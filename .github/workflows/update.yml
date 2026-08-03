@@ -1,0 +1,27 @@
+name: rebuild fx data
+on:
+  schedule:
+    - cron: '0 6 * * 1-5'      # weekdays 06:00 UTC
+  workflow_dispatch:            # or click Run workflow
+  push:
+    paths: ['code/**']
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install -r requirements.txt
+      - name: run pipeline
+        run: python code/pipeline.py
+      - name: commit refreshed data
+        run: |
+          git config user.name  "fx-bot"
+          git config user.email "fx-bot@users.noreply.github.com"
+          git add -A app_data.json app_ui.js results/ data/px28.csv
+          git diff --staged --quiet || git commit -m "auto: refresh $(date -u +%Y-%m-%d)"
+          git push
