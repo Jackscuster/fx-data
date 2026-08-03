@@ -10,6 +10,6 @@ for m in ('sc2.py','sc2.py','sc2.py','sc2.py','sc2.py'):   # resumable, idempote
     run(m)
 run('sc3.py'); run('sc3.py')
 run('rank2.py'); run('rank3.py'); run('prep.py')
-run('strat.py'); run('framework.py'); run('bundle.py')
+run('strat.py'); run('framework.py'); run('ninebox.py'); run('bundle.py')
 shutil.copy(os.path.join(R,'results','app_data.json'),os.path.join(R,'app_data.json'))
 print('\napp_data.json refreshed at repo root')
