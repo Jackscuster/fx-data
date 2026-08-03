@@ -80,11 +80,11 @@ reproduced from truncated data.</div>
 
 
 <section id="nb" hidden>
-<div class="note"><b>Direction \\u00d7 volatility, 3\\u00d73.</b> Cut points are terciles learned on
+<div class="note"><b>Direction × volatility, 3×3.</b> Cut points are terciles learned on
 1999-2015 only and applied unchanged to 2016-2026. Both inputs lagged one bar. Colour is
 OOS Sharpe: amber positive, red negative, against the unfiltered baseline shown below each grid.</div>
 <div id="nbgrid"></div>
-<h3>Routing \\u2014 which sleeve wins each box</h3>
+<h3>Routing — which sleeve wins each box</h3>
 <div class="tw"><table id="nbt"><thead><tr><th>Box</th><th>Mean reversion</th><th>Momentum</th>
 <th>Winner</th><th>Edge</th><th>Data %</th></tr></thead><tbody></tbody></table></div>
 <div class="note" id="nbtx"></div></section>
@@ -93,7 +93,7 @@ OOS Sharpe: amber positive, red negative, against the unfiltered baseline shown 
 <section id="mt" hidden>
 <div class="note"><b>Monthly / weekly / daily regimes, mapped onto daily bars.</b> Strategies
 trade daily; M and W exist only to confirm or contradict it. Lookbacks form a real hierarchy
-\\u2014 60 days, 26 weeks, 12 months. A weekly label is not usable until the following Monday and a
+— 60 days, 26 weeks, 12 months. A weekly label is not usable until the following Monday and a
 monthly label not until the next month opens; both are shifted on their own clock before being
 mapped down.</div>
 <h3>Do the timeframes line up?</h3><div id="mtag"></div>
