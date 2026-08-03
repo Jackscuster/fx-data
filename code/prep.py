@@ -6,7 +6,8 @@ sys.path.insert(0,ROOTLIB)
 import os, json, numpy as np, pandas as pd
 
 DIRS = [os.path.join(ROOTOUT,'/scores'.lstrip('/')),
-        os.path.join(ROOTOUT,'/scores3'.lstrip('/'))]
+        os.path.join(ROOTOUT,'/scores3'.lstrip('/')),
+        os.path.join(ROOTOUT,'scores4')]
 OUT = os.path.join(ROOTOUT,''.lstrip('/'))
 
 
@@ -42,7 +43,7 @@ def pool(d):
 
 
 rows = []
-for d, batch in zip(DIRS, ['own-price', 'cross-sectional']):
+for d, batch in zip(DIRS, ['own-price', 'cross-sectional', 'multi-timeframe']):
     names, R = pool(d)
     for j, s in enumerate(names):
         i, o = R['i'], R['o']
@@ -57,7 +58,6 @@ for d, batch in zip(DIRS, ['own-price', 'cross-sectional']):
             ai=round(float(i['agree'][j]), 3), ao=round(float(o['agree'][j]), 3),
             mi=round(float(i['mono'][j]), 3), mo=round(float(o['mono'][j]), 3),
             n=int(i['n'][j] + o['n'][j]),
-            qi=[round(float(v), 4) for v in i['M'][j]],
             qo=[round(float(v), 4) for v in o['M'][j]]))
 
 D = pd.DataFrame(rows).drop_duplicates(subset='s')

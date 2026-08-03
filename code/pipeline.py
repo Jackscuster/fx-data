@@ -9,6 +9,7 @@ run('build.py')
 for m in ('sc2.py','sc2.py','sc2.py','sc2.py','sc2.py'):   # resumable, idempotent
     run(m)
 run('sc3.py'); run('sc3.py')
+for _ in range(6): run('sc4.py')
 run('rank2.py'); run('rank3.py'); run('prep.py')
 run('strat.py'); run('framework.py'); run('ninebox.py'); run('mtf.py'); run('bundle.py')
 shutil.copy(os.path.join(R,'results','app_data.json'),os.path.join(R,'app_data.json'))
