@@ -1,13 +1,22 @@
-# fx-data — self-refreshing feed for the FX Signal Gauntlet
+# fx-data — self-refreshing feed AND interface
 
-GitHub Actions reruns the whole pipeline on a schedule and commits a fresh
-`app_data.json`. The app points at the raw URL of that file and picks up changes
-automatically. Nothing to upload by hand.
+Two files are served to the app:
 
-Feed URL:
+    app_data.json   the numbers   (rebuilt automatically by GitHub Actions)
+    app_ui.js       the interface (new tabs land here; no app redownload needed)
+
+The shell HTML on your device loads BOTH from this repo. It never needs updating again.
+
+Feed URL to paste into the app, once:
+
     https://raw.githubusercontent.com/<you>/fx-data/main/app_data.json
 
-Schedule: weekdays 06:00 UTC. Also runs on any push to `code/`, or on demand from
-the Actions tab -> "rebuild fx data" -> Run workflow.
+The app derives the app_ui.js URL from that automatically.
 
-Runtime ~40 min. Free tier allows 6 h per job.
+## Schedule
+Weekdays 06:00 UTC, on any push to `code/`, or on demand:
+Actions tab -> "rebuild fx data" -> Run workflow. Runtime ~40 min.
+
+## Adding analysis
+New tab = edit `app_ui.js`. New numbers = add a script under `code/` and a line in
+`code/pipeline.py`, then extend `code/bundle.py` so it lands in app_data.json.
