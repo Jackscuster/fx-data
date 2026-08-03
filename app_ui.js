@@ -39,6 +39,8 @@ estimator rebuilt. Everything shown here is measured, nothing is assumed.</div>
 <button class="chip" id="cT" aria-pressed="false">Trend</button>
 <button class="chip" id="cC" aria-pressed="false">Chop</button>
 <button class="chip" id="cX" aria-pressed="false">Cross-sectional</button>
+<button class="chip" id="cM" aria-pressed="false">Multi-timeframe</button>
+<button class="chip" id="cI" aria-pressed="false">Hide interactions</button>
 <span class="count" id="acnt"></span></div>
 <div class="tw"><table id="at"><thead><tr>
 <th data-k="s">Signal</th><th data-k="ti">t IS</th><th data-k="to">t OOS</th>
@@ -172,11 +174,11 @@ window.renderApp=function(BUNDLE,root){
   document.querySelectorAll('#gt th').forEach(th=>{if(!th.dataset.k)return;th.tabIndex=0;
    th.onclick=()=>{const k=th.dataset.k;gd=(k===gs)?-gd:-1;gs=k;drawG();};});
   
-  let as='ti',ad=-1,fT=0,fC=0,fX=0;
+  let as='ti',ad=-1,fT=0,fC=0,fX=0,fM=0,fI=0;
   function drawA(){
    const q=$('#q').value.trim().toLowerCase();
    let v=D.filter(d=>(!q||d.s.toLowerCase().includes(q))&&(!fT||d.ti>0)&&(!fC||d.ti<0)
-    &&(!fX||d.b==='cross-sectional'));
+    &&(!fX||d.b==='cross-sectional')&&(!fM||d.b==='multi-timeframe')&&(!fI||!d.s.startsWith('x_')));
    v.sort((a,b)=>{const x=a[as],y=b[as];
     return (typeof x==='string'?x.localeCompare(y):Math.abs(x)-Math.abs(y))*ad;});
    $('#acnt').textContent=v.length+' of '+D.length;
@@ -191,7 +193,7 @@ window.renderApp=function(BUNDLE,root){
    $('#cC').setAttribute('aria-pressed',false);drawA();};
   $('#cC').onclick=e=>{fC=!fC;fT=0;e.target.setAttribute('aria-pressed',!!fC);
    $('#cT').setAttribute('aria-pressed',false);drawA();};
-  $('#cX').onclick=e=>{fX=!fX;e.target.setAttribute('aria-pressed',!!fX);drawA();};
+  $('#cX').onclick=e=>{fX=!fX;fM=0;e.target.setAttribute('aria-pressed',!!fX);if($('#cM'))$('#cM').setAttribute('aria-pressed',false);drawA();};if($('#cM'))$('#cM').onclick=e=>{fM=!fM;fX=0;e.target.setAttribute('aria-pressed',!!fM);if($('#cX'))$('#cX').setAttribute('aria-pressed',false);drawA();};if($('#cI'))$('#cI').onclick=e=>{fI=!fI;e.target.setAttribute('aria-pressed',!!fI);drawA();};
   document.querySelectorAll('#at th').forEach(th=>{th.tabIndex=0;
    th.onclick=()=>{const k=th.dataset.k;ad=(k===as)?-ad:-1;as=k;drawA();};});
   
