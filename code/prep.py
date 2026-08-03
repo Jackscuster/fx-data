@@ -64,10 +64,10 @@ D = pd.DataFrame(rows).drop_duplicates(subset='s')
 D['dec'] = (D.to.abs() / D.ti.abs().clip(lower=.01)).round(3)
 D['held'] = np.sign(D.ti) == np.sign(D.to)
 recs = D.to_dict('records')
-json.dump(recs, open(os.path.join(OUT, 'app_data.json'), 'w'), separators=(',', ':'))
+json.dump(recs, open(os.path.join(OUT, 'signals.json'), 'w'), separators=(',', ':'))
 print('signals %d  | own-price %d  cross-sectional %d'
       % (len(D), (D.b == 'own-price').sum(), (D.b == 'cross-sectional').sum()))
-print('json %.0f KB' % (os.path.getsize(os.path.join(OUT, 'app_data.json')) / 1024))
+print('json %.0f KB' % (os.path.getsize(os.path.join(OUT, 'signals.json')) / 1024))
 g = D[(D.to.abs() >= 8) & (D.si.abs() >= .02) & (D.ao >= .85) & (D.mo.abs() >= .95)
       & (D.dec >= .6) & D.held]
 print('passing strict gates (no time-stability yet): %d' % len(g))
