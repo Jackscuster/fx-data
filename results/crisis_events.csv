@@ -1,0 +1,271 @@
+detector,date,type,ccy,severity,description,caught,lag_days
+maxabsmove,2000-09-22,intervention,EUR,2,G7 coordinated intervention to support the euro,True,0.0
+maxabsmove,2001-03-19,policy,JPY,2,BOJ adopts quantitative easing,False,
+maxabsmove,2001-09-11,geopolitical,,3,September 11 attacks,True,3.0
+maxabsmove,2001-12-20,credit,,2,"Argentina abandons convertibility, defaults",True,4.0
+maxabsmove,2003-09-20,policy,,2,G7 Dubai communique calls for FX flexibility,False,
+maxabsmove,2004-03-16,intervention,JPY,2,Japan ends its record yen-selling campaign,False,
+maxabsmove,2005-07-21,policy,CNY,2,China ends the dollar peg,True,0.0
+maxabsmove,2007-02-27,credit,,1,"Shanghai selloff, first carry-trade wobble",True,0.0
+maxabsmove,2007-08-09,credit,,3,"BNP Paribas freezes three funds, first carry unwind",True,0.0
+maxabsmove,2008-03-16,credit,USD,2,Bear Stearns sold to JPMorgan,True,1.0
+maxabsmove,2008-09-15,credit,,3,Lehman Brothers bankruptcy,True,3.0
+maxabsmove,2008-10-08,policy,,3,Coordinated global central bank rate cuts,True,0.0
+maxabsmove,2009-03-12,intervention,CHF,2,SNB intervenes to weaken the franc,True,0.0
+maxabsmove,2009-03-18,policy,USD,2,"Fed announces Treasury purchases, QE1 expansion",True,1.0
+maxabsmove,2010-04-23,credit,EUR,2,Greece formally requests a bailout,True,13.0
+maxabsmove,2010-05-06,credit,,1,US equity flash crash,True,0.0
+maxabsmove,2010-05-09,policy,EUR,2,EU stabilisation package and EFSF announced,True,1.0
+maxabsmove,2011-03-11,geopolitical,JPY,3,Tohoku earthquake and tsunami,True,7.0
+maxabsmove,2011-03-18,intervention,JPY,2,G7 coordinated yen intervention after Tohoku,True,0.0
+maxabsmove,2011-08-05,credit,USD,2,S&P downgrades the United States,True,4.0
+maxabsmove,2011-09-06,intervention,CHF,3,SNB announces the EURCHF 1.20 floor,True,0.0
+maxabsmove,2012-07-26,policy,EUR,2,Draghi: whatever it takes,False,
+maxabsmove,2012-09-06,policy,EUR,2,ECB announces OMT,True,8.0
+maxabsmove,2013-04-04,policy,JPY,3,BOJ launches QQE,True,0.0
+maxabsmove,2013-05-22,policy,USD,2,Bernanke taper tantrum,True,0.0
+maxabsmove,2014-06-05,policy,EUR,2,ECB cuts the deposit rate below zero,False,
+maxabsmove,2014-10-31,policy,JPY,2,BOJ surprise QQE expansion,True,0.0
+maxabsmove,2015-01-15,intervention,CHF,3,SNB abandons the EURCHF floor,True,0.0
+maxabsmove,2015-08-11,policy,CNY,3,China devalues the yuan,True,13.0
+maxabsmove,2016-01-29,policy,JPY,2,BOJ adopts negative interest rates,True,0.0
+maxabsmove,2016-06-23,vote,GBP,3,Brexit referendum,True,1.0
+maxabsmove,2016-10-07,credit,GBP,2,Sterling flash crash,False,
+maxabsmove,2016-11-08,vote,USD,2,US presidential election,False,
+maxabsmove,2018-02-05,credit,,2,"Volatility complex blow-up, XIV termination",False,
+maxabsmove,2018-08-10,credit,,2,Turkish lira crisis,False,
+maxabsmove,2019-08-05,policy,CNY,2,"Yuan breaks 7, US names China a currency manipulator",False,
+maxabsmove,2020-03-09,commodity,,3,Saudi-Russia oil price war,True,0.0
+maxabsmove,2020-03-11,pandemic,,3,WHO declares a pandemic,True,1.0
+maxabsmove,2020-03-15,policy,USD,3,"Fed emergency cut to zero, swap lines reopened",True,1.0
+maxabsmove,2022-02-24,geopolitical,,3,Russia invades Ukraine,True,0.0
+maxabsmove,2022-03-16,policy,USD,2,Fed begins the hiking cycle,False,
+maxabsmove,2022-09-22,intervention,JPY,2,"MOF yen intervention, first since 1998",True,0.0
+maxabsmove,2022-09-23,policy,GBP,3,UK mini-budget triggers the gilt crisis,True,0.0
+maxabsmove,2022-10-21,intervention,JPY,2,MOF second yen intervention,True,0.0
+maxabsmove,2023-03-10,credit,USD,2,Silicon Valley Bank fails,True,5.0
+maxabsmove,2023-03-19,credit,CHF,2,Credit Suisse rescue by UBS,False,
+maxabsmove,2023-07-28,policy,JPY,2,BOJ loosens yield curve control,False,
+maxabsmove,2024-03-19,policy,JPY,2,BOJ ends negative rates and YCC,False,
+maxabsmove,2024-04-29,intervention,JPY,2,MOF intervenes with USDJPY near 160,True,3.0
+maxabsmove,2024-07-31,policy,JPY,3,"BOJ surprise hike, carry unwind begins",True,0.0
+maxabsmove,2024-08-05,credit,JPY,3,Global carry unwind peak,True,0.0
+maxabsmove,2024-11-05,vote,USD,2,US presidential election,True,1.0
+maxabsmove,2025-04-02,policy,USD,3,US reciprocal tariff announcement,True,1.0
+maxabsmove,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,False,
+breadth2sig,2000-09-22,intervention,EUR,2,G7 coordinated intervention to support the euro,True,0.0
+breadth2sig,2001-03-19,policy,JPY,2,BOJ adopts quantitative easing,False,
+breadth2sig,2001-09-11,geopolitical,,3,September 11 attacks,True,6.0
+breadth2sig,2001-12-20,credit,,2,"Argentina abandons convertibility, defaults",True,13.0
+breadth2sig,2003-09-20,policy,,2,G7 Dubai communique calls for FX flexibility,False,
+breadth2sig,2004-03-16,intervention,JPY,2,Japan ends its record yen-selling campaign,False,
+breadth2sig,2005-07-21,policy,CNY,2,China ends the dollar peg,False,
+breadth2sig,2007-02-27,credit,,1,"Shanghai selloff, first carry-trade wobble",True,0.0
+breadth2sig,2007-08-09,credit,,3,"BNP Paribas freezes three funds, first carry unwind",True,0.0
+breadth2sig,2008-03-16,credit,USD,2,Bear Stearns sold to JPMorgan,True,1.0
+breadth2sig,2008-09-15,credit,,3,Lehman Brothers bankruptcy,True,3.0
+breadth2sig,2008-10-08,policy,,3,Coordinated global central bank rate cuts,True,0.0
+breadth2sig,2009-03-12,intervention,CHF,2,SNB intervenes to weaken the franc,False,
+breadth2sig,2009-03-18,policy,USD,2,"Fed announces Treasury purchases, QE1 expansion",False,
+breadth2sig,2010-04-23,credit,EUR,2,Greece formally requests a bailout,True,13.0
+breadth2sig,2010-05-06,credit,,1,US equity flash crash,True,0.0
+breadth2sig,2010-05-09,policy,EUR,2,EU stabilisation package and EFSF announced,True,1.0
+breadth2sig,2011-03-11,geopolitical,JPY,3,Tohoku earthquake and tsunami,False,
+breadth2sig,2011-03-18,intervention,JPY,2,G7 coordinated yen intervention after Tohoku,False,
+breadth2sig,2011-08-05,credit,USD,2,S&P downgrades the United States,True,0.0
+breadth2sig,2011-09-06,intervention,CHF,3,SNB announces the EURCHF 1.20 floor,True,0.0
+breadth2sig,2012-07-26,policy,EUR,2,Draghi: whatever it takes,False,
+breadth2sig,2012-09-06,policy,EUR,2,ECB announces OMT,True,8.0
+breadth2sig,2013-04-04,policy,JPY,3,BOJ launches QQE,True,0.0
+breadth2sig,2013-05-22,policy,USD,2,Bernanke taper tantrum,True,12.0
+breadth2sig,2014-06-05,policy,EUR,2,ECB cuts the deposit rate below zero,False,
+breadth2sig,2014-10-31,policy,JPY,2,BOJ surprise QQE expansion,True,0.0
+breadth2sig,2015-01-15,intervention,CHF,3,SNB abandons the EURCHF floor,True,0.0
+breadth2sig,2015-08-11,policy,CNY,3,China devalues the yuan,True,13.0
+breadth2sig,2016-01-29,policy,JPY,2,BOJ adopts negative interest rates,False,
+breadth2sig,2016-06-23,vote,GBP,3,Brexit referendum,True,1.0
+breadth2sig,2016-10-07,credit,GBP,2,Sterling flash crash,False,
+breadth2sig,2016-11-08,vote,USD,2,US presidential election,False,
+breadth2sig,2018-02-05,credit,,2,"Volatility complex blow-up, XIV termination",False,
+breadth2sig,2018-08-10,credit,,2,Turkish lira crisis,False,
+breadth2sig,2019-08-05,policy,CNY,2,"Yuan breaks 7, US names China a currency manipulator",True,2.0
+breadth2sig,2020-03-09,commodity,,3,Saudi-Russia oil price war,True,0.0
+breadth2sig,2020-03-11,pandemic,,3,WHO declares a pandemic,True,0.0
+breadth2sig,2020-03-15,policy,USD,3,"Fed emergency cut to zero, swap lines reopened",True,1.0
+breadth2sig,2022-02-24,geopolitical,,3,Russia invades Ukraine,True,0.0
+breadth2sig,2022-03-16,policy,USD,2,Fed begins the hiking cycle,True,1.0
+breadth2sig,2022-09-22,intervention,JPY,2,"MOF yen intervention, first since 1998",True,0.0
+breadth2sig,2022-09-23,policy,GBP,3,UK mini-budget triggers the gilt crisis,True,0.0
+breadth2sig,2022-10-21,intervention,JPY,2,MOF second yen intervention,False,
+breadth2sig,2023-03-10,credit,USD,2,Silicon Valley Bank fails,False,
+breadth2sig,2023-03-19,credit,CHF,2,Credit Suisse rescue by UBS,False,
+breadth2sig,2023-07-28,policy,JPY,2,BOJ loosens yield curve control,False,
+breadth2sig,2024-03-19,policy,JPY,2,BOJ ends negative rates and YCC,False,
+breadth2sig,2024-04-29,intervention,JPY,2,MOF intervenes with USDJPY near 160,False,
+breadth2sig,2024-07-31,policy,JPY,3,"BOJ surprise hike, carry unwind begins",True,2.0
+breadth2sig,2024-08-05,credit,JPY,3,Global carry unwind peak,True,0.0
+breadth2sig,2024-11-05,vote,USD,2,US presidential election,True,1.0
+breadth2sig,2025-04-02,policy,USD,3,US reciprocal tariff announcement,True,1.0
+breadth2sig,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,False,
+paneldisp,2000-09-22,intervention,EUR,2,G7 coordinated intervention to support the euro,True,0.0
+paneldisp,2001-03-19,policy,JPY,2,BOJ adopts quantitative easing,False,
+paneldisp,2001-09-11,geopolitical,,3,September 11 attacks,True,1.0
+paneldisp,2001-12-20,credit,,2,"Argentina abandons convertibility, defaults",True,4.0
+paneldisp,2003-09-20,policy,,2,G7 Dubai communique calls for FX flexibility,False,
+paneldisp,2004-03-16,intervention,JPY,2,Japan ends its record yen-selling campaign,False,
+paneldisp,2005-07-21,policy,CNY,2,China ends the dollar peg,True,0.0
+paneldisp,2007-02-27,credit,,1,"Shanghai selloff, first carry-trade wobble",True,0.0
+paneldisp,2007-08-09,credit,,3,"BNP Paribas freezes three funds, first carry unwind",True,0.0
+paneldisp,2008-03-16,credit,USD,2,Bear Stearns sold to JPMorgan,True,1.0
+paneldisp,2008-09-15,credit,,3,Lehman Brothers bankruptcy,True,3.0
+paneldisp,2008-10-08,policy,,3,Coordinated global central bank rate cuts,True,0.0
+paneldisp,2009-03-12,intervention,CHF,2,SNB intervenes to weaken the franc,False,
+paneldisp,2009-03-18,policy,USD,2,"Fed announces Treasury purchases, QE1 expansion",False,
+paneldisp,2010-04-23,credit,EUR,2,Greece formally requests a bailout,True,4.0
+paneldisp,2010-05-06,credit,,1,US equity flash crash,True,0.0
+paneldisp,2010-05-09,policy,EUR,2,EU stabilisation package and EFSF announced,True,1.0
+paneldisp,2011-03-11,geopolitical,JPY,3,Tohoku earthquake and tsunami,True,6.0
+paneldisp,2011-03-18,intervention,JPY,2,G7 coordinated yen intervention after Tohoku,True,0.0
+paneldisp,2011-08-05,credit,USD,2,S&P downgrades the United States,True,0.0
+paneldisp,2011-09-06,intervention,CHF,3,SNB announces the EURCHF 1.20 floor,True,0.0
+paneldisp,2012-07-26,policy,EUR,2,Draghi: whatever it takes,False,
+paneldisp,2012-09-06,policy,EUR,2,ECB announces OMT,False,
+paneldisp,2013-04-04,policy,JPY,3,BOJ launches QQE,True,0.0
+paneldisp,2013-05-22,policy,USD,2,Bernanke taper tantrum,True,12.0
+paneldisp,2014-06-05,policy,EUR,2,ECB cuts the deposit rate below zero,False,
+paneldisp,2014-10-31,policy,JPY,2,BOJ surprise QQE expansion,True,0.0
+paneldisp,2015-01-15,intervention,CHF,3,SNB abandons the EURCHF floor,True,0.0
+paneldisp,2015-08-11,policy,CNY,3,China devalues the yuan,True,13.0
+paneldisp,2016-01-29,policy,JPY,2,BOJ adopts negative interest rates,False,
+paneldisp,2016-06-23,vote,GBP,3,Brexit referendum,True,1.0
+paneldisp,2016-10-07,credit,GBP,2,Sterling flash crash,False,
+paneldisp,2016-11-08,vote,USD,2,US presidential election,False,
+paneldisp,2018-02-05,credit,,2,"Volatility complex blow-up, XIV termination",True,3.0
+paneldisp,2018-08-10,credit,,2,Turkish lira crisis,False,
+paneldisp,2019-08-05,policy,CNY,2,"Yuan breaks 7, US names China a currency manipulator",True,2.0
+paneldisp,2020-03-09,commodity,,3,Saudi-Russia oil price war,True,0.0
+paneldisp,2020-03-11,pandemic,,3,WHO declares a pandemic,True,0.0
+paneldisp,2020-03-15,policy,USD,3,"Fed emergency cut to zero, swap lines reopened",True,1.0
+paneldisp,2022-02-24,geopolitical,,3,Russia invades Ukraine,True,0.0
+paneldisp,2022-03-16,policy,USD,2,Fed begins the hiking cycle,True,1.0
+paneldisp,2022-09-22,intervention,JPY,2,"MOF yen intervention, first since 1998",True,0.0
+paneldisp,2022-09-23,policy,GBP,3,UK mini-budget triggers the gilt crisis,True,0.0
+paneldisp,2022-10-21,intervention,JPY,2,MOF second yen intervention,True,0.0
+paneldisp,2023-03-10,credit,USD,2,Silicon Valley Bank fails,False,
+paneldisp,2023-03-19,credit,CHF,2,Credit Suisse rescue by UBS,False,
+paneldisp,2023-07-28,policy,JPY,2,BOJ loosens yield curve control,False,
+paneldisp,2024-03-19,policy,JPY,2,BOJ ends negative rates and YCC,False,
+paneldisp,2024-04-29,intervention,JPY,2,MOF intervenes with USDJPY near 160,True,3.0
+paneldisp,2024-07-31,policy,JPY,3,"BOJ surprise hike, carry unwind begins",True,0.0
+paneldisp,2024-08-05,credit,JPY,3,Global carry unwind peak,True,0.0
+paneldisp,2024-11-05,vote,USD,2,US presidential election,True,1.0
+paneldisp,2025-04-02,policy,USD,3,US reciprocal tariff announcement,True,1.0
+paneldisp,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,False,
+legdiv20,2000-09-22,intervention,EUR,2,G7 coordinated intervention to support the euro,False,
+legdiv20,2001-03-19,policy,JPY,2,BOJ adopts quantitative easing,False,
+legdiv20,2001-09-11,geopolitical,,3,September 11 attacks,True,8.0
+legdiv20,2001-12-20,credit,,2,"Argentina abandons convertibility, defaults",False,
+legdiv20,2003-09-20,policy,,2,G7 Dubai communique calls for FX flexibility,True,11.0
+legdiv20,2004-03-16,intervention,JPY,2,Japan ends its record yen-selling campaign,True,0.0
+legdiv20,2005-07-21,policy,CNY,2,China ends the dollar peg,False,
+legdiv20,2007-02-27,credit,,1,"Shanghai selloff, first carry-trade wobble",False,
+legdiv20,2007-08-09,credit,,3,"BNP Paribas freezes three funds, first carry unwind",True,1.0
+legdiv20,2008-03-16,credit,USD,2,Bear Stearns sold to JPMorgan,False,
+legdiv20,2008-09-15,credit,,3,Lehman Brothers bankruptcy,True,1.0
+legdiv20,2008-10-08,policy,,3,Coordinated global central bank rate cuts,True,0.0
+legdiv20,2009-03-12,intervention,CHF,2,SNB intervenes to weaken the franc,False,
+legdiv20,2009-03-18,policy,USD,2,"Fed announces Treasury purchases, QE1 expansion",False,
+legdiv20,2010-04-23,credit,EUR,2,Greece formally requests a bailout,False,
+legdiv20,2010-05-06,credit,,1,US equity flash crash,True,13.0
+legdiv20,2010-05-09,policy,EUR,2,EU stabilisation package and EFSF announced,True,10.0
+legdiv20,2011-03-11,geopolitical,JPY,3,Tohoku earthquake and tsunami,False,
+legdiv20,2011-03-18,intervention,JPY,2,G7 coordinated yen intervention after Tohoku,False,
+legdiv20,2011-08-05,credit,USD,2,S&P downgrades the United States,True,0.0
+legdiv20,2011-09-06,intervention,CHF,3,SNB announces the EURCHF 1.20 floor,True,0.0
+legdiv20,2012-07-26,policy,EUR,2,Draghi: whatever it takes,False,
+legdiv20,2012-09-06,policy,EUR,2,ECB announces OMT,False,
+legdiv20,2013-04-04,policy,JPY,3,BOJ launches QQE,False,
+legdiv20,2013-05-22,policy,USD,2,Bernanke taper tantrum,False,
+legdiv20,2014-06-05,policy,EUR,2,ECB cuts the deposit rate below zero,False,
+legdiv20,2014-10-31,policy,JPY,2,BOJ surprise QQE expansion,True,13.0
+legdiv20,2015-01-15,intervention,CHF,3,SNB abandons the EURCHF floor,True,0.0
+legdiv20,2015-08-11,policy,CNY,3,China devalues the yuan,False,
+legdiv20,2016-01-29,policy,JPY,2,BOJ adopts negative interest rates,False,
+legdiv20,2016-06-23,vote,GBP,3,Brexit referendum,True,1.0
+legdiv20,2016-10-07,credit,GBP,2,Sterling flash crash,False,
+legdiv20,2016-11-08,vote,USD,2,US presidential election,False,
+legdiv20,2018-02-05,credit,,2,"Volatility complex blow-up, XIV termination",False,
+legdiv20,2018-08-10,credit,,2,Turkish lira crisis,False,
+legdiv20,2019-08-05,policy,CNY,2,"Yuan breaks 7, US names China a currency manipulator",True,7.0
+legdiv20,2020-03-09,commodity,,3,Saudi-Russia oil price war,True,0.0
+legdiv20,2020-03-11,pandemic,,3,WHO declares a pandemic,True,0.0
+legdiv20,2020-03-15,policy,USD,3,"Fed emergency cut to zero, swap lines reopened",True,1.0
+legdiv20,2022-02-24,geopolitical,,3,Russia invades Ukraine,True,8.0
+legdiv20,2022-03-16,policy,USD,2,Fed begins the hiking cycle,True,6.0
+legdiv20,2022-09-22,intervention,JPY,2,"MOF yen intervention, first since 1998",False,
+legdiv20,2022-09-23,policy,GBP,3,UK mini-budget triggers the gilt crisis,False,
+legdiv20,2022-10-21,intervention,JPY,2,MOF second yen intervention,False,
+legdiv20,2023-03-10,credit,USD,2,Silicon Valley Bank fails,False,
+legdiv20,2023-03-19,credit,CHF,2,Credit Suisse rescue by UBS,False,
+legdiv20,2023-07-28,policy,JPY,2,BOJ loosens yield curve control,False,
+legdiv20,2024-03-19,policy,JPY,2,BOJ ends negative rates and YCC,False,
+legdiv20,2024-04-29,intervention,JPY,2,MOF intervenes with USDJPY near 160,False,
+legdiv20,2024-07-31,policy,JPY,3,"BOJ surprise hike, carry unwind begins",True,0.0
+legdiv20,2024-08-05,credit,JPY,3,Global carry unwind peak,True,0.0
+legdiv20,2024-11-05,vote,USD,2,US presidential election,False,
+legdiv20,2025-04-02,policy,USD,3,US reciprocal tariff announcement,False,
+legdiv20,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,False,
+avgcorr60,2000-09-22,intervention,EUR,2,G7 coordinated intervention to support the euro,False,
+avgcorr60,2001-03-19,policy,JPY,2,BOJ adopts quantitative easing,False,
+avgcorr60,2001-09-11,geopolitical,,3,September 11 attacks,False,
+avgcorr60,2001-12-20,credit,,2,"Argentina abandons convertibility, defaults",False,
+avgcorr60,2003-09-20,policy,,2,G7 Dubai communique calls for FX flexibility,False,
+avgcorr60,2004-03-16,intervention,JPY,2,Japan ends its record yen-selling campaign,False,
+avgcorr60,2005-07-21,policy,CNY,2,China ends the dollar peg,False,
+avgcorr60,2007-02-27,credit,,1,"Shanghai selloff, first carry-trade wobble",True,9.0
+avgcorr60,2007-08-09,credit,,3,"BNP Paribas freezes three funds, first carry unwind",False,
+avgcorr60,2008-03-16,credit,USD,2,Bear Stearns sold to JPMorgan,False,
+avgcorr60,2008-09-15,credit,,3,Lehman Brothers bankruptcy,True,0.0
+avgcorr60,2008-10-08,policy,,3,Coordinated global central bank rate cuts,True,0.0
+avgcorr60,2009-03-12,intervention,CHF,2,SNB intervenes to weaken the franc,False,
+avgcorr60,2009-03-18,policy,USD,2,"Fed announces Treasury purchases, QE1 expansion",False,
+avgcorr60,2010-04-23,credit,EUR,2,Greece formally requests a bailout,False,
+avgcorr60,2010-05-06,credit,,1,US equity flash crash,False,
+avgcorr60,2010-05-09,policy,EUR,2,EU stabilisation package and EFSF announced,False,
+avgcorr60,2011-03-11,geopolitical,JPY,3,Tohoku earthquake and tsunami,True,7.0
+avgcorr60,2011-03-18,intervention,JPY,2,G7 coordinated yen intervention after Tohoku,True,0.0
+avgcorr60,2011-08-05,credit,USD,2,S&P downgrades the United States,True,0.0
+avgcorr60,2011-09-06,intervention,CHF,3,SNB announces the EURCHF 1.20 floor,False,
+avgcorr60,2012-07-26,policy,EUR,2,Draghi: whatever it takes,False,
+avgcorr60,2012-09-06,policy,EUR,2,ECB announces OMT,False,
+avgcorr60,2013-04-04,policy,JPY,3,BOJ launches QQE,False,
+avgcorr60,2013-05-22,policy,USD,2,Bernanke taper tantrum,False,
+avgcorr60,2014-06-05,policy,EUR,2,ECB cuts the deposit rate below zero,False,
+avgcorr60,2014-10-31,policy,JPY,2,BOJ surprise QQE expansion,False,
+avgcorr60,2015-01-15,intervention,CHF,3,SNB abandons the EURCHF floor,False,
+avgcorr60,2015-08-11,policy,CNY,3,China devalues the yuan,False,
+avgcorr60,2016-01-29,policy,JPY,2,BOJ adopts negative interest rates,False,
+avgcorr60,2016-06-23,vote,GBP,3,Brexit referendum,True,1.0
+avgcorr60,2016-10-07,credit,GBP,2,Sterling flash crash,False,
+avgcorr60,2016-11-08,vote,USD,2,US presidential election,False,
+avgcorr60,2018-02-05,credit,,2,"Volatility complex blow-up, XIV termination",False,
+avgcorr60,2018-08-10,credit,,2,Turkish lira crisis,True,0.0
+avgcorr60,2019-08-05,policy,CNY,2,"Yuan breaks 7, US names China a currency manipulator",False,
+avgcorr60,2020-03-09,commodity,,3,Saudi-Russia oil price war,False,
+avgcorr60,2020-03-11,pandemic,,3,WHO declares a pandemic,False,
+avgcorr60,2020-03-15,policy,USD,3,"Fed emergency cut to zero, swap lines reopened",False,
+avgcorr60,2022-02-24,geopolitical,,3,Russia invades Ukraine,True,4.0
+avgcorr60,2022-03-16,policy,USD,2,Fed begins the hiking cycle,True,0.0
+avgcorr60,2022-09-22,intervention,JPY,2,"MOF yen intervention, first since 1998",False,
+avgcorr60,2022-09-23,policy,GBP,3,UK mini-budget triggers the gilt crisis,False,
+avgcorr60,2022-10-21,intervention,JPY,2,MOF second yen intervention,False,
+avgcorr60,2023-03-10,credit,USD,2,Silicon Valley Bank fails,False,
+avgcorr60,2023-03-19,credit,CHF,2,Credit Suisse rescue by UBS,False,
+avgcorr60,2023-07-28,policy,JPY,2,BOJ loosens yield curve control,False,
+avgcorr60,2024-03-19,policy,JPY,2,BOJ ends negative rates and YCC,False,
+avgcorr60,2024-04-29,intervention,JPY,2,MOF intervenes with USDJPY near 160,True,3.0
+avgcorr60,2024-07-31,policy,JPY,3,"BOJ surprise hike, carry unwind begins",True,0.0
+avgcorr60,2024-08-05,credit,JPY,3,Global carry unwind peak,True,0.0
+avgcorr60,2024-11-05,vote,USD,2,US presidential election,True,0.0
+avgcorr60,2025-04-02,policy,USD,3,US reciprocal tariff announcement,True,0.0
+avgcorr60,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,False,
