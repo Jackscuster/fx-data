@@ -36,8 +36,9 @@ estimator rebuilt. Everything shown here is measured, nothing is assumed.</div>
 
 <section id="s" hidden>
 <div class="tools"><input type="search" id="q" placeholder="filter" aria-label="Filter">
-<button class="chip" id="cT" aria-pressed="false">Trend</button>
-<button class="chip" id="cC" aria-pressed="false">Chop</button>
+<button class="chip" id="cT" aria-pressed="false" title="Positive efficiency t IS — sign of the trend target, not the chop target">Trend</button>
+<button class="chip" id="cC" aria-pressed="false" title="Negative efficiency t IS — 'not trending'. Not the same as the chop target.">Chop</button>
+<button class="chip" id="cQ" aria-pressed="false" title="Signals that read more strongly on the chop target (turn frequency) than on trend">Chop target</button>
 <button class="chip" id="cX" aria-pressed="false">Cross-sectional</button>
 <button class="chip" id="cM" aria-pressed="false">Multi-timeframe</button>
 <button class="chip" id="cI" aria-pressed="false">Hide interactions</button>
@@ -45,8 +46,15 @@ estimator rebuilt. Everything shown here is measured, nothing is assumed.</div>
 <div class="tw"><table id="at"><thead><tr>
 <th data-k="s">Signal</th><th data-k="ti">t IS</th><th data-k="to">t OOS</th>
 <th data-k="si">Spread IS</th><th data-k="so">Spread OOS</th><th data-k="ai">Agree IS</th>
-<th data-k="ao">Agree OOS</th><th data-k="dec">Decay</th><th data-k="n">Obs</th>
-</tr></thead><tbody></tbody></table></div></section>
+<th data-k="ao">Agree OOS</th><th data-k="dec">Decay</th>
+<th data-k="cto" title="Chop target (forward 20d turn frequency), t OOS">t OOS chop</th>
+<th data-k="cso" title="Chop target spread OOS">Spr OOS chop</th>
+<th data-k="cao" title="Chop target pair agreement OOS">Agr OOS chop</th>
+<th data-k="bt" title="Which target this signal reads more strongly on, out of sample">Target</th>
+<th data-k="n">Obs</th>
+</tr></thead><tbody></tbody></table></div>
+<div class="note" style="margin-top:8px;opacity:.7;font-size:12px">Chop-target columns are
+blank for the v2–v4 batches, which scored a single target. Only regime-v5 carries both.</div></section>
 
 <section id="d" hidden>
 <div class="note">Each dot is one signal: in-sample strength across, out-of-sample down.
@@ -174,25 +182,36 @@ window.renderApp=function(BUNDLE,root){
   document.querySelectorAll('#gt th').forEach(th=>{if(!th.dataset.k)return;th.tabIndex=0;
    th.onclick=()=>{const k=th.dataset.k;gd=(k===gs)?-gd:-1;gs=k;drawG();};});
   
-  let as='ti',ad=-1,fT=0,fC=0,fX=0,fM=0,fI=0;
+  let as='ti',ad=-1,fT=0,fC=0,fQ=0,fX=0,fM=0,fI=0;
+  const NA='<span style="opacity:.3">—</span>';
+  const nf=(x,p)=>x==null?NA:x.toFixed(p);
+  const np=x=>x==null?NA:(x*100).toFixed(0)+'%';
   function drawA(){
    const q=$('#q').value.trim().toLowerCase();
    let v=D.filter(d=>(!q||d.s.toLowerCase().includes(q))&&(!fT||d.ti>0)&&(!fC||d.ti<0)
+    &&(!fQ||d.bt==='chop')
     &&(!fX||d.b==='cross-sectional')&&(!fM||d.b==='multi-timeframe')&&(!fI||!d.s.startsWith('x_')));
+   // nulls sort last in both directions rather than colliding at zero
    v.sort((a,b)=>{const x=a[as],y=b[as];
+    if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
     return (typeof x==='string'?x.localeCompare(y):Math.abs(x)-Math.abs(y))*ad;});
    $('#acnt').textContent=v.length+' of '+D.length;
    $('#at tbody').innerHTML=v.slice(0,600).map(d=>{
     const c=Math.abs(d.ti)<2?'var(--flat)':(d.ti>0?'var(--trend)':'var(--chop)');
+    const tc=d.bt==='chop'?'var(--chop)':(d.bt==='trend'?'var(--trend)':'var(--flat)');
     return `<tr><td style="color:${c}">${d.s}</td><td style="color:${c}">${d.ti.toFixed(1)}</td>
     <td>${d.to.toFixed(1)}</td><td>${d.si.toFixed(4)}</td><td>${d.so.toFixed(4)}</td>
     <td>${(d.ai*100).toFixed(0)}%</td><td>${(d.ao*100).toFixed(0)}%</td>
-    <td>${d.dec.toFixed(2)}</td><td>${(d.n/1000).toFixed(0)}k</td></tr>`;}).join('');}
+    <td>${d.dec.toFixed(2)}</td>
+    <td>${nf(d.cto,1)}</td><td>${nf(d.cso,4)}</td><td>${np(d.cao)}</td>
+    <td style="color:${tc}">${d.bt||NA}</td>
+    <td>${(d.n/1000).toFixed(0)}k</td></tr>`;}).join('');}
   $('#q').oninput=drawA;
   $('#cT').onclick=e=>{fT=!fT;fC=0;e.target.setAttribute('aria-pressed',!!fT);
    $('#cC').setAttribute('aria-pressed',false);drawA();};
   $('#cC').onclick=e=>{fC=!fC;fT=0;e.target.setAttribute('aria-pressed',!!fC);
    $('#cT').setAttribute('aria-pressed',false);drawA();};
+  if($('#cQ'))$('#cQ').onclick=e=>{fQ=!fQ;e.target.setAttribute('aria-pressed',!!fQ);drawA();};
   $('#cX').onclick=e=>{fX=!fX;fM=0;e.target.setAttribute('aria-pressed',!!fX);if($('#cM'))$('#cM').setAttribute('aria-pressed',false);drawA();};if($('#cM'))$('#cM').onclick=e=>{fM=!fM;fX=0;e.target.setAttribute('aria-pressed',!!fM);if($('#cX'))$('#cX').setAttribute('aria-pressed',false);drawA();};if($('#cI'))$('#cI').onclick=e=>{fI=!fI;e.target.setAttribute('aria-pressed',!!fI);drawA();};
   document.querySelectorAll('#at th').forEach(th=>{th.tabIndex=0;
    th.onclick=()=>{const k=th.dataset.k;ad=(k===as)?-ad:-1;as=k;drawA();};});
