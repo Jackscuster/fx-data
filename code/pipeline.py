@@ -14,6 +14,7 @@ for _ in range(8): run('sc5.py')
 run('rank2.py'); run('rank3.py'); run('prep.py')
 run('strat.py'); run('framework.py')
 run('ladder.py'); run('funnel.py')   # both consume framework.py output / its hmm cache
+run('crisis.py')                     # scores detectors against the events.py news calendar
 run('ninebox.py'); run('mtf.py'); run('bundle.py')
 shutil.copy(os.path.join(R,'results','app_data.json'),os.path.join(R,'app_data.json'))
 print('\napp_data.json refreshed at repo root')

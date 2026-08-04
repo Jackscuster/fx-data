@@ -11,6 +11,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="ld">Detectors</button>
 <button role="tab" aria-selected="false" data-t="nb">9-Box</button>
 <button role="tab" aria-selected="false" data-t="mt">Timeframes</button>
+<button role="tab" aria-selected="false" data-t="cr">Crisis</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
 const BODY=`<div class="grid">
@@ -112,6 +113,24 @@ mapped down.</div>
 <th>Cell</th><th>Data %</th><th>Sharpe</th><th>Ret/DD</th><th>PF</th><th>Trades</th>
 <th>Win%</th><th>$AvgTrade</th><th>Exposure</th></tr></thead><tbody></tbody></table></div>
 <div class="note" id="mttx"></div></section>
+
+<section id="cr" hidden>
+<div class="note"><b>The only real accuracy numbers in the project.</b> Every other score here
+is measured against a target derived from price itself. These are measured against dated news
+events — policy decisions, interventions, bankruptcies, referendums, invasions. No event date
+was ever chosen by looking at a chart, which is what stops this being circular.
+<br><br><b>The window is forward-only: the event date to +15 days.</b> An earlier version
+started the window 5 days <i>before</i> the event and reported a detector firing 2.5 days
+early. That was the window taking credit for the run-up, not a detector predicting anything.
+Under forward-only testing it vanished, and every detector fires on the day.</div>
+<div class="tw"><table id="crt"><thead><tr>
+<th>Detector</th><th>Caught</th><th>Recall</th><th>Base rate</th><th>Lift</th>
+<th>Median lag</th></tr></thead><tbody></tbody></table></div>
+<div class="note" id="crtx"></div>
+<h3>Events missed by the best detector</h3>
+<div class="tw"><table id="cet"><thead><tr>
+<th>Date</th><th>Type</th><th>Ccy</th><th>Severity</th><th>Event</th>
+</tr></thead><tbody></tbody></table></div></section>
 
 <section id="vd" hidden>
 <h3>The strictest test — is any one variant provably not luck?</h3>
@@ -432,12 +451,28 @@ window.renderApp=function(BUNDLE,root){
     Complexity did not buy anything here.`;})();
   }
   
+  // ---- crisis tab ----
+  (function(){const C=BUN.crisis;if(!C||!C.length)return;
+   const best=C.slice().sort((a,b)=>b.lift-a.lift)[0];
+   $('#crt tbody').innerHTML=C.slice().sort((a,b)=>b.lift-a.lift).map(d=>{
+    const lc=d.lift>=10?'var(--trend)':(d.lift>=5?'var(--chop)':'var(--dim)');
+    return `<tr><td>${d.detector}</td><td>${d.caught} of ${d.n_events}</td>
+    <td>${(d.recall*100).toFixed(0)}%</td><td>${(d.base_rate*100).toFixed(1)}%</td>
+    <td style="color:${lc}">${d.lift.toFixed(1)}×</td>
+    <td>${d.median_lag_days==null?'—':d.median_lag_days.toFixed(0)+'d'}</td></tr>`;}).join('');
+   const lead=C.filter(d=>d.median_lag_days<0);
+   $('#crtx').innerHTML=`Thresholds are the in-sample ${'95'}th percentile, so base rates sit
+   near 5% by construction and lift is comparable across detectors. Detectors firing
+   <i>before</i> the news: <b>${lead.length?lead.map(d=>d.detector).join(', '):'none'}</b>
+   — the window cannot reach backwards, so this is a property of the test, not a finding.`;
+   const EVs=(BUN.crisisev||[]).filter(e=>e.detector===best.detector&&!e.caught)
+    .sort((a,b)=>b.severity-a.severity||a.date.localeCompare(b.date));
+   $('#cet tbody').innerHTML=EVs.map(e=>`<tr><td>${e.date}</td><td>${e.type}</td>
+    <td>${e.ccy||'—'}</td><td>${e.severity}</td><td>${e.description}</td></tr>`).join('')
+    ||'<tr><td colspan="5">none</td></tr>';})();
+
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','s','d','f','st','ld','nb','mt','vd'].forEach(id=>$('#'+id).hidden=(id!==b.dataset.t));});
-  
-  document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
-    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-    ['g','s','d','f','st','ld','nb','mt','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['g','s','d','f','st','ld','nb','mt','cr','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();
