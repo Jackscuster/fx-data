@@ -18,6 +18,19 @@ def cl(d):
 
 
 sig = json.load(open(R + 'signals.json'))
+fun = rd('dsr_funnel.csv')
+
+
+def fun_val(stage_or_col, default):
+    """Read the DSR headline from funnel.py rather than hardcoding it here."""
+    if fun.empty:
+        return default
+    if stage_or_col == 'emax':
+        return round(float(fun.emax.iloc[0]), 3) if 'emax' in fun else default
+    hit = fun[fun.stage == stage_or_col]
+    return int(hit['count'].iloc[0]) if len(hit) else default
+
+
 out = dict(
     signals=sig,
     sweep=cl(rd('strategy_sweep.csv')),
@@ -32,7 +45,8 @@ out = dict(
     meta=dict(built=pd.Timestamp.now().strftime('%Y-%m-%d %H:%M'),
               pairs=28, split='2016-01-01',
               variants=int(len(rd('logic_results.csv'))),
-              dsr_pass=0, emax=1.076))
+              dsr_pass=fun_val('survive DSR >= 0.95', 0),
+              emax=fun_val('emax', 1.076)))
 json.dump(out, open(R + 'app_data.json', 'w'), separators=(',', ':'))
 print({k: (len(v) if isinstance(v, list) else 'meta') for k, v in out.items()})
 print('%.0f KB' % (os.path.getsize(R + 'app_data.json') / 1024))
