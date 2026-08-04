@@ -12,20 +12,21 @@ DIRS = [os.path.join(ROOTOUT,'/scores'.lstrip('/')),
 OUT = os.path.join(ROOTOUT,''.lstrip('/'))
 
 
-def pool(d):
-    files = sorted(f for f in os.listdir(d) if f.endswith('.npz'))
-    Z = [np.load(os.path.join(d, f), allow_pickle=True) for f in files]
-    names = [str(x) for x in Z[0]['names']]
-    K = len(names)
+def nn(x):
+    """NaN -> None. json.dump would otherwise emit bare NaN, which JSON.parse rejects."""
+    x = float(x)
+    return None if np.isnan(x) else x
+
+
+def _target(Z, K, pfx):
+    """Pool one target across pairs. pfx: '' single-target dirs, 't' trend, 'c' chop."""
     res = {}
     for tag in ('i', 'o'):
         N = np.zeros((K, 5)); S = np.zeros((K, 5)); SS = np.zeros((K, 5))
         SPR = np.full((K, len(Z)), np.nan); CT = np.zeros(K)
         for i, z in enumerate(Z):
-            # sc5 stores two targets (qt*/qc*); older scorers store a single q*.
-            p = '' if ('q' + tag) in z.files else 't'
-            m = z['q' + p + tag].astype(float); c = z['n' + p + tag].astype(float)
-            w = z['v' + p + tag].astype(float)
+            m = z['q' + pfx + tag].astype(float); c = z['n' + pfx + tag].astype(float)
+            w = z['v' + pfx + tag].astype(float)
             ok = ~np.isnan(m).any(1) & ~np.isnan(w).any(1)
             c2 = np.where(ok[:, None], c, 0)
             m2 = np.nan_to_num(m); w2 = np.nan_to_num(w)
@@ -42,32 +43,75 @@ def pool(d):
         res[tag] = dict(M=M, spread=spread, t=spread / se, mono=mono,
                         agree=np.nanmean(np.sign(SPR) == np.sign(spread)[:, None], 1),
                         n=N.sum(1), ct=CT)
-    return names, res
+    return res
+
+
+def pool(d):
+    """-> names, trend, chop. chop is None for score dirs holding a single target.
+
+    sc5 writes two targets: qt*/nt*/vt* (forward efficiency) and qc*/nc*/vc*
+    (forward turn frequency). sc2-sc4 write plain q*/n*/v*, efficiency only.
+    """
+    files = sorted(f for f in os.listdir(d) if f.endswith('.npz'))
+    Z = [np.load(os.path.join(d, f), allow_pickle=True) for f in files]
+    names = [str(x) for x in Z[0]['names']]
+    K = len(names)
+    keys = set(Z[0].files)
+    trend = _target(Z, K, '' if 'qi' in keys else 't')
+    chop = _target(Z, K, 'c') if 'qci' in keys else None
+    return names, trend, chop
+
+
+def rd(x, p):
+    v = nn(x)
+    return None if v is None else round(v, p)
 
 
 rows = []
 for d, batch in zip(DIRS, ['own-price', 'cross-sectional', 'multi-timeframe', 'regime-v5']):
-    names, R = pool(d)
+    names, R, C = pool(d)
     for j, s in enumerate(names):
         i, o = R['i'], R['o']
         if i['ct'][j] < 20 or o['ct'][j] < 20:
             continue
         if np.isnan(i['t'][j]) or np.isnan(o['t'][j]):
             continue
-        rows.append(dict(
+        r = dict(
             s=s, f=s.rsplit('_', 1)[0], b=batch,
             ti=round(float(i['t'][j]), 2), to=round(float(o['t'][j]), 2),
             si=round(float(i['spread'][j]), 5), so=round(float(o['spread'][j]), 5),
             ai=round(float(i['agree'][j]), 3), ao=round(float(o['agree'][j]), 3),
             mi=round(float(i['mono'][j]), 3), mo=round(float(o['mono'][j]), 3),
             n=int(i['n'][j] + o['n'][j]),
-            qo=[round(float(v), 4) for v in o['M'][j]]))
+            qo=[round(float(v), 4) for v in o['M'][j]])
+        # chop target: present only where the scorer wrote qc*/nc*/vc*.
+        if C is None or C['o']['ct'][j] < 20:
+            r.update(cti=None, cto=None, cso=None, cao=None, bt=None)
+        else:
+            ci, co = C['i'], C['o']
+            r.update(cti=rd(ci['t'][j], 2), cto=rd(co['t'][j], 2),
+                     cso=rd(co['spread'][j], 5), cao=rd(co['agree'][j], 3))
+            # which target this signal reads more strongly OOS
+            r['bt'] = ('chop' if r['cto'] is not None and abs(r['cto']) > abs(r['to'])
+                       else 'trend')
+        rows.append(r)
 
 D = pd.DataFrame(rows).drop_duplicates(subset='s')
 D['dec'] = (D.to.abs() / D.ti.abs().clip(lower=.01)).round(3)
 D['held'] = np.sign(D.ti) == np.sign(D.to)
-recs = D.to_dict('records')
-json.dump(recs, open(os.path.join(OUT, 'signals.json'), 'w'), separators=(',', ':'))
+def clean(v):
+    """DataFrame round-trip turns None into NaN in float columns. json.dump would then
+    emit bare NaN, which the browser's JSON.parse rejects outright."""
+    if isinstance(v, float) and np.isnan(v):
+        return None
+    if isinstance(v, list):
+        return [clean(x) for x in v]
+    return v
+
+
+recs = [{k: clean(v) for k, v in r.items()} for r in D.to_dict('records')]
+json.dump(recs, open(os.path.join(OUT, 'signals.json'), 'w'), separators=(',', ':'),
+          allow_nan=False)
 print('signals %d  | own-price %d  cross-sectional %d'
       % (len(D), (D.b == 'own-price').sum(), (D.b == 'cross-sectional').sum()))
 print('json %.0f KB' % (os.path.getsize(os.path.join(OUT, 'signals.json')) / 1024))
