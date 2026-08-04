@@ -8,8 +8,11 @@ import os, json, numpy as np, pandas as pd
 DIRS = [os.path.join(ROOTOUT,'/scores'.lstrip('/')),
         os.path.join(ROOTOUT,'/scores3'.lstrip('/')),
         os.path.join(ROOTOUT,'scores4'),
-        os.path.join(ROOTOUT,'scores5')]
+        os.path.join(ROOTOUT,'scores5'),
+        os.path.join(ROOTOUT,'scores6')]
+LABELS = ['own-price', 'cross-sectional', 'multi-timeframe', 'regime-v5', 'trend-duration']
 OUT = os.path.join(ROOTOUT,''.lstrip('/'))
+NBLK = 6          # time-stability blocks; gate 7 wants the sign holding in >= 4
 
 
 def nn(x):
@@ -59,7 +62,23 @@ def pool(d):
     keys = set(Z[0].files)
     trend = _target(Z, K, '' if 'qi' in keys else 't')
     chop = _target(Z, K, 'c') if 'qci' in keys else None
-    return names, trend, chop
+    # gate 7 inputs: per-block spreads, averaged across pairs. Only sc6 writes these.
+    bs = {}
+    for tag in ('t', 'c'):
+        k = 'bs' + tag
+        if k in keys:
+            with np.errstate(invalid='ignore'):
+                bs[tag] = np.nanmean(np.stack([z[k] for z in Z]), axis=0)
+    return names, trend, chop, bs
+
+
+def stability(bs, spread):
+    """Blocks (of NBLK) whose spread sign matches the pooled OOS sign."""
+    if bs is None:
+        return None
+    s = np.sign(spread)[:, None]
+    with np.errstate(invalid='ignore'):
+        return np.nansum((np.sign(bs) == s) & np.isfinite(bs), axis=1)
 
 
 def rd(x, p):
@@ -68,8 +87,16 @@ def rd(x, p):
 
 
 rows = []
-for d, batch in zip(DIRS, ['own-price', 'cross-sectional', 'multi-timeframe', 'regime-v5']):
-    names, R, C = pool(d)
+for d, batch in zip(DIRS, LABELS):
+    nz = len([f for f in os.listdir(d) if f.endswith('.npz')]) if os.path.isdir(d) else 0
+    if nz < 28:
+        # a half-scored dir would pool a subset of pairs and quietly understate
+        # agreement, so it is skipped entirely rather than partially included
+        print('skip %s (%d/28 pairs scored)' % (os.path.basename(d), nz))
+        continue
+    names, R, C, BS = pool(d)
+    stb = stability(BS.get('t'), R['o']['spread'])
+    stc = stability(BS.get('c'), C['o']['spread']) if C is not None else None
     for j, s in enumerate(names):
         i, o = R['i'], R['o']
         if i['ct'][j] < 20 or o['ct'][j] < 20:
@@ -94,6 +121,10 @@ for d, batch in zip(DIRS, ['own-price', 'cross-sectional', 'multi-timeframe', 'r
             # which target this signal reads more strongly OOS
             r['bt'] = ('chop' if r['cto'] is not None and abs(r['cto']) > abs(r['to'])
                        else 'trend')
+        # gate 7: blocks (of NBLK) holding the OOS sign. None for batches scored
+        # before block spreads were stored.
+        r['tsb'] = int(stb[j]) if stb is not None else None
+        r['csb'] = int(stc[j]) if stc is not None else None
         rows.append(r)
 
 D = pd.DataFrame(rows).drop_duplicates(subset='s')
@@ -112,11 +143,36 @@ def clean(v):
 recs = [{k: clean(v) for k, v in r.items()} for r in D.to_dict('records')]
 json.dump(recs, open(os.path.join(OUT, 'signals.json'), 'w'), separators=(',', ':'),
           allow_nan=False)
-print('signals %d  | own-price %d  cross-sectional %d'
-      % (len(D), (D.b == 'own-price').sum(), (D.b == 'cross-sectional').sum()))
+print('signals %d' % len(D))
+for lab in LABELS:
+    k = int((D.b == lab).sum())
+    if k:
+        print('  %-16s %6d' % (lab, k))
 print('json %.0f KB' % (os.path.getsize(os.path.join(OUT, 'signals.json')) / 1024))
-g = D[(D.to.abs() >= 8) & (D.si.abs() >= .02) & (D.ao >= .85) & (D.mo.abs() >= .95)
-      & (D.dec >= .6) & D.held]
-print('passing strict gates (no time-stability yet): %d' % len(g))
-print(g.sort_values('to', key=abs, ascending=False).head(12)[
-    ['s', 'ti', 'to', 'si', 'ao', 'mo', 'dec']].to_string(index=False))
+
+# ---- the gauntlet: sequential elimination, thresholds unchanged ----
+# Gate 6 is a FLOOR only. NEXT_BATCH.md is explicit that no ceiling is added, so a
+# signal that is stronger OOS than IS passes here and is caught by gate 7 instead.
+GATES = [('sign holds OOS',    lambda x: x.held),
+         ('|t| OOS >= 8',      lambda x: x.to.abs() >= 8),
+         ('effect >= 0.020',   lambda x: x.si.abs() >= .02),
+         ('agree >= 0.85',     lambda x: x.ao >= .85),
+         ('monotonic >= 0.95', lambda x: x.mo.abs() >= .95),
+         ('decay >= 0.60',     lambda x: x.dec >= .6)]
+cur = D
+print('\nGAUNTLET')
+print('%-22s %8s %8s' % ('gate', 'passing', 'killed'))
+for nm, f in GATES:
+    before = len(cur)
+    cur = cur[f(cur)]
+    print('%-22s %8d %8d' % (nm, len(cur), before - len(cur)))
+g6 = cur
+# gate 7 only applies where block spreads exist
+has = g6[g6.tsb.notna()]
+g7 = g6[g6.tsb.isna() | (g6.tsb >= 4)]
+print('%-22s %8d %8d   (%d of %d scorable)'
+      % ('stable >= 4 of 6', len(g7), len(g6) - len(g7),
+         int((has.tsb >= 4).sum()), len(has)))
+print('\nsurvivors: %d  (%d with block stability measured)' % (len(g7), len(has)))
+cols = ['s', 'b', 'ti', 'to', 'si', 'ao', 'mo', 'dec', 'tsb', 'bt']
+print(g7.sort_values('to', key=abs, ascending=False).head(25)[cols].to_string(index=False))
