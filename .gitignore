@@ -1,0 +1,9 @@
+# HMM parameters fitted by framework.py and reused by ladder.py. Regenerated on
+# demand and IS-only by construction, so it is a cache, not an input. Keeping it
+# out of the repo also stops a binary blob under code/ from tripping the
+# 'push to code/**' trigger in .github/workflows/update.yml.
+code/hmmcache.pkl
+
+__pycache__/
+*.pyc
+.DS_Store
