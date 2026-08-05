@@ -136,14 +136,16 @@ for d, batch in zip(DIRS, LABELS):
             qo=[rd(v, 4) for v in o['M'][j]])
         # chop target: present only where the scorer wrote qc*/nc*/vc*.
         if C is None or C['o']['ct'][j] < 20:
-            r.update(cti=None, cto=None, cso=None, cao=None, bt=None)
+            r.update(cti=None, cto=None, cso=None, cao=None, stronger_target=None)
         else:
             ci, co = C['i'], C['o']
             r.update(cti=rd(ci['t'][j], 2), cto=rd(co['t'][j], 2),
                      cso=rd(co['spread'][j], 5), cao=rd(co['agree'][j], 3))
-            # which target this signal reads more strongly OOS
-            r['bt'] = ('chop' if r['cto'] is not None and abs(r['cto']) > abs(r['to'])
-                       else 'trend')
+            # WHICH TARGET scores higher -- NOT the trend/chop split. A large
+            # negative efficiency t is a chop detector however it reads here. The
+            # real split is the SIGN of the efficiency spread (to).
+            r['stronger_target'] = ('chop' if r['cto'] is not None
+                                    and abs(r['cto']) > abs(r['to']) else 'trend')
         # gate 7: blocks (of NBLK) holding the OOS sign. None for batches scored
         # before block spreads were stored.
         r['tsb'] = int(stb[j]) if stb is not None else None
@@ -222,16 +224,21 @@ print('%-22s %8d %8d   (%d of %d scorable)'
       % ('stable >= 4 of 6', len(g7), len(g6) - len(g7),
          int((has.tsb >= 4).sum()), len(has)))
 print('\nsurvivors: %d  (%d with block stability measured)' % (len(g7), len(has)))
-cols = ['s', 'b', 'ti', 'to', 'si', 'ao', 'mo', 'dec', 'tsb', 'bt']
+cols = ['s', 'b', 'ti', 'to', 'si', 'ao', 'mo', 'dec', 'tsb', 'stronger_target']
 print(g7.sort_values('to', key=abs, ascending=False).head(25)[cols].to_string(index=False))
 if len(g7):
     print('\nsurvivors by batch:')
     print(g7.groupby('b').size().to_string())
     print('\nsurvivors by family:')
     print(g7.groupby(['b', 'f']).size().sort_values(ascending=False).head(20).to_string())
-    if 'bt' in g7:
-        print('\nsurvivors by target read:')
-        print(g7.bt.fillna('single-target').value_counts().to_string())
+    print('\nsurvivors by DIRECTION (sign of efficiency spread -- the real split):')
+    print(np.where(g7.to > 0, 'trend', 'chop').tolist().count('trend').__str__().rjust(6)
+          + '  trend')
+    print(np.where(g7.to > 0, 'trend', 'chop').tolist().count('chop').__str__().rjust(6)
+          + '  chop')
+    if 'stronger_target' in g7:
+        print('\nsurvivors by stronger target (diagnostic, NOT the split):')
+        print(g7.stronger_target.fillna('single-target').value_counts().to_string())
 
 # ---- OOS sign retention by family: what to stop building next time ----
 # This is how interactions (49.1%) and deltas (42%) were killed on evidence.
