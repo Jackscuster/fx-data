@@ -252,8 +252,19 @@ window.renderApp=function(BUNDLE,root){
     text-anchor="end" font-family="var(--mono)">${g}</text>
     <text x="${x(g)}" y="${H-P+16}" fill="var(--dim)" font-size="10" text-anchor="middle"
     font-family="var(--mono)">${g}</text>`;}
-   D.forEach(d=>{const c=!d.held?'var(--kill)':(d.ti>0?'var(--trend)':'var(--chop)');
+   // One <circle> per signal was fine at 20k. At 123k it builds a multi-megabyte
+   // SVG string and locks the browser, so plot every Nth point plus every signal
+   // strong enough to be worth seeing individually. The cloud looks the same;
+   // nothing above |t|=8 is ever dropped.
+   const CAP=12000, step=Math.max(1,Math.ceil(D.length/CAP));
+   let plotted=0;
+   D.forEach((d,i)=>{
+    if(i%step&&Math.abs(d.to)<8) return;
+    plotted++;
+    const c=!d.held?'var(--kill)':(d.ti>0?'var(--trend)':'var(--chop)');
     s+=`<circle cx="${x(d.ti)}" cy="${y(d.to)}" r="2.4" fill="${c}" opacity=".5"/>`;});
+   s+=txt(W-16,26,plotted.toLocaleString()+' of '+D.length.toLocaleString()+' plotted',
+    {a:'end',s:10,c:'var(--dim)'});
    s+=`<text x="${W/2}" y="${H-8}" fill="var(--mute)" font-size="11" text-anchor="middle">
     |t| in-sample 1999-2015</text>
     <text x="14" y="${H/2}" fill="var(--mute)" font-size="11" text-anchor="middle"
