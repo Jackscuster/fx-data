@@ -96,8 +96,32 @@ def d_hmm(lp, r, hp):
     return s
 
 
+_SURV = {}
+
+
+def d_surv(lp, r, hp=None):
+    """The 32 independent survivors, combined and cut at their IS median.
+
+    Every other detector here predates the entire signal search. This one IS the
+    signal search: survivors.py sign-aligns the 32 so high = expect straight
+    travel, and the cut point is the in-sample median applied unchanged to OOS.
+    Causal by construction -- every input is lagged before it enters the composite.
+    """
+    global _SURV
+    if not _SURV:
+        import survivors
+        _SURV['c'] = survivors.build()
+    c = _SURV['c'][lp.name].reindex(lp.index)
+    ins = lp.index < SPLIT
+    if c[ins].notna().sum() < 100:
+        return pd.Series(np.nan, index=lp.index, dtype=object)
+    q = np.nanmedian(c[ins].dropna())
+    return pd.Series(np.where(c > q, 'A', 'B'), index=lp.index).where(c.notna())
+
+
 DETS = [('trend_sma200', d_trend), ('vol_regime', d_vol),
-        ('markov_naive', d_naive), ('hmm_2state', d_hmm)]
+        ('markov_naive', d_naive), ('hmm_2state', d_hmm),
+        ('survivors32', d_surv)]
 
 
 # ---------- strategies ----------
