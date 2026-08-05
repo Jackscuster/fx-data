@@ -155,6 +155,16 @@ D = _D0.drop_duplicates(subset='s')
 del _D0
 D['dec'] = (D.to.abs() / D.ti.abs().clip(lower=.01)).round(3)
 D['held'] = np.sign(D.ti) == np.sign(D.to)
+
+# stability.py backfills gate 7 for v2-v5, which were scored before block spreads
+# were stored. Merge it so gate 7 covers every batch rather than v6 alone.
+_sf = os.path.join(OUT, 'stability.csv')
+if os.path.exists(_sf):
+    _S = pd.read_csv(_sf).set_index('s').tsb
+    _fill = D.s.map(_S)
+    D['tsb'] = D.tsb.where(D.tsb.notna(), _fill)
+    print('gate 7 backfilled from stability.csv for %d signals'
+          % int(_fill.notna().sum()))
 def clean(v):
     """DataFrame round-trip turns None into NaN in float columns. json.dump would then
     emit bare NaN, which the browser's JSON.parse rejects outright."""
