@@ -116,21 +116,24 @@ for d, batch in zip(DIRS, LABELS):
     stc = stability(BS.get('c'), C['o']['spread']) if C is not None else None
     for j, s in enumerate(names):
         i, o = R['i'], R['o']
-        if i['ct'][j] < 20 or o['ct'][j] < 20:
-            continue
-        if np.isnan(i['t'][j]) or np.isnan(o['t'][j]):
-            continue
+        # A failure is a result. Nothing is dropped for scoring badly -- that is how
+        # interactions (49% retention) and deltas (42%) were killed on evidence, and
+        # those findings only exist because the losers were kept. Records that cannot
+        # be scored at all (too few pairs with data, or an undefined t) are MARKED
+        # ok=False and carried, never filtered out.
+        ok = not (i['ct'][j] < 20 or o['ct'][j] < 20
+                  or np.isnan(i['t'][j]) or np.isnan(o['t'][j]))
         # f is the Families tab's grouping key. rsplit('_',1) is right for v2-v5
         # but on a v6 name like za_ts_sg2_v20_pl it strips one token and leaves
         # ~29,000 groups, which the tab cannot render. v6 uses the coarse family.
         r = dict(
-            s=s, f=famof(s, batch), b=batch,
-            ti=round(float(i['t'][j]), 2), to=round(float(o['t'][j]), 2),
-            si=round(float(i['spread'][j]), 5), so=round(float(o['spread'][j]), 5),
-            ai=round(float(i['agree'][j]), 3), ao=round(float(o['agree'][j]), 3),
-            mi=round(float(i['mono'][j]), 3), mo=round(float(o['mono'][j]), 3),
-            n=int(i['n'][j] + o['n'][j]),
-            qo=[round(float(v), 4) for v in o['M'][j]])
+            s=s, f=famof(s, batch), b=batch, ok=bool(ok),
+            ti=rd(i['t'][j], 2), to=rd(o['t'][j], 2),
+            si=rd(i['spread'][j], 5), so=rd(o['spread'][j], 5),
+            ai=rd(i['agree'][j], 3), ao=rd(o['agree'][j], 3),
+            mi=rd(i['mono'][j], 3), mo=rd(o['mono'][j], 3),
+            n=int(np.nan_to_num(i['n'][j] + o['n'][j])),
+            qo=[rd(v, 4) for v in o['M'][j]])
         # chop target: present only where the scorer wrote qc*/nc*/vc*.
         if C is None or C['o']['ct'][j] < 20:
             r.update(cti=None, cto=None, cso=None, cao=None, bt=None)
@@ -150,8 +153,12 @@ for d, batch in zip(DIRS, LABELS):
 _D0 = pd.DataFrame(rows)
 _dup = _D0.s.duplicated()
 if _dup.any():
-    print('WARNING: %d duplicate signal names across batches, deduped:' % int(_dup.sum()))
-    print(_D0[_D0.s.isin(_D0.s[_dup])].groupby(['s', 'b']).size().head(20).to_string())
+    # These are the same signal emitted by two modules, not two different signals
+    # sharing a name: the sig2 and sig3 quintile arrays for maxdd_*/z_maxdd_* are
+    # byte-identical. Collapsing them loses no scores. Re-verify before assuming
+    # that stays true of any NEW collision.
+    print('%d duplicate names across batches (identical scores, collapsed): %s'
+          % (int(_dup.sum()), ', '.join(sorted(set(_D0.s[_dup]))[:6]) + ' ...'))
 else:
     print('duplicate names across all batches: 0')
 D = _D0.drop_duplicates(subset='s')
@@ -191,14 +198,17 @@ print('json %.0f KB' % (os.path.getsize(os.path.join(OUT, 'signals.json')) / 102
 # ---- the gauntlet: sequential elimination, thresholds unchanged ----
 # Gate 6 is a FLOOR only. NEXT_BATCH.md is explicit that no ceiling is added, so a
 # signal that is stronger OOS than IS passes here and is caught by gate 7 instead.
+SCOR = D[D.ok]
+print('records %d | scorable %d | unscorable %d (kept, marked ok=False)'
+      % (len(D), len(SCOR), len(D) - len(SCOR)))
 GATES = [('sign holds OOS',    lambda x: x.held),
          ('|t| OOS >= 8',      lambda x: x.to.abs() >= 8),
          ('effect >= 0.020',   lambda x: x.si.abs() >= .02),
          ('agree >= 0.85',     lambda x: x.ao >= .85),
          ('monotonic >= 0.95', lambda x: x.mo.abs() >= .95),
          ('decay >= 0.60',     lambda x: x.dec >= .6)]
-cur = D
-print('\nGAUNTLET')
+cur = SCOR
+print('\nGAUNTLET (on the %d scorable records)' % len(SCOR))
 print('%-22s %8s %8s' % ('gate', 'passing', 'killed'))
 for nm, f in GATES:
     before = len(cur)
@@ -225,7 +235,7 @@ if len(g7):
 
 # ---- OOS sign retention by family: what to stop building next time ----
 # This is how interactions (49.1%) and deltas (42%) were killed on evidence.
-F = (D.groupby(['b', 'f'])
+F = (SCOR.groupby(['b', 'f'])
      .agg(n=('held', 'size'), retention=('held', 'mean'),
           best_to=('to', lambda x: x.abs().max()),
           med_to=('to', lambda x: x.abs().median()))
@@ -238,4 +248,4 @@ print(F.head(15).to_string(index=False, float_format=lambda x: '%.3f' % x))
 print('bottom 15 — these are the ones to stop building')
 print(F.tail(15).to_string(index=False, float_format=lambda x: '%.3f' % x))
 print('\nbatch-level retention:')
-print(D.groupby('b').held.agg(['size', 'mean']).to_string(float_format=lambda x: '%.3f' % x))
+print(SCOR.groupby('b').held.agg(['size', 'mean']).to_string(float_format=lambda x: '%.3f' % x))
