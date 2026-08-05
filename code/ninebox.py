@@ -2,7 +2,19 @@ import os,sys
 _R=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOTDATA=os.path.join(_R,'data'); ROOTOUT=os.path.join(_R,'results')
 os.makedirs(ROOTOUT,exist_ok=True); sys.path.insert(0,os.path.join(_R,'code'))
-"""9-box regime classification: direction (3) x volatility (3).
+"""9-box regime classification: direction (3) x SECOND AXIS (3).
+
+TWO VERSIONS ARE PRODUCED.
+
+  vol   the original: 60d realised vol as a percentile of its own trailing 500d.
+  surv  the second axis replaced by the 32 independent survivors, combined into
+        one sign-aligned composite by survivors.py. High = expect straight travel.
+
+The survivor axis is NOT a volatility axis and is not a direction axis either:
+the efficiency ratio is |net|/path and carries no sign, so the survivors can say
+trending-or-choppy but never up-or-down. Direction still comes from the 60d slope
+t-stat in both versions. Labels change accordingly -- low/med/high becomes
+chop/mid/trend.
 
     Trending DOWN | Not Trending | Trending UP
     x  High / Medium / Low volatility
@@ -25,6 +37,7 @@ MAJ = {'EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY'}
 cost = lambda p: 1.5e-4 if p in MAJ else 3.0e-4
 DIRS = ['down', 'flat', 'up']
 VOLS = ['low', 'med', 'high']
+SURV = ['chop', 'mid', 'trend']
 
 
 def slope_t(lp, n=60):
@@ -74,21 +87,24 @@ def metrics(ret, pos, tot_bars):
                 data_pct=len(ret) / tot_bars)
 
 
-def run():
+def run(axis='vol', COMP=None):
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
+    LAB = VOLS if axis == 'vol' else SURV
     acc = {}
     counts = {}
     for p in px.columns:
         lp = np.log(px[p].astype(float)); r = lp.diff(); c = cost(p)
-        st_ = slope_t(lp); vp = volpct(r)
+        st_ = slope_t(lp)
+        vp = volpct(r) if axis == 'vol' else (
+            COMP[p].reindex(lp.index) if COMP is not None else pd.Series(np.nan, index=lp.index))
         ins = lp.index < SPLIT; oos = ~ins
         # cut points from IS only
         dq = np.nanquantile(st_[ins].dropna(), [1 / 3, 2 / 3])
-        vq = np.nanquantile(vp[ins].dropna(), [1 / 3, 2 / 3])
+        vq = np.nanquantile(vp[ins].dropna(), [1 / 3, 2 / 3]) if vp.notna().any() else [0, 0]
         dl = pd.Series(np.where(st_ < dq[0], 'down',
                        np.where(st_ > dq[1], 'up', 'flat')), index=lp.index).where(st_.notna())
-        vl = pd.Series(np.where(vp < vq[0], 'low',
-                       np.where(vp > vq[1], 'high', 'med')), index=lp.index).where(vp.notna())
+        vl = pd.Series(np.where(vp < vq[0], LAB[0],
+                       np.where(vp > vq[1], LAB[2], LAB[1])), index=lp.index).where(vp.notna())
         dl = dl.shift(1); vl = vl.shift(1)          # BACKWARD-LOOKING
         sleeves = dict(mean_reversion=mr(lp).shift(1).fillna(0.),
                        momentum=mo(lp).shift(1).fillna(0.))
@@ -97,7 +113,7 @@ def run():
             net = pos * r - pos.diff().abs().fillna(0) * c
             acc.setdefault((sn, 'BASELINE'), []).append((net[oos], pos[oos], nbars))
             for d in DIRS:
-                for v in VOLS:
+                for v in LAB:
                     m = oos & (dl == d).values & (vl == v).values
                     if m.sum() < 150:
                         continue
@@ -120,11 +136,51 @@ def run():
                             imp_retdd=x.retdd / b.retdd - 1, imp_pf=x.pf / b.pf - 1,
                             imp_win=x.win / b.win - 1, imp_avg=x.avg / b.avg - 1))
     T = pd.DataFrame(out)
-    T.to_csv(os.path.join(ROOTOUT,'/ninebox.csv'.lstrip('/')), index=False)
+    fn = 'ninebox.csv' if axis == 'vol' else 'ninebox_surv.csv'
+    T.to_csv(os.path.join(ROOTOUT, fn), index=False)
     return T, counts
 
 
+def compare(A, ca, B, cb):
+    """Did populations and Sharpe move when the second axis changed?"""
+    ta, tb = sum(ca.values()), sum(cb.values())
+    print('\n' + '=' * 92)
+    print('WHAT CHANGED: original volatility axis  vs  32-survivor composite axis')
+    print('=' * 92)
+    print('\nBOX POPULATION (share of OOS bars)')
+    print('%-22s %8s      %-22s %8s' % ('vol axis cell', 'share', 'survivor axis cell', 'share'))
+    for i in range(3):
+        for d in DIRS:
+            va, vb = VOLS[2 - i], SURV[2 - i]
+            na = ca.get((va, d), 0); nb = cb.get((vb, d), 0)
+            print('%-22s %7.1f%%      %-22s %7.1f%%'
+                  % ('%s|%s' % (va, d), 100 * na / ta, '%s|%s' % (vb, d), 100 * nb / tb))
+    print('\nMEAN-REVERSION SHARPE BY BOX')
+    print('%-22s %8s      %-22s %8s   %s' % ('vol axis', 'sharpe', 'survivor axis', 'sharpe', 'delta'))
+    for i in range(3):
+        for d in DIRS:
+            va, vb = VOLS[2 - i], SURV[2 - i]
+            ra = A[(A.sleeve == 'mean_reversion') & (A.cell == '%s|%s' % (va, d))]
+            rb = B[(B.sleeve == 'mean_reversion') & (B.cell == '%s|%s' % (vb, d))]
+            sa = float(ra.sharpe.iloc[0]) if len(ra) else np.nan
+            sb = float(rb.sharpe.iloc[0]) if len(rb) else np.nan
+            print('%-22s %8.3f      %-22s %8.3f   %+.3f'
+                  % ('%s|%s' % (va, d), sa, '%s|%s' % (vb, d), sb, sb - sa))
+    ba = A[(A.sleeve == 'mean_reversion') & (A.cell == 'BASELINE')].sharpe.iloc[0]
+    ca_ = A[(A.sleeve == 'mean_reversion') & (A.cell != 'BASELINE')]
+    cb_ = B[(B.sleeve == 'mean_reversion') & (B.cell != 'BASELINE')]
+    print('\nbaseline Sharpe %.3f' % ba)
+    print('boxes beating baseline -- vol axis %d of %d, survivor axis %d of %d'
+          % ((ca_.sharpe > ba).sum(), len(ca_), (cb_.sharpe > ba).sum(), len(cb_)))
+    print('best box -- vol axis %s %.3f, survivor axis %s %.3f'
+          % (ca_.loc[ca_.sharpe.idxmax(), 'cell'], ca_.sharpe.max(),
+             cb_.loc[cb_.sharpe.idxmax(), 'cell'], cb_.sharpe.max()))
+    print('spread across boxes -- vol axis %.3f, survivor axis %.3f'
+          % (ca_.sharpe.max() - ca_.sharpe.min(), cb_.sharpe.max() - cb_.sharpe.min()))
+
+
 if __name__ == '__main__':
+    import survivors
     T, counts = run()
     pd.set_option('display.width', 240, 'display.max_columns', 25)
     f = lambda v: '%.3f' % v
@@ -134,6 +190,15 @@ if __name__ == '__main__':
     for (v, d), n in counts.items():
         grid.loc[v, d] = '%.1f%%' % (100 * n / tot)
     print(grid.fillna('-').to_string())
+
+    COMP = None
+    try:
+        COMP = survivors.build()
+    except Exception as e:
+        print('survivor composite unavailable (%s)' % e)
+    if COMP is not None:
+        T2, counts2 = run('surv', COMP)
+        compare(T, counts, T2, counts2)
 
     for sn in T.sleeve.unique():
         d = T[T.sleeve == sn].copy()

@@ -4,6 +4,7 @@
 const $=s=>document.querySelector(s);
 const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="true" data-t="g">Gauntlet</button>
+<button role="tab" aria-selected="false" data-t="iv">Survivors</button>
 <button role="tab" aria-selected="false" data-t="s">All signals</button>
 <button role="tab" aria-selected="false" data-t="d">Decay</button>
 <button role="tab" aria-selected="false" data-t="f">Families</button>
@@ -25,7 +26,8 @@ const BODY=`<div class="grid">
 </div>
 <div>
 <div class="panel"><h3>Survivors</h3>
-<div class="big" id="surv">0 <span>of 2030</span></div></div>
+<div class="big" id="surv">0 <span>of 0</span></div>
+<div class="note" id="counts" style="margin-top:6px;font-size:12px"></div></div>
 <div class="tools" style="margin-top:18px">
 <button class="chip" id="exp">Export CSV</button><span class="count" id="scnt"></span></div>
 <div class="tw"><table id="gt"><thead><tr>
@@ -38,6 +40,25 @@ below the raw number clearing gates 1-6. <b>Still not gated:</b> window robustne
 neighbouring lookbacks, turnover, detection lag and coverage. Everything shown here is
 measured, nothing is assumed.</div>
 </div></div></section>
+
+<section id="iv" hidden>
+<div class="note"><b>The output of this phase.</b> Every signal that clears all eight
+gates and is not a near-duplicate of a stronger one. Gate 8 is greedy decorrelation:
+strongest first, absorb everything correlated above 0.70, repeat — so each row here is
+a distinct effect, and <b>Absorbs</b> says how many others collapsed into it.
+<br><br><b>Trend or chop is the SIGN of the efficiency spread</b>, not which target
+scores higher. A large negative spread is a chop detector however it reads elsewhere.</div>
+<div class="tools"><span class="count" id="ivcnt"></span>
+<button class="chip" id="ivT" aria-pressed="false">Trend only</button>
+<button class="chip" id="ivC" aria-pressed="false">Chop only</button></div>
+<div class="tw"><table id="ivt"><thead><tr>
+<th data-k="s">Signal</th><th data-k="dirn">Dir</th><th data-k="f">Mechanism</th>
+<th data-k="b">Batch</th><th data-k="to">t OOS</th><th data-k="ti">t IS</th>
+<th data-k="si">Effect IS</th><th data-k="so">Effect OOS</th><th data-k="ao">Agree</th>
+<th data-k="mo">Mono</th><th data-k="dec">Decay</th><th data-k="tsb">Blocks</th>
+<th data-k="nclust">Absorbs</th><th data-k="n">Obs</th>
+</tr></thead><tbody></tbody></table></div>
+<div class="note" id="ivtx" style="margin-top:10px"></div></section>
 
 <section id="s" hidden>
 <div class="tools"><input type="search" id="q" placeholder="filter" aria-label="Filter">
@@ -98,6 +119,10 @@ reproduced from truncated data.</div>
 <div class="note"><b>Direction × volatility, 3×3.</b> Cut points are terciles learned on
 1999-2015 only and applied unchanged to 2016-2026. Both inputs lagged one bar. Colour is
 OOS Sharpe: amber positive, red negative, against the unfiltered baseline shown below each grid.</div>
+<div class="tools" style="margin-bottom:10px">
+<button class="chip" id="nbA" aria-pressed="true">Volatility axis (original)</button>
+<button class="chip" id="nbB" aria-pressed="false">32-survivor axis</button>
+<span class="count" id="nbwhich"></span></div>
 <div id="nbgrid"></div>
 <h3>Routing — which sleeve wins each box</h3>
 <div class="tw"><table id="nbt"><thead><tr><th>Box</th><th>Mean reversion</th><th>Momentum</th>
@@ -116,7 +141,16 @@ mapped down.</div>
 <div class="tw" style="margin-top:16px"><table id="mtt"><thead><tr>
 <th>Cell</th><th>Data %</th><th>Sharpe</th><th>Ret/DD</th><th>PF</th><th>Trades</th>
 <th>Win%</th><th>$AvgTrade</th><th>Exposure</th></tr></thead><tbody></tbody></table></div>
-<div class="note" id="mttx"></div></section>
+<div class="note" id="mttx"></div>
+<h3>Confluence on the survivor read, not on direction</h3>
+<div class="note">The original confluence asks whether D/W/M agree on <b>up vs down</b>.
+The 32 survivors cannot answer that — the efficiency ratio is unsigned — so this asks
+whether they agree on <b>trending vs choppy</b>. Cut points are IS-only terciles on each
+timeframe's own clock, shifted on that clock before being mapped down.</div>
+<div class="note" id="mtsagree" style="margin-top:8px"></div>
+<div class="tw" style="margin-top:10px"><table id="mts"><thead><tr>
+<th>Cell</th><th>Data %</th><th>Sharpe</th><th>PF</th><th>Trades</th><th>Win%</th>
+<th>$AvgTrade</th><th>Exposure</th></tr></thead><tbody></tbody></table></div></section>
 
 <section id="cr" hidden>
 <div class="note"><b>The only real accuracy numbers in the project.</b> Every other score here
@@ -175,10 +209,13 @@ function boot(BUNDLE,root){
   let D=DALL.filter(d=>d.ok!==false&&d.to!=null);
   root.innerHTML=NAV+'<section id="g">'+BODY;
   const MT=BUN.meta||{};
-  const nUn=DALL.length-D.length;
-  $('#sub').textContent=D.length.toLocaleString()+' signals'
-   +(nUn?' \u00b7 '+nUn.toLocaleString()+' unscorable held back':'')
-   +' \u00b7 '+(MT.pairs||28)+' pairs \u00b7 IS 1999-2015 \u00b7 OOS 2016-2026'
+  // TWO numbers, always both, never one ambiguous figure: everything built, and
+  // the subset that could produce quintile statistics. The gap is signals with too
+  // few pairs of data or an undefined t -- kept in the feed, marked ok:false.
+  const nBuilt=MT.n_built||DALL.length, nScor=MT.n_scorable||D.length;
+  $('#sub').textContent=nBuilt.toLocaleString()+' signals built \u00b7 '
+   +nScor.toLocaleString()+' scorable \u00b7 '+(nBuilt-nScor).toLocaleString()
+   +' unscorable \u00b7 '+(MT.pairs||28)+' pairs \u00b7 IS 1999-2015 \u00b7 OOS 2016-2026'
    +(MT.built?' \u00b7 rebuilt '+MT.built:'');
   const GATES=[
    {k:'to', n:'|t| OOS',      min:0,   max:25, step:.5, v:8,   f:d=>Math.abs(d.to)},
@@ -222,7 +259,13 @@ function boot(BUNDLE,root){
   function drawG(){
    GATES.forEach((g,i)=>$('#v'+i).textContent=fmt(g,+$('#r'+i).value));
    const S=survivors();funnel();
-   $('#surv').innerHTML=S.length+' <span>of '+D.length+'</span>';
+   $('#surv').innerHTML=S.length+' <span>of '+D.length.toLocaleString()+' scorable</span>';
+   if($('#counts'))$('#counts').innerHTML=
+     (MT.n_built||DALL.length).toLocaleString()+' built \u00b7 '
+     +D.length.toLocaleString()+' scorable \u00b7 '
+     +((MT.n_built||DALL.length)-D.length).toLocaleString()+' could not be scored'
+     +'<br><span style="opacity:.7">Gates run on the scorable set. Unscorable rows are '
+     +'kept in the feed, never deleted \u2014 a failure is a result.</span>';
    $('#scnt').textContent=S.length+' shown';
    S.sort((a,b)=>{const x=a[gs],y=b[gs];
     return (typeof x==='string'?x.localeCompare(y):Math.abs(x)-Math.abs(y))*gd;});
@@ -373,8 +416,16 @@ function boot(BUNDLE,root){
      ${f(d.imp_retexp)}${f(d.imp_retdd)}${f(d.imp_pf)}${f(d.imp_win)}${f(d.imp_avg)}</tr>`;}).join('');
   
    // ---- 9-box heatmaps ----
-   (function(){const N=B.ninebox;if(!N||!N.length)return;
-    const DIR=['down','flat','up'],VOL=['high','med','low'];
+   (function(){
+    // Two second axes: the original volatility percentile, and the 32 independent
+    // survivors combined into one sign-aligned composite. Direction comes from the
+    // 60d slope t-stat in both -- the survivors carry no direction, the efficiency
+    // ratio being unsigned.
+    let NBSRC='vol';
+    function nbdata(){return NBSRC==='vol'?B.ninebox:(B.ninebox_surv||[]);}
+    function nbrows(){return NBSRC==='vol'?['high','med','low']:['trend','mid','chop'];}
+    function drawNB(){const N=nbdata();if(!N||!N.length)return;
+    const DIR=['down','flat','up'],VOL=nbrows();
     const cells=N.filter(d=>d.cell!=='BASELINE');
     const mx=Math.max(...cells.map(d=>Math.abs(d.sharpe)))||1;
     let html='';
@@ -398,6 +449,9 @@ function boot(BUNDLE,root){
        +'  \u00b7  colour scaled to \u00b1'+mx.toFixed(2),{s:10,m:1});
      html+=svg(W,H,g);});
     $('#nbgrid').innerHTML=html;
+    if($('#nbwhich'))$('#nbwhich').textContent=NBSRC==='vol'
+      ?'60d realised vol as a percentile of its own trailing 500d'
+      :'32 survivors, sign-aligned so high = expect straight travel';
     // routing table
     const keys=[...new Set(cells.map(d=>d.cell))];
     const rows=keys.map(k=>{const a=cells.find(d=>d.cell===k&&d.sleeve==='mean_reversion');
@@ -415,9 +469,30 @@ function boot(BUNDLE,root){
     const nwin=rows.filter(r=>Math.max(r.sa,r.sb)>0).length;
     $('#nbtx').innerHTML=`<b>${nwin} of ${rows.length} boxes</b> have a positive sleeve.
     Where both are negative the box routes to <b>cash</b> \u2014 "winner" there only means
-    losing less, which is not a reason to allocate.`;})();
+    losing less, which is not a reason to allocate.`;}
+    drawNB();
+    if($('#nbA'))$('#nbA').onclick=e=>{NBSRC='vol';
+      e.target.setAttribute('aria-pressed',true);$('#nbB').setAttribute('aria-pressed',false);drawNB();};
+    if($('#nbB'))$('#nbB').onclick=e=>{NBSRC='surv';
+      e.target.setAttribute('aria-pressed',true);$('#nbA').setAttribute('aria-pressed',false);drawNB();};
+   })();
   
   
+   // ---- multi-timeframe: survivor-read confluence ----
+   (function(){const M=B.mtf_surv,A=B.mtfagree_surv;if(!M||!M.length)return;
+    const base=M.find(d=>d.cell==='BASELINE');
+    $('#mts tbody').innerHTML=M.slice().sort((a,b)=>b.sharpe-a.sharpe).map(d=>{
+     const c=d.sharpe>0?'var(--trend)':'var(--kill)';
+     return `<tr><td>${d.cell}</td><td>${(d.data_pct*100).toFixed(1)}%</td>
+     <td style="color:${c}">${d.sharpe.toFixed(3)}</td><td>${d.pf.toFixed(3)}</td>
+     <td>${d.trades}</td><td>${(d.win*100).toFixed(1)}%</td>
+     <td>${d.avg.toFixed(0)}</td><td>${(d.expo*100).toFixed(1)}%</td></tr>`;}).join('');
+    if(A&&A.length)$('#mtsagree').innerHTML='Regime agreement vs 33% chance: '
+      +A.map(d=>`<b>${d.tfs}</b> ${(d.regime_agree*100).toFixed(1)}%`).join(' \u00b7 ')
+      +`. Far higher than the direction agreement above \u2014 the trend/chop read is much `
+      +`more consistent across timeframes than direction is, which is why "all 3 aligned" `
+      +`covers most bars here and carries less information than "2 of 3".`;})();
+
    // ---- multi-timeframe ----
    (function(){const A=B.mtfagree,M=B.mtf;if(!A||!A.length)return;
     const W=660,H=170,P=76,CH=1/3;
@@ -507,6 +582,50 @@ function boot(BUNDLE,root){
     Complexity did not buy anything here.`;})();
   }
   
+  // ---- survivors tab: the 32 independents ----
+  (function(){const IV=(BUN.independents||[]).slice();if(!IV.length)return;
+   IV.forEach(d=>{d.dirn=d.to>0?'trend':'chop';});
+   let ks='to',kd=-1,fT=0,fC=0;
+   function draw(){
+    let v=IV.filter(d=>(!fT||d.dirn==='trend')&&(!fC||d.dirn==='chop'));
+    v.sort((a,b)=>{const x=a[ks],y=b[ks];
+     if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
+     return (typeof x==='string'?x.localeCompare(y):Math.abs(x)-Math.abs(y))*kd;});
+    $('#ivcnt').textContent=v.length+' of '+IV.length+' independent'
+      +' \u00b7 '+IV.filter(d=>d.dirn==='trend').length+' trend, '
+      +IV.filter(d=>d.dirn==='chop').length+' chop';
+    const nf=(x,p)=>x==null?'\u2014':x.toFixed(p);
+    $('#ivt tbody').innerHTML=v.map(d=>{
+     const c=d.dirn==='trend'?'var(--trend)':'var(--chop)';
+     return `<tr><td style="color:${c}">${d.s}</td>
+     <td style="color:${c}">${d.dirn}</td><td>${d.f}</td><td>${d.b}</td>
+     <td style="color:${c}">${nf(d.to,2)}</td><td>${nf(d.ti,2)}</td>
+     <td>${nf(d.si,4)}</td><td>${nf(d.so,4)}</td>
+     <td>${d.ao==null?'\u2014':(d.ao*100).toFixed(0)+'%'}</td>
+     <td>${nf(d.mo,3)}</td><td>${nf(d.dec,2)}</td>
+     <td>${d.tsb==null?'\u2014':d.tsb+'/6'}</td>
+     <td>${d.nclust==null?'\u2014':(d.nclust-1)}</td>
+     <td>${d.n==null?'\u2014':(d.n/1000).toFixed(0)+'k'}</td></tr>`;}).join('');
+    const tr=IV.filter(d=>d.dirn==='trend'),ch=IV.filter(d=>d.dirn==='chop');
+    const med=a=>{const x=a.slice().sort((p,q)=>p-q);return x.length?x[Math.floor(x.length/2)]:NaN;};
+    $('#ivtx').innerHTML=`<b>${IV.length} independent</b> from `
+     +`${(BUN.survivors||[]).length} that clear gates 1\u20137, out of `
+     +`${(BUN.meta.n_scorable||0).toLocaleString()} scorable signals.<br>`
+     +`Median |t| OOS \u2014 trend ${med(tr.map(d=>Math.abs(d.to))).toFixed(1)}, `
+     +`chop ${med(ch.map(d=>Math.abs(d.to))).toFixed(1)}. `
+     +`Median pair agreement \u2014 trend ${(100*med(tr.map(d=>d.ao))).toFixed(0)}%, `
+     +`chop ${(100*med(ch.map(d=>d.ao))).toFixed(0)}%. `
+     +`That gap is the structural asymmetry: volatility spikes hit all 28 pairs at once, `
+     +`so panel-based chop measures clear the agreement gate almost by construction, `
+     +`while trending is idiosyncratic per pair.`;}
+   document.querySelectorAll('#ivt th').forEach(th=>{th.tabIndex=0;
+    th.onclick=()=>{const k=th.dataset.k;kd=(k===ks)?-kd:-1;ks=k;draw();};});
+   $('#ivT').onclick=e=>{fT=!fT;fC=0;e.target.setAttribute('aria-pressed',!!fT);
+    $('#ivC').setAttribute('aria-pressed',false);draw();};
+   $('#ivC').onclick=e=>{fC=!fC;fT=0;e.target.setAttribute('aria-pressed',!!fC);
+    $('#ivT').setAttribute('aria-pressed',false);draw();};
+   draw();})();
+
   // ---- crisis tab ----
   (function(){const C=BUN.crisis;if(!C||!C.length)return;
    const best=C.slice().sort((a,b)=>b.lift-a.lift)[0];
@@ -529,6 +648,6 @@ function boot(BUNDLE,root){
 
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','s','d','f','st','ld','nb','mt','cr','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['g','iv','s','d','f','st','ld','nb','mt','cr','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();

@@ -84,6 +84,67 @@ def metrics(ret, pos, tot):
                 data_pct=len(ret) / tot)
 
 
+def run_surv(COMP):
+    """Confluence on the SURVIVOR read rather than on direction.
+
+    The original confluence asks whether D/W/M agree on up-vs-down. The 32
+    survivors cannot answer that -- the efficiency ratio is unsigned. What they
+    answer is trending-vs-choppy, so this version resamples the composite onto
+    each timeframe's own clock, terciles it with IS-only cuts, shifts it on that
+    clock, and asks how many timeframes agree the regime is TREND.
+    """
+    px = pd.read_csv(PX, index_col=0, parse_dates=True)
+    acc, agree = {}, []
+    for p in px.columns:
+        lp = np.log(px[p].astype(float)); r = lp.diff(); c = cost(p)
+        oos = lp.index >= SPLIT
+        cser = COMP[p].reindex(lp.index)
+        L = {}
+        for tf, (rule, n) in TF.items():
+            s = cser if tf == 'D' else cser.resample(rule).last().dropna()
+            ins = s.index < SPLIT
+            if s[ins].notna().sum() < 30:
+                L[tf] = pd.Series(np.nan, index=lp.index, dtype=object); continue
+            q = np.nanquantile(s[ins].dropna(), [1 / 3, 2 / 3])
+            lab = pd.Series(np.where(s < q[0], 'chop', np.where(s > q[1], 'trend', 'mid')),
+                            index=s.index).where(s.notna()).shift(1)
+            if tf != 'D':
+                lab = lab.reindex(lp.index, method='ffill')
+            L[tf] = lab
+        for a, b in (('D', 'W'), ('D', 'M'), ('W', 'M')):
+            m = L[a].notna() & L[b].notna() & oos
+            if m.sum():
+                agree.append(dict(pair=p, tfs=a + '-' + b,
+                                  regime_agree=float((L[a][m] == L[b][m]).mean())))
+        dD = L['D']
+        n_agree = ((L['W'] == dD).astype(float) + (L['M'] == dD).astype(float))
+        conf = pd.Series(np.where(dD.isna(), np.nan, n_agree), index=lp.index)
+        pos = mr(lp).shift(1).fillna(0.)
+        net = pos * r - pos.diff().abs().fillna(0) * c
+        nb = int(oos.sum())
+        acc.setdefault('BASELINE', []).append((net[oos], pos[oos], nb))
+        for k, nm in ((2, 'all 3 aligned'), (1, '2 of 3'), (0, 'daily alone')):
+            m = oos & (conf == k).values
+            if m.sum() > 150:
+                acc.setdefault(nm, []).append((net[m], pos[m], nb))
+        for st in ('trend', 'mid', 'chop'):
+            m = oos & (dD == st).values & (conf == 2).values
+            if m.sum() > 150:
+                acc.setdefault('aligned ' + st, []).append((net[m], pos[m], nb))
+    rows = []
+    for cell, lst in acc.items():
+        R = pd.concat([a for a, _, _ in lst]); P = pd.concat([b for _, b, _ in lst])
+        tb = sum(x for _, _, x in lst)
+        mm = metrics(R, P, tb)
+        if mm:
+            rows.append(dict(cell=cell, **mm))
+    T = pd.DataFrame(rows)
+    T.to_csv(os.path.join(ROOTOUT, 'mtf_confluence_surv.csv'), index=False)
+    A = pd.DataFrame(agree).groupby('tfs').regime_agree.mean().reset_index()
+    A.to_csv(os.path.join(ROOTOUT, 'mtf_agreement_surv.csv'), index=False)
+    return T, A
+
+
 def run():
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
     acc, agree, conf_rows = {}, [], []
@@ -144,6 +205,24 @@ def run():
 
 if __name__ == '__main__':
     T, A = run()
+    try:
+        import survivors
+        TS, AS_ = run_surv(survivors.build())
+        pd.set_option('display.width', 240, 'display.max_columns', 25)
+        print('=' * 88)
+        print('CONFLUENCE ON THE SURVIVOR READ (trend/mid/chop), not on direction')
+        print('=' * 88)
+        AS_['vs_chance'] = AS_.regime_agree - 1 / 3
+        print(AS_.to_string(index=False, float_format=lambda v: '%.3f' % v))
+        print()
+        print(TS[['cell', 'data_pct', 'sharpe', 'pf', 'trades', 'win', 'avg', 'expo']]
+              .sort_values('sharpe', ascending=False)
+              .to_string(index=False, float_format=lambda v: '%.3f' % v))
+        b = TS[TS.cell == 'BASELINE'].sharpe.iloc[0]
+        print('\nbaseline Sharpe %.3f | cells beating it: %d of %d'
+              % (b, (TS[TS.cell != 'BASELINE'].sharpe > b).sum(), len(TS) - 1))
+    except Exception as e:
+        print('survivor confluence unavailable (%s)' % e)
     pd.set_option('display.width', 240, 'display.max_columns', 25)
     f = lambda v: '%.3f' % v
     print('=' * 88); print('DO THE TIMEFRAMES LINE UP?  (OOS, mean across 28 pairs)'); print('=' * 88)
