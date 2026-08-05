@@ -44,6 +44,8 @@ out = dict(
     mtfagree=cl(rd('mtf_agreement.csv')),
     crisis=cl(rd('crisis_detectors.csv')),
     crisisev=cl(rd('crisis_events.csv')),
+    famret=cl(rd('family_retention.csv')),
+    stability=cl(rd('stability.csv')),
     meta=dict(built=pd.Timestamp.now().strftime('%Y-%m-%d %H:%M'),
               pairs=28, split='2016-01-01',
               variants=int(len(rd('logic_results.csv'))),

@@ -3,7 +3,24 @@ _R=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOTLIB=os.path.join(_R,'code'); ROOTDATA=os.path.join(_R,'data'); ROOTOUT=os.path.join(_R,'results')
 os.makedirs(ROOTDATA,exist_ok=True); os.makedirs(ROOTOUT,exist_ok=True)
 sys.path.insert(0,ROOTLIB)
-import os, json, numpy as np, pandas as pd
+import os, re, json, numpy as np, pandas as pd
+
+VARP = ('za_', 'zb_', 'zc_', 'zd_', 'ze_', 'ra_', 'rb_', 'rc_', 'rd_')
+
+
+def famof(s, b):
+    """Reporting family. For v6 this is readout x event class, e.g. ts_sg, hz_hi,
+    cd_ef -- the granularity that answers 'which families survived'."""
+    if b != 'trend-duration':
+        return s.rsplit('_', 1)[0]
+    for p in VARP:
+        if s.startswith(p):
+            s = s[len(p):]
+            break
+    t = s.split('_')
+    read = re.sub(r'\d+$', '', t[0])
+    ev = re.sub(r'[\d.]+$', '', t[1]) if len(t) > 1 else ''
+    return read + '_' + ev if ev else read
 
 DIRS = [os.path.join(ROOTOUT,'/scores'.lstrip('/')),
         os.path.join(ROOTOUT,'/scores3'.lstrip('/')),
@@ -104,7 +121,7 @@ for d, batch in zip(DIRS, LABELS):
         if np.isnan(i['t'][j]) or np.isnan(o['t'][j]):
             continue
         r = dict(
-            s=s, f=s.rsplit('_', 1)[0], b=batch,
+            s=s, f=s.rsplit('_', 1)[0], fam=famof(s, batch), b=batch,
             ti=round(float(i['t'][j]), 2), to=round(float(o['t'][j]), 2),
             si=round(float(i['spread'][j]), 5), so=round(float(o['spread'][j]), 5),
             ai=round(float(i['agree'][j]), 3), ao=round(float(o['agree'][j]), 3),
@@ -127,7 +144,15 @@ for d, batch in zip(DIRS, LABELS):
         r['csb'] = int(stc[j]) if stc is not None else None
         rows.append(r)
 
-D = pd.DataFrame(rows).drop_duplicates(subset='s')
+_D0 = pd.DataFrame(rows)
+_dup = _D0.s.duplicated()
+if _dup.any():
+    print('WARNING: %d duplicate signal names across batches, deduped:' % int(_dup.sum()))
+    print(_D0[_D0.s.isin(_D0.s[_dup])].groupby(['s', 'b']).size().head(20).to_string())
+else:
+    print('duplicate names across all batches: 0')
+D = _D0.drop_duplicates(subset='s')
+del _D0
 D['dec'] = (D.to.abs() / D.ti.abs().clip(lower=.01)).round(3)
 D['held'] = np.sign(D.ti) == np.sign(D.to)
 def clean(v):
@@ -176,3 +201,28 @@ print('%-22s %8d %8d   (%d of %d scorable)'
 print('\nsurvivors: %d  (%d with block stability measured)' % (len(g7), len(has)))
 cols = ['s', 'b', 'ti', 'to', 'si', 'ao', 'mo', 'dec', 'tsb', 'bt']
 print(g7.sort_values('to', key=abs, ascending=False).head(25)[cols].to_string(index=False))
+if len(g7):
+    print('\nsurvivors by batch:')
+    print(g7.groupby('b').size().to_string())
+    print('\nsurvivors by family:')
+    print(g7.groupby(['b', 'fam']).size().sort_values(ascending=False).head(20).to_string())
+    if 'bt' in g7:
+        print('\nsurvivors by target read:')
+        print(g7.bt.fillna('single-target').value_counts().to_string())
+
+# ---- OOS sign retention by family: what to stop building next time ----
+# This is how interactions (49.1%) and deltas (42%) were killed on evidence.
+F = (D.groupby(['b', 'fam'])
+     .agg(n=('held', 'size'), retention=('held', 'mean'),
+          best_to=('to', lambda x: x.abs().max()),
+          med_to=('to', lambda x: x.abs().median()))
+     .reset_index())
+F = F[F.n >= 30].sort_values('retention', ascending=False)
+F.to_csv(os.path.join(OUT, 'family_retention.csv'), index=False)
+print('\nOOS SIGN RETENTION BY FAMILY (n>=30). 50%% is a coin flip.')
+print('top 15')
+print(F.head(15).to_string(index=False, float_format=lambda x: '%.3f' % x))
+print('bottom 15 — these are the ones to stop building')
+print(F.tail(15).to_string(index=False, float_format=lambda x: '%.3f' % x))
+print('\nbatch-level retention:')
+print(D.groupby('b').held.agg(['size', 'mean']).to_string(float_format=lambda x: '%.3f' % x))

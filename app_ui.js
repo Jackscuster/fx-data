@@ -155,14 +155,18 @@ window.renderApp=function(BUNDLE,root){
    {k:'si', n:'Effect size',  min:0,   max:.04,step:.001,v:.02,f:d=>Math.abs(d.si)},
    {k:'ao', n:'Pairs agree',  min:.5,  max:1,  step:.01, v:.85,f:d=>d.ao},
    {k:'mo', n:'Monotonic',    min:.5,  max:1,  step:.01, v:.95,f:d=>Math.abs(d.mo)},
-   {k:'dec',n:'Decay ratio',  min:0,   max:1.5,step:.05, v:.6, f:d=>d.dec}];
-  const STRICT=[8,.02,.85,.95,.6];
+   {k:'dec',n:'Decay ratio',  min:0,   max:1.5,step:.05, v:.6, f:d=>d.dec},
+   // Gate 7. Signals scored before block spreads were stored have tsb null; they
+   // are treated as passing rather than silently killed, so the funnel never
+   // reports a drop that is really just missing data.
+   {k:'tsb',n:'Blocks stable',min:0,   max:6,  step:1,  v:4,  f:d=>d.tsb==null?6:d.tsb}];
+  const STRICT=[8,.02,.85,.95,.6,4];
   
   $('#gates').innerHTML=GATES.map((g,i)=>
    `<div class="gate"><label>${g.n}<b id="v${i}"></b></label>
     <input type="range" id="r${i}" min="${g.min}" max="${g.max}" step="${g.step}" value="${g.v}"></div>`).join('');
   
-  function fmt(g,v){return g.k==='si'?v.toFixed(3):(g.k==='ao'||g.k==='mo'?v.toFixed(2):v.toFixed(2));}
+  function fmt(g,v){return g.k==='si'?v.toFixed(3):(g.k==='tsb'?v.toFixed(0)+' of 6':v.toFixed(2));}
   function vals(){return GATES.map((g,i)=>+$('#r'+i).value);}
   function survivors(){
    const V=vals();
