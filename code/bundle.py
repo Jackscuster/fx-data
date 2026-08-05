@@ -84,12 +84,14 @@ out = dict(
     duration=cl(rd('duration_stats.csv')),
     funnel=cl(rd('dsr_funnel.csv')),
     audit=cl(rd('lookahead_audit.csv')),
-    ninebox=cl(rd('ninebox.csv')),
-    ninebox_surv=cl(rd('ninebox_surv.csv')),
-    mtf=cl(rd('mtf_confluence.csv')),
+    # REGIME-DETECTION metrics only in the estimator view. The strategy-metric
+    # versions stay on disk as Phase 4 groundwork but are not shipped to the app.
+    ninebox=cl(rd('ninebox_regime.csv')),
+    ninebox_surv=cl(rd('ninebox_regime_surv.csv')),
+    mtf=cl(rd('mtf_regime.csv')),
     mtfagree=cl(rd('mtf_agreement.csv')),
-    mtf_surv=cl(rd('mtf_confluence_surv.csv')),
     mtfagree_surv=cl(rd('mtf_agreement_surv.csv')),
+    composite=cl(rd('composite_stats.csv')),
     crisis=cl(rd('crisis_detectors.csv')),
     crisisev=cl(rd('crisis_events.csv')),
     famret=cl(rd('family_retention.csv')),

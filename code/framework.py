@@ -119,9 +119,12 @@ def d_surv(lp, r, hp=None):
     return pd.Series(np.where(c > q, 'A', 'B'), index=lp.index).where(c.notna())
 
 
+# d_surv is deliberately NOT in DETS. This module measures strategy performance --
+# Sharpe, Ret/DD, profit factor -- which is Phase 4 work. The regime estimator is
+# judged on whether it identifies the regime, never on whether it would have made
+# money, so the survivor composite does not belong in this harness.
 DETS = [('trend_sma200', d_trend), ('vol_regime', d_vol),
-        ('markov_naive', d_naive), ('hmm_2state', d_hmm),
-        ('survivors32', d_surv)]
+        ('markov_naive', d_naive), ('hmm_2state', d_hmm)]
 
 
 # ---------- strategies ----------

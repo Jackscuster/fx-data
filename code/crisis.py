@@ -77,18 +77,10 @@ def build(px):
     D['legdiv20'] = zscore(div)
     D['avgcorr60'] = (r.rolling(60).corr().groupby(level=0)
                       .apply(lambda m: m.values[np.triu_indices(m.shape[1], 1)].mean()))
-    # The 32 independent survivors as a crisis detector. The composite reads high
-    # for expected straight travel, so a crisis -- panel-wide whipsaw -- should show
-    # as a LOW composite; it is negated here so that, like every other row, high
-    # means more crisis-like. Panel mean across the 28 pairs.
-    try:
-        import survivors
-        C = survivors.build()
-        m = -C.reindex(px.index).mean(axis=1)
-        D['surv32'] = zscore(m)
-        D['surv32_min'] = zscore(-C.reindex(px.index).max(axis=1))
-    except Exception as e:
-        print('survivor composite unavailable for crisis scoring (%s)' % e)
+    # The survivor composite is deliberately NOT scored here. Crisis lift is a
+    # detection-vs-news measure that sits alongside the Phase 4 strategy work, and
+    # a low lift here would say nothing about whether the estimator identifies
+    # trend and chop -- which is the only thing it is judged on.
     return D
 
 

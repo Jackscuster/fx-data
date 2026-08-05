@@ -48,6 +48,7 @@ strongest first, absorb everything correlated above 0.70, repeat — so each row
 a distinct effect, and <b>Absorbs</b> says how many others collapsed into it.
 <br><br><b>Trend or chop is the SIGN of the efficiency spread</b>, not which target
 scores higher. A large negative spread is a chop detector however it reads elsewhere.</div>
+<div class="panel" id="cmp" style="margin-bottom:18px"></div>
 <div class="tools"><span class="count" id="ivcnt"></span>
 <button class="chip" id="ivT" aria-pressed="false">Trend only</button>
 <button class="chip" id="ivC" aria-pressed="false">Chop only</button></div>
@@ -105,6 +106,7 @@ is being propped up by outliers.</div>
 </tr></thead><tbody></tbody></table></div></section>
 
 <section id="ld" hidden>
+<div class="note" style="border-left:3px solid var(--kill);padding-left:10px"><b>PHASE 4 GROUNDWORK — strategy performance, not regime detection.</b> Everything below is measured in Sharpe, Ret/DD and profit factor. Those are money metrics and they say nothing about whether the estimator identifies the regime correctly. Kept for the record; not a verdict on the estimator.</div>
 <div class="note"><b>Detector ladder, dumbest to fanciest.</b> Each must beat the row above or
 it is not worth using. Every label is backward-looking and was audited: 20/20 spot-checks
 reproduced from truncated data.</div>
@@ -116,17 +118,20 @@ reproduced from truncated data.</div>
 
 
 <section id="nb" hidden>
-<div class="note"><b>Direction × volatility, 3×3.</b> Cut points are terciles learned on
+<div class="note"><b>Direction × second axis, 3×3.</b> Cut points are terciles learned on
 1999-2015 only and applied unchanged to 2016-2026. Both inputs lagged one bar. Colour is
-OOS Sharpe: amber positive, red negative, against the unfiltered baseline shown below each grid.</div>
+the <b>forward 20-day efficiency lift</b> against the all-bars baseline — amber means the
+box precedes straighter travel, red means choppier. <b>No money metrics here:</b> the
+question is whether the boxes separate regimes, not what a strategy would have earned.</div>
 <div class="tools" style="margin-bottom:10px">
 <button class="chip" id="nbA" aria-pressed="true">Volatility axis (original)</button>
 <button class="chip" id="nbB" aria-pressed="false">32-survivor axis</button>
 <span class="count" id="nbwhich"></span></div>
 <div id="nbgrid"></div>
-<h3>Routing — which sleeve wins each box</h3>
-<div class="tw"><table id="nbt"><thead><tr><th>Box</th><th>Mean reversion</th><th>Momentum</th>
-<th>Winner</th><th>Edge</th><th>Data %</th></tr></thead><tbody></tbody></table></div>
+<h3>Separation by box</h3>
+<div class="tw"><table id="nbt"><thead><tr><th>Box</th><th>Fwd efficiency</th>
+<th>Eff lift</th><th>Pair agree</th><th>Turn freq</th><th>Turn lift</th><th>Data %</th>
+</tr></thead><tbody></tbody></table></div>
 <div class="note" id="nbtx"></div></section>
 
 
@@ -137,22 +142,18 @@ trade daily; M and W exist only to confirm or contradict it. Lookbacks form a re
 monthly label not until the next month opens; both are shifted on their own clock before being
 mapped down.</div>
 <h3>Do the timeframes line up?</h3><div id="mtag"></div>
-<h3>Daily sleeve performance by confluence</h3><div id="mtcf"></div>
+<h3>Regime separation by confluence</h3>
+<div class="note">Forward efficiency and turn frequency per confluence cell, against the
+all-bars baseline. No Sharpe, no Ret/DD — those belong to Phase 4.</div>
+<div id="mtcf"></div>
 <div class="tw" style="margin-top:16px"><table id="mtt"><thead><tr>
-<th>Cell</th><th>Data %</th><th>Sharpe</th><th>Ret/DD</th><th>PF</th><th>Trades</th>
-<th>Win%</th><th>$AvgTrade</th><th>Exposure</th></tr></thead><tbody></tbody></table></div>
+<th>Cell</th><th>Data %</th><th>Fwd efficiency</th><th>Eff lift</th><th>Pair agree</th>
+<th>Turn freq</th><th>Turn lift</th></tr></thead><tbody></tbody></table></div>
 <div class="note" id="mttx"></div>
-<h3>Confluence on the survivor read, not on direction</h3>
-<div class="note">The original confluence asks whether D/W/M agree on <b>up vs down</b>.
-The 32 survivors cannot answer that — the efficiency ratio is unsigned — so this asks
-whether they agree on <b>trending vs choppy</b>. Cut points are IS-only terciles on each
-timeframe's own clock, shifted on that clock before being mapped down.</div>
-<div class="note" id="mtsagree" style="margin-top:8px"></div>
-<div class="tw" style="margin-top:10px"><table id="mts"><thead><tr>
-<th>Cell</th><th>Data %</th><th>Sharpe</th><th>PF</th><th>Trades</th><th>Win%</th>
-<th>$AvgTrade</th><th>Exposure</th></tr></thead><tbody></tbody></table></div></section>
+<div class="note" id="mtsagree" style="margin-top:12px"></div></section>
 
 <section id="cr" hidden>
+<div class="note" style="border-left:3px solid var(--kill);padding-left:10px"><b>PHASE 4 GROUNDWORK — crisis detection against news, not regime detection.</b> Lift here measures whether a detector fires near dated events. It is a different question from whether the estimator separates trend from chop, and a low lift is not a mark against a trend/chop signal.</div>
 <div class="note"><b>The only real accuracy numbers in the project.</b> Every other score here
 is measured against a target derived from price itself. These are measured against dated news
 events — policy decisions, interventions, bankruptcies, referendums, invasions. No event date
@@ -426,50 +427,41 @@ function boot(BUNDLE,root){
     function nbrows(){return NBSRC==='vol'?['high','med','low']:['trend','mid','chop'];}
     function drawNB(){const N=nbdata();if(!N||!N.length)return;
     const DIR=['down','flat','up'],VOL=nbrows();
+    const base=N.find(d=>d.cell==='BASELINE')||{eff:0,turn:0};
     const cells=N.filter(d=>d.cell!=='BASELINE');
-    const mx=Math.max(...cells.map(d=>Math.abs(d.sharpe)))||1;
-    let html='';
-    [...new Set(N.map(d=>d.sleeve))].forEach(sn=>{
-     const base=N.find(d=>d.sleeve===sn&&d.cell==='BASELINE');
-     const W=620,H=280,L=96,T=44,cw=(W-L-14)/3,ch=(H-T-34)/3;let g='';
-     g+=txt(L+(W-L-14)/2,20,sn.replace('_',' ').toUpperCase(),{a:'middle',s:13,c:'var(--ink)',w:600});
-     DIR.forEach((d,i)=>g+=txt(L+cw*i+cw/2,T-8,d==='flat'?'not trending':'trending '+d,{a:'middle',s:11}));
-     VOL.forEach((v,j)=>{g+=txt(L-10,T+ch*j+ch/2+4,v+' vol',{a:'end',s:11,c:'var(--ink)'});
-      DIR.forEach((d,i)=>{const r=cells.find(x=>x.sleeve===sn&&x.cell===v+'|'+d);
-       const x0=L+cw*i,y0=T+ch*j;
-       if(!r){g+=`<rect x="${x0+2}" y="${y0+2}" width="${cw-4}" height="${ch-4}" fill="var(--sf2)" rx="2"/>`;
-        g+=txt(x0+cw/2,y0+ch/2+4,'\u2014',{a:'middle',s:12,m:1});return;}
-       const c=r.sharpe>0?'224,160,60':'180,83,75';
-       g+=`<rect x="${x0+2}" y="${y0+2}" width="${cw-4}" height="${ch-4}"
-         fill="rgba(${c},${(0.15+0.75*Math.abs(r.sharpe)/mx).toFixed(2)})" rx="2"/>`;
-       g+=txt(x0+cw/2,y0+ch/2,(r.sharpe>0?'+':'')+r.sharpe.toFixed(2),
-         {a:'middle',s:16,m:1,c:'var(--ink)',w:600});
-       g+=txt(x0+cw/2,y0+ch/2+17,(r.data_pct*100).toFixed(1)+'% of bars',{a:'middle',s:9.5,m:1});});});
-     g+=txt(L,H-8,'baseline (unfiltered) Sharpe '+(base?base.sharpe.toFixed(3):'n/a')
-       +'  \u00b7  colour scaled to \u00b1'+mx.toFixed(2),{s:10,m:1});
-     html+=svg(W,H,g);});
+    const mx=Math.max(...cells.map(d=>Math.abs(d.eff_lift)))||1;
+    let html='<table class="nb"><tr><th></th>'+DIR.map(d=>'<th>'+d+'</th>').join('')+'</tr>';
+    VOL.forEach(v=>{html+='<tr><th>'+v+'</th>';
+     DIR.forEach(d=>{const c=cells.find(x=>x.cell===v+'|'+d);
+      if(!c){html+='<td>\u2014</td>';return;}
+      const a=Math.abs(c.eff_lift)/mx*.85+.1;
+      const col=c.eff_lift>0?'var(--trend)':'var(--chop)';
+      html+='<td style="background:'+col+';opacity:'+a.toFixed(2)+'" '
+       +'title="fwd efficiency '+c.eff.toFixed(4)+', lift '+(c.eff_lift>0?'+':'')
+       +c.eff_lift.toFixed(4)+', pair agreement '+(c.agree_eff*100).toFixed(0)+'%">'
+       +(c.eff_lift>0?'+':'')+c.eff_lift.toFixed(4)+'<br><span style="font-size:10px;opacity:.85">'
+       +(c.agree_eff*100).toFixed(0)+'% agree</span></td>';});
+     html+='</tr>';});
+    html+='</table>';
     $('#nbgrid').innerHTML=html;
     if($('#nbwhich'))$('#nbwhich').textContent=NBSRC==='vol'
       ?'60d realised vol as a percentile of its own trailing 500d'
       :'32 survivors, sign-aligned so high = expect straight travel';
-    // routing table
-    const keys=[...new Set(cells.map(d=>d.cell))];
-    const rows=keys.map(k=>{const a=cells.find(d=>d.cell===k&&d.sleeve==='mean_reversion');
-     const b2=cells.find(d=>d.cell===k&&d.sleeve==='momentum');
-     const sa=a?a.sharpe:NaN,sb=b2?b2.sharpe:NaN;
-     return {k,sa,sb,w:sa>sb?'mean_reversion':'momentum',e:Math.abs(sa-sb),dp:a?a.data_pct:0};})
-     .sort((p,q)=>q.e-p.e);
-    $('#nbt tbody').innerHTML=rows.map(r=>{
-     const pos=Math.max(r.sa,r.sb)>0;
-     return `<tr><td>${r.k}</td>
-     <td style="color:${r.sa>0?'var(--trend)':'var(--kill)'}">${r.sa.toFixed(3)}</td>
-     <td style="color:${r.sb>0?'var(--trend)':'var(--kill)'}">${r.sb.toFixed(3)}</td>
-     <td style="color:${pos?'var(--ink)':'var(--dim)'}">${pos?r.w:'cash'}</td>
-     <td>${r.e.toFixed(2)}</td><td>${(r.dp*100).toFixed(1)}%</td></tr>`;}).join('');
-    const nwin=rows.filter(r=>Math.max(r.sa,r.sb)>0).length;
-    $('#nbtx').innerHTML=`<b>${nwin} of ${rows.length} boxes</b> have a positive sleeve.
-    Where both are negative the box routes to <b>cash</b> \u2014 "winner" there only means
-    losing less, which is not a reason to allocate.`;}
+    const srt=cells.slice().sort((a,b)=>b.eff_lift-a.eff_lift);
+    $('#nbt tbody').innerHTML=srt.map(c=>`<tr><td>${c.cell}</td>
+     <td>${c.eff.toFixed(4)}</td>
+     <td style="color:${c.eff_lift>0?'var(--trend)':'var(--chop)'}">${c.eff_lift>0?'+':''}${c.eff_lift.toFixed(4)}</td>
+     <td>${(c.agree_eff*100).toFixed(0)}%</td>
+     <td>${c.turn.toFixed(4)}</td>
+     <td style="color:${c.turn_lift<0?'var(--trend)':'var(--chop)'}">${c.turn_lift>0?'+':''}${c.turn_lift.toFixed(4)}</td>
+     <td>${(c.data_pct*100).toFixed(1)}%</td></tr>`).join('');
+    const sep=srt[0].eff_lift-srt[srt.length-1].eff_lift;
+    $('#nbtx').innerHTML=`Baseline forward-20d efficiency <b>${base.eff.toFixed(4)}</b>, `
+     +`turn frequency <b>${base.turn.toFixed(4)}</b>. Best box minus worst box `
+     +`<b>${sep>0?'+':''}${sep.toFixed(4)}</b> \u2014 that is the separation power of `
+     +`this axis. Efficiency and turn frequency move in opposite directions across the `
+     +`grid, which is the coherence check: a box that precedes straighter travel should `
+     +`also precede fewer direction changes.`;}
     drawNB();
     if($('#nbA'))$('#nbA').onclick=e=>{NBSRC='vol';
       e.target.setAttribute('aria-pressed',true);$('#nbB').setAttribute('aria-pressed',false);drawNB();};
@@ -478,20 +470,15 @@ function boot(BUNDLE,root){
    })();
   
   
-   // ---- multi-timeframe: survivor-read confluence ----
-   (function(){const M=B.mtf_surv,A=B.mtfagree_surv;if(!M||!M.length)return;
-    const base=M.find(d=>d.cell==='BASELINE');
-    $('#mts tbody').innerHTML=M.slice().sort((a,b)=>b.sharpe-a.sharpe).map(d=>{
-     const c=d.sharpe>0?'var(--trend)':'var(--kill)';
-     return `<tr><td>${d.cell}</td><td>${(d.data_pct*100).toFixed(1)}%</td>
-     <td style="color:${c}">${d.sharpe.toFixed(3)}</td><td>${d.pf.toFixed(3)}</td>
-     <td>${d.trades}</td><td>${(d.win*100).toFixed(1)}%</td>
-     <td>${d.avg.toFixed(0)}</td><td>${(d.expo*100).toFixed(1)}%</td></tr>`;}).join('');
-    if(A&&A.length)$('#mtsagree').innerHTML='Regime agreement vs 33% chance: '
-      +A.map(d=>`<b>${d.tfs}</b> ${(d.regime_agree*100).toFixed(1)}%`).join(' \u00b7 ')
-      +`. Far higher than the direction agreement above \u2014 the trend/chop read is much `
-      +`more consistent across timeframes than direction is, which is why "all 3 aligned" `
-      +`covers most bars here and carries less information than "2 of 3".`;})();
+   // ---- survivor-read agreement across timeframes (regime, not direction) ----
+   (function(){const A=B.mtfagree_surv;if(!A||!A.length)return;
+    $('#mtsagree').innerHTML='<b>Agreement on the survivor read (trend/mid/chop) '
+     +'across timeframes:</b> '
+     +A.map(d=>`${d.tfs} ${(d.regime_agree*100).toFixed(1)}%`).join(' \u00b7 ')
+     +'. Chance is 33%. Far higher than the direction agreement above \u2014 the '
+     +'trend/chop read is much more consistent across timeframes than direction is, '
+     +'which is why all-three-aligned covers most bars and carries less information '
+     +'than partial agreement.';})();
 
    // ---- multi-timeframe ----
    (function(){const A=B.mtfagree,M=B.mtf;if(!A||!A.length)return;
@@ -513,27 +500,36 @@ function boot(BUNDLE,root){
     const ord=['all 3 aligned','aligned trending','aligned flat','2 of 3','daily alone','BASELINE'];
     const rows=ord.map(k=>M.find(d=>d.cell===k)).filter(Boolean);
     const W2=660,H2=40+rows.length*38,P2=140;
-    const m2=Math.max(...rows.map(d=>Math.abs(d.sharpe)))*1.25;
+    const m2=Math.max(...rows.map(d=>Math.abs(d.eff_lift||0)))*1.25||1;
     let h=`<line x1="${P2}" y1="6" x2="${P2}" y2="${H2-22}" stroke="var(--line2)"/>`;
-    rows.forEach((d,i)=>{const yy=12+i*38,w=Math.abs(d.sharpe)/m2*(W2-P2-110);
+    rows.forEach((d,i)=>{const yy=12+i*38,w=Math.abs(d.eff_lift||0)/m2*(W2-P2-110);
      const base=d.cell==='BASELINE';
-     const c=base?'var(--flat)':(d.sharpe>0.181?'var(--trend)':'var(--kill)');
+     const c=base?'var(--flat)':((d.eff_lift||0)>0?'var(--trend)':'var(--chop)');
      h+=txt(P2-10,yy+16,d.cell,{a:'end',m:1,s:11,c:base?'var(--dim)':'var(--ink)'});
      h+=`<rect x="${P2}" y="${yy+3}" width="${Math.max(w,2)}" height="19" fill="${c}" opacity=".75" rx="1"/>`;
-     h+=txt(P2+Math.max(w,2)+8,yy+17,d.sharpe.toFixed(3)+'   '+(d.data_pct*100).toFixed(1)+'% of bars',{m:1,s:10});});
-    h+=txt(P2,H2-6,'OOS Sharpe \u00b7 grey bar is the unfiltered baseline',{s:10});
+     h+=txt(P2+Math.max(w,2)+8,yy+17,((d.eff_lift>0?'+':'')+d.eff_lift.toFixed(4))+'   '+(d.data_pct*100).toFixed(1)+'% of bars',{m:1,s:10});});
+    h+=txt(P2,H2-6,'forward-20d efficiency lift \u00b7 grey bar is the all-bars baseline',{s:10});
     $('#mtcf').innerHTML=svg(W2,H2,h);
-    $('#mtt tbody').innerHTML=rows.map(d=>{const base=d.cell==='BASELINE';
-     const c=base?'var(--dim)':(d.sharpe>0.181?'var(--trend)':'var(--kill)');
+    $('#mtt tbody').innerHTML=rows.slice().sort((x,y)=>(y.eff_lift||0)-(x.eff_lift||0)).map(d=>{
+     const base=d.cell==='BASELINE';
+     const c=base?'var(--dim)':(d.eff_lift>0?'var(--trend)':'var(--chop)');
      return `<tr><td style="color:${c}">${d.cell}</td><td>${(d.data_pct*100).toFixed(1)}%</td>
-     <td style="color:${c}">${d.sharpe.toFixed(3)}</td><td>${d.retdd.toFixed(2)}</td>
-     <td>${d.pf.toFixed(3)}</td><td>${d.trades}</td><td>${(d.win*100).toFixed(1)}%</td>
-     <td>${d.avg.toFixed(0)}</td><td>${(d.expo*100).toFixed(0)}%</td></tr>`;}).join('');
-    const al=M.find(d=>d.cell==='aligned trending'),da=M.find(d=>d.cell==='daily alone');
-    if(al&&da)$('#mttx').innerHTML=`When all three timeframes agree and point somewhere,
-     the daily sleeve runs at <b>${al.sharpe.toFixed(3)}</b> Sharpe. When the daily read has no
-     higher-timeframe support it runs at <b>${da.sharpe.toFixed(3)}</b> \u2014 essentially zero.
-     Confluence is doing real work here.`;})();
+     <td>${d.eff.toFixed(4)}</td>
+     <td style="color:${c}">${d.eff_lift>0?'+':''}${d.eff_lift.toFixed(4)}</td>
+     <td>${d.agree_eff==null?'\u2014':(d.agree_eff*100).toFixed(0)+'%'}</td>
+     <td>${d.turn.toFixed(4)}</td>
+     <td style="color:${d.turn_lift<0?'var(--trend)':'var(--chop)'}">${d.turn_lift>0?'+':''}${d.turn_lift.toFixed(4)}</td>
+     </tr>`;}).join('');
+    const cells=M.filter(d=>d.cell!=='BASELINE');
+    const bestc=cells.reduce((a,b)=>a.eff_lift>b.eff_lift?a:b);
+    const worstc=cells.reduce((a,b)=>a.eff_lift<b.eff_lift?a:b);
+    $('#mttx').innerHTML=`<b>${bestc.cell}</b> precedes the straightest travel
+     (${bestc.eff_lift>0?'+':''}${bestc.eff_lift.toFixed(4)} efficiency against baseline,
+     ${(bestc.agree_eff*100).toFixed(0)}% of pairs agreeing);
+     <b>${worstc.cell}</b> the choppiest (${worstc.eff_lift.toFixed(4)}).
+     Separation across cells is
+     <b>${(bestc.eff_lift-worstc.eff_lift).toFixed(4)}</b>. Turn frequency moves the
+     opposite way, which is the coherence check.`;})();
   
    // ---- DSR funnel ----
    (function(){const F2=B.funnel;if(!F2.length)return;const W=700,H=160,P=16;
@@ -582,6 +578,44 @@ function boot(BUNDLE,root){
     Complexity did not buy anything here.`;})();
   }
   
+  // ---- composite headline ----
+  (function(){const C=(BUN.composite||[])[0];if(!C){return;}
+   const q=[C.q1,C.q2,C.q3,C.q4,C.q5];
+   const mn=Math.min(...q),mx=Math.max(...q),rg=(mx-mn)||1;
+   const W=520,Hh=150,P=44;
+   let g='';
+   q.forEach((v,i)=>{const x=P+i*((W-P-20)/4);
+    const y=Hh-26-((v-mn)/rg)*(Hh-60);
+    if(i)g+=`<line x1="${P+(i-1)*((W-P-20)/4)}" y1="${Hh-26-((q[i-1]-mn)/rg)*(Hh-60)}" `
+      +`x2="${x}" y2="${y}" stroke="var(--trend)" stroke-width="2"/>`;
+    g+=`<circle cx="${x}" cy="${y}" r="4" fill="var(--trend)"/>`;
+    g+=txt(x,y-10,v.toFixed(4),{a:'middle',s:10,m:1});
+    g+=txt(x,Hh-8,'Q'+(i+1),{a:'middle',s:10,c:'var(--dim)'});});
+   const svgc=`<svg viewBox="0 0 ${W} ${Hh}" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+   const better=C.uplift>0;
+   $('#cmp').innerHTML=`<h3>The composite \u2014 all ${C.n_components} independents combined</h3>
+   <div class="note">Each survivor z-scored and sign-aligned so high means expect straight
+   travel, then averaged. This is the estimator's actual regime read.</div>
+   ${svgc}
+   <div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:8px">
+     <div><div class="big">${C.spread>0?'+':''}${C.spread.toFixed(4)}</div>
+       <span class="count">Q5\u2212Q1 forward-efficiency spread</span></div>
+     <div><div class="big">${(C.agree*100).toFixed(1)}%</div>
+       <span class="count">pair agreement</span></div>
+     <div><div class="big">${C.mono>0?'+':''}${C.mono.toFixed(3)}</div>
+       <span class="count">monotonicity</span></div>
+     <div><div class="big">${C.turn_spread.toFixed(4)}</div>
+       <span class="count">turn-frequency spread</span></div>
+   </div>
+   <div class="note" style="margin-top:12px;border-left:3px solid ${better?'var(--trend)':'var(--kill)'};padding-left:10px">
+   <b>Against its own best component:</b> ${C.best_single_name} alone scores
+   <b>${C.best_single.toFixed(4)}</b>, so combining all ${C.n_components}
+   <b>${better?'adds':'costs'} ${Math.abs(C.uplift).toFixed(4)}</b>.
+   ${better?'':'The composite does NOT beat its strongest single component on spread. '
+    +'What it buys is breadth \u2014 32 independent effects rather than one \u2014 and it '
+    +'matches on pair agreement, but on raw separation a single panel-volatility signal '
+    +'is still the strongest regime read in the project.'}</div>`;})();
+
   // ---- survivors tab: the 32 independents ----
   (function(){const IV=(BUN.independents||[]).slice();if(!IV.length)return;
    IV.forEach(d=>{d.dirn=d.to>0?'trend':'chop';});

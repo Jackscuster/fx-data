@@ -31,6 +31,72 @@ for both sleeves, so the output is a routing table: which sleeve belongs in whic
 import numpy as np, pandas as pd
 
 PX = os.path.join(ROOTDATA,'/px28.csv'.lstrip('/'))
+H = 20
+
+
+def fwd_eff(lp, h=H):
+    r = lp.diff()
+    return ((lp.shift(-h) - lp).abs() / r.abs().shift(-h).rolling(h).sum()
+            ).replace([np.inf, -np.inf], np.nan)
+
+
+def fwd_turn(lp, h=H):
+    r = lp.diff()
+    flip = (np.sign(r) != np.sign(r.shift(1))).astype(float)
+    return flip.shift(-h).rolling(h).mean()
+
+
+def regime_grid(axis='vol', COMP=None):
+    """Does the estimator SEPARATE REGIMES? No money metrics anywhere in here.
+
+    Per box: mean forward 20d efficiency and turn frequency, the lift of each
+    against the all-bars baseline, the share of the 28 pairs whose lift carries
+    the pooled sign, and the share of bars. OOS only.
+    """
+    px = pd.read_csv(PX, index_col=0, parse_dates=True)
+    LAB = VOLS if axis == 'vol' else SURV
+    per = {}
+    base_e, base_t, nb = [], [], 0
+    for p in px.columns:
+        lp = np.log(px[p].astype(float)); r = lp.diff()
+        st_ = slope_t(lp)
+        vp = volpct(r) if axis == 'vol' else (
+            COMP[p].reindex(lp.index) if COMP is not None else pd.Series(np.nan, index=lp.index))
+        ins = lp.index < SPLIT; oos = ~ins
+        dq = np.nanquantile(st_[ins].dropna(), [1 / 3, 2 / 3])
+        vq = np.nanquantile(vp[ins].dropna(), [1 / 3, 2 / 3]) if vp.notna().any() else [0, 0]
+        dl = pd.Series(np.where(st_ < dq[0], 'down', np.where(st_ > dq[1], 'up', 'flat')),
+                       index=lp.index).where(st_.notna()).shift(1)
+        vl = pd.Series(np.where(vp < vq[0], LAB[0], np.where(vp > vq[1], LAB[2], LAB[1])),
+                       index=lp.index).where(vp.notna()).shift(1)
+        E, T = fwd_eff(lp), fwd_turn(lp)
+        m0 = oos & E.notna().values
+        base_e.append(E[m0].mean()); base_t.append(T[m0].mean()); nb += int(m0.sum())
+        for d in DIRS:
+            for v in LAB:
+                m = m0 & (dl == d).values & (vl == v).values
+                if m.sum() < 150:
+                    continue
+                per.setdefault((v, d), []).append(
+                    (E[m].mean(), T[m].mean(), int(m.sum()), E[m0].mean(), T[m0].mean()))
+    BE, BT = float(np.nanmean(base_e)), float(np.nanmean(base_t))
+    rows = [dict(cell='BASELINE', eff=BE, turn=BT, eff_lift=0.0, turn_lift=0.0,
+                 agree_eff=np.nan, agree_turn=np.nan, data_pct=1.0, n_pairs=len(px.columns))]
+    for (v, d), lst in per.items():
+        e = float(np.nanmean([a for a, _, _, _, _ in lst]))
+        t = float(np.nanmean([b for _, b, _, _, _ in lst]))
+        n = sum(c for _, _, c, _, _ in lst)
+        le = [a - be for a, _, _, be, _ in lst]
+        lt = [b - bt for _, b, _, _, bt in lst]
+        rows.append(dict(cell='%s|%s' % (v, d), eff=e, turn=t,
+                         eff_lift=e - BE, turn_lift=t - BT,
+                         agree_eff=float(np.mean(np.sign(le) == np.sign(e - BE))),
+                         agree_turn=float(np.mean(np.sign(lt) == np.sign(t - BT))),
+                         data_pct=n / nb, n_pairs=len(lst)))
+    R = pd.DataFrame(rows)
+    fn = 'ninebox_regime.csv' if axis == 'vol' else 'ninebox_regime_surv.csv'
+    R.to_csv(os.path.join(ROOTOUT, fn), index=False)
+    return R
 SPLIT = '2016-01-01'
 NOTIONAL = 100_000
 MAJ = {'EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY'}
@@ -136,7 +202,7 @@ def run(axis='vol', COMP=None):
                             imp_retdd=x.retdd / b.retdd - 1, imp_pf=x.pf / b.pf - 1,
                             imp_win=x.win / b.win - 1, imp_avg=x.avg / b.avg - 1))
     T = pd.DataFrame(out)
-    fn = 'ninebox.csv' if axis == 'vol' else 'ninebox_surv.csv'
+    fn = 'ninebox_strategy.csv' if axis == 'vol' else 'ninebox_strategy_surv.csv'
     T.to_csv(os.path.join(ROOTOUT, fn), index=False)
     return T, counts
 
@@ -179,6 +245,21 @@ def compare(A, ca, B, cb):
           % (ca_.sharpe.max() - ca_.sharpe.min(), cb_.sharpe.max() - cb_.sharpe.min()))
 
 
+def show_regime(R, label):
+    print('\n' + '=' * 92)
+    print('REGIME SEPARATION — %s   (OOS, no money metrics)' % label)
+    print('=' * 92)
+    b = R[R.cell == 'BASELINE'].iloc[0]
+    print('baseline forward-20d efficiency %.4f | turn frequency %.4f' % (b.eff, b.turn))
+    x = R[R.cell != 'BASELINE'].sort_values('eff_lift', ascending=False)
+    print(x[['cell', 'eff', 'eff_lift', 'agree_eff', 'turn', 'turn_lift',
+             'agree_turn', 'data_pct']].to_string(index=False,
+          float_format=lambda v: '%.4f' % v))
+    print('Q5-Q1 equivalent (best box minus worst box, efficiency): %+.4f'
+          % (x.eff.max() - x.eff.min()))
+    return x.eff.max() - x.eff.min()
+
+
 if __name__ == '__main__':
     import survivors
     T, counts = run()
@@ -196,7 +277,13 @@ if __name__ == '__main__':
         COMP = survivors.build()
     except Exception as e:
         print('survivor composite unavailable (%s)' % e)
+    # regime separation: the only thing the estimator is judged on
+    sv = show_regime(regime_grid('vol'), 'volatility axis')
     if COMP is not None:
+        ss = show_regime(regime_grid('surv', COMP), '32-survivor axis')
+        print('\nseparation power: volatility axis %+.4f, survivor axis %+.4f  -> %s'
+              % (sv, ss, 'survivor axis separates better'
+                 if ss > sv else 'volatility axis separates better'))
         T2, counts2 = run('surv', COMP)
         compare(T, counts, T2, counts2)
 
