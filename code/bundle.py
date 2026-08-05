@@ -46,6 +46,7 @@ out = dict(
     crisisev=cl(rd('crisis_events.csv')),
     famret=cl(rd('family_retention.csv')),
     stability=cl(rd('stability.csv')),
+    clusters=cl(rd('survivor_clusters.csv')),
     meta=dict(built=pd.Timestamp.now().strftime('%Y-%m-%d %H:%M'),
               pairs=28, split='2016-01-01',
               variants=int(len(rd('logic_results.csv'))),
