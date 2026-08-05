@@ -256,10 +256,12 @@ window.renderApp=function(BUNDLE,root){
    // SVG string and locks the browser, so plot every Nth point plus every signal
    // strong enough to be worth seeing individually. The cloud looks the same;
    // nothing above |t|=8 is ever dropped.
+   // |t|>=8 is not rare enough to exempt at this scale -- 24,853 signals clear it,
+   // which put 33,822 circles back into the SVG. Exempt only the genuinely extreme.
    const CAP=12000, step=Math.max(1,Math.ceil(D.length/CAP));
    let plotted=0;
    D.forEach((d,i)=>{
-    if(i%step&&Math.abs(d.to)<8) return;
+    if(i%step&&Math.abs(d.to)<18) return;
     plotted++;
     const c=!d.held?'var(--kill)':(d.ti>0?'var(--trend)':'var(--chop)');
     s+=`<circle cx="${x(d.ti)}" cy="${y(d.to)}" r="2.4" fill="${c}" opacity=".5"/>`;});
