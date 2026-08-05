@@ -198,7 +198,8 @@ window.renderApp=function(BUNDLE,root){
     `<div class="fr"><span class="nm">${r[0]}</span><span class="bar">
      <i style="width:${100*r[1]/D.length}%"></i></span>
      <span class="ct ${r[1]===0?'z':''}">${r[1]}</span></div>`).join('');}
-  function spark(q){const mn=Math.min(...q),mx=Math.max(...q),r=(mx-mn)||1;
+  function spark(q){if(!q||!q.length||q.some(v=>v==null))return '<span style="opacity:.3">—</span>';
+   const mn=Math.min(...q),mx=Math.max(...q),r=(mx-mn)||1;
    return '<span class="spark">'+q.map(v=>`<i style="height:${3+13*(v-mn)/r}px"></i>`).join('')+'</span>';}
   let gs='to',gd=-1;
   function drawG(){

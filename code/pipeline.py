@@ -17,6 +17,14 @@ for _ in range(8): run('sc5.py')
 # results/scores6/; every later run then finds the .npz and skips.
 if os.environ.get('FX_RUN_SC6'):
     for _ in range(3): run('sc6.py')
+# sc7 is the v7 trend batch: ~48k signals/pair scored against THREE horizons, ~2.2 h.
+# Same reason as sc6 -- Actions times out at 180 min. Its .npz are gitignored; what
+# the repo carries is pool7.py's per-signal statistics, so this only needs rerunning
+# when the signal definitions change.
+if os.environ.get('FX_RUN_SC7'):
+    for _ in range(3): run('sc7.py')
+if os.path.isdir(os.path.join(R, 'results', 'scores7')):
+    run('pool7.py')
 run('rank2.py'); run('rank3.py'); run('prep.py'); run('dedup.py')
 run('strat.py'); run('framework.py')
 run('ladder.py'); run('funnel.py')   # both consume framework.py output / its hmm cache
