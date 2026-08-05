@@ -17,6 +17,8 @@ const NAV=`<nav role="tablist">
 const BODY=`<div class="grid">
 <div>
 <div class="panel"><h3>Gates</h3><div id="gates"></div>
+<button class="chip" id="indep" aria-pressed="true" style="width:100%;margin-top:6px"
+ title="Gate 8. Greedy decorrelation: strongest survivor first, absorb everything correlated above 0.70, repeat. Computed at the STRICT settings, so it is only meaningful there.">Gate 8: independent only</button>
 <button class="chip" id="strict" style="width:100%;margin-top:6px">Reset to strict</button>
 </div>
 <div class="panel" style="margin-top:16px"><h3>Attrition</h3><div class="funnel" id="fun"></div></div>
@@ -30,9 +32,11 @@ const BODY=`<div class="grid">
 <th data-k="s">Signal</th><th data-k="to">t OOS</th><th data-k="ti">t IS</th>
 <th data-k="si">Spread</th><th data-k="ao">Agree</th><th data-k="mo">Mono</th>
 <th data-k="dec">Decay</th><th>Quintiles</th></tr></thead><tbody></tbody></table></div>
-<div class="note"><b>Not yet gated:</b> time stability across 6 blocks, window robustness,
-correlation to incumbents, turnover and detection lag. Those need a rescore and the
-estimator rebuilt. Everything shown here is measured, nothing is assumed.</div>
+<div class="note"><b>Gate 7</b> is time stability across 6 blocks; <b>gate 8</b> is greedy
+decorrelation against already-selected signals, which is why the survivor count is far
+below the raw number clearing gates 1-6. <b>Still not gated:</b> window robustness against
+neighbouring lookbacks, turnover, detection lag and coverage. Everything shown here is
+measured, nothing is assumed.</div>
 </div></div></section>
 
 <section id="s" hidden>
@@ -146,10 +150,19 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 
 `;
 window.renderApp=function(BUNDLE,root){
-  let BUN=BUNDLE, D=(BUNDLE.signals||BUNDLE);
+  let BUN=BUNDLE, DALL=(BUNDLE.signals||BUNDLE);
+  // Every scored signal is carried in the feed, including the ones that could not be
+  // scored at all (ok:false -- too few pairs with data, or an undefined t). Those have
+  // null metrics, so they are excluded from RENDERING while still being counted. The
+  // data file keeps them; the tables just have nothing to draw.
+  let D=DALL.filter(d=>d.ok!==false&&d.to!=null);
   root.innerHTML=NAV+'<section id="g">'+BODY;
   const MT=BUN.meta||{};
-  $('#sub').textContent=(D.length||0)+' signals \u00b7 '+(MT.pairs||28)+' pairs \u00b7 IS 1999-2015 \u00b7 OOS 2016-2026'+(MT.built?' \u00b7 rebuilt '+MT.built:'');
+  const nUn=DALL.length-D.length;
+  $('#sub').textContent=D.length.toLocaleString()+' signals'
+   +(nUn?' \u00b7 '+nUn.toLocaleString()+' unscorable held back':'')
+   +' \u00b7 '+(MT.pairs||28)+' pairs \u00b7 IS 1999-2015 \u00b7 OOS 2016-2026'
+   +(MT.built?' \u00b7 rebuilt '+MT.built:'');
   const GATES=[
    {k:'to', n:'|t| OOS',      min:0,   max:25, step:.5, v:8,   f:d=>Math.abs(d.to)},
    {k:'si', n:'Effect size',  min:0,   max:.04,step:.001,v:.02,f:d=>Math.abs(d.si)},
@@ -168,13 +181,19 @@ window.renderApp=function(BUNDLE,root){
   
   function fmt(g,v){return g.k==='si'?v.toFixed(3):(g.k==='tsb'?v.toFixed(0)+' of 6':v.toFixed(2));}
   function vals(){return GATES.map((g,i)=>+$('#r'+i).value);}
+  let fIND=1;
   function survivors(){
    const V=vals();
-   return D.filter(d=>d.held&&GATES.every((g,i)=>g.f(d)>=V[i]));}
+   const s=D.filter(d=>d.held&&GATES.every((g,i)=>g.f(d)>=V[i]));
+   // Gate 8. indep is marked by dedup.py against the STRICT set, so it only means
+   // what it says at strict settings; loosen a slider and the clustering behind it
+   // no longer matches what is on screen.
+   return fIND?s.filter(d=>d.indep!==false):s;}
   function funnel(){
    const V=vals();let cur=D.filter(d=>d.held);
    const rows=[['sign holds',cur.length]];
    GATES.forEach((g,i)=>{cur=cur.filter(d=>g.f(d)>=V[i]);rows.push([g.n,cur.length]);});
+   if(fIND){cur=cur.filter(d=>d.indep!==false);rows.push(['independent',cur.length]);}
    $('#fun').innerHTML=rows.map(r=>
     `<div class="fr"><span class="nm">${r[0]}</span><span class="bar">
      <i style="width:${100*r[1]/D.length}%"></i></span>
@@ -195,7 +214,9 @@ window.renderApp=function(BUNDLE,root){
     <td>${d.mo.toFixed(2)}</td><td>${d.dec.toFixed(2)}</td><td>${spark(d.qo)}</td></tr>`;}).join('')
     ||'<tr><td colspan="8" style="color:var(--kill);padding:18px">Nothing survives these gates.</td></tr>';}
   GATES.forEach((g,i)=>$('#r'+i).oninput=drawG);
-  $('#strict').onclick=()=>{STRICT.forEach((v,i)=>$('#r'+i).value=v);drawG();};
+  $('#strict').onclick=()=>{STRICT.forEach((v,i)=>$('#r'+i).value=v);fIND=1;
+   $('#indep').setAttribute('aria-pressed',true);drawG();};
+  $('#indep').onclick=e=>{fIND=fIND?0:1;e.target.setAttribute('aria-pressed',!!fIND);drawG();};
   $('#exp').onclick=()=>{const S=survivors();
    const csv='signal,t_is,t_oos,spread_is,spread_oos,agree_is,agree_oos,mono_oos,decay\n'+
     S.map(d=>[d.s,d.ti,d.to,d.si,d.so,d.ai,d.ao,d.mo,d.dec].join(',')).join('\n');
