@@ -120,8 +120,11 @@ for d, batch in zip(DIRS, LABELS):
             continue
         if np.isnan(i['t'][j]) or np.isnan(o['t'][j]):
             continue
+        # f is the Families tab's grouping key. rsplit('_',1) is right for v2-v5
+        # but on a v6 name like za_ts_sg2_v20_pl it strips one token and leaves
+        # ~29,000 groups, which the tab cannot render. v6 uses the coarse family.
         r = dict(
-            s=s, f=s.rsplit('_', 1)[0], fam=famof(s, batch), b=batch,
+            s=s, f=famof(s, batch), b=batch,
             ti=round(float(i['t'][j]), 2), to=round(float(o['t'][j]), 2),
             si=round(float(i['spread'][j]), 5), so=round(float(o['spread'][j]), 5),
             ai=round(float(i['agree'][j]), 3), ao=round(float(o['agree'][j]), 3),
@@ -215,14 +218,14 @@ if len(g7):
     print('\nsurvivors by batch:')
     print(g7.groupby('b').size().to_string())
     print('\nsurvivors by family:')
-    print(g7.groupby(['b', 'fam']).size().sort_values(ascending=False).head(20).to_string())
+    print(g7.groupby(['b', 'f']).size().sort_values(ascending=False).head(20).to_string())
     if 'bt' in g7:
         print('\nsurvivors by target read:')
         print(g7.bt.fillna('single-target').value_counts().to_string())
 
 # ---- OOS sign retention by family: what to stop building next time ----
 # This is how interactions (49.1%) and deltas (42%) were killed on evidence.
-F = (D.groupby(['b', 'fam'])
+F = (D.groupby(['b', 'f'])
      .agg(n=('held', 'size'), retention=('held', 'mean'),
           best_to=('to', lambda x: x.abs().max()),
           med_to=('to', lambda x: x.abs().median()))
