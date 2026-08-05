@@ -149,7 +149,24 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 <div class="note" id="cmptx"></div></section>
 
 `;
+// The feed is split in two: app_data.json (small, everything except signals) and
+// app_signals.json (large). The shell only fetches the first and hands it here, so
+// this module fetches the second itself and merges before rendering.
 window.renderApp=function(BUNDLE,root){
+  if(BUNDLE&&BUNDLE.signals){return boot(BUNDLE,root);}          // pre-split feed
+  const url=(BUNDLE&&BUNDLE.meta&&BUNDLE.meta.signals_url)||'app_signals.json';
+  root.innerHTML='<div style="padding:32px;font:14px/1.6 system-ui;color:#8a8f98">'
+   +'Loading signals\u2026<br><span style="font-size:12px;opacity:.7">'
+   +'app_signals.json is ~47 MB and gzips to about 6 MB.</span></div>';
+  fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+   .then(function(sig){BUNDLE.signals=sig;boot(BUNDLE,root);})
+   .catch(function(e){root.innerHTML='<div style="padding:32px;font:14px/1.6 system-ui;'
+     +'color:#d05">Could not load signals ('+e.message+').<br><span style="font-size:12px">'
+     +'The feed is split: <code>app_data.json</code> and <code>app_signals.json</code> '
+     +'must both be reachable. Tried:<br><code>'+url+'</code></span></div>';});
+};
+
+function boot(BUNDLE,root){
   let BUN=BUNDLE, DALL=(BUNDLE.signals||BUNDLE);
   // Every scored signal is carried in the feed, including the ones that could not be
   // scored at all (ok:false -- too few pairs with data, or an undefined t). Those have
