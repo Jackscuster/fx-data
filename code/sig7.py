@@ -395,7 +395,11 @@ def m2_conditional(ctx, pair):
              'rn': (lp.rolling(n).max() - lp.rolling(n).min()) / (sd * np.sqrt(n)),
              'dn': (-r.clip(upper=0)).rolling(n).sum() / path,
              'gi': ar.rolling(n).std() / ar.rolling(n).mean(),
-             'tl': ar.rolling(n).max() / ar.rolling(n).sum(),
+             # was ar.max()/ar.sum(), which is byte-identical to 'mx' above because
+             # path IS ar.rolling(n).sum(). That shipped 700 duplicate signals in the
+             # first v7 run. Now a genuinely different tail measure: the top TWO moves.
+             'tl': (ar.rolling(n).max() + ar.rolling(n).apply(
+                 lambda a: np.partition(a, -2)[-2] if len(a) > 1 else np.nan, raw=True)) / path,
              'sk': r.rolling(n).skew(),
              'kt': r.rolling(n).kurt(),
              'ac': r.rolling(n).corr(r.shift(1))}
