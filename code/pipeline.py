@@ -34,5 +34,6 @@ run('crisis.py')                     # scores detectors against the events.py ne
 if os.environ.get('FX_RUN_STABILITY'):
     run('stability.py')
 run('ninebox.py'); run('mtf.py'); run('bundle.py')
-shutil.copy(os.path.join(R,'results','app_data.json'),os.path.join(R,'app_data.json'))
+for _f in ('app_data.json','app_signals.json'):
+    shutil.copy(os.path.join(R,'results',_f),os.path.join(R,_f))
 print('\napp_data.json refreshed at repo root')
