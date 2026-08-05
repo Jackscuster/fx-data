@@ -36,7 +36,8 @@ CORRF = os.path.join(ROOTOUT, 'survivor_corr.csv')
 THRESH = 0.70
 NPAIR = 6
 MOD = {'own-price': 'sig2', 'cross-sectional': 'sig3', 'multi-timeframe': 'sig4',
-       'regime-v5': 'sig5', 'trend-duration': 'sig6'}
+       'regime-v5': 'sig5', 'trend-duration': 'sig6',
+       'trend-nonmomentum': 'sig7'}
 VARP = {'za_': ('z', 250), 'zb_': ('z', 500), 'zc_': ('z', 750), 'zd_': ('z', 120),
         'ze_': ('z', 60), 'ra_': ('r', 500), 'rb_': ('r', 250), 'rc_': ('r', 120),
         'rd_': ('r', 60)}
@@ -80,12 +81,13 @@ def series_for(surv, px, pairs):
                 F = m.build(px[pair])
             elif mod == 'sig5':
                 F = m.build(px, pair, ctx, exclude=frozenset())
-            elif mod == 'sig6':
+            elif mod in ('sig6', 'sig7'):
                 F = m.base_frame(px, pair, ctx)
             else:
                 F = m.build(px, pair, ctx)
             for n in names:
-                base, spec = split_variant(n) if mod == 'sig6' else (n, None)
+                base, spec = (split_variant(n) if mod in ('sig6', 'sig7')
+                              else (n, None))
                 if base in F.columns:
                     out[n].append(apply_variant(F[base].astype(float), spec).values)
                 elif n in F.columns:

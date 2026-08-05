@@ -28,6 +28,7 @@ DIRS = [os.path.join(ROOTOUT,'/scores'.lstrip('/')),
         os.path.join(ROOTOUT,'scores5'),
         os.path.join(ROOTOUT,'scores6')]
 LABELS = ['own-price', 'cross-sectional', 'multi-timeframe', 'regime-v5', 'trend-duration']
+V7LAB = 'trend-nonmomentum'   # pooled from signals7_stats.csv, not from .npz
 OUT = os.path.join(ROOTOUT,''.lstrip('/'))
 NBLK = 6          # time-stability blocks; gate 7 wants the sign holding in >= 4
 
@@ -152,6 +153,31 @@ for d, batch in zip(DIRS, LABELS):
         r['csb'] = int(stc[j]) if stc is not None else None
         rows.append(r)
 
+# ---- v7 arrives as pooled statistics, not .npz ----
+# results/scores7/ is gitignored (the repo already carries 438 MB of scores6), so
+# pool7.py writes one row per signal and that CSV is what is committed. Same record
+# shape as the npz batches; the 60d and 120d horizons ride along as extra columns.
+_v7 = os.path.join(OUT, 'signals7_stats.csv')
+if os.path.exists(_v7):
+    V = pd.read_csv(_v7)
+    print('v7 stats: %d rows from %s' % (len(V), os.path.basename(_v7)))
+    for _, v in V.iterrows():
+        r = dict(s=v.s, f=v.mech, b='trend-nonmomentum', ok=bool(v.ok),
+                 ti=nn(v.ti_20), to=nn(v.to_20), si=nn(v.si_20), so=nn(v.so_20),
+                 ai=nn(v.ai_20), ao=nn(v.ao_20), mi=nn(v.mi_20), mo=nn(v.mo_20),
+                 n=int(v.n) if np.isfinite(v.n) else 0, qo=None,
+                 cti=nn(v.cti), cto=nn(v.cto), cso=nn(v.cso), cao=nn(v.cao),
+                 tsb=(int(v.tsb_20) if np.isfinite(v.tsb_20) else None), csb=None)
+        r['stronger_target'] = ('chop' if r['cto'] is not None and r['to'] is not None
+                                and abs(r['cto']) > abs(r['to']) else 'trend')
+        # the horizon question, carried per signal
+        for H in (60, 120):
+            r['to_%d' % H] = nn(v['to_%d' % H]); r['so_%d' % H] = nn(v['so_%d' % H])
+            r['ao_%d' % H] = nn(v['ao_%d' % H]); r['mo_%d' % H] = nn(v['mo_%d' % H])
+            r['dec_%d' % H] = nn(v['dec_%d' % H]); r['tsb_%d' % H] = (
+                int(v['tsb_%d' % H]) if np.isfinite(v['tsb_%d' % H]) else None)
+        rows.append(r)
+
 _D0 = pd.DataFrame(rows)
 _dup = _D0.s.duplicated()
 if _dup.any():
@@ -254,5 +280,31 @@ print('top 15')
 print(F.head(15).to_string(index=False, float_format=lambda x: '%.3f' % x))
 print('bottom 15 — these are the ones to stop building')
 print(F.tail(15).to_string(index=False, float_format=lambda x: '%.3f' % x))
+# ---- does effect size rise at 60d and 120d? ----
+if 'to_60' in SCOR.columns:
+    H = SCOR[SCOR.b == V7LAB]
+    if len(H):
+        print('\n' + '=' * 78)
+        print('HORIZON TEST — does trend live at 60-120 days rather than 20?')
+        print('=' * 78)
+        rowsH = []
+        for h, tc, sc_, ac in ((20, 'to', 'si', 'ao'), (60, 'to_60', 'so_60', 'ao_60'),
+                               (120, 'to_120', 'so_120', 'ao_120')):
+            x = H[H[tc].notna()]
+            rowsH.append(dict(horizon='%dd' % h, n=len(x),
+                              med_abs_t=x[tc].abs().median(),
+                              med_abs_effect=x[sc_].abs().median(),
+                              p90_abs_effect=x[sc_].abs().quantile(.90),
+                              share_effect_ge_020=(x[sc_].abs() >= .02).mean(),
+                              med_agree=x[ac].median(),
+                              share_trend_signed=(x[tc] > 0).mean()))
+        HT = pd.DataFrame(rowsH)
+        HT.to_csv(os.path.join(OUT, 'horizon_test.csv'), index=False)
+        print(HT.to_string(index=False, float_format=lambda x: '%.4f' % x))
+        print('\nby mechanism, median |effect| at each horizon:')
+        piv = H.groupby('f')[['si', 'so_60', 'so_120']].apply(lambda g: g.abs().median())
+        piv.columns = ['20d', '60d', '120d']
+        print(piv.to_string(float_format=lambda x: '%.4f' % x))
+
 print('\nbatch-level retention:')
 print(SCOR.groupby('b').held.agg(['size', 'mean']).to_string(float_format=lambda x: '%.3f' % x))
