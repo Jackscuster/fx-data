@@ -109,9 +109,59 @@ def build(px=None, force=False):
     return C
 
 
+def stats(px=None, C=None):
+    """The composite's own regime-detection scorecard. No money metrics."""
+    if px is None:
+        px = pd.read_csv(PX, index_col=0, parse_dates=True)
+    if C is None:
+        C = build(px)
+    SPLIT = pd.Timestamp('2016-01-01')
+    H = 20
+    qs, spreads, turns = [], [], []
+    for p in px.columns:
+        lp = np.log(px[p].astype(float)); r = lp.diff()
+        e = ((lp.shift(-H) - lp).abs() / r.abs().shift(-H).rolling(H).sum())
+        t = (np.sign(r) != np.sign(r.shift(1))).astype(float).shift(-H).rolling(H).mean()
+        d = pd.DataFrame({'c': C[p], 'e': e, 't': t}).dropna()
+        d = d[d.index >= SPLIT]
+        if len(d) < 400:
+            continue
+        q = pd.qcut(d.c, 5, labels=False, duplicates='drop')
+        if q.nunique() < 5:
+            continue
+        qs.append(d.e.groupby(q).mean().values)
+        turns.append(d.t.groupby(q).mean().values)
+        spreads.append(d.e.groupby(q).mean().values[4] - d.e.groupby(q).mean().values[0])
+    Q = np.nanmean(np.stack(qs), axis=0)
+    T = np.nanmean(np.stack(turns), axis=0)
+    spread = float(Q[4] - Q[0])
+    agree = float(np.mean(np.sign(spreads) == np.sign(spread)))
+    rk = np.arange(5) - 2
+    mono = float(np.corrcoef(rk, Q)[0, 1])
+    IND = independents()
+    best = max(abs(d['so']) for d in IND if d.get('so') is not None)
+    bestn = max(IND, key=lambda d: abs(d.get('so') or 0))['s']
+    R = pd.DataFrame([dict(
+        metric='composite', q1=Q[0], q2=Q[1], q3=Q[2], q4=Q[3], q5=Q[4],
+        spread=spread, mono=mono, agree=agree, n_components=len(IND),
+        turn_q1=T[0], turn_q5=T[4], turn_spread=float(T[4] - T[0]),
+        best_single=best, best_single_name=bestn,
+        uplift=spread - best)])
+    R.to_csv(os.path.join(ROOTOUT, 'composite_stats.csv'), index=False)
+    print('\nCOMPOSITE SCORECARD (OOS, regime detection only)')
+    print('  quintile efficiency  ' + '  '.join('%.4f' % v for v in Q))
+    print('  Q5-Q1 spread %+.4f | monotonicity %+.3f | pair agreement %.3f'
+          % (spread, mono, agree))
+    print('  turn frequency Q1 %.4f -> Q5 %.4f (spread %+.4f)' % (T[0], T[4], T[4] - T[0]))
+    print('  best single survivor %s at %.4f -> composite adds %+.4f'
+          % (bestn, best, spread - best))
+    return R
+
+
 if __name__ == '__main__':
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
     C = build(px, force=True)
+    stats(px, C)
     SPLIT = pd.Timestamp('2016-01-01')
     print('\ncomposite: HIGH = expect straight travel, LOW = expect whipsaw')
     print(C.describe().T[['count', 'mean', 'std', 'min', 'max']].head(6)

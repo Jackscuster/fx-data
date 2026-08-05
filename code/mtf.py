@@ -84,6 +84,74 @@ def metrics(ret, pos, tot):
                 data_pct=len(ret) / tot)
 
 
+H = 20
+
+
+def _fe(lp, h=H):
+    r = lp.diff()
+    return ((lp.shift(-h) - lp).abs() / r.abs().shift(-h).rolling(h).sum()
+            ).replace([np.inf, -np.inf], np.nan)
+
+
+def _ft(lp, h=H):
+    r = lp.diff()
+    return (np.sign(r) != np.sign(r.shift(1))).astype(float).shift(-h).rolling(h).mean()
+
+
+def regime_confluence(COMP):
+    """Does confluence SEPARATE REGIMES? Forward efficiency and turn frequency
+    per cell, lift against the all-bars baseline, pair agreement, share of bars.
+    No Sharpe, no Ret/DD, no profit factor -- those are Phase 4 measures."""
+    px = pd.read_csv(PX, index_col=0, parse_dates=True)
+    per, be, bt, nb = {}, [], [], 0
+    for p in px.columns:
+        lp = np.log(px[p].astype(float))
+        oos = lp.index >= SPLIT
+        cser = COMP[p].reindex(lp.index)
+        L = {}
+        for tf, (rule, n) in TF.items():
+            s2 = cser if tf == 'D' else cser.resample(rule).last().dropna()
+            ins = s2.index < SPLIT
+            if s2[ins].notna().sum() < 30:
+                L[tf] = pd.Series(np.nan, index=lp.index, dtype=object); continue
+            q = np.nanquantile(s2[ins].dropna(), [1 / 3, 2 / 3])
+            lab = pd.Series(np.where(s2 < q[0], 'chop', np.where(s2 > q[1], 'trend', 'mid')),
+                            index=s2.index).where(s2.notna()).shift(1)
+            if tf != 'D':
+                lab = lab.reindex(lp.index, method='ffill')
+            L[tf] = lab
+        dD = L['D']
+        conf = pd.Series(np.where(dD.isna(), np.nan,
+                                  (L['W'] == dD).astype(float) + (L['M'] == dD).astype(float)),
+                         index=lp.index)
+        E, T = _fe(lp), _ft(lp)
+        m0 = oos & E.notna().values
+        be.append(E[m0].mean()); bt.append(T[m0].mean()); nb += int(m0.sum())
+        cells = {'all 3 aligned': conf == 2, '2 of 3': conf == 1, 'daily alone': conf == 0}
+        for st in ('trend', 'mid', 'chop'):
+            cells['aligned ' + st] = (conf == 2) & (dD == st)
+        for nm, mask in cells.items():
+            m = m0 & mask.values
+            if m.sum() < 150:
+                continue
+            per.setdefault(nm, []).append(
+                (E[m].mean(), T[m].mean(), int(m.sum()), E[m0].mean(), T[m0].mean()))
+    BE, BT = float(np.nanmean(be)), float(np.nanmean(bt))
+    rows = [dict(cell='BASELINE', eff=BE, turn=BT, eff_lift=0.0, turn_lift=0.0,
+                 agree_eff=np.nan, data_pct=1.0)]
+    for nm, lst in per.items():
+        e = float(np.nanmean([a for a, _, _, _, _ in lst]))
+        t = float(np.nanmean([b for _, b, _, _, _ in lst]))
+        n = sum(c for _, _, c, _, _ in lst)
+        le = [a - x for a, _, _, x, _ in lst]
+        rows.append(dict(cell=nm, eff=e, turn=t, eff_lift=e - BE, turn_lift=t - BT,
+                         agree_eff=float(np.mean(np.sign(le) == np.sign(e - BE))),
+                         data_pct=n / nb))
+    R = pd.DataFrame(rows)
+    R.to_csv(os.path.join(ROOTOUT, 'mtf_regime.csv'), index=False)
+    return R
+
+
 def run_surv(COMP):
     """Confluence on the SURVIVOR read rather than on direction.
 
@@ -207,7 +275,19 @@ if __name__ == '__main__':
     T, A = run()
     try:
         import survivors
-        TS, AS_ = run_surv(survivors.build())
+        COMP = survivors.build()
+        RG = regime_confluence(COMP)
+        print('=' * 88)
+        print('REGIME SEPARATION BY CONFLUENCE (OOS, no money metrics)')
+        print('=' * 88)
+        b = RG[RG.cell == 'BASELINE'].iloc[0]
+        print('baseline forward-20d efficiency %.4f | turn frequency %.4f' % (b.eff, b.turn))
+        print(RG[RG.cell != 'BASELINE'].sort_values('eff_lift', ascending=False)[
+            ['cell', 'eff', 'eff_lift', 'agree_eff', 'turn', 'turn_lift', 'data_pct']]
+            .to_string(index=False, float_format=lambda v: '%.4f' % v))
+        x = RG[RG.cell != 'BASELINE']
+        print('best cell minus worst cell (efficiency): %+.4f' % (x.eff.max() - x.eff.min()))
+        TS, AS_ = run_surv(COMP)
         pd.set_option('display.width', 240, 'display.max_columns', 25)
         print('=' * 88)
         print('CONFLUENCE ON THE SURVIVOR READ (trend/mid/chop), not on direction')
