@@ -149,7 +149,8 @@ def main():
     for rep, members in cc.items():
         r = surv[surv.s == rep].iloc[0]
         rows.append(dict(representative=rep, batch=r.b, fam=r.f, to=r.to, si=r.si,
-                         ao=r.ao, tsb=r.tsb, bt=r.bt, n_members=len(members),
+                         ao=r.ao, tsb=r.tsb, stronger_target=r.stronger_target,
+                         n_members=len(members),
                          members='|'.join(members)))
     T = pd.DataFrame(rows).sort_values('to', key=abs, ascending=False)
     T.to_csv(OUTF, index=False)

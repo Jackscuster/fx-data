@@ -1,4 +1,4 @@
-representative,batch,fam,to,si,ao,tsb,bt,n_members,members
+representative,batch,fam,to,si,ao,tsb,stronger_target,n_members,members
 z_panelvol_40,cross-sectional,z_panelvol,-25.59,-0.02566,0.964,6.0,,12,z_panelvol_40|zz_panelvol_D40|z_paneldisp_40|zz_paneldisp_D40|z_panelvol_60|zz_panelvol_D60|zb_ats_60_750|zc_cx3_m50|cx2_s40|zb_dts_60_750|zb_cx3_m120|zz_coex3_D120
 cx4_m375,trend-duration,cx_m,-21.75,-0.02353,0.929,6.0,trend,4,cx4_m375|cx3_m60_ph|cx3_m50_ph|dts_20_250_ch
 zb_cx3_x30,trend-duration,cx_x,-20.43,-0.02135,0.893,6.0,trend,4,zb_cx3_x30|rc_cx3_s30|ra_cx3_x40|za_cx3_s25

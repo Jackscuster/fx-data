@@ -55,7 +55,7 @@ measured, nothing is assumed.</div>
 <th data-k="cto" title="Chop target (forward 20d turn frequency), t OOS">t OOS chop</th>
 <th data-k="cso" title="Chop target spread OOS">Spr OOS chop</th>
 <th data-k="cao" title="Chop target pair agreement OOS">Agr OOS chop</th>
-<th data-k="bt" title="Which target this signal reads more strongly on, out of sample">Target</th>
+<th data-k="stronger_target" title="Which of the two targets this signal scores higher on. NOT the trend/chop split — that is the sign of t OOS.">Stronger target</th>
 <th data-k="n">Obs</th>
 </tr></thead><tbody></tbody></table></div>
 <div class="note" style="margin-top:8px;opacity:.7;font-size:12px">Chop-target columns are
@@ -233,7 +233,7 @@ window.renderApp=function(BUNDLE,root){
   function drawA(){
    const q=$('#q').value.trim().toLowerCase();
    let v=D.filter(d=>(!q||d.s.toLowerCase().includes(q))&&(!fT||d.ti>0)&&(!fC||d.ti<0)
-    &&(!fQ||d.bt==='chop')
+    &&(!fQ||d.stronger_target==='chop')
     &&(!fX||d.b==='cross-sectional')&&(!fM||d.b==='multi-timeframe')&&(!fI||!d.s.startsWith('x_')));
    // nulls sort last in both directions rather than colliding at zero
    v.sort((a,b)=>{const x=a[as],y=b[as];
@@ -242,13 +242,13 @@ window.renderApp=function(BUNDLE,root){
    $('#acnt').textContent=v.length+' of '+D.length;
    $('#at tbody').innerHTML=v.slice(0,600).map(d=>{
     const c=Math.abs(d.ti)<2?'var(--flat)':(d.ti>0?'var(--trend)':'var(--chop)');
-    const tc=d.bt==='chop'?'var(--chop)':(d.bt==='trend'?'var(--trend)':'var(--flat)');
+    const tc=d.stronger_target==='chop'?'var(--chop)':(d.stronger_target==='trend'?'var(--trend)':'var(--flat)');
     return `<tr><td style="color:${c}">${d.s}</td><td style="color:${c}">${d.ti.toFixed(1)}</td>
     <td>${d.to.toFixed(1)}</td><td>${d.si.toFixed(4)}</td><td>${d.so.toFixed(4)}</td>
     <td>${(d.ai*100).toFixed(0)}%</td><td>${(d.ao*100).toFixed(0)}%</td>
     <td>${d.dec.toFixed(2)}</td>
     <td>${nf(d.cto,1)}</td><td>${nf(d.cso,4)}</td><td>${np(d.cao)}</td>
-    <td style="color:${tc}">${d.bt||NA}</td>
+    <td style="color:${tc}">${d.stronger_target||NA}</td>
     <td>${(d.n/1000).toFixed(0)}k</td></tr>`;}).join('');}
   $('#q').oninput=drawA;
   $('#cT').onclick=e=>{fT=!fT;fC=0;e.target.setAttribute('aria-pressed',!!fT);
