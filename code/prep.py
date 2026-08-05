@@ -167,7 +167,8 @@ if os.path.exists(_v7):
                  ai=nn(v.ai_20), ao=nn(v.ao_20), mi=nn(v.mi_20), mo=nn(v.mo_20),
                  n=int(v.n) if np.isfinite(v.n) else 0, qo=None,
                  cti=nn(v.cti), cto=nn(v.cto), cso=nn(v.cso), cao=nn(v.cao),
-                 tsb=(int(v.tsb_20) if np.isfinite(v.tsb_20) else None), csb=None)
+                 tsb=(int(v.tsb_20) if np.isfinite(v.tsb_20) else None), csb=None,
+                 mom_corr=nn(v.mom_corr) if 'mom_corr' in V.columns else None)
         r['stronger_target'] = ('chop' if r['cto'] is not None and r['to'] is not None
                                 and abs(r['cto']) > abs(r['to']) else 'trend')
         # the horizon question, carried per signal
@@ -305,6 +306,23 @@ if 'to_60' in SCOR.columns:
         piv = H.groupby('f')[['si', 'so_60', 'so_120']].apply(lambda g: g.abs().median())
         piv.columns = ['20d', '60d', '120d']
         print(piv.to_string(float_format=lambda x: '%.4f' % x))
+
+# ---- is 'cross-sectional' actually cross-sectional, or momentum in disguise? ----
+if 'mom_corr' in SCOR.columns:
+    Q = SCOR[SCOR.mom_corr.notna()]
+    if len(Q):
+        Q = Q.assign(kind=np.where(Q.mom_corr >= .70, 'disguised momentum',
+                                   'genuinely panel-wide'))
+        print('\n' + '=' * 78)
+        print('MOMENTUM COLLINEARITY — px28 is triangulated, so leg_base - leg_quote')
+        print('IS the pair return. Features built on it are momentum, which is on the')
+        print('do-not-build list. Split by |corr| with the own N-day return:')
+        print('=' * 78)
+        print(Q.groupby(['f', 'kind']).agg(
+            n=('held', 'size'), retention=('held', 'mean'),
+            best_to=('to', lambda x: x.abs().max()),
+            med_effect=('si', lambda x: x.abs().median())
+        ).to_string(float_format=lambda x: '%.3f' % x))
 
 print('\nbatch-level retention:')
 print(SCOR.groupby('b').held.agg(['size', 'mean']).to_string(float_format=lambda x: '%.3f' % x))

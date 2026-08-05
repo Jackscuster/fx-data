@@ -19,6 +19,38 @@ rule as prep.py. Failures are results.
 import numpy as np, pandas as pd
 import sig7
 
+MOMPAIRS = 6      # pairs sampled for the momentum-collinearity measurement
+
+
+def momentum_corr(px):
+    """Max |corr| of each base feature with the pair's OWN N-day return.
+
+    px28 is built by triangulating 8 USD rates, so the panel is exactly consistent
+    and leg_base - leg_quote IS the pair's return. Any M1 feature built on the
+    difference between a pair's two legs is therefore momentum in cross-sectional
+    clothing -- xsspr_r* correlates 1.000 with the N-day return, and the rank gap
+    inherits most of it. Momentum is on the do-not-build list, so rather than
+    silently counting those as cross-sectional discoveries this measures the
+    collinearity and carries it per signal. Nothing is dropped; the retention table
+    can then separate genuinely panel-wide features from disguised momentum.
+    """
+    ctx = sig7.context(px)
+    pairs = list(px.columns)[:MOMPAIRS]
+    acc = {}
+    for pair in pairs:
+        F = sig7.base_frame(px, pair, ctx)
+        lp = ctx['lp'][pair]
+        rets = pd.DataFrame({n: lp - lp.shift(n) for n in (20, 60, 120, 250, 500)})
+        Fv = F.astype(float)
+        for n in rets:
+            c = Fv.corrwith(rets[n]).abs()
+            for k, v in c.items():
+                if np.isfinite(v):
+                    acc[k] = max(acc.get(k, 0.0), float(v))
+        del F, Fv
+        print('  mom-corr %s' % pair, flush=True)
+    return acc
+
 SC = os.path.join(ROOTOUT, 'scores7')
 OUTF = os.path.join(ROOTOUT, 'signals7_stats.csv')
 HOR = {'t': 20, 'e': 60, 'f': 120}          # efficiency horizons
@@ -67,6 +99,17 @@ def main():
     out['mech'] = [sig7.mech_of(n) for n in names]
     out['b'] = 'trend-nonmomentum'
 
+    px = pd.read_csv(os.path.join(ROOTDATA, 'px28.csv'), index_col=0, parse_dates=True)
+    print('measuring momentum collinearity...', flush=True)
+    MC = momentum_corr(px)
+    def basename(n):
+        for p, _ in sig7.VAR:
+            if p and n.startswith(p):
+                return n[len(p):]
+        return n
+    out['mom_corr'] = [round(MC.get(basename(n), np.nan), 3) for n in names]
+    out['disguised_momentum'] = out.mom_corr >= .70
+
     prim = None
     for tag, H in HOR.items():
         R = pool_target(Z, K, tag)
@@ -106,6 +149,10 @@ def main():
     print('scorable %d | unscorable %d (kept, ok=False)'
           % (int(out.ok.sum()), int((~out.ok).sum())))
     print('\nby mechanism:'); print(out.mech.value_counts().to_string())
+    dm = out.groupby('mech').disguised_momentum.agg(['sum', 'mean'])
+    dm.columns = ['n_disguised', 'share']
+    print('\nmomentum collinearity (|corr| with the pair\'s own N-day return >= 0.70):')
+    print(dm.to_string(float_format=lambda x: '%.3f' % x))
 
 
 if __name__ == '__main__':
