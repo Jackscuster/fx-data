@@ -69,6 +69,7 @@ offset a fatal flaw with an unrelated strength.
 | 5 | Monotonic | ≥ 0.95 | tail-only effects |
 | 6 | Decay ratio (t_oos / t_is) | ≥ 0.60 | signals bleeding out |
 | 7 | Time stability | sign holds in ≥ 4 of 6 blocks | works only in one era |
+| 8 | Decorrelation | \|r\| < 0.70 vs already-kept | the same idea counted twice |
 
 Gate 7 went live with v6. NEXT_BATCH.md is explicit that gate 6 stays a **floor only —
 no ceiling** — so a signal stronger OOS than IS passes gate 6 and is caught, if at all,
@@ -78,10 +79,13 @@ Jack's instruction: **nothing in the gauntlet may be decoration.** An earlier dr
 monotonicity at 0.80, which almost everything passed. That was called out and tightened.
 
 **Never computed, still owed:** window robustness against neighbouring lookbacks,
-turnover, detection lag, coverage. Time stability is now gate 7 (§15). Correlation to
-already-selected signals is computed by `dedup.py` but is *not* a gate — it is applied
-after the fact to report distinct survivors, and applying it as a gate would change
-which signal in each cluster is kept.
+turnover, detection lag, coverage.
+
+**DATA RETENTION — non-negotiable.** Gates *mark*, they never filter. Every signal's
+full record stays in the `.npz` files and in `signals.json` whether it passes or not,
+including records that could not be scored at all (`ok:false`). Failures are results:
+interactions at 49% retention and deltas at 42% are findings that exist only because
+the losers were kept. `prep.py` used to drop 4,053 unscorable rows — it no longer does.
 
 ---
 
@@ -89,8 +93,8 @@ which signal in each cluster is kept.
 
 > **v6 added 2026-08-04.** The duration batch (`sig6.py`/`sc6.py`) added 103,226 scored
 > signals, taking the total from 20,275 to 123,501. Gate 7, time stability, is now live.
-> Survivors went 13 → 101, but **101 is not 101 discoveries**: correlation dedup at
-> |r| < 0.70 collapses the 88 v6 survivors to **25 distinct signals**. Quote 25, not 88.
+> Survivors went 13 → 101, but **101 is not 101 discoveries**: gate 8, greedy
+> decorrelation at |r| < 0.70, collapses them to **28 independent signals**. Quote 28.
 > The table below is the pre-v6 history; §15 covers v6.
 
 | Batch | Count | Character | Module |
@@ -452,7 +456,7 @@ actually works:
 ## 14. THE HONEST BOTTOM LINE
 
 123,501 signals tested. 101 survive strict gates, but correlation dedup collapses those
-to **25 distinct signals** — quote 25. Of the 20,275 tested before v6, thirteen survive:
+to **28 independent signals** — quote 28. Of the 20,275 tested before v6, thirteen survive:
 twelve chop detectors built on panel-wide volatility and dispersion, and one trend
 detector built on time-since-shock. Of the 25 distinct new ones, eighteen are again
 panel/cross-sectional and seven come from the duration family.
@@ -490,25 +494,35 @@ breadth, vol rank churn, panel turn frequency.
 |---|---|
 | Signals | 123,501 total (103,226 new) |
 | Survivors, gates 1–7 | **101** (13 pre-v6 + 88 new) |
-| **Distinct after correlation dedup** | **25** |
+| **Independent after gate 8** | **28 combined** (v6 alone 25, earlier alone 5) |
 | v6 OOS sign retention | **63.6%** — above own-price 54.0% and multi-timeframe 52.5% |
 
 ### What actually survived
 
-Of the 25 distinct new signals, **18 are panel/cross-sectional** (coexceedance, dispersion
-term structure, breadth, rank churn) and **7 are from the duration family** (`ts_*`,
-`ep_*`, `oc_*`). The bet in NEXT_BATCH.md was that duration would carry the trend side.
-It contributed, but the panel families again dominate.
+Of the 28 independent signals, **24 are v6 representatives and 4 come from the earlier
+batches**. Two clusters span batches, which is the finding that matters: `z_panelvol_40`
+absorbs five v6 survivors outright (`zb_ats_60_750`, `zc_cx3_m50`, `cx2_s40`,
+`zb_dts_60_750`, `zb_cx3_m120`), and `ra_cx2.5_m120` absorbs `zz_coex2_D150`. **Several
+v6 "discoveries" are rediscoveries of panel volatility.** Run the batches separately and
+you get 25 + 5 = 30; run them together and you get 28.
 
-**16 of the 25 carry a condition suffix** (`_ch`, `_ph`, `_pl`, `_ol`). Conditioning the
+By construction the panel/cross-sectional families (coexceedance, dispersion term
+structure, breadth, rank churn) still dominate the representative list. The bet in
+NEXT_BATCH.md was that duration would carry the trend side. It contributed — `ts_dd`,
+`ts_sg`, `ep_fl`, `ep_mu`, `hz_sg` all lead clusters — but panel again dominates.
+
+**Most representatives carry a condition suffix** (`_ch`, `_ph`, `_pl`, `_ol`). Conditioning the
 event on panel or own-vol state is the single most productive idea in the batch — it is
 what most distinguishes a survivor from its unconditional twin.
 
-**Hazard ratios produced zero distinct survivors.** `hz_*` reached the raw survivor list
-but every one collapsed into a `ts_*` cluster. This is structural, not bad luck: hazard is
-elapsed × count / H, which correlates near 1 with plain time-since. The idea NEXT_BATCH.md
-called "the most promising untested" is tested, and it adds nothing over time-since.
-**Do not rebuild it.**
+**Hazard ratios are a near-substitute for time-since, not a separate idea.** Under gate 8
+they and `ts_*` land in the same cluster every time; which one represents it is decided by
+whichever happens to be strongest, and that flips with the set. Decorrelating v6 alone,
+no `hz_*` survives as a representative. Decorrelating the combined set, `hz500_sg1.5_v10_pl`
+does — and it absorbs four `ts_*` signals. This is structural: hazard is
+elapsed × count / H, which correlates near 1 with plain elapsed time. Build one or the
+other, never both, and do not read the representative as evidence that hazard beat
+time-since.
 
 ### Gate 7 — time stability
 
