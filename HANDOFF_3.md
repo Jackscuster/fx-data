@@ -68,17 +68,30 @@ offset a fatal flaw with an unrelated strength.
 | 4 | Pairs agree OOS | ≥ 0.85 | one-pair flukes |
 | 5 | Monotonic | ≥ 0.95 | tail-only effects |
 | 6 | Decay ratio (t_oos / t_is) | ≥ 0.60 | signals bleeding out |
+| 7 | Time stability | sign holds in ≥ 4 of 6 blocks | works only in one era |
+
+Gate 7 went live with v6. NEXT_BATCH.md is explicit that gate 6 stays a **floor only —
+no ceiling** — so a signal stronger OOS than IS passes gate 6 and is caught, if at all,
+by gate 7. In practice gate 7 kills nothing that reaches it (§15).
 
 Jack's instruction: **nothing in the gauntlet may be decoration.** An earlier draft had
 monotonicity at 0.80, which almost everything passed. That was called out and tightened.
 
-**Never computed, still owed:** time stability across 6 blocks, window robustness
-against neighbouring lookbacks, correlation to already-selected signals, turnover,
-detection lag, coverage.
+**Never computed, still owed:** window robustness against neighbouring lookbacks,
+turnover, detection lag, coverage. Time stability is now gate 7 (§15). Correlation to
+already-selected signals is computed by `dedup.py` but is *not* a gate — it is applied
+after the fact to report distinct survivors, and applying it as a gate would change
+which signal in each cluster is kept.
 
 ---
 
-## 5. SIGNALS TESTED — 20,275 TOTAL
+## 5. SIGNALS TESTED — 123,501 TOTAL
+
+> **v6 added 2026-08-04.** The duration batch (`sig6.py`/`sc6.py`) added 103,226 scored
+> signals, taking the total from 20,275 to 123,501. Gate 7, time stability, is now live.
+> Survivors went 13 → 101, but **101 is not 101 discoveries**: correlation dedup at
+> |r| < 0.70 collapses the 88 v6 survivors to **25 distinct signals**. Quote 25, not 88.
+> The table below is the pre-v6 history; §15 covers v6.
 
 | Batch | Count | Character | Module |
 |---|---|---|---|
@@ -88,7 +101,9 @@ detection lag, coverage.
 | v5 | 7,862 | jump, contagion, entropy, vol clustering, order stats | `sig5.py` |
 
 Every batch was cross-referenced against previously tested names before building.
-**Zero duplicated work.**
+**Almost zero duplicated work** — `prep.py` now reports collisions instead of silently
+deduping them, which surfaced 16 real ones between sig2 and sig3 (`maxdd_*`,
+`z_maxdd_*`). v6's overlap against all 20,275 is genuinely zero.
 
 ### Survivors at strict gates
 
@@ -333,7 +348,11 @@ code/sig2..sig5.py  the four signal libraries
 code/sc2..sc5.py    scorers — one .npz per pair, resumable, skip completed pairs
 code/rank2.py       per-batch ranking with BH-FDR
 code/rank3.py
+code/sig6.py        v6 duration library, EVENT x CONDITION x READOUT
+code/sc6.py         v6 scorer, two targets + block spreads, resumable per block
 code/prep.py        pools ALL score dirs -> results/signals.json
+code/stability.py   gate 7 backfill for v2-v5
+code/dedup.py       correlation dedup -> how many survivors are actually distinct
 code/strat.py       38-config strategy sweep
 code/framework.py   look-ahead audit, durations, 3 logics, DSR
 code/ninebox.py     3x3 direction x volatility
@@ -432,8 +451,11 @@ actually works:
 
 ## 14. THE HONEST BOTTOM LINE
 
-20,275 signals tested. Thirteen survive strict gates. Twelve are chop detectors built on
-panel-wide volatility and dispersion; one is a trend detector built on time-since-shock.
+123,501 signals tested. 101 survive strict gates, but correlation dedup collapses those
+to **25 distinct signals** — quote 25. Of the 20,275 tested before v6, thirteen survive:
+twelve chop detectors built on panel-wide volatility and dispersion, and one trend
+detector built on time-since-shock. Of the 25 distinct new ones, eighteen are again
+panel/cross-sectional and seven come from the duration family.
 
 Total explanatory power of the entire library against forward efficiency: **1.4% of
 variance.** The best single signal moves forward efficiency from 0.212 to 0.232 — about
@@ -446,3 +468,70 @@ and became the panel's, both strength and durability improved. Carry, positionin
 options-market data and policy language remain untouched — and the crisis work makes
 clear that the biggest single event in the dataset was triggered by something price could
 not see.
+
+---
+
+## 15. THE v6 DURATION BATCH (added 2026-08-04)
+
+107,040 signals generated, 103,226 scored after the coverage filter. **Overlap with the
+previous 20,275: zero**, asserted at generation, not assumed.
+
+Built as **EVENT × CONDITION × READOUT**: ~280 datable events (sigma exceedances, new
+n-day highs and lows, MA crosses, direction flips, vol-median crosses, range breakouts,
+drawdown openings), six states an event can be required to occur in (unconditional,
+panel vol low/high, own vol low/high, coexceedance high), and readouts of time-since,
+hazard ratio, occupancy, episode count and streak length. Chop stayed cross-sectional:
+eigenvalue spectrum and eigen-gaps, dispersion term structure, a wider coexceedance grid,
+breadth, vol rank churn, panel turn frequency.
+
+### Results
+
+| | |
+|---|---|
+| Signals | 123,501 total (103,226 new) |
+| Survivors, gates 1–7 | **101** (13 pre-v6 + 88 new) |
+| **Distinct after correlation dedup** | **25** |
+| v6 OOS sign retention | **63.6%** — above own-price 54.0% and multi-timeframe 52.5% |
+
+### What actually survived
+
+Of the 25 distinct new signals, **18 are panel/cross-sectional** (coexceedance, dispersion
+term structure, breadth, rank churn) and **7 are from the duration family** (`ts_*`,
+`ep_*`, `oc_*`). The bet in NEXT_BATCH.md was that duration would carry the trend side.
+It contributed, but the panel families again dominate.
+
+**16 of the 25 carry a condition suffix** (`_ch`, `_ph`, `_pl`, `_ol`). Conditioning the
+event on panel or own-vol state is the single most productive idea in the batch — it is
+what most distinguishes a survivor from its unconditional twin.
+
+**Hazard ratios produced zero distinct survivors.** `hz_*` reached the raw survivor list
+but every one collapsed into a `ts_*` cluster. This is structural, not bad luck: hazard is
+elapsed × count / H, which correlates near 1 with plain time-since. The idea NEXT_BATCH.md
+called "the most promising untested" is tested, and it adds nothing over time-since.
+**Do not rebuild it.**
+
+### Gate 7 — time stability
+
+Six equal blocks, quintiles recomputed inside each, sign must hold in ≥ 4.
+
+- **All 13 pre-v6 survivors hold 6 of 6**, including the two pre-2008 blocks. The specific
+  worry — that panel-volatility signals ride the dispersion in COVID, 2020 and 2022 — is
+  answered: they do not.
+- Across all v6 signals the gate discriminates hard: **39% fail it**.
+- But it killed **0 of 101** survivors, because gates 1–6 already select for stability.
+  **Gate 7 is a strong standalone filter and a non-binding 7th sequential gate.** At ≥ 6
+  of 6 it would kill 28 of 88.
+
+### Gotchas this batch created
+
+- `app_data.json` is **36.5 MB** raw. raw.githubusercontent serves it gzipped, so the
+  transfer is **7.0 MB** — verified against the live URL. Fine, but no longer trivial.
+- The decay scatter emitted one `<circle>` per signal. At 123,501 that is a multi-megabyte
+  SVG that locks the browser. It now samples to ~12,000.
+- The Families tab grouped on `s.rsplit('_',1)[0]`, which left **29,344 groups** on v6
+  names. v6 now groups on the coarse readout × event family.
+- `results/scores6/` is **438 MB** committed. Actions will never rescore it, but the repo
+  is now ~500 MB.
+- **16 names collide between sig2 and sig3** (`maxdd_*`, `z_maxdd_*`) and have been
+  silently deduped since v3. §5's "zero duplicated work" was not exactly true. v6's own
+  overlap is genuinely zero.

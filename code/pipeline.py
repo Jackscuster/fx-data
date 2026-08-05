@@ -17,7 +17,7 @@ for _ in range(8): run('sc5.py')
 # results/scores6/; every later run then finds the .npz and skips.
 if os.environ.get('FX_RUN_SC6'):
     for _ in range(3): run('sc6.py')
-run('rank2.py'); run('rank3.py'); run('prep.py')
+run('rank2.py'); run('rank3.py'); run('prep.py'); run('dedup.py')
 run('strat.py'); run('framework.py')
 run('ladder.py'); run('funnel.py')   # both consume framework.py output / its hmm cache
 run('crisis.py')                     # scores detectors against the events.py news calendar
