@@ -11,3 +11,6 @@ __pycache__/
 # v7 scores are local only: pooled per-signal statistics are committed instead
 # (results/signals7_stats.csv). The repo already carries 438 MB of scores6.
 results/scores7/
+
+# Task-1 selection experiment: per-pair rescores, regenerable, not a feed
+results/_isonly/
