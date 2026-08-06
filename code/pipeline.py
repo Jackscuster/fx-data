@@ -33,7 +33,16 @@ run('crisis.py')                     # scores detectors against the events.py ne
 # (rebuilds each module's full frame per pair), so it is opt-in like sc6.
 if os.environ.get('FX_RUN_STABILITY'):
     run('stability.py')
-run('ninebox.py'); run('mtf.py'); run('bundle.py')
+run('ninebox.py'); run('mtf.py')
+# The four validation tests, permanent. Shuffled labels and persistence are cheap;
+# synthetic ground truth and refit stability each rebuild the composite, so they
+# are gated the same way sc6/sc7 are and run on demand.
+if os.environ.get('FX_FULL_VALIDATION'):
+    run('validate.py')
+else:
+    subprocess.run([sys.executable, os.path.join(C, 'validate.py'),
+                    '--no-synth', '--no-refit'], check=True)
+run('bundle.py')
 for _f in ('app_data.json','app_signals.json'):
     shutil.copy(os.path.join(R,'results',_f),os.path.join(R,_f))
 print('\napp_data.json refreshed at repo root')

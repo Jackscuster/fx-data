@@ -1,0 +1,2 @@
+test,accuracy,precision,recall,median_lag_days,n_pairs,built_s,passes
+synthetic,0.9104630619115422,0.9136084176440484,0.9141177634930026,32.0,28,823,True
