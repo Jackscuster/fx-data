@@ -13,6 +13,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="nb">9-Box</button>
 <button role="tab" aria-selected="false" data-t="mt">Timeframes</button>
 <button role="tab" aria-selected="false" data-t="cr">Crisis</button>
+<button role="tab" aria-selected="false" data-t="va">Validation</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
 const BODY=`<div class="grid">
@@ -170,6 +171,34 @@ Under forward-only testing it vanished, and every detector fires on the day.</di
 <div class="tw"><table id="cet"><thead><tr>
 <th>Date</th><th>Type</th><th>Ccy</th><th>Severity</th><th>Event</th>
 </tr></thead><tbody></tbody></table></div></section>
+
+<section id="va" hidden>
+<div class="note"><b>Is the estimator detecting anything at all?</b> Four tests, none of
+them a money metric. Every other score in this app is measured against a target derived
+from the same prices; these are the tests that can say the whole thing is an artefact.</div>
+<div id="valcards" style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0"></div>
+<h3>1 — Shuffled labels</h3>
+<div class="note">Shuffle the regime labels while preserving run lengths, rescore, 500
+times. If the real labels sit inside that null, the composite is only chopping the sample
+into persistent blocks and any persistent blocking would score the same.</div>
+<div id="valshuf"></div>
+<h3>2 — Synthetic ground truth</h3>
+<div class="note">Simulate a panel whose regimes we set ourselves, then run the composite
+against them. The only place in the project a real accuracy number can exist.</div>
+<div id="valsynth"></div>
+<h3>3 — Refit stability</h3>
+<div class="note">Build the composite through 2015 and label history; rebuild through 2020
+and label again. If 2010's labels move, the composite is using information it would not
+have had at the time.</div>
+<div id="valrefit"></div>
+<h3>4 — Persistence and transitions</h3>
+<div class="note">A real regime structure has a strong diagonal and spends its time in
+long runs. Note that share-of-runs and share-of-bars answer different questions: a third
+of runs can be short while almost no time is spent in them.</div>
+<div id="valpers"></div>
+<div class="tw" style="margin-top:12px"><table id="valtr"><thead><tr>
+<th>from \ to</th><th>chop</th><th>mid</th><th>trend</th></tr></thead><tbody></tbody></table></div>
+</section>
 
 <section id="vd" hidden>
 <h3>The strictest test — is any one variant provably not luck?</h3>
@@ -578,6 +607,54 @@ function boot(BUNDLE,root){
     Complexity did not buy anything here.`;})();
   }
   
+  // ---- validation tab ----
+  (function(){const SUM=BUN.val_summary||[];if(!SUM.length)return;
+   const NAME={shuffled_labels:'Shuffled labels',synthetic:'Synthetic truth',
+               refit_stability:'Refit stability',persistence:'Persistence'};
+   $('#valcards').innerHTML=SUM.map(d=>{
+    const ok=d.passes===true||d.passes==='True';
+    return `<div class="panel" style="flex:1;min-width:170px;border-left:3px solid
+     ${ok?'var(--trend)':'var(--kill)'}">
+     <div class="big" style="color:${ok?'var(--trend)':'var(--kill)'}">${ok?'PASS':'FAIL'}</div>
+     <span class="count">${NAME[d.test]||d.test}</span></div>`;}).join('');
+   const S=(BUN.val_shuffle||[])[0];
+   if(S)$('#valshuf').innerHTML=`<div class="note">Real trend-minus-chop efficiency gap
+    <b>${S.real>0?'+':''}${S.real.toFixed(5)}</b>. Shuffled null: mean
+    ${S.null_mean>0?'+':''}${S.null_mean.toFixed(5)}, sd ${S.null_std.toFixed(5)},
+    95th percentile ${S.null_p95>0?'+':''}${S.null_p95.toFixed(5)} over
+    ${S.n_shuffles} shuffles. The real labels sit at the
+    <b>${(S.percentile*100).toFixed(1)}%</b> percentile of the null,
+    <b>z = ${S.z>0?'+':''}${S.z.toFixed(2)}</b>.</div>`;
+   const Y=(BUN.val_synth||[])[0];
+   $('#valsynth').innerHTML=Y?`<div class="note">On regimes we defined:
+    accuracy <b>${(Y.accuracy*100).toFixed(1)}%</b>, precision
+    <b>${(Y.precision*100).toFixed(1)}%</b>, recall <b>${(Y.recall*100).toFixed(1)}%</b>,
+    median detection lag <b>${Y.median_lag_days} days</b> across ${Y.n_pairs} pairs.</div>`
+    :'<div class="note">Not run in this build (rebuilds the composite; run with FX_FULL_VALIDATION).</div>';
+   const RF=(BUN.val_refit||[])[0];
+   $('#valrefit').innerHTML=RF?`<div class="note">${RF.year} labels identical after
+    refitting through 2020: <b>${(RF.label_agreement*100).toFixed(1)}%</b> of days across
+    ${RF.n_pairs} pairs.<br><b>Limitation:</b> this refits the composite only. The 32
+    survivors were selected by gates that read out-of-sample statistics, so the choice of
+    which signals to combine already knows about 2016\u20132026. That is a larger
+    look-ahead than this test measures.</div>`
+    :'<div class="note">Not run in this build (rebuilds the composite twice).</div>';
+   const P=BUN.val_persist||[];
+   if(P.length)$('#valpers').innerHTML='<div class="tw"><table><thead><tr>'
+    +'<th>Regime</th><th>Runs</th><th>Median len</th><th>Mean len</th>'
+    +'<th>% runs &lt;5d</th><th>% bars &lt;5d</th><th>Diagonal</th></tr></thead><tbody>'
+    +P.map(d=>`<tr><td>${d.regime}</td><td>${d.n_runs}</td>
+      <td>${d.median_len.toFixed(1)}</td><td>${d.mean_len.toFixed(1)}</td>
+      <td>${(d.share_runs_under_5*100).toFixed(1)}%</td>
+      <td><b>${(d.share_bars_under_5*100).toFixed(1)}%</b></td>
+      <td>${d.diagonal.toFixed(3)}</td></tr>`).join('')+'</tbody></table></div>';
+   const TR=BUN.val_trans||[];
+   if(TR.length)$('#valtr tbody').innerHTML=TR.map(r=>{
+    const k=Object.keys(r)[0];
+    return `<tr><td><b>${r[k]}</b></td><td>${(+r.chop).toFixed(3)}</td>
+     <td>${(+r.mid).toFixed(3)}</td><td>${(+r.trend).toFixed(3)}</td></tr>`;}).join('');
+  })();
+
   // ---- composite headline ----
   (function(){const C=(BUN.composite||[])[0];if(!C){return;}
    const q=[C.q1,C.q2,C.q3,C.q4,C.q5];
@@ -682,6 +759,6 @@ function boot(BUNDLE,root){
 
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','iv','s','d','f','st','ld','nb','mt','cr','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();
