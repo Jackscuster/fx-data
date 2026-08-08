@@ -14,6 +14,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="mt">Timeframes</button>
 <button role="tab" aria-selected="false" data-t="cr">Crisis</button>
 <button role="tab" aria-selected="false" data-t="va">Validation</button>
+<button role="tab" aria-selected="false" data-t="if">Inflation</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
 const BODY=`<div class="grid">
@@ -198,6 +199,37 @@ of runs can be short while almost no time is spent in them.</div>
 <div id="valpers"></div>
 <div class="tw" style="margin-top:12px"><table id="valtr"><thead><tr>
 <th>from \ to</th><th>chop</th><th>mid</th><th>trend</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="if" hidden>
+<div class="note"><b>How much of the effect did the selection itself invent?</b> Every
+measured effect is the true effect plus sampling noise, and taking the best out of 175,634
+preferentially takes the ones whose noise ran positive. This measures that directly: the
+target panel is circularly shifted by a random offset of at least 1000 bars, which destroys
+signal-to-outcome alignment while leaving autocorrelation and cross-pair correlation intact,
+and the whole gauntlet is rerun against it. 50 offsets. True effect is zero by construction,
+so anything that survives is manufactured.</div>
+<div class="note">This is not the shuffled-labels test on the Validation tab. That asks
+whether the composite beats noise. This asks how much effect the procedure makes
+<i>from</i> noise.</div>
+<div id="inflcards" style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0"></div>
+<h3>Rank-matched correction</h3>
+<div class="note">Real effect at rank k against what the same procedure manufactures at
+rank k. The correction uses the median over runs that actually produced a k-th survivor
+&mdash; where the null produced nothing there is no correction to apply, not a correction
+of zero. The p-value uses all 50 runs, so a run that produced nothing counts as a
+non-exceedance. <b>Read the deep ranks with care</b>: the runs column shows how thin the
+correction gets.</div>
+<div class="tw"><table id="infltab"><thead><tr>
+<th>Rank</th><th>Real |spread|</th><th>Null when it fired</th><th>Adjusted</th>
+<th>Manufactured</th><th>p</th><th>Runs reaching</th></tr></thead><tbody></tbody></table></div>
+<h3>Family mix</h3>
+<div class="note">If noise favours the same families our survivors come from, the mix is
+not evidence of anything.</div>
+<div class="tw"><table id="inflfam"><thead><tr>
+<th>Family</th><th>Built</th><th>% of built</th><th>Real survivors</th><th>% of real</th>
+<th>Null survivors</th><th>% of null</th></tr></thead><tbody></tbody></table></div>
+<div class="note" id="infltx"></div>
 </section>
 
 <section id="vd" hidden>
@@ -655,6 +687,53 @@ function boot(BUNDLE,root){
      <td>${(+r.mid).toFixed(3)}</td><td>${(+r.trend).toFixed(3)}</td></tr>`;}).join('');
   })();
 
+  // ---- selection-inflation tab ----
+  (function(){const A=BUN.infl||[],SM=BUN.inflsum||[],FM=BUN.inflfam||[];
+   if(!A.length)return;
+   const by=m=>SM.find(d=>d.metric===m)||{};
+   const f4=v=>v==null?'—':(+v).toFixed(4);
+   const NS=by('n_survivors'),BE=by('best_effect'),EM=by('runs_empty');
+   const card=(ok,head,sub)=>`<div class="panel" style="flex:1;min-width:210px;
+     border-left:3px solid ${ok?'var(--trend)':'var(--kill)'}">
+     <div class="big" style="color:${ok?'var(--trend)':'var(--kill)'}">${head}</div>
+     <span class="count">${sub}</span></div>`;
+   $('#inflcards').innerHTML=
+    card(NS.p_emp!=null&&NS.p_emp<=.05,'p = '+(NS.p_emp==null?'—':NS.p_emp.toFixed(3)),
+      `<b>How many survive.</b> Real ${NS.real} against a null median of
+       ${NS.null_med}, worst case ${NS.null_max}. The gauntlet does not manufacture
+       a set this deep from noise.`)
+   +card(BE.p_emp!=null&&BE.p_emp<=.05,'p = '+(BE.p_emp==null?'—':BE.p_emp.toFixed(3)),
+      `<b>How big the best one looks.</b> Real ${f4(BE.real)} against ${f4(BE.null_med)}
+       manufactured. The single strongest signal is <b>not</b> distinguishable from
+       what selection invents.`)
+   +card(true,(EM.null_max==null?'—':EM.null_max)+' of 50',
+      `<b>Null runs that produced nothing at all.</b> The other ${50-(EM.null_max||0)}
+       produced at least one survivor from a target with no signal in it.`);
+   $('#infltab tbody').innerHTML=A.map(r=>{
+    const hit=r.p_emp!=null&&r.p_emp<=.05;
+    return `<tr><td><b>${r.rank}</b></td><td>${f4(r.real_eff)}</td>
+     <td>${f4(r.null_med_fired)}</td><td><b>${f4(r.adjusted)}</b></td>
+     <td>${r.manufactured_pct==null?'—':r.manufactured_pct.toFixed(0)+'%'}</td>
+     <td style="color:${hit?'var(--trend)':'var(--kill)'}">${r.p_emp==null?'—'
+       :r.p_emp.toFixed(3)}</td>
+     <td${r.n_runs_reaching<10?' style="color:var(--dim)"':''}>${r.n_runs_reaching}</td>
+     </tr>`;}).join('');
+   $('#inflfam tbody').innerHTML=FM.map(r=>`<tr><td>${r.family}</td>
+     <td>${r.n_built.toLocaleString()}</td><td>${r.built_share.toFixed(1)}%</td>
+     <td>${r.real_survivors}</td><td><b>${r.real_share.toFixed(1)}%</b></td>
+     <td>${r.null_survivors}</td><td><b>${r.null_share.toFixed(1)}%</b></td></tr>`).join('');
+   const top=FM.slice().sort((a,b)=>b.null_share-a.null_share)[0];
+   $('#infltx').innerHTML=top?`<b>What this says.</b> The depth of the survivor set is real
+    &mdash; 50 runs against a signal-free target never got past ${NS.null_max}, so
+    ${NS.real} is not luck. The size of any individual effect is largely not:
+    ${A[0].manufactured_pct==null?'':'about '+A[0].manufactured_pct.toFixed(0)
+    +'% of the top signal’s headline spread is what the procedure manufactures '
+    +'from noise, leaving '+f4(A[0].adjusted)+' after correction. '}And the family mix is no
+    evidence either &mdash; <b>${top.family}</b> takes ${top.null_share.toFixed(0)}% of null
+    survivors against ${top.built_share.toFixed(0)}% of everything built, so its dominance
+    among the real survivors is what noise alone produces at that population size.`:'';
+  })();
+
   // ---- composite headline ----
   (function(){const C=(BUN.composite||[])[0];if(!C){return;}
    const q=[C.q1,C.q2,C.q3,C.q4,C.q5];
@@ -759,6 +838,6 @@ function boot(BUNDLE,root){
 
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();

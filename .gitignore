@@ -14,3 +14,8 @@ results/scores7/
 
 # Task-1 selection experiment: per-pair rescores, regenerable, not a feed
 results/_isonly/
+
+# inflation.py scratch: the resume checkpoint plus the pooled accumulators, 2.2 GB
+# against GitHub's 100 MB wall. What the repo carries is the three small CSVs the
+# adjustment stage derives from inflation_runs.csv, which IS committed.
+results/_infl_*

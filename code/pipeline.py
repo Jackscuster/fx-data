@@ -34,6 +34,16 @@ run('crisis.py')                     # scores detectors against the events.py ne
 if os.environ.get('FX_RUN_STABILITY'):
     run('stability.py')
 run('ninebox.py'); run('mtf.py')
+# The selection-inflation null: 50 circular shifts of the target panel, the whole
+# gauntlet rerun against each. Gated like sc6/sc7 -- a cold pass rescores all 28
+# pairs against every signal and its 2.2 GB of accumulators are gitignored, so
+# Actions only recomputes the correction from the committed inflation_runs.csv.
+if os.environ.get('FX_RUN_INFLATION'):
+    run('inflation.py')
+elif os.path.exists(os.path.join(R, 'results', 'inflation_runs.csv')):
+    print('\n=== inflation.py --adjust-only ===', flush=True)
+    subprocess.run([sys.executable, os.path.join(C, 'inflation.py'),
+                    '--adjust-only'], check=True)
 # The four validation tests, permanent. Shuffled labels and persistence are cheap;
 # synthetic ground truth and refit stability each rebuild the composite, so they
 # are gated the same way sc6/sc7 are and run on demand.

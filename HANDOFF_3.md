@@ -361,6 +361,11 @@ code/strat.py       38-config strategy sweep
 code/framework.py   look-ahead audit, durations, 3 logics, DSR
 code/ninebox.py     3x3 direction x volatility
 code/mtf.py         monthly/weekly/daily confluence
+code/inflation.py   selection-inflation null: 50 circular target shifts, gauntlet
+                    rerun against each. Sweep is FX_RUN_INFLATION-gated (hours cold,
+                    2.2 GB of gitignored scratch); the pipeline normally runs only
+                    `--adjust-only`, which rebuilds the correction from the committed
+                    results/inflation_runs.csv
 code/bundle.py      signals.json + csvs -> app_data.json
 code/pipeline.py    runs everything in order
 app_ui.js           THE ENTIRE APP INTERFACE — add new tabs here
