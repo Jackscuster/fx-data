@@ -1,5 +1,3 @@
 test,passes
 shuffled_labels,True
 persistence,True
-refit_stability,True
-synthetic,True

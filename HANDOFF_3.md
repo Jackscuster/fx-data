@@ -361,6 +361,14 @@ code/strat.py       38-config strategy sweep
 code/framework.py   look-ahead audit, durations, 3 logics, DSR
 code/ninebox.py     3x3 direction x volatility
 code/mtf.py         monthly/weekly/daily confluence
+code/extdata.py     Yahoo daily closes + FRED 2y yields -> data/ext.csv. Aligned to
+                    the px28 calendar, ffill only. FRED is unreachable from the dev
+                    sandbox; the fetcher records what resolved in ext_coverage.csv
+code/extsig.py      runs the SURVIVING constructions over ext.csv and scores them
+                    against the same FX targets. Uses sc3.quint itself, and
+                    --verify checks it reproduces published FX statistics first.
+                    FX_RUN_EXTERNAL gates the ~25 min rebuild; --report-only
+                    regenerates the tables from the committed ext_signals.csv
 code/inflation.py   selection-inflation null: 50 circular target shifts, gauntlet
                     rerun against each. Sweep is FX_RUN_INFLATION-gated (hours cold,
                     2.2 GB of gitignored scratch); the pipeline normally runs only

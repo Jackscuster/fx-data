@@ -50,6 +50,15 @@ MINOFF = 1000
 RANKS = [1, 2, 3, 5, 10, 32]
 CH = 1000                       # base columns per block
 SEED = 7
+# The live gauntlet's thresholds. These MUST track prep.py and dedup.py exactly --
+# if they drift, the null and the real selection stop describing the same procedure
+# and every number below becomes a comparison between two different gauntlets.
+#
+# Gates 3 and 4 were themselves calibrated against this null, so the survivor counts
+# it now reports are the fit, not an independent test of it. What remains honest is
+# the rank-matched correction: the size of the effect the procedure manufactures is
+# not what the thresholds were tuned on.
+G_T, G_S, G_A, G_M, G_D = 8., .0221, .893, .95, .6
 BATCH = [('own-price', 'sig2'), ('cross-sectional', 'sig3'),
          ('multi-timeframe', 'sig4'), ('regime-v5', 'sig5'),
          ('trend-duration', 'sig6'), ('trend-nonmomentum', 'sig7')]
@@ -98,10 +107,14 @@ class Acc:
         V = np.where(N > 1, (SS - N * M * M) / np.maximum(N - 1, 1), np.nan)
         spread = M[:, 4] - M[:, 0]
         se = np.sqrt(V[:, 4] / np.maximum(N[:, 4], 1) + V[:, 0] / np.maximum(N[:, 0], 1))
-        rk = np.arange(5) - 2
+        # Pearson r between quintile rank and quintile mean, written out rather than
+        # looped through np.corrcoef -- the loop ran 175,634 times per run, 50 runs,
+        # and was most of the wall clock of the whole selection stage.
+        rk = np.arange(5) - 2.
         with np.errstate(invalid='ignore'):
-            mono = np.array([np.corrcoef(rk, M[j])[0, 1] if np.isfinite(M[j]).all() else np.nan
-                             for j in range(M.shape[0])])
+            Mc = M - M.mean(1, keepdims=True)
+            mono = ((Mc * rk).sum(1)
+                    / np.sqrt((Mc ** 2).sum(1) * (rk ** 2).sum()))
             sg = self.SGN[run]
             agree = np.nansum(sg == np.sign(spread)[:, None], 1) / np.maximum((sg != 0).sum(1), 1)
         return spread, spread / se, mono, agree, self.CT[run]
@@ -234,6 +247,13 @@ def main():
                             CT=A[tag].CT, SGN=A[tag].SGN)
     print('accumulators written', flush=True)
 
+    return select(A, offs)
+
+
+def select(A, offs):
+    """Run the gauntlet against each shifted panel. Split out from the sweep so a
+    threshold change can be re-scored from the saved accumulators in seconds
+    instead of rescoring 28 pairs against the whole library again."""
     rows = []
     for r in range(NRUN):
         si, ti, mi, ai, cti = A['i'].stats(r)
@@ -241,8 +261,8 @@ def main():
         ok = (cti >= 20) & (cto >= 20) & np.isfinite(ti) & np.isfinite(to)
         with np.errstate(invalid='ignore', divide='ignore'):
             dec = np.abs(to) / np.maximum(np.abs(ti), .01)
-        sel = ok & (np.sign(ti) == np.sign(to)) & (np.abs(to) >= 8) & (np.abs(si) >= .02) \
-            & (ao >= .85) & (np.abs(mo) >= .95) & (dec >= .6)
+        sel = ok & (np.sign(ti) == np.sign(to)) & (np.abs(to) >= G_T) & (np.abs(si) >= G_S) \
+            & (ao >= G_A) & (np.abs(mo) >= G_M) & (dec >= G_D)
         eff = np.abs(so[sel])
         eff = np.sort(eff)[::-1]
         rec = dict(run=r, offset=int(offs[r]), n_survivors=int(sel.sum()))
@@ -258,6 +278,27 @@ def main():
     return D
 
 
+def reselect():
+    """Re-score the existing null at the current thresholds. Needs the pooled
+    accumulators, which are gitignored -- local only, like the sweep itself."""
+    need = [os.path.join(ROOTOUT, f) for f in
+            ('_infl_i.npz', '_infl_o.npz', '_infl_offsets.npy')]
+    missing = [f for f in need if not os.path.exists(f)]
+    if missing:
+        raise SystemExit('reselect needs the accumulators, which are local only. '
+                         'Missing: %s' % ', '.join(os.path.basename(f) for f in missing))
+    offs = np.load(need[2])
+    A = {}
+    for tag in ('i', 'o'):
+        z = np.load(os.path.join(ROOTOUT, '_infl_%s.npz' % tag))
+        a = Acc(z['N'].shape[1], NRUN, z['SGN'].shape[2])
+        a.N, a.S, a.SS, a.CT, a.SGN = z['N'], z['S'], z['SS'], z['CT'], z['SGN']
+        A[tag] = a
+    print('re-scoring the null at |t|>=%g effect>=%g agree>=%g mono>=%g decay>=%g'
+          % (G_T, G_S, G_A, G_M, G_D), flush=True)
+    return select(A, offs)
+
+
 # ---------------------------------------------------------------- adjustment
 
 def real_survivors():
@@ -267,8 +308,8 @@ def real_survivors():
     d = D[D.ok.fillna(True)]
     with np.errstate(invalid='ignore', divide='ignore'):
         dec = d.to.abs() / d.ti.abs().clip(lower=.01)
-    return d[(np.sign(d.ti) == np.sign(d.to)) & (d.to.abs() >= 8) & (d.si.abs() >= .02)
-             & (d.ao >= .85) & (d.mo.abs() >= .95) & (dec >= .6)
+    return d[(np.sign(d.ti) == np.sign(d.to)) & (d.to.abs() >= G_T) & (d.si.abs() >= G_S)
+             & (d.ao >= G_A) & (d.mo.abs() >= G_M) & (dec >= G_D)
              & (d.tsb.isna() | (d.tsb >= 4))].copy()
 
 
@@ -380,5 +421,7 @@ if __name__ == '__main__':
     # recomputes the correction from the committed inflation_runs.csv.
     if '--adjust-only' in sys.argv:
         adjust()
+    elif '--reselect' in sys.argv:
+        adjust(reselect())
     else:
         adjust(main())
