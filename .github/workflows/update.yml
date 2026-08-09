@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: '0 6 * * 1-5'      # weekdays 06:00 UTC
   workflow_dispatch:            # or click Run workflow
+    inputs:
+      external:
+        description: 'Fetch external data and rescore it (FX_RUN_EXTERNAL, ~25 min)'
+        type: boolean
+        default: false
   push:
     paths: ['code/**']
 permissions:
@@ -17,6 +22,11 @@ jobs:
         with: {python-version: '3.11'}
       - run: pip install -r requirements.txt
       - name: run pipeline
+        env:
+          # Actions sits on a different network from the dev sandbox. The probe in
+          # pipeline.py runs either way and records what resolves from here.
+          FX_RUN_EXTERNAL: ${{ inputs.external && '1' || '' }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python code/pipeline.py
       - name: commit refreshed data
         run: |

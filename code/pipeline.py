@@ -41,6 +41,12 @@ run('ninebox.py'); run('mtf.py')
 # External data. The fetch hits Yahoo and the scoring rebuilds six signal modules
 # against 19 series, ~25 min, so it is opt-in like sc6/sc7. The committed CSVs are
 # enough to regenerate the retention tables, which is what --report-only does.
+# Reachability probe, always. Seconds, and it is the only way to tell a blocked
+# host from a dead one: fred.stlouisfed.org refuses the dev sandbox while every
+# other central bank answers, so "unreachable" must be recorded per network
+# rather than concluded from one vantage point. Never fails the build.
+print('\n=== extdata.py --probe ===', flush=True)
+subprocess.run([sys.executable, os.path.join(C, 'extdata.py'), '--probe'], check=False)
 if os.environ.get('FX_RUN_EXTERNAL'):
     run('extdata.py'); run('extsig.py')
 elif os.path.exists(os.path.join(R, 'results', 'ext_signals.csv')):
