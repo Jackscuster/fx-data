@@ -62,6 +62,80 @@ FRED = {'USD': 'DGS2', 'EUR': 'IRLTLT01EZM156N', 'JPY': 'IRLTLT01JPM156N',
         'AUD': 'IRLTLT01AUM156N', 'NZD': 'IRLTLT01NZM156N',
         'CHF': 'IRLTLT01CHM156N'}
 
+# ---------------------------------------------------------------------------
+# Candidate free routes to 2-year government yields, one block per currency.
+#
+# fred.stlouisfed.org is blocked from the dev sandbox but api.stlouisfed.org is
+# NOT -- it answers with a proper "api_key is not set" error, so the keyed route
+# needs only a free key, not a different network. Everything else here is
+# keyless. Running this from two networks is the point: --probe records what
+# resolved and from where, so "blocked" is never inferred from one vantage.
+PROBES = [
+    ('USD', 'us-treasury',  'https://home.treasury.gov/resource-center/data-chart-'
+     'center/interest-rates/daily-treasury-rates.csv/2024/all?type=daily_treasury_'
+     'yield_curve&field_tdr_date_value=2024&page&_format=csv', 'daily, has 2 Yr'),
+    ('USD', 'fred-graph',   'https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2',
+     'keyless CSV host'),
+    ('USD', 'fred-api',     'https://api.stlouisfed.org/fred/series?series_id=DGS2'
+     '&file_type=json', 'needs a free api key'),
+    ('EUR', 'ecb',          'https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR'
+     '.4F.G_N_A.SV_C_YM.SR_2Y?format=csvdata&startPeriod=2024-01-01&endPeriod='
+     '2024-01-10', 'daily AAA curve, starts 2004-09'),
+    ('JPY', 'mof',          'https://www.mof.go.jp/jgbs/reference/interest_rate/data/'
+     'jgbcm_all.csv', 'daily from 1974, Shift-JIS, Japanese era dates'),
+    ('GBP', 'boe-glc',      'https://www.bankofengland.co.uk/-/media/boe/files/'
+     'statistics/yield-curves/glcnominalddata.zip', 'daily from 1979, 39 MB of xlsx'),
+    ('CAD', 'boc-valet',    'https://www.bankofcanada.ca/valet/observations/'
+     'BD.CDN.2YR.DQ.YLD/csv?start_date=2024-01-01&end_date=2024-01-10', 'daily'),
+    ('AUD', 'rba-f2',       'https://www.rba.gov.au/statistics/tables/csv/f2-data.csv',
+     'has an explicit 2 year bond column'),
+    ('CHF', 'snb-daily',    'https://data.snb.ch/api/cube/rendoblid/data/csv/en',
+     'daily from 1988, 2J maturity'),
+    ('NZD', 'rbnz-b2',      'https://www.rbnz.govt.nz/-/media/project/sites/rbnz/'
+     'files/statistics/series/b/b2/hb2-daily.csv', 'bot-walled from the sandbox'),
+    ('NZD', 'nz-dmo',       'https://debtmanagement.treasury.govt.nz/investor-'
+     'resources/data/nominal-bond-yields', 'Cloudflare challenge from the sandbox'),
+    # route 4: does Yahoo carry any non-US government yield at all?
+    ('USD', 'yahoo-^TNX',   'https://query1.finance.yahoo.com/v8/finance/chart/'
+     '%5ETNX?range=5d&interval=1d', 'US 10y, already in the feed'),
+    ('GBP', 'yahoo-GB2YR',  'https://query1.finance.yahoo.com/v8/finance/chart/'
+     'GB2YR%3DX?range=5d&interval=1d', 'speculative ticker'),
+    ('JPY', 'yahoo-2YY=F',  'https://query1.finance.yahoo.com/v8/finance/chart/'
+     '2YY%3DF?range=5d&interval=1d', 'CBOT 2y yield future, US not JP'),
+]
+
+
+def probe():
+    """Which routes resolve, from whichever network is running this."""
+    where = 'github-actions' if os.environ.get('GITHUB_ACTIONS') else 'local'
+    rows = []
+    print('probing %d routes from %s' % (len(PROBES), where), flush=True)
+    for ccy, name, url, note in PROBES:
+        st, nb, err = '', 0, ''
+        try:
+            b = _get(url, timeout=25, tries=1)
+            nb = len(b)
+            head = b[:400].lower()
+            # a 200 that is really a bot wall or an error envelope is not data
+            bad = (b'<!doctype html' in head or b'<html' in head
+                   or b'error_code' in head or b'just a moment' in head)
+            st = 'DATA' if not bad else 'BLOCKED-OR-HTML'
+        except urllib.error.HTTPError as e:
+            st, err = 'HTTP %d' % e.code, str(e)
+        except Exception as e:                       # noqa: BLE001
+            st, err = 'UNREACHABLE', type(e).__name__
+        rows.append(dict(currency=ccy, route=name, network=where, status=st,
+                         bytes=nb, note=note, error=err))
+        print('  %-4s %-14s %-16s %9d  %s' % (ccy, name, st, nb, note), flush=True)
+    P = pd.DataFrame(rows)
+    f = os.path.join(ROOTOUT, 'ext_probe_%s.csv' % where)
+    P.to_csv(f, index=False)
+    ok = P[P.status == 'DATA'].currency.nunique()
+    print('\n%s: %d of 8 currencies have at least one working free route'
+          % (where, ok))
+    print('wrote %s' % os.path.basename(f))
+    return P
+
 
 def _get(url, timeout=30, tries=3):
     last = None
@@ -168,4 +242,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if '--probe' in sys.argv:
+        probe()
+    else:
+        main()
