@@ -224,16 +224,23 @@ for lab in LABELS:
         print('  %-16s %6d' % (lab, k))
 print('json %.0f KB' % (os.path.getsize(os.path.join(OUT, 'signals.json')) / 1024))
 
-# ---- the gauntlet: sequential elimination, thresholds unchanged ----
+# ---- the gauntlet: sequential elimination ----
 # Gate 6 is a FLOOR only. NEXT_BATCH.md is explicit that no ceiling is added, so a
 # signal that is stronger OOS than IS passes here and is caught by gate 7 instead.
+#
+# THRESHOLDS ARE CALIBRATED AGAINST THE NOISE NULL, not chosen by hand. inflation.py
+# reruns this gauntlet against 50 circularly-shifted target panels, where the true
+# effect is zero by construction; gates 3 and 4 are set at the tightest point that
+# holds the null to 16 of its 161 manufactured survivors, firing in 10 runs of 50.
+# Gate 4's 0.893 is 25 of 28 pairs -- the old 0.85 was 24 of 28 in disguise.
+# Moving these invalidates that calibration. See inflation_adjusted.csv.
 SCOR = D[D.ok]
 print('records %d | scorable %d | unscorable %d (kept, marked ok=False)'
       % (len(D), len(SCOR), len(D) - len(SCOR)))
 GATES = [('sign holds OOS',    lambda x: x.held),
          ('|t| OOS >= 8',      lambda x: x.to.abs() >= 8),
-         ('effect >= 0.020',   lambda x: x.si.abs() >= .02),
-         ('agree >= 0.85',     lambda x: x.ao >= .85),
+         ('effect >= 0.0221',  lambda x: x.si.abs() >= .0221),
+         ('agree >= 0.893',    lambda x: x.ao >= .893),
          ('monotonic >= 0.95', lambda x: x.mo.abs() >= .95),
          ('decay >= 0.60',     lambda x: x.dec >= .6)]
 cur = SCOR

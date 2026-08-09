@@ -1,0 +1,28 @@
+series,source,group,ok,first,last,n_raw,note,coverage_on_px28,n_aligned
+^VIX,yahoo,equity-vol,True,1998-06-01,2026-08-07,7092,,1.0,6916.0
+^VIX3M,yahoo,equity-vol,True,2006-07-17,2026-07-17,5032,,0.726,5021.0
+^VVIX,yahoo,equity-vol,True,2007-01-03,2026-08-07,4921,,0.7091,4904.0
+^MOVE,yahoo,rates-vol,True,2002-11-12,2026-07-17,5854,,0.8596,5945.0
+HYG,yahoo,credit,True,2007-04-11,2026-08-07,4863,,0.6992,4836.0
+LQD,yahoo,credit,True,2002-07-30,2026-08-07,6045,,0.87,6017.0
+TLT,yahoo,bonds,True,2002-07-30,2026-08-07,6045,,0.87,6017.0
+SHY,yahoo,bonds,True,2002-07-30,2026-08-07,6045,,0.87,6017.0
+IEF,yahoo,bonds,True,2002-07-30,2026-08-07,6045,,0.87,6017.0
+CL=F,yahoo,commodities,True,2000-08-23,2026-08-07,6517,,0.94,6501.0
+GC=F,yahoo,commodities,True,2000-08-30,2026-08-07,6508,,0.9393,6496.0
+SI=F,yahoo,commodities,True,2000-08-30,2026-08-07,6510,,0.9393,6496.0
+^TNX,yahoo,us-yields,True,1998-06-01,2026-08-07,7081,,1.0,6916.0
+^FVX,yahoo,us-yields,True,1998-06-01,2026-08-07,7081,,1.0,6916.0
+^IRX,yahoo,us-yields,True,1998-06-01,2026-08-07,7081,,1.0,6916.0
+DX-Y.NYB,yahoo,dollar,True,1998-06-01,2026-08-07,7131,,1.0,6916.0
+HYG_LQD,derived,credit,True,2007-04-11,2026-08-07,4863,HYG / LQD,0.6992,4836.0
+TLT_SHY,derived,bonds,True,2002-07-30,2026-08-07,6045,TLT / SHY,0.87,6017.0
+VIX_TS,derived,equity-vol,True,2006-07-17,2026-07-17,5032,^VIX3M / ^VIX,0.726,5021.0
+Y2_USD,fred,yields-2y,False,,,0,DGS2: timeout,,
+Y2_EUR,fred,yields-2y,False,,,0,IRLTLT01EZM156N: timeout,,
+Y2_JPY,fred,yields-2y,False,,,0,IRLTLT01JPM156N: timeout,,
+Y2_GBP,fred,yields-2y,False,,,0,IRLTLT01GBM156N: timeout,,
+Y2_CAD,fred,yields-2y,False,,,0,IRLTLT01CAM156N: timeout,,
+Y2_AUD,fred,yields-2y,False,,,0,IRLTLT01AUM156N: timeout,,
+Y2_NZD,fred,yields-2y,False,,,0,IRLTLT01NZM156N: timeout,,
+Y2_CHF,fred,yields-2y,False,,,0,IRLTLT01CHM156N: timeout,,

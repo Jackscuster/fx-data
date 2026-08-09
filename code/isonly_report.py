@@ -27,8 +27,8 @@ def gates(D):
     g = D[(D.cta >= 20) & (D.ctb >= 20) & D.ta.notna() & D.tb.notna()].copy()
     steps = [('sign holds A->B', lambda x: np.sign(x.ta) == np.sign(x.tb)),
              ('|t| B >= 8', lambda x: x.tb.abs() >= 8),
-             ('effect A >= 0.020', lambda x: x.spa.abs() >= .02),
-             ('agree B >= 0.85', lambda x: x.agb >= .85),
+             ('effect A >= 0.0221', lambda x: x.spa.abs() >= .0221),
+             ('agree B >= 0.893', lambda x: x.agb >= .893),
              ('monotonic B >= 0.95', lambda x: x.mob.abs() >= .95),
              ('decay B/A >= 0.60', lambda x: (x.tb.abs() / x.ta.abs().clip(lower=.01)) >= .6),
              ('stable >= 4 of 6 IS blocks', lambda x: x.tsb >= 4)]
@@ -127,8 +127,8 @@ def main():
             row = st.loc[n] if n in st.index else None
             why = 'not scorable in IS' if row is None else (
                 'IS-B |t| %.1f' % abs(row.tb) if abs(row.tb) < 8 else
-                'IS-A effect %.4f' % abs(row.spa) if abs(row.spa) < .02 else
-                'IS-B agree %.2f' % row.agb if row.agb < .85 else
+                'IS-A effect %.4f' % abs(row.spa) if abs(row.spa) < .0221 else
+                'IS-B agree %.2f' % row.agb if row.agb < .893 else
                 'IS-B mono %.2f' % abs(row.mob) if abs(row.mob) < .95 else
                 'IS sign flip' if np.sign(row.ta) != np.sign(row.tb) else 'other')
             print('    %-22s %-14s OOS |t| %6.2f   fails: %s'

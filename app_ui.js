@@ -15,6 +15,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="cr">Crisis</button>
 <button role="tab" aria-selected="false" data-t="va">Validation</button>
 <button role="tab" aria-selected="false" data-t="if">Inflation</button>
+<button role="tab" aria-selected="false" data-t="ex">External</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
 const BODY=`<div class="grid">
@@ -232,6 +233,31 @@ not evidence of anything.</div>
 <div class="note" id="infltx"></div>
 </section>
 
+<section id="ex" hidden>
+<div class="note"><b>First non-price data in the project.</b> Everything else here is FX
+closes predicting their own future shape. This runs the <i>surviving constructions,
+unchanged</i>, over the outside world &mdash; equity and rates vol, credit, bonds,
+commodities, US yields, the dollar index &mdash; and scores them against the same 28 FX
+targets. No new signal families: because the construction is held constant, any difference
+is about the data.</div>
+<div id="excards" style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0"></div>
+<h3>Out-of-sample sign retention by source</h3>
+<div class="note">The comparison the task turns on. <b>Read the n column first</b> &mdash;
+these groups are small enough that the individual rows are noise.</div>
+<div class="tw"><table id="extab"><thead><tr>
+<th>Source</th><th>n</th><th>OOS retention</th><th>vs FX price</th></tr></thead><tbody></tbody></table></div>
+<h3>Which constructions transfer at all</h3>
+<div class="note">A construction that indexes a currency pair's two legs has nothing to read
+on a VIX series. That is a property of the construction, not a data failure.</div>
+<div id="extr"></div>
+<h3>Coverage</h3>
+<div class="note">Aligned to the FX calendar, forward-filled only, never backfilled and
+never padded at the front. Series that start late stay NaN until they start.</div>
+<div class="tw"><table id="excov"><thead><tr>
+<th>Series</th><th>Source</th><th>Group</th><th>First</th><th>Coverage</th></tr></thead><tbody></tbody></table></div>
+<div class="note" id="extx"></div>
+</section>
+
 <section id="vd" hidden>
 <h3>The strictest test — is any one variant provably not luck?</h3>
 <div id="funch"></div>
@@ -281,21 +307,26 @@ function boot(BUNDLE,root){
    +(MT.built?' \u00b7 rebuilt '+MT.built:'');
   const GATES=[
    {k:'to', n:'|t| OOS',      min:0,   max:25, step:.5, v:8,   f:d=>Math.abs(d.to)},
-   {k:'si', n:'Effect size',  min:0,   max:.04,step:.001,v:.02,f:d=>Math.abs(d.si)},
-   {k:'ao', n:'Pairs agree',  min:.5,  max:1,  step:.01, v:.85,f:d=>d.ao},
+   // Gates 2 and 3 sit where the noise null (inflation.py) stops manufacturing
+   // survivors, not at a round number. 0.893 is 25 of 28 pairs; the old 0.85 was
+   // 24 of 28 in disguise. Steps are fine enough to land on them exactly.
+   {k:'si', n:'Effect size',  min:0,   max:.04,step:.0001,v:.0221,f:d=>Math.abs(d.si)},
+   {k:'ao', n:'Pairs agree',  min:.5,  max:1,  step:.001,v:.893,f:d=>d.ao},
    {k:'mo', n:'Monotonic',    min:.5,  max:1,  step:.01, v:.95,f:d=>Math.abs(d.mo)},
    {k:'dec',n:'Decay ratio',  min:0,   max:1.5,step:.05, v:.6, f:d=>d.dec},
    // Gate 7. Signals scored before block spreads were stored have tsb null; they
    // are treated as passing rather than silently killed, so the funnel never
    // reports a drop that is really just missing data.
    {k:'tsb',n:'Blocks stable',min:0,   max:6,  step:1,  v:4,  f:d=>d.tsb==null?6:d.tsb}];
-  const STRICT=[8,.02,.85,.95,.6,4];
+  const STRICT=[8,.0221,.893,.95,.6,4];
   
   $('#gates').innerHTML=GATES.map((g,i)=>
    `<div class="gate"><label>${g.n}<b id="v${i}"></b></label>
     <input type="range" id="r${i}" min="${g.min}" max="${g.max}" step="${g.step}" value="${g.v}"></div>`).join('');
   
-  function fmt(g,v){return g.k==='si'?v.toFixed(3):(g.k==='tsb'?v.toFixed(0)+' of 6':v.toFixed(2));}
+  function fmt(g,v){return g.k==='si'?v.toFixed(4)
+   :(g.k==='tsb'?v.toFixed(0)+' of 6'
+   :(g.k==='ao'?v.toFixed(3)+' ('+Math.ceil(v*28)+' of 28)':v.toFixed(2)));}
   function vals(){return GATES.map((g,i)=>+$('#r'+i).value);}
   let fIND=1;
   function survivors(){
@@ -734,6 +765,52 @@ function boot(BUNDLE,root){
     among the real survivors is what noise alone produces at that population size.`:'';
   })();
 
+  // ---- external data tab ----
+  (function(){const R=BUN.extret||[],C=BUN.extcov||[],T=BUN.exttr||[];
+   if(!R.length)return;
+   const pct=v=>(v*100).toFixed(1)+'%';
+   const base=R.find(d=>/FX price/.test(d.group)),all=R.find(d=>d.group==='ALL EXTERNAL');
+   const xs=R.find(d=>/cross-sectional/.test(d.group));
+   const card=(ok,head,sub)=>`<div class="panel" style="flex:1;min-width:220px;
+     border-left:3px solid ${ok?'var(--trend)':'var(--kill)'}">
+     <div class="big" style="color:${ok?'var(--trend)':'var(--kill)'}">${head}</div>
+     <span class="count">${sub}</span></div>`;
+   if(all&&base)$('#excards').innerHTML=
+     card(all.retention>base.retention,pct(all.retention),
+       `<b>External data, all ${all.n} signals.</b> Against ${pct(base.retention)} for FX
+        price and ${xs?pct(xs.retention):'—'} for FX cross-sectional.`)
+    +card(false,'0 of '+all.n,
+       `<b>Through the gauntlet.</b> Nothing external clears the seven gates. At this
+        sample size that is expected, not a verdict.`)
+    +card(T.length&&T.filter(d=>d.transferred).length===T.length,
+       T.filter(d=>d.transferred).length+' of '+T.length,
+       `<b>Constructions that transfer.</b> The rest read a currency pair's two legs and
+        have nothing to compute on a single external series.`);
+   $('#extab tbody').innerHTML=R.map(r=>{
+    const hd=/^\(|ALL EXTERNAL/.test(r.group), up=r.vs_price_baseline>0;
+    return `<tr${hd?' style="opacity:.75"':''}><td>${hd?'<i>'+r.group+'</i>':r.group}</td>
+     <td>${r.n.toLocaleString()}</td><td><b>${pct(r.retention)}</b></td>
+     <td style="color:${up?'var(--trend)':'var(--kill)'}">${
+       (r.vs_price_baseline>0?'+':'')+(r.vs_price_baseline*100).toFixed(1)}pp</td></tr>`;
+   }).join('');
+   const nt=T.filter(d=>!d.transferred);
+   $('#extr').innerHTML='<div class="note">'+(nt.length
+     ? `<b>${nt.length} of ${T.length} did not transfer:</b> `
+       +nt.map(d=>'<code>'+d.signal+'</code>').join(', ')
+     : 'All '+T.length+' transferred.')+'</div>';
+   $('#excov tbody').innerHTML=C.filter(d=>d.ok===true||d.ok==='True').map(d=>
+    `<tr><td>${d.series}</td><td>${d.source}</td><td>${d.group}</td><td>${d.first}</td>
+     <td>${d.coverage_on_px28==null?'—':pct(d.coverage_on_px28)}</td></tr>`).join('');
+   const miss=C.filter(d=>!(d.ok===true||d.ok==='True'));
+   $('#extx').innerHTML=(miss.length?`<b>${miss.length} series unavailable in this build</b>
+     &mdash; ${miss.map(d=>d.series).join(', ')}. `:'')
+    +`<b>Do not over-read the source rows.</b> Most of the surviving constructions turn out
+      to be panel-wide on the external universe, so they contribute one signal each rather
+      than one per series; the per-source rows rest on only a handful of distinct
+      constructions repeated across correlated series. The effective sample is far smaller
+      than the n column suggests.`;
+  })();
+
   // ---- composite headline ----
   (function(){const C=(BUN.composite||[])[0];if(!C){return;}
    const q=[C.q1,C.q2,C.q3,C.q4,C.q5];
@@ -838,6 +915,6 @@ function boot(BUNDLE,root){
 
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();

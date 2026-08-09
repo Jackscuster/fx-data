@@ -60,10 +60,13 @@ def apply_variant(x, spec):
 
 
 def gates(D):
-    """Gates 1-7. Unscorable records can never pass, but are never dropped either."""
+    """Gates 1-7. Unscorable records can never pass, but are never dropped either.
+
+    Thresholds are the noise-calibrated set -- see the comment in prep.py. These two
+    files must agree or the funnel and the survivor flags describe different sets."""
     d = D[D.ok.fillna(True)]
-    return d[(np.sign(d.ti) == np.sign(d.to)) & (d.to.abs() >= 8) & (d.si.abs() >= .02)
-             & (d.ao >= .85) & (d.mo.abs() >= .95)
+    return d[(np.sign(d.ti) == np.sign(d.to)) & (d.to.abs() >= 8) & (d.si.abs() >= .0221)
+             & (d.ao >= .893) & (d.mo.abs() >= .95)
              & ((d.to.abs() / d.ti.abs().clip(lower=.01)) >= .6)
              & (d.tsb.isna() | (d.tsb >= 4))].copy()
 
