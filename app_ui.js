@@ -17,6 +17,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="if">Inflation</button>
 <button role="tab" aria-selected="false" data-t="ex">External</button>
 <button role="tab" aria-selected="false" data-t="pt">Pairs</button>
+<button role="tab" aria-selected="false" data-t="hz">Horizon</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
 const BODY=`<div class="grid">
@@ -302,6 +303,22 @@ construction. <b>Expected false</b> is what the same threshold admits from noise
 <div id="snnote"></div>
 <div class="tw"><table id="agtab"><thead><tr>
 <th>Pair</th><th>In the strongest 7 for…</th><th>Trendiness</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="hz" hidden>
+<div class="note"><b>Is 20 days the right horizon, or just the first one anybody picked?</b>
+Every effect in this project is measured against forward 20-day efficiency because that was
+chosen at the start and never justified. The 111 old survivors rescored at 5, 10, 15 and 20
+days, same signals, same pooling.</div>
+<div class="note"><b>t-statistics do not compare across horizons.</b> Overlapping windows
+make the target more serially correlated the longer the horizon, so a zero effect earns a
+bigger t at 20 days than at 5. The null column is what the same signals score against a
+circularly shifted target &mdash; <b>real ÷ null</b> is the only honest comparison here.</div>
+<div id="hzcards" style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0"></div>
+<div class="tw"><table id="hztab"><thead><tr>
+<th>Horizon</th><th>|effect| OOS</th><th>Agreement</th><th>Monotonic</th><th>Retention</th>
+<th>Null |t|</th><th>Real ÷ null</th></tr></thead><tbody></tbody></table></div>
+<div class="note" id="hznote"></div>
 </section>
 
 <section id="vd" hidden>
@@ -957,6 +974,38 @@ function boot(BUNDLE,root){
       a few percent of noise.${pc}</div>`;}
   })();
 
+  // ---- horizon sweep ----
+  (function(){const H=BUN.horizon||[];if(!H.length)return;
+   const f4=v=>v==null?'—':(+v).toFixed(4);
+   const best=H.reduce((a,b)=>(b.t_ratio||0)>(a.t_ratio||0)?b:a,H[0]);
+   const h20=H.find(d=>d.H===20)||{};
+   const card=(h,s)=>`<div class="panel" style="flex:1;min-width:210px">
+     <div class="big">${h}</div><span class="count">${s}</span></div>`;
+   $('#hzcards').innerHTML=
+     card(best.H+' days',`<b>Best horizon on the null-normalised comparison.</b>
+       Real effect divided by what a shifted target earns peaks here at
+       ${best.eff_ratio.toFixed(2)}x, against ${h20.eff_ratio.toFixed(2)}x at 20 days.`)
+    +card(f4(best.eff_oos),`<b>Median |OOS effect| at ${best.H} days</b>, against
+       ${f4(h20.eff_oos)} at 20 &mdash; ${((best.eff_oos/h20.eff_oos-1)*100).toFixed(0)}%
+       larger for the same signals.`)
+    +card(h20.null_t.toFixed(2)+' vs '+H[0].null_t.toFixed(2),
+      `<b>Null |t| at 20 days against 5.</b> A zero effect earns a BIGGER t at long
+       horizons, not smaller &mdash; overlapping windows, not sample size, dominate.`);
+   $('#hztab tbody').innerHTML=H.map(d=>{
+    const b=d.H===best.H;
+    return `<tr${b?' style="font-weight:600"':''}><td>${d.H} days${b?' &larr; best':''}</td>
+     <td>${f4(d.eff_oos)}</td><td>${d.agree.toFixed(3)}</td><td>${d.mono.toFixed(3)}</td>
+     <td>${(d.retention*100).toFixed(1)}%</td><td>${d.null_t.toFixed(2)}</td>
+     <td><b>${d.eff_ratio.toFixed(2)}x</b></td></tr>`;}).join('');
+   $('#hznote').innerHTML=`<b>The 20-day choice was not optimal, but it was not badly
+    wrong either.</b> Effect size peaks at 10 days and the null-normalised ratio peaks
+    there too, ${best.eff_ratio.toFixed(2)}x against ${h20.eff_ratio.toFixed(2)}x &mdash;
+    roughly ${((best.eff_ratio/h20.eff_ratio-1)*100).toFixed(0)}% more signal per unit of
+    noise. Against that, agreement and monotonicity both improve monotonically with
+    horizon, and out-of-sample sign retention is perfect at 15 and 20 days but not at 5.
+    Shortening buys effect size and pays for it in cross-pair consistency.`;
+  })();
+
   // ---- composite headline ----
   (function(){const C=(BUN.composite||[])[0];if(!C){return;}
    const q=[C.q1,C.q2,C.q3,C.q4,C.q5];
@@ -1061,6 +1110,6 @@ function boot(BUNDLE,root){
 
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','pt','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','pt','hz','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();

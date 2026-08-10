@@ -35,6 +35,14 @@ if os.environ.get('FX_RUN_STABILITY'):
     run('stability.py')
 run('ninebox.py'); run('mtf.py')
 run('pairtrend.py')          # per-pair trendiness, and whether gate 4 over-kills
+# Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
+# at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
+if os.environ.get('FX_RUN_HORIZON'):
+    run('horizon.py')
+elif os.path.exists(os.path.join(R, 'results', 'horizon_signals.csv')):
+    print('\n=== horizon.py --report-only ===', flush=True)
+    subprocess.run([sys.executable, os.path.join(C, 'horizon.py'),
+                    '--report-only'], check=True)
 # The selection-inflation null: 50 circular shifts of the target panel, the whole
 # gauntlet rerun against each. Gated like sc6/sc7 -- a cold pass rescores all 28
 # pairs against every signal and its 2.2 GB of accumulators are gitignored, so
