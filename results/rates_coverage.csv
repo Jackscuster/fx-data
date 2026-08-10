@@ -1,0 +1,9 @@
+currency,source,ok,n,first,last,note,coverage_on_px28
+USD,home.treasury.gov,True,6904,1999-01-04,2026-08-07,,1.0
+EUR,ECB + Bundesbank,True,7192,1998-06-02,2026-08-06,splice step +0.017 pp,1.0
+JPY,MOF,True,6905,1998-06-01,2026-07-31,,1.0
+GBP,Bank of England,True,7119,1998-06-01,2026-07-31,,1.0
+CAD,BoC Valet,True,6400,2001-01-02,2026-08-06,,0.9271
+AUD,RBA archive + current,True,7025,1998-06-01,2026-08-05,,0.9909
+CHF,SNB rendoblid,True,6817,1998-06-03,2025-07-31,,0.9653
+NZD,FRED api (key),False,0,,,no key,

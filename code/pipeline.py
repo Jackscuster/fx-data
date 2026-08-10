@@ -49,10 +49,14 @@ print('\n=== extdata.py --probe ===', flush=True)
 subprocess.run([sys.executable, os.path.join(C, 'extdata.py'), '--probe'], check=False)
 if os.environ.get('FX_RUN_EXTERNAL'):
     run('extdata.py'); run('extsig.py')
-elif os.path.exists(os.path.join(R, 'results', 'ext_signals.csv')):
-    print('\n=== extsig.py --report-only ===', flush=True)
-    subprocess.run([sys.executable, os.path.join(C, 'extsig.py'),
-                    '--report-only'], check=True)
+    run('rates.py'); run('carrysig.py')
+else:
+    for _m, _f in (('extsig.py', 'ext_signals.csv'),
+                   ('carrysig.py', 'carry_signals.csv')):
+        if os.path.exists(os.path.join(R, 'results', _f)):
+            print('\n=== %s --report-only ===' % _m, flush=True)
+            subprocess.run([sys.executable, os.path.join(C, _m),
+                            '--report-only'], check=True)
 if os.environ.get('FX_RUN_INFLATION'):
     run('inflation.py')
 elif os.path.exists(os.path.join(R, 'results', 'inflation_runs.csv')):
