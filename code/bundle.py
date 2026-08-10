@@ -102,6 +102,7 @@ out = dict(
     crisisev=cl(rd('crisis_events.csv')),
     famret=cl(rd('family_retention.csv')),
     pairtrend=cl(rd('pair_trend.csv')),
+    horizon=cl(rd('horizon_summary.csv')),
     subnull=cl(rd('subset_null.csv')),
     subnullpairs=cl(rd('subset_null_pairs.csv')),
     agreepairs=cl(rd('agree_gate_pairs.csv')),
