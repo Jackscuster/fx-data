@@ -1,24 +1,42 @@
 # MAKING THE ESTIMATOR ACTIONABLE
 
-Three tasks. The estimator is not a warning light — it is a parameter setting. When a
-Layer 2 signal fires, the regime read should tell us how to manage the trade, not whether
-to take it.
+Six tasks. Task 1 is done; 2 and 3 were specced earlier; 4-6 are new.
 
-**Chop reading** → take profit early, tight target, expect the move to stall and reverse
-**Not-chop reading** → let it run, trail the stop, wide target
+**What the estimator is for.** It says what regime a pair is in. When a Layer 2 signal
+fires, the regime read is the environment that signal is firing into. What Layer 2 does
+with that information is Layer 2's decision.
 
-Same entry. Different exit. That is the estimator doing real work, and it does not
-require a trend detector — "not choppy" is information whether or not we can name what is
-happening instead.
-
-**Correction to record before starting:** the conclusion "trend is not detectable" was
-too broad. What was actually established is narrower — no signal predicts *whether* a
-pair will trend over the next 20 days, panel-wide. Every pair trends sometimes. EURGBP at
-0.171 trends less often than EURCHF at 0.281; it does not fail to trend.
+**Correction to record.** The conclusion "trend is not detectable" was too broad. What was
+actually established is narrower — no signal predicts *whether* a pair will trend over the
+next 20 days, panel-wide. Every pair trends sometimes. The measured spread in baseline
+trendiness across the panel is 15%, not the 64% an earlier version of this doc claimed.
 
 ---
 
-## TASK 1 — SHORTER HORIZONS
+## STATUS
+
+- **Task 1 — DONE.** Answer: 20d stays primary. Effect size falls steadily as the horizon
+  shortens (0.0398 at 20d, 0.0209 at 5d). Nothing new appears short. Monotonicity is
+  cleanest at 15d (0.9997 vs 0.9856), so 15d is carried alongside.
+- **Task 2 — pending.** Note the premise was overstated: measured panel spread is 15%, not
+  64%, and IS/OOS rank correlation is 0.582, not 0.71. EURCHF and EURGBP both sit
+  mid-table and differ by 0.006. Expect normalisation to be closer to cosmetic than
+  decisive; the agreement-gate criterion settles it either way.
+- **Task 3 — pending.** Still the task that decides whether the estimator earns its place.
+- **Tasks 4-6 — new, below.** Added because Task 1 was framed wrongly: the four horizons
+  were treated as competing candidates for one slot when they are actually dimensions
+  describing the shape of a move. Two pairs both reading 0.30 at 5 days are in different
+  regimes if one reads 0.30 at 20d and the other 0.15. The estimator currently cannot tell
+  them apart.
+
+**Scope, restated:** the estimator says what regime a pair is in. Nothing more. What
+Layer 2 does with that — targets, stops, holding periods — is Layer 2's decision and is
+not specified here. An earlier version of this doc said the estimator "sets take-profit
+distance." That was wrong and is withdrawn.
+
+---
+
+## TASK 1 — SHORTER HORIZONS  *(DONE)*
 
 Everything in this project measures forward efficiency over 20 days because that is what
 was chosen at the start. It has never been justified. If a trade holds five days, 20-day
@@ -119,10 +137,111 @@ trade management and we need to know that before building Layer 2 on top of it.
 
 ---
 
+## TASK 4 — BUILD THE TERM STRUCTURE
+
+For every survivor, at every pair and date, we now have four readings: 5, 10, 15, 20 days.
+Turn those into regime dimensions.
+
+### 4.1 Persistence ratio
+
+```
+persistence = reading(20d) / reading(5d)
+```
+
+- High → the move sustains as the window lengthens
+- Low → the move is front-loaded and decays
+- Around 1 → flat term structure
+
+**Nothing in the project currently measures this.** It is a distinct regime property from
+"how straight is the move," and it is only visible with multiple horizons.
+
+Also build the log version and the difference version — ratios are unstable when the
+denominator is small, and 5-day readings can be near zero.
+
+### 4.2 Term structure slope and curvature
+
+- [ ] Slope: OLS fit of reading against horizon across 5/10/15/20
+- [ ] Curvature: is the path across the four horizons convex, concave, or straight
+- [ ] Classify each day into one of three shapes — rising, flat, falling
+
+Three shapes is three regimes, and they are not the same thing as high/low readings.
+
+### 4.3 Cross-horizon agreement
+
+The multi-timeframe confluence work is the strongest filter found in this project — daily
+alone gave 0.007 Sharpe, all three timeframes aligned gave 0.302. **Same construction,
+applied to horizons rather than timeframes.**
+
+- [ ] How many of the four horizons agree on direction (0–4)
+- [ ] Dispersion of the four readings — tight cluster or wide spread
+- [ ] Whether the extremes (5d and 20d) agree, specifically
+
+Distinguish this clearly from the existing multi-timeframe work. That measures the same
+horizon computed on daily, weekly and monthly bars. **This measures different forward
+horizons on daily bars.** Different question, and both may carry information.
+
+### 4.4 Score everything
+
+Run all of 4.1-4.3 through the existing gauntlet at the current gate settings. Report:
+
+- Effect size, agreement, monotonicity, retention for each construction
+- Whether any term-structure feature beats the best single-horizon reading
+- **Whether any of them are trend-signed** — this is the first construction in the
+  project that could plausibly detect trend without predicting direction
+
+---
+
+## TASK 5 — TREND DETECTOR WITH CROSS-HORIZON CONFLUENCE
+
+Trend detection has failed panel-wide, on subsets, and at long horizons. **It has never
+been attempted using agreement across horizons as the confirming evidence.**
+
+The logic: a real trend should look like a trend at 5, 10, 15 *and* 20 days. Noise that
+happens to look trendy at one horizon should not survive at all four.
+
+- [ ] Build a trend read requiring the same direction across N of 4 horizons, sweep N
+- [ ] Add the persistence ratio as a second condition — a real trend sustains, so require
+      persistence above a threshold as well
+- [ ] Add the existing multi-timeframe agreement (daily/weekly/monthly) as a third
+      dimension, since it is the strongest filter already found
+- [ ] Test each condition alone and in combination, so we can see whether confluence adds
+      anything or whether one condition carries it
+
+**Run the null on this before believing any of it.** Every previous trend route died when
+tested against a circularly-shifted target. Subset agreement looked promising and noise
+beat it five to one. Assume this is the same until proven otherwise.
+
+Specifically: does noise produce the same rate of four-horizon agreement? Confluence rules
+can be weak in the same way subset rules were — if the criterion is easy to satisfy by
+chance, agreement across horizons is not evidence of anything.
+
+---
+
+## TASK 6 — WHAT THE TERM STRUCTURE MEANS PER PAIR
+
+Baseline trendiness varies 15% across the panel with 0.582 rank correlation between IS
+and OOS. Modest but real.
+
+- [ ] Compute the typical term structure shape for each pair, IS only
+- [ ] Do some pairs habitually show sustained moves and others habitually show bursts
+- [ ] Is that stable IS to OOS
+- [ ] Does normalising by each pair's own typical shape change anything
+
+If some pairs sustain and others burst, that is a per-pair regime property that persists —
+and it is routing information for Layer 3, not a parameter for Layer 2.
+
+---
+
 ## ORDER
 
-1 and 2 first — they are cheap and they change what "the regime reading" means before
-Task 3 tests it. Task 3 is the one that matters.
+1 → 2 → 3 → 4 → 5 → 6.
+
+Tasks 1-3 were the original set. Task 1 is done. Tasks 4-6 came out of what Task 1
+revealed and slot in after Task 3, because Task 3 is the bridge to Layer 2 and should not
+wait on the term-structure work.
+
+If Task 4 produces something strong, it may be worth rerunning Task 3 with the
+term-structure reading as an additional input. Decide that after Task 4 reports.
 
 ## WHAT SUCCESS LOOKS LIKE
 
@@ -130,7 +249,13 @@ Not "we found a trend detector." The realistic good outcome is:
 
 > When the estimator reads high-chop, moves reach their peak in N bars and retrace X% of
 > it. When it reads low-chop, moves run for M bars and retrace Y%. N < M and X > Y, with
-> a large enough gap to set different targets.
+> a large enough gap to distinguish the regimes.
 
 That is a regime estimator earning its place — it does not need to predict direction, and
-it does not need a trend detector. It needs to tell the strategy layer how to hold.
+it does not need a trend detector. It needs to describe the environment accurately enough
+that Layer 2 can act on it.
+
+From Tasks 4-6, the realistic good outcome is a **second dimension**: not just how
+straight the recent move has been, but whether that straightness sustains or decays. Two
+readings instead of one. If cross-horizon confluence also rescues trend detection, that is
+a bonus rather than the premise.
