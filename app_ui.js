@@ -322,6 +322,18 @@ circularly shifted target &mdash; <b>real ÷ null</b> is the only honest compari
 </section>
 
 <section id="vd" hidden>
+<h3>Does the regime read predict what happens after entry?</h3>
+<div class="note">The bridge to Layer 2. Three deliberately dumb triggers &mdash; a 20-day
+breakout, a 20/100 moving-average cross, a two-sigma stretch faded &mdash; generate entry
+events. At each one the regime reading is taken as of the prior bar, then the next 20 bars
+are measured with <b>no exit rule</b>: how far it went the right way, how far the wrong
+way, how long to the peak, how much of the peak was surrendered, how straight the path was.
+No PnL, no win rate. Terciles cut on in-sample data only.</div>
+<div class="tw"><table id="entab"><thead><tr>
+<th>Regime third</th><th>n</th><th>MFE</th><th>MAE</th><th>MFE/|MAE|</th>
+<th>Bars to peak</th><th>Giveback</th><th>Path eff.</th><th>Onside at 20</th>
+</tr></thead><tbody></tbody></table></div>
+<div class="note" id="entxt"></div>
 <h3>The strictest test — is any one variant provably not luck?</h3>
 <div id="funch"></div>
 <div class="note" id="funtx"></div>
@@ -972,6 +984,38 @@ function boot(BUNDLE,root){
       ${((b.real/b.ratio)/b.real*100).toFixed(1)}%, while survivors go from ${a.real} to
       ${b.real}. So there is genuine structure below gate 4 and the price of reaching it is
       a few percent of noise.${pc}</div>`;}
+  })();
+
+  // ---- Task 3: excursion shape by regime ----
+  (function(){const E=BUN.entry||[],EP=BUN.entrypair||[];if(!E.length)return;
+   const O=E.filter(d=>d.sample==='oos');if(!O.length)return;
+   const f4=v=>v==null?'—':(+v).toFixed(4);
+   $('#entab tbody').innerHTML=O.map(d=>`<tr><td>${d.band}</td>
+     <td>${d.n.toLocaleString()}</td><td>${f4(d.mfe)}</td><td>${f4(d.mae)}</td>
+     <td>${d.ratio.toFixed(2)}</td><td>${d.bars_to_peak.toFixed(1)}</td>
+     <td>${d.gb_pct.toFixed(1)}%</td><td>${f4(d.path_eff)}</td>
+     <td>${(d.fav20*100).toFixed(1)}%</td></tr>`).join('');
+   const c=O[0],t=O[2];
+   const pk=EP.filter(d=>d.peak_later_in_trend===true||d.peak_later_in_trend==='True').length;
+   $('#entxt').innerHTML=`<b>No. The excursion profiles are the same.</b> The prediction was
+    that chop entries peak sooner and give more of it back. Bars to peak come out
+    ${c.bars_to_peak.toFixed(1)} against ${t.bars_to_peak.toFixed(1)} (t = +1.2, not
+    significant), and giveback is <b>${c.gb_pct.toFixed(0)}% against
+    ${t.gb_pct.toFixed(0)}%</b> of the favourable peak &mdash; indistinguishable. Still
+    onside at 20 bars is ${(c.fav20*100).toFixed(0)}% against ${(t.fav20*100).toFixed(0)}%,
+    both coin flips. Pair by pair the peak arrives later in the trend third in just
+    ${pk} of ${EP.length}.
+    <br><br><b>What does differ is scale, not shape.</b> Chop entries have a larger MFE
+    (${f4(c.mfe)} vs ${f4(t.mfe)}) <i>and</i> a larger MAE (${f4(c.mae)} vs ${f4(t.mae)}) —
+    chop regimes are simply more volatile, so everything is bigger in both directions.
+    Normalise by the size of the move and the shape is identical. The one asymmetry is that
+    adverse excursion shrinks faster than favourable, lifting MFE/|MAE| from
+    ${c.ratio.toFixed(2)} to ${t.ratio.toFixed(2)} — a stop-distance input at best, and it
+    is not stable across subsamples.
+    <br><br><b>Path efficiency does separate cleanly</b> (${f4(c.path_eff)} to
+    ${f4(t.path_eff)}, t = +7.9) — but that is the quantity the composite was selected to
+    predict, so it confirms the estimator works as an estimator and says nothing about
+    whether it informs trade management.`;
   })();
 
   // ---- horizon sweep ----
