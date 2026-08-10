@@ -215,6 +215,15 @@ def run_null(X, lp, px, ins, H=20):
 def task6(px, F):
     """Do some pairs habitually sustain and others burst, and does it persist?
 
+    On "does normalising by each pair's own typical shape change anything": for
+    the FINISHED feature, provably nothing. The scorer ranks the signal within
+    each pair before quintiling, so any strictly-monotone per-pair transform
+    leaves quintile membership identical and every statistic with it -- scaling
+    and z-scoring ts_slope, persist_diff and ts_disp reproduce their effect,
+    agreement, monotonicity and t to every digit. Normalising the COMPONENT
+    horizons before combining them is a different operation and does change the
+    feature, which is exactly what the median division below does.
+
     The RAW slope cannot answer this. Over a random walk the net move grows like
     sqrt(H) while the path grows like H, so trailing efficiency decays as
     1/sqrt(H) for every series alive -- the first run duly classified all 28
