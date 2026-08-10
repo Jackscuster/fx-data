@@ -342,6 +342,41 @@ SOURCES = [('USD', 'home.treasury.gov', usd), ('EUR', 'ECB + Bundesbank', None),
            ('CHF', 'SNB rendoblid', chf), ('NZD', 'FRED api (key)', None)]
 
 
+SPOT = ['2007-06-29', '2011-09-30', '2015-06-30', '2021-06-30', '2024-06-28']
+
+
+def verify_leg(ccy, s):
+    """Check a leg before it is allowed into the panel.
+
+    Every failure mode here has actually happened to someone: a source quoted in
+    basis points reads 100x high, a bad splice puts a step in the middle, a
+    reindex leaves duplicate dates that silently double-count in a pooled stat.
+    None of them announce themselves -- the series still looks like a series.
+    """
+    p = []
+    if not len(s):
+        return ['empty'], {}
+    if not s.index.is_monotonic_increasing:
+        p.append('index not sorted')
+    if s.index.duplicated().any():
+        p.append('%d duplicate dates' % int(s.index.duplicated().sum()))
+    lo, hi = float(s.min()), float(s.max())
+    if lo < -2 or hi > 25:
+        p.append('outside a plausible yield band: %.2f..%.2f -- unit error?' % (lo, hi))
+    # a 2y government yield does not move 200bp in a day; a splice or a unit
+    # change does exactly that
+    j = s.diff().abs()
+    big = int((j > 1.5).sum())
+    if big:
+        p.append('%d day-on-day jumps over 1.5pp (worst %.2f on %s)'
+                 % (big, j.max(), j.idxmax().date()))
+    gaps = s.index.to_series().diff().dt.days
+    long_gap = int((gaps > 30).sum())
+    smp = {d: (round(float(s.asof(pd.Timestamp(d))), 3)
+               if len(s[:d]) else None) for d in SPOT}
+    return p, dict(min=round(lo, 3), max=round(hi, 3), long_gaps=long_gap, samples=smp)
+
+
 def fetch_all():
     Y, meta = {}, []
     for ccy, src, fn in SOURCES:
@@ -353,7 +388,22 @@ def fetch_all():
                 note = 'splice step %+.3f pp' % step if np.isfinite(step) else ''
             elif ccy == 'NZD':
                 s, sid = nzd()
-                note = ('FRED %s -- MONTHLY LONG RATE, not a 2y' % sid) if sid else 'no key'
+                # A tenor and frequency guard, not a formality. FRED's New Zealand
+                # coverage is OECD monthly LONG-TERM (10y) -- with the key present
+                # this returns a series that looks fine and is the wrong
+                # instrument. Dropping a monthly 10y into a daily 2y panel would
+                # silently corrupt all seven NZD differentials, and they would
+                # still plot. So it is fetched, reported, and kept OUT unless it
+                # is genuinely daily.
+                med = (s.index.to_series().diff().dt.days.median()
+                       if len(s) > 2 else np.nan)
+                if len(s) and (not np.isfinite(med) or med > 5):
+                    note = ('FRED %s is %.0f-day frequency, not daily 2y -- '
+                            'EXCLUDED from the panel' % (sid, med))
+                    print('    NZD %s' % note)
+                    s = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
+                else:
+                    note = ('FRED %s' % sid) if sid else 'no key'
             else:
                 s = fn()
         except Exception as e:                       # noqa: BLE001
@@ -365,12 +415,22 @@ def fetch_all():
             s = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
         s = s[s.index >= START]
         Y[ccy] = s
+        probs, stat = verify_leg(ccy, s)
         meta.append(dict(currency=ccy, source=src, ok=len(s) > 0, n=len(s),
                          first=str(s.index.min().date()) if len(s) else '',
-                         last=str(s.index.max().date()) if len(s) else '', note=note))
+                         last=str(s.index.max().date()) if len(s) else '',
+                         note=note, checks='; '.join(probs) if probs else 'clean',
+                         vmin=stat.get('min'), vmax=stat.get('max')))
         print('  %-4s %-24s %6d obs  %s .. %s  %.0fs %s'
               % (ccy, src, len(s), meta[-1]['first'], meta[-1]['last'],
                  time.time() - t0, note), flush=True)
+        if stat:
+            print('       range %.2f..%.2f  samples %s'
+                  % (stat['min'], stat['max'],
+                     '  '.join('%s=%s' % (d[2:], v)
+                               for d, v in stat['samples'].items())), flush=True)
+        for x in probs:
+            print('       CHECK: %s' % x, flush=True)
     return Y, pd.DataFrame(meta)
 
 
