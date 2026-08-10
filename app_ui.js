@@ -250,6 +250,22 @@ these groups are small enough that the individual rows are noise.</div>
 <div class="note">A construction that indexes a currency pair's two legs has nothing to read
 on a VIX series. That is a property of the construction, not a data failure.</div>
 <div id="extr"></div>
+<h3>Rate differentials &mdash; the carry test</h3>
+<div class="note">Two-year government yields for the G8, one leg per currency, assembled
+from eight central banks and treasuries because FRED's keyless host refuses this network.
+The differential base&minus;quote <i>is</i> the carry. Unlike the market series above these
+are <b>pair-specific</b>, so every construction produces a genuine 28-pair panel and is
+scored exactly the way an FX price signal is.</div>
+<div class="note">A rate differential crosses zero and every signal module starts with
+<code>log(price)</code>, so the differential is accumulated into a carry index
+<code>cumprod(1+d/252)</code> whose log-increments are the differential exactly. Gaps stay
+gaps &mdash; a missing month is never filled into flat carry.</div>
+<div class="tw"><table id="cartab"><thead><tr>
+<th>Group</th><th>n</th><th>OOS retention</th><th>vs FX price</th></tr></thead><tbody></tbody></table></div>
+<div id="carnote"></div>
+<div class="tw"><table id="ratecov"><thead><tr>
+<th>Currency</th><th>Source</th><th>Obs</th><th>First</th><th>Last</th><th>Coverage</th>
+</tr></thead><tbody></tbody></table></div>
 <h3>Coverage</h3>
 <div class="note">Aligned to the FX calendar, forward-filled only, never backfilled and
 never padded at the front. Series that start late stay NaN until they start.</div>
@@ -801,6 +817,30 @@ function boot(BUNDLE,root){
    $('#excov tbody').innerHTML=C.filter(d=>d.ok===true||d.ok==='True').map(d=>
     `<tr><td>${d.series}</td><td>${d.source}</td><td>${d.group}</td><td>${d.first}</td>
      <td>${d.coverage_on_px28==null?'—':pct(d.coverage_on_px28)}</td></tr>`).join('');
+   // ---- carry / rate differentials ----
+   const CR=BUN.carryret||[],RC=BUN.ratecov||[],CS=BUN.carrysig||[];
+   const cbase=CR.find(d=>/FX price/.test(d.group));
+   if(CR.length)$('#cartab tbody').innerHTML=CR.map(r=>{
+    const hd=/^\(/.test(r.group),up=r.vs_price_baseline>0;
+    return `<tr${hd?' style="opacity:.75"':''}><td>${hd?'<i>'+r.group+'</i>':r.group}</td>
+     <td>${r.n.toLocaleString()}</td><td><b>${r.retention==null?'—':pct(r.retention)}</b></td>
+     <td style="color:${up?'var(--trend)':'var(--kill)'}">${r.vs_price_baseline==null?'—'
+       :(r.vs_price_baseline>0?'+':'')+(r.vs_price_baseline*100).toFixed(1)+'pp'}</td></tr>`;
+   }).join('');
+   const kc=CR.find(d=>/surviving constructions/.test(d.group));
+   if(kc)$('#carnote').innerHTML=`<div class="note"><b>The constructions do not transfer to
+    carry.</b> ${pct(kc.retention)} of ${kc.n} keep their sign out of sample &mdash; a coin
+    flip, and ${Math.abs(kc.vs_price_baseline*100).toFixed(1)}pp below FX price. Nothing
+    clears the gauntlet. Note what the target is: forward efficiency is
+    <b>|net|&divide;path</b>, a trend-versus-chop measure carrying no direction at all,
+    while carry is a directional return phenomenon. This says the shapes that read trend in
+    price do not read trend in rate differentials &mdash; it does not say carry is
+    uninformative about returns, which is a question this project does not ask.</div>`;
+   if(RC.length)$('#ratecov tbody').innerHTML=RC.map(r=>
+    `<tr${(r.ok===true||r.ok==='True')?'':' style="opacity:.5"'}><td><b>${r.currency}</b></td>
+     <td>${r.source}</td><td>${(r.n||0).toLocaleString()}</td><td>${r.first||'—'}</td>
+     <td>${r.last||'—'}</td>
+     <td>${r.coverage_on_px28==null?'—':pct(r.coverage_on_px28)}</td></tr>`).join('');
    const miss=C.filter(d=>!(d.ok===true||d.ok==='True'));
    $('#extx').innerHTML=(miss.length?`<b>${miss.length} series unavailable in this build</b>
      &mdash; ${miss.map(d=>d.series).join(', ')}. `:'')

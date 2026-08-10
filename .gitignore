@@ -19,3 +19,7 @@ results/_isonly/
 # against GitHub's 100 MB wall. What the repo carries is the three small CSVs the
 # adjustment stage derives from inflation_runs.csv, which IS committed.
 results/_infl_*
+
+# rates.py raw downloads. The BoE yield-curve zip alone is 39 MB and closed
+# Treasury years never change, so they are cached rather than refetched.
+data/_ratecache/

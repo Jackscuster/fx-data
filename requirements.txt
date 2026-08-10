@@ -1,3 +1,8 @@
 pandas>=2.0
 numpy>=1.24
 scipy>=1.10
+# rates.py only: the BoE ships its yield curves as xlsx inside a zip and the RBA
+# keeps everything before 2013 in a legacy .xls. openpyxl reads the former,
+# xlrd the latter; pandas cannot open either on its own.
+openpyxl>=3.1
+xlrd>=2.0
