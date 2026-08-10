@@ -334,6 +334,23 @@ No PnL, no win rate. Terciles cut on in-sample data only.</div>
 <th>Bars to peak</th><th>Giveback</th><th>Path eff.</th><th>Onside at 20</th>
 </tr></thead><tbody></tbody></table></div>
 <div class="note" id="entxt"></div>
+<h3>The term structure &mdash; a second regime dimension?</h3>
+<div class="note">Efficiency measured over the past 5, 10, 15 and 20 days gives a shape,
+not a number: its level, how much it persists from the short window to the long one, its
+slope and curvature, its dispersion, and how many horizons agree. <b>All trailing and
+lagged one bar.</b> Every feature is scored against a circularly shifted target as well,
+and <b>corrected</b> is the real effect minus what the same feature earns from noise.</div>
+<div class="note" style="border-left:3px solid var(--kill);padding-left:10px"><b>Why
+trailing matters here more than anywhere else.</b> Defining persistence from the
+<i>forward</i> readings makes it a function of the target: it scores an OOS effect of
+0.2460 at t=190 with all 28 pairs agreeing, about ten times the best real survivor in the
+project. A shifted-target null does <b>not</b> catch that &mdash; shifting destroys the
+leaked alignment, so the null reads near zero and the ratio comes out around 40×,
+certifying the leak. Nulls test selection inflation, not look-ahead.</div>
+<div class="tw"><table id="tstab"><thead><tr>
+<th>Feature</th><th>OOS effect</th><th>Null</th><th>Corrected</th><th>Ratio</th>
+<th>Agreement</th><th>\|t\|</th></tr></thead><tbody></tbody></table></div>
+<div class="note" id="tstxt"></div>
 <h3>The strictest test — is any one variant provably not luck?</h3>
 <div id="funch"></div>
 <div class="note" id="funtx"></div>
@@ -1016,6 +1033,43 @@ function boot(BUNDLE,root){
     ${f4(t.path_eff)}, t = +7.9) — but that is the quantity the composite was selected to
     predict, so it confirms the estimator works as an estimator and says nothing about
     whether it informs trade management.`;
+  })();
+
+  // ---- term structure (tasks 4-6) ----
+  (function(){const T=BUN.termstruct||[],TP=BUN.termpairs||[];if(!T.length)return;
+   const N=(BUN.termnull||[]);
+   const f4=v=>v==null?'—':(+v).toFixed(4);
+   const rows=T.filter(d=>d.scorable===true||d.scorable==='True')
+     .map(d=>({...d,abs_so:Math.abs(d.so),corr:Math.abs(d.so)-(d.null_eff||0)}))
+     .sort((a,b)=>b.corr-a.corr);
+   $('#tstab tbody').innerHTML=rows.map(d=>{
+    const ok=d.corr>0;
+    return `<tr><td>${d.signal}${d.kind==='binary'?' <span class="count">rule</span>':''}</td>
+     <td>${f4(d.abs_so)}</td><td>${f4(d.null_eff)}</td>
+     <td style="color:${ok?'var(--trend)':'var(--kill)'}"><b>${f4(d.corr)}</b></td>
+     <td>${d.null_eff?(d.abs_so/d.null_eff).toFixed(2)+'x':'—'}</td>
+     <td>${d.ao==null?'—':d.ao.toFixed(3)}</td>
+     <td>${Math.abs(d.to).toFixed(1)}</td></tr>`;}).join('');
+   const b=rows[0];
+   const stable=TP.filter(d=>d.stable===true||d.stable==='True').length;
+   $('#tstxt').innerHTML=`<b>Nothing here clears the gauntlet.</b> The strongest corrected
+    effect is <code>${b.signal}</code> at <b>${f4(b.corr)}</b>, against a gate of 0.0221 and
+    a survivor set averaging 0.0277. Best agreement across the whole table is 0.79 against a
+    gate of 0.893, and best |t| is 5.5 against a gate of 8.
+    <br><br><b>Cross-horizon confluence does not rescue trend detection.</b> Requiring
+    2-of-4 or 3-of-4 agreement scores <i>below</i> its own null (0.40× and 0.76×). The best
+    rule, 3-of-4 plus positive persistence, corrects to 0.0033 — weaker than simply reading
+    trailing 20-day efficiency on its own. Adding the daily/weekly/monthly filter as a third
+    condition makes it worse, not better. Confluence is not adding evidence here.
+    <br><br><b>Persistence is real but small:</b> corrected 0.0050 in difference form,
+    0.0045 as a log ratio. That is a fifth of the gate.
+    <br><br><b>Per pair (Task 6):</b> the absolute "sustains vs bursts" split is not
+    meaningful — every pair lands on the same side under either construction, because
+    efficiency decays as 1/&radic;H for any series and the common component swamps the
+    pair. What <i>is</i> real is the ordering: the slope's rank correlation from in-sample
+    to out is <b>+0.559</b> with ${stable} of ${TP.length} pairs keeping their sign, about
+    as stable as baseline trendiness at 0.582. Term-structure shape is a genuine per-pair
+    property, of the same modest size as everything else per-pair here.`;
   })();
 
   // ---- horizon sweep ----
