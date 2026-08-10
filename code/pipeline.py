@@ -34,6 +34,7 @@ run('crisis.py')                     # scores detectors against the events.py ne
 if os.environ.get('FX_RUN_STABILITY'):
     run('stability.py')
 run('ninebox.py'); run('mtf.py')
+run('pairtrend.py')          # per-pair trendiness, and whether gate 4 over-kills
 # The selection-inflation null: 50 circular shifts of the target panel, the whole
 # gauntlet rerun against each. Gated like sc6/sc7 -- a cold pass rescores all 28
 # pairs against every signal and its 2.2 GB of accumulators are gitignored, so

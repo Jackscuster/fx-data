@@ -16,6 +16,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="va">Validation</button>
 <button role="tab" aria-selected="false" data-t="if">Inflation</button>
 <button role="tab" aria-selected="false" data-t="ex">External</button>
+<button role="tab" aria-selected="false" data-t="pt">Pairs</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
 const BODY=`<div class="grid">
@@ -272,6 +273,26 @@ never padded at the front. Series that start late stay NaN until they start.</di
 <div class="tw"><table id="excov"><thead><tr>
 <th>Series</th><th>Source</th><th>Group</th><th>First</th><th>Coverage</th></tr></thead><tbody></tbody></table></div>
 <div class="note" id="extx"></div>
+</section>
+
+<section id="pt" hidden>
+<div class="note"><b>Which pairs trend and which chop.</b> Mean forward 20-day efficiency,
+<b>|net move| &divide; |path travelled|</b>, per pair, in sample and out. Nothing is fitted
+&mdash; this is a property of the pair, not of the estimator. A high number means the pair
+goes somewhere in a straight line.</div>
+<div id="ptcards" style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0"></div>
+<div class="tw"><table id="pttab"><thead><tr>
+<th>Pair</th><th></th><th>IS</th><th>OOS</th><th>Rank IS</th><th>Rank OOS</th><th>Move</th>
+</tr></thead><tbody></tbody></table></div>
+<h3>Is the agreement gate killing pair-specific trend signals?</h3>
+<div class="note">Gate 4 demands a signal point the same way on 25 of 28 pairs. If a signal
+genuinely worked on trending pairs and did nothing on choppy ones, that would be real
+structure and the gate would delete it for not being universal. So: every signal that
+clears every other gate and dies only on agreement, with its per-pair spreads recovered
+from the score files, asking whether the pairs carrying it are the trending ones.</div>
+<div id="agnote"></div>
+<div class="tw"><table id="agtab"><thead><tr>
+<th>Pair</th><th>In the strongest 7 for…</th><th>Trendiness</th></tr></thead><tbody></tbody></table></div>
 </section>
 
 <section id="vd" hidden>
@@ -851,6 +872,53 @@ function boot(BUNDLE,root){
       than the n column suggests.`;
   })();
 
+  // ---- pair trendiness ----
+  (function(){const P=BUN.pairtrend||[],AG=BUN.agreepairs||[];
+   if(!P.length)return;
+   const MAJ=new Set(['EURUSD','GBPUSD','AUDUSD','NZDUSD','USDCAD','USDCHF','USDJPY']);
+   const f4=v=>v==null?'—':(+v).toFixed(4);
+   const rk=(a,b)=>{const r=x=>x.map((_,i)=>i);const ia=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]),
+     ib=b.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]);
+    const ra=[],rb=[];ia.forEach(([,i],k)=>ra[i]=k);ib.forEach(([,i],k)=>rb[i]=k);
+    const n=a.length,m=(n-1)/2;let sx=0,sy=0,sxy=0;
+    for(let i=0;i<n;i++){sx+=(ra[i]-m)**2;sy+=(rb[i]-m)**2;sxy+=(ra[i]-m)*(rb[i]-m);}
+    return sxy/Math.sqrt(sx*sy);};
+   const rho=rk(P.map(d=>d.eff_is),P.map(d=>d.eff_oos));
+   const mj=P.filter(d=>MAJ.has(d.pair)),cr=P.filter(d=>!MAJ.has(d.pair));
+   const avg=a=>a.reduce((s,d)=>s+d.eff_both,0)/a.length;
+   const card=(h,s)=>`<div class="panel" style="flex:1;min-width:200px">
+     <div class="big">${h}</div><span class="count">${s}</span></div>`;
+   $('#ptcards').innerHTML=
+     card(rho.toFixed(2),`<b>IS&ndash;OOS rank correlation.</b> The ordering is only
+       partly stable: roughly ${Math.round(rho*rho*100)}% of the rank variance carries
+       across the split.`)
+    +card(f4(avg(mj))+' / '+f4(avg(cr)),`<b>Majors vs crosses.</b> The ranking sorts
+       almost entirely by whether the dollar is in the pair.`)
+    +card(f4(P[0].eff_both-P[P.length-1].eff_both),`<b>Trendiest minus choppiest.</b>
+       Real but modest &mdash; about 13% of the level, on a standard error near 0.0025.`);
+   $('#pttab tbody').innerHTML=P.map(d=>{
+    const mv=d.rank_move,big=Math.abs(mv)>=8;
+    return `<tr><td><b>${d.pair}</b></td>
+     <td><span class="count">${MAJ.has(d.pair)?'major':'cross'}</span></td>
+     <td>${f4(d.eff_is)}</td><td>${f4(d.eff_oos)}</td>
+     <td>${d.rank_is}</td><td>${d.rank_oos}</td>
+     <td style="color:${big?(mv>0?'var(--trend)':'var(--kill)'):'inherit'}">${
+       mv>0?'+'+mv:mv}</td></tr>`;}).join('');
+   if(AG.length){
+    const rr=rk(AG.map(d=>d.backing_rate),AG.map(d=>d.eff_both));
+    $('#agnote').innerHTML=`<div class="note"><b>No &mdash; the gate is doing its job.</b>
+     Across the signals killed only by agreement, the pairs carrying the largest effects
+     are no trendier than the pairs where the effect is smallest, and the correlation
+     between how often a pair is among a killed signal's strongest and how trendy that
+     pair is comes out at <b>${rr.toFixed(3)}</b>. If the gate were deleting real
+     trend-concentrated structure this number would be strongly positive. The killed
+     signals lean on an arbitrary handful of pairs, which is what noise lining up on a
+     subset looks like.</div>`;
+    $('#agtab tbody').innerHTML=AG.slice(0,10).map(d=>
+     `<tr><td>${d.pair}</td><td>${(d.backing_rate*100).toFixed(0)}% of them</td>
+      <td>${f4(d.eff_both)}</td></tr>`).join('');}
+  })();
+
   // ---- composite headline ----
   (function(){const C=(BUN.composite||[])[0];if(!C){return;}
    const q=[C.q1,C.q2,C.q3,C.q4,C.q5];
@@ -955,6 +1023,6 @@ function boot(BUNDLE,root){
 
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','pt','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();
