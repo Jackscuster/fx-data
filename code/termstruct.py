@@ -43,7 +43,7 @@ from carrysig import score_panel
 PX = os.path.join(ROOTDATA, 'px28.csv')
 SPLIT = pd.Timestamp('2016-01-01')
 HS = [5, 10, 15, 20]
-NSHIFT = 20
+NSHIFT = int(os.environ.get('FX_NSHIFT', 50))   # project standard is 50
 MINOFF = 1000
 SEED = 23
 MEDWIN = 250
