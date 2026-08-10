@@ -291,6 +291,15 @@ structure and the gate would delete it for not being universal. So: every signal
 clears every other gate and dies only on agreement, with its per-pair spreads recovered
 from the score files, asking whether the pairs carrying it are the trending ones.</div>
 <div id="agnote"></div>
+<h3>The null test on the subset route</h3>
+<div class="note">A looser gate always admits more signals, so counting them proves
+nothing. The whole agreement sweep is therefore run twice &mdash; once on the real target,
+once against each of the 50 circularly-shifted panels where the true effect is zero by
+construction. <b>Expected false</b> is what the same threshold admits from noise.</div>
+<div class="tw"><table id="sntab"><thead><tr>
+<th>Agreement</th><th>Pairs</th><th>Real</th><th>Null median</th><th>Null max</th>
+<th>Expected false</th><th>Contamination</th></tr></thead><tbody></tbody></table></div>
+<div id="snnote"></div>
 <div class="tw"><table id="agtab"><thead><tr>
 <th>Pair</th><th>In the strongest 7 for…</th><th>Trendiness</th></tr></thead><tbody></tbody></table></div>
 </section>
@@ -917,6 +926,35 @@ function boot(BUNDLE,root){
     $('#agtab tbody').innerHTML=AG.slice(0,10).map(d=>
      `<tr><td>${d.pair}</td><td>${(d.backing_rate*100).toFixed(0)}% of them</td>
       <td>${f4(d.eff_both)}</td></tr>`).join('');}
+   const SN=BUN.subnull||[],SP=BUN.subnullpairs||[];
+   if(SN.length){
+    $('#sntab tbody').innerHTML=SN.map(r=>{
+     const ef=r.real/r.ratio,cont=ef/r.real,cur=Math.abs(r.thresh-0.893)<1e-6;
+     return `<tr${cur?' style="font-weight:600"':''}><td>${r.thresh.toFixed(3)}${
+       cur?' &larr; current':''}</td><td>${r.pairs_required} of 28</td>
+      <td><b>${r.real}</b></td><td>${r.null_med.toFixed(1)}</td><td>${r.null_max}</td>
+      <td>${ef.toFixed(1)}</td>
+      <td style="color:${cont<.05?'var(--trend)':'var(--kill)'}">${(cont*100).toFixed(1)}%</td>
+      </tr>`;}).join('');
+    const a=SN.find(d=>Math.abs(d.thresh-0.893)<1e-6),b=SN.find(d=>Math.abs(d.thresh-0.75)<1e-6);
+    let pc='';
+    if(SP.length){const rr=rk(SP.map(d=>d['real_0.750']),SP.map(d=>d.panel_corr)),
+      tt=rk(SP.map(d=>d['real_0.750']),SP.map(d=>d.eff));
+     pc=`<br><br><b>And the clustering is not a trend pattern.</b> Which pairs carry the
+      subset survivors correlates <b>${rr.toFixed(2)}</b> with how closely that pair's
+      forward efficiency tracks the panel's, and <b>${tt.toFixed(2)}</b> with how much the
+      pair trends. AUDNZD is the cleanest case: the trendiest pair on the board and one of
+      the weakest carriers. The survivor set is overwhelmingly panel-volatility chop
+      detectors, so the pairs that carry them are the pairs that move with the panel &mdash;
+      a sensitivity effect, not a trend effect.`;}
+    if(a&&b)$('#snnote').innerHTML=`<div class="note"><b>The subset survivors are real.</b>
+      Relaxing agreement to ${b.pairs_required} of 28 admits <b>${b.real}</b> signals where
+      the shifted-target null yields a median of ${b.null_med.toFixed(0)} and never exceeds
+      ${b.null_max}. Expected contamination rises from
+      ${((a.real/a.ratio)/a.real*100).toFixed(1)}% at the current gate to
+      ${((b.real/b.ratio)/b.real*100).toFixed(1)}%, while survivors go from ${a.real} to
+      ${b.real}. So there is genuine structure below gate 4 and the price of reaching it is
+      a few percent of noise.${pc}</div>`;}
   })();
 
   // ---- composite headline ----

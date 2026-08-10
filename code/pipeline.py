@@ -60,6 +60,7 @@ else:
                             '--report-only'], check=True)
 if os.environ.get('FX_RUN_INFLATION'):
     run('inflation.py')
+    run('subsetnull.py')      # same accumulator dependency, so same gate
 elif os.path.exists(os.path.join(R, 'results', 'inflation_runs.csv')):
     print('\n=== inflation.py --adjust-only ===', flush=True)
     subprocess.run([sys.executable, os.path.join(C, 'inflation.py'),
