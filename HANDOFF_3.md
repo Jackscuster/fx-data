@@ -584,14 +584,38 @@ Two axes, both trailing over 20 bars and lagged one, each cut at that pair's own
 - **scale** = path / (60-day vol × √20)
 
 ```
-            small          mid           large
-  straight  drift-clean    drift-firm    TRENDING
-  mid       drift-quiet    neutral       pushing
-  chop      DEAD           chopping      VOLATILE CHOP
+                  small          medium        big
+  clean (straight) clean-small    clean-medium  clean-big
+  mixed            mixed-small    mixed-medium  mixed-big
+  messy (chop)     messy-small    messy-medium  messy-big
 ```
 
-Occupancy 9.4–13.4% per state. Median run 3–6 bars. Transition diagonal 0.734 to
-0.876, off-diagonal mass on adjacent cells.
+Names describe position on **both** axes — hue is straightness, darkness is scale
+in the app. It is an explicit cross of two tercile axes, **not** terciles of a
+weighted score, so neither axis can crowd the other out. An earlier weighted
+version (`classifier.py`, three states) put 97.3% of the variance on scale and was
+effectively one-dimensional; it is kept for comparison and should not be treated
+as the estimator.
+
+Occupancy 9.3–13.5%. Median run 4 bars, diagonal 0.798. Refit stability **97.1%**.
+
+**THE SECOND AXIS IS REAL AND RUNS BACKWARDS TO ITS OWN NAME.** At equal scale,
+the *messy* side is followed by **more** efficient travel:
+
+| scale | messy − clean, forward path efficiency | null-corrected | p |
+|---|---|---|---|
+| medium | **+0.0218** | +0.0220 | **0.020** |
+| big | +0.0133 | +0.0137 | 0.078 |
+| small | +0.0053 | — | — |
+
+Trailing straightness **mean-reverts**. So "clean" describes the last 20 bars
+accurately and is the opposite of a forecast — reading clean-big as "trending,
+expect more of it" has the sign backwards. This is the same phenomenon as the
+chop detectors' negative spreads, seen from the other side.
+
+Separation across the nine: range-to-path **1.65 sd**, average absolute move 0.86,
+realised vol 0.80, return autocorrelation 0.12. Against surrogates: sign-randomised
+0.424, IID 0.052, both p=0.005 with 0/200 draws beating it.
 
 `code/ninestate.py` builds it and writes `app_explorer.json`. The **Explorer** tab
 is the primary screen; **States** has the grid, transition heatmap and per-pair
@@ -727,6 +751,15 @@ PASS for every rule.
 108% vs 109%. Use absolute giveback per row and form the proportion at group level.
 
 **Window = normalisation window is degenerate.** See 16.2.
+
+**`x.rank(pct=True)` ranks against the whole sample.** Used for the tercile cuts in
+`classifier.py`, `ribbon.py` and `ninestate.py`, it meant a bar's label depended on
+data after it and the cut points were learned partly on the holdout. The tell was a
+refit stability of **exactly 100.0%** — refitting changed nothing because nothing
+was being fitted. Fixed with `classifier.fit_frac`, which builds the empirical CDF
+on the fit window and applies it unchanged; stability is now 97.1%. The one place
+whole-sample ranking is legitimate is `ribbon.truth()`, the non-causal reference
+the reaction lag is measured against, which is never a feature.
 
 **One library signal is broken.** `zs_coexmax_D375`: `coexmax_D375` takes 15
 distinct values, is unchanged on 94% of days, and its 120-day rolling sd is

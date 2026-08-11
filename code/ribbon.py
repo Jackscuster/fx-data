@@ -34,7 +34,8 @@ Everything else is trailing and lagged one bar, weights as in classifier.py.
 Writes results/ribbon_sweep.csv, ribbon_config.csv, ribbon_excursion.csv.
 """
 import numpy as np, pandas as pd
-from classifier import WEIGHT, LAB, hyst, zfit, runs_of, realised_props, separation
+from classifier import (WEIGHT, LAB, hyst, zfit, runs_of, realised_props,
+                        separation, fit_frac)
 
 PX = os.path.join(ROOTDATA, 'px28.csv')
 EV = os.path.join(ROOTOUT, 'entry_events.csv')
@@ -68,7 +69,7 @@ def axes_at(px, L, r=None):
 def label_at(px, L, fit, r=None):
     Z = zfit(axes_at(px, L, r), fit)
     sc = sum(WEIGHT[k] * Z[k] for k in WEIGHT)
-    frac = pd.DataFrame({p: sc[p].rank(pct=True) for p in sc.columns})
+    frac = fit_frac(sc, fit)
     lo_b = hyst((frac - 1 / 3 + .5).clip(0, 1), BAND)
     hi_b = hyst((frac - 2 / 3 + .5).clip(0, 1), BAND)
     ok = frac.notna()
@@ -84,6 +85,8 @@ def truth(px):
     path = rr.abs().rolling(REF, center=True).sum()
     vol = rr.rolling(VOLWIN).std()
     sc = (path / (vol * np.sqrt(REF))).replace([np.inf, -np.inf], np.nan)
+    # whole-sample ranking is fine HERE and only here: truth() is the non-causal
+    # reference the lag is measured against, never a feature
     frac = pd.DataFrame({p: sc[p].rank(pct=True) for p in sc.columns})
     return pd.DataFrame(np.where(frac.notna(),
                                  np.where(frac > 2 / 3, 'high',
