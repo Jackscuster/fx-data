@@ -118,7 +118,6 @@ out = dict(
                 .round(4).where(pd.notna(d.drop(columns=[c for c in d.columns
                 if c.startswith('Unnamed')])), None).values.tolist())(
                     rd('nine_transitions.csv')),
-    ribexc=cl(rd('ribbon_excursion.csv')),
     durhaz=cl(rd('duration_hazard_hysteresis.csv')),
     scaleexc=cl(rd('scale_excursion.csv')),
     newtarget=cl(rd('newtarget_summary.csv')),

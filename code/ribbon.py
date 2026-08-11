@@ -153,6 +153,8 @@ def main():
     S.to_csv(os.path.join(ROOTOUT, 'ribbon_sweep.csv'), index=False)
     print('\nchosen: %s' % pick)
 
+    global PICKED
+    PICKED = tuple(pick[k] for k in ('fast', 'medium', 'slow'))
     F = label_at(px, pick['fast'], fit)
     M = label_at(px, pick['medium'], fit)
     L3 = label_at(px, pick['slow'], fit)
@@ -199,6 +201,9 @@ def main():
     print('\nwrote ribbon_sweep.csv, ribbon_config.csv, ribbon_excursion.csv')
 
 
+PICKED = ()
+
+
 def excursion(C):
     if not os.path.exists(EV):
         return
@@ -214,7 +219,13 @@ def excursion(C):
     print('\nTASK 3 EXCURSION BY CONFIGURATION (out of sample)')
     print(g[['n', 'mfe', 'ratio', 'bars', 'eff', 'fav20']]
           .to_string(float_format=lambda v: '%.4f' % v))
-    g.to_csv(os.path.join(ROOTOUT, 'ribbon_excursion.csv'))
+    # self-describing filename and a windows column: the old ribbon_excursion.csv
+    # said nothing about which windows or which classifier produced it, and was
+    # read months later as if it described the shipped 7/28/128 nine-state grid
+    # when it was 10/26/72 on the three-state weighted score.
+    g.insert(0, 'windows', '%d/%d/%d' % tuple(sorted(PICKED)))
+    g.insert(1, 'classifier', 'three-state weighted (ribbon.py sweep)')
+    g.to_csv(os.path.join(ROOTOUT, 'ribbon_sweep_excursion.csv'))
     base = X[X.cfg == CFG[0]]
     for c in CFG[1:]:
         sub = X[X.cfg == c]
