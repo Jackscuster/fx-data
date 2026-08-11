@@ -562,3 +562,182 @@ Six equal blocks, quintiles recomputed inside each, sign must hold in ≥ 4.
 - **16 names collide between sig2 and sig3** (`maxdd_*`, `z_maxdd_*`) and have been
   silently deduped since v3. §5's "zero duplicated work" was not exactly true. v6's own
   overlap is genuinely zero.
+
+---
+
+## 16. LAYER 1 FINISHED (2026-08-10)
+
+This section is the final state of Layer 1 and, more importantly, the list of
+things **not to rebuild**. Almost everything tried in this phase failed. The
+failures are the valuable part — each one cost hours and each is recorded with
+the number that killed it.
+
+### 16.1 What Layer 1 is
+
+A **backward-looking, nine-state classifier**. It describes what a pair has been
+doing over the last 20 bars. It is not a prediction and has no forward target.
+
+Two axes, both trailing over 20 bars and lagged one, each cut at that pair's own
+**in-sample** terciles with a 0.25 hysteresis band:
+
+- **straightness** = |net| / path
+- **scale** = path / (60-day vol × √20)
+
+```
+            small          mid           large
+  straight  drift-clean    drift-firm    TRENDING
+  mid       drift-quiet    neutral       pushing
+  chop      DEAD           chopping      VOLATILE CHOP
+```
+
+Occupancy 9.4–13.4% per state. Median run 3–6 bars. Transition diagonal 0.734 to
+0.876, off-diagonal mass on adjacent cells.
+
+`code/ninestate.py` builds it and writes `app_explorer.json`. The **Explorer** tab
+is the primary screen; **States** has the grid, transition heatmap and per-pair
+occupancy.
+
+### 16.2 The three-window ribbon
+
+Ships at **8 / 21 / 60**. The lag-and-churn sweep in `ribbon.py` selected
+**10 / 26 / 72**; both are computed, 8/21/60 is displayed by decision.
+
+**Known issue with the 60-bar slow window.** 60 equals `VOLWIN`, so
+`sum|r|_60 / (sd_60·√60)` collapses toward the constant √(2/π). The scale axis's
+cross-sectional sd bottoms out exactly there — 0.343 at 60, against 0.393 at 63
+and 0.550 at 72. The slow row moves less than the others partly because it has
+less range to move in. If it ever looks suspiciously calm, that is why. Moving the
+slow window off 60, or changing `VOLWIN`, fixes it.
+
+Configuration occupancy: established 0.208, transition starting 0.165, confirming
+0.327, unresolved 0.300 — stable IS to OOS. **But sign-randomised surrogates
+reproduce that mix almost exactly** (0.198 / 0.166 / 0.331 / 0.306). Whether three
+windows agree is not market structure.
+
+### 16.3 What each axis contributed
+
+| Axis | Verdict | Number |
+|---|---|---|
+| **scale** (path/vol) | the only axis with independent content | r = **+0.041** with straightness; separates MFE 0.0150 large vs 0.0133 small |
+| **straightness** | real but already covered by the composite | corrected effect 0.0314, p=0.020 |
+| **persistence** | real, small, clean | corrected **0.0048** at 2.47×, p=0.039 over 50 shifts |
+| **duration** (state age) | **nothing** | hazard slope real +0.039 vs surrogate +0.042 |
+
+Note `range_vol` correlates **+0.649** with straightness — it is largely
+straightness re-measured. Use `path_vol` for scale. This is why the 2×2 uses path.
+
+### 16.4 The 200-draw null, and why one surrogate was not enough
+
+Two surrogates, because the specified one cannot touch a scale axis:
+
+- **A — sign randomisation.** Every |return| stays in place, only signs move.
+  Preserves volatility clustering perfectly.
+- **B — IID permutation.** Destroys volatility clustering, preserves the
+  distribution.
+
+| | Real | A | B |
+|---|---|---|---|
+| median run | 11.00 | **11.00 ± 0.00** | 10.01 ± 0.10 |
+| separation | 0.3899 | 0.3781 ± 0.0030 | **0.0200 ± 0.0075** |
+
+**`path = Σ|r|` is invariant under sign randomisation**, which is why A returns the
+median run with *zero variance across 200 draws*. A scale-based classifier passes
+that null by arithmetic. If you only run surrogate A you will certify anything.
+
+Reading them together: **persistence is mechanical** (IID noise gives 10 of the 11
+bars — it is the rolling window), **separation is real but near-tautological** (it
+is volatility clustering, and the separation metrics restate the scale axis).
+
+Refit stability: **99.8%** of pre-2016 pair-days keep their label after refitting
+through 2020.
+
+### 16.5 DO NOT REBUILD — everything ruled out, with the number
+
+**Trend detection.** Dead by every route tried.
+- Panel-wide: no signal predicts whether a pair will trend.
+- **Subset agreement** (relaxing gate 4): there *is* real structure below the gate
+  — 120 survivors at 21/28 against a null median of 3 — but it is **not
+  trend-concentrated**. Carrying pairs correlate **+0.47 with panel sensitivity**
+  and **−0.10 with trendiness**. AUDNZD is the trendiest pair and one of the
+  weakest carriers. A subset rule keyed to trending pairs picks the wrong pairs.
+- **Cross-horizon confluence**: `conf_2of4` scores **0.40×** its own null,
+  `conf_3of4` 0.76×. Layering persistence and the daily/weekly/monthly filter on
+  top made it worse at every step.
+
+**Direction.** 121 constructions at chance against a signed target. Monotonicity
+collapses 0.944 → 0.363, sign-holds 0.975 → 0.339, and per-pair direction
+persistence is **0.479 — below a coin flip**. The existing survivors are
+direction-blind *by construction*: they were selected against an absolute-value
+target. The up/down asymmetry does **not** replicate — up-moves measured straighter
+(0.2252 vs 0.2200), and down-straighter held on only 12 of 28 pairs.
+
+**Per-pair normalisation.** Provably null, not empirically null. The scorer ranks
+the signal *within each pair* before quintiling, so **any strictly-monotone
+per-pair transform leaves every statistic identical to the digit**. Confirmed on
+three features. Normalising the *target* affinely is null on agreement for the same
+reason (the constants cancel out of the sign), though pooled effect and
+monotonicity do move. Only normalising *components before combining* changes
+anything.
+
+**Carry / rate differentials.** All 29 constructions transfer; retention **50.0%**
+against a 60.6% price baseline — a coin flip. Nothing clears the gauntlet. The
+data is built and committed (`data/rates2y.csv`, `data/carry28.csv`, 21 of 28
+pairs, 7 central banks) if anyone wants to ask a different question of it.
+
+**External market data.** 69.3% retention against 60.6%, **z = +1.5, not
+significant**, and it rests on three distinct constructions repeated across
+correlated series. 0 of 75 clear the gauntlet.
+
+**Duration / state age.** See 16.3 — the entire hazard curve is reproduced by a
+vol-clustering surrogate.
+
+**The estimator does not inform trade management.** Task 3, 26,833 entries, no exit
+rule: bars to peak 9.9 vs 10.1 (t = +1.2), giveback 108% vs 109%, still onside at
+20 bars 47% vs 48%. Terciles and quintiles both. What differs between regimes is
+**scale, not shape** — chop has larger MFE *and* larger MAE, because chop is more
+volatile. Normalise by move size and the profile is identical.
+
+### 16.6 Traps that cost time — read before writing a new feature
+
+**A circular-shift null does not catch look-ahead.** `ACTIONABLE.md` defined
+persistence from *forward* readings, which makes it a function of the target. Built
+that way it scores **OOS effect 0.2460 at t = 190 with all 28 pairs agreeing** —
+ten times the best real survivor. Shifting the target destroys the leaked
+alignment, so the null reads ~0 and the ratio comes out around **40×**. The null
+*certifies* the leak. Nulls test selection inflation; only construction discipline
+tests look-ahead.
+
+**Effect sizes are not comparable across targets.** Raw spreads are in the target's
+own units. Divide by the target's sd first: eff_abs 0.146, signed 0.028, range_vol
+0.160, path_vol 0.115.
+
+**Excursion spreads are not comparable across bin counts.** Nine bins spread wider
+than three by construction. The nine-state grid gives 0.0327 at 9 bins; the forward
+composite gives 0.0284 at 3 bins but **0.0401 at 9**. Like for like the forward
+composite separates excursion **23% better** and remains the strongest result in
+the project.
+
+**Binary rules cannot go through the quintile scorer.** `pd.qcut` needs five
+distinct values and returns `None`, which silently dropped every confluence feature
+from a whole run. And **NaN is truthy** — a gauntlet column built on it displayed
+PASS for every rule.
+
+**`(mfe − final)/mfe` per row explodes** when MFE is near zero. Its mean reported
+6.05 vs 11.32 between regimes, which is pure divisor noise; the true figures were
+108% vs 109%. Use absolute giveback per row and form the proportion at group level.
+
+**Window = normalisation window is degenerate.** See 16.2.
+
+**One library signal is broken.** `zs_coexmax_D375`: `coexmax_D375` takes 15
+distinct values, is unchanged on 94% of days, and its 120-day rolling sd is
+*exactly zero on 51.6% of days*, so the z-score is 0/0 across 58.8% of the sample.
+Its `zs_`/`ps_` siblings on other near-constant bases deserve the same check.
+
+### 16.7 Open, and not blocked on analysis
+
+- **CI has failed every run since 2026-08-06**, at the `run pipeline` step,
+  predating this phase. Seventeen modules added to `pipeline.py` have never
+  executed there. The traceback needs a token to read.
+- **`results/composite_stats.csv` is stale** (dated 2026-08-05, reports 32
+  components against the current 15). `framework.py` is not regenerating it, so
+  the composite headline in the app is pre-gate-change.

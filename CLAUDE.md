@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **`HANDOFF_3.md`** — the full project handoff: what the estimator is, what has been
   tested, what was learned, and how Jack works. Read it before any substantive change.
-  Its §11 lists bugs already hit; §12 lists what is unfinished.
+  Its §11 lists bugs already hit; §12 lists what is unfinished. **§16 is the
+  Layer 1 final state and the do-not-rebuild list** — read it before proposing any
+  regime work, it records what was ruled out and the number that killed it.
 - **`FIXES.md`** — the current work backlog, in order.
 - **`STRATEGY_TEMPLATE.md`** — the mandatory output format for any strategy result.
 

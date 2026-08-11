@@ -360,8 +360,9 @@ every other bar.</div>
 probability.</div>
 <div id="nstm" style="overflow-x:auto"></div>
 <h3>Window agreement</h3>
-<div class="note">The three-window ribbon at 10 / 26 / 72, the lengths the lag-and-churn
-sweep selected.</div>
+<div class="note">The three-window ribbon at 8 / 21 / 60. Note the sweep in the Validation
+tab selected 10 / 26 / 72; 60 is also the window where the scale axis loses most of its
+range, so the slow row moves less than the others partly for that reason.</div>
 <div class="tw"><table id="nsagree"><thead><tr>
 <th>Configuration</th><th>Share</th><th>n</th><th>Peak</th><th>Bars to peak</th>
 <th>Path eff.</th></tr></thead><tbody></tbody></table></div>
@@ -1193,7 +1194,7 @@ function boot(BUNDLE,root){
 
     // ribbon: three stacked window rows
     const RH=54;let r='';
-    [['fast 10','rf'],['med 26','rm'],['slow 72','rs']].forEach((row,ri)=>{
+    [['fast 8','rf'],['med 21','rm'],['slow 60','rs']].forEach((row,ri)=>{
      const y=ri*16+6;
      r+=txt(PL-6,y+9,row[0],{a:'end',s:9,c:'var(--dim)'});
      let run=null,x0=null;

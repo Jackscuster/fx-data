@@ -19,11 +19,17 @@ Both axes are trailing over 20 bars and lagged one, cut at each pair's own
 in-sample terciles with hysteresis, so a reading sitting on a boundary does not
 flip the label every other bar.
 
-THE RIBBON runs at 10 / 26 / 72, which is what the lag-and-churn sweep in
-ribbon.py selected. 8 / 21 / 60 is also computed and shipped for comparison --
-but note 60 is the window where the scale axis degenerates, because it equals the
-volatility normalisation span and the ratio collapses toward sqrt(2/pi). Its low
-churn is an artefact of that collapse, not stability.
+THE RIBBON SHIPS AT 8 / 21 / 60, which is the chosen configuration. The
+lag-and-churn sweep in ribbon.py selected 10 / 26 / 72 instead, and both are
+computed here so the difference stays visible.
+
+KNOWN ISSUE WITH THE 60-BAR SLOW WINDOW. 60 equals VOLWIN, the volatility
+normalisation span, so scale = sum|r|_60 / (sd_60 * sqrt(60)) collapses toward
+the constant sqrt(2/pi). Its cross-sectional sd bottoms out exactly there: 0.343
+at 60 against 0.393 at 63 and 0.550 at 72. The slow row therefore moves less than
+the others because it has less range to move in, not because it is steadier. If
+that row ever looks suspiciously calm, this is why. Changing VOLWIN or moving the
+slow window off 60 both fix it.
 
 Writes results/nine_*.csv and app_explorer.json, which is a SEPARATE feed file
 like app_signals.json -- 28 pairs of daily series would push app_data.json from
@@ -161,13 +167,13 @@ def main():
     # ---- the ribbon, at the measured lengths and at the requested ones ----
     from ribbon import label_at
     rib = {}
-    for tag, ls in (('measured', (10, 26, 72)), ('requested', (8, 21, 60))):
+    for tag, ls in (('shipped', (8, 21, 60)), ('sweep-selected', (10, 26, 72))):
         rib[tag] = [label_at(px, L, fit) for L in ls]
         f, m, s2 = rib[tag]
         agree = ((f == m) & (m == s2)).where(f.notna()).stack().mean()
         print('ribbon %-9s %s  all-three-agree %.3f' % (tag, ls, agree))
 
-    write_feed(px, lab, A, age, rib['measured'], st, prof, TM, per, perdur)
+    write_feed(px, lab, A, age, rib['shipped'], st, prof, TM, per, perdur)
 
 
 def write_feed(px, lab, A, age, rib, st, prof, TM, per, perdur):
