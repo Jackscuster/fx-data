@@ -107,6 +107,7 @@ out = dict(
     termstruct=cl(rd('termstruct_signals.csv')),
     scaleocc=cl(rd('scale_occupancy.csv')),
     durbands=cl(rd('duration_bands.csv')),
+    clsval=cl(rd('classifier_validation.csv')),
     durhaz=cl(rd('duration_hazard_hysteresis.csv')),
     scaleexc=cl(rd('scale_excursion.csv')),
     newtarget=cl(rd('newtarget_summary.csv')),
