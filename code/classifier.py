@@ -118,16 +118,22 @@ def persistence(lab):
                 n_runs=len(R))
 
 
-def separation(px, lab):
-    """Do the states differ on measurable realised properties?"""
+def realised_props(px):
+    """The properties states are compared on. These read REAL prices, so they do
+    not change between surrogate draws and are computed once."""
     lp = np.log(px.astype(float)); rr = lp.diff()
-    props = {
+    return {
         'realised_vol': rr.rolling(W).std().shift(1),
         'avg_abs_move': rr.abs().rolling(W).mean().shift(1),
         'autocorr': rr.rolling(W).corr(rr.shift(1)).shift(1),
         'range_to_path': ((lp.rolling(W).max() - lp.rolling(W).min())
                           / rr.abs().rolling(W).sum()).shift(1),
     }
+
+
+def separation(px, lab, props=None):
+    """Do the states differ on measurable realised properties?"""
+    props = realised_props(px) if props is None else props
     rows = []
     for name, P in props.items():
         d = pd.DataFrame({'s': lab.stack(), 'v': P.stack()}).dropna()
@@ -183,8 +189,11 @@ def main():
     print('\n5. NULL -- two surrogates, because one cannot touch a scale axis')
     rr = np.log(px.astype(float)).diff()
     rng = np.random.default_rng(41)
-    for tag, n in (('A sign-randomised (vol clustering kept)', 5),
-                   ('B IID permutation (vol clustering destroyed)', 5)):
+    NSHUF = int(os.environ.get('FX_NSHUF', 200))
+    props = realised_props(px)
+    print('  %d draws per surrogate' % NSHUF)
+    for tag, n in (('A sign-randomised (vol clustering kept)', NSHUF),
+                   ('B IID permutation (vol clustering destroyed)', NSHUF)):
         pers, seps = [], []
         for _ in range(n):
             if tag.startswith('A'):
@@ -198,10 +207,15 @@ def main():
             A2 = axes(px, r=r2)
             l2, _ = classify(A2, fit15)
             pers.append(persistence(l2)['median_run'])
-            seps.append(separation(px, l2).gap_over_sd.mean())
-        print('  %-46s median run %.1f (real %.1f)  mean separation %.3f (real %.3f)'
-              % (tag, np.mean(pers), P['median_run'], np.mean(seps),
-                 S.gap_over_sd.mean()))
+            seps.append(separation(px, l2, props).gap_over_sd.mean())
+        pers, seps = np.array(pers), np.array(seps)
+        pr = (1 + int((pers >= P['median_run']).sum())) / (len(pers) + 1)
+        ps = (1 + int((seps >= S.gap_over_sd.mean()).sum())) / (len(seps) + 1)
+        print('  %-46s' % tag)
+        print('     median run  surrogate %.2f +/- %.2f  real %.2f  p=%.3f'
+              % (pers.mean(), pers.std(), P['median_run'], pr))
+        print('     separation  surrogate %.4f +/- %.4f  real %.4f  p=%.3f'
+              % (seps.mean(), seps.std(), S.gap_over_sd.mean(), ps))
         V.append(dict(check='null_' + tag[0], metric='median_run', value=np.mean(pers)))
         V.append(dict(check='null_' + tag[0], metric='separation', value=np.mean(seps)))
 
