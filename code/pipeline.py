@@ -42,6 +42,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('scale.py')          # Task 8: scale x straightness, the four states
     run('duration.py')       # Task 9: state age, hazard, and its null
     run('classifier.py')     # Task 10: the backward-looking classifier
+    run('ribbon.py')         # the three-window state ribbon
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
 if os.environ.get('FX_RUN_HORIZON'):

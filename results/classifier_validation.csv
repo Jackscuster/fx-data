@@ -13,6 +13,6 @@ separation,autocorr,0.01788526406304956
 separation,range_to_path,0.13890832311819742
 stability,label_agreement,0.997914122914123
 null_A,median_run,11.0
-null_A,separation,0.3798300870322463
-null_B,median_run,10.0
-null_B,separation,0.02019053484644184
+null_A,separation,0.3780505169364627
+null_B,median_run,10.01
+null_B,separation,0.02001660912257605
