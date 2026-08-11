@@ -30,15 +30,19 @@ Both axes are trailing over 20 bars and lagged one, cut at each pair's own
 in-sample terciles with hysteresis, so a reading sitting on a boundary does not
 flip the label every other bar.
 
-THE RIBBON SHIPS AT 7 / 28 / 128. The 4-200 sweep in windowsweep.py pointed at
-19 / 105 / 188 on separation and non-duplication; both are computed so the
-difference stays visible.
+THE RIBBON SHIPS AT 8 / 21 / 60, chosen on horizon rather than on the sweep: the
+moves being described peak around 10 bars, so the useful range is two weeks to a
+quarter. windowsweep.py over 4-200 pointed at 19 / 105 / 188 on separation and
+non-duplication, and 7 / 28 / 128 was tried; both are computed so the difference
+stays visible.
 
-The previous 60-bar slow window is gone and that matters: 60 equals VOLWIN, so
-scale = sum|r|_60 / (sd_60 * sqrt(60)) collapsed toward sqrt(2/pi) and the axis
-stopped moving. It was the worst single window in the whole 4-200 range -- churn
-92.7 against ~143 either side, separation 0.0187 against 0.0408 at L=105. 128 is
-clear of it.
+KNOWN ISSUE WITH THE 60-BAR SLOW WINDOW, kept here deliberately. 60 equals
+VOLWIN, so scale = sum|r|_60 / (sd_60 * sqrt(60)) collapses toward sqrt(2/pi) and
+the axis loses most of its range: cross-sectional sd 0.343 at 60 against 0.393 at
+63 and 0.550 at 72, and churn 92.7 against ~143 on either side. The slow row
+therefore moves less than the others partly because it has less room to move, not
+because it is steadier. Shifting the slow window to 63 or changing VOLWIN removes
+this at no cost to the horizon argument.
 
 Writes results/nine_*.csv and app_explorer.json, which is a SEPARATE feed file
 like app_signals.json -- 28 pairs of daily series would push app_data.json from
@@ -58,7 +62,7 @@ SPLIT = pd.Timestamp('2016-01-01')
 # excursion profiles and the per-pair stats are all computed on it, so the
 # headline numbers and the chart describe the same object. It was 20, which was
 # not one of the ribbon windows at all.
-W, VOLWIN, BAND = 28, 60, .25
+W, VOLWIN, BAND = 21, 60, .25
 SAX = ['chop', 'mid', 'straight']
 CAX = ['small', 'mid', 'large']
 SNAME = {'straight': 'trend', 'mid': 'transitional', 'chop': 'chop'}
@@ -248,7 +252,7 @@ def big_test(lab):
               % (d, d / se))
 
 
-MULTI = (7, 28, 128)
+MULTI = (8, 21, 60)
 
 
 def grid_at(px, L, fit):
