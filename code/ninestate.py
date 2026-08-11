@@ -30,17 +30,15 @@ Both axes are trailing over 20 bars and lagged one, cut at each pair's own
 in-sample terciles with hysteresis, so a reading sitting on a boundary does not
 flip the label every other bar.
 
-THE RIBBON SHIPS AT 8 / 21 / 60, which is the chosen configuration. The
-lag-and-churn sweep in ribbon.py selected 10 / 26 / 72 instead, and both are
-computed here so the difference stays visible.
+THE RIBBON SHIPS AT 7 / 28 / 128. The 4-200 sweep in windowsweep.py pointed at
+19 / 105 / 188 on separation and non-duplication; both are computed so the
+difference stays visible.
 
-KNOWN ISSUE WITH THE 60-BAR SLOW WINDOW. 60 equals VOLWIN, the volatility
-normalisation span, so scale = sum|r|_60 / (sd_60 * sqrt(60)) collapses toward
-the constant sqrt(2/pi). Its cross-sectional sd bottoms out exactly there: 0.343
-at 60 against 0.393 at 63 and 0.550 at 72. The slow row therefore moves less than
-the others because it has less range to move in, not because it is steadier. If
-that row ever looks suspiciously calm, this is why. Changing VOLWIN or moving the
-slow window off 60 both fix it.
+The previous 60-bar slow window is gone and that matters: 60 equals VOLWIN, so
+scale = sum|r|_60 / (sd_60 * sqrt(60)) collapsed toward sqrt(2/pi) and the axis
+stopped moving. It was the worst single window in the whole 4-200 range -- churn
+92.7 against ~143 either side, separation 0.0187 against 0.0408 at L=105. 128 is
+clear of it.
 
 Writes results/nine_*.csv and app_explorer.json, which is a SEPARATE feed file
 like app_signals.json -- 28 pairs of daily series would push app_data.json from
@@ -56,7 +54,11 @@ EV = os.path.join(ROOTOUT, 'entry_events.csv')
 CRISIS = os.path.join(ROOTOUT, 'crisis_events.csv')
 OUT = os.path.join(ROOTOUT, 'app_explorer.json')
 SPLIT = pd.Timestamp('2016-01-01')
-W, VOLWIN, BAND = 20, 60, .25
+# W is the MEDIUM ribbon window. The base grid, the transition matrix, the
+# excursion profiles and the per-pair stats are all computed on it, so the
+# headline numbers and the chart describe the same object. It was 20, which was
+# not one of the ribbon windows at all.
+W, VOLWIN, BAND = 28, 60, .25
 SAX = ['chop', 'mid', 'straight']
 CAX = ['small', 'mid', 'large']
 SNAME = {'straight': 'trend', 'mid': 'transitional', 'chop': 'chop'}
@@ -246,7 +248,7 @@ def big_test(lab):
               % (d, d / se))
 
 
-MULTI = (8, 21, 60)
+MULTI = (7, 28, 128)
 
 
 def grid_at(px, L, fit):
@@ -268,6 +270,24 @@ def grid_at(px, L, fit):
                        index=px.index, columns=px.columns)
     lean = (fit_frac(st, fit) > .5)
     return lab, lean
+
+
+TIERS = ['established', 'transition starting', 'transition confirming',
+         'unresolved']
+
+
+def tiers_from(multi):
+    """Agreement tiers from the three ribbon grids, compared at FAMILY level
+    (trend / transitional / chop) -- the size word is not what a window
+    disagreement is about."""
+    ls = sorted(multi)
+    fam = [multi[L][0].apply(lambda c: c.str.split().str[-1]) for L in ls]
+    f, m, s2 = fam
+    ok = f.notna() & m.notna() & s2.notna()
+    return pd.DataFrame(np.where(ok, np.where((f == m) & (m == s2), TIERS[0],
+                                 np.where((f != m) & (m == s2), TIERS[1],
+                                 np.where((f == m) & (m != s2), TIERS[2], TIERS[3]))),
+                                 None), index=f.index, columns=f.columns)
 
 
 def main():
@@ -320,13 +340,35 @@ def main():
     # ---- the ribbon, at the measured lengths and at the requested ones ----
     from ribbon import label_at
     rib = {}
-    for tag, ls in (('shipped', (8, 21, 60)), ('sweep-selected', (10, 26, 72))):
+    for tag, ls in (('shipped', MULTI), ('sweep-selected', (19, 105, 188))):
         rib[tag] = [label_at(px, L, fit) for L in ls]
         f, m, s2 = rib[tag]
         agree = ((f == m) & (m == s2)).where(f.notna()).stack().mean()
         print('ribbon %-9s %s  all-three-agree %.3f' % (tag, ls, agree))
 
     multi = {L: grid_at(px, L, fit) for L in MULTI}
+    T = tiers_from(multi)
+    T.to_csv(os.path.join(ROOTOUT, 'nine_tiers.csv'))
+    print('\nAGREEMENT TIERS at %s (family level)' % str(MULTI))
+    for tag, msk in (('is', fit), ('oos', ~fit)):
+        v = T[msk].stack().value_counts(normalize=True).reindex(TIERS)
+        print('  %-4s %s' % (tag, '  '.join('%s %.3f' % (k[:11], v[k]) for k in TIERS)))
+    if os.path.exists(EV):
+        Ev = pd.read_csv(EV); Ev['date'] = pd.to_datetime(Ev.date)
+        Lt = T.stack().rename('tier').reset_index()
+        Lt.columns = ['date', 'pair', 'tier']
+        Xt = Ev.merge(Lt, on=['date', 'pair'], how='left')
+        Xt = Xt[Xt.oos & Xt.tier.notna()]
+        gt = Xt.groupby('tier').agg(n=('mfe', 'size'), mfe=('mfe', 'mean'),
+                                    mae=('mae', 'mean'),
+                                    bars=('bars_to_peak', 'mean'),
+                                    eff=('path_eff', 'mean')).reindex(TIERS)
+        gt['ratio'] = gt.mfe / gt.mae.abs()
+        gt.to_csv(os.path.join(ROOTOUT, 'nine_tier_excursion.csv'))
+        print(gt[['n', 'mfe', 'ratio', 'bars', 'eff']]
+              .to_string(float_format=lambda v: '%.4f' % v))
+        print('  established vs transition-starting path eff: %.4f vs %.4f'
+              % (gt.eff.iloc[0], gt.eff.iloc[1]))
     write_feed(px, lab, A, age, rib['shipped'], st, prof, TM, per, perdur, multi)
 
 
