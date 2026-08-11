@@ -43,6 +43,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('duration.py')       # Task 9: state age, hazard, and its null
     run('classifier.py')     # Task 10: the backward-looking classifier
     run('ribbon.py')         # the three-window state ribbon
+    run('ninestate.py')      # the 3x3 grid and the explorer feed
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
 if os.environ.get('FX_RUN_HORIZON'):
@@ -90,6 +91,6 @@ else:
     subprocess.run([sys.executable, os.path.join(C, 'validate.py'),
                     '--no-synth', '--no-refit'], check=True)
 run('bundle.py')
-for _f in ('app_data.json','app_signals.json'):
+for _f in ('app_data.json','app_signals.json','app_explorer.json'):
     shutil.copy(os.path.join(R,'results',_f),os.path.join(R,_f))
 print('\napp_data.json refreshed at repo root')
