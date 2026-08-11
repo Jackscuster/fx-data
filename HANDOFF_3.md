@@ -584,15 +584,21 @@ Two axes, both trailing over 20 bars and lagged one, each cut at that pair's own
 - **scale** = path / (60-day vol × √20)
 
 ```
-                  small          medium        big
-  clean (straight) clean-small    clean-medium  clean-big
-  mixed            mixed-small    mixed-medium  mixed-big
-  messy (chop)     messy-small    messy-medium  messy-big
+                       strong          medium            weak
+  trend (straight)     strong trend    medium trend      weak trend
+  transitional         strong trans.   medium trans.     weak trans.
+  chop                 strong chop     medium chop       weak chop
 ```
 
-Names describe position on **both** axes — hue is straightness, darkness is scale
-in the app. It is an explicit cross of two tercile axes, **not** terciles of a
-weighted score, so neither axis can crowd the other out. An earlier weighted
+**The two words are two different axes.** `strong/medium/weak` is **SIZE** — how
+far the pair moved in its own vol units, *not* confidence in the reading.
+`trend/transitional/chop` is **CLEANLINESS** — how straight the travel was. So
+"strong chop" is a pair thrashing a long way and "weak trend" is a pair drifting a
+short way in a straight line.
+
+Colour in the app follows the row: green trend, amber transitional, red chop,
+darker for larger. It is an explicit cross of two tercile axes, **not** terciles of
+a weighted score, so neither axis can crowd the other out. An earlier weighted
 version (`classifier.py`, three states) put 97.3% of the variance on scale and was
 effectively one-dimensional; it is kept for comparison and should not be treated
 as the estimator.
@@ -602,15 +608,15 @@ Occupancy 9.3–13.5%. Median run 4 bars, diagonal 0.798. Refit stability **97.1
 **THE SECOND AXIS IS REAL AND RUNS BACKWARDS TO ITS OWN NAME.** At equal scale,
 the *messy* side is followed by **more** efficient travel:
 
-| scale | messy − clean, forward path efficiency | null-corrected | p |
+| size | chop − trend, forward path efficiency | null-corrected | p |
 |---|---|---|---|
 | medium | **+0.0218** | +0.0220 | **0.020** |
-| big | +0.0133 | +0.0137 | 0.078 |
-| small | +0.0053 | — | — |
+| strong | +0.0133 | +0.0137 | 0.078 |
+| weak | +0.0053 | — | — |
 
-Trailing straightness **mean-reverts**. So "clean" describes the last 20 bars
-accurately and is the opposite of a forecast — reading clean-big as "trending,
-expect more of it" has the sign backwards. This is the same phenomenon as the
+Trailing straightness **mean-reverts**. So the trend/chop word describes the last
+20 bars accurately and is the opposite of a forecast — reading "strong trend" as
+"expect more of it" has the sign backwards. This is the same phenomenon as the
 chop detectors' negative spreads, seen from the other side.
 
 Separation across the nine: range-to-path **1.65 sd**, average absolute move 0.86,
