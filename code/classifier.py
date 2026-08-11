@@ -74,6 +74,28 @@ def zfit(A, fit):
     return {k: (v - v[fit].mean()) / v[fit].std() for k, v in A.items()}
 
 
+def fit_frac(x, fit):
+    """Percentile of each value within the FIT WINDOW only, per pair.
+
+    x.rank(pct=True) ranks against the WHOLE sample, so a bar's label depended on
+    data after it and the cut points were learned partly on the holdout. That is
+    the look-ahead the project forbids, and it showed up as a refit-stability of
+    exactly 100.0% -- refitting changed nothing because nothing was being fitted.
+    Here the empirical CDF is built on the fit window and applied unchanged
+    afterwards, which is what every other cut point in the project does.
+    """
+    out = {}
+    for p in x.columns:
+        ref = np.sort(x[p][fit].dropna().values)
+        if not len(ref):
+            out[p] = pd.Series(np.nan, index=x.index)
+            continue
+        v = np.searchsorted(ref, x[p].values, side='right') / len(ref)
+        out[p] = pd.Series(np.where(np.isfinite(x[p].values), v, np.nan),
+                           index=x.index)
+    return pd.DataFrame(out)
+
+
 def hyst(frac, band):
     lo, hi = .5 - band / 2, .5 + band / 2
     s = pd.DataFrame(np.nan, index=frac.index, columns=frac.columns)
@@ -86,7 +108,7 @@ def classify(A, fit, band=BAND):
     """Weighted score -> three states with hysteresis on the tercile cuts."""
     Z = zfit(A, fit)
     sc = sum(WEIGHT[k] * Z[k] for k in WEIGHT)
-    frac = pd.DataFrame({p: sc[p].rank(pct=True) for p in sc.columns})
+    frac = fit_frac(sc, fit)
     # two hysteretic thresholds at the tercile boundaries
     lo_b = hyst((frac - 1 / 3 + .5).clip(0, 1), band)
     hi_b = hyst((frac - 2 / 3 + .5).clip(0, 1), band)

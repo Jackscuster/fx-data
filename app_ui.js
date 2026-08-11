@@ -349,9 +349,18 @@ No forward target and no money metrics &mdash; this describes what has happened.
 </section>
 
 <section id="ns" hidden>
-<div class="note"><b>The nine states.</b> Straightness &times; scale, each cut at that pair's
-own in-sample terciles with hysteresis so a reading on the boundary does not flip the label
-every other bar.</div>
+<div class="note"><b>The nine states.</b> An explicit grid: straightness &times; scale, each
+cut at that pair's own in-sample terciles with hysteresis. Both axes contribute by
+construction &mdash; the states are the cross, not terciles of a weighted score, so neither
+axis can crowd the other out. Names describe position on <i>both</i> axes: hue is
+straightness, darkness is scale.</div>
+<div class="note" style="border-left:3px solid var(--kill);padding-left:10px"><b>The second
+axis is real, and it runs backwards to its own name.</b> Comparing states at the same scale
+but opposite straightness, the <i>messy</i> side is followed by <b>more</b> efficient travel,
+not less: +0.0206 at medium scale (null-corrected +0.0191, p=0.020) and +0.0141 at big
+(p=0.137, not significant). Trailing straightness mean-reverts. So "clean" describes the
+last 20 bars accurately and is the opposite of a forecast &mdash; reading clean-big as
+"trending, expect more" has the sign backwards.</div>
 <div class="tw"><table id="nstab"><thead><tr>
 <th>State</th><th>Share</th><th>Median run</th><th>n entries</th><th>Peak (MFE)</th>
 <th>Bars to peak</th><th>Retrace</th><th>Path eff.</th></tr></thead><tbody></tbody></table></div>
@@ -1116,9 +1125,10 @@ function boot(BUNDLE,root){
 
   // ---- Explorer + States: the nine-state read ----
   (function(){
-   const SC={'trending':'#2e9e5b','drift-firm':'#6ab97f','drift-clean':'#9fd4ae',
-    'pushing':'#d9a441','neutral':'#9aa0a6','drift-quiet':'#b8c0c8',
-    'volatile chop':'#d1495b','chopping':'#e08b96','dead':'#6f7680'};
+   // hue = straightness, darkness = scale, so the grid reads as a grid
+   const SC={'clean-small':'#a8d5b5','clean-medium':'#5fae7a','clean-big':'#2e7d4f',
+    'mixed-small':'#e8d3a0','mixed-medium':'#d9a441','mixed-big':'#a8781f',
+    'messy-small':'#eab0b8','messy-medium':'#d1495b','messy-big':'#962f3f'};
    const RC=['#d1495b','#9aa0a6','#2e9e5b'];
    let EXP=null,PAIR=null,RANGE='full',loading=false;
    const RANGES={full:0,'5y':1260,'1y':252,'90d':90};
