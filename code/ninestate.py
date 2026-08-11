@@ -10,15 +10,21 @@ are built here as the 3x3 of the two axes that actually measured something --
 straightness x scale -- which follows the pattern of the project's existing
 ninebox.py and gives every cell a plain meaning:
 
-                small          medium         big
-  clean (straight)  clean-small    clean-medium   CLEAN-BIG    = trending
-  mixed             mixed-small    mixed-medium   mixed-big
-  messy (chop)      MESSY-SMALL    messy-medium   MESSY-BIG    = violent chop
-                    = dead
+                     strong         medium         weak
+  trend (straight)   strong trend   medium trend   weak trend
+  transitional       strong trans.  medium trans.  weak trans.
+  chop               strong chop    medium chop    weak chop
 
-Names describe position on BOTH axes, because that is what the state is. The old
-labels (drift-firm, drift-clean, pushing) described positions on a grid that did
-not exist when they were written.
+TWO WORDS, TWO AXES, AND THEY ARE NOT THE SAME THING.
+
+  strong / medium / weak   SIZE. How far the pair is moving, in its own vol units.
+                           NOT confidence in the reading.
+  trend / transitional /   CLEANLINESS. How straight the travel was.
+  chop
+
+So "strong chop" is a pair thrashing a long way, and "weak trend" is a pair
+drifting a short way in a straight line. Neither word says anything about how
+sure the classifier is.
 
 Both axes are trailing over 20 bars and lagged one, cut at each pair's own
 in-sample terciles with hysteresis, so a reading sitting on a boundary does not
@@ -53,10 +59,12 @@ SPLIT = pd.Timestamp('2016-01-01')
 W, VOLWIN, BAND = 20, 60, .25
 SAX = ['chop', 'mid', 'straight']
 CAX = ['small', 'mid', 'large']
-SNAME = {'straight': 'clean', 'mid': 'mixed', 'chop': 'messy'}
-CNAME = {'large': 'big', 'mid': 'medium', 'small': 'small'}
-NAME = {(a, b): '%s-%s' % (SNAME[a], CNAME[b]) for a in SNAME for b in CNAME}
-STATES = [NAME[(s, c)] for s in SAX[::-1] for c in CAX]
+SNAME = {'straight': 'trend', 'mid': 'transitional', 'chop': 'chop'}
+CNAME = {'large': 'strong', 'mid': 'medium', 'small': 'weak'}
+NAME = {(a, b): '%s %s' % (CNAME[b], SNAME[a]) for a in SNAME for b in CNAME}
+# trend first, then transitional, then chop; strong to weak inside each row
+STATES = [NAME[(s, c)] for s in ('straight', 'mid', 'chop')
+          for c in ('large', 'mid', 'small')]
 
 
 def raw_axes(px, L=W):
@@ -126,9 +134,10 @@ def transitions(lab):
 def validate(px, lab, fit):
     """The same battery the three-state classifier got, on the grid.
 
-    The question this exists to answer: do clean-big and messy-big -- both large
-    moves, one straight and one thrashing -- actually differ? If they do not,
-    straightness is not carrying anything and the second axis is decoration.
+    The question this exists to answer: do "strong trend" and "strong chop" --
+    both large moves, one straight and one thrashing -- actually differ? If they
+    do not, cleanliness is not carrying anything and the second axis is
+    decoration.
     """
     import numpy as np
     from classifier import realised_props, separation, persistence
@@ -208,7 +217,7 @@ def nine_from_returns(px, r, fit):
 
 
 def big_test(lab):
-    """clean-big against messy-big: the whole case for a second axis."""
+    """strong trend against strong chop: the whole case for a second axis."""
     if not os.path.exists(EV):
         return
     E = pd.read_csv(EV); E['date'] = pd.to_datetime(E.date)
@@ -216,27 +225,24 @@ def big_test(lab):
     L.columns = ['date', 'pair', 'state']
     X = E.merge(L, on=['date', 'pair'], how='left')
     X = X[X.oos & X.state.notna()]
-    print('\nCLEAN-BIG vs MESSY-BIG -- same scale, opposite straightness')
-    a = X[X.state == 'clean-big']; b = X[X.state == 'messy-big']
-    print('  %-12s n=%4d  mfe %.4f  mae %.4f  ratio %.3f  bars %.2f  eff %.4f'
-          % ('clean-big', len(a), a.mfe.mean(), a.mae.mean(),
-             a.mfe.mean() / abs(a.mae.mean()), a.bars_to_peak.mean(),
-             a.path_eff.mean()))
-    print('  %-12s n=%4d  mfe %.4f  mae %.4f  ratio %.3f  bars %.2f  eff %.4f'
-          % ('messy-big', len(b), b.mfe.mean(), b.mae.mean(),
-             b.mfe.mean() / abs(b.mae.mean()), b.bars_to_peak.mean(),
-             b.path_eff.mean()))
+    print('\nSTRONG TREND vs STRONG CHOP -- same size, opposite cleanliness')
+    a = X[X.state == 'strong trend']; b = X[X.state == 'strong chop']
+    for nm, d in (('strong trend', a), ('strong chop', b)):
+        print('  %-13s n=%4d  mfe %.4f  mae %.4f  ratio %.3f  bars %.2f  eff %.4f'
+              % (nm, len(d), d.mfe.mean(), d.mae.mean(),
+                 d.mfe.mean() / abs(d.mae.mean()), d.bars_to_peak.mean(),
+                 d.path_eff.mean()))
     for col in ('path_eff', 'bars_to_peak', 'mfe', 'mae'):
         x, y = a[col].dropna(), b[col].dropna()
         d = y.mean() - x.mean()
         se = np.sqrt(x.var() / len(x) + y.var() / len(y))
-        print('    %-13s messy minus clean %+.4f  t %+.2f' % (col, d, d / se))
+        print('    %-13s chop minus trend %+.4f  t %+.2f' % (col, d, d / se))
     # and the same cut at small scale, as a control
-    c = X[X.state == 'clean-small']; e = X[X.state == 'messy-small']
+    c = X[X.state == 'weak trend']; e = X[X.state == 'weak chop']
     if len(c) > 100 and len(e) > 100:
         d = e.path_eff.mean() - c.path_eff.mean()
         se = np.sqrt(c.path_eff.var() / len(c) + e.path_eff.var() / len(e))
-        print('  control at SMALL scale: path eff messy minus clean %+.4f  t %+.2f'
+        print('  control at WEAK size: path eff chop minus trend %+.4f  t %+.2f'
               % (d, d / se))
 
 

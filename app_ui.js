@@ -337,7 +337,8 @@ circularly shifted target &mdash; <b>real ÷ null</b> is the only honest compari
 
 <section id="px" hidden>
 <div class="note"><b>What state is this pair in, and what did price do.</b> The nine-state
-grid is straightness &times; scale, both measured over the trailing 20 bars and lagged one.
+grid is size &times; cleanliness, both measured over the trailing 20 bars and lagged one.
+<b>strong/medium/weak is how far it moved, not how confident the reading is.</b>
 No forward target and no money metrics &mdash; this describes what has happened.</div>
 <div id="pxsel" style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0"></div>
 <div id="pxrange" style="display:flex;gap:6px;margin:10px 0"></div>
@@ -349,18 +350,26 @@ No forward target and no money metrics &mdash; this describes what has happened.
 </section>
 
 <section id="ns" hidden>
-<div class="note"><b>The nine states.</b> An explicit grid: straightness &times; scale, each
+<div class="note"><b>The nine states.</b> An explicit grid: size &times; cleanliness, each
 cut at that pair's own in-sample terciles with hysteresis. Both axes contribute by
 construction &mdash; the states are the cross, not terciles of a weighted score, so neither
-axis can crowd the other out. Names describe position on <i>both</i> axes: hue is
-straightness, darkness is scale.</div>
+axis can crowd the other out.</div>
+<div class="note" style="border-left:3px solid var(--dim);padding-left:10px">
+<b>The two words mean different things.</b><br>
+<b>strong / medium / weak</b> is <b>SIZE</b> &mdash; how far the pair moved, in its own
+volatility units. It is <i>not</i> confidence in the reading.<br>
+<b>trend / transitional / chop</b> is <b>CLEANLINESS</b> &mdash; how straight the travel
+was.<br>
+So <i>strong chop</i> is a pair thrashing a long way, and <i>weak trend</i> is a pair
+drifting a short way in a straight line. Neither word says how sure the classifier is.
+Colour follows the row: green trend, amber transitional, red chop; darker is larger.</div>
 <div class="note" style="border-left:3px solid var(--kill);padding-left:10px"><b>The second
 axis is real, and it runs backwards to its own name.</b> Comparing states at the same scale
-but opposite straightness, the <i>messy</i> side is followed by <b>more</b> efficient travel,
-not less: +0.0206 at medium scale (null-corrected +0.0191, p=0.020) and +0.0141 at big
-(p=0.137, not significant). Trailing straightness mean-reverts. So "clean" describes the
-last 20 bars accurately and is the opposite of a forecast &mdash; reading clean-big as
-"trending, expect more" has the sign backwards.</div>
+but opposite straightness, the <i>chop</i> side is followed by <b>more</b> efficient travel,
+not less: <b>+0.0218</b> at medium size (null-corrected +0.0220, p=0.020) and +0.0133 at
+strong (p=0.078, not significant). Trailing straightness mean-reverts. So the trend/chop
+word describes the <i>last</i> 20 bars accurately and is the opposite of a forecast
+&mdash; reading <i>strong trend</i> as "expect more of it" has the sign backwards.</div>
 <div class="tw"><table id="nstab"><thead><tr>
 <th>State</th><th>Share</th><th>Median run</th><th>n entries</th><th>Peak (MFE)</th>
 <th>Bars to peak</th><th>Retrace</th><th>Path eff.</th></tr></thead><tbody></tbody></table></div>
@@ -1125,10 +1134,12 @@ function boot(BUNDLE,root){
 
   // ---- Explorer + States: the nine-state read ----
   (function(){
-   // hue = straightness, darkness = scale, so the grid reads as a grid
-   const SC={'clean-small':'#a8d5b5','clean-medium':'#5fae7a','clean-big':'#2e7d4f',
-    'mixed-small':'#e8d3a0','mixed-medium':'#d9a441','mixed-big':'#a8781f',
-    'messy-small':'#eab0b8','messy-medium':'#d1495b','messy-big':'#962f3f'};
+   // hue = cleanliness (green trend / amber transitional / red chop),
+   // darkness = size, so the grid reads as a grid
+   const SC={'strong trend':'#1f6b40','medium trend':'#3d9968','weak trend':'#8fc9a6',
+    'strong transitional':'#9c6b12','medium transitional':'#d9a441',
+    'weak transitional':'#ecd39a',
+    'strong chop':'#8f2b3a','medium chop':'#d1495b','weak chop':'#e8a3ac'};
    const RC=['#d1495b','#9aa0a6','#2e9e5b'];
    let EXP=null,PAIR=null,RANGE='full',loading=false;
    const RANGES={full:0,'5y':1260,'1y':252,'90d':90};
