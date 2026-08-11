@@ -379,9 +379,10 @@ word describes the <i>last</i> 20 bars accurately and is the opposite of a forec
 probability.</div>
 <div id="nstm" style="overflow-x:auto"></div>
 <h3>Window agreement</h3>
-<div class="note">The three-window ribbon at 8 / 21 / 60. Note the sweep in the Validation
-tab selected 10 / 26 / 72; 60 is also the window where the scale axis loses most of its
-range, so the slow row moves less than the others partly for that reason.</div>
+<div class="note">The three-window ribbon at 7 / 28 / 128. The 4-200 sweep pointed at
+19 / 105 / 188 on separation and non-duplication; both are computed. The old 60-bar slow
+window is gone, which matters &mdash; it equalled the volatility normalisation span, so the
+scale axis collapsed there and it was the worst single window in the whole range.</div>
 <div class="tw"><table id="nsagree"><thead><tr>
 <th>Configuration</th><th>Share</th><th>n</th><th>Peak</th><th>Bars to peak</th>
 <th>Path eff.</th></tr></thead><tbody></tbody></table></div>
@@ -1142,19 +1143,19 @@ function boot(BUNDLE,root){
     'weak transitional':'#ecd39a',
     'strong chop':'#8f2b3a','medium chop':'#d1495b','weak chop':'#e8a3ac'};
    const RC=['#d1495b','#9aa0a6','#2e9e5b'];
-   let EXP=null,PAIR=null,RANGE='full',loading=false,WIN='60',GRP=9;
+   let EXP=null,PAIR=null,RANGE='full',loading=false,WIN='128',GRP=9;
    const RANGES={full:0,'5y':1260,'1y':252,'90d':90};
-   const WINS={'8':'fast 8','21':'medium 21','60':'slow 60','c':'consensus'};
+   const WINS={'7':'fast 7','28':'medium 28','128':'slow 128','c':'consensus'};
    // consensus: the label at least two of the three windows agree on, else slow.
    // Slow is the fallback rather than medium because it is the one that does not
    // fragment -- see the note under the chart.
    function stateAt(P,i){
     if(WIN!=='c')return P['st'+WIN]?P['st'+WIN][i]:P.st[i];
-    const a=P.st8[i],b=P.st21[i],c=P.st60[i];
+    const a=P.st7[i],b=P.st28[i],c=P.st128[i];
     if(a===b||a===c)return a; if(b===c)return b; return c;
    }
    function leanAt(P,i){
-    const k=WIN==='c'?'60':WIN;return P['ln'+k]?P['ln'+k][i]:null;
+    const k=WIN==='c'?'128':WIN;return P['ln'+k]?P['ln'+k][i]:null;
    }
    // 9 -> 6: a transitional bar joins trend or chop by which side of the
    // straightness midpoint it sits on. Its SIZE word is unchanged.
@@ -1246,7 +1247,7 @@ function boot(BUNDLE,root){
 
     // ribbon: three stacked window rows
     const RH=54;let r='';
-    [['fast 8','rf'],['med 21','rm'],['slow 60','rs']].forEach((row,ri)=>{
+    [['fast 7','rf'],['med 28','rm'],['slow 128','rs']].forEach((row,ri)=>{
      const y=ri*16+6;
      r+=txt(PL-6,y+9,row[0],{a:'end',s:9,c:'var(--dim)'});
      let run=null,x0=null;
@@ -1345,9 +1346,9 @@ function boot(BUNDLE,root){
         text-align:center;font-size:10px">${v==null?'':(v*100).toFixed(0)}</td>`;});
       h+='</tr>';});
      $('#nstm').innerHTML=h+'</tbody></table>';}
-    const RX=BUN.ribexc||[];
+    const RX=BUN.ninetiers||[];
     if(RX.length)$('#nsagree tbody').innerHTML=RX.map(d=>
-     `<tr><td>${d.cfg}</td><td>—</td><td>${d.n}</td>
+     `<tr><td>${d.tier}</td><td>—</td><td>${d.n}</td>
       <td>${d.mfe==null?'—':d.mfe.toFixed(4)}</td>
       <td>${d.bars==null?'—':d.bars.toFixed(2)}</td>
       <td>${d.eff==null?'—':d.eff.toFixed(4)}</td></tr>`).join('');

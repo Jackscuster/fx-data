@@ -111,6 +111,7 @@ out = dict(
     ribsweep=cl(rd('ribbon_sweep.csv')),
     ninestates=cl(rd('nine_states.csv').rename(columns={'Unnamed: 0':'state'})),
     nineexc=cl(rd('nine_excursion.csv').rename(columns={'Unnamed: 0':'state'})),
+    ninetiers=cl(rd('nine_tier_excursion.csv').rename(columns={'Unnamed: 0':'tier'})),
     nineper=cl(rd('nine_per_pair.csv').rename(columns={'Unnamed: 0':'pair'})),
     ninetrans=(lambda d: [] if d.empty else
                d.drop(columns=[c for c in d.columns if c.startswith('Unnamed')])
