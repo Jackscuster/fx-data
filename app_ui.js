@@ -3,6 +3,8 @@
 (function(){'use strict';
 const $=s=>document.querySelector(s);
 const NAV=`<nav role="tablist">
+<button role="tab" aria-selected="false" data-t="px">Explorer</button>
+<button role="tab" aria-selected="false" data-t="ns">States</button>
 <button role="tab" aria-selected="true" data-t="g">Gauntlet</button>
 <button role="tab" aria-selected="false" data-t="iv">Survivors</button>
 <button role="tab" aria-selected="false" data-t="s">All signals</button>
@@ -181,6 +183,18 @@ Under forward-only testing it vanished, and every detector fires on the day.</di
 them a money metric. Every other score in this app is measured against a target derived
 from the same prices; these are the tests that can say the whole thing is an artefact.</div>
 <div id="valcards" style="display:flex;gap:14px;flex-wrap:wrap;margin:16px 0"></div>
+<h3>0 — The backward-looking classifier</h3>
+<div class="note">The Layer 1 output: nine states from straightness &times; scale, trailing
+and lagged. Validated as a <i>description</i> rather than a prediction &mdash; persistence,
+separation, refit stability, coverage and two surrogate nulls.</div>
+<div id="clsval"></div>
+<div class="note" id="clstxt"></div>
+<h3>0b — Window selection</h3>
+<div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
+churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
+in behaviour, timed against a <b>centred</b> reference that is a diagnostic only and never
+enters a feature.</div>
+<div id="ribcurve"></div>
 <h3>1 — Shuffled labels</h3>
 <div class="note">Shuffle the regime labels while preserving run lengths, rescore, 500
 times. If the real labels sit inside that null, the composite is only chopping the sample
@@ -319,6 +333,41 @@ circularly shifted target &mdash; <b>real ÷ null</b> is the only honest compari
 <th>Horizon</th><th>|effect| OOS</th><th>Agreement</th><th>Monotonic</th><th>Retention</th>
 <th>Null |t|</th><th>Real ÷ null</th></tr></thead><tbody></tbody></table></div>
 <div class="note" id="hznote"></div>
+</section>
+
+<section id="px" hidden>
+<div class="note"><b>What state is this pair in, and what did price do.</b> The nine-state
+grid is straightness &times; scale, both measured over the trailing 20 bars and lagged one.
+No forward target and no money metrics &mdash; this describes what has happened.</div>
+<div id="pxsel" style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0"></div>
+<div id="pxrange" style="display:flex;gap:6px;margin:10px 0"></div>
+<div class="grid" style="grid-template-columns:1fr 300px;gap:16px;align-items:start">
+<div><div id="pxchart"></div><div id="pxribbon"></div><div id="pxaxes"></div></div>
+<div class="panel" id="pxpanel"></div>
+</div>
+<div id="pxlegend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"></div>
+</section>
+
+<section id="ns" hidden>
+<div class="note"><b>The nine states.</b> Straightness &times; scale, each cut at that pair's
+own in-sample terciles with hysteresis so a reading on the boundary does not flip the label
+every other bar.</div>
+<div class="tw"><table id="nstab"><thead><tr>
+<th>State</th><th>Share</th><th>Median run</th><th>n entries</th><th>Peak (MFE)</th>
+<th>Bars to peak</th><th>Retrace</th><th>Path eff.</th></tr></thead><tbody></tbody></table></div>
+<h3>Transition matrix</h3>
+<div class="note">Row = state today, column = state tomorrow. The diagonal is the stay
+probability.</div>
+<div id="nstm" style="overflow-x:auto"></div>
+<h3>Window agreement</h3>
+<div class="note">The three-window ribbon at 10 / 26 / 72, the lengths the lag-and-churn
+sweep selected.</div>
+<div class="tw"><table id="nsagree"><thead><tr>
+<th>Configuration</th><th>Share</th><th>n</th><th>Peak</th><th>Bars to peak</th>
+<th>Path eff.</th></tr></thead><tbody></tbody></table></div>
+<h3>Per pair</h3>
+<div class="tw" style="max-height:420px;overflow:auto"><table id="nsper"><thead><tr>
+<th>Pair</th></tr></thead><tbody></tbody></table></div>
 </section>
 
 <section id="vd" hidden>
@@ -762,6 +811,67 @@ function boot(BUNDLE,root){
     Complexity did not buy anything here.`;})();
   }
   
+  // ---- classifier validation + window curve ----
+  (function(){const V=BUN.clsval||[],RS=BUN.ribsweep||[];
+   const get=(c,m)=>{const r=V.find(d=>d.check===c&&d.metric===m);return r?r.value:null;};
+   if(V.length){
+    const f=(v,n)=>v==null?'—':(+v).toFixed(n==null?3:n);
+    $('#clsval').innerHTML='<div class="tw"><table><thead><tr><th>Check</th>'
+     +'<th>Result</th><th>Surrogate A<br><span class="count">signs shuffled,'
+     +' vol clustering kept</span></th><th>Surrogate B<br><span class="count">IID,'
+     +' vol clustering destroyed</span></th></tr></thead><tbody>'
+     +`<tr><td>Median run length</td><td><b>${f(get('persistence','median_run'),2)}</b>
+        bars</td><td>${f(get('null_A','median_run'),2)}</td>
+        <td>${f(get('null_B','median_run'),2)}</td></tr>`
+     +`<tr><td>Separation (mean gap, sd units)</td>
+        <td><b>${f(get('separation','realised_vol'))}</b> vol,
+        ${f(get('separation','avg_abs_move'))} move</td>
+        <td>${f(get('null_A','separation'))}</td>
+        <td>${f(get('null_B','separation'))}</td></tr>`
+     +`<tr><td>Refit stability</td><td colspan="3"><b>${
+        get('stability','label_agreement')==null?'—'
+        :(get('stability','label_agreement')*100).toFixed(1)+'%'}</b> of pre-2016
+        pair-days keep their label after refitting through 2020</td></tr>`
+     +`<tr><td>Coverage</td><td colspan="3">${['low','mid','high'].map(k=>
+        k+' '+f(get('coverage',k))).join(' · ')}</td></tr>`
+     +'</tbody></table></div>';
+    $('#clstxt').innerHTML=`<b>Read the two surrogates together.</b> A keeps every
+     |return| exactly in place and moves only the signs, so volatility clustering is
+     preserved perfectly &mdash; but <code>path = &Sigma;|r|</code> is <i>invariant</i>
+     under that, which is why it returns the median run with zero variance across 200
+     draws. It cannot move a scale-based classifier and passing it would mean nothing.
+     B destroys volatility clustering instead. Under B the separation collapses from
+     ${f(get('separation','realised_vol'))} to ${f(get('null_B','separation'))} &mdash;
+     real &mdash; while the persistence only falls from
+     ${f(get('persistence','median_run'),2)} to ${f(get('null_B','median_run'),2)} bars,
+     so about one bar in eleven is market structure and the other ten are the rolling
+     window.`;
+   }
+   if(RS.length){
+    const W=640,H=170,PL=40;
+    const bands=['fast','medium','slow'];let g='';
+    bands.forEach((b,bi)=>{
+     const d=RS.filter(r=>r.band===b);if(!d.length)return;
+     const x0=PL+bi*((W-PL)/3),w=(W-PL)/3-26;
+     const lg=d.map(r=>r.lag),ch=d.map(r=>r.churn);
+     const lmax=Math.max(...lg),cmax=Math.max(...ch);
+     const best=d.reduce((a,c)=>c.cost<a.cost?c:a,d[0]);
+     d.forEach((r,i)=>{const x=x0+i*(w/Math.max(d.length-1,1));
+      g+=`<circle cx="${x}" cy="${20+(1-r.lag/lmax)*50}" r="2.5" fill="#5b8dd9"/>`
+       +`<circle cx="${x}" cy="${90+(1-r.churn/cmax)*50}" r="2.5" fill="#d9a441"/>`
+       +(r.L===best.L?`<line x1="${x}" y1="14" x2="${x}" y2="146"
+          stroke="var(--trend)" stroke-width="1.4" stroke-dasharray="3 2"/>`:'');});
+     g+=txt(x0+w/2,162,b+' — chose '+best.L,{a:'middle',s:10,c:'var(--trend)'});});
+    g+=txt(4,26,'lag',{s:9,c:'#5b8dd9'})+txt(4,96,'churn',{s:9,c:'#d9a441'});
+    $('#ribcurve').innerHTML=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${g}</svg>`
+     +'<div class="note">Both curves are normalised within their band; the dashed line is'
+     +' the length minimising normalised lag plus normalised churn. <b>The slow band'
+     +' starts at 62, not 60</b> — at a 60-bar window the scale axis collapses toward'
+     +' &radic;(2/&pi;) because it equals the volatility normalisation span, and its'
+     +' artificially low churn would have read as the best slow window.</div>';
+   }
+  })();
+
   // ---- validation tab ----
   (function(){const SUM=BUN.val_summary||[];if(!SUM.length)return;
    const NAME={shuffled_labels:'Shuffled labels',synthetic:'Synthetic truth',
@@ -1003,6 +1113,200 @@ function boot(BUNDLE,root){
       a few percent of noise.${pc}</div>`;}
   })();
 
+  // ---- Explorer + States: the nine-state read ----
+  (function(){
+   const SC={'trending':'#2e9e5b','drift-firm':'#6ab97f','drift-clean':'#9fd4ae',
+    'pushing':'#d9a441','neutral':'#9aa0a6','drift-quiet':'#b8c0c8',
+    'volatile chop':'#d1495b','chopping':'#e08b96','dead':'#6f7680'};
+   const RC=['#d1495b','#9aa0a6','#2e9e5b'];
+   let EXP=null,PAIR=null,RANGE='full',loading=false;
+   const RANGES={full:0,'5y':1260,'1y':252,'90d':90};
+
+   function load(){
+    if(EXP||loading)return;loading=true;
+    const url=(BUN.meta&&BUN.meta.explorer_url)||'app_explorer.json';
+    $('#pxchart').innerHTML='<div class="note">Loading the per-pair feed'
+     +' (about 7 MB)…</div>';
+    fetch(url).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+     .then(j=>{EXP=j;PAIR=Object.keys(j.pairs)[0];loading=false;draw();})
+     .catch(e=>{$('#pxchart').innerHTML='<div class="note" style="color:var(--kill)">'
+      +'Could not load '+url+' ('+e.message+').</div>';loading=false;});
+   }
+
+   function slice(){
+    const P=EXP.pairs[PAIR],n=EXP.dates.length,k=RANGES[RANGE];
+    const a=k?Math.max(0,n-k):0;
+    const idx=[];const step=Math.max(1,Math.ceil((n-a)/1400));
+    for(let i=a;i<n;i+=step)idx.push(i);
+    if(idx[idx.length-1]!==n-1)idx.push(n-1);
+    return {P,idx};
+   }
+
+   function draw(){
+    if(!EXP)return;
+    $('#pxsel').innerHTML=Object.keys(EXP.pairs).map(p=>
+     `<button class="chip" data-p="${p}"${p===PAIR?' aria-pressed="true"':''}
+      style="${p===PAIR?'outline:2px solid var(--trend)':''}">${p}</button>`).join('');
+    $('#pxsel').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+     PAIR=b.dataset.p;draw();});
+    $('#pxrange').innerHTML=Object.keys(RANGES).map(r=>
+     `<button class="chip" data-r="${r}"${r===RANGE?' aria-pressed="true"':''}
+      style="${r===RANGE?'outline:2px solid var(--trend)':''}">${r}</button>`).join('');
+    $('#pxrange').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+     RANGE=b.dataset.r;draw();});
+
+    const {P,idx}=slice();
+    const W=760,H=300,PL=52,PR=8,PT=10,PB=18;
+    const lp=idx.map(i=>P.px[i]==null?null:Math.log(P.px[i]));
+    const fin=lp.filter(v=>v!=null);
+    if(!fin.length){$('#pxchart').innerHTML='<div class="note">No data.</div>';return;}
+    const mn=Math.min(...fin),mx=Math.max(...fin),rg=(mx-mn)||1;
+    const X=k=>PL+k*(W-PL-PR)/Math.max(idx.length-1,1);
+    const Y=v=>PT+(1-(v-mn)/rg)*(H-PT-PB);
+    // one polyline per run of identical state keeps the element count sane
+    let g='',cur=null,pts=[];
+    const flush=()=>{if(pts.length>1)g+=`<polyline points="${pts.join(' ')}" fill="none"
+      stroke="${SC[EXP.states[cur]]||'#888'}" stroke-width="1.6"/>`;};
+    idx.forEach((i,k)=>{
+     if(lp[k]==null)return;
+     const s=P.st[i];
+     if(s!==cur){flush();pts=pts.length?[pts[pts.length-1]]:[];cur=s;}
+     pts.push(X(k).toFixed(1)+','+Y(lp[k]).toFixed(1));});
+    flush();
+    // split line and crisis events
+    const dstr=idx.map(i=>EXP.dates[i]);
+    const at=d=>{let k=dstr.findIndex(x=>x>=d);return k<0?null:X(k);};
+    const sx=at(EXP.split);
+    if(sx!=null)g+=`<line x1="${sx}" y1="${PT}" x2="${sx}" y2="${H-PB}"
+      stroke="var(--dim)" stroke-width="1.5" stroke-dasharray="5 3"/>`
+      +txt(sx+3,PT+10,'IS | OOS',{s:9,c:'var(--dim)'});
+    (EXP.events||[]).forEach(e=>{const x=at(e.date);
+     if(x!=null&&x>PL)g+=`<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}"
+       stroke="#d1495b" stroke-width="0.6" opacity="0.35"><title>${e.date} ${e.type}
+       ${e.ccy}</title></line>`;});
+    [0,.5,1].forEach(f=>{const v=mn+f*rg;
+     g+=txt(PL-6,Y(v)+3,Math.exp(v).toFixed(4),{a:'end',s:9,c:'var(--dim)'});});
+    g+=txt(PL,H-4,dstr[0],{s:9,c:'var(--dim)'})
+      +txt(W-PR,H-4,dstr[dstr.length-1],{a:'end',s:9,c:'var(--dim)'});
+    $('#pxchart').innerHTML=`<h3>${PAIR} — log price, coloured by state</h3>
+     <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+
+    // ribbon: three stacked window rows
+    const RH=54;let r='';
+    [['fast 10','rf'],['med 26','rm'],['slow 72','rs']].forEach((row,ri)=>{
+     const y=ri*16+6;
+     r+=txt(PL-6,y+9,row[0],{a:'end',s:9,c:'var(--dim)'});
+     let run=null,x0=null;
+     idx.forEach((i,k)=>{const v=P[row[1]][i];
+      if(v!==run){if(run!=null&&x0!=null)r+=`<rect x="${x0}" y="${y}"
+        width="${Math.max(X(k)-x0,.8)}" height="11" fill="${RC[run]}" opacity="0.85"/>`;
+       run=v;x0=X(k);}});
+     if(run!=null&&x0!=null)r+=`<rect x="${x0}" y="${y}" width="${Math.max(X(idx.length-1)-x0,.8)}"
+       height="11" fill="${RC[run]}" opacity="0.85"/>`;});
+    $('#pxribbon').innerHTML=`<svg viewBox="0 0 ${W} ${RH}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+
+    // the four underlying axes
+    const AH=150;let a2='';
+    [['straightness','straight','#2e9e5b'],['scale','scale','#d9a441'],
+     ['persistence','persist','#5b8dd9'],['state age','age','#9aa0a6']]
+     .forEach((ax,ai)=>{
+      const vals=idx.map(i=>P[ax[1]][i]),f2=vals.filter(v=>v!=null);
+      if(!f2.length)return;
+      const lo=Math.min(...f2),hi=Math.max(...f2),rr=(hi-lo)||1;
+      const y0=ai*36+8,hh=28;
+      let pp=[];vals.forEach((v,k)=>{if(v==null)return;
+       pp.push(X(k).toFixed(1)+','+(y0+(1-(v-lo)/rr)*hh).toFixed(1));});
+      a2+=`<polyline points="${pp.join(' ')}" fill="none" stroke="${ax[2]}"
+        stroke-width="1.1" opacity="0.9"/>`
+       +txt(PL-6,y0+hh/2,ax[0],{a:'end',s:9,c:'var(--dim)'})
+       +txt(W-PR,y0+8,hi.toFixed(2),{a:'end',s:8,c:'var(--dim)'});});
+    $('#pxaxes').innerHTML=`<svg viewBox="0 0 ${W} ${AH}" xmlns="http://www.w3.org/2000/svg">${a2}</svg>`;
+
+    panel(P);
+    $('#pxlegend').innerHTML=EXP.states.map(s=>
+     `<span class="count"><span style="display:inline-block;width:11px;height:11px;
+      background:${SC[s]};border-radius:2px;vertical-align:-1px"></span> ${s}</span>`).join('');
+   }
+
+   function panel(P){
+    const n=EXP.dates.length;let last=n-1;
+    while(last>0&&P.st[last]==null)last--;
+    const st=EXP.states[P.st[last]],age=P.age[last];
+    const rf=P.rf[last],rm=P.rm[last],rs=P.rs[last];
+    const nm=['low','mid','high'];
+    const agree=(rf===rm&&rm===rs)?'all three agree'
+      :(rf!==rm&&rm===rs)?'fast diverging — transition starting'
+      :(rf===rm&&rm!==rs)?'slow lagging — transition confirming':'unresolved';
+    const ti=EXP.states.indexOf(st);
+    const stay=(EXP.transitions&&ti>=0&&EXP.transitions[ti])?EXP.transitions[ti][ti]:null;
+    const per=(EXP.per_pair||[]).find(d=>d.pair===PAIR)||{};
+    const dur=(EXP.per_pair_dur||[]).find(d=>d.pair===PAIR)||{};
+    $('#pxpanel').innerHTML=`<h3>${PAIR} now</h3>
+     <div class="big" style="color:${SC[st]||'inherit'}">${st||'—'}</div>
+     <span class="count">as of ${EXP.dates[last]}, ${age||'—'} bars in this state</span>
+     <div class="note" style="margin-top:10px"><b>Windows:</b> fast ${nm[rf]},
+      medium ${nm[rm]}, slow ${nm[rs]}<br>${agree}</div>
+     <div class="note"><b>Stays tomorrow:</b> ${stay==null?'—':(stay*100).toFixed(1)+'%'}
+      <span class="count">from the transition matrix</span></div>
+     <div class="tw" style="margin-top:10px"><table><thead><tr><th>State</th>
+      <th>Share</th><th>Median run</th></tr></thead><tbody>
+      ${EXP.states.map(s=>`<tr><td><span style="display:inline-block;width:9px;height:9px;
+        background:${SC[s]};border-radius:2px"></span> ${s}</td>
+        <td>${per[s]==null?'—':(per[s]*100).toFixed(1)+'%'}</td>
+        <td>${dur[s]==null?'—':(+dur[s]).toFixed(0)}</td></tr>`).join('')}
+      </tbody></table></div>`;
+   }
+
+   document.addEventListener('keydown',e=>{
+    const sec=$('#px');if(!sec||sec.hidden||!EXP)return;
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    const ks=Object.keys(EXP.pairs),i=ks.indexOf(PAIR);
+    PAIR=ks[(i+(e.key==='ArrowRight'?1:ks.length-1))%ks.length];draw();e.preventDefault();});
+
+   const navb=[...document.querySelectorAll('nav button')].find(b=>b.dataset.t==='px');
+   if(navb)navb.addEventListener('click',load);
+   if(!$('#px').hidden)load();
+
+   // ---- States tab, from the small feed ----
+   const NS=BUN.ninestates||[],NE=BUN.nineexc||[],NT=BUN.ninetrans||[];
+   if(NS.length){
+    const ex=Object.fromEntries(NE.map(d=>[d.state,d]));
+    $('#nstab tbody').innerHTML=NS.map(d=>{const e=ex[d.state]||{};
+     return `<tr><td><span style="display:inline-block;width:10px;height:10px;
+      background:${SC[d.state]};border-radius:2px"></span> <b>${d.state}</b></td>
+      <td>${(d.share*100).toFixed(1)}%</td><td>${d.median_len}</td>
+      <td>${e.n==null?'—':e.n}</td>
+      <td>${e.mfe==null?'—':e.mfe.toFixed(4)}</td>
+      <td>${e.bars==null?'—':e.bars.toFixed(1)}</td>
+      <td>${e.retrace_pct==null?'—':e.retrace_pct.toFixed(0)+'%'}</td>
+      <td>${e.eff==null?'—':e.eff.toFixed(4)}</td></tr>`;}).join('');
+    if(NT.length){
+     const names=NS.map(d=>d.state);
+     let h='<table><thead><tr><th></th>'+names.map(n=>
+      `<th style="font-size:10px">${n.slice(0,9)}</th>`).join('')+'</tr></thead><tbody>';
+     NT.forEach((row,i)=>{h+=`<tr><td style="font-size:11px"><b>${names[i]}</b></td>`;
+      row.forEach((v,j)=>{const a=v==null?0:v;
+       h+=`<td style="background:rgba(46,158,91,${Math.min(a*1.6,.85)});
+        text-align:center;font-size:10px">${v==null?'':(v*100).toFixed(0)}</td>`;});
+      h+='</tr>';});
+     $('#nstm').innerHTML=h+'</tbody></table>';}
+    const RX=BUN.ribexc||[];
+    if(RX.length)$('#nsagree tbody').innerHTML=RX.map(d=>
+     `<tr><td>${d.cfg}</td><td>—</td><td>${d.n}</td>
+      <td>${d.mfe==null?'—':d.mfe.toFixed(4)}</td>
+      <td>${d.bars==null?'—':d.bars.toFixed(2)}</td>
+      <td>${d.eff==null?'—':d.eff.toFixed(4)}</td></tr>`).join('');
+    const PP=BUN.nineper||[];
+    if(PP.length){
+     const names=NS.map(d=>d.state);
+     $('#nsper thead tr').innerHTML='<th>Pair</th>'+names.map(n=>
+      `<th style="font-size:10px">${n.slice(0,9)}</th>`).join('');
+     $('#nsper tbody').innerHTML=PP.map(r=>`<tr><td><b>${r.pair}</b></td>`
+      +names.map(n=>`<td>${r[n]==null?'—':(r[n]*100).toFixed(1)}</td>`).join('')
+      +'</tr>').join('');}
+   }
+  })();
+
   // ---- Task 3: excursion shape by regime ----
   (function(){const E=BUN.entry||[],EP=BUN.entrypair||[];if(!E.length)return;
    const O=E.filter(d=>d.sample==='oos');if(!O.length)return;
@@ -1208,6 +1512,6 @@ function boot(BUNDLE,root){
 
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','pt','hz','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   ['px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','pt','hz','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
   drawG();drawA();buildScatter();buildFam();buildNew();
 };})();

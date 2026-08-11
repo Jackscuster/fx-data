@@ -109,6 +109,14 @@ out = dict(
     durbands=cl(rd('duration_bands.csv')),
     clsval=cl(rd('classifier_validation.csv')),
     ribsweep=cl(rd('ribbon_sweep.csv')),
+    ninestates=cl(rd('nine_states.csv').rename(columns={'Unnamed: 0':'state'})),
+    nineexc=cl(rd('nine_excursion.csv').rename(columns={'Unnamed: 0':'state'})),
+    nineper=cl(rd('nine_per_pair.csv').rename(columns={'Unnamed: 0':'pair'})),
+    ninetrans=(lambda d: [] if d.empty else
+               d.drop(columns=[c for c in d.columns if c.startswith('Unnamed')])
+                .round(4).where(pd.notna(d.drop(columns=[c for c in d.columns
+                if c.startswith('Unnamed')])), None).values.tolist())(
+                    rd('nine_transitions.csv')),
     ribexc=cl(rd('ribbon_excursion.csv')),
     durhaz=cl(rd('duration_hazard_hysteresis.csv')),
     scaleexc=cl(rd('scale_excursion.csv')),
@@ -137,6 +145,8 @@ out = dict(
               dsr_pass=fun_val('survive DSR >= 0.95', 0),
               emax=fun_val('emax', 1.076),
               signals_url=signals_url(),
+              explorer_url=signals_url().replace('app_signals.json',
+                                                 'app_explorer.json'),
               # two different numbers, never to be conflated: everything built,
               # and the subset that could actually produce quintile statistics
               n_built=n_built, n_scorable=n_scorable))
