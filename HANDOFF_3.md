@@ -627,6 +627,48 @@ realised vol 0.80, return autocorrelation 0.12. Against surrogates: sign-randomi
 is the primary screen; **States** has the grid, transition heatmap and per-pair
 occupancy.
 
+### 16.1b Which window colours the chart, and why 6 states was rejected
+
+**Fragmentation is a display choice, but not in the way it looks.** Colouring the
+price line by the fast window breaks long moves into confetti. Measured:
+
+| window | median trend spell | longest | label changes / 1000 bars |
+|---|---|---|---|
+| 8 | 4 bars | 29 | 340 |
+| 21 | 8 bars | 68 | 197 |
+| **60** | **16 bars** | **176** | **93** |
+
+So slow colouring is 4× longer spells and 3.7× fewer changes. Default is slow.
+
+**But the amount of non-trend labelling does not change**: trend takes 29.0% of
+bars at window 8, 29.6% at 21, 29.4% at 60. It *cannot* change — the cuts are that
+pair's own terciles recomputed per window, so a third of bars land in each band by
+construction. The window changes how labels are distributed in time, not how many
+there are. 67.6% of bars the slow window calls trend are called non-trend by the
+fast one, so the two are measuring different things, not noisy versions of each
+other.
+
+**A corollary worth internalising: a per-pair tercile cut can never show a
+multi-year trend as sustained trend.** If a pair trends for two years that becomes
+its normal, and the cut splits it across the bands. EURJPY reads 28.6 / 29.1 /
+29.8% trend at the three windows — indistinguishable from the panel. If sustained
+trends need to read as sustained, the cut has to be absolute, not relative.
+
+**6-state was measured and rejected as the default.** Collapsing the transitional
+row by which side of the straightness midpoint each bar leans:
+
+- where the transitional bars actually sit: **28.9% dead centre**, 17.1% near the
+  chop edge, 22.0% near the trend edge, and 32.0% outside the nominal band
+  entirely (held there by hysteresis). Leaning trend 55.0% against chop 45.0% —
+  close to a coin flip.
+- separation degrades: the discriminating test, strong trend against strong chop,
+  falls from **+0.0133 (t=1.89) to +0.0097 (t=1.70)** — and that is with the
+  samples growing from 1113/963 to 1856/1353, so a larger n produced a *smaller*
+  t. The absorbed bars dilute the effect, which is what genuinely ambiguous bars
+  do.
+
+So 9 stays the default and 6 is an optional view, both in the app.
+
 ### 16.2 The three-window ribbon
 
 Ships at **8 / 21 / 60**. The lag-and-churn sweep in `ribbon.py` selected

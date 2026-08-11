@@ -341,6 +341,7 @@ grid is size &times; cleanliness, both measured over the trailing 20 bars and la
 <b>strong/medium/weak is how far it moved, not how confident the reading is.</b>
 No forward target and no money metrics &mdash; this describes what has happened.</div>
 <div id="pxsel" style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0"></div>
+<div id="pxwin" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0"></div>
 <div id="pxrange" style="display:flex;gap:6px;margin:10px 0"></div>
 <div class="grid" style="grid-template-columns:1fr 300px;gap:16px;align-items:start">
 <div><div id="pxchart"></div><div id="pxribbon"></div><div id="pxaxes"></div></div>
@@ -1141,8 +1142,28 @@ function boot(BUNDLE,root){
     'weak transitional':'#ecd39a',
     'strong chop':'#8f2b3a','medium chop':'#d1495b','weak chop':'#e8a3ac'};
    const RC=['#d1495b','#9aa0a6','#2e9e5b'];
-   let EXP=null,PAIR=null,RANGE='full',loading=false;
+   let EXP=null,PAIR=null,RANGE='full',loading=false,WIN='60',GRP=9;
    const RANGES={full:0,'5y':1260,'1y':252,'90d':90};
+   const WINS={'8':'fast 8','21':'medium 21','60':'slow 60','c':'consensus'};
+   // consensus: the label at least two of the three windows agree on, else slow.
+   // Slow is the fallback rather than medium because it is the one that does not
+   // fragment -- see the note under the chart.
+   function stateAt(P,i){
+    if(WIN!=='c')return P['st'+WIN]?P['st'+WIN][i]:P.st[i];
+    const a=P.st8[i],b=P.st21[i],c=P.st60[i];
+    if(a===b||a===c)return a; if(b===c)return b; return c;
+   }
+   function leanAt(P,i){
+    const k=WIN==='c'?'60':WIN;return P['ln'+k]?P['ln'+k][i]:null;
+   }
+   // 9 -> 6: a transitional bar joins trend or chop by which side of the
+   // straightness midpoint it sits on. Its SIZE word is unchanged.
+   function display(P,i){
+    const s=stateAt(P,i); if(s==null)return null;
+    const nm=EXP.states[s]; if(GRP===9||nm.indexOf('transitional')<0)return nm;
+    const ln=leanAt(P,i); if(ln==null)return nm;
+    return nm.split(' ')[0]+(ln?' trend':' chop');
+   }
 
    function load(){
     if(EXP||loading)return;loading=true;
@@ -1171,6 +1192,16 @@ function boot(BUNDLE,root){
       style="${p===PAIR?'outline:2px solid var(--trend)':''}">${p}</button>`).join('');
     $('#pxsel').querySelectorAll('button').forEach(b=>b.onclick=()=>{
      PAIR=b.dataset.p;draw();});
+    $('#pxwin').innerHTML='<span class="count">colour by</span> '
+     +Object.keys(WINS).map(w=>`<button class="chip" data-w="${w}"
+       style="${w===WIN?'outline:2px solid var(--trend)':''}">${WINS[w]}</button>`).join('')
+     +' &nbsp; <span class="count">grouping</span> '
+     +[9,6].map(gv=>`<button class="chip" data-g="${gv}"
+       style="${gv===GRP?'outline:2px solid var(--trend)':''}">${gv}-state</button>`).join('');
+    $('#pxwin').querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{
+     WIN=b.dataset.w;draw();});
+    $('#pxwin').querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{
+     GRP=+b.dataset.g;draw();});
     $('#pxrange').innerHTML=Object.keys(RANGES).map(r=>
      `<button class="chip" data-r="${r}"${r===RANGE?' aria-pressed="true"':''}
       style="${r===RANGE?'outline:2px solid var(--trend)':''}">${r}</button>`).join('');
@@ -1188,10 +1219,10 @@ function boot(BUNDLE,root){
     // one polyline per run of identical state keeps the element count sane
     let g='',cur=null,pts=[];
     const flush=()=>{if(pts.length>1)g+=`<polyline points="${pts.join(' ')}" fill="none"
-      stroke="${SC[EXP.states[cur]]||'#888'}" stroke-width="1.6"/>`;};
+      stroke="${SC[cur]||'#888'}" stroke-width="1.6"/>`;};
     idx.forEach((i,k)=>{
      if(lp[k]==null)return;
-     const s=P.st[i];
+     const s=display(P,i);
      if(s!==cur){flush();pts=pts.length?[pts[pts.length-1]]:[];cur=s;}
      pts.push(X(k).toFixed(1)+','+Y(lp[k]).toFixed(1));});
     flush();
@@ -1245,7 +1276,8 @@ function boot(BUNDLE,root){
     $('#pxaxes').innerHTML=`<svg viewBox="0 0 ${W} ${AH}" xmlns="http://www.w3.org/2000/svg">${a2}</svg>`;
 
     panel(P);
-    $('#pxlegend').innerHTML=EXP.states.map(s=>
+    $('#pxlegend').innerHTML=(GRP===9?EXP.states:EXP.states.filter(
+      x=>x.indexOf('transitional')<0)).map(s=>
      `<span class="count"><span style="display:inline-block;width:11px;height:11px;
       background:${SC[s]};border-radius:2px;vertical-align:-1px"></span> ${s}</span>`).join('');
    }
@@ -1253,7 +1285,7 @@ function boot(BUNDLE,root){
    function panel(P){
     const n=EXP.dates.length;let last=n-1;
     while(last>0&&P.st[last]==null)last--;
-    const st=EXP.states[P.st[last]],age=P.age[last];
+    const st=display(P,last),age=P.age[last];
     const rf=P.rf[last],rm=P.rm[last],rs=P.rs[last];
     const nm=['low','mid','high'];
     const agree=(rf===rm&&rm===rs)?'all three agree'
@@ -1265,6 +1297,7 @@ function boot(BUNDLE,root){
     const dur=(EXP.per_pair_dur||[]).find(d=>d.pair===PAIR)||{};
     $('#pxpanel').innerHTML=`<h3>${PAIR} now</h3>
      <div class="big" style="color:${SC[st]||'inherit'}">${st||'—'}</div>
+     <span class="count">coloured by ${WINS[WIN]}, ${GRP}-state view</span><br>
      <span class="count">as of ${EXP.dates[last]}, ${age||'—'} bars in this state</span>
      <div class="note" style="margin-top:10px"><b>Windows:</b> fast ${nm[rf]},
       medium ${nm[rm]}, slow ${nm[rs]}<br>${agree}</div>

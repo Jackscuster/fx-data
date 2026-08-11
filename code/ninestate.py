@@ -246,6 +246,30 @@ def big_test(lab):
               % (d, d / se))
 
 
+MULTI = (8, 21, 60)
+
+
+def grid_at(px, L, fit):
+    """The nine-state grid at an arbitrary window, plus which side of the
+    straightness midpoint each bar leans (for the 6-state collapse)."""
+    lp = np.log(px.astype(float)); rr = lp.diff()
+    net = (lp - lp.shift(L)).abs()
+    path = rr.abs().rolling(L).sum()
+    vol = rr.rolling(VOLWIN).std()
+    inf = [np.inf, -np.inf]
+    st = (net / path).replace(inf, np.nan).shift(1)
+    sc = (path / (vol * np.sqrt(L))).replace(inf, np.nan).shift(1)
+    a, b = tercile(st, fit), tercile(sc, fit)
+    lab = pd.DataFrame(np.where(a.notna() & b.notna(),
+                                [[NAME[(SAX[int(x)], CAX[int(y)])]
+                                  if np.isfinite(x) and np.isfinite(y) else None
+                                  for x, y in zip(ar, br)]
+                                 for ar, br in zip(a.values, b.values)], None),
+                       index=px.index, columns=px.columns)
+    lean = (fit_frac(st, fit) > .5)
+    return lab, lean
+
+
 def main():
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
     fit = px.index < SPLIT
@@ -302,10 +326,11 @@ def main():
         agree = ((f == m) & (m == s2)).where(f.notna()).stack().mean()
         print('ribbon %-9s %s  all-three-agree %.3f' % (tag, ls, agree))
 
-    write_feed(px, lab, A, age, rib['shipped'], st, prof, TM, per, perdur)
+    multi = {L: grid_at(px, L, fit) for L in MULTI}
+    write_feed(px, lab, A, age, rib['shipped'], st, prof, TM, per, perdur, multi)
 
 
-def write_feed(px, lab, A, age, rib, st, prof, TM, per, perdur):
+def write_feed(px, lab, A, age, rib, st, prof, TM, per, perdur, multi=None):
     code = {s: i for i, s in enumerate(STATES)}
     rcode = {'low': 0, 'mid': 1, 'high': 2}
     dates = [d.strftime('%Y-%m-%d') for d in px.index]
@@ -324,6 +349,14 @@ def write_feed(px, lab, A, age, rib, st, prof, TM, per, perdur):
             scale=arr(A['scale'][p].values, 3),
             persist=arr(A['persist'][p].values, 4),
             age=[None if not np.isfinite(v) else int(v) for v in age[p].values])
+        # the grid at each ribbon window, so the chart can be coloured by any of
+        # them, plus which way each transitional bar leans for the 6-state view
+        for L, (lb, ln) in (multi or {}).items():
+            pairs[p]['st%d' % L] = [None if v is None or (isinstance(v, float)
+                                    and not np.isfinite(v)) else code.get(v)
+                                    for v in lb[p].values]
+            pairs[p]['ln%d' % L] = [None if not np.isfinite(v) else int(v)
+                                    for v in ln[p].astype(float).values]
     ev = []
     if os.path.exists(CRISIS):
         C = pd.read_csv(CRISIS)
