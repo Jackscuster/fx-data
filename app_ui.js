@@ -189,6 +189,10 @@ and lagged. Validated as a <i>description</i> rather than a prediction &mdash; p
 separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="clsval"></div>
 <div class="note" id="clstxt"></div>
+<h3>Does anything describe SHAPE?</h3>
+<div id="shapeblock"></div>
+<div id="dwellblock"></div>
+<div class="note" id="shapetxt"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -876,6 +880,49 @@ function boot(BUNDLE,root){
      ${f(get('persistence','median_run'),2)} to ${f(get('null_B','median_run'),2)} bars,
      so about one bar in eleven is market structure and the other ten are the rolling
      window.`;
+   }
+   const SV=BUN.shapeval||[],CV=BUN.combval||[];
+   if(SV.length){
+    const f=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+    const NEUT=['autocorr','dir_changes','mean_crossings','run_length'];
+    $('#shapeblock').innerHTML='<div class="tw"><table><thead><tr>'
+     +'<th>Property</th><th>Structural</th><th>Nine-state</th><th>Weighted</th>'
+     +'<th>Kind</th></tr></thead><tbody>'+SV.map(r=>'<tr'
+     +(NEUT.indexOf(r.prop)>=0?' class="neutral"':'')+'><td>'+r.prop+'</td><td>'
+     +f(r.structural)+'</td><td>'+f(r.grid)+'</td><td>'+f(r.weighted)+'</td><td>'
+     +'<span class="count">'+(r.kind||'')+(NEUT.indexOf(r.prop)>=0
+       ?', neutral':'')+'</span></td></tr>').join('')+'</tbody></table></div>';
+   }
+   if(CV.length){
+    const f=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+    const sw=CV.filter(r=>r.null==null||r.null===''),
+          nl=CV.filter(r=>r.null!=null&&r.null!=='');
+    $('#dwellblock').innerHTML='<div class="tw"><table><thead><tr><th>Classifier'
+     +'</th><th>Dwell M</th><th>Median run</th><th>Runs under 5</th>'
+     +'<th>Diagonal</th><th>Shape separation</th><th>States</th>'
+     +'</tr></thead><tbody>'+sw.map(r=>'<tr><td>'+r.classifier+'</td><td>'
+     +(r.M?r.M:'&mdash;')+'</td><td>'+f(r.median_run,0)+'</td><td>'
+     +f(100*r.under5,1)+'%</td><td>'+f(r.diagonal)+'</td><td>'+f(r.gap_sd)
+     +'</td><td>'+r.n_states+'</td></tr>').join('')+'</tbody></table></div>'
+     +'<div class="tw"><table><thead><tr><th>Null</th><th>Classifier</th>'
+     +'<th>Real</th><th>Surrogate</th><th>Corrected</th><th>p</th></tr></thead>'
+     +'<tbody>'+nl.map(r=>'<tr><td>'+r.null+'</td><td>'+r.classifier+'</td><td>'
+     +f(r.real)+'</td><td>'+f(r.surrogate)+' &plusmn; '+f(r.sd)+'</td><td><b>'
+     +(r.corrected>0?'+':'')+f(r.corrected)+'</b></td><td>'+f(r.p)
+     +'</td></tr>').join('')+'</tbody></table></div>';
+    $('#shapetxt').innerHTML=`<b>Separation is not comparable across state
+     counts</b> &mdash; a 12-state classifier has more chances at an extreme than
+     a four-state one, and a longer confirmation dwell lengthens every block,
+     which raises separation on properties that are themselves autocorrelated.
+     Both effects are why only the <b>corrected</b> column means anything: the
+     surrogate carries the identical classifier, the identical state count and
+     the identical dwell. Every corrected value here is negative. The dwell does
+     fix the flickering &mdash; a 3-bar median run and 62% of runs under 5 bars
+     becomes 13 bars and 0.1% at M=5 &mdash; and it does raise raw shape
+     separation from 0.316 to 0.477, but it raises the surrogate from 0.337 to
+     0.520 at the same time. Shape is not described by any of these definitions.
+     What survives its null is the magnitude reading: 0.881 on realised vol and
+     0.976 on mean absolute move against 0.378 and 0.020.`;
    }
    if(RS.length){
     const W=640,H=170,PL=40;

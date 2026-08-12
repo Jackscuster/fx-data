@@ -982,6 +982,66 @@ Refit stability is 100% for both grid and structural on 117,936 and 119,616
 pre-2016 pair-days. Persistence: structural median run 3 diagonal 0.810 across 4
 holdout states; grid 4 and 0.831 across 9; weighted 11 and 0.935 across 3.
 
+### 16.4c Flickering and coverage: both fixed, neither helps
+
+**Flickering, fixed.** The structural state is categorical, so it has no score to
+put a hysteresis band around. The equivalent is a **confirmation dwell**: a new
+state must print M consecutive bars before it is adopted, and the previous state
+is held until then. Symmetric, costs M-1 bars of recognition lag, strictly causal.
+`combined.confirm()`. Sweep on the structural state:
+
+| M | median run | under 5 bars | diagonal | shape sep | eta2 |
+|---|---|---|---|---|---|
+| 1 | 3 | 61.9% | 0.809 | 0.316 | 0.0185 |
+| 2 | 5 | 43.0% | 0.868 | 0.350 | 0.0217 |
+| 3 | 8 | 27.7% | 0.901 | 0.381 | 0.0243 |
+| **5** | **13** | **0.1%** | **0.948** | **0.477** | **0.0344** |
+| 8 | 25 | 0.1% | 0.977 | 0.747 | 0.0358 |
+| 13 | 90 | 0.0% | 0.995 | 0.384 | 0.0055 |
+| 21 | 540 | 0.0% | 1.000 | 0.331 | 0.0013 |
+
+M=5 is the smallest dwell reaching an 11-bar median run. Past M=8 the states
+collapse into each other and eta2 falls off a cliff.
+
+**THE 42% FIGURE WAS `broken`, NOT `no swings`.** Measured across the whole swing
+grid, `no swings` is 0.9-1.0% of bars at every N and **0% of holdout bars**. There
+is no unlabelled 70% and nothing for a fallback layer to fill — built anyway as
+`combined.fallback()`, it is identical to the raw structural state to three
+decimals on every metric. Shares at the shipped config: broken 0.457, range 0.263,
+drifting 0.198, trending 0.073, no swings 0.009. The real coverage problem is that
+**one state holds 46% of bars while `trending` holds 7%**, and a fallback cannot
+touch that.
+
+So the two classifiers are combined the way that uses both: **activity on every
+bar crossed with shape on every bar** — 4 shape x 3 scale terciles = 12 states,
+`combined.product()`. At M=5 it beats both parents on every shape property.
+
+**SEPARATION IS NOT COMPARABLE ACROSS STATE COUNTS OR DWELLS.** A 12-state
+classifier has more chances at an extreme than a 4-state one, and a longer dwell
+lengthens every block, which raises separation on properties that are themselves
+autocorrelated. Only the null-corrected value compares — the surrogate carries the
+identical classifier, state count and dwell. 120 draws:
+
+| null | classifier | real | surrogate | corrected | p |
+|---|---|---|---|---|---|
+| sign | structural raw | 0.316 | 0.337 ± 0.023 | −0.021 | 0.851 |
+| sign | structural M=5 | 0.477 | 0.520 ± 0.032 | **−0.043** | 0.909 |
+| sign | product M=5 | 0.560 | 0.646 ± 0.051 | **−0.087** | 0.959 |
+| sign | grid | 0.457 | 0.512 ± 0.028 | −0.054 | 0.992 |
+| iid | structural raw | 0.316 | 0.329 ± 0.023 | −0.013 | 0.694 |
+| iid | structural M=5 | 0.477 | 0.504 ± 0.034 | −0.027 | 0.810 |
+| iid | product M=5 | 0.560 | 0.636 ± 0.053 | −0.076 | 0.926 |
+| iid | grid | 0.457 | 0.489 ± 0.025 | −0.031 | 0.884 |
+
+**The dwell raises the surrogate faster than it raises the real value, and so does
+the product.** Every corrected value is negative and the gap widens as the state
+gets more persistent and more elaborate. Refit stability 100% for both, product
+and structural, on ~117,600 pre-2016 pair-days.
+
+Both fixes work as fixes — 3-bar runs with 62% under five become 13-bar runs with
+0.1%, and coverage is complete — and neither buys any shape description. 16.4b's
+conclusion is unchanged and now holds across seven classifier variants.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
