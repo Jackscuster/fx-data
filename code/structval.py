@@ -75,8 +75,23 @@ def properties(px):
     return {k: v.shift(1) for k, v in P.items()}
 
 
-def separation(lab, P, oos_only=True):
-    """Gap between the extreme state means, in sd units of the property."""
+MIN_SHARE = 0.02
+
+
+def separation(lab, P, oos_only=True, min_share=MIN_SHARE):
+    """Gap between the extreme state means, in sd units of the property.
+
+    STATES BELOW min_share ARE EXCLUDED FROM THE GAP. A max-minus-min over
+    group means is set by whichever group is smallest and noisiest: at the
+    loosest break settings 'drifting' collapses to SIX observations in
+    1999-2007 and its mean alone fixed the gap, producing a corrected
+    separation of +1.27 on that block against +0.03 on the next. Any state
+    holding under 2% of the block's bars is dropped before the extremes are
+    taken. This changes nothing already published -- the smallest holdout
+    share in 16.4b/16.4c is 4.7% for the structural state, 8.6% for the grid
+    and 1.4% for the twelve-state product, and only the first two feed a
+    max-minus-min -- but it is what makes the IS blocks comparable.
+    """
     rows = []
     for nm, X in P.items():
         a, b = lab, X
@@ -84,6 +99,10 @@ def separation(lab, P, oos_only=True):
             a, b = a[a.index >= SPLIT], b[b.index >= SPLIT]
         d = pd.DataFrame({'s': a.stack(), 'v': b.stack()}).dropna()
         d = d[d.s != '']
+        if d.s.nunique() < 2 or len(d) < 1000:
+            rows.append(dict(prop=nm, gap_sd=np.nan)); continue
+        keep = d.s.value_counts(normalize=True)
+        d = d[d.s.isin(keep[keep >= min_share].index)]
         if d.s.nunique() < 2 or len(d) < 1000:
             rows.append(dict(prop=nm, gap_sd=np.nan)); continue
         g = d.groupby('s').v.mean()

@@ -1042,6 +1042,70 @@ Both fixes work as fixes — 3-bar runs with 62% under five become 13-bar runs w
 0.1%, and coverage is complete — and neither buys any shape description. 16.4b's
 conclusion is unchanged and now holds across seven classifier variants.
 
+### 16.4d IS-only selection of the structural cell. Shape does not hold.
+
+structure.py's own 144-cell sweep selected on bars-to-peak and MFE/|MAE| — forward
+measurements, which this project no longer treats as verdicts on a descriptive
+classifier. So the cell had never been chosen on the criterion it is now judged
+by. `structsel.py` redoes it.
+
+**Criterion, written into the file before the sweep ran:** mean **null-corrected**
+shape separation over the four neutral properties. Corrected, not raw — raw
+separation rises with block length, so selecting on raw would pick the most
+persistent cell and call it the most descriptive. Every cell is measured against
+its own sign surrogate at the same parameters and the same dwell. Select on IS-A,
+require IS-B to agree in sign, holdout read once. The dwell is held at M=5 (fixed
+in 16.4c on persistence alone), so the search space stays at 144.
+
+**A degeneracy had to be fixed first.** At the loosest break settings `drifting`
+collapses to **six observations** in 1999-2007 and its mean alone set the
+max-minus-min gap, producing a corrected separation of +1.27 on IS-A against
++0.03 on IS-B. `structval.separation` now drops any state under a 2% share of the
+block. This changes nothing already published — the smallest holdout share in
+16.4b/16.4c is 4.7% — but without it the selection is meaningless.
+
+**The surface, 40 surrogate draws per cell:**
+
+| | count |
+|---|---|
+| positive corrected on IS-A | 84 of 144 |
+| positive corrected on IS-B | 68 of 144 |
+| positive on **both** | **36 of 144** |
+
+39.7 is what independent coin flips would give. **Block agreement is at chance.**
+Every one of the top eight cells by IS-A corrected separation is *negative* on
+IS-B — the IS-A ranking does not transfer. And **R is inert**: mean IS-A corrected
+separation is +0.0421 / +0.0428 / +0.0424 / +0.0428 across the four retracement
+thresholds. The retracement parameter does nothing on this criterion.
+
+**Chosen cell: N=2, B=3, D=1.00, R=0.62.** IS-A corrected +0.0968 (z +2.23), IS-B
++0.0171 (z +0.43) — it met the bar, weakly.
+
+**Holdout, read once, 120 draws each:**
+
+| null | real | surrogate | corrected | p |
+|---|---|---|---|---|
+| sign | 0.495 | 0.561 ± 0.045 | **−0.066** | 0.909 |
+| iid | 0.495 | 0.547 ± 0.036 | **−0.051** | 0.909 |
+
+**Shape separation does not hold.** The properly-selected cell is further below
+its own surrogate on the holdout than the unselected one was.
+
+**A degradation to record:** the IS-selected cell is more lopsided than
+structure.py's own. `trending` falls from 7.3% of bars to 5.6%, and `broken` still
+holds 44%.
+
+**One positive number, and why it should not be promoted.** At the new cell the
+twelve-state product reads corrected **+0.024** (p=0.215) and **+0.036** (p=0.140)
+— the only positive corrected values anywhere in 16.4b-d. It was not the selected
+object; selection ran on the structural classifier. At the *previous* cell the same
+product read −0.087 and −0.076. Changing the swing width from 3 to 2 moved it from
+−0.087 to +0.036 with p never below 0.14, across eight comparisons. That is what an
+unstable noise quantity looks like, not a finding. Do not route on it.
+
+Layer 1's interface now carries `shape`, `activity` and `combined`; both
+self-assertions still pass on all 191,940 pair-days.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

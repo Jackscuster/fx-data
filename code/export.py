@@ -36,6 +36,14 @@ SCHEMA of results/layer1_states.csv
   age_28       bars the 28-day state has held, 1 on its first bar
   straight_28  straightness axis, |net| / path over 28 bars
   scale_28     scale axis, path over 28 bars in the pair's own vol units
+  shape        trending | broken | range | drifting -- the structural read, from
+               swings, breaks and retracements, at the cell selected on IS only
+               by structsel.py, with a 5-bar confirmation dwell
+  activity     weak | medium | strong -- the scale tercile, the same axis as
+               scale_28, cut on IS and applied unchanged
+  combined     '<activity> <shape>', the twelve-state product. DESCRIPTION ONLY:
+               its shape separation is BELOW its own surrogate on the holdout,
+               so it describes size honestly and shape not at all. See 16.4c.
   sample       is | oos, split at 2016-01-01
 
 READING IT.
@@ -56,6 +64,10 @@ THE CONTRACT, so Layer 2 can rely on it.
     'weak trend' count as agreeing.
   - age_28 is a confidence weight, not a state, and a weak one: the hazard curve
     is fully reproduced by a volatility-clustering surrogate.
+  - shape, activity and combined carry the same warning as the tier, for the
+    same reason: they are descriptions that failed their own null. Route on
+    activity if you route on anything -- it is the only axis in this file whose
+    separation survives a surrogate. Do not route on shape.
   - The tier predicts NOTHING measurable. Permutation p=0.257 on MFE/|MAE| and
     worse on the other three metrics. It is carried as a description of the
     windows, not as a signal. Do not route on it.
@@ -73,6 +85,8 @@ Writes results/layer1_states.csv.
 import json
 import numpy as np, pandas as pd
 from ninestate import MULTI, STATES, SPLIT, grid_at, age_of, tiers_from, raw_axes
+from combined import layers, product, confirm, DWELL
+from structsel import chosen_cell
 
 PX = os.path.join(ROOTDATA, 'px28.csv')
 OUT = os.path.join(ROOTOUT, 'layer1_states.csv')
@@ -80,7 +94,7 @@ TIERCSV = os.path.join(ROOTOUT, 'nine_tiers.csv')
 EXPL = os.path.join(ROOTOUT, 'app_explorer.json')
 BASE = 28                      # the medium ribbon window, and ninestate's W
 COLS = ['date', 'pair', 'state_7', 'state_28', 'state_128', 'tier', 'age_28',
-        'straight_28', 'scale_28', 'sample']
+        'straight_28', 'scale_28', 'shape', 'activity', 'combined', 'sample']
 
 
 def build(px):
@@ -89,6 +103,12 @@ def build(px):
     tier = tiers_from(multi)
     age = age_of(multi[BASE][0])
     A = raw_axes(px, BASE)
+    cell = chosen_cell()
+    sh, act = layers(px, fit, cell)
+    sh, act = sh.reindex_like(px), act.reindex_like(px)
+    comb = product(sh, act, DWELL)
+    # the shape layer carries the dwell too, so the three columns are consistent
+    sh = confirm(sh, DWELL)
 
     n, m = len(px.index), len(px.columns)
     flat = lambda d: d.reindex(index=px.index, columns=px.columns).values.ravel()
@@ -102,9 +122,12 @@ def build(px):
         'age_28': flat(age),
         'straight_28': flat(A['straight']),
         'scale_28': flat(A['scale']),
+        'shape': flat(sh),
+        'activity': flat(act),
+        'combined': flat(comb),
         'sample': np.where(np.repeat(fit, m), 'is', 'oos'),
     })
-    keep = T[['state_7', 'state_28', 'state_128']].notna().any(axis=1)
+    keep = T[['state_7', 'state_28', 'state_128', 'combined']].notna().any(axis=1)
     T = T[keep].reset_index(drop=True)
     T['age_28'] = T.age_28.astype('Int64')
     return T[COLS], multi, tier
@@ -151,7 +174,8 @@ def main():
     print('  %d rows, %d pairs, %s to %s, %.1f MB'
           % (len(T), T.pair.nunique(), T.date.iloc[0], T.date.iloc[-1],
              os.path.getsize(OUT) / 1048576))
-    print('  windows %s, base %d' % (str(MULTI), BASE))
+    print('  windows %s, base %d, structural cell %s, dwell M=%d'
+          % (str(MULTI), BASE, str(chosen_cell()), DWELL))
 
     print('\nSTATE SHARE, 28-day window')
     for tag in ('is', 'oos'):
@@ -165,8 +189,16 @@ def main():
         print('  %-4s %s' % (tag, '  '.join('%s %.3f' % (k[:11], v[k])
                                             for k in v.sort_index().index)))
 
+    print('\nSHAPE AND ACTIVITY SHARE')
+    for c in ('shape', 'activity'):
+        for tag in ('is', 'oos'):
+            v = T[T['sample'] == tag][c].value_counts(normalize=True)
+            print('  %-9s %-4s %s' % (c, tag, '  '.join('%s %.3f' % (k, v[k])
+                                                        for k in v.index)))
+
     print('\nCOVERAGE, share of rows with a label')
-    for c in ('state_7', 'state_28', 'state_128', 'tier'):
+    for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape', 'activity',
+              'combined'):
         print('  %-11s %.3f' % (c, T[c].notna().mean()))
 
     print('\nAGREEMENT WITH THE PUBLISHED OUTPUT')

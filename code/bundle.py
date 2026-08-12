@@ -109,6 +109,8 @@ out = dict(
     durbands=cl(rd('duration_bands.csv')),
     clsval=cl(rd('classifier_validation.csv')),
     combval=cl(rd('combined_validation.csv')),
+    structsel=cl(rd('structsel_surface.csv')),
+    structselres=cl(rd('structsel_result.csv')),
     shapeval=cl(rd('structval.csv').rename(columns={'Unnamed: 0':'prop'})),
     ribsweep=cl(rd('ribbon_sweep.csv')),
     ninestates=cl(rd('nine_states.csv').rename(columns={'Unnamed: 0':'state'})),
