@@ -45,7 +45,28 @@ is not pre-specified -- the nine-state grid found chop peaking LATER, which is t
 opposite of the conventional prior, so forcing a direction would beg the question.
 What is pre-specified is that the same signed statistic must hold on both blocks.
 
-Writes results/structure_surface.csv and structure_result.csv.
+TWO FILES, TWO DIFFERENT THINGS.
+
+  structure_surface.csv   the 144-cell sweep. IN-SAMPLE ONLY -- every column is
+                          measured on IS-A (1999-2007) or IS-B (2008-2015).
+                          A_* is block A, B_* is block B. The holdout appears
+                          nowhere in it.
+  structure_result.csv    the single chosen configuration read ONCE on the
+                          holdout (2016-2026), with its null, its gates and the
+                          five-state split.
+
+They are not comparable cell-for-cell and never describe the same sample.
+
+THE NON-TRENDING BARS ARE NOT ONE THING. Lumping them loses information, so the
+state is five-way:
+
+  trending   sequence + break + no retracement past R
+  broken     a qualifying break in the last K bars but the sequence fails
+  range      inside the last confirmed [low, high], no recent break
+  drifting   outside that band, but with neither a qualifying break nor a sequence
+  no swings  fewer than two confirmed swings either side -- warm-up only
+
+Splitting widens the holdout MFE/|MAE| contrast from 0.130 to 0.194.
 """
 import numpy as np, pandas as pd
 
@@ -55,6 +76,7 @@ A_END = pd.Timestamp('2008-01-01')
 SPLIT = pd.Timestamp('2016-01-01')
 VOLWIN = 60
 NS = (2, 3, 5, 8)
+K_BROKEN = 10          # bars a break stays 'recent'
 BS = (1, 2, 3)
 DS = (0.25, 0.5, 1.0)
 RS = (0.50, 0.62, 0.75, 1.00)
@@ -124,6 +146,39 @@ def classify(c, sigma, N, B, D, R):
     st[dn_seq & below & (ret_dn < R) & ok] = -1
     st[~ok] = -9
     return st
+
+
+def five_state(px, N, B, D, R, K=None):
+    """The five-way state. Same construction as classify(), not collapsed."""
+    K = K_BROKEN if K is None else K
+    lp = np.log(px.astype(float))
+    sig = lp.diff().rolling(VOLWIN).std()
+    out = {}
+    for p in px.columns:
+        c, sg = lp[p].values, sig[p].values
+        hi, hip, lo, lop = swings(c, N)
+        up = (hi > hip) & (lo > lop); dn = (hi < hip) & (lo < lop)
+        thr = D * sg
+        ab = pd.Series(c > hi + thr).rolling(B).sum().values == B
+        be = pd.Series(c < lo - thr).rolling(B).sum().values == B
+        sh = pd.Series(c).groupby(_seg(lo)).cummax().values
+        sl = pd.Series(c).groupby(_seg(hi)).cummin().values
+        with np.errstate(invalid='ignore', divide='ignore'):
+            ru = np.where(sh - lo > 0, (sh - c) / (sh - lo), np.nan)
+            rd = np.where(hi - sl > 0, (c - sl) / (hi - sl), np.nan)
+        ok = (np.isfinite(hi) & np.isfinite(hip) & np.isfinite(lo)
+              & np.isfinite(lop) & np.isfinite(sg))
+        st = np.full(len(c), '', object)
+        st[~ok] = 'no swings'
+        tr = ((up & ab & (ru < R)) | (dn & be & (rd < R))) & ok
+        st[tr] = 'trending'
+        br = (pd.Series(ab | be).rolling(K).max().values == 1) & ok & ~tr
+        st[br] = 'broken'
+        ir = ok & ~tr & ~br & (c <= hi) & (c >= lo)
+        st[ir] = 'range'
+        st[ok & ~tr & ~br & ~ir] = 'drifting'
+        out[p] = pd.Series(st, index=px.index).shift(1)
+    return pd.DataFrame(out)
 
 
 def build(px, N, B, D, R):
