@@ -898,9 +898,37 @@ there are no fitted parameters, so refitting on more data cannot relabel history
 and persistence is high (median run 8, diagonal 0.968). But coverage is poor:
 trending is only **6.7%** of holdout bars, so it is barely a two-state classifier.
 
-**Do not rebuild this without a different contrast.** The construction is sound and
-the causality is clean; what failed is the claim that structural trending predicts
-excursion shape.
+**The primary metric fails; the secondary holds.** Bars-to-peak inverts and dies.
+But MFE/|MAE| — the other pre-specified metric — survives on the holdout:
+
+| contrast (holdout) | value | 95% CI | null | p |
+|---|---|---|---|---|
+| chop − trending, MFE/\|MAE\| | **+0.1301** | +0.014 to +0.236 | −0.011 ± 0.061 | **0.015** |
+| drifting − trending, after the split | **+0.1943** | +0.061 to +0.324 | −0.021 ± 0.070 | **0.005** |
+
+Trending entries have the *worst* MFE/|MAE| of any state, 0.803 against 0.997 for
+drifting. That agrees in direction with the entirely separate nine-state grid
+(strong trend 0.783 against strong chop 0.993), so two unrelated classifiers put
+the same sign on it.
+
+**The non-trending bars are not one thing.** Split five ways:
+
+| state | share | n | MFE/\|MAE\| | bars | retrace |
+|---|---|---|---|---|---|
+| trending | 6.7% | 892 | **0.803** | 9.85 | 125.4% |
+| broken | 45.2% | 4871 | 0.924 | 10.11 | 108.6% |
+| range | 27.8% | 3348 | 0.909 | 9.99 | 109.5% |
+| drifting | 20.3% | 2056 | **0.997** | 10.11 | 101.0% |
+| no swings | 0.0% | — | — | — | — |
+
+Splitting widens the ratio contrast from 0.130 to 0.194 and takes it from p=0.015
+to p=0.005. "Neither" was hiding structure. `no swings` is empty on the holdout —
+it only exists during warm-up.
+
+**Two files, not comparable.** `structure_surface.csv` is the 144-cell sweep,
+**in-sample only** (`A_*` = 1999-2007, `B_*` = 2008-2015); the holdout appears
+nowhere in it. `structure_result.csv` is the one chosen configuration read once on
+the holdout. They never describe the same sample.
 
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
