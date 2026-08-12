@@ -54,7 +54,23 @@ PX = os.path.join(ROOTDATA, 'px28.csv')
 SPLIT = pd.Timestamp('2016-01-01')
 NSHUF = int(os.environ.get('FX_NSHUF', 200))
 MS = (1, 2, 3, 5, 8, 13, 21)        # confirmation dwells swept
-CFG = (3, 3, 1.00, 0.62)            # the structural configuration fixed on IS
+DWELL = 5                           # the shipped dwell, fixed on persistence
+
+
+def _cfg():
+    """The structural cell selected on IS by structsel.py.
+
+    Read from the CSV rather than imported: structsel.py imports confirm() from
+    here, so an import the other way would be circular.
+    """
+    f = os.path.join(ROOTOUT, 'structsel_result.csv')
+    if os.path.exists(f):
+        r = pd.read_csv(f).iloc[0]
+        return int(r.N), int(r.B), float(r.D), float(r.R)
+    return 3, 3, 1.00, 0.62         # structure.py's own, pre-selection
+
+
+CFG = None                          # resolved at call time by layers()
 SHAPE_STATES = ['trending', 'broken', 'range', 'drifting']
 ACT = {0.0: 'weak', 1.0: 'medium', 2.0: 'strong'}
 
@@ -82,11 +98,11 @@ def confirm(lab, M):
     return pd.DataFrame(out)
 
 
-def layers(px, fit, cfg=CFG):
+def layers(px, fit, cfg=None):
     """-> (shape, activity) frames, both defined on every bar."""
     from structure import five_state
     from ninestate import raw_axes, tercile
-    sh = five_state(px, *cfg)
+    sh = five_state(px, *(cfg or _cfg()))
     sh = sh.where(sh.isin(SHAPE_STATES))
     act = tercile(raw_axes(px)['scale'], fit).replace(ACT)
     return sh, act.where(act.isin(list(ACT.values())))
@@ -126,11 +142,12 @@ def main():
     P = properties(px)
     from ninestate import nine
     sh, act = layers(px, fit)
+    print('structural cell selected on IS: N=%d B=%d D=%.2f R=%.2f' % _cfg())
     grid = nine(px, fit)[0]
 
     print('COVERAGE OF THE RAW STRUCTURAL STATE')
     from structure import five_state
-    cv = five_state(px, *CFG).stack().replace('', np.nan).dropna() \
+    cv = five_state(px, *_cfg()).stack().replace('', np.nan).dropna() \
         .value_counts(normalize=True)
     print(cv.to_string(float_format=lambda v: '%.3f' % v))
     print('  "no swings" is %.1f%% of all bars and 0%% of holdout bars -- there is'

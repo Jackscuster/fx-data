@@ -193,6 +193,7 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="shapeblock"></div>
 <div id="dwellblock"></div>
 <div class="note" id="shapetxt"></div>
+<div id="selblock"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -923,6 +924,41 @@ function boot(BUNDLE,root){
      0.520 at the same time. Shape is not described by any of these definitions.
      What survives its null is the magnitude reading: 0.881 on realised vol and
      0.976 on mean absolute move against 0.378 and 0.020.`;
+   }
+   const SS=BUN.structsel||[],SR=BUN.structselres||[];
+   if(SS.length){
+    const f=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?4:n);
+    const pa=SS.filter(r=>r.A_corr>0).length,pb=SS.filter(r=>r.B_corr>0).length,
+          both=SS.filter(r=>r.A_corr>0&&r.B_corr>0).length,
+          exp=(pa*pb/SS.length).toFixed(1);
+    const top=SS.slice().sort((x,y)=>y.A_corr-x.A_corr).slice(0,8);
+    $('#selblock').innerHTML='<h3>IS-only selection of the structural cell</h3>'
+     +'<div class="note">Criterion fixed before the sweep: mean <b>null-corrected'
+     +'</b> shape separation over the four neutral properties, selected on IS-A'
+     +' (1999&ndash;2007), required to agree in sign on IS-B (2008&ndash;2015),'
+     +' holdout read once. Corrected, not raw &mdash; raw separation rises with'
+     +' block length, so selecting on it would pick the most persistent cell and'
+     +' call it the most descriptive.</div>'
+     +'<div class="note">Positive on IS-A: <b>'+pa+'</b> of '+SS.length
+     +'. Positive on IS-B: <b>'+pb+'</b>. Positive on <b>both</b>: <b>'+both
+     +'</b>, against '+exp+' expected if the two blocks were independent coin'
+     +' flips. Block agreement is at chance.</div>'
+     +'<div class="tw"><table><thead><tr><th>N</th><th>B</th><th>D</th><th>R</th>'
+     +'<th>IS-A corrected</th><th>z</th><th>IS-B corrected</th><th>z</th>'
+     +'<th>Agree</th></tr></thead><tbody>'+top.map(r=>'<tr><td>'+r.N+'</td><td>'
+     +r.B+'</td><td>'+r.D+'</td><td>'+r.R+'</td><td>'+f(r.A_corr)+'</td><td>'
+     +f(r.A_z,2)+'</td><td>'+f(r.B_corr)+'</td><td>'+f(r.B_z,2)+'</td><td>'
+     +(r.agree===true||r.agree==='True'?'yes':'<b>no</b>')+'</td></tr>').join('')
+     +'</tbody></table><div class="count">Top eight cells by IS-A corrected'
+     +' separation. Every one is negative on IS-B &mdash; the IS-A ranking does'
+     +' not transfer between blocks.</div></div>'
+     +(SR.length?'<div class="tw"><table><thead><tr><th>Holdout, read once</th>'
+      +'<th>Real</th><th>Surrogate</th><th>Corrected</th><th>p</th></tr></thead>'
+      +'<tbody>'+SR.map(r=>'<tr><td>N='+r.N+' B='+r.B+' D='+r.D+' R='+r.R
+      +', M='+r.M+' &middot; '+r.null+'</td><td>'+f(r.real,3)+'</td><td>'
+      +f(r.surrogate,3)+' &plusmn; '+f(r.sd,3)+'</td><td><b>'
+      +(r.corrected>0?'+':'')+f(r.corrected,3)+'</b></td><td>'+f(r.p,3)
+      +'</td></tr>').join('')+'</tbody></table></div>':'');
    }
    if(RS.length){
     const W=640,H=170,PL=40;
