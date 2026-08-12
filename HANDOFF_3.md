@@ -686,7 +686,76 @@ Configuration occupancy: established 0.208, transition starting 0.165, confirmin
 reproduce that mix almost exactly** (0.198 / 0.166 / 0.331 / 0.306). Whether three
 windows agree is not market structure.
 
-### 16.2b Agreement tiers carry nothing — settled
+### 16.2a THE LAYER 1 INTERFACE
+
+`results/layer1_states.csv`, written by `code/export.py`, is what Layer 2 reads.
+One row per pair per day: `state_7`, `state_28`, `state_128`, `tier`, `age_28`,
+`straight_28`, `scale_28`, `sample`. 191,940 rows, 1999-04-01 to 2026-07-31.
+
+It computes nothing new — every column is imported from `ninestate.py` — and it
+asserts agreement with `nine_tiers.csv` and `app_explorer.json` on every pair-day,
+halting the run on a mismatch. Wired into `pipeline.py` after `axischeck.py`.
+
+**Windows ship at 7 / 28 / 128, base 28.** 60 cannot be the slow window: it equals
+`VOLWIN`, so the scale axis collapses toward √(2/π) — sd 0.343 at 60 against 0.393
+at 63 and 0.550 at 72, churn 92.7 against ~143 either side. It was the worst
+single window in the 4–200 sweep. If a horizon argument pulls the slow window back
+toward 60, use 63.
+
+### 16.2b What separates, and what does not — settled by permutation
+
+All figures out of sample, 11,167 entry events (26,833 across both samples), nine
+states keyed on `state_28`, permutation = the label series rolled in time so run
+lengths and entry clustering survive.
+
+| keyed on | MFE spread | ratio spread | ratio p | MFE p |
+|---|---|---|---|---|
+| state_7 | 0.0028 | 0.2150 | 0.249 | 0.067 |
+| **state_28** | 0.0023 | **0.2569** | **0.110** | 0.392 |
+| state_128 | 0.0027 | 0.1994 | 0.524 | 0.521 |
+| tier | 0.0010 | 0.1200 | 0.257 | 0.487 |
+
+**Read this carefully.** The nine states beat the tier on raw ratio spread — 0.257
+against 0.135 at these windows, about 1.9× — but **the omnibus test clears nothing
+at 0.05**. A nine-way split of this data produces a ratio spread of 0.19 ± 0.06 by
+chance; 0.257 was observed. The ordering across the nine is **not monotone** —
+weak trend sits below strong trend on ratio.
+
+What *is* significant is the single pre-specified contrast, strong trend against
+strong chop on bars to peak: **+1.435 bars, t = +4.78, surrogate +0.209 ± 0.297,
+0/50 draws beating it, p = 0.020**. A targeted contrast has power the max-minus-min
+of nine noisy means does not. Quote that, not the omnibus.
+
+The fast window does **not** separate better at entry: state_7's ratio spread is
+0.215 against state_28's 0.257, and its only near-miss is MFE at p = 0.067. Base
+stays 28.
+
+**State age carries nothing.** Banded within each state so the band is not a proxy
+for which state you are in: fresh / mid / mature give ratio 0.932 / 0.924 / 0.911,
+MFE identical at 0.0141, bars 10.12 / 10.06 / 9.98. Permutation shuffling age
+within state: real ratio spread 0.021 against a null of **0.048 ± 0.025, p = 0.875**
+— *less* variation than chance. Per state the direction is inconsistent (strong
+trend falls with age, strong transitional rises). Age is a description, not a
+signal.
+
+### 16.2c Figures that are not reproducible — do not reuse
+
+**1.24 / 0.60 and 1.32 / 0.93 do not appear in any artefact in this repo** and
+could not be reproduced at any window set or classifier. Recomputed from scratch
+three times, tier ratios span 0.86–0.98 at 8/21/60 and 0.84–0.98 at 7/28/128.
+`ribbon_excursion.csv`, deleted, held 0.900/0.879 — but it was 10/26/72 on the
+*three-state weighted* classifier and described neither shipped set. Anything
+quoting those numbers is quoting nothing.
+
+**Two reported bugs do not exist.** No hardcoded-20 was found in the
+`nine_tier_excursion.csv` path — the only literal 20s are a docstring, a 2021
+timestamp and the `fav_20` column name. And `age_of` was never broken: tested on a
+constructed series with a NaN gap and a resumed state it returns 1,2,1,·,·,1,2,1,2,3
+correctly, `age_28` runs to a max of 70 with only 16.9% of rows at 1, and Task 9's
+hazard buckets held 3,625 observations at ages 21–40 *before* any change. Nothing
+was fixed because nothing was broken.
+
+### 16.2d Agreement tiers carry nothing — settled
 
 The tiers are a complete, symmetric enumeration of which windows disagree:
 
