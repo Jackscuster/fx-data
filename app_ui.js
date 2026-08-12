@@ -194,6 +194,10 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="dwellblock"></div>
 <div class="note" id="shapetxt"></div>
 <div id="selblock"></div>
+<h3>Counting, per pair, and transitions</h3>
+<div id="epiblock"></div>
+<div id="pairblock"></div>
+<div id="transblock"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -888,8 +892,7 @@ function boot(BUNDLE,root){
     const NEUT=['autocorr','dir_changes','mean_crossings','run_length'];
     $('#shapeblock').innerHTML='<div class="tw"><table><thead><tr>'
      +'<th>Property</th><th>Structural</th><th>Nine-state</th><th>Weighted</th>'
-     +'<th>Kind</th></tr></thead><tbody>'+SV.map(r=>'<tr'
-     +(NEUT.indexOf(r.prop)>=0?' class="neutral"':'')+'><td>'+r.prop+'</td><td>'
+     +'<th>Kind</th></tr></thead><tbody>'+SV.map(r=>'<tr><td>'+r.prop+'</td><td>'
      +f(r.structural)+'</td><td>'+f(r.grid)+'</td><td>'+f(r.weighted)+'</td><td>'
      +'<span class="count">'+(r.kind||'')+(NEUT.indexOf(r.prop)>=0
        ?', neutral':'')+'</span></td></tr>').join('')+'</tbody></table></div>';
@@ -959,6 +962,94 @@ function boot(BUNDLE,root){
       +f(r.surrogate,3)+' &plusmn; '+f(r.sd,3)+'</td><td><b>'
       +(r.corrected>0?'+':'')+f(r.corrected,3)+'</b></td><td>'+f(r.p,3)
       +'</td></tr>').join('')+'</tbody></table></div>':'');
+   }
+   const EC=BUN.epicount||[],EX=BUN.epiexc||[],PC=BUN.pairclf||[],
+         TE=BUN.transedge||[],MN=BUN.magnull||[],ES=BUN.episep||[];
+   const ff=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(EC.length||EX.length){
+    let h='<div class="note"><b>Bars are not independent observations.</b> A '
+     +'20-bar state is one episode, not twenty pieces of evidence. Two '
+     +'corrections are applied: an <b>episode basis</b> (one row per state run, '
+     +'fixing serial dependence within a pair) and a <b>moving-block bootstrap '
+     +'over calendar dates</b> (a block carries every pair on those dates, so '
+     +'cross-pair correlation rides along too). Surrogate-based p-values were '
+     +'already sound &mdash; they recompute the whole statistic on each '
+     +'surrogate panel, so no independence was ever assumed in them.</div>';
+    if(EC.length) h+='<div class="tw"><table><thead><tr><th>Classifier</th>'
+     +'<th>Holdout bars</th><th>Episodes</th><th>Overstatement</th></tr></thead>'
+     +'<tbody>'+EC.map(r=>'<tr><td>'+r.classifier+'</td><td>'+r.bars+'</td><td>'
+     +r.episodes+'</td><td><b>'+ff(r.ratio,1)+'&times;</b></td></tr>').join('')
+     +'</tbody></table><div class="count">A t-statistic pooled over bars '
+     +'overstates its sample by this factor and its |t| by about its square '
+     +'root.</div></div>';
+    if(EX.length) h+='<div class="tw"><table><thead><tr><th>Contrast</th>'
+     +'<th>Metric</th><th>Observed</th><th>Published t</th><th>p@21</th>'
+     +'<th>p@63</th><th>p@126</th></tr></thead><tbody>'+EX.map(r=>{
+      const live=Math.max(r.p_21,r.p_63,r.p_126)<0.05;
+      return '<tr><td>'+(live?'&#9679; ':'')+r.contrast+'</td><td>'
+      +r.metric+'</td><td>'+ff(r.observed,4)+'</td><td>'
+      +(r.naive_t==null||r.naive_t===''?'&mdash;':ff(r.naive_t,2))+'</td><td>'
+      +ff(r.p_21)+'</td><td><b>'+ff(r.p_63)+'</b></td><td>'+ff(r.p_126)
+      +'</td></tr>';}).join('')+'</tbody></table><div class="count">Two-sided '
+     +'block-bootstrap p at three block lengths. &#9679; marks the rows '
+     +'significant at every block length.</div></div>';
+    if(MN.length) h+='<div class="note"><b>Correction.</b> &ldquo;Magnitude '
+     +'survives at 0.881 and 0.976 against nulls of 0.378 and 0.020&rdquo; was '
+     +'not a matched comparison &mdash; the real values are the grid&rsquo;s, '
+     +'the nulls belong to the three-state weighted classifier. Matched:</div>'
+     +'<div class="tw"><table><thead><tr><th>Null</th><th>Classifier</th>'
+     +'<th>Property</th><th>Real</th><th>Surrogate</th><th>Corrected</th>'
+     +'<th>p</th></tr></thead><tbody>'+MN.map(r=>'<tr><td>'+r.null+'</td><td>'
+     +r.classifier+'</td><td>'+r.prop+'</td><td>'+ff(r.real)+'</td><td>'
+     +ff(r.surrogate)+' &plusmn; '+ff(r.sd)+'</td><td><b>'
+     +(r.corrected>0?'+':'')+ff(r.corrected)+'</b></td><td>'+ff(r.p)
+     +'</td></tr>').join('')+'</tbody></table><div class="count">Sign '
+     +'randomisation is nearly degenerate for a magnitude axis: it keeps every '
+     +'|r| in place, so mean absolute move is exactly invariant and '
+     +'path = &Sigma;|r| barely moves. Only the IID row is a real test.</div>'
+     +'</div>';
+    $('#epiblock').innerHTML=h;
+   }
+   if(PC.length){
+    const pos=PC.filter(r=>r.shape_corr>0).length,
+          deg=PC.filter(r=>r.DEGENERATE===true||r.DEGENERATE==='True').length,
+          uns=PC.filter(r=>r.UNSTABLE===true||r.UNSTABLE==='True').length;
+    $('#pairblock').innerHTML='<div class="note"><b>Nothing had been tested per '
+     +'pair.</b> Every pair gets its own surrogate &mdash; a per-pair number '
+     +'against a pooled null would clear the bar for reasons that have nothing '
+     +'to do with the classifier. <b>'+pos+' of '+PC.length+'</b> pairs are '
+     +'positive on corrected shape, <b>'+deg+'</b> are degenerate (a state under '
+     +'2% of that pair&rsquo;s bars), <b>'+uns+'</b> are unstable (median run '
+     +'under 5).</div><div class="tw"><table><thead><tr><th>Pair</th>'
+     +'<th>Shape</th><th>Surrogate</th><th>Corrected</th><th>z</th>'
+     +'<th>Magnitude corr</th><th>Median run</th><th>States used</th></tr>'
+     +'</thead><tbody>'+PC.slice().sort((a,b)=>b.shape_corr-a.shape_corr)
+     .map(r=>'<tr><td>'+r.pair+'</td><td>'+ff(r.shape)+'</td><td>'
+     +ff(r.shape_surr)+'</td><td><b>'+(r.shape_corr>0?'+':'')+ff(r.shape_corr)
+     +'</b></td><td>'+(r.shape_z>0?'+':'')+ff(r.shape_z,2)+'</td><td>'
+     +(r.mag_corr>0?'+':'')+ff(r.mag_corr)+'</td><td>'+ff(r.median_run,0)
+     +'</td><td>'+r.states_used+'/'+r.states_seen+'</td></tr>').join('')
+     +'</tbody></table></div>';
+   }
+   if(TE.length){
+    $('#transblock').innerHTML='<div class="note"><b>Do bars at a state change '
+     +'differ from bars deep inside one?</b> Age &le;3 against age &ge;15, '
+     +'within the same state. Some difference must exist mechanically &mdash; a '
+     +'28-bar window three bars into a new state is still mostly describing the '
+     +'old one &mdash; so the surrogate, which has the same windows and the same '
+     +'dwell, is what that mechanical part looks like.</div>'
+     +'<div class="tw"><table><thead><tr><th>Classifier</th><th>Property</th>'
+     +'<th>Edge &minus; interior</th><th>Surrogate</th><th>Corrected</th>'
+     +'<th>z</th></tr></thead><tbody>'+TE.map(r=>'<tr><td>'+r.classifier
+     +'</td><td>'+r.prop+'</td><td>'+(r.observed>0?'+':'')+ff(r.observed)
+     +'</td><td>'+(r.surrogate>0?'+':'')+ff(r.surrogate)+'</td><td><b>'
+     +(r.corrected>0?'+':'')+ff(r.corrected)+'</b></td><td>'
+     +(r.corrected/r.sd>0?'+':'')+ff(r.corrected/r.sd,2)+'</td></tr>').join('')
+     +'</tbody></table><div class="count">No corrected effect reaches |z| = 2 '
+     +'across 18 comparisons. And direction carries nothing: entering trending '
+     +'from broken and entering broken from trending show the SAME signed shift, '
+     +'not opposite ones &mdash; the signature belongs to the boundary, not to '
+     +'the way it was crossed.</div></div>';
    }
    if(RS.length){
     const W=640,H=170,PL=40;

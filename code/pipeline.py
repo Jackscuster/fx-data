@@ -53,6 +53,10 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('structsel.py')      # IS-only cell selection, holdout read once
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
+    run('magnull.py')        # the magnitude axis against its OWN null
+    run('episodes.py')       # episode-basis and block-bootstrap significance
+    run('perpair.py')        # the classifier pair by pair, own surrogate each
+    run('transitions.py')    # edge vs interior, and whether direction matters
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
 if os.environ.get('FX_RUN_HORIZON'):
