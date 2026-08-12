@@ -930,6 +930,58 @@ it only exists during warm-up.
 nowhere in it. `structure_result.csv` is the one chosen configuration read once on
 the holdout. They never describe the same sample.
 
+### 16.4b Does anything describe SHAPE? Present-tense battery — no.
+
+The excursion tests in 16.4 were forward-looking and should never have been read
+as verdicts on a descriptive classifier. This is the correct framework: coverage,
+run length, transition diagonal, separation on realised properties, refit
+stability, nulls. No forward measurement.
+
+Separation in sd units, holdout, common window W=28, three classifiers:
+
+| property | structural | grid | weighted | |
+|---|---|---|---|---|
+| autocorrelation | **0.266** | 0.092 | 0.074 | shape, neutral |
+| direction changes | 0.238 | 0.292 | 0.108 | shape, neutral |
+| mean crossings | 0.551 | **1.134** | 0.146 | shape, neutral |
+| same-sign run length | 0.208 | 0.311 | 0.122 | shape, neutral |
+| variance ratio k=5 | **0.336** | 0.051 | 0.087 | shape, kin to net/path |
+| variance ratio k=10 | 0.297 | 0.261 | 0.124 | shape, kin to net/path |
+| range/path | 1.581 | 1.670 | 0.353 | shape, kin to net/path |
+| realised vol | 0.079 | 0.881 | 0.630 | magnitude |
+| mean absolute move | 0.051 | 0.976 | 0.724 | magnitude |
+
+**The structural classifier is nearly blind to magnitude** — 0.065 mean against the
+grid's 0.928. That is a real and clean property: it describes shape and only shape,
+by construction.
+
+**On the property named as the gap it is much better.** Autocorrelation separates
+at 0.266 against the grid's 0.092 and the weighted classifier's 0.074 — roughly
+3×. Same for variance ratio k=5, 0.336 against 0.051.
+
+**But neither classifier's shape separation survives its own null.** Mean over the
+four neutral shape properties, 60 surrogates each:
+
+| | real | sign-randomised | IID | p |
+|---|---|---|---|---|
+| structural | 0.316 | 0.340 ± 0.023 | 0.325 ± 0.021 | 0.869 / 0.656 |
+| grid | 0.457 | 0.517 ± 0.027 | 0.492 ± 0.025 | 0.984 / 0.934 |
+
+Both sit **below** both surrogate means. Corrected, the grid is −0.060 and the
+structural −0.024. Slicing a price series into persistent blocks by any rule
+separates these properties this much, because the properties are themselves
+autocorrelated; neither classifier adds anything to that.
+
+So the answer to "does the structural definition describe shape better than
+straightness does" is: **better on serial-dependence measures, worse on
+oscillation-count measures, and neither beats a surrogate.** The magnitude
+separation the earlier battery reported is the part that is real — 0.881 and 0.976
+for the grid against nulls of 0.378 and 0.020. Shape is not described by either.
+
+Refit stability is 100% for both grid and structural on 117,936 and 119,616
+pre-2016 pair-days. Persistence: structural median run 3 diagonal 0.810 across 4
+holdout states; grid 4 and 0.831 across 9; weighted 11 and 0.935 across 3.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

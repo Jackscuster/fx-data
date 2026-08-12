@@ -47,7 +47,8 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('windowsweep.py')    # re-derive the classifier windows over 4-200
     run('axischeck.py')      # what the axes measure, and structural separation
     run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
-    run('structure.py')      # swing/break/retracement classifier -- FAILED, see 16.4
+    run('structure.py')      # swing/break/retracement classifier
+    run('structval.py')      # present-tense shape battery, all three classifiers
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
 if os.environ.get('FX_RUN_HORIZON'):
