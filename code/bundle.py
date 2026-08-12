@@ -108,6 +108,8 @@ out = dict(
     scaleocc=cl(rd('scale_occupancy.csv')),
     durbands=cl(rd('duration_bands.csv')),
     clsval=cl(rd('classifier_validation.csv')),
+    combval=cl(rd('combined_validation.csv')),
+    shapeval=cl(rd('structval.csv').rename(columns={'Unnamed: 0':'prop'})),
     ribsweep=cl(rd('ribbon_sweep.csv')),
     ninestates=cl(rd('nine_states.csv').rename(columns={'Unnamed: 0':'state'})),
     nineexc=cl(rd('nine_excursion.csv').rename(columns={'Unnamed: 0':'state'})),

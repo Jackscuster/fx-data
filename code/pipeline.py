@@ -49,6 +49,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
     run('structure.py')      # swing/break/retracement classifier
     run('structval.py')      # present-tense shape battery, all three classifiers
+    run('combined.py')       # confirmation dwell + shape x activity, same battery
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
 if os.environ.get('FX_RUN_HORIZON'):
