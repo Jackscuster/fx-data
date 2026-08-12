@@ -846,6 +846,62 @@ is volatility clustering, and the separation metrics restate the scale axis).
 Refit stability: **99.8%** of pre-2016 pair-days keep their label after refitting
 through 2020.
 
+### 16.4 The structural classifier — built, and it fails out of sample
+
+Swing sequence, breaks and retracements straight from price. `code/structure.py`.
+**Trending** = the last two swing highs *and* the last two swing lows step the same
+way, the most recent extreme was taken out by a qualifying break, and price has
+not retraced past R of the impulse. Higher highs alone is not a trend — nothing in
+the 175,634 tracked the with-higher-lows condition.
+
+Swings are confirmed at t+N, never on the bar they print, then lagged one more.
+
+144 cells, all measured on IS-A (1999-2007) and IS-B (2008-2015) only.
+
+| lever | span of the mean IS-A contrast | verdict |
+|---|---|---|
+| **swing width N** | **0.691** | dominant |
+| break distance D | 0.061 | weak |
+| break bars-outside B | 0.029 | weaker |
+| retracement R | 0.015 | negligible |
+
+**N is the only parameter that matters, by an order of magnitude.** Of the two
+break qualifiers, distance beats bars-outside — but both are noise next to N.
+
+N=5 is a genuine plateau: all nine (B,D) cells give |t| between 2.78 and 3.93.
+N=8 is equally strong and **flips sign between the two IS blocks in every cell**.
+N=3 is weak but agrees in sign in all 36. N=2 is nothing.
+
+Selection rule, stated before the sweep: among sign-agreeing cells, maximise the
+*weaker* of the two blocks' |t|, so a cell that spikes in one block and dies in the
+other cannot win. It chose N=3, B=3, D=1.00, R=0.62 — IS-A t −1.20, IS-B t −1.64.
+
+**THE HOLDOUT, READ ONCE: it fails.**
+
+| | contrast | t |
+|---|---|---|
+| IS-A | −1.20 | |
+| IS-B | −1.64 | |
+| **holdout** | **+0.2242** | **+0.94** |
+
+The sign **inverts**. In sample, trending peaks later than chop; out of sample the
+reverse, and not significantly. Against 200 sign-randomised surrogates the holdout
+contrast sits at p = 0.761 — 152 of 200 draws were at least as extreme.
+
+The selection rule was not the problem. Every configuration tried flips positive on
+the holdout: the IS-A-only pick +0.21, the IS-B-only pick +0.22, N=8 +0.45. Only
+the loosest cell (N=2, B=1, D=0.25, R=1.0) stays negative at −0.32, and it was
+never a candidate. **The inversion is a property of the holdout, not of the pick.**
+
+Two other gates it does pass, for the record: refit stability is genuinely 100% —
+there are no fitted parameters, so refitting on more data cannot relabel history —
+and persistence is high (median run 8, diagonal 0.968). But coverage is poor:
+trending is only **6.7%** of holdout bars, so it is barely a two-state classifier.
+
+**Do not rebuild this without a different contrast.** The construction is sound and
+the causality is clean; what failed is the claim that structural trending predicts
+excursion shape.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
