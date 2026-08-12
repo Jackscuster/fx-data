@@ -378,21 +378,23 @@ word describes the <i>last</i> 20 bars accurately and is the opposite of a forec
 <div class="note">Row = state today, column = state tomorrow. The diagonal is the stay
 probability.</div>
 <div id="nstm" style="overflow-x:auto"></div>
-<h3>Window agreement</h3>
-<div class="note">Which of the three windows disagree, as a complete and symmetric
-enumeration. <b>These names deliberately predict nothing.</b> The previous set &mdash;
-established / transition starting / transition confirming / unresolved &mdash; implied a
-narrative the data does not support: the excursion ordering across configurations does not
-replicate between the in-sample and out-of-sample halves, and it flips direction depending
-on which state family you look within. Measured, window agreement carries no reliable
-excursion signal.</div>
-<div class="note">The three-window ribbon at 8 / 21 / 60, chosen on horizon: the moves being
-described peak near 10 bars, so the useful range is two weeks to a quarter. Note the slow
-window equals the 60-day volatility normalisation span, where the scale axis loses most of
-its range &mdash; the slow row moves less than the others partly for that reason.</div>
-<div class="tw"><table id="nsagree"><thead><tr>
-<th>Configuration</th><th>Share</th><th>n</th><th>Peak</th><th>Bars to peak</th>
-<th>Path eff.</th></tr></thead><tbody></tbody></table></div>
+<h3>Window agreement &mdash; dropped as a signal</h3>
+<div class="note" style="border-left:3px solid var(--kill);padding-left:10px">
+<b>This is no longer presented as part of the estimator output.</b> Whether the three
+windows agree was tested against a circular-shift permutation that preserves the tier
+run-lengths and the entry clustering, and against a cluster bootstrap by pair:
+<br><br>
+<code>ratio</code> spread 0.120 against a null of 0.099 &plusmn; 0.037, <b>p = 0.257</b>.
+<code>bars to peak</code> 0.529 against 0.385 &plusmn; 0.140, p = 0.156.
+<code>retracement</code> 10.9pp against 9.8 &plusmn; 3.6, p = 0.335.
+<code>MFE</code> 0.0010 against 0.0010, p = 0.487.
+The widest single gap, all-agree against slow-apart, is +0.062 with a bootstrap 95%
+interval of <b>&minus;0.029 to +0.165</b> &mdash; it crosses zero.
+<br><br>
+A five-way split of this data produces a ratio spread near 0.10 by chance alone; we
+observed 0.12. The configuration is still shown on the chart and in the per-pair panel as
+a <i>description</i> of which windows currently disagree, because that is a fact about the
+windows. It predicts nothing measurable and no excursion table is shipped for it.</div>
 <h3>Per pair</h3>
 <div class="tw" style="max-height:420px;overflow:auto"><table id="nsper"><thead><tr>
 <th>Pair</th></tr></thead><tbody></tbody></table></div>
@@ -1297,8 +1299,8 @@ function boot(BUNDLE,root){
     const rf=P.rf[last],rm=P.rm[last],rs=P.rs[last];
     const nm=['low','mid','high'];
     const agree=(rf===rm&&rm===rs)?'all three agree'
-      :(rf!==rm&&rm===rs)?'fast diverging — transition starting'
-      :(rf===rm&&rm!==rs)?'slow lagging — transition confirming':'unresolved';
+      :(rf!==rm&&rm===rs)?'fast apart':(rf===rs&&rm!==rs)?'medium apart'
+      :(rf===rm&&rm!==rs)?'slow apart':'all differ';
     const ti=EXP.states.indexOf(st);
     const stay=(EXP.transitions&&ti>=0&&EXP.transitions[ti])?EXP.transitions[ti][ti]:null;
     const per=(EXP.per_pair||[]).find(d=>d.pair===PAIR)||{};
@@ -1308,7 +1310,8 @@ function boot(BUNDLE,root){
      <span class="count">coloured by ${WINS[WIN]}, ${GRP}-state view</span><br>
      <span class="count">as of ${EXP.dates[last]}, ${age||'—'} bars in this state</span>
      <div class="note" style="margin-top:10px"><b>Windows:</b> fast ${nm[rf]},
-      medium ${nm[rm]}, slow ${nm[rs]}<br>${agree}</div>
+      medium ${nm[rm]}, slow ${nm[rs]}<br>${agree} <span class="count">(description only — carries no
+      measured excursion signal)</span></div>
      <div class="note"><b>Stays tomorrow:</b> ${stay==null?'—':(stay*100).toFixed(1)+'%'}
       <span class="count">from the transition matrix</span></div>
      <div class="tw" style="margin-top:10px"><table><thead><tr><th>State</th>
@@ -1353,13 +1356,7 @@ function boot(BUNDLE,root){
         text-align:center;font-size:10px">${v==null?'':(v*100).toFixed(0)}</td>`;});
       h+='</tr>';});
      $('#nstm').innerHTML=h+'</tbody></table>';}
-    const RX=BUN.ninetiers||[];
-    if(RX.length)$('#nsagree tbody').innerHTML=RX.map(d=>
-     `<tr><td>${d.tier}</td><td>—</td><td>${d.n}</td>
-      <td>${d.mfe==null?'—':d.mfe.toFixed(4)}</td>
-      <td>${d.bars==null?'—':d.bars.toFixed(2)}</td>
-      <td>${d.eff==null?'—':d.eff.toFixed(4)}</td></tr>`).join('');
-    const PP=BUN.nineper||[];
+     const PP=BUN.nineper||[];
     if(PP.length){
      const names=NS.map(d=>d.state);
      $('#nsper thead tr').innerHTML='<th>Pair</th>'+names.map(n=>
