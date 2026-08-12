@@ -1106,6 +1106,104 @@ unstable noise quantity looks like, not a finding. Do not route on it.
 Layer 1's interface now carries `shape`, `activity` and `combined`; both
 self-assertions still pass on all 191,940 pair-days.
 
+### 16.4e Counting, per pair, transitions — and a correction to 16.4b-d
+
+**CORRECTION FIRST.** "The magnitude reading survives at 0.881 and 0.976 against
+nulls of 0.378 and 0.020" was stated three times and it is **not a matched
+comparison**. The two real values are the *nine-state grid's*. The two null values
+come from `classifier_validation.csv` and belong to the *three-state weighted*
+classifier — different classifier, and a single pooled scalar rather than a
+per-property null. The grid's magnitude separation had never been nulled at all.
+`magnull.py` does it properly:
+
+| null | property | real | surrogate | corrected | p |
+|---|---|---|---|---|---|
+| sign | realised vol | 0.881 | 0.851 ± 0.030 | +0.030 | 0.197 |
+| sign | mean abs move | 0.976 | 0.922 ± 0.023 | +0.054 | 0.033 |
+| iid | realised vol | 0.881 | 0.551 ± 0.045 | **+0.330** | 0.016 |
+| iid | mean abs move | 0.976 | 0.885 ± 0.046 | +0.091 | 0.066 |
+
+And **the sign surrogate is nearly degenerate for a magnitude axis**: it keeps
+every |r| exactly in place, so mean absolute move is *exactly* invariant under it
+and `path = Σ|r|` barely moves, so the grid's scale axis barely moves. Only the
+IID row is a real test — and clearing IID mostly establishes that volatility
+clusters, which was never in question. The magnitude claim stands, but far more
+weakly than 16.4b-d said.
+
+**1. BARS ARE NOT INDEPENDENT.** Correct, and it applies unevenly.
+
+*Surrogate-based p-values were already sound.* They recompute the whole statistic
+on each surrogate panel, so the null distribution carries all the serial and
+cross-pair dependence the real panel has. Redone on episode means, the verdicts
+do not move — and the one positive number from 16.4d dies:
+
+| null | classifier | real | surrogate | corrected |
+|---|---|---|---|---|
+| sign | structural M=5 | 0.459 | 0.518 ± 0.048 | −0.059 |
+| sign | product M=5 | 0.451 | 0.668 ± 0.073 | **−0.218** |
+| sign | grid | 0.349 | 0.413 ± 0.021 | −0.064 |
+
+*t-statistics pooled over bars or events were inflated.* Effective sample:
+
+| classifier | bars | episodes | overstatement |
+|---|---|---|---|
+| structural M=5 | 74,004 | 3,275 | **22.6×** |
+| product M=5 | 74,004 | 4,199 | 17.6× |
+| grid | 74,004 | 12,649 | 5.9× |
+
+Two corrections applied: episode basis (fixes serial dependence within a pair)
+and a **moving-block bootstrap over calendar dates** at block lengths 21/63/126
+(a block carries every pair on those dates, so cross-pair correlation rides
+along). The bootstrap is primary. Every excursion contrast redone:
+
+| contrast | metric | obs | published t | p@21 | p@63 | p@126 |
+|---|---|---|---|---|---|---|
+| grid: strong chop − strong trend | bars_to_peak | +1.435 | +4.78 | **0.000** | **0.005** | **0.000** |
+| grid: strong chop − strong trend | MFE/\|MAE\| | +0.210 | — | **0.033** | **0.002** | **0.000** |
+| structure: non-trending − trending | path_eff | +0.020 | +2.27 | 0.198 | 0.231 | 0.200 |
+| grid: strong chop − strong trend | path_eff | +0.015 | +2.14 | 0.215 | 0.256 | 0.193 |
+| tier: all differ − all agree | path_eff | −0.009 | −1.67 | 0.187 | 0.167 | 0.092 |
+| tier: all differ − all agree | MFE/\|MAE\| | +0.070 | — | 0.312 | 0.219 | 0.179 |
+| structure: non-trending − trending | bars_to_peak | −0.080 | −0.22 | 0.905 | 0.913 | 0.951 |
+| others | | | | all > 0.39 | | |
+
+**Two survive, both the same contrast**: strong chop takes 1.43 bars longer to
+peak than strong trend, and has a 0.21 higher MFE/|MAE|. Rule of thumb from this
+table: a published |t| under about 3 does not survive the block bootstrap.
+
+**2. PER PAIR.** `perpair.py`. Every pair scored against **its own** surrogate —
+a per-pair number against a pooled null would clear the bar for reasons that have
+nothing to do with the classifier.
+
+- **Corrected shape: 10 of 28 pairs positive, median −0.036.** Best AUDJPY +0.428
+  (z +2.23), worst AUDNZD −0.232. One pair past |z|=2 out of 28 is what chance
+  gives. Same 10-of-28 for the structural classifier and for the grid.
+- **DEGENERATE: 28 of 28.** Every pair leaves states unused at the 2% floor —
+  typically 7-9 of 12. Pooled, the product looked fine; per pair its vocabulary
+  fits nobody. This is the finding pooling hid.
+- **UNSTABLE: 0 of 28.** The dwell works uniformly, median run 13-16 everywhere.
+  Coverage is 1.00 on every pair.
+- **Magnitude is a coin flip per pair**: 16 of 28 positive, median +0.013, and
+  the top value is EURNZD +1.710 at z +7.46 — one outlier carrying the ranking.
+  All six JPY crosses are negative.
+
+**3. TRANSITIONS.** `transitions.py`. Bars with age ≤3 against age ≥15, *within
+the same state*. Some difference must exist mechanically — a 28-bar window three
+bars into a new state is still mostly describing the old one — so the surrogate,
+with the same windows and dwell, is what that mechanical part looks like.
+
+**No corrected effect reaches |z| = 2 across 18 comparisons.** Largest are grid
+mean-abs-move −0.054 (z −1.42), product run_length +0.040 (z +1.71). The raw
+edge-minus-interior differences do reach small bootstrap p, but the surrogate
+reproduces nearly all of them.
+
+**Direction carries nothing, and not in the way expected.** If direction were
+irrelevant, X→Y and Y→X would be the same displacement with *opposite* sign. The
+antisymmetry correlations are −0.785, −0.665, −0.994, −1.000 — the two directions
+give the **same** signed shift. trending→broken reads (−0.144, −0.200, −0.626,
++0.250) and broken→trending reads (−0.108, −0.225, −0.517, +0.217). The signature
+belongs to the boundary between two states, not to the way it was crossed.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
