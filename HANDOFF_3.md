@@ -704,7 +704,26 @@ data does not support, and its fourth label was a catch-all bundling *medium
 apart* with *all differ* — which is why it sat mid-table on every metric, being an
 average of two different things.
 
-Tested for a real reversal and it is noise:
+**Dropped from the estimator output.** Tested formally and it is flat on every
+metric. Circular-shift permutation, 500 draws, rolling the tier label series in
+time so run lengths and entry clustering both survive:
+
+| metric | real spread | null | p |
+|---|---|---|---|
+| MFE/\|MAE\| | 0.1200 | 0.0990 ± 0.0370 | **0.257** |
+| bars to peak | 0.5291 | 0.3854 ± 0.1400 | 0.156 |
+| retracement | 10.91pp | 9.77 ± 3.57 | 0.335 |
+| MFE | 0.0010 | 0.0010 ± 0.0004 | 0.487 |
+
+Cluster bootstrap by pair on the widest gap, all-agree against slow-apart: +0.062
+with a 95% interval of **−0.029 to +0.165**, crossing zero, and 8.2% of draws
+negative. A five-way split of this data produces a ratio spread near 0.10 by
+chance; 0.12 was observed.
+
+The configuration is still shown on the chart and in the per-pair panel as a
+description of which windows disagree. No excursion table is shipped for it.
+
+The earlier evidence, which pointed the same way:
 
 | | ratio order, worst to best |
 |---|---|
