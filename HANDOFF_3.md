@@ -686,6 +686,41 @@ Configuration occupancy: established 0.208, transition starting 0.165, confirmin
 reproduce that mix almost exactly** (0.198 / 0.166 / 0.331 / 0.306). Whether three
 windows agree is not market structure.
 
+### 16.2b Agreement tiers carry nothing — settled
+
+The tiers are a complete, symmetric enumeration of which windows disagree:
+
+| tier | condition |
+|---|---|
+| all agree | f == m == s |
+| fast apart | f ≠ m, m == s |
+| medium apart | f == s, m ≠ s |
+| slow apart | f == m, m ≠ s |
+| all differ | none of the above |
+
+**Named to predict nothing, deliberately.** The previous set (established /
+transition starting / transition confirming / unresolved) asserted a narrative the
+data does not support, and its fourth label was a catch-all bundling *medium
+apart* with *all differ* — which is why it sat mid-table on every metric, being an
+average of two different things.
+
+Tested for a real reversal and it is noise:
+
+| | ratio order, worst to best |
+|---|---|
+| out of sample | fast apart < medium apart < all agree < all differ < slow apart |
+| in sample | medium apart < all differ < fast apart < slow apart < **all agree** |
+
+"all agree" is *highest* in sample and third out of sample. The largest OOS gap,
+all-agree 0.917 ± 0.043 against slow-apart 0.978 ± 0.033, is **t ≈ 1.1**. And the
+direction flips by state family: within trend and transitional, slow-apart is
+highest; within chop, all-agree is highest at 1.148 and slow-apart lowest at
+0.937.
+
+A state-mix confound was checked and rejected — it works *against* the observed
+direction. Slow-apart holds 28.0% chop against all-agree's 37.0%, and chop states
+have the higher ratio, so the mix should push slow-apart down, not up.
+
 ### 16.3 What each axis contributed
 
 | Axis | Verdict | Number |

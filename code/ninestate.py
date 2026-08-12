@@ -276,8 +276,16 @@ def grid_at(px, L, fit):
     return lab, lean
 
 
-TIERS = ['established', 'transition starting', 'transition confirming',
-         'unresolved']
+# Purely mechanical names. The old set -- established / transition starting /
+# transition confirming / unresolved -- asserted a narrative these configurations
+# do not support: measured, they do not order excursion consistently, the IS and
+# OOS orderings differ, and the direction flips by state family. Names now say
+# which windows disagree and predict nothing.
+#
+# The enumeration is also complete and symmetric now. The old "unresolved" was a
+# catch-all bundling two different configurations, medium-apart and all-differ,
+# which is why it sat mid-table on every metric -- it was an average of two things.
+TIERS = ['all agree', 'fast apart', 'medium apart', 'slow apart', 'all differ']
 
 
 def tiers_from(multi):
@@ -288,10 +296,13 @@ def tiers_from(multi):
     fam = [multi[L][0].apply(lambda c: c.str.split().str[-1]) for L in ls]
     f, m, s2 = fam
     ok = f.notna() & m.notna() & s2.notna()
-    return pd.DataFrame(np.where(ok, np.where((f == m) & (m == s2), TIERS[0],
-                                 np.where((f != m) & (m == s2), TIERS[1],
-                                 np.where((f == m) & (m != s2), TIERS[2], TIERS[3]))),
-                                 None), index=f.index, columns=f.columns)
+    return pd.DataFrame(
+        np.where(ok, np.where((f == m) & (m == s2), TIERS[0],
+                  np.where((f != m) & (m == s2), TIERS[1],       # fast odd one out
+                   np.where((f == s2) & (m != s2), TIERS[2],     # medium odd one out
+                    np.where((f == m) & (m != s2), TIERS[3],     # slow odd one out
+                             TIERS[4])))), None),
+        index=f.index, columns=f.columns)
 
 
 def main():
@@ -371,8 +382,10 @@ def main():
         gt.to_csv(os.path.join(ROOTOUT, 'nine_tier_excursion.csv'))
         print(gt[['n', 'mfe', 'ratio', 'bars', 'eff']]
               .to_string(float_format=lambda v: '%.4f' % v))
-        print('  established vs transition-starting path eff: %.4f vs %.4f'
-              % (gt.eff.iloc[0], gt.eff.iloc[1]))
+        r = gt.ratio.sort_values()
+        print('  ratio order: %s' % ' < '.join(r.index))
+        print('  this order does NOT replicate between the halves -- see 16.2b in'
+              ' HANDOFF_3.md. Window agreement carries no reliable excursion signal.')
     write_feed(px, lab, A, age, rib['shipped'], st, prof, TM, per, perdur, multi)
 
 
