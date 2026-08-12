@@ -30,7 +30,9 @@ SCHEMA of results/layer1_states.csv
   state_7      nine-state label on the 7-day window    \\
   state_28     nine-state label on the 28-day window    > 'strong trend' ... 'weak chop'
   state_128    nine-state label on the 128-day window  /
-  tier         established | transition starting | transition confirming | unresolved
+  tier         all agree | fast apart | medium apart | slow apart | all differ
+               (a complete, symmetric enumeration of which windows disagree;
+                DESCRIPTION ONLY -- tested flat on excursion, see HANDOFF 16.2b)
   age_28       bars the 28-day state has held, 1 on its first bar
   straight_28  straightness axis, |net| / path over 28 bars
   scale_28     scale axis, path over 28 bars in the pair's own vol units
@@ -52,8 +54,11 @@ THE CONTRACT, so Layer 2 can rely on it.
   - The tier compares FAMILY only -- trend / transitional / chop. Window
     disagreement is about cleanliness, not about size, so 'strong trend' and
     'weak trend' count as agreeing.
-  - age_28 is a confidence weight, not a state. An old state is more likely to
-    survive; it does not behave differently while it lasts.
+  - age_28 is a confidence weight, not a state, and a weak one: the hazard curve
+    is fully reproduced by a volatility-clustering surrogate.
+  - The tier predicts NOTHING measurable. Permutation p=0.257 on MFE/|MAE| and
+    worse on the other three metrics. It is carried as a description of the
+    windows, not as a signal. Do not route on it.
   - Cut points are fitted on 1999-2015 and applied unchanged afterwards, so a
     historical row never changes when new data arrives. Only the tail moves.
   - Rows where all three windows are still warming up are dropped. Rows where
