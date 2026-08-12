@@ -379,6 +379,13 @@ word describes the <i>last</i> 20 bars accurately and is the opposite of a forec
 probability.</div>
 <div id="nstm" style="overflow-x:auto"></div>
 <h3>Window agreement</h3>
+<div class="note">Which of the three windows disagree, as a complete and symmetric
+enumeration. <b>These names deliberately predict nothing.</b> The previous set &mdash;
+established / transition starting / transition confirming / unresolved &mdash; implied a
+narrative the data does not support: the excursion ordering across configurations does not
+replicate between the in-sample and out-of-sample halves, and it flips direction depending
+on which state family you look within. Measured, window agreement carries no reliable
+excursion signal.</div>
 <div class="note">The three-window ribbon at 8 / 21 / 60, chosen on horizon: the moves being
 described peak near 10 bars, so the useful range is two weeks to a quarter. Note the slow
 window equals the 60-day volatility normalisation span, where the scale axis loses most of
