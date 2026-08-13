@@ -41,6 +41,12 @@ SCHEMA of results/layer1_states.csv
                by structsel.py, with a 5-bar confirmation dwell
   activity     weak | medium | strong -- the scale tercile, the same axis as
                scale_28, cut on IS and applied unchanged
+  settling     graded confidence in the combined state, min(age/5, 1). 0.2 on
+               the first bar a state is adopted, 1.0 from the fifth. NOT a
+               binary flag: three fast signals were tested for whether they fire
+               before a confirmed change more often than chance and none beat
+               its own surrogate (16.4g), so the 4-bar confirmation lag is
+               accepted and carried as a weight rather than hidden.
   combined     '<activity> <shape>', the twelve-state product. DESCRIPTION ONLY:
                its shape separation is BELOW its own surrogate on the holdout,
                so it describes size honestly and shape not at all. See 16.4c.
@@ -94,7 +100,8 @@ TIERCSV = os.path.join(ROOTOUT, 'nine_tiers.csv')
 EXPL = os.path.join(ROOTOUT, 'app_explorer.json')
 BASE = 28                      # the medium ribbon window, and ninestate's W
 COLS = ['date', 'pair', 'state_7', 'state_28', 'state_128', 'tier', 'age_28',
-        'straight_28', 'scale_28', 'shape', 'activity', 'combined', 'sample']
+        'straight_28', 'scale_28', 'shape', 'activity', 'combined', 'settling',
+        'sample']
 
 
 def build(px):
@@ -107,6 +114,11 @@ def build(px):
     sh, act = layers(px, fit, cell)
     sh, act = sh.reindex_like(px), act.reindex_like(px)
     comb = product(sh, act, DWELL)
+    # graded settling confidence: a state is fully weighted only once it has
+    # held as long as it took to confirm. See 16.4g for why this is a weight
+    # rather than a fast signal.
+    cage = age_of(comb)
+    settle = (cage / DWELL).clip(upper=1.0)
     # the shape layer carries the dwell too, so the three columns are consistent
     sh = confirm(sh, DWELL)
 
@@ -125,6 +137,7 @@ def build(px):
         'shape': flat(sh),
         'activity': flat(act),
         'combined': flat(comb),
+        'settling': flat(settle),
         'sample': np.where(np.repeat(fit, m), 'is', 'oos'),
     })
     keep = T[['state_7', 'state_28', 'state_128', 'combined']].notna().any(axis=1)
@@ -196,9 +209,13 @@ def main():
             print('  %-9s %-4s %s' % (c, tag, '  '.join('%s %.3f' % (k, v[k])
                                                         for k in v.index)))
 
+    print('\nSETTLING CONFIDENCE, share of holdout rows at each grade')
+    v = T[T['sample'] == 'oos'].settling.round(2).value_counts(normalize=True)
+    print('  ' + '  '.join('%.1f %.3f' % (k, v[k]) for k in sorted(v.index)))
+
     print('\nCOVERAGE, share of rows with a label')
     for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape', 'activity',
-              'combined'):
+              'combined', 'settling'):
         print('  %-11s %.3f' % (c, T[c].notna().mean()))
 
     print('\nAGREEMENT WITH THE PUBLISHED OUTPUT')

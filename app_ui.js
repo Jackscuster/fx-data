@@ -200,6 +200,8 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="transblock"></div>
 <h3>Two axes or one?</h3>
 <div id="axesblock"></div>
+<h3>Can a fast signal bridge the confirmation delay?</h3>
+<div id="leadblock"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -1113,6 +1115,45 @@ function boot(BUNDLE,root){
      +'Cramer&rsquo;s V '+g(r.cramers_v,4)+'. The two labels pick out different '
      +'bars, at chance with respect to each other.</div>';}
     $('#axesblock').innerHTML=h;
+   }
+   const LT=BUN.leadtime||[];
+   if(LT.length){
+    const g=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+    const win=LT.filter(r=>r.excess>0.05&&r.p_sign<0.05).length;
+    const top=LT.slice().sort((a,b)=>b.excess-a.excess);
+    $('#leadblock').innerHTML='<div class="note">The 5-bar dwell means a change '
+     +'visible in raw structure at <i>t</i> is not in the shipped label until '
+     +'<i>t</i>+4. Three cheap signals were tested for whether they fire in that '
+     +'window more often than before an arbitrary bar: <b>mas</b> (5-bar mean '
+     +'turning against the 20-bar mean), <b>vol</b> (5 over 60 realised '
+     +'volatility) and <b>rng</b> (5-bar close range over its 60-day average). '
+     +'Thresholds are calibrated on IS to a common 10% firing budget, so a '
+     +'signal cannot buy hit rate by firing more often, and a fire is an upward '
+     +'<i>crossing</i>, not the condition holding.</div>'
+     +'<div class="note"><b>The bar this is held to.</b> Cross-horizon '
+     +'confluence fired 79% before real state changes and 79% before surrogate '
+     +'ones, which is why it was dropped. So the whole thing &mdash; signals '
+     +'<i>and</i> states &mdash; is rebuilt on 60 sign and 60 IID surrogate '
+     +'panels, and what counts is <b>excess</b>: lift on real data minus the '
+     +'larger surrogate lift.</div>'
+     +'<div class="tw"><table><thead><tr><th>State</th><th>Signal</th>'
+     +'<th>Lead</th><th>Hit</th><th>Base</th><th>Lift</th><th>Sign</th>'
+     +'<th>IID</th><th>Excess</th><th>p</th></tr></thead><tbody>'
+     +top.slice(0,12).map(r=>'<tr><td>'+r.state+'</td><td>'+r.signal+'</td><td>'
+      +r.lead+'</td><td>'+g(100*r.hit,1)+'%</td><td>'+g(100*r.base,1)
+      +'%</td><td>'+g(r.lift)+'</td><td>'+g(r.sign_lift)+'</td><td>'
+      +g(r.iid_lift)+'</td><td><b>'+(r.excess>0?'+':'')+g(r.excess)
+      +'</b></td><td>'+g(r.p_sign)+'</td></tr>').join('')
+     +'</tbody></table><div class="count">Best twelve of 36 by excess. '
+     +'<b>'+win+' of '+LT.length+'</b> beat both surrogates by more than 0.05 '
+     +'lift at p&lt;0.05. The strongest raw lift in the table, mas at lead 1, is '
+     +'1.739 &mdash; and its surrogate is 1.680. Same story as confluence: the '
+     +'signal and the state are both reacting to the same volatility burst.'
+     +'</div></div>'
+     +'<div class="note"><b>So the lag is accepted.</b> <code>settling</code> in '
+     +'layer1_states.csv is a graded confidence, min(age/5, 1) &mdash; 0.2 on the '
+     +'first bar a state is adopted, 1.0 from the fifth. 22.6% of holdout bars '
+     +'carry a reduced weight; 77.4% are fully weighted.</div>';
    }
    if(RS.length){
     const W=640,H=170,PL=40;
