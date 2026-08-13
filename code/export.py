@@ -41,10 +41,16 @@ SCHEMA of results/layer1_states.csv
                terciles, so every bar lands somewhere. The score sums four
                standardised structural readings -- cancelling swing sequence,
                boundary distance, break-and-hold, and pullback -- with equal
-               weights. Equals shape_144. 5-bar confirmation dwell.
-  shape_12     the same score at a 12-bar median lookback  \  the shape ribbon,
-  shape_35     ...at 35 bars                                >  the analogue of
-  shape_144    ...at 144 bars, chosen on IS                /   state_7/28/128.
+               weights. Equals shape_106. 5-bar confirmation dwell.
+  shape_35     the same score at a 35-bar median lookback  \  the shape ribbon,
+  shape_106    ...at 106 bars, the LOCKED base              >  the analogue of
+  shape_247    ...at 247 bars                              /   state_7/28/128.
+  shape_score  THE RAW SCORE at the base window, before any cut. The tercile
+               boundaries are a DECISION, not a discovery: the score is one
+               continuous right-skewed spread with a single KDE peak at every
+               bandwidth and excess kurtosis +1.44, not three clusters (16.4q).
+               This column is here so Layer 2 can cut it somewhere else without
+               re-deriving it. Higher is more trending.
                Suffixes are the MEASURED median distance back to the anchoring
                swing, not the swing width. The lookback is quantised because the
                swing width is an integer; 12/35/132 are the achievable values
@@ -110,8 +116,8 @@ TIERCSV = os.path.join(ROOTOUT, 'nine_tiers.csv')
 EXPL = os.path.join(ROOTOUT, 'app_explorer.json')
 BASE = 28                      # the medium ribbon window, and ninestate's W
 COLS = ['date', 'pair', 'state_7', 'state_28', 'state_128', 'tier', 'age_28',
-        'straight_28', 'scale_28', 'shape_12', 'shape_35', 'shape',
-        'activity', 'combined', 'settling', 'sample']
+        'straight_28', 'scale_28', 'shape_35', 'shape', 'shape_247',
+        'shape_score', 'activity', 'combined', 'settling', 'sample']
 
 
 def build(px):
@@ -129,7 +135,12 @@ def build(px):
     # rather than a fast signal.
     from shape3 import RIBBON
     from shapescore import score_at
-    rib = {lb: score_at(px, n, fit)[0] for n, lb in RIBBON}
+    from shape3 import N_SCORE
+    rib, scr = {}, None
+    for n, lb in RIBBON:
+        rib[lb], sc_ = score_at(px, n, fit)
+        if n == N_SCORE:
+            scr = sc_
     cage = age_of(comb)
     settle = (cage / DWELL).clip(upper=1.0)
     # the shape layer carries the dwell too, so the three columns are consistent
@@ -147,9 +158,10 @@ def build(px):
         'age_28': flat(age),
         'straight_28': flat(A['straight']),
         'scale_28': flat(A['scale']),
-        'shape_12': flat(rib[12]),
         'shape_35': flat(rib[35]),
         'shape': flat(sh),
+        'shape_247': flat(rib[247]),
+        'shape_score': flat(scr),
         'activity': flat(act),
         'combined': flat(comb),
         'settling': flat(settle),
@@ -218,7 +230,7 @@ def main():
                                             for k in v.sort_index().index)))
 
     print('\nSHAPE RIBBON AND ACTIVITY SHARE')
-    for c in ('shape_12', 'shape_35', 'shape', 'activity'):
+    for c in ('shape_35', 'shape', 'shape_247', 'activity'):
         for tag in ('is', 'oos'):
             v = T[T['sample'] == tag][c].value_counts(normalize=True)
             print('  %-9s %-4s %s' % (c, tag, '  '.join('%s %.3f' % (k, v[k])
@@ -229,8 +241,8 @@ def main():
     print('  ' + '  '.join('%.1f %.3f' % (k, v[k]) for k in sorted(v.index)))
 
     print('\nCOVERAGE, share of rows with a label')
-    for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape_12',
-              'shape_35', 'shape', 'activity', 'combined', 'settling'):
+    for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape_35', 'shape',
+              'shape_247', 'shape_score', 'activity', 'combined', 'settling'):
         print('  %-11s %.3f' % (c, T[c].notna().mean()))
 
     print('\nAGREEMENT WITH THE PUBLISHED OUTPUT')

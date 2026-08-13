@@ -213,6 +213,8 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="scoreblock"></div>
 <h3>Separation split by state</h3>
 <div id="splitblock"></div>
+<h3>Is the score three clusters, or one spread?</h3>
+<div id="distblock"></div>
 <h3>Old nine-box vs new nine-state</h3>
 <div id="oldnewblock"></div>
 <h3>Three kinds of regime change</h3>
@@ -1528,6 +1530,45 @@ function boot(BUNDLE,root){
      +'and trend is not readable until 250+</b>, where it is arguably too slow '
      +'to act on.</div>';
     $('#splitblock').innerHTML=h;
+   }
+   const SD=BUN.scoredist||[],SY=BUN.scoreyears||[];
+   const f8=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(SD.length){
+    let h='<div class="note"><b>The tercile cut is a design choice, not a '
+     +'finding.</b> Four tests, because no single one settles multimodality: KDE '
+     +'local maxima across bandwidths, Gaussian-mixture BIC for k=1/2/3, excess '
+     +'kurtosis (three separated clusters are <i>platykurtic</i>, one heavy '
+     +'spread is <i>leptokurtic</i>), and all three repeated on a sign '
+     +'surrogate.</div><div class="tw"><table><thead><tr><th></th><th>n</th>'
+     +'<th>sd</th><th>Excess kurtosis</th><th>KDE peaks</th><th>BIC k=1</th>'
+     +'<th>k=2</th><th>k=3</th></tr></thead><tbody>'
+     +SD.map(r=>'<tr><td>'+r.tag+'</td><td>'+r.n+'</td><td>'+f8(r.sd)+'</td><td>'
+      +(r.kurtosis>0?'+':'')+f8(r.kurtosis)+'</td><td>'+r.peaks_min+'&ndash;'
+      +r.peaks_max+'</td><td>'+f8(r.bic1,0)+'</td><td>'+f8(r.bic2,0)+'</td><td>'
+      +f8(r.bic3,0)+'</td></tr>').join('')+'</tbody></table>'
+     +'<div class="count"><b>One spread, not three clusters.</b> A single KDE '
+     +'peak at every bandwidth; excess kurtosis <b>+1.44</b>, the wrong sign for '
+     +'separated clusters; and although BIC picks k=3, <i>the surrogate picks '
+     +'k=3 too</i> &mdash; the extra components are fitting skew and tails, not '
+     +'finding groups. The k=2&rarr;k=3 gain is 0.11% against 2.7% for '
+     +'k=1&rarr;k=2. The tercile boundaries sit only <b>0.72 sd apart</b>, well '
+     +'inside the body of one distribution.</div></div>';
+    if(SY.length) h+='<div class="note"><b>But the quota is not what it looked '
+     +'like.</b> The cut fits the CDF on in-sample and applies it unchanged, so '
+     +'holdout shares are free to float &mdash; and they do, trending running '
+     +'from 14.7% to 31.9% across holdout years. It never forces 33/33/33 out of '
+     +'sample. A fixed raw-level cut at the same thresholds gives an almost '
+     +'identical yearly spread (0.175 vs 0.173 for trending), so the choice '
+     +'between them is a level shift, not a change in responsiveness.</div>'
+     +'<div class="tw"><table><thead><tr><th>Year</th><th>trending</th>'
+     +'<th>drifting</th><th>range</th></tr></thead><tbody>'
+     +SY.map(r=>'<tr><td>'+r.year+'</td><td>'+f8(r.quota_trending)+'</td><td>'
+      +f8(r.quota_drifting)+'</td><td>'+f8(r.quota_range)+'</td></tr>').join('')
+     +'</tbody></table><div class="count">Holdout shares by year under the '
+     +'shipped cut. <code>shape_score</code> is now a column in '
+     +'layer1_states.csv so the boundary can be moved downstream without '
+     +'re-deriving the score.</div></div>';
+    $('#distblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
