@@ -2035,6 +2035,77 @@ independent and left the overlap where it was.
 on separation and worse on coverage — closer than it was in 16.4r but still not a
 reason to switch.
 
+### 16.4t Chop is concentrated — on the wrong component. And 'both' is overlap.
+
+`chopmore.py`.
+
+**PART ONE. The four components named as missing are already in the chop score** —
+boundary tests, time inside the band, reversion crossings, failed breaks — plus
+pullback hold, five in total. So the question is concentration, and that is a
+drop-one:
+
+| removed | chop \|sep\| | change |
+|---|---|---|
+| — (all five) | 0.124 | |
+| **hold** | 0.074 | **−0.050** |
+| tests | 0.156 | **+0.032** |
+| fails | 0.116 | −0.008 |
+| inside | 0.123 | −0.001 |
+| revert | 0.116 | −0.008 |
+
+**The concern is right and the target is wrong. Chop does lean on one component,
+but it is `hold`, not failed swings.** Removing `hold` costs a third of the
+score; removing `fails` costs 0.008. And **removing `tests` makes chop better by
++0.032** — the boundary-test count is actively hurting.
+
+That `hold` is load-bearing is worth noting: it is the component I moved from
+trend to chop in 16.4r on the evidence of its sign. It turns out to be the thing
+holding chop up.
+
+**Three new components added anyway**, since five correlated readings is not
+redundancy:
+
+| component | alone | dropping it | r with old chop | corrected |
+|---|---|---|---|---|
+| `vr_short` variance ratio at lag 5 | **0.286** | −0.000 | −0.082 | −0.036 |
+| `hold_ratio` touches that held | 0.033 | +0.006 | +0.699 | −0.044 |
+| `width_stab` band-width stability | 0.053 | +0.003 | +0.009 | **+0.023** |
+
+**Adding all three makes the chop score worse: 0.124 → 0.082.** `vr_short` alone
+separates at 0.286 — better than the whole five-component score — but it is
+essentially uncorrelated with them (−0.082), so summing it in dilutes rather than
+reinforces. `hold_ratio` is 0.699 correlated with what is already there and adds
+nothing. Only `width_stab` is positive against its own surrogate, and it is weak.
+
+**So chop does not get redundancy by addition here.** The honest options are to
+drop `tests`, or to treat `vr_short` as a separate reading rather than a summand.
+
+**PART TWO. The 'both' cell measured 18.1% of holdout bars, not 6.8%.** 257
+episodes of 20+ bars.
+
+| cell | n | net move | efficiency | median bars |
+|---|---|---|---|---|
+| trending | 290 | 0.56 sd | **0.113** | 39 |
+| ranging | 376 | 0.80 sd | 0.143 | 50 |
+| trend-in-range | 257 | 0.62 sd | **0.154** | 31 |
+| neither | 272 | 0.64 sd | 0.138 | 33 |
+
+**All four cells look the same.** A genuine trend-inside-a-range would show a
+large net move and high efficiency while still being called chop. Instead
+trend-in-range sits at 0.62 sd and 0.154 — indistinguishable from `neither` at
+0.64 and 0.138. **It is measurement overlap.**
+
+And the worse finding sitting in that table: **the cell labelled `trending` has
+the LOWEST path efficiency of all four (0.113)**, below `ranging` at 0.143. The
+trend score is not identifying directional movement.
+
+The ten longest 'both' episodes are mostly flat — GBPNZD 2016-12→2017-06, 118
+bars, net move 0.15 sd, efficiency 0.02; EURJPY 2023-08→2024-01, 107 bars, 0.14
+sd, 0.02. Two exceptions are real: **USDJPY 2021-12→2022-05, 102 bars, 2.86 sd,
+efficiency 0.32** — the actual yen collapse — and EURNZD 2025-07→11 at 1.43 sd.
+Most 'both' episodes run ranging → both → ranging, which is what a boundary
+artefact looks like, not a distinct regime.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
