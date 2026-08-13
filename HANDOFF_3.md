@@ -1204,6 +1204,66 @@ give the **same** signed shift. trending→broken reads (−0.144, −0.200, −
 +0.250) and broken→trending reads (−0.108, −0.225, −0.517, +0.217). The signature
 belongs to the boundary between two states, not to the way it was crossed.
 
+### 16.4f Two axes or one. The nine-box is not replaced by anything.
+
+`axes2.py`. Also corrects two figures that were quoted at me and are not what
+they were taken to be: **0.751 is `classifier_validation.csv`'s `avg_abs_move`
+and belongs to the THREE-STATE WEIGHTED classifier, not the nine-box** (the
+nine-box reads 0.976 on mean-abs-move and 0.881 on realised vol), and **0.762
+does not appear anywhere in `results/`** — the combined figures are 0.746 and
+0.660. `layer1_states.csv` does carry `state_7/28/128`, `scale_28`, `activity`,
+`shape` and `combined` all at once; nothing was replaced.
+
+**1. SCALE IS GENUINELY FEEDING THE COMBINED STATE.** The path is
+`act = tercile(raw_axes(px)['scale'], fit)` → `act + ' ' + shape` → the 5-bar
+dwell on the joint label. Being in the string is not proof, so ablation:
+
+| variant | magnitude | shape | states |
+|---|---|---|---|
+| combined (shape × activity) | 0.703 | 0.460 | 12 |
+| shape only, activity removed | **0.137** | 0.495 | 4 |
+| activity only, shape removed | 0.744 | 0.079 | 3 |
+| **nine-box grid** | **0.928** | 0.457 | 9 |
+
+Remove activity and magnitude separation collapses 0.703 → 0.137. Remove shape
+and it does not move. **And the nine-box on its own beats the combined state on
+both axes** — 0.928 vs 0.703 on magnitude, 0.457 vs 0.460 on shape, a tie.
+Crossing shape into it costs magnitude resolution (12 states spread over the same
+data) and buys nothing.
+
+`combined` equals `activity + ' ' + shape` on only 66.5% of holdout rows: the
+joint label's dwell restarts when *either* half changes, while `shape` confirms
+shape alone. Neither column is derivable from the other.
+
+**2. SHAPE AND ACTIVITY ARE INDEPENDENT.** Cramér's V **0.094** [0.069, 0.115],
+normalised mutual information 0.009. Observed/expected stays inside 0.67–1.47 in
+every one of the twelve cells. Shape separation inside weak / medium / strong
+activity is **0.564 / 0.453 / 0.472** with heavily overlapping bootstrap
+intervals — shape reads the same way whether or not the pair is moving. The
+mirror holds too: magnitude separation inside trending / broken / range /
+drifting is 1.020 / 0.807 / 0.814 / 0.816.
+
+So they are two axes, not one, and neither is redundant. **Independence is not
+informativeness, though** — the shape axis is orthogonal *and* fails its own null
+(16.4d, 16.4e). It is a second axis that describes nothing measurable.
+
+Against **straightness**, the nine-box axis shape might be replacing, V is
+**0.193** — twice the overlap, with structural `trending` at 2.81× expected
+inside the nine-box trend family and 0.149× inside chop. Related, as two attempts
+at the same thing should be. Not a replacement.
+
+**3. SETTLING IS NOT TRANSITIONAL RENAMED.** P(transitional | settling) 0.3544
+against a base rate of 0.3565 — **lift 0.994**. Reverse: 0.1681 against 0.1691,
+lift 0.994. Joint 0.0599 against 0.0603 expected under independence. Cramér's V
+**0.0020**. The two labels pick out different bars, at chance with respect to
+each other.
+
+**WHAT REPLACES WHAT: nothing.** The nine-box stays whole and stays primary. It
+is the strongest magnitude reader in the file (0.928), it ties the structural
+work on shape, and its straightness axis is only weakly overlapped. The
+structural layer sits alongside as an orthogonal description in
+`layer1_states.csv` — carried, not routed on.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

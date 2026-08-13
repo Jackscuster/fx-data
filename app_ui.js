@@ -198,6 +198,8 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="epiblock"></div>
 <div id="pairblock"></div>
 <div id="transblock"></div>
+<h3>Two axes or one?</h3>
+<div id="axesblock"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -1050,6 +1052,67 @@ function boot(BUNDLE,root){
      +'from broken and entering broken from trending show the SAME signed shift, '
      +'not opposite ones &mdash; the signature belongs to the boundary, not to '
      +'the way it was crossed.</div></div>';
+   }
+   const AB=BUN.axesab||[],AC=BUN.axesct||[],ACS=BUN.axescts||[],AS=BUN.axesset||[];
+   if(AB.length){
+    const g=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+    const pct=t=>{const tot=t.reduce((a,r)=>a+['weak','medium','strong','trend',
+      'transitional','chop'].reduce((x,k)=>x+(+r[k]||0),0),0);
+      return {t:t,tot:tot};};
+    let h='<div class="note"><b>Where scale enters.</b> <code>act = tercile('
+     +'raw_axes(px)[&#39;scale&#39;], fit)</code> &rarr; <code>act + &#39; &#39;'
+     +' + shape</code> &rarr; the 5-bar dwell on the joint label. The activity '
+     +'word is the first half of every combined state. But being in the string '
+     +'is not proof it carries anything, so each layer is knocked out in '
+     +'turn:</div><div class="tw"><table><thead><tr><th>Variant</th>'
+     +'<th>Magnitude separation</th><th>Shape separation</th><th>States</th>'
+     +'</tr></thead><tbody>'+AB.map(r=>'<tr><td>'+r.variant+'</td><td><b>'
+     +g(r.magnitude)+'</b></td><td>'+g(r.shape)+'</td><td>'+r.n_states
+     +'</td></tr>').join('')+'</tbody></table><div class="count">Removing '
+     +'activity collapses magnitude 0.703 &rarr; 0.137. Removing shape does not '
+     +'touch it. The volatility axis supplies essentially all of the combined '
+     +'state&rsquo;s magnitude reading &mdash; and the nine-box on its own beats '
+     +'the combined state on <i>both</i> axes.</div></div>';
+    if(AC.length) h+='<div class="note"><b>Shape against activity</b>, observed '
+     +'&divide; expected. 1.00 is independence.</div><div class="tw"><table>'
+     +'<thead><tr><th>Shape</th><th>weak</th><th>medium</th><th>strong</th></tr>'
+     +'</thead><tbody>'+(function(){const tot=AC.reduce((a,r)=>a+(+r.weak)+
+      (+r.medium)+(+r.strong),0);
+      const rs=AC.map(r=>(+r.weak)+(+r.medium)+(+r.strong));
+      const cs=['weak','medium','strong'].map(k=>AC.reduce((a,r)=>a+(+r[k]),0));
+      return AC.map((r,i)=>'<tr><td>'+(r.shape||r.state)+'</td>'
+       +['weak','medium','strong'].map((k,j)=>'<td>'
+        +g((+r[k])/(rs[i]*cs[j]/tot))+'</td>').join('')+'</tr>').join('');})()
+     +'</tbody></table><div class="count">Cramer&rsquo;s V 0.094 '
+     +'[0.069, 0.115], normalised mutual information 0.009. Shape separation '
+     +'inside weak / medium / strong activity is 0.564 / 0.453 / 0.472 with '
+     +'overlapping intervals &mdash; shape reads the same way whether or not the '
+     +'pair is moving. <b>Two genuinely independent axes.</b></div></div>';
+    if(ACS.length) h+='<div class="note"><b>And against straightness</b> &mdash; '
+     +'the nine-box axis shape might actually be replacing.</div>'
+     +'<div class="tw"><table><thead><tr><th>Shape</th><th>trend</th>'
+     +'<th>transitional</th><th>chop</th></tr></thead><tbody>'
+     +(function(){const K=['trend','transitional','chop'];
+      const tot=ACS.reduce((a,r)=>a+K.reduce((x,k)=>x+(+r[k]),0),0);
+      const rs=ACS.map(r=>K.reduce((x,k)=>x+(+r[k]),0));
+      const cs=K.map(k=>ACS.reduce((a,r)=>a+(+r[k]),0));
+      return ACS.map((r,i)=>'<tr><td>'+(r.shape||r.state)+'</td>'
+       +K.map((k,j)=>'<td>'+g((+r[k])/(rs[i]*cs[j]/tot))+'</td>').join('')
+       +'</tr>').join('');})()
+     +'</tbody></table><div class="count">Cramer&rsquo;s V 0.193 &mdash; twice '
+     +'the overlap with scale, and structural <i>trending</i> runs 2.81&times; '
+     +'expected inside the nine-box trend family. Related, as two attempts to '
+     +'measure the same thing should be, but nowhere near a replacement.</div>'
+     +'</div>';
+    if(AS.length){const r=AS[0];
+     h+='<div class="note"><b>Settling is not transitional renamed.</b> '
+     +'P(transitional | settling) = '+g(r.p_trans_given_settling,4)+' against a '
+     +'base rate of '+g(r.p_transitional,4)+' &mdash; lift <b>'+g(r.lift,3)
+     +'</b>. The reverse is the same. Joint '+g(r.joint,4)+' against '
+     +g(r.p_settling*r.p_transitional,4)+' expected under independence, '
+     +'Cramer&rsquo;s V '+g(r.cramers_v,4)+'. The two labels pick out different '
+     +'bars, at chance with respect to each other.</div>';}
+    $('#axesblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
