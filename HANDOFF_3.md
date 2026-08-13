@@ -1438,6 +1438,99 @@ orthogonal to it (V 0.094) and to the straightness family (V 0.193), so they are
 not redundant — but they fail their own nulls, so they are not informative
 either. `settling` is a weight, not a state. `tier` is description only.
 
+### 16.4k Three kinds of regime change. Activity carries half of them.
+
+`changes.py`. The point is right and the numbers back it: the same shape at high
+activity is a trend and at low activity a drift, so an activity move is a regime
+change. No volume exists for FX — H.10 is close-only, the market is
+decentralised — so distance travelled, `path/(vol·√28)`, is the proxy and nothing
+here claims more.
+
+**A decomposition problem that has to be stated.** The shipped `combined` applies
+the dwell to the *joint* label, so it cannot be split back into halves. Both
+objects are carried: `combined` counted, and a **split-join** —
+`confirm(shape) + confirm(activity)`, each dwelled on its own axis — decomposed.
+
+| kind | changes | rate | mean gap |
+|---|---|---|---|
+| shape only | 3,117 | 4.212% | 23.7 bars |
+| activity only | 3,125 | 4.223% | 23.7 bars |
+| both same bar | 132 | 0.178% | 560.6 bars |
+| split-join any | 6,374 | 8.613% | 11.6 bars |
+| combined (shipped) | 4,173 | 5.639% | 17.7 bars |
+
+**48.9% shape / 49.0% activity / 2.1% both.** Almost exactly even, and
+**independent**: 132 same-bar changes against 143 expected by chance, ratio 0.92.
+The shipped `combined` records 34.5% fewer changes than the split-join total —
+the joint dwell merges changes landing within 5 bars of each other.
+
+**WHICH DO THE SIGNALS TRACK — they split cleanly by axis:**
+
+| signal | shape only | activity only |
+|---|---|---|
+| mas 5/8 | **+0.183 (p=0.024)** | −0.007 (p=0.634) |
+| vol 8/200 | −0.076 (p=0.780) | **+0.349 (p=0.024)** |
+| rng 5/60 | −0.122 | −0.122 |
+
+A moving-average signal reads shape; a volatility-ratio signal reads activity.
+That is what their construction says they should do, and it is worth knowing
+before either is read as tracking "the state". `both` is not readable at n=132 —
+`rng 72/200` posts an 8.245 lift there on 132 events.
+
+### 16.4l Failed swings: a real IS plateau that does not survive
+
+`failswing.py`. Definition entirely within the trailing window: at bar *t*, with
+the 28-bar window split into an old part [t−28, t−6] and a recent part [t−5, t],
+price reached at least X of the way from the old low back to the old high
+**without clearing it**, and has since turned back from that recent peak by at
+least Y multiples of the recent average daily range. Mirror for the downside.
+Every clause is a max, min or mean of bars at or before *t*, then shifted one.
+
+The no-clearing clause is load-bearing: without it every successful breakout
+fires too and X stops meaning anything.
+
+X ∈ {0.85, 0.90, 0.93, 0.95, 0.97, 0.98, 0.99} × Y ∈ {0.5, 0.75, 1, 1.5, 2, 3,
+4} = 49 cells. Firing rates run 0.128% to 6.173% of bars.
+
+**The IS surface has a genuine plateau** — shape changes, IS excess:
+
+| X \ Y | 0.50 | 0.75 | 1.00 | 1.50 | 2.00 | 3.00 | 4.00 |
+|---|---|---|---|---|---|---|---|
+| 0.85 | −0.029 | −0.019 | −0.024 | −0.025 | −0.048 | −0.038 | −0.012 |
+| 0.90 | +0.013 | +0.038 | +0.025 | +0.018 | +0.028 | +0.057 | +0.073 |
+| 0.93 | +0.091 | +0.134 | +0.117 | +0.114 | +0.119 | +0.131 | +0.193 |
+| 0.95 | +0.093 | +0.110 | +0.112 | +0.108 | +0.111 | +0.148 | +0.221 |
+| 0.97 | +0.058 | +0.076 | +0.094 | +0.088 | +0.031 | +0.073 | +0.319 |
+| 0.98 | +0.047 | +0.067 | +0.095 | +0.134 | +0.082 | +0.170 | +0.528 |
+| 0.99 | +0.135 | +0.027 | +0.076 | +0.143 | +0.139 | +0.078 | +0.669 |
+
+**34 of 49 cells above +0.05, 33 of them contiguous.** That is the broad plateau
+the bar was set at, and X=0.85 failing while X≥0.93 works is a sensible boundary
+rather than a random one. Combined-shipped is stronger still: 39 of 49, all
+contiguous.
+
+**A flaw in my own plateau criterion, caught and fixed.** A 3×3 neighbourhood
+mean is not sufficient: a corner cell has only three neighbours, so a lone spike
+at the grid edge survives smoothing. On the first run X=0.99 Y=4.00 won on *both*
+the raw and the smoothed criterion while firing on **0.128% of bars**, the
+sparsest cell in the sweep. Selection is now restricted to **interior** cells,
+where a full 3×3 exists.
+
+**Chosen on IS: X=0.98, Y=3.00, shape changes.** Neighbourhood mean +0.232 over 8
+neighbours, IS lift 0.681 vs surrogate 0.511, excess +0.170, z +1.13.
+
+**Holdout, read once, 200 draws:**
+
+| null | lift | surrogate | excess | p |
+|---|---|---|---|---|
+| sign | 0.164 | 0.477 ± 0.190 | **−0.313** | 0.960 |
+| iid | 0.164 | 0.444 ± 0.166 | **−0.281** | 0.960 |
+
+**Does not survive.** The holdout lift is 0.164 — failed swings fire *far below*
+chance before shape changes out of sample, having looked coherent on IS across 33
+contiguous cells. A broad plateau is a better filter than a single cell and it
+still was not enough.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

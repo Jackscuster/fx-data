@@ -206,6 +206,10 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="confirmblock"></div>
 <h3>Layer 1, merged &mdash; every claim beside its test</h3>
 <div id="l1sumblock"></div>
+<h3>Three kinds of regime change</h3>
+<div id="chgblock"></div>
+<h3>Failed swings</h3>
+<div id="fswblock"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -1240,6 +1244,75 @@ function boot(BUNDLE,root){
      +'straightness family, so not redundant, but they fail their own nulls, so '
      +'not informative either. <code>settling</code> is a weight, not a state. '
      +'<code>tier</code> is description only.</div>';
+   }
+   const CC=BUN.chgcount||[],CTk=BUN.chgtrack||[],FS=BUN.fswing||[],FC=BUN.fswingc||[];
+   const f3=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(CC.length){
+    let h='<div class="note"><b>Activity is not a side question.</b> The same '
+     +'shape at high activity is a trend; at low activity it is a drift. So a '
+     +'move from <i>weak broken</i> to <i>strong broken</i> is a regime change '
+     +'even though the shape word did not move. No volume data exists for FX '
+     +'&mdash; H.10 is close-only and the market is decentralised &mdash; so '
+     +'distance travelled is the proxy.</div>'
+     +'<div class="tw"><table><thead><tr><th>Kind</th><th>Changes</th>'
+     +'<th>Rate</th><th>Mean gap</th></tr></thead><tbody>'
+     +CC.map(r=>'<tr><td>'+r.kind+'</td><td>'+r.changes+'</td><td>'
+      +f3(100*r.rate,3)+'%</td><td>'+f3(r.mean_gap,1)+' bars</td></tr>').join('')
+     +'</tbody></table><div class="count">Shape and activity change at almost '
+     +'exactly the same rate &mdash; 48.9% / 49.0% of the split-join total &mdash; '
+     +'and independently: both-on-the-same-bar is 132 against 143 expected by '
+     +'chance, ratio 0.92. Activity carries half the regime changes.</div></div>';
+    if(CTk.length) h+='<div class="tw"><table><thead><tr><th>Signal</th>'
+     +'<th>Change type</th><th>n</th><th>Lift</th><th>Surrogate</th>'
+     +'<th>Excess</th><th>p</th></tr></thead><tbody>'
+     +CTk.filter(r=>r.kind!=='both').map(r=>'<tr><td>'+r.family+' '+r.fast+'/'
+      +r.slow+'</td><td>'+r.kind+'</td><td>'+r.n+'</td><td>'+f3(r.lift)
+      +'</td><td>'+f3(r.surrogate)+'</td><td><b>'+(r.excess>0?'+':'')
+      +f3(r.excess)+'</b></td><td>'+f3(r.p)+'</td></tr>').join('')
+     +'</tbody></table><div class="count"><b>The signals split by axis.</b> '
+     +'mas 5/8 tracks shape (+0.183, p=0.024) and not activity (&minus;0.007, '
+     +'p=0.634); vol 8/200 tracks activity (+0.349, p=0.024) and not shape '
+     +'(&minus;0.076, p=0.780). A moving-average signal reads shape, a '
+     +'volatility-ratio signal reads activity &mdash; which is what their '
+     +'construction says they should do, and is worth knowing before either is '
+     +'read as tracking &ldquo;the state&rdquo;. <i>both</i> is omitted here: '
+     +'132 events is too few to read.</div></div>';
+    $('#chgblock').innerHTML=h;
+   }
+   if(FS.length){
+    const XS=[0.85,0.90,0.93,0.95,0.97,0.98,0.99],YS=[0.5,0.75,1,1.5,2,3,4];
+    const sel=FS.filter(r=>r.kind==='shape only');
+    const cel=(x,y)=>sel.find(r=>Math.abs(r.X-x)<1e-9&&Math.abs(r.Y-y)<1e-9);
+    let h='<div class="note"><b>Within-window only.</b> A bar counts as a '
+     +'rejection on what already happened: price came within X of the prior '
+     +'extreme without clearing it, and has since turned back by Y multiples of '
+     +'the recent daily range. The no-clearing clause matters &mdash; without it '
+     +'every successful breakout fires too and X stops meaning anything.</div>'
+     +'<div class="tw"><table><thead><tr><th>IS excess, shape changes<br>'
+     +'<span class="count">X &darr; Y &rarr;</span></th>'
+     +YS.map(y=>'<th>'+y+'</th>').join('')+'</tr></thead><tbody>'
+     +XS.map(x=>'<tr><td><b>'+x+'</b></td>'+YS.map(y=>{const c=cel(x,y);
+       return '<td>'+(c?((c.is_excess>0.10?'<b>':'')+(c.is_excess>0?'+':'')
+        +f3(c.is_excess)+(c.is_excess>0.10?'</b>':'')):'&middot;')+'</td>';})
+      .join('')+'</tr>').join('')+'</tbody></table>'
+     +'<div class="count">34 of 49 cells clear +0.05 on IS, 33 of them '
+     +'contiguous &mdash; a genuine broad plateau across X = 0.93&ndash;0.99, '
+     +'which is what was set as the bar.</div></div>';
+    if(FC.length) h+='<div class="tw"><table><thead><tr><th>Cell</th>'
+     +'<th>IS excess</th><th>Holdout lift</th><th>Surrogate</th>'
+     +'<th>Holdout excess</th><th>p</th></tr></thead><tbody>'
+     +FC.map(r=>'<tr><td>X='+r.X+' Y='+r.Y+' &middot; '+r.kind+' &middot; '
+      +r.null+'</td><td>'+(r.is_excess>0?'+':'')+f3(r.is_excess)+'</td><td>'
+      +f3(r.holdout_lift)+'</td><td>'+f3(r.surrogate)+' &plusmn; '+f3(r.sd)
+      +'</td><td><b>'+(r.excess>0?'+':'')+f3(r.excess)+'</b></td><td>'+f3(r.p)
+      +'</td></tr>').join('')+'</tbody></table><div class="count">The plateau '
+     +'does not survive. Selection was restricted to <b>interior</b> cells: a '
+     +'3&times;3 mean alone is not enough, because a corner has only three '
+     +'neighbours and a lone spike at the grid edge survives smoothing &mdash; '
+     +'which is exactly what happened first time, where X=0.99 Y=4.00 won on '
+     +'both criteria while firing on 0.128% of bars, the sparsest cell in the '
+     +'sweep.</div></div>';
+    $('#fswblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
