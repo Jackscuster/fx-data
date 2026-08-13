@@ -68,7 +68,10 @@ NS = (2, 3, 5, 8, 13)
 STATES = ['trending', 'range', 'drifting']
 # the shipped setting: most balanced on IS among modes that keep a sequence
 # requirement. combined.layers() reads these two names.
-MODE_SHIPPED, N_SHIPPED = 'relaxed', 5
+MODE_SHIPPED, N_SHIPPED = 'relaxed', 6      # chosen on IS by shapewin.py
+# the shape ribbon, the direct analogue of the nine-box's 7/28/128. Suffixes are
+# the MEASURED median lookback in bars, not the swing width.
+RIBBON = ((2, 12), (6, 35), (24, 132))
 
 from structure import swings, _seg, VOLWIN
 from structsel import chosen_cell

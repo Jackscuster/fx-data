@@ -128,6 +128,8 @@ out = dict(
     maiss=cl(rd('masweep_is.csv').sort_values('is_excess',ascending=False).head(12)),
     l1sum=cl(rd('layer1_summary.csv')),
     shape3cov=cl(rd('shape3_coverage.csv')),
+    shapewin=cl(rd('shapewin.csv')),
+    shapewinc=cl(rd('shapewin_confirm.csv')),
     shape3lb=cl(rd('shape3_lookback.csv')),
     oldnew=cl(rd('oldnew.csv')),
     chgcount=cl(rd('change_counts.csv')),
