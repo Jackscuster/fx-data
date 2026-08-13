@@ -1892,6 +1892,67 @@ somewhere else without re-deriving anything. Higher is more trending.
 0.367. `combined` is nine states, min share 0.054, max 0.152. Both self-assertions
 pass on all 191,940 pair-days.
 
+### 16.4r TWO_SCORES.md: two axes confirmed, "neither" halved, null still fails
+
+`twoscores.py`. Trend and chop scored independently, classified on the pair.
+
+**FIRST QUESTION — ARE THEY ONE AXIS? No.** Pooled correlation **−0.350**, per
+pair −0.207 to −0.467. The project's own decorrelation bar is |r| < 0.70, so they
+clear it comfortably. **The premise holds: trend and chop are not opposite ends
+of one scale.**
+
+**A CONSTRUCTION ERROR FOUND AND FIXED, and it was mine.** The spec assigns
+`hold` (do pullbacks hold above the prior low) to the trend score. Measured, it
+behaves as a **chop** component. On IS: `disp` reads range/path **+0.170** and
+mean crossings **−0.220**, while `hold` reads **−0.254** and **+0.288** — opposite
+sign on both. Summed into one score they cancel, which is why the trend score
+first came out at 0.034 while `disp` alone reached 0.088 and `hold` alone 0.147.
+Moved to the chop score, **direction confirmed on IS before the holdout was
+read.** Effect: trend 0.034 → 0.053, chop 0.074 → 0.124, correlation −0.400 →
+−0.350.
+
+**OCCUPANCY, holdout:**
+
+| cell | share | sep | run | diag | autocorr | range/path | dir chg | crossings |
+|---|---|---|---|---|---|---|---|---|
+| trending | 0.249 | 0.104 | 21 | 0.971 | +0.051 | **+0.134** | −0.003 | **−0.229** |
+| ranging | 0.371 | 0.100 | 24 | 0.978 | −0.048 | **−0.143** | +0.015 | **+0.195** |
+| trend-in-range | 0.181 | 0.053 | 18 | 0.959 | −0.003 | −0.052 | −0.036 | +0.121 |
+| **neither** | **0.199** | 0.065 | 18 | 0.959 | +0.013 | +0.101 | +0.015 | −0.129 |
+
+**The honest "neither" bucket is 19.9% of bars, against 41% in the single-axis
+middle tercile.** The design does what it was meant to do — it more than halves
+the unclassifiable share. And trending and ranging now show clean mirror-image
+signatures on path efficiency and oscillation count, which the single-axis middle
+never did.
+
+**BUT NOTHING SURVIVES ITS NULL.** 20 draws:
+
+| | real | surrogate | corrected |
+|---|---|---|---|
+| trending | 0.104 | 0.150 | **−0.046** |
+| ranging | 0.100 | 0.147 | **−0.046** |
+| trend-in-range | 0.053 | 0.059 | −0.006 |
+| neither | 0.065 | 0.066 | −0.002 |
+| trend axis alone | 0.053 | 0.102 | −0.049 |
+| chop axis alone | 0.124 | 0.163 | −0.039 |
+
+**AND THE TRADEOFF AGAINST THE SINGLE AXIS IS REAL.** At the same window the
+single-axis version separates *better* — trending 0.261, range 0.239 against
+0.104 and 0.100 here — but leaves 41% ambiguous. Two scores buy coverage and cost
+description. Neither version beats its surrogate, so the choice between them is
+about what the vocabulary should look like, not about which describes more.
+
+**JOINT vs SEPARATE CUTS with activity**: 12 cells either way. Separate mean
+|sep| 0.063, min share 0.056; joint (weak activity must clear a higher trend bar)
+0.061 and 0.040. **Joint cutting does not separate better and costs coverage** —
+keep them separate.
+
+**Episode basis**: 74,004 holdout bars → 2,306 episodes, 32.1×.
+
+**Note for the record**: activity remains a distance-travelled proxy. FX is
+decentralised and H.10 is close-only; there is no volume anywhere in this work.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

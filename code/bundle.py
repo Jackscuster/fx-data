@@ -132,6 +132,7 @@ out = dict(
     shapesc=cl(rd('shapescore.csv')),
     shapesplit=cl(rd('shapesplit.csv')),
     scoredist=cl(rd('scoredist.csv')),
+    twocells=cl(rd('twoscores_cells.csv')),
     scoreyears=cl(rd('scoredist_years.csv')),
     shapesplitp=cl(rd('shapesplit_pairs.csv')),
     shapescc=cl(rd('shapescore_confirm.csv')),
