@@ -211,6 +211,8 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="swinblock"></div>
 <h3>The shipped shape read: a continuous score</h3>
 <div id="scoreblock"></div>
+<h3>Separation split by state</h3>
+<div id="splitblock"></div>
 <h3>Old nine-box vs new nine-state</h3>
 <div id="oldnewblock"></div>
 <h3>Three kinds of regime change</h3>
@@ -1482,6 +1484,50 @@ function boot(BUNDLE,root){
       +'p=0.314 is inside the noise. The sign flipped; the magnitude did not '
       +'arrive.</div></div>';}
     $('#scoreblock').innerHTML=h;
+   }
+   const SP=BUN.shapesplit||[];
+   const f7=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(SP.length){
+    const SHOW=[2,6,13,18,22,26,30,36,44,52,60,70];
+    let h='<div class="note">Every number before this was <b>blended</b> &mdash; '
+     +'one figure for the whole classifier, which cannot tell "both trend and '
+     +'chop separate" from "trend carries it and chop is dead weight". The metric '
+     +'here is <b>one-versus-rest, signed</b>: the state&rsquo;s own mean minus '
+     +'every other state&rsquo;s, in sd units. Sweep extended to a 393-bar '
+     +'lookback because corrected separation was still climbing at 200.</div>'
+     +'<div class="tw"><table><thead><tr><th>N</th><th>Days</th>'
+     +'<th colspan="4">Trending</th><th colspan="4">Drifting</th>'
+     +'<th colspan="4">Range</th></tr><tr><th></th><th></th>'
+     +['Trending','Drifting','Range'].map(()=>'<th>corr</th><th>share</th>'
+       +'<th>run</th><th>diag</th>').join('')+'</tr></thead><tbody>'
+     +SHOW.map(N=>{const r={};SP.filter(x=>x.N===N).forEach(x=>{r[x.state]=x;});
+      if(!r.trending) return '';
+      return '<tr><td>'+N+'</td><td>'+f7(r.trending.lookback,0)+'</td>'
+       +['trending','drifting','range'].map(s=>'<td><b>'
+        +(r[s].corr>0?'+':'')+f7(r[s].corr)+'</b></td><td>'+f7(r[s].share)
+        +'</td><td>'+f7(r[s].run,0)+'</td><td>'+f7(r[s].diag)+'</td>').join('')
+       +'</tr>';}).join('')+'</tbody></table>'
+     +'<div class="count"><b>Trend and chop want different windows.</b> Trending '
+     +'corrected turns positive only past a 200-bar lookback and peaks at +0.058 '
+     +'near 309 bars; range is positive only in the 100&ndash;190 bar band and '
+     +'goes negative beyond it. Drifting &mdash; the middle tercile &mdash; never '
+     +'exceeds 0.10 raw at any window: it is the dead weight, and that is what a '
+     +'blended number was hiding.</div></div>'
+     +'<div class="note"><b>Which property carries each state</b>, at a 144-bar '
+     +'lookback, signed: trending is range/path <b>+0.327</b> and mean crossings '
+     +'<b>&minus;0.385</b>; range is the mirror, &minus;0.360 and +0.340; '
+     +'drifting is +0.055 / +0.014. <b>Autocorrelation carries almost nothing '
+     +'for any state</b> (+0.007, &minus;0.037, +0.033) &mdash; the work is done '
+     +'by path efficiency and oscillation count, not by serial dependence.</div>'
+     +'<div class="note"><b>The tradeoff.</b> Trending run length climbs 18 '
+     +'&rarr; 36 bars and its diagonal 0.955 &rarr; 0.986 as the window '
+     +'lengthens, so the windows where trend separation is positive are also the '
+     +'ones where a trend state lasts seven weeks and changes on 1.4% of bars. '
+     +'Range peaks earlier and cheaper: +0.009 at 101&ndash;144 bars with 17&ndash;'
+     +'18 bar runs. For an entry held weeks, <b>range is readable at 144 bars '
+     +'and trend is not readable until 250+</b>, where it is arguably too slow '
+     +'to act on.</div>';
+    $('#splitblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
