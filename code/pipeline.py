@@ -57,6 +57,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('episodes.py')       # episode-basis and block-bootstrap significance
     run('perpair.py')        # the classifier pair by pair, own surrogate each
     run('transitions.py')    # edge vs interior, and whether direction matters
+    run('axes2.py')          # scale ablation, shape x activity, settling overlap
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
 if os.environ.get('FX_RUN_HORIZON'):
