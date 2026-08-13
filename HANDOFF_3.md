@@ -1693,6 +1693,86 @@ the merge is about the max of its parts.
 **Queued in NEXT_WORK.md**: SHAPE_MEASUREMENTS.md — failed swings (partly built,
 needs rescoring as present-tense), retracement depth, swing spacing, cross-pair.
 
+### 16.4o THE SHIPPED SHAPE READ: a continuous score, cut at terciles
+
+**Option B.** A continuous trend-versus-range score, cut at IS terciles, so every
+bar lands somewhere. Three shapes, nine states, no residual, no fourth category.
+`shapescore.py`. This supersedes the gated version in 16.4m-n.
+
+**The structural information is kept, as readings rather than gates.** A gate
+discards everything except which side a bar fell on; a score keeps the distance.
+
+| component | what it measures |
+|---|---|
+| `seq` | swing sequence, **signed and summed so it cancels** — a higher high with a lower low nets to nothing, which is the distinction the gate existed to make and the one thing that had to survive |
+| `bound` | distance outside the confirmed band, or depth inside it, in vol units, continuous through zero |
+| `hold` | break-and-hold: mean distance beyond the boundary over the last 10 bars |
+| `pull` | 1 − retracement from the running extreme as a fraction of the impulse |
+
+**Equal weights, on purpose.** Each is standardised on IS and the four are summed
+unweighted. Fitting weights would be a four-parameter search against a target,
+and the target here is a description, not an outcome — there is nothing
+legitimate to fit them to.
+
+**IS SWEEP, N = 2..40:**
+
+| N | days | trending | drifting | range | sep | surr | corrected | run | pairs + |
+|---|---|---|---|---|---|---|---|---|---|
+| 2 | 12 | 0.308 | 0.327 | 0.365 | 0.683 | 0.714 | −0.031 | 16 | 9/28 |
+| 6 | 35 | 0.289 | 0.379 | 0.331 | 0.635 | 0.674 | −0.039 | 14 | 5/28 |
+| 13 | 74 | 0.284 | 0.388 | 0.328 | 0.433 | 0.466 | −0.033 | 15 | 9/28 |
+| 18 | 101 | 0.283 | 0.386 | 0.331 | 0.370 | 0.370 | −0.000 | 17 | 14/28 |
+| 22 | 121 | 0.286 | 0.384 | 0.330 | 0.318 | 0.315 | +0.003 | 18 | 15/28 |
+| **26** | **144** | 0.285 | 0.384 | 0.331 | 0.282 | 0.268 | **+0.014** | 18 | 13/28 |
+| 30 | 167 | 0.282 | 0.388 | 0.330 | 0.240 | 0.236 | +0.004 | 19 | 15/28 |
+| 40 | 227 | 0.284 | 0.390 | 0.326 | 0.192 | 0.181 | +0.011 | 21 | 13/28 |
+
+**17 of 39 windows are positive, and every one of them is past N=18.** Short
+windows uniformly negative, long windows uniformly positive — a plateau with a
+clean boundary, not a spike. Neighbourhood at the pick: +0.007 / +0.011 /
+**+0.014** / +0.010 / +0.012 across N=24–28.
+
+Note the raw separation FALLS as the window lengthens (0.683 → 0.192) while the
+corrected value RISES. The surrogate falls faster. That is the whole reason for
+correcting.
+
+**HOLDOUT, READ ONCE, N=26, 120 draws:**
+
+| trending | drifting | range | residual | sep | surrogate | corrected | p |
+|---|---|---|---|---|---|---|---|
+| 0.225 | 0.395 | 0.380 | **0.000** | 0.275 | 0.266 ± 0.023 | **+0.009** | 0.314 |
+
+**The first positive holdout corrected separation in this project** — every gated
+version was negative (−0.019 at 16.4n, −0.051 to −0.066 at 16.4d). But +0.009 at
+p=0.314 is inside the noise. The sign flipped; the magnitude did not arrive.
+
+**WHICH WINDOW FOR DAILY ENTRY HELD FOR WEEKS.** The state has to outlast the
+hold or it is not describing it.
+
+| N | days | trend runs | range runs | corrected |
+|---|---|---|---|---|
+| 6 | 35 | 19 | 14 | −0.039 |
+| 13 | 74 | 21 | 15 | −0.033 |
+| 18 | 101 | 27 | 17 | −0.000 |
+| **26** | **144** | **25** | **19** | **+0.014** |
+| 30 | 167 | 30 | 18 | +0.004 |
+
+**N=26 is the answer**: trend episodes of ~25 bars (five weeks) and range
+episodes of ~19 (four weeks) both outlast a multi-week hold, and it is inside the
+only region of the sweep with positive corrected separation. Anything under N=18
+gives episodes shorter than the hold *and* negative corrected separation.
+
+**SHIPPED.** `layer1_states.csv` carries the score at three lookbacks —
+`shape_12`, `shape_35`, `shape` (=144) — and `combined` is now a genuine **nine**
+states with **no residual**: medium drifting 0.147, medium range 0.144, weak
+range 0.139, weak drifting 0.133, strong drifting 0.114, strong range 0.098,
+strong trending 0.088, medium trending 0.079, weak trending 0.058. Both
+self-assertions still pass on all 191,940 pair-days.
+
+**Per pair at N=26**: 13 of 28 positive, median −0.003. Best CADJPY +0.148,
+GBPCAD +0.142, USDJPY +0.125; worst GBPAUD −0.126, AUDNZD −0.124, GBPJPY −0.097.
+Still a coin flip pair by pair.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

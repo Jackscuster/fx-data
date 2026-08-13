@@ -52,7 +52,8 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     # both read its result, so it must run before either of them.
     run('structsel.py')      # IS-only cell selection, holdout read once
     run('shape3.py')         # THREE shapes, not four, and the lookback answer
-    run('shapewin.py')       # the shape lookback swept 12-227, IS/OOS
+    run('shapewin.py')       # the gate version's lookback sweep, superseded
+    run('shapescore.py')     # THE SHIPPED SHAPE READ: continuous score, terciles
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
     run('episodes.py')       # episode-basis and block-bootstrap significance

@@ -82,7 +82,7 @@ def _cfg():
 
 
 CFG = None                          # resolved at call time by layers()
-SHAPE_STATES = ['trending', 'range', 'drifting']
+SHAPE_STATES = ['trending', 'drifting', 'range']
 ACT = {0.0: 'weak', 1.0: 'medium', 2.0: 'strong'}
 
 from structval import properties, separation, persistence, surrogate, SHAPE, MAG, W
@@ -115,10 +115,10 @@ def layers(px, fit, cfg=None):
     The shape layer is the THREE-way partition (shape3.py). The four-state read
     with 'broken' is superseded; see 16.4m.
     """
-    from shape3 import three_state, MODE_SHIPPED, N_SHIPPED
+    from shape3 import N_SCORE
+    from shapescore import score_at
     from ninestate import raw_axes, tercile
-    _, B, D, R = (cfg or _cfg())
-    sh = three_state(px, N_SHIPPED, B, D, R, MODE_SHIPPED)
+    sh = score_at(px, N_SCORE, fit)[0]
     sh = sh.where(sh.isin(SHAPE_STATES))
     act = tercile(raw_axes(px)['scale'], fit).replace(ACT)
     return sh, act.where(act.isin(list(ACT.values())))

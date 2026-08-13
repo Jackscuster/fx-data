@@ -36,13 +36,15 @@ SCHEMA of results/layer1_states.csv
   age_28       bars the 28-day state has held, 1 on its first bar
   straight_28  straightness axis, |net| / path over 28 bars
   scale_28     scale axis, path over 28 bars in the pair's own vol units
-  shape        trending | range | drifting -- THREE shapes, no residual. Inside
-               the confirmed swing band is range; outside it is trending if the
-               swing sequence supports the break and drifting if it does not.
-               Equals shape_35. 5-bar confirmation dwell.
-  shape_12     the same read at a 12-bar median lookback   \  the shape ribbon,
-  shape_35     ...at 35 bars, chosen on IS by shapewin.py   >  the analogue of
-  shape_132    ...at 132 bars                              /   state_7/28/128.
+  shape        trending | drifting | range -- THREE shapes, NO residual and no
+               fourth category. A CONTINUOUS trend-versus-range score cut at IS
+               terciles, so every bar lands somewhere. The score sums four
+               standardised structural readings -- cancelling swing sequence,
+               boundary distance, break-and-hold, and pullback -- with equal
+               weights. Equals shape_144. 5-bar confirmation dwell.
+  shape_12     the same score at a 12-bar median lookback  \  the shape ribbon,
+  shape_35     ...at 35 bars                                >  the analogue of
+  shape_144    ...at 144 bars, chosen on IS                /   state_7/28/128.
                Suffixes are the MEASURED median distance back to the anchoring
                swing, not the swing width. The lookback is quantised because the
                swing width is an integer; 12/35/132 are the achievable values
@@ -108,7 +110,7 @@ TIERCSV = os.path.join(ROOTOUT, 'nine_tiers.csv')
 EXPL = os.path.join(ROOTOUT, 'app_explorer.json')
 BASE = 28                      # the medium ribbon window, and ninestate's W
 COLS = ['date', 'pair', 'state_7', 'state_28', 'state_128', 'tier', 'age_28',
-        'straight_28', 'scale_28', 'shape_12', 'shape', 'shape_132',
+        'straight_28', 'scale_28', 'shape_12', 'shape_35', 'shape',
         'activity', 'combined', 'settling', 'sample']
 
 
@@ -126,10 +128,8 @@ def build(px):
     # held as long as it took to confirm. See 16.4g for why this is a weight
     # rather than a fast signal.
     from shape3 import RIBBON
-    from shapewin import shape3_at
-    from structsel import chosen_cell as _cc
-    _n, _B, _D, _R = _cc()
-    rib = {lb: shape3_at(px, n, _B, _D, _R) for n, lb in RIBBON}
+    from shapescore import score_at
+    rib = {lb: score_at(px, n, fit)[0] for n, lb in RIBBON}
     cage = age_of(comb)
     settle = (cage / DWELL).clip(upper=1.0)
     # the shape layer carries the dwell too, so the three columns are consistent
@@ -148,8 +148,8 @@ def build(px):
         'straight_28': flat(A['straight']),
         'scale_28': flat(A['scale']),
         'shape_12': flat(rib[12]),
+        'shape_35': flat(rib[35]),
         'shape': flat(sh),
-        'shape_132': flat(rib[132]),
         'activity': flat(act),
         'combined': flat(comb),
         'settling': flat(settle),
@@ -218,7 +218,7 @@ def main():
                                             for k in v.sort_index().index)))
 
     print('\nSHAPE RIBBON AND ACTIVITY SHARE')
-    for c in ('shape_12', 'shape', 'shape_132', 'activity'):
+    for c in ('shape_12', 'shape_35', 'shape', 'activity'):
         for tag in ('is', 'oos'):
             v = T[T['sample'] == tag][c].value_counts(normalize=True)
             print('  %-9s %-4s %s' % (c, tag, '  '.join('%s %.3f' % (k, v[k])
@@ -229,8 +229,8 @@ def main():
     print('  ' + '  '.join('%.1f %.3f' % (k, v[k]) for k in sorted(v.index)))
 
     print('\nCOVERAGE, share of rows with a label')
-    for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape_12', 'shape',
-              'shape_132', 'activity', 'combined', 'settling'):
+    for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape_12',
+              'shape_35', 'shape', 'activity', 'combined', 'settling'):
         print('  %-11s %.3f' % (c, T[c].notna().mean()))
 
     print('\nAGREEMENT WITH THE PUBLISHED OUTPUT')
