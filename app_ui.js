@@ -206,6 +206,10 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="confirmblock"></div>
 <h3>Layer 1, merged &mdash; every claim beside its test</h3>
 <div id="l1sumblock"></div>
+<h3>Three shapes, and what lookback shape uses</h3>
+<div id="shape3block"></div>
+<h3>Old nine-box vs new nine-state</h3>
+<div id="oldnewblock"></div>
 <h3>Three kinds of regime change</h3>
 <div id="chgblock"></div>
 <h3>Failed swings</h3>
@@ -1313,6 +1317,71 @@ function boot(BUNDLE,root){
      +'both criteria while firing on 0.128% of bars, the sparsest cell in the '
      +'sweep.</div></div>';
     $('#fswblock').innerHTML=h;
+   }
+   const S3=BUN.shape3cov||[],LB=BUN.shape3lb||[],ON=BUN.oldnew||[];
+   const f4=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(S3.length){
+    let h='<div class="note"><b>The fourth shape was never in the spec.</b> '
+     +'&ldquo;broken&rdquo; took 64% of days while trending took 2.9%, so the '
+     +'classifier mostly reported a diagnostic rather than a regime. Replaced by '
+     +'a partition: inside the confirmed swing band is <b>range</b>; outside it '
+     +'is <b>trending</b> if the swing sequence supports the break and '
+     +'<b>drifting</b> if it does not. Every bar labelled exactly once, 3 &times; '
+     +'3 = 9 states.</div>'
+     +'<div class="tw"><table><thead><tr><th>Mode</th><th>N</th>'
+     +'<th>trending</th><th>range</th><th>drifting</th><th>Balance</th></tr>'
+     +'</thead><tbody>'+S3.map(r=>'<tr><td>'+r.mode+'</td><td>'+r.N+'</td><td>'
+      +f4(r.trending)+'</td><td>'+f4(r.range_)+'</td><td>'+f4(r.drifting)
+      +'</td><td>'+f4(r.balance)+'</td></tr>').join('')+'</tbody></table>'
+     +'<div class="count">Balance is entropy over the three states, IS only. '
+     +'The raw winner is <i>breakonly</i> N=3 at 0.936 &mdash; <b>rejected</b>: '
+     +'it drops the swing sequence, so &ldquo;trending&rdquo; would mean only '
+     +'&ldquo;a break happened&rdquo;, and the whole point of the structural '
+     +'read is that higher highs alone is not a trend. Not traded away for 0.013 '
+     +'of entropy. Shipped: <b>relaxed, N=5</b> &mdash; trending goes from 2.6% '
+     +'to 17.8% of holdout bars.</div></div>';
+    if(LB.length) h+='<div class="note"><b>Shape has no fixed window.</b> The '
+     +'nine-box reads 7 / 28 / 128 bars. The shape read is event-driven: its '
+     +'memory runs back to the second-most-recent confirmed swing, whose '
+     +'distance moves with the market. Measured, not asserted:</div>'
+     +'<div class="tw"><table><thead><tr><th>Swing width N</th><th>p10</th>'
+     +'<th>median</th><th>mean</th><th>p90</th><th>p99</th></tr></thead><tbody>'
+     +LB.map(r=>'<tr><td>'+r.N+'</td><td>'+f4(r.p10,0)+'</td><td><b>'
+      +f4(r.median,0)+'</b></td><td>'+f4(r.mean,1)+'</td><td>'+f4(r.p90,0)
+      +'</td><td>'+f4(r.p99,0)+'</td></tr>').join('')+'</tbody></table>'
+     +'<div class="count">Bars back to the anchoring swing. <b>N is the horizon '
+     +'knob</b> &mdash; the direct analogue of the ribbon&rsquo;s windows. For a '
+     +'daily entry held for weeks, N=5 (median 35 bars, p90 52) is the closest '
+     +'match to the 28-day ribbon leg; N=2 is the fast leg, N=8&ndash;13 the '
+     +'slow one. Running three N values side by side would reproduce the ribbon '
+     +'on the shape axis &mdash; a build decision, not a finding.</div></div>';
+    $('#shape3block').innerHTML=h;
+   }
+   if(ON.length){
+    $('#oldnewblock').innerHTML='<div class="note">Every classifier carries the '
+     +'same 5-bar dwell, including the nine-box: persistence drives separation '
+     +'on autocorrelated properties, so comparing a dwelled classifier with an '
+     +'undwelled one measures the dwell. The nine-box as shipped is listed too. '
+     +'<b>Corrected</b> is the only cross-classifier column that means anything '
+     +'&mdash; raw separation is not comparable across state counts.</div>'
+     +'<div class="tw"><table><thead><tr><th>Classifier</th><th>States</th>'
+     +'<th>Median run</th><th>Min share</th><th>Refit</th>'
+     +'<th>Shape (raw)</th><th>Activity (raw)</th>'
+     +'<th>Shape corr (sign / iid)</th><th>Activity corr (sign / iid)</th>'
+     +'</tr></thead><tbody>'+ON.map(r=>'<tr><td>'+r.classifier+'</td><td>'
+      +r.n_states+'</td><td>'+f4(r.median_run,0)+'</td><td>'+f4(r.min_share)
+      +'</td><td>'+f4(r.refit,1)+'%</td><td>'+f4(r.shape)+'</td><td>'
+      +f4(r.activity)+'</td><td><b>'+(r.corr_shape_sign>0?'+':'')
+      +f4(r.corr_shape_sign)+'</b> / <b>'+(r.corr_shape_iid>0?'+':'')
+      +f4(r.corr_shape_iid)+'</b></td><td>'+(r.corr_act_sign>0?'+':'')
+      +f4(r.corr_act_sign)+' / '+(r.corr_act_iid>0?'+':'')+f4(r.corr_act_iid)
+      +'</td></tr>').join('')+'</tbody></table>'
+     +'<div class="count"><b>The new nine-state is the first classifier in this '
+     +'project with a positive corrected shape separation</b> (+0.026 sign, '
+     +'+0.037 iid) &mdash; the old nine-box is &minus;0.108 / &minus;0.081. But '
+     +'it does not beat its own components: activity alone scores +0.037 on the '
+     +'same shape properties, and shape3 alone scores &minus;0.011. The merge is '
+     +'about the max of its parts, not more than them.</div></div>';
    }
    if(RS.length){
     const W=640,H=170,PL=40;

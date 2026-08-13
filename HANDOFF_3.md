@@ -1531,6 +1531,91 @@ chance before shape changes out of sample, having looked coherent on IS across 3
 contiguous cells. A broad plateau is a better filter than a single cell and it
 still was not enough.
 
+### 16.4m Three shapes, not four. The lookback answer. Old vs new.
+
+**THE FOURTH SHAPE WAS NEVER IN THE SPEC, and that is my error.**
+`structure.five_state` emits trending / broken / range / drifting, and I carried
+all four into the product, making 12 states where the spec said 9. `broken` then
+took 64% of days while `trending` took 2.9% — the classifier spent most of its
+time reporting a diagnostic, not a regime.
+
+**Fixed as a partition, not a fold** (`shape3.py`). One question asked twice:
+inside the last confirmed swing band → **range**; outside it → **trending** if
+the swing sequence supports the break, **drifting** if it does not. `broken` was
+the leftover of a rule requiring *both* sequence legs to step the same way; bars
+that broke out with one leg confirming are now trending, with neither are
+drifting. Every bar labelled exactly once.
+
+| mode | trending | range | drifting | balance |
+|---|---|---|---|---|
+| strict N=5 | 0.092 | 0.518 | 0.390 | 0.845 |
+| **relaxed N=5** | **0.185** | **0.518** | **0.297** | **0.923** |
+| breakonly N=3 | 0.197 | 0.501 | 0.302 | 0.936 |
+
+Balance is entropy over the three states, IS only — a design criterion, not
+scored against any outcome. The raw winner is **breakonly, and it is rejected**:
+it drops the swing sequence, so "trending" would mean only "a break happened and
+price has not retraced". `structure.py` exists because higher highs alone is not
+a trend. Not traded away for 0.013 of entropy.
+
+**Shipped: relaxed, N=5.** Holdout shares now **range 0.614 / drifting 0.207 /
+trending 0.178**, against the old **broken 0.440 / range 0.267 / drifting 0.240 /
+trending 0.053**. Trending goes from 2.6% to 17.8%. `layer1_states.csv`
+regenerated; both self-assertions still pass on all 191,940 pair-days.
+
+**WHAT LOOKBACK DOES SHAPE USE — it has no fixed window.** The nine-box reads 7,
+28 and 128 bars. The shape read is *event-driven*: its memory runs back to the
+second-most-recent confirmed swing on each side, whose distance moves with the
+market. Measured rather than asserted — bars back to the anchoring swing:
+
+| N | p10 | median | mean | p90 | p99 |
+|---|---|---|---|---|---|
+| 2 | 10 | 14 | 15.2 | 22 | 30 |
+| 3 | 14 | 21 | 22.5 | 32 | 44 |
+| **5** | **23** | **35** | **36.7** | **52** | **71** |
+| 8 | 37 | 55 | 57.8 | 82 | 109 |
+| 13 | 60 | 88 | 91.3 | 127 | 170 |
+
+**N is the horizon knob** — the direct analogue of the ribbon's windows. For a
+daily entry held for weeks, N=5 (median 35 bars, p90 52) is the closest match to
+the 28-day ribbon leg; N=2 is the fast leg and N=8–13 the slow one. Running three
+N values side by side would reproduce the ribbon on the shape axis. That is a
+build decision and it is not done yet.
+
+**OLD vs NEW, same battery, same 5-bar dwell on every classifier** (`oldnew.py`).
+Corrected = real minus its own surrogate, which is the only cross-classifier
+column that means anything.
+
+| classifier | states | run | min share | shape raw | act raw | shape corr (sign/iid) | act corr (sign/iid) |
+|---|---|---|---|---|---|---|---|
+| nine-box (dwelled) | 9 | 11 | 0.094 | 0.422 | 0.835 | −0.108 / −0.081 | +0.067 / +0.264 |
+| **shape3 × activity** | 9 | 12 | 0.054 | 0.371 | 0.751 | **+0.026 / +0.037** | −0.003 / +0.267 |
+| shape3 alone | 3 | 14 | 0.178 | 0.254 | 0.096 | −0.011 / −0.002 | +0.038 / +0.043 |
+| activity alone | 3 | 19 | 0.301 | 0.079 | 0.744 | +0.037 / +0.037 | +0.005 / +0.256 |
+| nine-box (as shipped) | 9 | 4 | 0.086 | 0.457 | 0.928 | −0.054 / −0.034 | +0.052 / +0.197 |
+
+Refit stability is 100% for all five.
+
+**What the old does well**: the highest *raw* separation on both axes (0.457 /
+0.928) and the most even coverage (min share 0.086 undwelled). **What the new
+does well**: it is the **first classifier in this project with a positive
+corrected shape separation** (+0.026 / +0.037), and it fixes the coverage
+pathology — trending 17.8% not 2.6%.
+
+**Is the merge better than either alone? No — it is about the max of its parts.**
+On shape, merge +0.026 against activity-alone **+0.037** and shape3-alone −0.011.
+On activity, merge +0.267 against activity-alone +0.256 and nine-box +0.264.
+
+And the uncomfortable line in that table: **the activity axis describes the shape
+properties better than the shape axis does** (+0.037 vs −0.011). Per pair, same
+story — activity alone is positive on 18 of 28 pairs, median +0.026; shape3 ×
+activity on 13 of 28, median −0.005; the dwelled nine-box on 7 of 28.
+
+**Results computed before this change** — 16.4k's change counts have been rerun
+(shape now 53.4% of changes, activity 44.0%, both 2.6%, independence ratio 1.04);
+`episodes`, `perpair`, `transitions`, `axes2`, `failswing` and `masweep` still
+carry 12-state numbers and refresh on the next full pipeline run.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
