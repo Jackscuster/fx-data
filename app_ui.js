@@ -209,6 +209,8 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <h3>Three shapes, and what lookback shape uses</h3>
 <div id="shape3block"></div>
 <div id="swinblock"></div>
+<h3>The shipped shape read: a continuous score</h3>
+<div id="scoreblock"></div>
 <h3>Old nine-box vs new nine-state</h3>
 <div id="oldnewblock"></div>
 <h3>Three kinds of regime change</h3>
@@ -1436,6 +1438,50 @@ function boot(BUNDLE,root){
       +'18.6% instead of 2.9% &mdash; but the separation still sits below its own '
       +'surrogate on the holdout.</div></div>';}
     $('#swinblock').innerHTML=h;
+   }
+   const SC=BUN.shapesc||[],SCC=BUN.shapescc||[];
+   const f6=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(SC.length){
+    let h='<div class="note"><b>Option B, shipped.</b> A continuous '
+     +'trend-versus-range score cut at IS terciles, so <b>every bar lands '
+     +'somewhere</b> &mdash; three shapes, nine states, no residual and no fourth '
+     +'category. The structural information is kept as four continuous readings '
+     +'rather than four pass/fail gates: <b>seq</b> (swing sequence, signed and '
+     +'summed so a higher high with a lower low cancels), <b>bound</b> (distance '
+     +'outside or depth inside the confirmed band), <b>hold</b> (break-and-hold), '
+     +'<b>pull</b> (1 &minus; retracement). Equal weights, standardised on IS '
+     +'&mdash; fitting weights would be a four-parameter search against a target '
+     +'that does not exist for a description.</div>'
+     +'<div class="tw"><table><thead><tr><th>N</th><th>Lookback</th>'
+     +'<th>trending</th><th>drifting</th><th>range</th><th>Separation</th>'
+     +'<th>Surrogate</th><th>Corrected</th><th>Median run</th><th>Diagonal</th>'
+     +'<th>Pairs +</th></tr></thead><tbody>'
+     +SC.filter(r=>[2,4,6,8,13,18,22,26,30,36,40].indexOf(r.N)>=0)
+      .map(r=>'<tr><td>'+r.N+'</td><td>'+f6(r.lookback,0)+'</td><td>'
+      +f6(r.trending)+'</td><td>'+f6(r.drifting)+'</td><td>'+f6(r.range)
+      +'</td><td>'+f6(r.sep)+'</td><td>'+f6(r.surr)+'</td><td><b>'
+      +(r.corr>0?'+':'')+f6(r.corr)+'</b></td><td>'+f6(r.median_run,0)
+      +'</td><td>'+f6(r.diagonal)+'</td><td>'+r.pairs_pos+'/28</td></tr>')
+      .join('')+'</tbody></table><div class="count">In-sample. Corrected = '
+     +'separation minus its own surrogate at the same window. <b>17 of 39 '
+     +'windows are positive, all of them past N=18</b> &mdash; the short windows '
+     +'are uniformly negative and the long ones uniformly positive, which is a '
+     +'plateau rather than a spike.</div></div>';
+    if(SCC.length){const c=SCC[0];
+     h+='<div class="tw"><table><thead><tr><th>Holdout, read once</th>'
+      +'<th>trending</th><th>drifting</th><th>range</th><th>Residual</th>'
+      +'<th>Separation</th><th>Surrogate</th><th>Corrected</th><th>p</th>'
+      +'</tr></thead><tbody><tr><td>N='+c.N+' &middot; '+f6(c.lookback,0)
+      +' bars</td><td>'+f6(c.oos_trending)+'</td><td>'+f6(c.oos_drifting)
+      +'</td><td>'+f6(c.oos_range)+'</td><td><b>'+f6(c.oos_residual)
+      +'</b></td><td>'+f6(c.oos_sep)+'</td><td>'+f6(c.surrogate)+' &plusmn; '
+      +f6(c.sd)+'</td><td><b>'+(c.corrected>0?'+':'')+f6(c.corrected)
+      +'</b></td><td>'+f6(c.p)+'</td></tr></tbody></table>'
+      +'<div class="count"><b>The first positive holdout corrected separation in '
+      +'this project</b> &mdash; every gated version was negative. But +0.009 at '
+      +'p=0.314 is inside the noise. The sign flipped; the magnitude did not '
+      +'arrive.</div></div>';}
+    $('#scoreblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
