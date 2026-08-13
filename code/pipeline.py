@@ -60,6 +60,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('leadtime.py')       # can a fast signal bridge the confirmation delay
     run('masweep.py')        # ...and the same three, both windows swept 1-200
     run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
+    run('layer1sum.py')      # every claim next to the test that was run on it
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.
 if os.environ.get('FX_RUN_HORIZON'):

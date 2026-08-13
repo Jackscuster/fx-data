@@ -203,6 +203,9 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <h3>Can a fast signal bridge the confirmation delay?</h3>
 <div id="leadblock"></div>
 <div id="sweepblock"></div>
+<div id="confirmblock"></div>
+<h3>Layer 1, merged &mdash; every claim beside its test</h3>
+<div id="l1sumblock"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -1198,6 +1201,45 @@ function boot(BUNDLE,root){
      +'scores +0.211 excess and its immediate neighbours average '
      +'<b>&minus;0.296</b>. An isolated spike with nothing around it.</div>';
     $('#sweepblock').innerHTML=h;
+   }
+   const MCF=BUN.maconfirm||[],MIS=BUN.maiss||[],LS=BUN.l1sum||[];
+   const gg=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(MCF.length){
+    $('#confirmblock').innerHTML='<div class="note"><b>The sweep above measured '
+     +'every cell on the holdout</b>, so its peak was selected on the same data '
+     +'it was scored on. Redone properly: cell picked on IS, holdout read '
+     +'once.</div><div class="tw"><table><thead><tr><th>Cell (IS-selected)</th>'
+     +'<th>IS excess</th><th>Holdout lift</th><th>Surrogate</th>'
+     +'<th>Holdout excess</th><th>p</th></tr></thead><tbody>'
+     +MCF.map(r=>'<tr><td>'+r.family+' '+r.fast+'/'+r.slow+' &middot; '+r.null
+      +'</td><td>'+(r.is_excess>0?'+':'')+gg(r.is_excess)+'</td><td>'
+      +gg(r.holdout_lift)+'</td><td>'+gg(r.surrogate)+' &plusmn; '+gg(r.sd)
+      +'</td><td><b>'+(r.excess>0?'+':'')+gg(r.excess)+'</b></td><td>'+gg(r.p)
+      +'</td></tr>').join('')+'</tbody></table><div class="count">IS lift 1.492 '
+     +'&rarr; holdout 1.117, and the holdout excess is negative against both '
+     +'nulls. Dropped &mdash; there is no second confirmation signal. The graded '
+     +'confidence stands alone.</div></div>';
+   }
+   if(LS.length){
+    const grp={};LS.forEach(r=>{(grp[r.area]=grp[r.area]||[]).push(r);});
+    $('#l1sumblock').innerHTML='<div class="note">shape (structural, IS-selected '
+     +'cell, 5-bar dwell) &times; activity (nine-box scale tercile) = '
+     +'<b>combined</b>, twelve states, with <b>settling</b> as a graded weight. '
+     +'The nine-box is unchanged and still primary. Every claim below sits next '
+     +'to the test that was run on it.</div>'
+     +Object.keys(grp).map(a=>'<div class="tw"><table><thead><tr><th>'+a
+      +'</th><th>Statistic</th><th>Null</th><th>Verdict</th></tr></thead><tbody>'
+      +grp[a].map(r=>'<tr><td>'+r.claim+'</td><td>'+r.statistic+'</td><td>'
+       +r.null+'</td><td>'+(String(r.verdict).indexOf('HOLDS')===0
+        ?'<b>'+r.verdict+'</b>':r.verdict)+'</td></tr>').join('')
+      +'</tbody></table></div>').join('')
+     +'<div class="note"><b>What to route on.</b> <code>activity</code> / '
+     +'<code>scale_28</code> &mdash; the only axis whose separation survives a '
+     +'surrogate, and only against IID. <code>shape</code> and '
+     +'<code>combined</code> are orthogonal to it and to the nine-box '
+     +'straightness family, so not redundant, but they fail their own nulls, so '
+     +'not informative either. <code>settling</code> is a weight, not a state. '
+     +'<code>tier</code> is description only.</div>';
    }
    if(RS.length){
     const W=640,H=170,PL=40;
