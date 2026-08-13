@@ -57,6 +57,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('shapesplit.py')     # separation split per state, sweep to 400 bars
     run('scoredist.py')      # is the score three clusters or one spread
     run('twoscores.py')      # TWO_SCORES.md: trend and chop scored separately
+    run('measures.py')       # the four measurements, both tests each
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
     run('episodes.py')       # episode-basis and block-bootstrap significance

@@ -1953,6 +1953,88 @@ keep them separate.
 **Note for the record**: activity remains a distance-travelled proxy. FX is
 decentralised and H.10 is close-only; there is no volume anywhere in this work.
 
+### 16.4s The four measurements. One passes test two; the panel test is vacuous.
+
+`measures.py`. All four built, each tested twice, reported separately.
+
+**THE CROSS-PAIR TRAP IS WORSE THAN THE SPEC ASSUMED, and I walked into it
+first.** Excluding the pair from its own leg index is not enough. 28 pairs from 8
+currencies is a **rank-7 panel**, so every pair is an exact linear combination of
+the others — EURGBP minus USDGBP *is* EURUSD. Measured lag-0 correlation against
+a leg proxy built from every other pair: **+1.0000**. That is an identity, not a
+finding, and no exclusion rule repairs it. **A contemporaneous cross-pair reading
+is mathematically vacuous on this panel.**
+
+Rebuilt on a **disjoint proxy** — the 15 pairs sharing *neither* currency, which
+carries no algebraic identity:
+
+| lag | −5 | −3 | −1 | 0 | +1 | +3 | +5 |
+|---|---|---|---|---|---|---|---|
+| r | −0.020 | −0.026 | −0.016 | −0.039 | −0.001 | +0.003 | +0.000 |
+
+Peak |r| is 0.039 at lag 0 and nothing reaches 0.03 elsewhere. **No lead, in
+either direction.** The 68%-retention cross-sectional result quoted in
+TWO_SCORES.md was from the signal search, not from state classification, and does
+not transfer.
+
+**FAILED SWINGS — the surface, extended below the spec's 0.85 floor** because
+separation was still climbing at the edge (same standard as 16.4l):
+
+| X \ Y | 0.5 | 0.75 | 1.0 | 1.5 | 2.0 | 3.0 | 4.0 |
+|---|---|---|---|---|---|---|---|
+| **0.70** | 0.660 | **0.709** | 0.686 | 0.677 | 0.646 | 0.679 | 0.488 |
+| 0.75 | 0.613 | 0.665 | 0.651 | 0.637 | 0.639 | 0.650 | 0.454 |
+| 0.80 | 0.581 | 0.621 | 0.593 | 0.548 | 0.541 | 0.558 | 0.376 |
+| 0.85 | 0.439 | 0.485 | 0.463 | 0.445 | 0.444 | 0.487 | 0.359 |
+| 0.90 | 0.288 | 0.322 | 0.322 | 0.295 | 0.301 | 0.321 | 0.241 |
+| 0.95 | 0.155 | 0.158 | 0.131 | 0.126 | 0.137 | 0.210 | 0.171 |
+| 0.99 | 0.066 | 0.051 | 0.057 | 0.093 | 0.093 | 0.115 | 0.084 |
+
+**18 of 70 cells above 0.5, and the gradient is monotone in X** — a broad ramp,
+not a spike. But the ranking is the opposite of the premise: separation is
+highest at the *loosest* approach threshold. At X=0.70 "approaching the prior
+extreme" means reaching 70% of the band, which is most of the time — so what the
+measurement is really counting is oscillation inside the band, not defended
+levels. Honest reading: it works, and not for the stated reason.
+
+**TEST ONE and TEST TWO, holdout:**
+
+| measurement | sep IS | sep OOS | incremental | surrogate | corrected | lead lift | lead excess |
+|---|---|---|---|---|---|---|---|
+| retr_last | 0.037 | 0.109 | 0.093 | 0.089 | +0.020 | 0.130 | −0.350 |
+| retr_slope | 0.028 | 0.107 | 0.089 | 0.084 | +0.023 | 0.000 | −0.498 |
+| retr_rel | 0.070 | 0.103 | 0.069 | 0.085 | +0.018 | 0.000 | −0.433 |
+| **space_last** | 0.425 | **0.400** | 0.094 | 0.454 | −0.054 | 0.282 | −0.056 |
+| space_slope | 0.319 | 0.321 | 0.118 | 0.315 | +0.006 | 0.144 | −0.193 |
+| space_rel | 0.168 | 0.067 | 0.083 | 0.172 | −0.105 | 0.444 | −0.427 |
+| fail_count | 0.131 | 0.201 | 0.062 | 0.176 | +0.025 | 0.928 | −0.055 |
+| **panel_r2** | 0.248 | 0.080 | 0.079 | 0.122 | −0.042 | **1.341** | **+0.349** |
+
+**Test one**: swing spacing is much the strongest raw descriptor (0.400) but sits
+*below* its surrogate — long windows make persistent states and the surrogate
+gets there too. The retracement family and `fail_count` are marginally positive
+corrected (+0.018 to +0.025). Every incremental value is small but non-zero
+(0.062–0.118), so none of them is purely a restatement of the existing scores.
+
+**Test two**: **only `panel_r2` leads** — 1.341 lift against a surrogate of
+0.991, excess **+0.349**. Everything else fires at or below chance. Note this is
+the one measurement whose *test one* is negative: it leads changes without
+describing the present, the exact opposite pattern from the rest, and exactly the
+case the spec said not to bury.
+
+**REBUILT SCORES.** Score correlation **−0.350 → −0.017** — adding the
+measurements makes trend and chop very nearly orthogonal, which is the design's
+own premise finally holding cleanly. Occupancy barely moves (neither 0.199 →
+0.214), per-cell separation shifts around without improving (trending 0.104 →
+0.088, trend-in-range 0.053 → 0.096), and run lengths lengthen slightly. **The
+43% overlap was not a symptom of crude scores** — better scores made the axes
+independent and left the overlap where it was.
+
+**ACTIVITY, joint or separate**, on the rebuilt scores: separate 12 cells, mean
+|sep| 0.062, min share 0.049; joint 0.068 and 0.043. Joint is marginally better
+on separation and worse on coverage — closer than it was in 16.4r but still not a
+reason to switch.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
