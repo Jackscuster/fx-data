@@ -54,6 +54,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('shape3.py')         # THREE shapes, not four, and the lookback answer
     run('shapewin.py')       # the gate version's lookback sweep, superseded
     run('shapescore.py')     # THE SHIPPED SHAPE READ: continuous score, terciles
+    run('shapesplit.py')     # separation split per state, sweep to 400 bars
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
     run('episodes.py')       # episode-basis and block-bootstrap significance

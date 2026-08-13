@@ -1773,6 +1773,76 @@ self-assertions still pass on all 191,940 pair-days.
 GBPCAD +0.142, USDJPY +0.125; worst GBPAUD −0.126, AUDNZD −0.124, GBPJPY −0.097.
 Still a coin flip pair by pair.
 
+### 16.4p Separation split by state. Drifting is the dead weight.
+
+Every number before this was blended — one figure for the whole classifier, which
+cannot tell "both trend and chop separate" from "one carries it". `shapesplit.py`
+uses **one-versus-rest, signed**: the state's own mean minus every other state's,
+in sd units, per property, per pair, per window. Sweep extended to N=70, a
+393-bar lookback, because corrected separation was still climbing at 200.
+
+**COVERAGE IS FLAT ACROSS THE WHOLE SWEEP** — trending 0.283–0.308, drifting
+0.327–0.391, range 0.326–0.365 at every window. It is fixed by the tercile cut,
+so it carries no information and is a check only.
+
+| | | TRENDING | | | | DRIFTING | | | | RANGE | | |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| N | days | corr | raw | run | diag | corr | raw | run | diag | corr | raw | run |
+| 2 | 12 | −0.016 | 0.581 | 18 | .955 | +0.015 | 0.097 | 13 | .941 | −0.032 | 0.442 | 17 |
+| 6 | 35 | −0.018 | 0.509 | 19 | .960 | +0.013 | 0.065 | 12 | .936 | −0.043 | 0.403 | 14 |
+| 13 | 74 | −0.028 | 0.340 | 21 | .967 | −0.008 | 0.038 | 14 | .943 | −0.015 | 0.282 | 15 |
+| 18 | 101 | −0.012 | 0.277 | 27 | .973 | +0.010 | 0.063 | 15 | .949 | **+0.009** | 0.250 | 17 |
+| 26 | 144 | −0.003 | 0.204 | 27 | .976 | +0.002 | 0.041 | 16 | .953 | **+0.009** | 0.190 | 18 |
+| 34 | 190 | −0.000 | 0.150 | 30 | .979 | −0.004 | 0.024 | 18 | .958 | +0.002 | 0.148 | 18 |
+| 44 | 247 | **+0.039** | 0.153 | 33 | .981 | +0.014 | 0.040 | 19 | .962 | −0.008 | 0.109 | 20 |
+| 55 | 309 | **+0.058** | 0.148 | 34 | .984 | +0.020 | 0.049 | 21 | .966 | −0.004 | 0.086 | 25 |
+| 70 | 393 | **+0.043** | 0.110 | 36 | .986 | +0.021 | 0.049 | 24 | .970 | −0.010 | 0.057 | 28 |
+
+**THE ANSWER TO THE QUESTION: trend and chop both work; the middle is dead
+weight.** Raw one-vs-rest at 144 bars is trending 0.204, range 0.190, drifting
+**0.041**. Drifting never exceeds 0.10 at any window in the sweep. It is the
+middle tercile of a continuous score, so being indistinguishable from average is
+what it is *for* — but it should not be read as a third regime, and the blended
+number was averaging it in.
+
+**AND THEY WANT DIFFERENT WINDOWS.** Trending corrected is negative until a
+~200-bar lookback, turns positive at 247 and peaks **+0.058 at 309 bars**. Range
+corrected is positive only in the **101–190 bar band** (+0.009, +0.009, +0.002)
+and goes negative beyond it. There is no window where both are positive together;
+the best compromise is N=26–34 (144–190 bars) where range is +0.009/+0.002 and
+trending is −0.003/−0.000.
+
+**WHICH PROPERTY CARRIES EACH STATE**, at 144 bars, signed:
+
+| state | autocorr | range/path | dir changes | mean crossings |
+|---|---|---|---|---|
+| trending | +0.007 | **+0.327** | −0.097 | **−0.385** |
+| drifting | −0.037 | +0.055 | +0.058 | +0.014 |
+| range | +0.033 | **−0.360** | +0.028 | **+0.340** |
+
+Trending and range are near mirror images on path efficiency and oscillation
+count. **Autocorrelation carries almost nothing for any state** (+0.007, −0.037,
++0.033) — the work is done by how directly price travels and how often it crosses
+its own mean, not by serial dependence in returns. That is worth knowing given
+autocorrelation was named as the original gap back in 16.4b.
+
+**THE TRADEOFF.** Trending run length climbs 18 → 36 bars and its diagonal 0.955
+→ 0.986 across the sweep. So the windows where trend separation is positive are
+the same ones where a trend state lasts **seven weeks and changes on 1.4% of
+bars**. Range peaks earlier and cheaper: +0.009 at 101–144 bars with 17–18 bar
+runs.
+
+**For an entry held weeks: range is readable at 144 bars, trend is not readable
+until 250+, and at 250+ it is arguably too slow to act on.** If the choice has to
+be one window, 144 bars buys a working chop read and a trend read at parity with
+noise; 309 bars buys the trend read at the cost of a chop read that has gone
+negative and trend episodes lasting seven weeks.
+
+**PER PAIR** (corrected): at 144 bars, trending 13 of 28 positive (median
+−0.004), drifting 16 of 28 (+0.009), range 15 of 28 (+0.017). At 247 bars,
+trending 14 of 28 (−0.002). Still a coin flip pair by pair at every window and
+for every state.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
