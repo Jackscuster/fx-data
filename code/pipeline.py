@@ -58,6 +58,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('transitions.py')    # edge vs interior, and whether direction matters
     run('axes2.py')          # scale ablation, shape x activity, settling overlap
     run('leadtime.py')       # can a fast signal bridge the confirmation delay
+    run('masweep.py')        # ...and the same three, both windows swept 1-200
     run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
 # Horizon sweep: rebuilds 6 signal modules across 28 pairs and runs a 20-shift null
 # at four horizons, ~50 min, so it is opt-in. The committed CSVs regenerate the tables.

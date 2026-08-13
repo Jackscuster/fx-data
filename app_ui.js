@@ -202,6 +202,7 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="axesblock"></div>
 <h3>Can a fast signal bridge the confirmation delay?</h3>
 <div id="leadblock"></div>
+<div id="sweepblock"></div>
 <h3>0b — Window selection</h3>
 <div class="note">The three ribbon lengths come from a measured trade-off, not a preference:
 churn is label changes per 1000 bars, lag is bars until the label follows a genuine change
@@ -1154,6 +1155,49 @@ function boot(BUNDLE,root){
      +'layer1_states.csv is a graded confidence, min(age/5, 1) &mdash; 0.2 on the '
      +'first bar a state is adopted, 1.0 from the fifth. 22.6% of holdout bars '
      +'carry a reduced weight; 77.4% are fully weighted.</div>';
+   }
+   const MW=BUN.masweep||[],MR=BUN.maridge||[];
+   if(MW.length){
+    const g=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+    const ST='product M=5',G=[1,2,3,4,5,6,8,10,13,16,21,27,34,44,56,72,92,118,152,200];
+    const sel=MW.filter(r=>r.state===ST&&r.lead===1&&r.family==='mas');
+    const cell=(f,s2)=>sel.find(r=>r.fast===f&&r.slow===s2);
+    const at=t=>MW.filter(r=>r.excess>t&&r.p<0.05).length;
+    let h='<div class="note"><b>The three candidates in 16.4g were single '
+     +'arbitrary settings</b> &mdash; 5/20, 5/60, 5/60 &mdash; so that result '
+     +'tested three points, not three ideas. All three swept, both windows '
+     +'1&ndash;200 on a 20-point log grid, 3,420 cells in total, every cell '
+     +'against its own surrogate at its own window pair and a common firing '
+     +'budget.</div>'
+     +'<div class="note">A single spiking cell in a 190-cell grid is what noise '
+     +'looks like; a broad <b>plateau</b> would mean something. So: <b>'+at(0.05)
+     +' of '+MW.length+'</b> cells clear excess&gt;0.05 at p&lt;0.05 &mdash; '
+     +(100*at(0.05)/MW.length).toFixed(1)+'%, <i>below</i> the ~5% chance alone '
+     +'produces. '+at(0.10)+' clear at excess&gt;0.10, '+at(0.20)
+     +' at excess&gt;0.20.</div>'
+     +'<div class="tw"><table><thead><tr><th>MAS lift, fast &darr; slow &rarr;'
+     +'</th>'+G.slice(1,12).map(x=>'<th>'+x+'</th>').join('')+'</tr></thead>'
+     +'<tbody>'+G.slice(0,10).map(f=>'<tr><td><b>'+f+'</b></td>'
+      +G.slice(1,12).map(s2=>{const c=cell(f,s2);
+        return '<td>'+(c?(c.lift>=1.5?'<b>'+g(c.lift,2)+'</b>':g(c.lift,2)):'&middot;')+'</td>';})
+      .join('')+'</tr>').join('')+'</tbody></table>'
+     +'<div class="count">The lift surface has genuine structure: one sharp '
+     +'ridge, at fast=5, reaching 2.13&times;. Its excess over its own surrogate '
+     +'is only +0.21, and the surrogate sits at 1.91.</div></div>';
+    if(MR.length) h+='<div class="tw"><table><thead><tr><th>Dwell M</th>'
+     +'<th>Ridge peaks at fast =</th><th>Peak lift</th></tr></thead><tbody>'
+     +MR.map(r=>'<tr><td>'+r.dwell+'</td><td><b>'+r.peak_fast+'</b></td><td>'
+      +g(r.peak_lift,2)+'</td></tr>').join('')+'</tbody></table>'
+     +'<div class="count"><b>The ridge moves with the dwell.</b> That is the '
+     +'mechanism: an M-bar mean&rsquo;s slope turns over exactly the M bars the '
+     +'confirmation is counting, so the signal reads the same window the dwell '
+     +'reads rather than leading it. It cannot bridge a delay it is measuring '
+     +'from the inside &mdash; which is why the lift is large and the surrogate '
+     +'reproduces nearly all of it.</div></div>'
+     +'<div class="note">Range expansion is the clearest failure: its best cell '
+     +'scores +0.211 excess and its immediate neighbours average '
+     +'<b>&minus;0.296</b>. An isolated spike with nothing around it.</div>';
+    $('#sweepblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
