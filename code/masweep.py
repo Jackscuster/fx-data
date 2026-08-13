@@ -51,13 +51,20 @@ from ninestate import nine
 from structval import surrogate
 
 
-def state_masks(px, fit):
-    """-> dict name -> (change mask, valid mask), both numpy bool (n x 28)."""
+def state_masks(px, fit, period='oos'):
+    """-> dict name -> (change mask, valid mask), both numpy bool (n x 28).
+
+    period selects which block the lift is MEASURED on. The whole 16.4h sweep
+    ran with period='oos', which means every one of its 3,420 cells was read on
+    the holdout -- so its peak was selected on the same data it was scored on.
+    That is what 16.4i fixes.
+    """
     sh, act = layers(px, fit)
     LAB = {'product M=%d' % DWELL: product(sh, act, DWELL),
            'structural M=%d' % DWELL: confirm(sh, DWELL),
            'nine-box': nine(px, fit)[0]}
-    oos = np.asarray(px.index >= SPLIT)[:, None]
+    oos = np.asarray(px.index >= SPLIT if period == 'oos'
+                     else px.index < SPLIT)[:, None]
     out = {}
     for k, lab in LAB.items():
         v = lab.values
@@ -116,6 +123,24 @@ def families(px):
             F['rng'][(a, b)] = (rg[a] / rg[a].rolling(b).mean()
                                 ).replace(inf, np.nan).shift(1)
     return F
+
+
+def score_one(px, fam, a, b):
+    """One cell's score, without building the other 569."""
+    lp = np.log(px.astype(float)); rr = lp.diff()
+    inf = [np.inf, -np.inf]
+    if fam == 'mas':
+        sf, ss = lp.rolling(a).mean().diff(), lp.rolling(b).mean().diff()
+        against = (np.sign(sf) != np.sign(ss)) & sf.notna() & ss.notna()
+        v = ((sf.abs() / rr.rolling(VOLW).std()).where(against, 0.0)
+             .replace(inf, np.nan))
+    elif fam == 'vol':
+        v = (rr.rolling(max(a, 2)).std()
+             / rr.rolling(max(b, 2)).std()).replace(inf, np.nan)
+    else:
+        rg = lp.rolling(a).max() - lp.rolling(a).min()
+        v = (rg / rg.rolling(b).mean()).replace(inf, np.nan)
+    return v.shift(1)
 
 
 def sweep(px, fit, masks):
@@ -189,6 +214,81 @@ def ridge(px, fit):
   the surrogate reproduces nearly all of it.""")
 
 
+def split_select(px, fit, nsel=40, nfin=200):
+    """Pick the cell on IS, confirm ONCE on the holdout.
+
+    THE LIFT WILL HOLD AND THAT IS NOT THE TEST. The ridge is mechanical -- an
+    M-bar mean turns over the M bars the dwell counts -- so a large lift is
+    expected on any block and carries no information. What has to hold is the
+    EXCESS over the cell's own surrogate, which is the only part that could
+    represent something the surrogate does not already contain.
+    """
+    print('\n' + '=' * 78)
+    print('IS-ONLY SELECTION, HOLDOUT READ ONCE')
+    ism = state_masks(px, fit, 'is')
+    real = sweep(px, fit, ism)
+    rng = np.random.default_rng(2718)
+    acc = {k: [] for k in real}
+    for i in range(nsel):
+        px2 = surrogate(px, 'sign', rng)
+        for k, v in sweep(px2, fit, state_masks(px2, fit, 'is')).items():
+            acc[k].append(v)
+        if (i + 1) % 10 == 0:
+            print('  IS %d/%d' % (i + 1, nsel), flush=True)
+    rows = []
+    for k, v in real.items():
+        s = np.array(acc[k], float); s = s[np.isfinite(s)]
+        rows.append(dict(family=k[0], fast=k[1], slow=k[2], state=k[3],
+                         lead=k[4], is_lift=v, is_surr=s.mean(),
+                         is_excess=v - s.mean(),
+                         is_z=(v - s.mean()) / s.std() if s.std() else np.nan))
+    S = pd.DataFrame(rows)
+    S.to_csv(os.path.join(ROOTOUT, 'masweep_is.csv'), index=False)
+    print('  cells with POSITIVE IS excess: %d of %d'
+          % (int((S.is_excess > 0).sum()), len(S)))
+    print('\n  TOP 8 ON IS')
+    T = S.sort_values('is_excess', ascending=False)
+    print(T.head(8)[['family', 'fast', 'slow', 'state', 'lead', 'is_lift',
+                     'is_surr', 'is_excess', 'is_z']]
+          .to_string(index=False, float_format=lambda v: '%.3f' % v))
+    w = T.iloc[0]
+    print('\n  CHOSEN ON IS: %s fast=%d slow=%d, state %s, lead %d'
+          % (w.family, w.fast, w.slow, w.state, w.lead))
+    print('  IS lift %.3f  surrogate %.3f  excess %+.3f  z %+.2f'
+          % (w.is_lift, w.is_surr, w.is_excess, w.is_z))
+
+    key = (w.family, int(w.fast), int(w.slow), w.state, int(w.lead))
+    def one(pz, fitz):
+        sc = score_one(pz, key[0], key[1], key[2])
+        m = state_masks(pz, fitz, 'oos')[key[3]]
+        wv = warn_of(fire_of(sc, fitz), key[4])
+        chg, ok = m
+        return wv[chg].mean() / wv[ok].mean()
+    ho = one(px, fit)
+    print('\n  HOLDOUT, read once, %d surrogate draws' % nfin)
+    out = []
+    for kind in ('sign', 'iid'):
+        r2 = np.random.default_rng(1414)
+        v = np.array([one(surrogate(px, kind, r2), fit) for _ in range(nfin)])
+        v = v[np.isfinite(v)]
+        p = (1 + int((v >= ho).sum())) / (len(v) + 1)
+        print('    %-5s lift %.3f   surrogate %.3f +/- %.3f   excess %+.3f   '
+              'p=%.3f' % (kind, ho, v.mean(), v.std(), ho - v.mean(), p))
+        out.append(dict(family=key[0], fast=key[1], slow=key[2], state=key[3],
+                        lead=key[4], is_excess=w.is_excess, null=kind,
+                        holdout_lift=ho, surrogate=v.mean(), sd=v.std(),
+                        excess=ho - v.mean(), p=p))
+    O = pd.DataFrame(out)
+    O.to_csv(os.path.join(ROOTOUT, 'masweep_confirm.csv'), index=False)
+    surv = bool((O.excess > 0.05).all() and (O.p < 0.05).all())
+    print('\n  SURVIVES (excess > 0.05 and p < 0.05 against BOTH nulls): %s'
+          % ('YES' if surv else 'NO'))
+    if not surv:
+        print('  -> dropped. The lift holds because it is mechanical; the excess')
+        print('     does not, which is the part that would have been news.')
+    return surv
+
+
 def main():
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
     fit = px.index < SPLIT
@@ -258,6 +358,7 @@ def main():
                'excess', 'p']]
           .to_string(index=False, float_format=lambda v: '%.3f' % v))
     ridge(px, fit)
+    split_select(px, fit)
     print('\nwrote masweep.csv and masweep_ridge.csv')
 
 

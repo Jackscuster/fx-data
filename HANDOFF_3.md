@@ -1372,6 +1372,72 @@ So the approach is now tested rather than the setting, and the conclusion in
 16.4g stands: the graded `settling` confidence is the answer, and the 4-bar lag
 is accepted.
 
+### 16.4i IS/OOS split on the sweep: dropped. And the merged Layer 1.
+
+**The flaw in 16.4h**: `state_masks` ran with `period='oos'`, so all 3,420 cells
+were measured on the holdout and its peak was selected on the same data it was
+scored on. Redone in `masweep.split_select()`: every cell measured on IS only,
+best cell selected there, holdout read once with 200 surrogate draws.
+
+Two figures I had quoted need fixing: the sweep peak was **2.13×** (2.40× at
+dwell 8), not 1.61 — 1.61 is a cell in the M=13 row — and the grid is **3,420**
+cells, not 6,000.
+
+**On IS**: 1,290 of 3,420 cells have positive excess — 37.7%, below a coin flip.
+Top cell `rng` fast=72 slow=200 on structural M=5 at lead 1, IS lift 1.492
+against a surrogate of 0.914, **excess +0.578, z +3.61**. A strong-looking IS
+result.
+
+**Holdout, read once:**
+
+| null | lift | surrogate | excess | p |
+|---|---|---|---|---|
+| sign | 1.117 | 1.190 ± 0.319 | **−0.073** | 0.592 |
+| iid | 1.117 | 1.260 ± 0.298 | **−0.143** | 0.662 |
+
+IS lift 1.492 → holdout 1.117, and the holdout excess is negative against both
+nulls. **Does not survive. Dropped.** There is no second confirmation signal; the
+graded `settling` confidence stands alone, as specified.
+
+Note what the split changed and what it did not: the *lift* is still above 1 on
+the holdout, because the lift is mechanical (16.4h — the signal reads the same
+window the dwell counts). The *excess* is what had to hold and it did not.
+
+### 16.4j THE MERGED LAYER 1 — final state
+
+`layer1sum.py` assembles every claim next to the test run on it and writes
+`results/layer1_summary.csv`. It computes nothing new.
+
+```
+shape      structural read at the IS-selected cell, 5-bar confirmation dwell
+activity   nine-box scale axis, path/(vol*sqrt(28)), IS terciles
+combined   the twelve-state product, '<activity> <shape>'
+settling   graded confidence, min(age/5, 1)
+```
+
+and `state_7/28/128`, `straight_28`, `scale_28`, `tier`, `age_28` **unchanged**.
+191,940 rows, 28 pairs, 1999-04-01 to 2026-07-31, **1.000 coverage on every
+column** in the holdout. Shares: shape broken 0.633 / range 0.266 / drifting
+0.075 / trending 0.026; activity medium 0.383 / weak 0.321 / strong 0.295;
+settling 0.774 at full weight.
+
+**WHAT SURVIVED ITS OWN NULL — the whole list:**
+
+1. the nine-box **scale axis** on realised vol, +0.330 against an IID surrogate,
+   p=0.016 (and +0.091 on mean-abs-move, p=0.066). Only against IID; the sign
+   surrogate is degenerate for a scale axis.
+2. **strong chop vs strong trend** on bars-to-peak (+1.43 bars) and MFE/|MAE|
+   (+0.21), block-bootstrapped at all three block lengths.
+
+Nothing else. Shape separation fails on bars and fails harder on episodes
+(product M=5: −0.218). The IS-selected structural cell fails. The tier fails.
+The lead-time signals fail, swept and split.
+
+**WHAT TO ROUTE ON**: `activity` / `scale_28`. `shape` and `combined` are
+orthogonal to it (V 0.094) and to the straightness family (V 0.193), so they are
+not redundant — but they fail their own nulls, so they are not informative
+either. `settling` is a weight, not a state. `tier` is description only.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

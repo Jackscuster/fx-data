@@ -1,0 +1,34 @@
+area,claim,statistic,null,verdict,ref
+nine-box scale axis,separates on realised_vol,"0.881 vs surrogate 0.551, corrected +0.330",iid,HOLDS (p=0.016),16.4e
+nine-box scale axis,separates on avg_abs_move,"0.976 vs surrogate 0.885, corrected +0.091",iid,HOLDS (p=0.066),16.4e
+nine-box scale axis,separates on realised_vol,"0.881 vs surrogate 0.851, corrected +0.030",sign (degenerate here),p=0.197,16.4e
+nine-box scale axis,separates on avg_abs_move,"0.976 vs surrogate 0.922, corrected +0.054",sign (degenerate here),p=0.033,16.4e
+shape separation,structural raw,"real 0.336 vs surrogate 0.362, corrected -0.026",sign,FAILS (p=0.851),16.4c
+shape separation,structural M=5,"real 0.495 vs surrogate 0.561, corrected -0.066",sign,FAILS (p=0.950),16.4c
+shape separation,product M=5,"real 0.460 vs surrogate 0.436, corrected +0.024",sign,FAILS (p=0.215),16.4c
+shape separation,grid,"real 0.457 vs surrogate 0.512, corrected -0.054",sign,FAILS (p=0.992),16.4c
+shape separation,structural raw,"real 0.336 vs surrogate 0.351, corrected -0.015",iid,FAILS (p=0.727),16.4c
+shape separation,structural M=5,"real 0.495 vs surrogate 0.552, corrected -0.057",iid,FAILS (p=0.926),16.4c
+shape separation,product M=5,"real 0.460 vs surrogate 0.424, corrected +0.036",iid,FAILS (p=0.140),16.4c
+shape separation,grid,"real 0.457 vs surrogate 0.489, corrected -0.031",iid,FAILS (p=0.884),16.4c
+"shape separation, EPISODE basis",structural M=5,"real 0.459 vs surrogate 0.518, corrected -0.059",sign,FAILS (p=0.885),16.4e
+"shape separation, EPISODE basis",product M=5,"real 0.451 vs surrogate 0.668, corrected -0.218",sign,FAILS (p=1.000),16.4e
+"shape separation, EPISODE basis",grid,"real 0.349 vs surrogate 0.413, corrected -0.064",sign,FAILS (p=1.000),16.4e
+"shape separation, EPISODE basis",structural M=5,"real 0.459 vs surrogate 0.503, corrected -0.044",iid,FAILS (p=0.869),16.4e
+"shape separation, EPISODE basis",product M=5,"real 0.451 vs surrogate 0.664, corrected -0.213",iid,FAILS (p=1.000),16.4e
+"shape separation, EPISODE basis",grid,"real 0.349 vs surrogate 0.409, corrected -0.060",iid,FAILS (p=1.000),16.4e
+"structural cell, IS-selected",N=2 B=3 D=1.00 R=0.62,"holdout 0.495 vs surrogate 0.561, corrected -0.066",sign,FAILS (p=0.909),16.4d
+"structural cell, IS-selected",N=2 B=3 D=1.00 R=0.62,"holdout 0.495 vs surrogate 0.547, corrected -0.051",iid,FAILS (p=0.909),16.4d
+excursion,structure: non-trending minus trending / bars_to_peak,"observed -0.0795, published t -0.22",block bootstrap 21/63/126,FAILS (p 0.905/0.913/0.951),16.4e
+excursion,structure: non-trending minus trending / ratio,"observed -0.0049, published t --",block bootstrap 21/63/126,FAILS (p 0.986/0.981/0.984),16.4e
+excursion,structure: non-trending minus trending / path_eff,"observed +0.0197, published t 2.27",block bootstrap 21/63/126,FAILS (p 0.198/0.231/0.200),16.4e
+excursion,grid: strong chop minus strong trend / path_eff,"observed +0.0145, published t 2.14",block bootstrap 21/63/126,FAILS (p 0.215/0.256/0.193),16.4e
+excursion,grid: strong chop minus strong trend / bars_to_peak,"observed +1.4347, published t 4.78",block bootstrap 21/63/126,HOLDS (p 0.000/0.005/0.000),16.4e
+excursion,grid: strong chop minus strong trend / mfe,"observed +0.0003, published t 0.44",block bootstrap 21/63/126,FAILS (p 0.672/0.622/0.574),16.4e
+excursion,grid: strong chop minus strong trend / ratio,"observed +0.2103, published t --",block bootstrap 21/63/126,HOLDS (p 0.033/0.002/0.000),16.4e
+excursion,tier: all differ minus all agree / ratio,"observed +0.0700, published t --",block bootstrap 21/63/126,FAILS (p 0.312/0.219/0.179),16.4e
+excursion,tier: all differ minus all agree / bars_to_peak,"observed +0.1582, published t 0.69",block bootstrap 21/63/126,FAILS (p 0.577/0.468/0.393),16.4e
+excursion,tier: all differ minus all agree / path_eff,"observed -0.0091, published t -1.67",block bootstrap 21/63/126,FAILS (p 0.187/0.167/0.092),16.4e
+settling vs transitional,are they the same bars,"lift 0.994, Cramers V 0.0020",-,INDEPENDENT,16.4f
+"lead-time, IS-selected cell",rng fast=72 slow=200 on structural M=5,"IS excess +0.578, holdout lift 1.117 vs surrogate 1.190, excess -0.073",sign,FAILS (p=0.592),16.4i
+"lead-time, IS-selected cell",rng fast=72 slow=200 on structural M=5,"IS excess +0.578, holdout lift 1.117 vs surrogate 1.260, excess -0.143",iid,FAILS (p=0.662),16.4i
