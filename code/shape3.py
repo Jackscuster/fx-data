@@ -72,8 +72,10 @@ MODE_SHIPPED, N_SHIPPED = 'relaxed', 6      # the superseded GATE version
 # The shipped shape read is now the CONTINUOUS score (shapescore.py), cut at
 # terciles so every bar lands somewhere. N_SCORE was chosen on IS. The ribbon
 # suffixes are the MEASURED median lookback in bars, not the swing width.
-N_SCORE = 26
-RIBBON = ((2, 12), (6, 35), (26, 144))
+# LOCKED: swing width 19, measured lookback 106 bars. Chosen for 21-bar range
+# episodes over the last 5% of separation -- see 16.4q.
+N_SCORE = 19
+RIBBON = ((6, 35), (19, 106), (44, 247))
 
 from structure import swings, _seg, VOLWIN
 from structsel import chosen_cell

@@ -1843,6 +1843,55 @@ negative and trend episodes lasting seven weeks.
 trending 14 of 28 (−0.002). Still a coin flip pair by pair at every window and
 for every state.
 
+### 16.4q LOCKED at 106 bars. And the score is one spread, not three clusters.
+
+**LOCKED: swing width 19, measured lookback 106 bars.** Chosen for 21-bar range
+episodes over the last 5% of separation. Per state at that window: trending
+sep 0.261 (corrected −0.013, run 27, diag 0.974), range 0.239 (+0.007, run 17,
+0.957), drifting 0.062 (+0.011, run 15, 0.950).
+
+**IS THE SCORE THREE CLUSTERS? No.** Four tests, since no single one settles it:
+
+| | n | sd | excess kurtosis | KDE peaks | BIC k=1 | k=2 | k=3 |
+|---|---|---|---|---|---|---|---|
+| real | 189,341 | 2.498 | **+1.443** | **1 at every bandwidth** | 884,085 | 860,307 | 859,345 |
+| surrogate | 189,248 | 2.635 | +3.095 | 1–2 | 903,836 | 869,425 | 868,698 |
+
+- **A single KDE peak at every bandwidth** (0.15 through 0.40).
+- **Excess kurtosis +1.443** — leptokurtic. Three well-separated clusters are
+  *platykurtic*; the sign is wrong for clusters.
+- BIC picks k=3 — **and so does the surrogate**. The extra components are fitting
+  skew (+0.930) and tails, not finding groups. The k=2→k=3 gain is 0.11% against
+  2.7% for k=1→k=2.
+- The tercile cuts sit at −1.312 and +0.488, **0.72 sd apart** — well inside the
+  body of one distribution.
+
+**So the boundaries are a decision.** Recorded as such.
+
+**BUT THE QUOTA IS NOT WHAT IT LOOKED LIKE.** `fit_frac` fits the CDF on IS and
+applies it unchanged, so holdout shares are free to float — and they do:
+
+| | 2016 | 2019 | 2021 | 2024 | 2026 | spread |
+|---|---|---|---|---|---|---|
+| trending | 0.221 | 0.168 | 0.319 | **0.147** | 0.306 | 0.173 |
+| drifting | 0.419 | 0.418 | 0.359 | 0.410 | 0.335 | 0.118 |
+| range | 0.360 | 0.415 | 0.322 | **0.443** | 0.359 | 0.121 |
+
+**It never forces 33/33/33 out of sample.** 2024 reads 14.7% trending and 44.3%
+range; 2021 reads 31.9% trending. A fixed raw-level cut at the same thresholds
+gives an almost identical yearly spread (0.175 vs 0.173 on trending), so the
+choice between quota-style and fixed-level is a level shift, not a change in
+responsiveness. Kept as-is.
+
+**`shape_score` is now a column** in `layer1_states.csv` — the raw continuous
+value at the base window, before any cut, so Layer 2 can put the boundary
+somewhere else without re-deriving anything. Higher is more trending.
+
+**SHIPPED STATE.** Ribbon `shape_35` / `shape` (=106) / `shape_247`, plus
+`shape_score`. Holdout shape shares trending 0.223 / drifting 0.410 / range
+0.367. `combined` is nine states, min share 0.054, max 0.152. Both self-assertions
+pass on all 191,940 pair-days.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
