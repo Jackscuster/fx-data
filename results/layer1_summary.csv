@@ -30,5 +30,12 @@ excursion,tier: all differ minus all agree / ratio,"observed +0.0700, published 
 excursion,tier: all differ minus all agree / bars_to_peak,"observed +0.1582, published t 0.69",block bootstrap 21/63/126,FAILS (p 0.577/0.468/0.393),16.4e
 excursion,tier: all differ minus all agree / path_eff,"observed -0.0091, published t -1.67",block bootstrap 21/63/126,FAILS (p 0.187/0.167/0.092),16.4e
 settling vs transitional,are they the same bars,"lift 0.994, Cramers V 0.0020",-,INDEPENDENT,16.4f
+regime change counts,shape only,"3117 changes, 4.212% of bars, mean gap 23.7 bars",-,COUNT,16.4k
+regime change counts,activity only,"3125 changes, 4.223% of bars, mean gap 23.7 bars",-,COUNT,16.4k
+regime change counts,both,"132 changes, 0.178% of bars, mean gap 560.6 bars",-,COUNT,16.4k
+regime change counts,split-join any,"6374 changes, 8.613% of bars, mean gap 11.6 bars",-,COUNT,16.4k
+regime change counts,combined (shipped),"4173 changes, 5.639% of bars, mean gap 17.7 bars",-,COUNT,16.4k
+"failed swings, IS-selected cell",X=0.98 Y=3.00 on shape only,"IS excess +0.170, holdout lift 0.164 vs surrogate 0.477, excess -0.313",sign,FAILS (p=0.960),16.4l
+"failed swings, IS-selected cell",X=0.98 Y=3.00 on shape only,"IS excess +0.170, holdout lift 0.164 vs surrogate 0.444, excess -0.281",iid,FAILS (p=0.960),16.4l
 "lead-time, IS-selected cell",rng fast=72 slow=200 on structural M=5,"IS excess +0.578, holdout lift 1.117 vs surrogate 1.190, excess -0.073",sign,FAILS (p=0.592),16.4i
 "lead-time, IS-selected cell",rng fast=72 slow=200 on structural M=5,"IS excess +0.578, holdout lift 1.117 vs surrogate 1.260, excess -0.143",iid,FAILS (p=0.662),16.4i

@@ -132,6 +132,20 @@ def main():
             'lift %.3f, Cramers V %.4f' % (r.lift, r.cramers_v), '-',
             'INDEPENDENT', '16.4f')
 
+    CT = rd('change_counts.csv')
+    for _, r in CT.iterrows():
+        add('regime change counts', str(r.kind),
+            '%d changes, %.3f%% of bars, mean gap %.1f bars'
+            % (r.changes, 100 * r.rate, r.mean_gap), '-', 'COUNT', '16.4k')
+
+    FC = rd('failswing_confirm.csv')
+    for _, r in FC.iterrows():
+        add('failed swings, IS-selected cell',
+            'X=%.2f Y=%.2f on %s' % (r.X, r.Y, r.kind),
+            'IS excess %+.3f, holdout lift %.3f vs surrogate %.3f, excess %+.3f'
+            % (r.is_excess, r.holdout_lift, r.surrogate, r.excess), str(r.null),
+            'FAILS (p=%.3f)' % r.p, '16.4l')
+
     MC = rd('masweep_confirm.csv')
     for _, r in MC.iterrows():
         add('lead-time, IS-selected cell',
