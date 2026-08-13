@@ -122,6 +122,8 @@ out = dict(
     axescts=cl(rd('axes_crosstab_straight.csv').rename(columns={'Unnamed: 0':'shape','state':'shape'})),
     axesset=cl(rd('axes_settling.csv')),
     leadtime=cl(rd('leadtime.csv')),
+    masweep=cl(rd('masweep.csv')),
+    maridge=cl(rd('masweep_ridge.csv')),
     structselres=cl(rd('structsel_result.csv')),
     shapeval=cl(rd('structval.csv').rename(columns={'Unnamed: 0':'prop'})),
     ribsweep=cl(rd('ribbon_sweep.csv')),

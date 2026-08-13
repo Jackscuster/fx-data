@@ -1315,6 +1315,63 @@ lead it.
 bars carry a reduced weight, 77.4% are fully weighted. Not a binary flag, and
 not hidden.
 
+### 16.4h The lead-time candidates, swept. And what the MA signal was doing.
+
+**16.4g tested three points, not three ideas.** `mas` 5/20, `vol` 5/60, `rng`
+5/60 were conventional settings, none selected by anything. A null on one cell
+of a two-dimensional surface says that cell is dead; it says nothing about the
+approach, and reporting it as though it did was wrong. `masweep.py` sweeps all
+three, both windows 1–200 on a 20-point log grid, 3 states × 2 leads = **3,420
+cells**, every cell against its own surrogate at its own window pair and a common
+IS-calibrated firing budget.
+
+**The bar, set before the surface was read:** a single spiking cell in a 190-cell
+grid is what noise looks like. A **plateau** — a contiguous region several cells
+across — would mean something.
+
+| threshold | cells clearing at p<0.05 | share |
+|---|---|---|
+| excess > 0.05 | 102 of 3,420 | **3.0%** |
+| excess > 0.10 | 29 of 3,420 | 0.8% |
+| excess > 0.20 | 5 of 3,420 | 0.1% |
+
+**Chance alone gives about 5% at p<0.05. The sweep produced fewer.**
+
+Per family, on the primary state at lead 1:
+
+| family | cells > 0.05 | largest contiguous | best cell | excess | p | neighbours |
+|---|---|---|---|---|---|---|
+| mas | 37 of 190 | 8 | 5/8 | +0.214 | 0.024 | mean +0.059 |
+| vol | 41 of 189 | 11 | 8/200 | +0.281 | 0.024 | mean +0.076 |
+| rng | 9 of 171 | **1** | 118/152 | +0.211 | 0.317 | mean **−0.296** |
+
+Range expansion is the clearest failure — an isolated spike whose immediate
+neighbours average −0.296.
+
+**WHAT THE MA SIGNAL WAS ACTUALLY DOING.** The raw lift surface is not flat. It
+has one sharp, coherent ridge at **fast=5** running across every slow window,
+peaking at 2.13×, with fast=4 and fast=6 at roughly 1.2. The shipped dwell is
+5 bars. That is not a coincidence, and it is testable — move the dwell and see
+if the ridge moves:
+
+| dwell M | ridge peaks at fast = | peak lift |
+|---|---|---|
+| 2 | **2** | 1.49 |
+| 3 | **3** | 1.63 |
+| 5 | **5** | 2.13 |
+| 8 | **8** | 2.40 |
+| 13 | 8 | 1.85 |
+
+**The ridge tracks the dwell.** An M-bar mean's slope turns over exactly the M
+bars the confirmation is counting, so the signal is reading the same window the
+dwell reads — not leading it. It cannot bridge a delay it is measuring from the
+inside. That is why the lift is large and why the surrogate reproduces nearly all
+of it (1.913 of the 2.127).
+
+So the approach is now tested rather than the setting, and the conclusion in
+16.4g stands: the graded `settling` confidence is the answer, and the 4-bar lag
+is accepted.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
