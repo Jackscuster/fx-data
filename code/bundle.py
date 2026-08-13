@@ -121,6 +121,7 @@ out = dict(
     axesct=cl(rd('axes_crosstab.csv').rename(columns={'Unnamed: 0':'shape','state':'shape'})),
     axescts=cl(rd('axes_crosstab_straight.csv').rename(columns={'Unnamed: 0':'shape','state':'shape'})),
     axesset=cl(rd('axes_settling.csv')),
+    leadtime=cl(rd('leadtime.csv')),
     structselres=cl(rd('structsel_result.csv')),
     shapeval=cl(rd('structval.csv').rename(columns={'Unnamed: 0':'prop'})),
     ribsweep=cl(rd('ribbon_sweep.csv')),

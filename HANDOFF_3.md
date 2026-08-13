@@ -1264,6 +1264,57 @@ work on shape, and its straightness axis is only weakly overlapped. The
 structural layer sits alongside as an orthogonal description in
 `layer1_states.csv` — carried, not routed on.
 
+### 16.4g Bridging the confirmation delay: nothing beats chance
+
+`leadtime.py`. **Deliberately predictive** — the one place in the Layer 1 work
+where that is the right frame. Everywhere else the question is what a state
+describes; here it is whether something fires *before* the dwell confirms a
+change, which cannot be asked in the present tense.
+
+The 5-bar dwell means a change visible in raw structure at *t* is not in the
+shipped label until *t*+4. Three cheap close-only candidates, all lagged:
+
+| | definition |
+|---|---|
+| `mas` | 5-bar mean turning against the 20-bar mean, scored by the fast leg's move in vol units |
+| `vol` | 5-day over 60-day realised volatility |
+| `rng` | 5-bar close range over its own 60-day average |
+
+**Thresholds calibrated, not picked.** Each score is cut at the IS quantile
+giving a 10% firing rate, so all three carry the same budget and their lifts
+compare. A fire is an upward *crossing*, not the condition holding — otherwise a
+persistent condition inflates the base rate and flattens every lift toward 1.
+
+**Held to the confluence standard.** Cross-horizon confluence fired 79% before
+real changes and 79% before surrogate ones. So hit-vs-base is not enough: the
+whole thing — signals *and* states — is rebuilt on 60 sign and 60 IID surrogate
+panels, and what counts is **excess** = lift minus the larger surrogate lift.
+
+Best five of 36:
+
+| state | signal | lead | hit | base | lift | sign | iid | excess | p |
+|---|---|---|---|---|---|---|---|---|---|
+| nine-box | rng | 1 | 4.5% | 3.9% | 1.132 | 1.071 | 1.046 | +0.060 | 0.082 |
+| product M=5 | mas | 1 | 9.0% | 5.2% | **1.739** | 1.680 | 1.658 | +0.059 | 0.197 |
+| product M=5 | rng | 3 | 9.1% | 11.7% | 0.775 | 0.730 | 0.732 | +0.043 | 0.082 |
+| structural M=5 | vol | 2 | 5.5% | 6.4% | 0.858 | 0.808 | 0.824 | +0.035 | 0.164 |
+| nine-box | rng | 3 | 12.1% | 11.7% | 1.031 | 0.997 | 0.964 | +0.034 | 0.066 |
+
+**0 of 36 beat both surrogates by more than 0.05 lift at p<0.05.**
+
+The MA slope divergence looks like a find at first — 1.739× lift, 9.0% hit
+against a 5.2% base, at one bar of lead. Its surrogate is 1.680. Exactly the
+confluence pattern: the signal and the state are both reacting to the same
+volatility burst, so shuffling the signs of the returns barely touches either.
+`vol` and `rng` mostly fire *below* chance — they lag the change rather than
+lead it.
+
+**So the lag is accepted, as specified.** `settling` is now a column in
+`layer1_states.csv`: a graded confidence, `min(age/5, 1)` on the combined state
+— 0.2 on the first bar a state is adopted, 1.0 from the fifth. 22.6% of holdout
+bars carry a reduced weight, 77.4% are fully weighted. Not a binary flag, and
+not hidden.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
