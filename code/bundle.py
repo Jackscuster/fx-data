@@ -134,6 +134,8 @@ out = dict(
     scoredist=cl(rd('scoredist.csv')),
     twocells=cl(rd('twoscores_cells.csv')),
     meas1=cl(rd('measures_test1.csv')),
+    chopcomp=cl(rd('chop_components.csv')),
+    bothep=cl(rd('both_episodes.csv').sort_values('bars',ascending=False).head(15)),
     failsurf=cl(rd('measures_failsurface.csv')),
     scoreyears=cl(rd('scoredist_years.csv')),
     shapesplitp=cl(rd('shapesplit_pairs.csv')),

@@ -58,6 +58,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('scoredist.py')      # is the score three clusters or one spread
     run('twoscores.py')      # TWO_SCORES.md: trend and chop scored separately
     run('measures.py')       # the four measurements, both tests each
+    run('chopmore.py')       # chop redundancy, and what the 'both' cell is
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
     run('episodes.py')       # episode-basis and block-bootstrap significance
