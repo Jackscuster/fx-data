@@ -51,6 +51,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     # structsel picks the structural cell on IS only; combined.py and export.py
     # both read its result, so it must run before either of them.
     run('structsel.py')      # IS-only cell selection, holdout read once
+    run('shape3.py')         # THREE shapes, not four, and the lookback answer
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
     run('episodes.py')       # episode-basis and block-bootstrap significance
@@ -60,6 +61,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('leadtime.py')       # can a fast signal bridge the confirmation delay
     run('masweep.py')        # ...and the same three, both windows swept 1-200
     run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
+    run('oldnew.py')         # old nine-box vs new nine-state, same battery
     run('changes.py')        # shape / activity / both, counted separately
     run('failswing.py')      # within-window rejections, X x Y swept, IS/OOS
     run('layer1sum.py')      # every claim next to the test that was run on it

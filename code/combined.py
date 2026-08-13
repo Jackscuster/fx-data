@@ -18,6 +18,17 @@ held until then. Switching back needs the same M bars, so the rule is symmetric
 in the way a hysteresis band is. It costs M-1 bars of recognition lag and is
 strictly causal: bar t reads only bars t-M+1..t, each already lagged upstream.
 
+THE SHAPE AXIS IS NOW THREE-WAY, NOT FOUR. The spec was nine states -- three
+shapes crossed with three activity levels -- and 'broken' was never part of it.
+It had taken 64% of all days while 'trending' took 2.9%, so the classifier spent
+most of its time reporting a diagnostic rather than a regime. shape3.three_state
+replaces it with a partition: inside the confirmed band is RANGE, outside it is
+TRENDING if the swing sequence supports the break and DRIFTING if it does not.
+Trending goes to 16.8% of holdout bars and the product is 3 x 3 = 9. See 16.4m.
+
+The paragraph below describes the SUPERSEDED four-state read and is kept because
+the 42% correction in it is still the record of what that figure was.
+
 COVERAGE -- THE 42% FIGURE WAS 'broken', NOT 'no swings'. Measured across the
 whole swing-width grid, 'no swings' is 0.9-1.0% of bars at every N, and zero in
 the holdout. The structural vocabulary already labels essentially every bar, so
@@ -71,7 +82,7 @@ def _cfg():
 
 
 CFG = None                          # resolved at call time by layers()
-SHAPE_STATES = ['trending', 'broken', 'range', 'drifting']
+SHAPE_STATES = ['trending', 'range', 'drifting']
 ACT = {0.0: 'weak', 1.0: 'medium', 2.0: 'strong'}
 
 from structval import properties, separation, persistence, surrogate, SHAPE, MAG, W
@@ -99,10 +110,15 @@ def confirm(lab, M):
 
 
 def layers(px, fit, cfg=None):
-    """-> (shape, activity) frames, both defined on every bar."""
-    from structure import five_state
+    """-> (shape, activity) frames, both defined on every bar.
+
+    The shape layer is the THREE-way partition (shape3.py). The four-state read
+    with 'broken' is superseded; see 16.4m.
+    """
+    from shape3 import three_state, MODE_SHIPPED, N_SHIPPED
     from ninestate import raw_axes, tercile
-    sh = five_state(px, *(cfg or _cfg()))
+    _, B, D, R = (cfg or _cfg())
+    sh = three_state(px, N_SHIPPED, B, D, R, MODE_SHIPPED)
     sh = sh.where(sh.isin(SHAPE_STATES))
     act = tercile(raw_axes(px)['scale'], fit).replace(ACT)
     return sh, act.where(act.isin(list(ACT.values())))
