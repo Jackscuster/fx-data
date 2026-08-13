@@ -1616,6 +1616,83 @@ activity on 13 of 28, median −0.005; the dwelled nine-box on 7 of 28.
 `episodes`, `perpair`, `transitions`, `axes2`, `failswing` and `masweep` still
 carry 12-state numbers and refresh on the next full pipeline run.
 
+### 16.4n The shape lookback swept. Coverage fixed, separation not.
+
+**There is no 'broken'. Three shapes: trending, range, drifting.** 16.4m's
+four-state discussion is superseded.
+
+**TWO FACTS ABOUT THE SWEEP AXIS, both of which change what could be swept.**
+
+**A bounded lookback window does nothing.** Capping swing history at L bars and
+sweeping L from 28 to 200 moves the shares by under 0.001 past L=40 — trending
+.054/.056/.056 and residual .025/.009/.009 at L=28/40/200. The sequence rule
+consults only the **last two** confirmed swings per side, and at a narrow swing
+width those sit ~12 bars apart, so a 200-bar cap and a 40-bar cap see the
+identical pair. Longer windows do contain more swings; the rule never looks at
+them.
+
+**So the horizon knob is the swing width, and it is an integer — the lookback is
+quantised.** Achievable medians are 12, 18, 24, 29, 35, 41, 46… bars, not every
+integer day. Every N from 2 to 40 is swept, spanning 12 to 227 bars, each row
+labelled with its measured lookback.
+
+**COVERAGE ACROSS THE SWEEP** (IS, selected rows):
+
+| N | days | trending | range | drifting | residual | sep | corrected | range runs |
+|---|---|---|---|---|---|---|---|---|
+| 2 | 12 | 0.115 | 0.637 | 0.247 | 0.017 | 0.523 | +0.002 | 26 |
+| 4 | 24 | 0.181 | 0.599 | 0.219 | 0.016 | 0.550 | +0.006 | 20 |
+| **6** | **35** | **0.208** | **0.604** | **0.188** | **0.016** | **0.560** | **+0.020** | 22 |
+| 8 | 46 | 0.212 | 0.608 | 0.179 | 0.017 | 0.548 | +0.004 | 24 |
+| 24 | 132 | 0.240 | 0.611 | 0.149 | 0.048 | — | — | 48 |
+| 40 | 227 | 0.256 | 0.608 | 0.135 | 0.082 | — | — | 64 |
+
+**DOES CHOP IMPROVE, SHRINK OR HOLD WHILE TREND GROWS?** Over the full sweep:
+
+- trending **GROWS**, 0.115 → 0.256
+- drifting **SHRINKS**, 0.247 → 0.135
+- range **HOLDS STEADY**, 0.637 → 0.608
+
+But **range episodes lengthen 2.5×, 26 → 64 bars**, while its share barely moves.
+That is the answer to "a three-month range is a stronger chop reading": the long
+window does not find *more* chop, it finds the *same* chop in longer, readable
+episodes. Trending grows and drifting is what it takes from — the trade is
+trend-against-drift, not trend-against-chop.
+
+**SELECTION on IS**, pre-specified: residual ≤2%, every shape ≥10%, then the
+highest null-corrected separation. Nine of 39 windows meet the coverage bar
+(N=2–10), and **all nine have positive corrected separation** — a plateau, not a
+spike. Neighbourhood: +0.006 / +0.015 / **+0.020** / +0.012 / +0.004 across
+N=4–8. **Chosen: N=6, lookback 35 bars.**
+
+**HOLDOUT, READ ONCE, 120 draws:**
+
+| trending | range | drifting | residual | sep | surrogate | corrected | p |
+|---|---|---|---|---|---|---|---|
+| 0.186 | 0.620 | 0.195 | **0.000** | 0.519 | 0.538 ± 0.014 | **−0.019** | 0.901 |
+
+**Coverage is fixed; separation is not.** Zero residual, every shape above 18.6%,
+trending at 18.6% instead of 2.9% — the vocabulary now works. But the separation
+still sits below its own surrogate out of sample, exactly as it did at every
+other setting tried since 16.4b.
+
+**SHIPPED, and now adjustable.** `layer1_states.csv` carries a **shape ribbon** —
+`shape_12`, `shape` (=35), `shape_132` — the direct analogue of
+`state_7/28/128`. Suffixes are the measured median lookback, not the swing width.
+Coverage 0.998 / 0.999 / 0.980. Both self-assertions still pass on all 191,940
+pair-days. For a daily entry held for weeks, `shape` at 35 bars is the base and
+`shape_132` is the multi-month read.
+
+**Points 1 and 2 stand as answered in 16.4m**: the shape column previously used
+no settable window at all (event-driven, median 35 bars at N=5) — that is now
+fixed and exposed as the ribbon above. The old-vs-new battery is in 16.4m; its
+headline is unchanged: the new nine-state is the first classifier here with
+positive corrected shape separation on IS, it does not beat activity-alone, and
+the merge is about the max of its parts.
+
+**Queued in NEXT_WORK.md**: SHAPE_MEASUREMENTS.md — failed swings (partly built,
+needs rescoring as present-tense), retracement depth, swing spacing, cross-pair.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

@@ -208,6 +208,7 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="l1sumblock"></div>
 <h3>Three shapes, and what lookback shape uses</h3>
 <div id="shape3block"></div>
+<div id="swinblock"></div>
 <h3>Old nine-box vs new nine-state</h3>
 <div id="oldnewblock"></div>
 <h3>Three kinds of regime change</h3>
@@ -1382,6 +1383,59 @@ function boot(BUNDLE,root){
      +'it does not beat its own components: activity alone scores +0.037 on the '
      +'same shape properties, and shape3 alone scores &minus;0.011. The merge is '
      +'about the max of its parts, not more than them.</div></div>';
+   }
+   const SW=BUN.shapewin||[],SWC=BUN.shapewinc||[];
+   const f5=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(SW.length){
+    const a=SW[0],b=SW[SW.length-1];
+    let h='<div class="note"><b>A bounded lookback window does nothing.</b> '
+     +'Capping swing history at L bars and sweeping L from 28 to 200 moves the '
+     +'shares by under 0.001 past L=40 &mdash; the sequence rule consults only '
+     +'the <i>last two</i> confirmed swings per side, and at a narrow swing width '
+     +'those sit ~12 bars apart, so a 200-bar cap and a 40-bar cap see the same '
+     +'pair. The horizon knob is the <b>swing width</b>, and because it is an '
+     +'integer the lookback is <b>quantised</b>: 12, 18, 24, 29, 35, 41&hellip; '
+     +'bars, not every integer day.</div>'
+     +'<div class="tw"><table><thead><tr><th>N</th><th>Lookback</th>'
+     +'<th>trending</th><th>range</th><th>drifting</th><th>Residual</th>'
+     +'<th>Separation</th><th>Corrected</th><th>Median run</th><th>Diagonal</th>'
+     +'<th>Range runs</th></tr></thead><tbody>'
+     +SW.map(r=>'<tr><td>'+r.N+'</td><td>'+f5(r.lookback,0)+'</td><td>'
+      +f5(r.trending)+'</td><td>'+f5(r.range)+'</td><td>'+f5(r.drifting)
+      +'</td><td>'+f5(r.residual)+'</td><td>'+f5(r.sep)+'</td><td>'
+      +(r.corr>0?'+':'')+f5(r.corr)+'</td><td>'+f5(r.median_run,0)+'</td><td>'
+      +f5(r.diagonal)+'</td><td>'+f5(r.run_range,0)+'</td></tr>').join('')
+     +'</tbody></table><div class="count">In-sample. Corrected = separation minus '
+     +'its own surrogate at the same window.</div></div>'
+     +'<div class="note"><b>Does chop improve, shrink or hold while trend '
+     +'grows?</b> Over the full sweep trending <b>grows</b> '+f5(a.trending)
+     +' &rarr; '+f5(b.trending)+', drifting <b>shrinks</b> '+f5(a.drifting)
+     +' &rarr; '+f5(b.drifting)+', and range <b>holds steady</b> '+f5(a.range)
+     +' &rarr; '+f5(b.range)+'. But range <i>episodes</i> lengthen '
+     +f5(b.run_range/a.run_range,1)+'&times;, '+f5(a.run_range,0)+' &rarr; '
+     +f5(b.run_range,0)+' bars. The long window does not find MORE chop &mdash; '
+     +'it finds the SAME chop in longer, readable episodes, which is exactly the '
+     +'three-month-range-versus-one-month distinction. Trending grows and '
+     +'drifting is what it takes from.</div>';
+    if(SWC.length){const c=SWC[0];
+     h+='<div class="note"><b>Chosen on IS: N=6, lookback 35 bars.</b> All nine '
+      +'windows meeting the coverage bar (residual &le;2%, every shape &ge;10%) '
+      +'have positive corrected separation &mdash; a plateau, not a spike, with '
+      +'neighbours +0.006 / +0.015 / <b>+0.020</b> / +0.012 / +0.004 across '
+      +'N=4&ndash;8.</div><div class="tw"><table><thead><tr>'
+      +'<th>Holdout, read once</th><th>trending</th><th>range</th>'
+      +'<th>drifting</th><th>Residual</th><th>Separation</th><th>Surrogate</th>'
+      +'<th>Corrected</th><th>p</th></tr></thead><tbody><tr><td>N='+c.N
+      +' &middot; '+f5(c.lookback,0)+' bars</td><td>'+f5(c.oos_trending)
+      +'</td><td>'+f5(c.oos_range)+'</td><td>'+f5(c.oos_drifting)+'</td><td><b>'
+      +f5(c.oos_residual)+'</b></td><td>'+f5(c.oos_sep)+'</td><td>'
+      +f5(c.surrogate)+' &plusmn; '+f5(c.sd)+'</td><td><b>'
+      +(c.corrected>0?'+':'')+f5(c.corrected)+'</b></td><td>'+f5(c.p)
+      +'</td></tr></tbody></table><div class="count"><b>Coverage is fixed; '
+      +'separation is not.</b> Zero residual, every shape above 18%, trending at '
+      +'18.6% instead of 2.9% &mdash; but the separation still sits below its own '
+      +'surrogate on the holdout.</div></div>';}
+    $('#swinblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
