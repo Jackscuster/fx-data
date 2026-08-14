@@ -68,6 +68,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('ratediff_pre1999.py')  # its one-shot pre-1999 confirmation
     run('move.py')           # EXTERNAL DRIVER 2: bond volatility (MOVE)
     run('drivers.py')        # REFRAMED: do drivers SUPPORT the regime call
+    run('drivers_c.py')      # DRIVER 3 equity correlation + FORWARD ODDS
     run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null

@@ -1,0 +1,9 @@
+Driver C -- equity correlation separation
+=========================================
+
+Rolling |corr(pair returns, S&P returns)| at 21 and 63 bars, lagged one.
+Absolute level: strength, not sign. Episode-based; crisis episodes are
+those overlapping a forward-only window from an event date to +15 bars.
+
+Null circularly shifts the S&P RETURN series against price, so the
+index keeps its own behaviour and only the alignment breaks.

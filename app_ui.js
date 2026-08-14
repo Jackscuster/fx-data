@@ -506,6 +506,8 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 <section id="xd" hidden>
 <h3>External drivers &mdash; do they confirm the regime read?</h3>
 <div id="extdrv0"></div>
+<div id="drvc"></div>
+<div id="fwdodds"></div>
 <h3>Direction tests (superseded, kept on file)</h3>
 <div id="extdrv"></div>
 <div id="extdrv2"></div>
@@ -1384,7 +1386,169 @@ function boot(BUNDLE,root){
     +'blocks. And <b>driver A should not be used at all</b>: it clears its null '
     +'only because of 2020 onwards, and reads the wrong sign in 2016–19.</p>'
     +'</div></details>';
+   h+='<div class="note" style="border-left:3px solid var(--mute)">'
+    +'<b>MOVE status after driver 3&rsquo;s run: STILL PROVISIONAL, separation '
+    +'only.</b> Its separation result is corroborated &mdash; same sign and size '
+    +'in every sub-period, crisis days ~0.9&nbsp;sd high. Its <b>forward</b> odds '
+    +'are not: ×0.83 in-sample against ×1.66 out, and the sub-period split cannot '
+    +'corroborate the holdout figure (two windows have too few events, the third '
+    +'reads ×1.18). And the confidence test failed on it, as on everything else. '
+    +'MOVE is a second opinion on the <i>current</i> call and nothing more.</div>';
    $('#extdrv0').innerHTML=h;
+  }
+
+  function buildDriverC(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const SC=BUN.drvsepc||[],CF=BUN.drvconfc||[],FC=BUN.drvfwdc||[],
+         FB=BUN.drvfwdb||[],SU=BUN.drvsubc||[],ME=BUN.drvmech||[],
+         FS=BUN.drvfwdsub||[];
+   if(!SC.length){$('#drvc').innerHTML='';return;}
+   const sep=SC.filter(r=>r.group&&r.real==null), nul=SC.filter(r=>r.real!=null);
+   let h='<h3>Driver 3 — equity correlation (S&amp;P 500)</h3>'
+    +'<div class="note"><b>^GSPC via the Yahoo chart API, 1996-12-09 to '
+    +'2026-08-14, 7,464 closes</b> (cached to <code>data/gspc.csv</code>). '
+    +'Overlap with the FX sample is <b>6,872 bars, 1999-01-04 to 2026-07-30</b> — '
+    +'the whole sample, unlike MOVE which misses the first 3.9 years. Driver is '
+    +'the rolling |correlation| of each pair&rsquo;s returns with S&amp;P returns '
+    +'at 21 and 63 bars. Unlike MOVE it is <b>pair-specific</b>.</div>'
+    +'<div class="note"><b>Mechanism prediction, written down before the run:</b> '
+    +'JPY and CHF crosses are funding currencies moving on global risk, so the '
+    +'equity link should separate most on those and weakly on EURGBP/AUDNZD types. '
+    +'Separation on the wrong pairs would be a red flag, not a pass.</div>';
+
+   h+='<div class="tw"><table><thead><tr><th>W</th><th>Block</th><th>Group</th>'
+    +'<th>Episodes</th><th>Mean |corr|</th><th>Separation vs rest</th></tr>'
+    +'</thead><tbody>'+sep.map(r=>'<tr><td>'+r.W+'</td><td>'+r.block+'</td><td>'
+     +r.group+'</td><td>'+r.episodes+'</td><td>'+f(r.mean_drv,4)+'</td><td><b>'
+     +(r.sep_vs_rest>0?'+':'')+f(r.sep_vs_rest)+'</b></td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Test 1 — separation.</b> — '
+    +'<code>results/driver_separation_c.csv</code></div></div>';
+
+   if(nul.length) h+='<div class="tw"><table><thead><tr><th>Block</th>'
+    +'<th>Chosen on IS</th><th>Real</th><th>Null</th><th>Rank</th><th>p</th>'
+    +'</tr></thead><tbody>'+nul.map(r=>'<tr><td>'+r.block+'</td><td>W='+r.W+' '
+     +r.group+'</td><td><b>'+(r.real>0?'+':'')+f(r.real,4)+'</b></td><td>'
+     +f(r.null_mean,4)+' ± '+f(r.null_sd,4)+'</td><td>'+r.rank_of_real+' of '
+     +r.n_compared+'</td><td><b style="color:'+(r.p<0.05?'var(--trend)':'var(--chop)')
+     +'">'+f(r.p)+'</b></td></tr>').join('')+'</tbody></table>'
+    +'<div class="count">In-sample clears at p=0.020; <b>the holdout flips sign '
+    +'and fails at p=0.647</b>.</div></div>';
+
+   if(SU.length){const per=['2016-19','2020-21','2022-26'];
+    h+='<div class="tw"><table><thead><tr><th>Group</th>'
+     +per.map(p=>'<th>'+p+'</th>').join('')+'</tr></thead><tbody>'
+     +['trending','ranging','crisis'].map(g=>'<tr><td>'+g+'</td>'
+      +per.map(p=>{const r=SU.find(x=>x.group===g&&x.period===p);
+        return '<td>'+(r&&r.sep!=null?((r.sep>0?'+':'')+f(r.sep)):'—')+'</td>';})
+       .join('')+'</tr>').join('')+'</tbody></table>'
+     +'<div class="count"><b>Sub-period split, run before reporting.</b> Crisis '
+     +'reads +0.112 / &minus;0.105 / &minus;0.139 — inconsistent in sign. This is '
+     +'the check that killed driver 1. — '
+     +'<code>results/driver_subperiod_c.csv</code></div></div>';}
+
+   if(ME.length){
+    const fu=ME.filter(r=>r.funding===true||r.funding==='True'),
+          nf=ME.filter(r=>!(r.funding===true||r.funding==='True'));
+    const am=a=>a.reduce((s,r)=>s+Math.abs(r.sep),0)/(a.length||1);
+    const top=ME.slice().sort((a,b)=>Math.abs(b.sep)-Math.abs(a.sep)).slice(0,5);
+    h+='<div class="note"><b>Mechanism check.</b> JPY/CHF crosses mean |sep| <b>'
+     +f(am(fu))+'</b> (n='+fu.length+') against <b>'+f(am(nf))+'</b> for all '
+     +'others (n='+nf.length+') — the prediction holds <i>on the mean</i>. But the '
+     +'largest single separation is <b>'+top[0].pair+' '+(top[0].sep>0?'+':'')
+     +f(top[0].sep,2)+'</b>, which is not a funding cross, and the top five are '
+     +top.map(r=>r.pair+' '+(r.sep>0?'+':'')+f(r.sep,2)).join(', ')+'. A margin '
+     +'of '+f(am(fu)-am(nf))+' sd with a non-funding pair at the top is weak '
+     +'support, and the driver failed its holdout anyway. — '
+     +'<code>results/driver_mechanism_c.csv</code></div>';}
+
+   if(CF.length) h+='<div class="tw"><table><thead><tr><th>Block</th>'
+    +'<th>State</th><th>Subset</th><th>Episodes</th><th>Median run</th></tr>'
+    +'</thead><tbody>'+CF.map(r=>'<tr><td>'+r.block+'</td><td>'+r.state
+     +'</td><td>'+r.subset+'</td><td>'+r.episodes+'</td><td>'+f(r.median_run,1)
+     +'</td></tr>').join('')+'</tbody></table>'
+    +'<div class="count"><b>Test 2 — confidence. RETIRED.</b> Run-length gaps '
+    +'(driver high minus low) are +1.0, +1.0, +1.5 and +8.5 bars — three of four '
+    +'under two bars on a ~23-bar median, which is noise. This test has now failed '
+    +'on all three drivers: rate-gap momentum (26.0 vs 20.0 in-sample collapsing '
+    +'to 19.0 vs 18.0), MOVE (flip-rate sign flipped between blocks) and equity '
+    +'correlation. <b>Agreement between a driver and the state call does not make '
+    +'the call more reliable, and three independent attempts is enough.</b> — '
+    +'<code>results/driver_confidence_c.csv</code></div></div>';
+   $('#drvc').innerHTML=h;
+  }
+
+  function buildForwardOdds(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const FC=BUN.drvfwdc||[],FB=BUN.drvfwdb||[],FS=BUN.drvfwdsub||[];
+   if(!FC.length){$('#fwdodds').innerHTML='';return;}
+   const cell=A=>A.filter(r=>r.bucket);
+   const nl=A=>A.filter(r=>r.real!=null);
+   let h='<h3>Forward odds — the only place prediction lives</h3>'
+    +'<div class="note" style="border-left:3px solid var(--trend)">'
+    +'<b>Layer 1 does not predict.</b> It is a view of the current regime and is '
+    +'never modified for, fed by, or judged on prediction. <b>Only drivers carry '
+    +'forward odds</b>, they are reported as their own block, and nothing here '
+    +'changes a state label.</div>'
+    +'<div class="tw"><table><thead><tr><th>Driver</th><th>Block</th>'
+    +'<th>Metric</th><th>Base</th><th>Low</th><th>Mid</th><th>High</th></tr>'
+    +'</thead><tbody>'
+    +[['C',FC],['B',FB]].map(([nm,A])=>{
+      const C2=cell(A);const mets=[...new Set(C2.map(r=>r.metric))];
+      return mets.map(mt=>['is','oos'].map(bl=>{
+        const d=C2.filter(r=>r.metric===mt&&r.block===bl);
+        if(!d.length)return '';
+        const g=b=>{const r=d.find(x=>x.bucket===b);
+          return r?(f(r.p)+' <span class="count">×'+f(r.lift,2)+'</span>'):'—';};
+        return '<tr><td>'+nm+'</td><td>'+bl+'</td><td>'+mt+'</td><td>'
+         +f(d[0].base)+'</td><td>'+g('low')+'</td><td>'+g('mid')+'</td><td>'
+         +g('high')+'</td></tr>';}).join('')).join('');}).join('')
+    +'</tbody></table><div class="count">Probability of each regime over the next '
+    +'20 bars, by tercile of today&rsquo;s driver reading. <b>One crisis is one '
+    +'observation</b> — the crisis row is computed at day level against distinct '
+    +'event dates, not per bar or per pair. — <code>results/driver_forward_c.csv</code>, '
+    +'<code>results/driver_forward_b.csv</code></div></div>';
+   const N=nl(FC).concat(nl(FB));
+   if(N.length) h+='<div class="tw"><table><thead><tr><th>Driver</th>'
+    +'<th>Block</th><th>High-bucket lift</th><th>Null</th><th>Rank</th><th>p</th>'
+    +'</tr></thead><tbody>'+N.map(r=>'<tr><td>'+r.driver+'</td><td>'+r.block
+     +'</td><td><b>'+f(r.real)+'</b></td><td>'+f(r.null_mean)+' ± '+f(r.null_sd)
+     +'</td><td>'+r.rank_of_real+' of '+r.n_compared+'</td><td><b style="color:'
+     +(r.p<0.05?'var(--trend)':'var(--chop)')+'">'+f(r.p)+'</b></td></tr>')
+     .join('')+'</tbody></table>'
+    +(FS.length?('<div class="count">Sub-period lift: '
+      +FS.map(r=>r.driver.split(' ')[0]+' '+r.period+' '
+        +(r.lift==null||isNaN(r.lift)?'n/a':f(r.lift,2))).join(' · ')+'</div>'):'')
+    +'<div class="count"><b>Neither driver has usable forward odds.</b> Equity '
+    +'correlation flips from ×1.21 in-sample to ×0.61 out, and fails its null in '
+    +'both blocks. MOVE flips the other way — ×0.83 in-sample to <b>×1.66</b> out, '
+    +'which does clear its null (p=0.043) — but its in-sample block sits <i>below</i> '
+    +'base rate and the sub-period split cannot corroborate it: two of three '
+    +'windows have too few events to compute, and the one that does reads ×1.18, '
+    +'not ×1.66. By the standard now in force that is not a pass.</div></div>';
+   h+='<details class="panel" style="margin-top:14px" open>'
+    +'<summary style="cursor:pointer;font-weight:600">Forward odds '
+    +'<span class="count">plain English</span></summary>'
+    +'<div style="margin-top:10px;font-size:13px;line-height:1.65">'
+    +'<p><b>What it is.</b> Given what a driver reads today, how likely is each '
+    +'regime at some point in the next 20 bars — and is that different from the '
+    +'unconditional rate?</p>'
+    +'<p><b>How it is calculated.</b> Days are split into terciles of the '
+    +'driver&rsquo;s reading, cut on in-sample data only. For crisis, the question '
+    +'is whether one of the 54 dated events falls in the next 20 bars, counted '
+    +'once per event at day level. For trending and ranging it is per pair: does '
+    +'the pair enter that state at any point in the window.</p>'
+    +'<p><b>How to read it.</b> The lift column is bucket over base. ×1.00 is no '
+    +'information. The cell that would matter is the high bucket on '
+    +'P(crisis in 20 bars): the price-based detector has <b>zero days of '
+    +'warning</b>, so a driver that raised those odds would be genuinely new.</p>'
+    +'<p style="color:var(--chop)"><b>What it is NOT.</b> <b>Layer 1 does not '
+    +'predict — only drivers carry forward odds</b>, and none of them currently '
+    +'carries any that survive. This is not a directional forecast: it says '
+    +'nothing about which way price moves, only which regime may appear. And a '
+    +'lift above 1.00 in one block is not a finding — both drivers here flip sign '
+    +'between in-sample and holdout, which is exactly what a spurious result looks '
+    +'like.</p></div></details>';
+   $('#fwdodds').innerHTML=h;
   }
 
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
@@ -3057,6 +3221,8 @@ function boot(BUNDLE,root){
   buildCurrentStates();
   buildExtDrivers();
   buildDriversReframed();
+  buildDriverC();
+  buildForwardOdds();
   buildDrivers2();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
   (function(){

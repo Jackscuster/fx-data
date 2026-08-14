@@ -2664,6 +2664,62 @@ and CHF have 2-year yields before 1999, and the yields go back to **1998-06, not
 **Files**: `driver_separation_{a,b}.csv`, `driver_confidence_{a,b}.csv`,
 `driver_subperiod.csv`, each with a `.txt` companion.
 
+### 16.5d Driver 3 dead. Confidence test retired. No driver has forward odds.
+
+**S&P 500**: ^GSPC via the Yahoo chart API, **1996-12-09 to 2026-08-14, 7,464
+closes**, cached to `data/gspc.csv`. Overlap with the FX sample is **6,872 bars,
+1999-01-04 to 2026-07-30** — the whole sample, unlike MOVE which misses 3.9 years.
+Yahoo's CSV endpoint 401s; the chart API works.
+
+**TEST 1 — SEPARATION: FAILS.**
+
+| W | block | group | episodes | sep vs rest |
+|---|---|---|---|---|
+| 21 | is | crisis | 990 | **+0.172** (rank 1 of 51, p=0.020) |
+| 21 | oos | crisis | 757 | **−0.071** (rank 33 of 51, p=0.647) |
+
+Sign flips. Sub-period split, run before reporting: crisis **+0.112 / −0.105 /
+−0.139** — inconsistent across the three windows. Same failure mode as driver 1.
+
+**Mechanism prediction — technically holds, but weakly.** JPY/CHF crosses mean
+|sep| **0.238** against **0.199** for the rest, so funding crosses do separate
+more on average. But the largest single separation is **EURAUD −0.76**, not a
+funding cross, and the margin is 0.039 sd. Reported because it was
+pre-registered; it does not rescue a driver that failed its holdout.
+
+**TEST 2 — CONFIDENCE: RETIRED.** Run-length gaps (driver high minus low):
+**+1.0, +1.0, +1.5, +8.5** bars — three of four under two bars on a ~23-bar
+median. The test has now failed on all three drivers: rate-gap momentum (26.0 vs
+20.0 in-sample collapsing to 19.0 vs 18.0), MOVE (flip-rate sign flipped between
+blocks), equity correlation. **Agreement between a driver and the state call does
+not make the call more reliable. Three independent attempts is enough — the test
+is retired**, recorded in `driver_confidence_c.txt`.
+
+**TEST 3 — FORWARD ODDS: neither driver has any.** Base rate for P(crisis in 20
+bars) is 0.121 IS / 0.154 OOS.
+
+| driver | block | high-bucket lift | null | rank | p |
+|---|---|---|---|---|---|
+| C equity | is | 1.214 | 0.932 ± 0.215 | 20 of 51 | 0.392 |
+| C equity | oos | **0.612** | 0.982 ± 0.246 | 6 of 51 | 0.118 |
+| B MOVE | is | **0.827** | 1.002 ± 0.230 | 26 of 51 | 0.510 |
+| B MOVE | oos | **1.661** | 0.947 ± 0.244 | 2 of 46 | **0.043** |
+
+Equity correlation flips ×1.21 → ×0.61 and fails both blocks. **MOVE flips the
+other way and its holdout clears at p=0.043** — but its in-sample block sits
+*below* base rate, and the sub-period split cannot corroborate it: two of three
+windows have too few events to compute and the third reads **×1.18, not ×1.66**.
+By the standard now in force that is not a pass.
+
+**MOVE STATUS: still provisional, separation only.** Separation is corroborated —
+same sign and size in every sub-period, crisis days ~0.9 sd high. Forward odds are
+not. Confidence failed. It is a second opinion on the *current* call and nothing
+more.
+
+**Files**: `driver_separation_c.csv`, `driver_confidence_c.csv`,
+`driver_forward_c.csv`, `driver_forward_b.csv`, `driver_subperiod_c.csv`,
+`driver_forward_subperiod.csv`, `driver_mechanism_c.csv`.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

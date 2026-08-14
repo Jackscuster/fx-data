@@ -1,0 +1,6 @@
+Driver C -- holdout separation split by sub-period
+==================================================
+
+Run BEFORE any holdout pass is reported. This check is what killed
+driver 1, whose ranging separation read the wrong sign in 2016-19 and
+only worked from 2020.
