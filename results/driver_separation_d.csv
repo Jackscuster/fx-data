@@ -1,0 +1,9 @@
+driver,block,group,episodes,mean_drv,sep_vs_rest,real,n_shifts,null_mean,null_sd,rank_of_real,n_compared,p
+D curve |slope gap|,is,trending,233.0,0.7541240405649017,0.09136595398144634,,,,,,,
+D curve |slope gap|,is,ranging,270.0,0.7354679569006919,0.0379957797474213,,,,,,,
+D curve |slope gap|,is,crisis,357.0,0.694398413887204,-0.10803788638960482,,,,,,,
+D curve |slope gap|,oos,trending,160.0,0.3868357551966662,0.06126110813973342,,,,,,,
+D curve |slope gap|,oos,ranging,143.0,0.33441635849416496,-0.1759010067702844,,,,,,,
+D curve |slope gap|,oos,crisis,273.0,0.38656520599868266,0.082376178150468,,,,,,,
+D curve |slope gap|,is,crisis,,,,-0.10803788638960482,50.0,-0.018876040548610678,0.1370339530264759,29.0,51.0,0.5686274509803921
+D curve |slope gap|,oos,crisis,,,,0.082376178150468,50.0,-0.01109955162064862,0.13324590048279988,35.0,51.0,0.6862745098039216

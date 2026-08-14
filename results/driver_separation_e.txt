@@ -1,0 +1,8 @@
+Driver E commodities -- separation (this test decides keep or kill)
+===================================================================
+
+Verdict: DEAD -- sign flips.
+
+A driver dies only when its read on the PRESENT is
+unreliable -- a sign flip between data halves or between
+sub-periods. Failing the forward test never kills a driver.

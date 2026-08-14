@@ -1,0 +1,63 @@
+THE FIVE-DRIVER PROGRAMME, CLOSED
+=================================
+
+WHAT WAS TESTED. Five external drivers against the regime classifier, each on the
+same terms: does it read differently across trending, ranging and crisis days,
+now. Lag one bar, in-sample 1999-2015 chooses, holdout 2016-2026 is read once,
+episodes not bars, circular-shift null with 50 draws, and a sub-period split of
+the holdout run BEFORE any pass is reported.
+
+THE RESULT. One keeper out of five.
+
+  1 rate differential momentum   DEAD        sub-period sign flip
+  2 MOVE bond volatility         KEEPER      held sign everywhere
+  3 equity correlation           DEAD        sign flip between halves
+  4 yield curve shape            DEAD        sign flip, halves and sub-periods
+  5 commodities (oil, gold)      DEAD        sub-period sign flip
+  5b NZD commodities             UNTESTABLE  no free data exists
+
+WHAT FREE EXTERNAL DATA CAN DO FOR THIS SYSTEM. One thing: bond volatility
+confirms a crisis reading that price structure has already made. Crisis days
+carry a MOVE level about 0.9 sd above everything else, and that holds in every
+sub-period of the holdout. It is a second opinion on the present, and it is
+worth having precisely because it comes from outside the price series the
+classifier is built on.
+
+WHAT IT CANNOT DO. Two things, both established rather than assumed.
+
+  It cannot make the state call more reliable. The confidence test -- are runs
+  longer and flips fewer when the driver agrees -- was run on three drivers and
+  failed on all three. It is retired.
+
+  It cannot see forward. Every forward-odds reading that looked like something
+  either flipped sign between halves (equity x1.21 -> x0.61, MOVE x0.83 -> x1.66)
+  or failed its null when tested (commodities x1.17 in both halves, p=0.255 and
+  p=0.235). Nothing in the free external data raises the odds of a crisis in the
+  next 20 bars in a way that survives.
+
+WHY THE FAILURES LOOK THE WAY THEY DO. Four of the five died the same death: a
+result that is real in one block or one sub-period and gone or reversed in
+another. That is what a driver looks like when it tracks a regime of the world
+rather than a property of the market -- 2020-21 dominates almost every one of
+these tables. The sub-period split is what exposed it, and it is now standard.
+
+WHERE PREDICTIVE VALUE WOULD HAVE TO COME FROM. Not from prices of other assets,
+which is what all five of these are. The remaining candidates are all about
+POSITIONING and EXPECTATIONS rather than realised prices:
+
+  CFTC Commitments of Traders   FREE, weekly, and NOT YET TESTED. Speculative
+                                positioning in FX futures. Weekly frequency is a
+                                real limit against a daily classifier and the
+                                data is US-exchange only, but it is free and it
+                                is the one obvious gap left in the free universe.
+  FX options risk reversals     PAID. The clearest measure of what the market is
+                                paying for protection, which is the closest free
+                                analogue MOVE only approximates.
+  Dealer / bank flow            PAID, and mostly not redistributable.
+  Order book depth              PAID.
+
+So the honest position is this: the free external universe has been worked
+through and it yields one confirmation signal and no forecast. Anything further
+requires either the CFTC positioning data -- free, weekly, untested -- or paid
+options data. Layer 1 remains what it always was: a view of the current regime,
+never judged on prediction.
