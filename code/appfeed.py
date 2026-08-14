@@ -15,16 +15,35 @@ every float is rounded to the fewest digits that survive a chart at screen
 resolution, and nulls are written as null rather than a padded float. That lands
 it near the existing explorer feed rather than three times it.
 
+THE CHART VIEW ALSO READS THIS FILE, which is why three things were added to it
+rather than a second nine-megabyte payload being built beside it:
+
+  cuts    the two boundaries the classifier actually cuts at, so the optional
+          score panel can draw them instead of the reader guessing.
+  trb     the trend score AFTER the activity adjustment. This matters and is the
+          reason a plain `tr` line would misexplain the label: the cut mt is
+          applied to tr minus the activity bump, so plotting raw `tr` against mt
+          would show bars sitting the wrong side of a line they never crossed.
+          Both series are kept -- `tr` raw, `trb` as used.
+  crisis  indices of days inside the forward-only acute-crisis window, so the
+          chart can mark them. The window opens ON a news-dated event and never
+          before it; these marks are the detector CONFIRMING, never predicting.
+
 Writes app_regime.json at the repo root and in results/.
 """
 import json
 import numpy as np, pandas as pd
 
 L1 = os.path.join(ROOTOUT, 'layer1_states.csv')
+SPLIT = pd.Timestamp('2016-01-01')
 PX = os.path.join(ROOTDATA, 'px28.csv')
 OUT = 'app_regime.json'
 SHAPES = ['trending', 'ranging', 'trend-in-range', 'neither']
 ACTS = ['weak', 'medium', 'strong']
+
+
+from final import scores as _sc, activity as _act, DROP_TESTS, BUMP, ACTW
+from drivers import crisis_mask
 
 
 def rnd(v, n):
@@ -46,6 +65,22 @@ def main():
            'pairs': {}}
     sidx = {s: i for i, s in enumerate(SHAPES)}
     aidx = {a: i for i, a in enumerate(ACTS)}
+    # the series the cuts are ACTUALLY applied to, plus the cuts themselves
+    fitm = np.asarray(px.index < SPLIT)
+    _tr, _ch = _sc(px, fitm, drop_tests=DROP_TESTS)
+    _a = _act(px, fitm)
+    _trb = _tr - _a.replace(ACTW).astype(float) * BUMP
+    _ft = np.where(fitm[:, None], _trb.values, np.nan)
+    _fc = np.where(fitm[:, None], _ch.values, np.nan)
+    out['cuts'] = {'mt': round(float(np.nanmedian(_ft)), 4),
+                   'mc': round(float(np.nanmedian(_fc)), 4)}
+    cm, n_ev = crisis_mask(px.index)
+    cmi = cm.reindex(pd.DatetimeIndex(dates)).fillna(False).values
+    out['crisis'] = [int(i) for i in np.flatnonzero(cmi)]
+    out['crisis_events'] = int(n_ev)
+    print('  cuts mt=%.4f mc=%.4f | %d acute-crisis days from %d events'
+          % (out['cuts']['mt'], out['cuts']['mc'], len(out['crisis']), n_ev))
+
     for p, g in S.groupby('pair'):
         g = g.set_index('date')
         pos = np.array([di[d] for d in g.index])
@@ -65,6 +100,7 @@ def main():
             'ac': [None if x is None else int(x)
                    for x in col('activity', 0, aidx)],
             'tr': col('trend_score', 2),
+            'trb': rnd(_trb[p].reindex(pd.DatetimeIndex(dates)).values, 2),
             'ch': col('chop_score', 2),
             'set': col('settling', 2),
             'mf': col('m_fail', 1),

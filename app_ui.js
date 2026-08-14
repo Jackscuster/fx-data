@@ -4,6 +4,7 @@
 const $=s=>document.querySelector(s);
 const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="true" data-t="today">Today</button>
+<button role="tab" aria-selected="false" data-t="chart">Chart</button>
 <button role="tab" aria-selected="false" data-t="pairs2">Pairs</button>
 <button role="tab" aria-selected="false" data-t="how">How it works</button>
 <button role="tab" aria-selected="false" data-t="evid">Evidence</button>
@@ -83,6 +84,22 @@ const PSTYLE=`<style>
  vertical-align:top}
 .prod .bar{height:8px;border-radius:4px;overflow:hidden;display:flex;min-width:90px}
 .prod .bar i{display:block;height:100%}
+.prod .ctools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 10px;
+ font-size:13px}
+.prod .ctools select{font:inherit;padding:3px 6px;border-radius:7px;
+ border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit}
+.prod .rbtns{display:inline-flex;gap:4px}
+.prod .rb{font:inherit;font-size:12px;padding:3px 10px;border-radius:7px;cursor:pointer;
+ border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit}
+.prod .rb.on{background:rgba(128,128,128,.2);font-weight:600}
+.prod .scl{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;opacity:.85}
+.prod .chsvg{width:100%;height:auto;display:block;overflow:visible}
+.prod .scnote{font-size:12.5px;line-height:1.55;opacity:.85;margin:14px 0 6px}
+.prod .chlegend{display:flex;flex-wrap:wrap;gap:14px;margin:9px 0 2px;font-size:12.5px}
+.prod .lg{display:inline-flex;align-items:center;gap:6px}
+.prod .lg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.prod .card[data-pair]{cursor:pointer}
+.prod .card[data-pair]:hover{border-color:rgba(128,128,128,.5)}
 .advbtn{margin-left:auto;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;
  border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit}
 .advbtn[aria-pressed="true"]{background:rgba(128,128,128,.18)}
@@ -90,6 +107,7 @@ const PSTYLE=`<style>
 </style>`;
 const PROD=PSTYLE
 +'<section id="today"><div class="prod" id="todaywrap"></div></section>'
++'<section id="chart" hidden><div class="prod" id="chartwrap"></div></section>'
 +'<section id="pairs2" hidden><div class="prod" id="pairswrap"></div></section>'
 +'<section id="how" hidden><div class="prod" id="howwrap"></div></section>'
 +'<section id="evid" hidden><div class="prod" id="evidwrap"></div></section>';
@@ -982,6 +1000,199 @@ function boot(BUNDLE,root){
   const SLUG=x=>'s-'+String(x||'').replace(/[^a-z-]/g,'');
   const CAP=x=>String(x||'').charAt(0).toUpperCase()+String(x||'').slice(1);
 
+  // ---------------- CHART: price action meets regime ----------------
+  // One state colour map, used by Today (via CSS classes with the same hexes),
+  // Pairs and Chart. Changing a colour here changes it everywhere it is drawn.
+  const PCOL={'trending':'#2e9e6b','ranging':'#3b7fc4',
+              'trend-in-range':'#7b8493','neither':'#767b88'};
+  const ASHADE={'weak':0.00,'medium':0.05,'strong':0.11};
+  const CHS={pair:'EURUSD',years:1,scores:false};
+
+  function chartOpen(){
+   const w=$('#chartwrap'); if(!w) return;
+   if(REG){drawChartUI();return;}
+   w.innerHTML='<h2>Chart</h2><p class="sub">Loading the price and regime feed '
+    +'(about 10 MB, fetched once)&hellip;</p>';
+   const url=(BUN.meta&&BUN.meta.regime_url)||'app_regime.json';
+   fetch(url).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(j=>{REG=j;drawChartUI();})
+    .catch(e=>{w.innerHTML='<h2>Chart</h2><div class="box warn">Could not load '
+      +'<code>app_regime.json</code> ('+e.message+'). It must sit beside '
+      +'<code>app_data.json</code>.</div>';});
+  }
+  function showChart(p){ if(p)CHS.pair=p; show('chart'); }
+
+  function drawChartUI(){
+   const w=$('#chartwrap'); if(!w||!REG) return;
+   const pairs=Object.keys(REG.pairs).sort();
+   if(pairs.indexOf(CHS.pair)<0)CHS.pair=pairs[0];
+   const RB=[['1y',1],['3y',3],['10y',10],['all',99]];
+   w.innerHTML='<h2>Chart &mdash; price and the label together</h2>'
+    +'<p class="sub">The daily close, coloured by the regime the classifier was '
+    +'in <b>on that day</b>. Nothing here is repainted with hindsight: every '
+    +'label is the one that was live at the time, confirmed 5 days after the '
+    +'switch began.</p>'
+    +'<div class="ctools">Pair <select id="chp">'
+    +pairs.map(p=>'<option'+(p===CHS.pair?' selected':'')+'>'+p+'</option>').join('')
+    +'</select><span class="rbtns">'
+    +RB.map(([l,y])=>'<button type="button" class="rb'+(CHS.years===y?' on':'')
+      +'" data-y="'+y+'">'+l+'</button>').join('')+'</span>'
+    +'<label class="scl"><input type="checkbox" id="chsc"'
+    +(CHS.scores?' checked':'')+'> Show the two scores</label></div>'
+    +'<div id="chsvg"></div><div id="chleg"></div>';
+   $('#chp').onchange=e=>{CHS.pair=e.target.value;drawChartUI();};
+   [...w.querySelectorAll('.rb')].forEach(b=>b.onclick=()=>{
+     CHS.years=+b.dataset.y;drawChartUI();});
+   $('#chsc').onchange=e=>{CHS.scores=e.target.checked;drawChartUI();};
+   paintChart();
+  }
+
+  function paintChart(){
+   const R=REG,P=R.pairs[CHS.pair],D=R.dates,n=D.length;
+   const per=CHS.years>=99?n:Math.min(n,Math.round(CHS.years*252));
+   const a0=Math.max(0,n-per);
+   const idx=[];for(let i=a0;i<n;i++)if(P.px[i]!=null)idx.push(i);
+   if(idx.length<5){$('#chsvg').innerHTML='<div class="box">No price in this '
+     +'range for '+CHS.pair+'.</div>';return;}
+   const W=1000,H=CHS.scores?300:340,PADL=52,PADR=10,PADT=12,STRIP=16,GAP=6;
+   const PH=H-PADT-STRIP-GAP-22;
+   const xs=i=>PADL+((i-idx[0])/(idx[idx.length-1]-idx[0]))*(W-PADL-PADR);
+   let lo=Infinity,hi=-Infinity;
+   idx.forEach(i=>{const v=P.px[i];if(v<lo)lo=v;if(v>hi)hi=v;});
+   const pad=(hi-lo)*0.06||0.001; lo-=pad; hi+=pad;
+   const ys=v=>PADT+PH-((v-lo)/(hi-lo))*PH;
+   const stName=i=>P.st[i]==null?null:R.shapes[P.st[i]];
+   const acName=i=>P.ac[i]==null?null:R.acts[P.ac[i]];
+
+   // activity shading: contiguous runs, drawn behind everything
+   let bg='';
+   for(let k=0;k<idx.length;){
+    const a=acName(idx[k]);let j=k;
+    while(j+1<idx.length&&acName(idx[j+1])===a)j++;
+    if(a&&ASHADE[a]>0)bg+='<rect x="'+xs(idx[k]).toFixed(1)+'" y="'+PADT
+      +'" width="'+Math.max(0.6,(xs(idx[j])-xs(idx[k]))).toFixed(1)+'" height="'
+      +PH+'" fill="currentColor" opacity="'+ASHADE[a]+'"/>';
+    k=j+1;}
+
+   // price line, split into same-state segments
+   let path='';
+   for(let k=0;k<idx.length;){
+    const st=stName(idx[k]);let j=k;
+    while(j+1<idx.length&&stName(idx[j+1])===st)j++;
+    const pts=[];for(let q=k;q<=Math.min(j+1,idx.length-1);q++)
+      pts.push(xs(idx[q]).toFixed(1)+','+ys(P.px[idx[q]]).toFixed(1));
+    path+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="'
+      +(st?PCOL[st]:'#9aa0ab')+'" stroke-width="1.6" stroke-linejoin="round"/>';
+    k=j+1;}
+
+   // the regime strip
+   let strip='';const SY=PADT+PH+GAP;
+   for(let k=0;k<idx.length;){
+    const st=stName(idx[k]);let j=k;
+    while(j+1<idx.length&&stName(idx[j+1])===st)j++;
+    strip+='<rect x="'+xs(idx[k]).toFixed(1)+'" y="'+SY+'" width="'
+      +Math.max(0.6,(xs(idx[j])-xs(idx[k]))).toFixed(1)+'" height="'+STRIP
+      +'" fill="'+(st?PCOL[st]:'#c9ccd2')+'" opacity="'+(st?0.85:0.3)+'"/>';
+    k=j+1;}
+
+   // acute crisis ticks
+   const cset=new Set(R.crisis||[]);
+   let ticks='',ncr=0;
+   for(let k=0;k<idx.length;k++) if(cset.has(idx[k])){
+     ncr++;
+     ticks+='<rect x="'+xs(idx[k]).toFixed(1)+'" y="'+PADT+'" width="1" height="'
+      +PH+'" fill="#c0553f" opacity="0.30"/>';}
+
+   // axes
+   const fmt=v=>v>=50?v.toFixed(1):v.toFixed(4);
+   let ax='<line x1="'+PADL+'" y1="'+(PADT+PH)+'" x2="'+(W-PADR)+'" y2="'
+     +(PADT+PH)+'" stroke="currentColor" opacity=".25"/>';
+   [0,0.5,1].forEach(f=>{const v=lo+(hi-lo)*f;
+     ax+='<text x="'+(PADL-7)+'" y="'+(ys(v)+3.5)+'" text-anchor="end" '
+      +'font-size="10" fill="currentColor" opacity=".55">'+fmt(v)+'</text>';});
+   const NT=CHS.years>=10?6:4;
+   for(let t=0;t<=NT;t++){const i=idx[Math.round(t/NT*(idx.length-1))];
+     ax+='<text x="'+xs(i).toFixed(1)+'" y="'+(SY+STRIP+15)+'" text-anchor="'
+      +(t===0?'start':t===NT?'end':'middle')+'" font-size="10" fill="currentColor" '
+      +'opacity=".55">'+D[i].slice(0,7)+'</text>';}
+
+   let svg='<svg viewBox="0 0 '+W+' '+H+'" class="chsvg" '
+     +'preserveAspectRatio="none" role="img" aria-label="price coloured by regime">'
+     +bg+ticks+path+strip+ax+'</svg>';
+
+   // the optional score panel
+   if(CHS.scores){
+    const SH=150,S0=10;
+    let lo2=Infinity,hi2=-Infinity;
+    idx.forEach(i=>{[P.trb?P.trb[i]:null,P.ch[i]].forEach(v=>{
+      if(v==null)return;if(v<lo2)lo2=v;if(v>hi2)hi2=v;});});
+    [R.cuts.mt,R.cuts.mc].forEach(v=>{if(v<lo2)lo2=v;if(v>hi2)hi2=v;});
+    const p2=(hi2-lo2)*0.08||1;lo2-=p2;hi2+=p2;
+    const y2=v=>S0+SH-((v-lo2)/(hi2-lo2))*SH;
+    const line=(key,col)=>{const pts=[];idx.forEach(i=>{
+      const v=key==='trb'?(P.trb?P.trb[i]:null):P.ch[i];
+      if(v!=null)pts.push(xs(i).toFixed(1)+','+y2(v).toFixed(1));});
+      return '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+col
+       +'" stroke-width="1.3"/>';};
+    const cut=(v,col,lab)=>'<line x1="'+PADL+'" y1="'+y2(v).toFixed(1)+'" x2="'
+      +(W-PADR)+'" y2="'+y2(v).toFixed(1)+'" stroke="'+col
+      +'" stroke-width="1" stroke-dasharray="4 4" opacity=".8"/>'
+      +'<text x="'+(W-PADR-2)+'" y="'+(y2(v)-4).toFixed(1)+'" text-anchor="end" '
+      +'font-size="9" fill="'+col+'" opacity=".9">'+lab+'</text>';
+    svg+='<div class="scnote">These two lines answer <b>different questions</b>, '
+     +'not opposite ends of one. The <b style="color:'+PCOL.trending+'">trend '
+     +'score</b> asks how much ground the pair is covering; the '
+     +'<b style="color:'+PCOL.ranging+'">chop score</b> asks how much it is '
+     +'bouncing back from its own edges. Both can be high, or both low &mdash; '
+     +'which is exactly what the two muted states are. A pair is labelled by '
+     +'which side of each dashed line it sits on. The trend line already '
+     +'includes the activity adjustment, because that is the series the cut is '
+     +'applied to.</div>'
+     +'<svg viewBox="0 0 '+W+' '+(SH+S0+8)+'" class="chsvg" '
+     +'preserveAspectRatio="none" role="img" aria-label="trend and chop scores">'
+     +cut(R.cuts.mt,PCOL.trending,'trend cut')
+     +cut(R.cuts.mc,PCOL.ranging,'chop cut')
+     +line('trb',PCOL.trending)+line('ch',PCOL.ranging)+'</svg>';}
+   $('#chsvg').innerHTML=svg;
+
+   // counts for the legend, from the drawn range only
+   const cnt={};idx.forEach(i=>{const s2=stName(i);if(s2)cnt[s2]=(cnt[s2]||0)+1;});
+   const tot=Object.values(cnt).reduce((a,b)=>a+b,0)||1;
+   const last=idx[idx.length-1];
+   $('#chleg').innerHTML='<div class="chlegend">'
+    +Object.keys(PCOL).map(k=>'<span class="lg"><i style="background:'+PCOL[k]
+      +'"></i>'+k+' <span class="count">'+Math.round(100*(cnt[k]||0)/tot)
+      +'%</span></span>').join('')
+    +'<span class="lg"><i style="background:#9aa0ab"></i>no label yet</span>'
+    +'<span class="lg"><i style="background:#c0553f;opacity:.5"></i>acute crisis '
+    +'<span class="count">'+ncr+' days</span></span></div>'
+    +'<div class="box"><h4>Reading this chart</h4>'
+    +'<p><b style="color:'+PCOL.trending+'">Trending</b> is getting somewhere; '
+    +'<b style="color:'+PCOL.ranging+'">ranging</b> is going nowhere. '
+    +'<b style="color:'+PCOL['trend-in-range']+'">Trend-in-range</b> and '
+    +'<b style="color:'+PCOL.neither+'">neither</b> are drawn in muted grey on '
+    +'purpose: testing every hand-picked setting showed those two move most when '
+    +'anything is nudged, so they are the lower-confidence readings and the chart '
+    +'says so rather than dressing them up. Plain grey is the warm-up before the '
+    +'classifier has enough history to label a bar at all.</p>'
+    +'<p>The <b>band under the price</b> is the same label as a strip, so the '
+    +'shape and the call can be read together. The <b>faint background shading</b> '
+    +'is activity &mdash; darker means the pair is covering more ground &mdash; '
+    +'which is why a weak trend and a strong one look different here without a '
+    +'second chart.</p>'
+    +'<p>The <b>red vertical marks</b> are acute-crisis days: the 15 trading days '
+    +'following a news-dated event, from a calendar of '+(R.crisis_events||54)
+    +' events. <b>The window opens on the event and never before it</b>, so these '
+    +'marks are the detector <i>confirming</i> what already happened. It has zero '
+    +'lead time and that is stated rather than buried.</p>'
+    +'<p><b>Not for:</b> reading the future off the right-hand edge. The label is '
+    +'confirmed 5 days after a switch begins, so the last few days of colour can '
+    +'still change &mdash; and nothing on this chart forecasts.</p>'
+    +'<div class="cite">app_regime.json &middot; results/layer1_states.csv '
+    +'&middot; results/states_g4_twoscore4.csv &middot; last bar '+D[last]
+    +'</div></div>';
+  }
+
   function buildToday(){
    const T=BUN.today||[],H=(BUN.todayhdr||[])[0];
    const w=$('#todaywrap'); if(!w) return;
@@ -1020,7 +1231,9 @@ function boot(BUNDLE,root){
 
    h+='<div class="cards">'+T.map(r=>{
      const dim=(r.lower_confidence===true||r.lower_confidence==='True');
-     let c='<div class="card '+SLUG(r.state)+(dim?' dim':'')+'">'
+     let c='<div class="card '+SLUG(r.state)+(dim?' dim':'')
+      +'" data-pair="'+r.pair+'" role="button" tabindex="0" '
+      +'title="Open '+r.pair+' on the chart">'
       +'<div class="cardtop"><span class="pn">'+r.pair+'</span>'
       +'<span class="st '+SLUG(r.state)+'">'+CAP(r.state)
       +'<span class="pill">'+(r.activity||'--')+'</span></span></div>';
@@ -1066,6 +1279,11 @@ function boot(BUNDLE,root){
     +'<div class="cite">results/today_pairs.csv &middot; results/today_header.csv '
     +'&middot; results/states_g4_twoscore4.csv</div></div>';
    w.innerHTML=h;
+   // every card is a link into the chart for that pair
+   [...w.querySelectorAll('.card[data-pair]')].forEach(el=>{
+    const go=()=>showChart(el.dataset.pair);
+    el.onclick=go;
+    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
   }
 
   function buildPairs2(){
@@ -1092,8 +1310,7 @@ function boot(BUNDLE,root){
     +'<th>Pair</th><th>Time in each state</th><th>Trending</th><th>Ranging</th>'
     +'<th>Typical run</th></tr></thead><tbody>'
     +rows.map((r,i)=>{
-      const seg=[['trending','#2e9e6b'],['ranging','#3b7fc4'],
-                 ['trend-in-range','#7b8493'],['neither','#767b88']];
+      const seg=Object.keys(PCOL).map(k=>[k,PCOL[k]]);
       const bar='<div class="bar">'+seg.map(([k,c])=>'<i style="background:'+c
         +';width:'+(100*(r['share_'+k]||0)).toFixed(1)+'%"></i>').join('')+'</div>';
       const run=r['med_trending'],runr=r['med_ranging'];
@@ -4535,7 +4752,7 @@ function boot(BUNDLE,root){
     <td>${e.ccy||'—'}</td><td>${e.severity}</td><td>${e.description}</td></tr>`).join('')
     ||'<tr><td colspan="5">none</td></tr>';})();
 
-  const TABS=['today','pairs2','how','evid',
+  const TABS=['today','chart','pairs2','how','evid',
               'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
               'ex','pt','hz','rd','xd','pc','gl','ar','vd'];
   // The default view is the product: four tabs. Everything else -- the
@@ -4543,14 +4760,15 @@ function boot(BUNDLE,root){
   // validation tables and the whole archive of superseded generations -- is
   // HIDDEN, not removed. Every feed still loads and every panel still builds;
   // the Advanced button only toggles which nav buttons are reachable.
-  const DEFAULT_TABS=['today','pairs2','how','evid'];
+  const DEFAULT_TABS=['today','chart','pairs2','how','evid'];
   let ADV=false;                       // deliberately NOT persisted
   const show=t=>{
    document.querySelectorAll('nav button[data-t]').forEach(
     x=>x.setAttribute('aria-selected',x.dataset.t===t));
    TABS.forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==t);});
    // the regime feed is ~9 MB, so it is fetched only when that tab is first opened
-   if(t==='rd'&&!REG&&!$('#rdpair'))initRegime();};
+   if(t==='rd'&&!$('#rdpair'))initRegime();
+   if(t==='chart')chartOpen();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
     b.style.display=(ADV||DEFAULT_TABS.indexOf(b.dataset.t)>=0)?'':'none';});
