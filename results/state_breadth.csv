@@ -1,0 +1,23 @@
+block,days,metric,mean,p05,p25,median,p75,p95,share_ge_20,share_ge_24,share_le_12,threshold,p,base,lift,n_shifts,null_mean_lift,null_sd,rank_of_real,n_compared,p_null,events,modal_count,share,modal_state_mode
+is,4051,modal_count,11.900518390520858,9.0,10.0,11.0,13.0,17.0,0.01481115773882992,0.0,0.6872377190817082,,,,,,,,,,,,,,
+oos,2643,modal_count,11.986379114642451,9.0,10.0,11.0,13.0,17.0,0.010972379871358306,0.0,0.64472190692395,,,,,,,,,,,,,,
+is,559,widest decile vs crisis calendar,,,,,,,,,,15.0,0.13595706618962433,0.10367810417180943,1.3113382741289719,,,,,,,,,,
+oos,450,widest decile vs crisis calendar,,,,,,,,,,15.0,0.11555555555555555,0.12031782065834279,0.96041928721174,,,,,,,,,,
+all,1009,widest decile vs crisis calendar,,,,,,,,,,15.0,0.12685827552031714,0.11024798326859875,1.1506630031612506,50.0,1.0415298089551757,0.26935688268435803,29.0,51.0,0.5686274509803921,54.0,,,
+all,18,modal_count distribution,,,,,,,,,,,,,,,,,,,,,7.0,0.00268897520167314,trending
+all,256,modal_count distribution,,,,,,,,,,,,,,,,,,,,,8.0,0.03824320286824021,trending
+all,734,modal_count distribution,,,,,,,,,,,,,,,,,,,,,9.0,0.1096504332237825,ranging
+all,1163,modal_count distribution,,,,,,,,,,,,,,,,,,,,,10.0,0.17373767553032565,ranging
+all,1223,modal_count distribution,,,,,,,,,,,,,,,,,,,,,11.0,0.18270092620256947,ranging
+all,1094,modal_count distribution,,,,,,,,,,,,,,,,,,,,,12.0,0.1634299372572453,ranging
+all,692,modal_count distribution,,,,,,,,,,,,,,,,,,,,,13.0,0.10337615775321184,ranging
+all,505,modal_count distribution,,,,,,,,,,,,,,,,,,,,,14.0,0.07544069315805199,ranging
+all,346,modal_count distribution,,,,,,,,,,,,,,,,,,,,,15.0,0.05168807887660592,ranging
+all,218,modal_count distribution,,,,,,,,,,,,,,,,,,,,,16.0,0.03256647744248581,ranging
+all,172,modal_count distribution,,,,,,,,,,,,,,,,,,,,,17.0,0.025694651927098893,ranging
+all,123,modal_count distribution,,,,,,,,,,,,,,,,,,,,,18.0,0.01837466387809979,ranging
+all,61,modal_count distribution,,,,,,,,,,,,,,,,,,,,,19.0,0.009112638183447864,trending
+all,47,modal_count distribution,,,,,,,,,,,,,,,,,,,,,20.0,0.007021213026590977,trending
+all,19,modal_count distribution,,,,,,,,,,,,,,,,,,,,,21.0,0.0028383627128772035,trending
+all,11,modal_count distribution,,,,,,,,,,,,,,,,,,,,,22.0,0.0016432626232446967,trending
+all,12,modal_count distribution,,,,,,,,,,,,,,,,,,,,,23.0,0.00179265013444876,ranging

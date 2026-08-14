@@ -1,0 +1,21 @@
+Same-day state agreement between every pair of pairs
+====================================================
+
+MEASUREMENT ONLY. Nothing here changes a state call or feeds the
+classifier. The question is how many independent observations a day of
+28 state readings actually contains.
+
+THE RANK-7 FLOOR, which bounds every number here. The 28 pairs are
+built from 8 currencies, so the panel has rank 7. EURJPY is EURUSD plus
+USDJPY by construction. Agreement between pairs sharing a leg is partly
+an IDENTITY and is not evidence the market moved together.
+
+kappa = (observed - expected) / (1 - expected), with expected the
+agreement forced by the two marginal state distributions alone. Raw
+observed agreement is in the file beside it so the correction can be
+checked. Complete-case days only (6694 of 6855), so both marginals and the
+observed rate use the same day set and kappa is exact.
+
+  is   raw 0.297, chance 0.265, kappa 0.043 | share-leg 0.080 vs no-leg 0.014 | N_eff 12.9 (eigen 23.0)
+  oos  raw 0.302, chance 0.268, kappa 0.046 | share-leg 0.076 vs no-leg 0.022 | N_eff 12.5 (eigen 23.1)
+

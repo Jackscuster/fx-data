@@ -1,0 +1,10 @@
+The strongest and weakest cells of the agreement matrix
+=======================================================
+
+Every one of the strongest cells shares a currency leg, which is the
+rank-7 identity showing up rather than a discovery. Note that sharing a
+leg does NOT guarantee agreement -- GBPCAD/USDCAD is among the WEAKEST
+cells on the holdout at -0.157 despite both carrying CAD.
+
+Individual cells repeat only moderately between halves (spearman 0.37),
+so this table is a description of structure, not a lookup table.

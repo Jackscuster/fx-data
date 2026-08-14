@@ -1,0 +1,11 @@
+Does agreement cluster around a shared currency leg?
+====================================================
+
+Each currency block is the 7 pairs containing that currency. A pair
+belongs to TWO blocks, so blocks overlap: "within" and "across" are not
+a partition of the pairs but of the 378 PAIRS-OF-PAIRS, by whether the
+two share a leg.
+
+Read this against the rank-7 floor. Pairs sharing a leg are
+algebraically linked, so a higher figure inside a block is expected and
+the informative quantity is the GAP between share-leg and no-leg.
