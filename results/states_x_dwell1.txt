@@ -1,0 +1,8 @@
+states_x_dwell1.csv
+============================================================
+
+Generation 3b with NO confirmation dwell -- the flickering version, 3-bar median runs with 62% under five bars.
+
+REGENERATED from committed code by code/regenerate.py -- not restored from a blob.
+Shape: 6916 dates x 28 pairs. Already lagged one bar.
+States: drifting; range; trending

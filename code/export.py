@@ -177,8 +177,15 @@ def build(px):
     _M, _ = build_measures(px)
     cage = age_of(comb)
     settle = (cage / DWELL).clip(upper=1.0)
-    # the shape layer carries the dwell too, so the three columns are consistent
-    sh = confirm(sh, DWELL)
+    # NO SECOND CONFIRM HERE. layers() now returns score_at output, which
+    # already applies the 5-bar dwell internally. This line used to read
+    # `sh = confirm(sh, DWELL)` -- correct when the shape came from five_state,
+    # which does not dwell, and a DOUBLE DWELL once the source changed. It gave
+    # the shipped `shape` column an 8-bar effective confirmation and a 4-bar lag
+    # against everything else in the file. Caught by regenerate.py: the archived
+    # column matched score_at(19) at exactly +4 bars, 100.000%, and matched
+    # confirm(score_at(19), DWELL) at 100.000% unshifted. `combined` was built
+    # before this line and was never affected.
 
     n, m = len(px.index), len(px.columns)
     flat = lambda d: d.reindex(index=px.index, columns=px.columns).values.ravel()

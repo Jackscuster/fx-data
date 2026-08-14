@@ -1,0 +1,8 @@
+states_g3_gate3.csv
+============================================================
+
+Generation 3a, the GATED three-shape read at swing width 6. Superseded by the continuous score because it left a residual.
+
+REGENERATED from committed code by code/regenerate.py -- not restored from a blob.
+Shape: 6916 dates x 28 pairs. Already lagged one bar.
+States: drifting; range; trending

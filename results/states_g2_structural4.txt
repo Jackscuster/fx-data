@@ -1,0 +1,8 @@
+states_g2_structural4.csv
+============================================================
+
+Generation 2 SHAPE ONLY: trending / broken / range / drifting. The four states before the activity cross. 'broken' was never in the spec.
+
+REGENERATED from committed code by code/regenerate.py -- not restored from a blob.
+Shape: 6916 dates x 28 pairs. Already lagged one bar.
+States: broken; drifting; range; trending

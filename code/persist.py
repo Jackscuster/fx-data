@@ -59,11 +59,12 @@ GENS = [
 ]
 
 
-# The generation-2 output cannot be regenerated. combined.layers() was changed to
-# the three-shape read, so re-running any current module produces generation 3
-# under the old column name. The only intact copy is in git at f597f23, verified
-# to hold the twelve 'weak/medium/strong x trending/broken/range/drifting' cells,
-# and it is restored from there rather than rebuilt.
+# SUPERSEDED BY regenerate.py, AND THE CLAIM IT RESTS ON WAS WRONG. Generation 2
+# IS reproducible: combined.layers() was rewired away from structure.five_state,
+# but the function itself is untouched on main, and calling it directly rebuilds
+# g2 exactly -- regenerate.py now does so and matches this restored copy at
+# 100.000%. The restore is kept as an independent cross-check on the rebuild:
+# two paths to the same file is a stronger guarantee than either alone.
 G2_COMMIT = 'f597f23'
 G2_SRC = 'results/combined_states.csv'
 
