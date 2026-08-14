@@ -191,6 +191,8 @@ out = dict(
               signals_url=signals_url(),
               explorer_url=signals_url().replace('app_signals.json',
                                                  'app_explorer.json'),
+              regime_url=signals_url().replace('app_signals.json',
+                                               'app_regime.json'),
               # two different numbers, never to be conflated: everything built,
               # and the subset that could actually produce quintile statistics
               n_built=n_built, n_scorable=n_scorable))

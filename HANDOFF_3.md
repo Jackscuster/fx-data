@@ -2256,6 +2256,50 @@ USDJPY 0.204, EURJPY 0.172 — all JPY crosses; least direct GBPCAD 0.021, GBPJP
 **Longest runs on record**: trending EURAUD 237, EURCAD 234, USDCAD 227 bars;
 ranging GBPCHF 291, CADCHF 258, NZDJPY 245. Median across pairs 148 and 165 bars.
 
+### 16.4w The app rebuilt on the current classifier
+
+**DATA.** `layer1_states.csv` now carries **only the current classifier**:
+`trend_score`, `chop_score`, `shape2`, `activity`, `scale_28`, `combined2`,
+`settling`, and the four measurements as `m_fail` / `m_retr` / `m_space` /
+`m_panel`. Holdout coverage 0.984–1.000 on every column.
+
+Three generations of superseded columns moved to **`results/layer1_legacy.csv`**
+— not deleted: the nine-box (`state_7/28/128`, `straight_28`, `tier`, `age_28`),
+the single-axis shape score (`shape_35/shape/shape_247/shape_score`) and the
+nine-state product built on it (`combined`). Both `export.py` self-assertions now
+run against the legacy file and still pass on all 191,940 pair-days.
+
+**FEED.** `appfeed.py` writes **`app_regime.json`**, 9.0 MB, 28 pairs × 6,855
+dates: price, shape state as an integer code, both scores as separate series, the
+settling weight and all four measurements. Fetched lazily when the Regime tab is
+first opened, the same pattern the signals feed already uses. State is an integer
+index into a legend and every float is rounded to the fewest digits that survive
+at screen resolution — a naive dump was ~30 MB.
+
+**FOUR NEW SCREENS.**
+
+- **Regime** — price coloured by state, pair selector across all 28, window
+  selector, the two scores plotted as separate traces so their independence is
+  visible, and the four measurements as their own traces. No money metrics
+  anywhere on it.
+- **Character** — the 28 pairs ranked by trendiness with shares, run lengths and
+  longest runs, and the stability verdict stated on the screen rather than left
+  to be inferred.
+- **Explain** — 14 metrics, each with what it is, how it is calculated, how to
+  read it, what it is good for, and **what it is NOT**. That last line carries
+  the specific misreading each one invites.
+- **Archive** — the index, plus a banner injected at the top of every superseded
+  screen saying what it was and why it moved.
+
+**ARCHIVED, NOT DELETED**: the nine-box, timeframe confluence, the detector
+ladder, the strategy sweep, and — described in the Archive index — the tier, the
+single-axis score and the moving-average lead-time work.
+
+**A FIGURE TO CORRECT.** GBPCHF at 51% trending against EURGBP at 33% does not
+appear anywhere in the data. Measured, **GBPCHF is the second-least trending pair
+of the 28** at 23.2%, and EURGBP is 25.1%. The full ranking runs 23.2% to 36.2%
+and no pair reaches 51%. The Character screen shows the measured figures.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

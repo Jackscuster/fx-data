@@ -20,6 +20,10 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="ex">External</button>
 <button role="tab" aria-selected="false" data-t="pt">Pairs</button>
 <button role="tab" aria-selected="false" data-t="hz">Horizon</button>
+<button role="tab" aria-selected="false" data-t="rd">Regime</button>
+<button role="tab" aria-selected="false" data-t="pc">Character</button>
+<button role="tab" aria-selected="false" data-t="gl">Explain</button>
+<button role="tab" aria-selected="false" data-t="ar">Archive</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
 const BODY=`<div class="grid">
@@ -475,6 +479,24 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 <div id="cmpch"></div>
 <div class="note" id="cmptx"></div></section>
 
+
+
+<section id="rd" hidden>
+<div id="rdwrap"></div>
+</section>
+
+<section id="pc" hidden>
+<div id="pcwrap"></div>
+</section>
+
+<section id="gl" hidden>
+<div class="note"><b>Every metric in this build, in plain English.</b> What it is, how it is calculated, how to read it, what it is good for, and the most likely misreading. The last line of each is the one that matters.</div>
+<div id="glwrap"></div>
+</section>
+
+<section id="ar" hidden>
+<div id="arwrap"></div>
+</section>
 `;
 // The feed is split in two: app_data.json (small, everything except signals) and
 // app_signals.json (large). The shell only fetches the first and hands it here, so
@@ -666,6 +688,248 @@ function boot(BUNDLE,root){
     <td style="color:${r.pa?'var(--trend)':'var(--dim)'}">${r.pa}</td></tr>`).join('');}
   
   
+  // ================= GLOSSARY =================
+  const GLOSS=[
+   {k:'trend_score',n:'Trend score',
+    what:'How much progress price is making in one direction over the last ~106 bars.',
+    how:'Sum of two standardised readings: |net displacement| / path walked, and the swing sequence (higher high minus previous, plus higher low minus previous, in volatility units). The sequence is SIGNED and SUMMED so a higher high with a lower low nets to zero. Standardised on 1999-2015 only.',
+    read:'Higher is more directional. Cut at the in-sample median to give "high"/"low".',
+    good:'Separating a pair that is going somewhere from one that is not, on its own history.',
+    not:'It is NOT a forecast, and it is NOT strong: out of sample it separates at 0.053 against a surrogate of 0.098 — worse than noise. The most likely misreading is treating a high trend score as a reason to expect continuation.'},
+   {k:'chop_score',n:'Chop score',
+    what:'How much price is respecting boundaries and returning to them.',
+    how:'Sum of four standardised readings: pullback hold, failed breaks, share of time inside the confirmed swing band, and crossings of the band midpoint. The boundary-test count was dropped — it made the score worse.',
+    read:'Higher is more range-bound. Cut at the in-sample median.',
+    good:'The stronger of the two axes and the only one that holds up out of sample — 0.151 in-sample, 0.156 out.',
+    not:'It still does not beat its own surrogate (corrected −0.011). Do NOT read "chop" as "safe to fade".'},
+   {k:'shape2',n:'Shape state',
+    what:'The 2×2 on the pair of scores: trending, ranging, trend-in-range, neither.',
+    how:'trend high + chop low = trending; low + high = ranging; high + high = trend-in-range; low + low = neither. A 5-bar confirmation dwell is applied, so a state must print five consecutive bars before it is adopted.',
+    read:'Every bar lands somewhere. "neither" is the honest unclassified bucket at ~20% of days.',
+    good:'A vocabulary that always answers, with the ambiguous share halved against the old single-axis version (41% → 20%).',
+    not:'"trend-in-range" is mostly MEASUREMENT OVERLAP, not a real regime — those episodes look statistically identical to "neither" (net move 0.62 sd vs 0.64, efficiency 0.154 vs 0.138). Two genuine cases exist in the record (USDJPY Dec 2021–May 2022) and they are the exception.'},
+   {k:'activity',n:'Activity',
+    what:'How far price travelled over the window, in the pair’s own volatility units.',
+    how:'path / (vol × √28), cut into terciles on in-sample data. There is NO VOLUME — FX is decentralised and H.10 is close-only — so distance travelled is the proxy.',
+    read:'weak / medium / strong.',
+    good:'The only axis in this whole build whose separation survives a surrogate, and only against an IID one (+0.330 on realised vol, p=0.016).',
+    not:'It is a proxy for participation, not a measurement of it. Do NOT call it volume.'},
+   {k:'combined2',n:'Combined state',
+    what:'Activity crossed with shape — twelve cells.',
+    how:'Activity is cut JOINTLY with a 0.75 bump, so a weak-activity bar must clear a higher trend bar before being called trending. That beat a separate cut by 0.002 on in-sample, which is a tie.',
+    read:'e.g. "strong trending", "weak ranging".',
+    good:'Full coverage (1.000 out of sample), 12 usable cells, median run 12 bars, diagonal 0.936.',
+    not:'Mean separation 0.072 against a surrogate of 0.078 — corrected −0.006. The grid describes state, it does not beat noise.'},
+   {k:'settling',n:'Settling confidence',
+    what:'How settled the current state is, from 0.2 on its first bar to 1.0 from the fifth.',
+    how:'min(age / 5, 1) on the combined state.',
+    read:'A weight, not a state. 22.6% of days carry a reduced one.',
+    good:'Making the 4-bar confirmation lag explicit instead of hiding it.',
+    not:'It is NOT an early warning. Three fast signals were swept across 3,420 window pairs to try to bridge that lag and none beat its own surrogate.'},
+   {k:'m_fail',n:'Failed swings',
+    what:'How often price approached a prior extreme without clearing it, then turned back.',
+    how:'Rolling count over 106 bars. Approach threshold and turn magnitude were swept 10×7; separation is highest at the LOOSEST threshold.',
+    read:'Higher means more rejections at boundaries. Feeds the chop score.',
+    good:'Marginally positive against its surrogate (+0.025) and it adds something the scores do not already carry.',
+    not:'It works, and NOT for the stated reason. At the best setting "approaching the prior extreme" means reaching 70% of the band, which is most of the time — so it is counting oscillation inside the band, not defended levels.'},
+   {k:'m_retr',n:'Retracement depth slope',
+    what:'Whether successive pullbacks are getting deeper — a trend tiring.',
+    how:'Slope of the last four retracement depths, each measured as pullback ÷ prior impulse between confirmed swings.',
+    read:'Negative slope means pullbacks are shallowing. Feeds the trend score.',
+    good:'Positive against its surrogate (+0.023) and it is not a restatement of the existing scores.',
+    not:'It does NOT lead state changes — lead lift 0.000 against a surrogate of 0.498.'},
+   {k:'m_space',n:'Swing spacing slope',
+    what:'Whether each new extreme is taking longer to arrive — momentum fading.',
+    how:'Slope of the last four gaps, in bars, between confirmed swings. Pure shape, no volatility component.',
+    read:'Rising gaps mean a slowing rhythm. Feeds the trend score.',
+    good:'The strongest raw descriptor of the four (0.400 out of sample).',
+    not:'It sits BELOW its own surrogate (−0.054). Long windows make persistent states and the surrogate gets there too.'},
+   {k:'m_panel',n:'Cross-pair',
+    what:'How much of this pair’s movement is shared with the rest of the panel.',
+    how:'Rolling R² of the pair’s absolute move against the mean absolute move of the 15 pairs sharing NEITHER of its currencies.',
+    read:'High means the move is panel-wide; low means idiosyncratic.',
+    good:'The ONLY measurement that leads state changes — lift 1.341 against a surrogate of 0.991.',
+    not:'It does not describe the present (corrected −0.042), so it is a lead indicator that says nothing about now. And a leg-based version is VACUOUS: 28 pairs from 8 currencies is a rank-7 panel, so any leg index reconstructs the pair exactly (measured lag-0 correlation +1.0000).'},
+   {k:'sep',n:'Separation',
+    what:'How far apart the states sit on a property they were not built from.',
+    how:'One-versus-rest: a state’s mean minus every other state’s, in standard deviations, averaged over autocorrelation, range/path, direction changes and mean crossings.',
+    read:'Bigger is a sharper description. Always read the CORRECTED value.',
+    good:'Comparing classifiers on the same properties.',
+    not:'Raw separation is NOT comparable across classifiers with different state counts or different persistence — more states and longer runs both raise it mechanically. That is why every figure here is corrected against a surrogate carrying the identical classifier.'},
+   {k:'surrogate',n:'Surrogate / null',
+    what:'The same statistic computed on price with its structure destroyed.',
+    how:'Sign randomisation keeps every |return| in place and flips signs, so volatility clustering survives. IID permutation destroys clustering too. Everything is rebuilt on the surrogate — signals AND states.',
+    read:'Corrected = real − surrogate. Positive means the classifier beat noise.',
+    good:'It is the only test here that carries the full dependence structure, so no independence is assumed anywhere.',
+    not:'Sign randomisation is NEARLY DEGENERATE for anything scale-based: mean absolute move is exactly invariant under it, so passing that test proves nothing about an activity axis. Only the IID row is a real test there.'},
+   {k:'episode',n:'Episode basis',
+    what:'One observation per state run, instead of one per bar.',
+    how:'74,004 holdout bars collapse to 4,604 episodes.',
+    read:'Any per-bar t-statistic overstates its sample by about 16× and its |t| by about 4×.',
+    good:'It is why no per-bar t-statistic appears anywhere in this build.',
+    not:'It does not fix cross-pair correlation — 28 pairs from 8 currencies move together. Block bootstrap over calendar dates handles both.'},
+   {k:'dwell',n:'Confirmation dwell',
+    what:'A new state must print 5 consecutive bars before it is adopted.',
+    how:'The categorical equivalent of a hysteresis band. Strictly causal — bar t reads only bars t−4…t.',
+    read:'Fixes flickering: 3-bar median runs with 62% under five bars became 13-bar runs with 0.1%.',
+    good:'Making the state a regime rather than a signal firing.',
+    not:'It costs 4 bars of recognition lag, and it RAISES the surrogate as much as it raises the real value — the corrected separation gets worse, not better, as the dwell lengthens.'}];
+
+  function glossHTML(){
+   return GLOSS.map(g=>`<details class="panel" style="margin-bottom:10px">
+    <summary style="cursor:pointer;font-weight:600">${g.n} <span class="count">${g.k}</span></summary>
+    <div style="margin-top:10px;font-size:13px;line-height:1.65">
+    <p><b>What it is.</b> ${g.what}</p>
+    <p><b>How it is calculated.</b> ${g.how}</p>
+    <p><b>How to read it.</b> ${g.read}</p>
+    <p><b>What it is good for.</b> ${g.good}</p>
+    <p style="color:var(--chop)"><b>What it is NOT.</b> ${g.not}</p></div></details>`).join('');
+  }
+
+  // ================= ARCHIVE BANNERS =================
+  const ARCHIVED={
+   nb:['The nine-box','Straightness × scale terciles, the first classifier. Superseded by the two-score version. It still holds the highest RAW separation of anything built (0.457 shape, 0.928 activity) but its corrected shape separation is −0.108, and its activity result was compared against the wrong classifier’s null for three revisions.'],
+   mt:['Multi-timeframe confluence','Fired 79% before real state changes and 79% before surrogate ones. Dropped.'],
+   ld:['Detector ladder','Built against forward efficiency, which is a prediction test. Layer 1 is descriptive; these numbers were never a verdict on the classifier.'],
+   st:['Strategy sweep','Money metrics. Out of scope for Layer 1 and kept only as a record.']};
+
+  function archiveBanner(id,title,why){
+   const sec=document.getElementById(id); if(!sec||sec.querySelector('.arcban'))return;
+   const d=document.createElement('div');
+   d.className='note arcban';
+   d.style.cssText='border-left:3px solid var(--chop);margin-bottom:14px';
+   d.innerHTML='<b>ARCHIVED — '+title+'.</b> '+why+' Kept because it is the record of what was tried, not deleted.';
+   sec.insertBefore(d,sec.firstChild);
+  }
+
+  // ================= REGIME DETECTOR =================
+  let REG=null;
+  function loadRegime(){
+   if(REG)return Promise.resolve(REG);
+   const url=(BUN.meta&&BUN.meta.regime_url)||'app_regime.json';
+   $('#rdwrap').innerHTML='<div class="note">Loading the regime feed (~9 MB)…</div>';
+   return fetch(url).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(j=>{REG=j;return j;});
+  }
+  const SCOL={0:'var(--trend)',1:'var(--chop)',2:'#b58900',3:'var(--mute)'};
+  function drawRegime(pair){
+   const R=REG,P=R.pairs[pair]; if(!P)return;
+   const n=R.dates.length, W=980,H=260,L=54,Rp=14,T=12,B=22;
+   const yrs=$('#rdyears')?+$('#rdyears').value:10;
+   const i0=Math.max(0,n-Math.round(yrs*252)), N=n-i0;
+   const px=P.px.slice(i0),st=P.st.slice(i0);
+   const fin=px.filter(v=>v!=null);
+   const lo=Math.min(...fin),hi=Math.max(...fin),pad=(hi-lo)*.06||1;
+   const x=i=>L+i/(N-1)*(W-L-Rp), y=v=>T+(hi+pad-v)/(hi-lo+2*pad)*(H-T-B);
+   let g='';
+   for(let k=0;k<=4;k++){const v=lo-pad+(hi-lo+2*pad)*k/4;
+    g+=`<line x1="${L}" y1="${y(v)}" x2="${W-Rp}" y2="${y(v)}" stroke="var(--line)"/>`
+      +txt(L-7,y(v)+4,v.toPrecision(5),{a:'end',m:1,s:10});}
+   let seg=[],cur=null;
+   for(let i=0;i<N;i++){
+    if(px[i]==null){continue;}
+    if(st[i]!==cur){if(seg.length>1)g+=`<polyline fill="none" stroke="${SCOL[cur]}" stroke-width="1.6" points="${seg.join(' ')}"/>`;
+     seg=seg.length?[seg[seg.length-1]]:[];cur=st[i];}
+    seg.push(x(i).toFixed(1)+','+y(px[i]).toFixed(1));}
+   if(seg.length>1)g+=`<polyline fill="none" stroke="${SCOL[cur]}" stroke-width="1.6" points="${seg.join(' ')}"/>`;
+   for(let k=0;k<6;k++){const i=Math.round(k*(N-1)/5);
+    g+=txt(x(i),H-4,R.dates[i0+i].slice(0,7),{a:'middle',m:1,s:10});}
+   $('#rdpx').innerHTML=svg(W,H,g);
+   const leg=R.shapes.map((s,i)=>`<span style="margin-right:14px"><span style="display:inline-block;width:22px;height:3px;background:${SCOL[i]};vertical-align:middle"></span> ${s}</span>`).join('');
+   $('#rdleg').innerHTML=leg;
+   function trace(id,keys,names,cols,ttl,zero){
+    const H2=140;let s='';
+    const all=[].concat(...keys.map(k=>P[k].slice(i0).filter(v=>v!=null)));
+    if(!all.length){$(id).innerHTML='';return;}
+    let a=Math.min(...all),b=Math.max(...all);if(zero){const m=Math.max(Math.abs(a),Math.abs(b));a=-m;b=m;}
+    const pd=(b-a)*.08||1;
+    const yy=v=>10+(b+pd-v)/(b-a+2*pd)*(H2-30);
+    for(let k=0;k<=2;k++){const v=a-pd+(b-a+2*pd)*k/2;
+     s+=`<line x1="${L}" y1="${yy(v)}" x2="${W-Rp}" y2="${yy(v)}" stroke="var(--line)"/>`
+       +txt(L-7,yy(v)+4,v.toFixed(2),{a:'end',m:1,s:10});}
+    keys.forEach((k,ki)=>{const v=P[k].slice(i0);let pts=[];
+     for(let i=0;i<N;i++){if(v[i]==null){continue;}pts.push(x(i).toFixed(1)+','+yy(v[i]).toFixed(1));}
+     s+=`<polyline fill="none" stroke="${cols[ki]}" stroke-width="1.3" points="${pts.join(' ')}"/>`;});
+    const lg=names.map((nm,i)=>`<span style="margin-right:12px"><span style="display:inline-block;width:18px;height:3px;background:${cols[i]};vertical-align:middle"></span> ${nm}</span>`).join('');
+    $(id).innerHTML='<div class="count" style="margin:6px 0 2px">'+ttl+' &nbsp; '+lg+'</div>'+svg(W,H2,s);
+   }
+   trace('#rdscores',['tr','ch'],['trend score','chop score'],['var(--trend)','var(--chop)'],
+     'THE TWO SCORES — plotted separately so their independence is visible (pooled correlation −0.35)',1);
+   trace('#rdm1',['mf'],['failed swings'],['#7aa2f7'],'FAILED SWINGS — rolling count of rejections at a prior extreme (feeds chop)');
+   trace('#rdm2',['mr','ms'],['retracement slope','swing-spacing slope'],['#bb9af7','#9ece6a'],
+     'RETRACEMENT DEPTH and SWING SPACING — deepening pullbacks and widening gaps (feed trend)',1);
+   trace('#rdm3',['mp'],['cross-pair R²'],['#e0af68'],'CROSS-PAIR — how much of the move is shared with the 15 pairs sharing neither currency');
+   const cur2=st.filter(v=>v!=null);
+   const li=cur2.length?cur2[cur2.length-1]:3;
+   const last=cur2.length?R.shapes[li]:'\u2014';
+   const sh={};cur2.forEach(v=>{sh[v]=(sh[v]||0)+1;});
+   $('#rdnow').innerHTML='<b>'+pair+'</b> is currently <b style="color:'
+    +SCOL[cur2[cur2.length-1]]+'">'+last+'</b>. Over the window shown: '
+    +R.shapes.map((s,i)=>s+' '+((sh[i]||0)/cur2.length*100).toFixed(0)+'%').join(' · ');
+  }
+  function initRegime(){
+   loadRegime().then(R=>{
+    const pairs=Object.keys(R.pairs).sort();
+    $('#rdwrap').innerHTML=
+     '<div class="tools" style="margin-bottom:10px">Pair '
+     +'<select id="rdpair">'+pairs.map(p=>`<option>${p}</option>`).join('')+'</select>'
+     +' &nbsp; Years <select id="rdyears"><option>3</option><option>5</option>'
+     +'<option selected>10</option><option>30</option></select>'
+     +'<span class="count" id="rdnow" style="margin-left:14px"></span></div>'
+     +'<div id="rdpx"></div><div class="count" id="rdleg" style="margin:4px 0 14px"></div>'
+     +'<div id="rdscores"></div><div id="rdm1"></div><div id="rdm2"></div><div id="rdm3"></div>'
+     +'<div class="note" style="margin-top:14px"><b>No money metrics on this screen, by design.</b> '
+     +'It shows what state a pair is in and what price did. What that was worth is Layer 2 and is not here.</div>';
+    const go=()=>drawRegime($('#rdpair').value);
+    $('#rdpair').onchange=go;$('#rdyears').onchange=go;
+    $('#rdpair').value=pairs.indexOf('EURUSD')>=0?'EURUSD':pairs[0];go();
+   }).catch(e=>{$('#rdwrap').innerHTML='<div class="note" style="color:var(--chop)">'
+     +'Could not load app_regime.json ('+e.message+'). It must sit beside app_data.json.</div>';});
+  }
+
+  // ================= PAIR CHARACTER =================
+  function buildCharacter(){
+   const C=BUN.paircha||[],RK=BUN.pairrank||[];
+   if(!C.length){$('#pcwrap').innerHTML='<div class="note">pair_character.csv not in the feed.</div>';return;}
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const rk=C.slice().sort((a,b)=>b.trendiness-a.trendiness);
+   const mx=Math.max(...C.map(r=>r.share_trending)),mn=Math.min(...C.map(r=>r.share_trending));
+   let h='<div class="note"><b>What each pair IS, not how well the classifier reads it.</b> '
+    +'Ranked by trendiness = share of days trending minus share ranging, pooled '
+    +'standardisation so cross-pair differences survive. <b>Read the verdict at the '
+    +'bottom before using this to route anything.</b></div>'
+    +'<div class="tw"><table><thead><tr><th>#</th><th>Pair</th><th>Trending</th>'
+    +'<th>Ranging</th><th>Both</th><th>Neither</th><th>Trendiness</th>'
+    +'<th>Median trend run</th><th>Median range run</th><th>Longest trend</th>'
+    +'<th>Longest range</th></tr></thead><tbody>'
+    +rk.map((r,i)=>{const w=(r.share_trending-mn)/((mx-mn)||1);
+     return '<tr><td>'+(i+1)+'</td><td><b>'+r.pair+'</b></td>'
+      +'<td><span style="display:inline-block;height:8px;background:var(--trend);width:'
+      +(4+w*46).toFixed(0)+'px;vertical-align:middle;margin-right:6px"></span>'
+      +f(r.share_trending)+'</td><td>'+f(r.share_ranging)+'</td><td>'
+      +f(r['share_trend-in-range'])+'</td><td>'+f(r.share_neither)+'</td><td><b>'
+      +(r.trendiness>0?'+':'')+f(r.trendiness)+'</b></td><td>'+f(r.med_trending,0)
+      +'</td><td>'+f(r.med_ranging,0)+'</td><td>'+f(r.max_trending,0)+'</td><td>'
+      +f(r.max_ranging,0)+'</td></tr>';}).join('')+'</tbody></table></div>';
+   h+='<div class="note" style="border-left:3px solid var(--chop);margin-top:16px">'
+    +'<b>THE RANKING DOES NOT HOLD, AND PAIRS DIFFER LESS THAN NOISE.</b><br><br>'
+    +'Rank correlation between 1999–2015 and 2016–2026: share trending <b>+0.002</b>, '
+    +'trendiness <b>−0.087</b>, median ranging run −0.293. Individual moves are violent — '
+    +'NZDJPY rank 2→23, NZDUSD 4→26, CHFJPY 24→2.<br><br>'
+    +'Cross-pair spread of trending share: real sd <b>0.0337</b> against a sign-surrogate '
+    +'sd of <b>0.0430 ± 0.0061</b>; real range 0.130 against 0.180. '
+    +'<b>28 surrogate pairs, which have no character at all, spread wider than the real ones.</b> '
+    +'p(dispersion) = 1.000, p(rank correlation) = 0.625.<br><br>'
+    +'So there is no structurally trendy set and no structurally choppy set to route on — '
+    +'not on this classifier. Every pair sits between 23% and 36% trending, and only 6 of 28 '
+    +'have positive trendiness at all. <b>The one per-pair structure that does show up is in '
+    +'the transitions:</b> direct trend↔range moves are rare (10–12%), pairs pass through an '
+    +'intermediate state, and the most direct are all JPY crosses (CHFJPY 0.208, USDJPY 0.204, '
+    +'EURJPY 0.172) against GBPCAD 0.021. That is untested against a null and is an '
+    +'observation, not a finding.</div>';
+   $('#pcwrap').innerHTML=h;
+  }
+
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
   function txt(x,y,t,o){o=o||{};return `<text x="${x}" y="${y}" fill="${o.c||'var(--mute)'}" font-size="${o.s||11}" text-anchor="${o.a||'start'}" font-family="${o.m?'var(--mono)':'inherit'}" font-weight="${o.w||400}">${t}</text>`;}
   function buildNew(){
@@ -2322,8 +2586,44 @@ function boot(BUNDLE,root){
     <td>${e.ccy||'—'}</td><td>${e.severity}</td><td>${e.description}</td></tr>`).join('')
     ||'<tr><td colspan="5">none</td></tr>';})();
 
+  const TABS=['px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
+              'ex','pt','hz','rd','pc','gl','ar','vd'];
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   ['px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if','ex','pt','hz','vd'].forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});});
+   TABS.forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});
+   // the regime feed is ~9 MB, so it is fetched only when that tab is first opened
+   if(b.dataset.t==='rd'&&!REG&&!$('#rdpair'))initRegime();});
   drawG();drawA();buildScatter();buildFam();buildNew();
+  // ---- the four new screens ----
+  $('#glwrap').innerHTML=glossHTML();
+  buildCharacter();
+  Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
+  (function(){
+   const names={nb:'9-Box',mt:'Timeframes',ld:'Detectors',st:'Strategies'};
+   $('#arwrap').innerHTML='<div class="note"><b>Nothing here is deleted.</b> These are '
+    +'earlier generations of the classifier and the work that was tried and did not '
+    +'survive. They stay because the record of what was ruled out is worth as much as '
+    +'what shipped, and because two of them were re-tested later and the second look '
+    +'changed the answer. Each tab carries a banner saying what it was and why it moved '
+    +'here.</div>'
+    +'<div class="tw"><table><thead><tr><th>Screen</th><th>What it was</th>'
+    +'<th>Why it is archived</th></tr></thead><tbody>'
+    +Object.keys(ARCHIVED).map(k=>'<tr><td><b>'+(names[k]||k)+'</b></td><td>'
+      +ARCHIVED[k][0]+'</td><td>'+ARCHIVED[k][1]+'</td></tr>').join('')
+    +'<tr><td><b>Validation</b> &mdash; part</td><td>The single-axis shape score</td>'
+    +'<td>One continuous &ldquo;how trend-like&rdquo; number cut at terciles. It '
+    +'separates better than the two-score version (0.261 vs 0.104 on trending) but '
+    +'leaves 41% of days in an ambiguous middle against 20%. Superseded on coverage, '
+    +'not on description &mdash; and that trade is still open.</td></tr>'
+    +'<tr><td><b>Validation</b> &mdash; part</td><td>Moving-average and lead-time work</td>'
+    +'<td>3,420 window pairs swept across three signal families to try to bridge the '
+    +'4-bar confirmation lag. The best raw lift was 2.13&times; and its surrogate was '
+    +'1.91&times;. The ridge <i>tracks the dwell</i> &mdash; an M-bar mean turns over '
+    +'exactly the M bars the confirmation counts &mdash; so it reads the same window '
+    +'rather than leading it.</td></tr>'
+    +'<tr><td><b>States</b> &mdash; part</td><td>The tier</td>'
+    +'<td>Five words describing which of the three ribbon windows disagreed. '
+    +'Permutation p=0.257 on MFE/|MAE| and worse on everything else. Carried as '
+    +'description only, never routed on.</td></tr>'
+    +'</tbody></table></div>';})();
 };})();
