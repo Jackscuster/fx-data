@@ -79,6 +79,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('statecorr.py')      # cross-pair state sharing; the routing count
     run('refit.py')          # REFIT STABILITY: re-estimate at 6 vintages, compare
     run('windowsens.py')     # WINDOW SENSITIVITY: 90/120 vs the locked 106
+    run('scoreq.py')         # score_q: the declared decision behind the median
     run('knobs.py')          # KNOB SENSITIVITY: every hand-picked constant
     run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery

@@ -26,5 +26,5 @@ Separation is measured with a FIXED RULER: structval.properties uses
 its own window and is not perturbed by anything here. If the ruler
 moved with the machine, every machine would look equally good.
 
-FLAGGED: score_q (AMBER)
+FLAGGED: none
 

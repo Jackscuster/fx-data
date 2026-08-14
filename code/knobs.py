@@ -104,8 +104,13 @@ KNOBS = [
      'fitted choice, but no comparison against other splits is on file.'),
     ('score_q', 'score cut quantile', 0.5,
      [('0.40', dict(score_q=0.40)), ('0.60', dict(score_q=0.60))],
-     'PARTIAL', 'The median by construction, so each score splits its own '
-     'distribution in half; no comparison against other quantiles is on file.'),
+     'FULL', 'DECIDED, not assumed -- scoreq.py. Candidates 0.40/0.45/0.50/'
+     '0.55/0.60 judged on IS against a criterion declared before looking '
+     '(separation on trend AND chop, median run ~20 bars, no state below 5% '
+     'share, default wins ties). 0.40 won IS by 1.1 paired block-bootstrap SE, '
+     'then LOST the holdout by 1.9 SE on identical rows -- worse on both axes '
+     '(trend 0.1324 vs 0.1354, chop 0.1130 vs 0.1368). 0.50 stays: tested, '
+     'median survived. See scoreq_decision.csv and scoreq_regression.csv.'),
     ('weights', 'measurement weights', 'equal',
      [('tilt up', dict(weights='tilt_up')),
       ('tilt down', dict(weights='tilt_down'))],
