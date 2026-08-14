@@ -136,6 +136,19 @@ failure on test two bury a pass on test one.
 
 ## SETTINGS AND REPORTING
 
+> **CORRECTION, added after the window-sensitivity run.** The shipped constant is
+> **106**, not 105 — `code/twoscores.py:55`, `W = 106`, and `shape3.py` carries the
+> same value in `RIBBON = ((6,35),(19,106),(44,247))`. The line below was written at
+> the decision stage and was never updated; it is left as written rather than edited.
+>
+> The two numbers are the same quantity measured on different windows, not a typo.
+> The settable parameter is the integer **swing width N=19**; the lookback is a
+> *measured* consequence of it — the pooled median distance back to the previous
+> confirmed swing. That measures **106.0 bars on the in-sample window** (the
+> project's measurement convention) and **105.0 on the full sample**. 105 was also
+> the nominal figure the sweep pointed at, so it is what the decision was phrased in.
+> HANDOFF_3.md §16.4q and the app both say 106 and are correct.
+
 **Window stays at 105 days** unless something above changes it. Chosen because separation is
 44% of peak while runs stay at 21 days — separation keeps climbing to 200 but runs stretch
 to 42, which is too slow for entries held for weeks.

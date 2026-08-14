@@ -196,6 +196,7 @@ out = dict(
     rfagr=cl(rd('refit_agreement.csv')),
     rfdis=cl(rd('refit_disagreement.csv')),
     rfthr=cl(rd('refit_thresholds.csv')),
+    wsens=cl(rd('window_sensitivity.csv')),
     r10cov=cl(rd('rates10y_coverage.csv')),
     chronep=cl(rd('chronic_episodes.csv')),
     chronsep=cl(rd('chronic_separation.csv')),

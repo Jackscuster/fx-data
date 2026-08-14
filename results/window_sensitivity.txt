@@ -1,0 +1,47 @@
+Window sensitivity -- do nearby lookbacks give a different machine?
+===================================================================
+
+THIS IS NOT A RE-TUNE. The shipped lookback stays at 106 bars. Nothing
+here is selected, no window is compared on separation or any other
+quality measure, and no window is proposed. 90 and 120 were declared
+before running, chosen only as "near", and the measure is the SAME
+per-day agreement the refit test uses so the two read against each
+other.
+
+WHAT THE LOOKBACK TOUCHES: disp (net/path), tests, inside, revert. What
+it does not: fails (its own KFAIL=20 window), seq, the swing width 19,
+the activity scale axis (its own 28-bar lookback), the 5-bar dwell, and
+every cut rule. All fitted quantities are re-estimated at each window on
+the shipped fit window, because a score built on a different lookback
+has a different distribution and reusing the old standardisation would
+compare two things that are not comparable.
+
+CONTROL: rebuilding at 106 reproduces the shipped states exactly, and
+the run asserts it.
+
+THE RESULT, AND IT IS NOT THE COMFORTABLE ONE. 0.806 agreement at 90
+bars and 0.831 at 120, against 0.939-0.964 for the refit test. Moving
+the lookback by 15% changes roughly ONE CALL IN SIX; re-estimating
+every fitted number from a fit window seven years shorter changes one
+in twenty. THE WINDOW IS A BIGGER LEVER THAN THE FITTING.
+
+The disagreements are also a different KIND. Under refit the median
+disagreement run was 3-4 bars, BELOW the 5-bar dwell, and 3-6% of
+episodes were fully relabelled -- boundary noise. Here the median run
+is 7 bars, ABOVE the dwell, and 15-16% of episodes are fully
+relabelled. Changing the window does not jitter the edges; it tells a
+different story about whole stretches of market.
+
+WHAT THAT DOES AND DOES NOT MEAN. It is not a cliff: kappa is still
+0.74 and 0.77, substantial agreement, and 120 sits closer to the
+shipped read than 90 as a monotone drift rather than a discontinuity.
+It does mean the lookback is a REAL CHOICE carrying real consequences,
+not a free parameter -- which is an argument for leaving it locked and
+documented rather than revisiting it, and an argument against reading
+any single state call as though the window were incidental to it.
+
+The fragile cells are the same ones refit exposed: trending and ranging
+hold ~0.85 at both windows, while trend-in-range and neither fall to
+0.73 at 90 bars. The overlap cell and the residual cell inherit the
+wobble of both cuts.
+
