@@ -1,0 +1,7 @@
+MOVE coverage
+=============
+
+^MOVE runs 2002-11-12 to 2026-07-31. The FX sample starts 1999-01-04,
+so the first ~3.9 years have no MOVE at all and IS is a 13-year window
+rather than 17. Unit of observation is a DAY, not a pair-day, because
+MOVE is one global series hitting all 28 pairs simultaneously.

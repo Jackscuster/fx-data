@@ -1,0 +1,5 @@
+Pre-1999 null draws
+===================
+
+One row per circular shift of the yield panel against price,
+offsets of at least 250 bars. 50 draws, the exact count run.

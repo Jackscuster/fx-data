@@ -506,6 +506,7 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 <section id="xd" hidden>
 <h3>External drivers</h3>
 <div id="extdrv"></div>
+<div id="extdrv2"></div>
 </section>
 `;
 // The feed is split in two: app_data.json (small, everything except signals) and
@@ -1148,6 +1149,128 @@ function boot(BUNDLE,root){
     +'holdout, it was <i>not</i> the question asked, and a single surviving cell out '
     +'of four tested is roughly what chance delivers.</p></div></details>';
    $('#extdrv').innerHTML=h;
+  }
+
+  function buildDrivers2(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const PRE=(BUN.rdpre||[])[0],PC=BUN.precov||[],M1=BUN.mvq1||[],
+         MC=BUN.mvchg||[],M2=BUN.mvq2||[],MN=BUN.mvnull||[],MV=(BUN.mvcov||[])[0];
+   let h='';
+   if(PRE){
+    h+='<h3>Rate differential — pre-1999 confirmation</h3>'
+     +'<div class="note"><b>One shot, zero tuning, on data nobody had touched.</b> '
+     +'W=5 frozen, the same one-bar lag, the same episode scoring imported rather '
+     +'than reimplemented, and the classifier cut points fitted on 1999&ndash;2015 '
+     +'carried backwards unchanged.</div>'
+     +'<div class="note" style="border-left:3px solid var(--chop)">'
+     +'<b>It ran on 3 pairs, not the 21 the brief assumed.</b> Only USD, GBP and '
+     +'CHF have 2-year yields before 1999 — CAD starts 2001, AUD&rsquo;s cache is '
+     +'a 31-row fragment, JPY&rsquo;s will not parse, NZD does not exist. <b>And '
+     +'those three are not independent</b>: three currencies give three pairs and '
+     +'any one is the ratio of the other two, so the effective sample is nearer '
+     +'two series than three. FX was rebuilt from the FRED mirror of H.10 (the Fed '
+     +'endpoint returns 403) and checked against the committed panel over 6,916 '
+     +'shared bars — median relative difference 0.00004 / 0.00000 / 0.00004.</div>'
+     +'<div class="tw"><table><thead><tr><th>Sample</th><th>Pairs</th>'
+     +'<th>Ranging episodes</th><th>Excess</th><th>Null mean</th><th>Rank</th>'
+     +'<th>p</th><th>Verdict</th></tr></thead><tbody><tr><td>'+PRE.sample
+     +'</td><td>'+PRE.pairs+'</td><td>'+PRE.ranging_episodes+'</td><td><b>'
+     +(PRE.excess>0?'+':'')+f(PRE.excess,4)+'</b></td><td>'
+     +(PRE.null_mean>0?'+':'')+f(PRE.null_mean,4)+'</td><td>'+PRE.rank_of_real
+     +' of '+PRE.n_compared+'</td><td>'+f(PRE.p)+'</td><td><b style="color:'
+     +(PRE.verdict==='CONFIRMED'?'var(--trend)':'var(--chop)')+'">'+PRE.verdict
+     +'</b></td></tr></tbody></table>'
+     +'<div class="count">Verdict rule fixed <i>before</i> the read: excess &gt; 0 '
+     +'AND rank &le; 3, the bar the original cleared on its holdout. — '
+     +'<code>results/ratediff_pre1999_result.csv</code></div></div>'
+     +'<div class="note"><b>What actually happened, stated both ways.</b> The '
+     +'point estimate did <i>not</i> flip: <b>+0.053</b> pre-1999 against '
+     +'<b>+0.046</b> on the original holdout, the same sign and nearly the same '
+     +'size. But the null spread is <b>0.075</b> here against <b>0.019</b> there, '
+     +'because 39 ranging episodes is not 478. So this is a <b>failure to '
+     +'confirm through lack of power</b>, not a refutation — and by the rule set '
+     +'in advance, that closes the question either way. The ranging cell stays '
+     +'unpromoted and is not revisited.</div>';
+   }
+   if(M1.length){
+    const sp={};M1.forEach(r=>{sp[r.block+'|'+r.state+'|'+r.bucket]=r.mean_share;});
+    const ST=['trending','ranging','trend-in-range','neither'];
+    h+='<h3>External driver #2 — bond volatility (MOVE)</h3>'
+     +'<div class="note"><b>MOVE is one global series hitting all 28 pairs at '
+     +'once</b>, so pair-level episodes are not independent observations. '
+     +'Everything here is <b>pooled by day</b>: the unit is a calendar day and the '
+     +'statistic is the cross-sectional share of pairs in each state. '
+     +(MV?('Overlap '+MV.first+' to '+MV.last+', '+MV.days+' days ('+MV.is_days
+        +' in-sample, '+MV.oos_days+' holdout). The FX sample starts 1999-01-04, '
+        +'so the first ~3.9 years have no MOVE at all.'):'')+'</div>'
+     +'<div class="tw"><table><thead><tr><th>Block</th><th>State</th>'
+     +'<th>Low MOVE</th><th>Mid</th><th>High MOVE</th><th>Spread (high&minus;low)</th>'
+     +'</tr></thead><tbody>'
+     +['is','oos'].map(b=>ST.map(s=>{
+       const lo=sp[b+'|'+s+'|low'],mi=sp[b+'|'+s+'|mid'],hi=sp[b+'|'+s+'|high'];
+       if(lo==null)return '';
+       return '<tr><td>'+b+'</td><td>'+s+'</td><td>'+f(lo)+'</td><td>'+f(mi)
+        +'</td><td>'+f(hi)+'</td><td><b>'+((hi-lo)>0?'+':'')+f(hi-lo)
+        +'</b></td></tr>';}).join('')).join('')
+     +'</tbody></table><div class="count"><b>Question 1</b> — state occupancy by '
+     +'MOVE tercile, cut on in-sample only. MOVE is a level, not a direction, so '
+     +'this is an occupancy question and not a sign test. — '
+     +'<code>results/move_q1.csv</code></div></div>';
+    if(MC.length) h+='<div class="tw"><table><thead><tr><th>Block</th>'
+     +'<th>State</th><th>Days</th><th>Correlation with 21-bar MOVE change</th>'
+     +'</tr></thead><tbody>'+MC.map(r=>'<tr><td>'+r.block+'</td><td>'+r.state
+      +'</td><td>'+r.n_days+'</td><td>'+(r.corr_chg21>0?'+':'')+f(r.corr_chg21,4)
+      +'</td></tr>').join('')+'</tbody></table><div class="count">The trending '
+     +'correlation <b>flips sign</b> between blocks, +0.143 to &minus;0.039. — '
+     +'<code>results/move_q1_chg.csv</code></div></div>';
+    if(M2.length) h+='<div class="tw"><table><thead><tr><th>Block</th>'
+     +'<th>Day type</th><th>Days</th><th>Mean MOVE level</th>'
+     +'<th>Mean 21-bar change</th></tr></thead><tbody>'
+     +M2.map(r=>'<tr><td>'+r.block+'</td><td>'+r.kind+'</td><td>'+r.days
+      +'</td><td>'+f(r.mean_level,2)+'</td><td>'+(r.mean_chg21>0?'+':'')
+      +f(r.mean_chg21,2)+'</td></tr>').join('')+'</tbody></table>'
+     +'<div class="count"><b>Question 2</b> — MOVE on days containing a transition '
+     +'into trending against days containing none, both reads lagged one bar. — '
+     +'<code>results/move_q2.csv</code></div></div>';
+    if(MN.length) h+='<div class="tw"><table><thead><tr><th>Block</th>'
+     +'<th>Statistic</th><th>Real</th><th>Null mean</th><th>Null sd</th>'
+     +'<th>Shifts</th><th>Rank</th><th>p</th></tr></thead><tbody>'
+     +MN.map(r=>'<tr><td>'+r.block+'</td><td>'+r.statistic+'</td><td><b>'
+      +(r.real>0?'+':'')+f(r.real,4)+'</b></td><td>'+(r.null_mean>0?'+':'')
+      +f(r.null_mean,4)+'</td><td>'+f(r.null_sd,4)+'</td><td>'+r.n_shifts
+      +'</td><td>'+r.rank_of_real+' of '+r.n_compared+'</td><td>'+f(r.p)
+      +'</td></tr>').join('')+'</tbody></table><div class="count">Circular shift '
+     +'of MOVE against the state panel, offsets &ge;500 days, two-sided on '
+     +'|spread| because the headline state was chosen on in-sample magnitude. — '
+     +'<code>results/move_null.csv</code></div></div>';
+    h+='<details class="panel" style="margin-top:14px" open>'
+     +'<summary style="cursor:pointer;font-weight:600">Bond volatility (MOVE) '
+     +'<span class="count">plain English</span></summary>'
+     +'<div style="margin-top:10px;font-size:13px;line-height:1.65">'
+     +'<p><b>What it is.</b> The MOVE index — implied volatility of US Treasury '
+     +'options, the bond market&rsquo;s equivalent of the VIX. One number a day '
+     +'for the whole world.</p>'
+     +'<p><b>How it is calculated here.</b> Two declared constructions and nothing '
+     +'else: the level cut into terciles on 1999&ndash;2015 data and applied '
+     +'unchanged, and its 21-bar change. Both lagged one bar. No sweep.</p>'
+     +'<p><b>How to read it.</b> Because MOVE is global, a day is one observation '
+     +'no matter how many of the 28 pairs move. The tables show the average share '
+     +'of pairs sitting in each state on high-MOVE days against low-MOVE days.</p>'
+     +'<p><b>What it is good for.</b> Ruling the idea in or out cheaply, with the '
+     +'non-independence handled by construction rather than argued away.</p>'
+     +'<p style="color:var(--chop)"><b>What it is NOT.</b> <b>It does not predict '
+     +'price direction</b> — it is tested against <i>regime shape only</i>, and '
+     +'MOVE has no direction to give. It is also <b>not confirmed</b>: the '
+     +'in-sample trending spread of +0.071 shrinks to <b>+0.015</b> out of sample '
+     +'and ranks 31st of 46 nulls, and the 21-bar-change correlation flips sign '
+     +'between blocks. The one cell that survives its null is question 2 — MOVE '
+     +'rising ahead of transition days — and the most likely misreading is '
+     +'treating that as an early-warning signal. A day when FX regimes turn is a '
+     +'day something happened globally, and bond volatility rising on such days is '
+     +'close to a restatement of that, not an independent forecast.</p>'
+     +'</div></details>';
+   }
+   $('#extdrv2').innerHTML=h;
   }
 
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
@@ -2819,6 +2942,7 @@ function boot(BUNDLE,root){
   buildCharacter();
   buildCurrentStates();
   buildExtDrivers();
+  buildDrivers2();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
   (function(){
    const names={nb:'9-Box',mt:'Timeframes',ld:'Detectors',st:'Strategies'};

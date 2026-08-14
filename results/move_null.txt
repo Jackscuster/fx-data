@@ -1,0 +1,8 @@
+Null -- circular shift of MOVE against the state panel
+======================================================
+
+MOVE is rolled by a random offset of at least 500 days and the terciles
+recut on the shifted series. Rank is TWO-SIDED on |spread| because the
+headline state was chosen on the magnitude of its in-sample spread.
+
+n_shifts is the exact draw count run.
