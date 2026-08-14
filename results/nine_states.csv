@@ -1,3 +1,11 @@
+# SUPERSEDED NAME -- kept, data untouched.
+# This file contains the generation-1 NINE-BOX summary: the nine states
+# strong/medium/weak x trend/transitional/chop, with share, median run
+# length and run count. It is a 9-row summary table. It does NOT contain
+# four shape states and it does NOT contain per-day labels.
+# Correctly-named copy: ninebox_state_summary.csv
+# Per-day labels:       states_g1_ninebox.csv
+# Superseded by:        generation 4, states_g4_twoscore4.csv
 ,share,median_len,runs
 strong trend,0.10180264666041472,7.0,1943
 medium trend,0.107085547566948,5.0,2879

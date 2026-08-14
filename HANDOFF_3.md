@@ -2407,6 +2407,70 @@ every comparison here is reported as MATCHES or MISMATCH rather than assumed.
 `/tmp`. If a result is worth reporting it is written to `results/` and committed.
 Stdout is for progress, not for findings.
 
+### 16.4z Persistence gaps closed, filename fixed, app on the current classifier
+
+**PART 1 — what was already there, and what was actually missing.**
+
+Already committed, not rebuilt: **per-pair character** (`pair_character.csv`,
+`pair_ranking.csv`, `pair_transitions.csv`) and **the window sweep**
+(`shapesplit.csv`, 207 rows, N=2–70 = a measured lookback of **12 to 393 bars**,
+carrying separation, run length and diagonal per state per window — that is the
+28-to-400 sweep asked for). `run_lengths.csv` was committed in 16.4x.
+
+Genuinely missing and now written by `persist2.py` — **8 wide daily series**,
+dates down and 28 pairs across:
+
+| file | what |
+|---|---|
+| `series_trend_score.csv` | daily trend score |
+| `series_chop_score.csv` | daily chop score |
+| `series_measure_failed_swings.csv` | failed swings |
+| `series_measure_retracement.csv` | retracement depth slope |
+| `series_measure_swing_spacing.csv` | swing spacing slope |
+| `series_measure_cross_pair.csv` | cross-pair R² |
+| `series_measure_boundary_tests.csv` | boundary test counts |
+| `series_measure_range_containment.csv` | range containment |
+
+**The last two had never been exported at all** — they are chop-score components
+living inside `twoscores.raw_parts` with no file of their own. Boundary tests is
+the component the drop-one in 16.4t found was *hurting* the score, so it is
+persisted as a diagnostic and labelled as one.
+
+Also added: `pair_character_blocks.csv` (28 pairs × IS/OOS/all),
+`pair_rank_stability.csv` and `pair_rank_moves.csv` — the IS-vs-OOS split and
+rank correlations, which `pair_character.csv` did not carry.
+
+**PART 2 — the filename, stated accurately.** `nine_states.csv` does **not**
+hold four shape states. It is a **9-row summary table** of the generation-1
+nine-box: `strong/medium/weak × trend/transitional/chop`, with share, median run
+length and run count. That is the third time this has been checked and the
+content is unchanged.
+
+Done anyway, because the name is genuinely uninformative: a correctly-named copy
+`ninebox_state_summary.csv`, and an 8-line `#` header note added to the original
+saying what it contains, what holds the per-day labels
+(`states_g1_ninebox.csv`) and what superseded it. **Its 9 data rows are
+untouched.** `bundle.rd()` now defaults to `comment='#'` so the note cannot turn
+into a data row — verified: the feed still carries exactly 9 rows.
+
+**PART 3 — the app.** The Regime / Character / Explain / Archive screens were
+built in `74b9651`; this adds the missing **States and Validation** panel
+(`#curstates`), which carries coverage, run length and longest run per state per
+block; the 4×4 transition matrix averaged across pairs; separation IS vs OOS with
+surrogate and corrected; per-pair separation for both axes; and the IS-vs-OOS
+rank-correlation table. **Every table names the file it came from.**
+
+**One thing the panel says rather than shows.** There is no 200-shuffle null on
+the generation-4 classifier. The 200-draw figures in this repo belong to the
+lead-time holdout reads (`masweep_confirm.csv`, `shapewin_confirm.csv`); the
+final report ran 15 draws and the shape-window confirmation 120. The panel states
+the actual draw counts and says plainly that quoting 200 here would be wrong.
+
+**VERIFIED**: 14 `states_*.csv` and 8 `series_*.csv` load with 28 pairs each;
+EURUSD peak **1.6010** and USDCHF low **0.7296** both hold; eight app feeds match
+their source files row for row with an end-to-end spot check; headless boot
+completes and the new panel cites five filenames. Zero deletions.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

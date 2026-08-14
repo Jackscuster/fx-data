@@ -63,6 +63,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('paircharacter.py')  # per-pair CHARACTER, and whether it is stable
     run('persist.py')        # every generation to its own named file + manifest
     run('regenerate.py')     # rebuild every superseded classifier, check vs archive
+    run('persist2.py')       # daily series wide, character by block, filename fix
     run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
