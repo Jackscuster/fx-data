@@ -2597,6 +2597,73 @@ that rather than an independent forecast. Recorded, not promoted.
 `move_{coverage,q1,q1_chg,q2,null}.csv` — each with a `.txt` companion. Drivers
 tab carries both with plain-English panels and their "what it is NOT".
 
+### 16.5c Drivers reframed: MOVE confirms the regime read, rate-gap size does not
+
+The question is no longer "does the driver predict direction" — those answers stay
+on file — but the one the internal measurements were held to: **does the driver
+read differently across states.** Drivers stay a separate output; nothing folds
+into the shape or activity scores.
+
+**Crisis is a forward-only window**, event date to +15 bars, the convention
+`crisis.py` already uses. The calendar holds **54 events, not 48**; crisis days
+are 10.7% of bars.
+
+**TEST 1 — separation.**
+
+| driver | block | group | n | separation vs rest |
+|---|---|---|---|---|
+| A rate-gap \|21d\| | is | ranging | 512 | −0.162 |
+| A | is | crisis | 730 | +0.124 |
+| A | oos | ranging | 316 | **−0.319** |
+| A | oos | crisis | 562 | **+0.557** |
+| B MOVE | is | range-leaning | 1,625 | −0.296 |
+| B | is | crisis | 356 | +0.286 |
+| B | oos | range-leaning | 1,645 | **−0.481** |
+| B | oos | crisis | 318 | **+0.926** |
+
+Driver B is **pooled by day** — 5,944 days, IS 3,301 / OOS 2,643 — because MOVE is
+one global series and pooling by pair would let one world event count 28 times.
+
+**Both clear their nulls on the holdout at p=0.020** (rank 1 of 51), and **both
+fail in-sample** (p=0.157 and p=0.235). A holdout stronger than its own in-sample
+is unusual enough to check, so I split it three ways:
+
+| driver | group | 2016-19 | 2020-21 | 2022-26 |
+|---|---|---|---|---|
+| A | ranging | **+0.160** | −0.438 | −0.376 |
+| A | crisis | −0.066 | +1.599 | +0.422 |
+| **B** | range-leaning | **−0.538** | **−0.314** | **−0.648** |
+| **B** | crisis | **+0.932** | — | **+0.852** |
+
+**This is where the two part company.** Driver A's ranging separation is
+**+0.160 in 2016-19 — the wrong sign** — and only turns negative from 2020. Its
+holdout result is a post-COVID rate-cycle effect, not a property of the sample.
+**Driver A should not be used.**
+
+**Driver B is robust**: same sign and similar size in every sub-period. Crisis
+days carry a MOVE reading about **0.9 sd** above everything else. **That is a
+genuine second opinion from outside price — the first external driver in this
+project to survive both a null and a sub-period split.**
+
+**TEST 2 — does agreement add confidence? Barely, and not usably.**
+
+- Driver A: trending runs 26.0 vs 20.0 bars in-sample when the gap is moving
+  hard, but **19.0 vs 18.0 out of sample** — the gap collapses.
+- Driver B: daily flip rate 0.0343 vs 0.0332 in-sample, **0.0343 vs 0.0372 out of
+  sample** — the sign flips.
+
+Neither is a usable confidence input for sizing. The separation result stands;
+the confidence claim does not.
+
+**RIDE-ALONG — already answered, and the brief's premises were wrong.** The
+pre-1999 confirmation ran last session (`ratediff_pre1999_result.csv`, 16.5b) and
+**FAILED**: rank 18 of 51, p=0.353. It ran on **3 pairs, not 21** — only USD, GBP
+and CHF have 2-year yields before 1999, and the yields go back to **1998-06, not
+1990**. Not re-run.
+
+**Files**: `driver_separation_{a,b}.csv`, `driver_confidence_{a,b}.csv`,
+`driver_subperiod.csv`, each with a `.txt` companion.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

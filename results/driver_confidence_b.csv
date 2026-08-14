@@ -1,0 +1,5 @@
+driver,block,subset,episodes,median_run,mean_run,daily_flip_rate
+B,is,MOVE low,1101,,,0.03425457376411054
+B,is,MOVE high,1100,,,0.03321428571428571
+B,oos,MOVE low,1453,,,0.03431324353554222
+B,oos,MOVE high,670,,,0.03715351812366737

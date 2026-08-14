@@ -504,7 +504,9 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 
 
 <section id="xd" hidden>
-<h3>External drivers</h3>
+<h3>External drivers &mdash; do they confirm the regime read?</h3>
+<div id="extdrv0"></div>
+<h3>Direction tests (superseded, kept on file)</h3>
 <div id="extdrv"></div>
 <div id="extdrv2"></div>
 </section>
@@ -1271,6 +1273,118 @@ function boot(BUNDLE,root){
      +'</div></details>';
    }
    $('#extdrv2').innerHTML=h;
+  }
+
+  function buildDriversReframed(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const SA=BUN.drvsepa||[],SB=BUN.drvsepb||[],CF=BUN.drvconf||[],SU=BUN.drvsub||[];
+   if(!SA.length){$('#extdrv0').innerHTML='';return;}
+   const sep=r=>r.group&&r.real==null, nul=r=>r.real!=null;
+   let h='<div class="note" style="border-left:3px solid var(--trend)">'
+    +'<b>Drivers CONFIRM the regime read. They do not predict price.</b> The '
+    +'question here is the one the internal measurements were held to: does the '
+    +'driver <i>read differently across states</i>? A driver that does is a second '
+    +'opinion from outside price. The old direction-agreement results stay on file '
+    +'and are superseded as the main question, not deleted. Nothing here folds into '
+    +'the shape or activity scores.</div>'
+    +'<div class="note">Crisis is a <b>forward-only</b> window, event date to +15 '
+    +'bars — the convention crisis.py already uses, because a window opening '
+    +'before the event once produced a false “fires 2.5 days ahead” result. The '
+    +'calendar holds <b>54</b> events, and crisis days are 10.7% of bars.</div>';
+
+   h+='<div class="tw"><table><thead><tr><th>Driver</th><th>Block</th>'
+    +'<th>Group</th><th>Episodes / days</th><th>Mean reading</th>'
+    +'<th>Separation vs rest</th></tr></thead><tbody>'
+    +SA.filter(sep).map(r=>'<tr><td>A rate-gap |21d|</td><td>'+r.block+'</td><td>'
+     +r.group+'</td><td>'+r.episodes+'</td><td>'+f(r.mean_drv,4)+'</td><td><b>'
+     +(r.sep_vs_rest>0?'+':'')+f(r.sep_vs_rest)+'</b></td></tr>').join('')
+    +SB.filter(r=>r.group&&r.real==null).map(r=>'<tr><td>B MOVE level</td><td>'
+     +r.block+'</td><td>'+r.group+'</td><td>'+r.days+'</td><td>'
+     +f(r.mean_level,2)+'</td><td><b>'+(r.sep_level>0?'+':'')+f(r.sep_level)
+     +'</b></td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Test 1</b> — driver A is per-pair and '
+    +'episode-based; driver B is <b>pooled by day</b>, because MOVE is one global '
+    +'series and pooling by pair would let one world event count 28 times. — '
+    +'<code>results/driver_separation_a.csv</code>, '
+    +'<code>results/driver_separation_b.csv</code></div></div>';
+
+   const nulls=SA.filter(nul).concat(SB.filter(nul));
+   if(nulls.length) h+='<div class="tw"><table><thead><tr><th>Driver</th>'
+    +'<th>Block</th><th>Group (chosen on IS)</th><th>Real</th><th>Null</th>'
+    +'<th>Rank</th><th>p</th></tr></thead><tbody>'
+    +nulls.map(r=>'<tr><td>'+r.driver+'</td><td>'+r.block+'</td><td>'+r.group
+     +'</td><td><b>'+(r.real>0?'+':'')+f(r.real,4)+'</b></td><td>'
+     +(r.null_mean>0?'+':'')+f(r.null_mean,4)+' ± '+f(r.null_sd,4)+'</td><td>'
+     +r.rank_of_real+' of '+r.n_compared+'</td><td><b style="color:'
+     +(r.p<0.05?'var(--trend)':'var(--mute)')+'">'+f(r.p)+'</b></td></tr>')
+     .join('')+'</tbody></table><div class="count">Circular-shift null, 50 draws, '
+    +'two-sided. <b>Both drivers clear on the holdout at p=0.020</b> — and both '
+    +'FAIL in-sample (p=0.157 and p=0.235). A holdout stronger than its own '
+    +'in-sample is unusual enough to check, which is the next table.</div></div>';
+
+   if(SU.length){
+    const per=['2016-19','2020-21','2022-26'];
+    h+='<div class="tw"><table><thead><tr><th>Driver</th><th>Group</th>'
+     +per.map(p=>'<th>'+p+'</th>').join('')+'</tr></thead><tbody>'
+     +[['A','ranging'],['A','crisis'],['B','range-leaning'],['B','crisis']]
+      .map(([d,g])=>'<tr><td>'+d+'</td><td>'+g+'</td>'+per.map(p=>{
+        const r=SU.find(x=>x.driver===d&&x.group===g&&x.period===p);
+        const v=r?r.sep:null;
+        return '<td'+(v!=null&&v>0&&(g==='ranging'||g==='range-leaning')
+          ?' style="color:var(--chop)"':'')+'>'
+          +(v==null||isNaN(v)?'—':((v>0?'+':'')+f(v)))+'</td>';}).join('')
+       +'</tr>').join('')+'</tbody></table>'
+     +'<div class="count"><b>The two drivers part company here.</b> '
+     +'<b>Driver A is not robust</b>: its ranging separation is <b>+0.160 in '
+     +'2016–19 — the wrong sign</b> — and only turns negative from 2020. Its '
+     +'holdout result is a post-COVID effect, not a property of the sample. '
+     +'<b>Driver B is robust</b>: range-leaning reads −0.538 / −0.314 / −0.648 '
+     +'and crisis +0.932 / — / +0.852, the same sign and similar size in every '
+     +'sub-period. — <code>results/driver_subperiod.csv</code></div></div>';
+   }
+
+   if(CF.length) h+='<div class="tw"><table><thead><tr><th>Driver</th>'
+    +'<th>Block</th><th>Subset</th><th>n</th><th>Median run</th>'
+    +'<th>Daily flip rate</th></tr></thead><tbody>'
+    +CF.map(r=>'<tr><td>'+r.driver+'</td><td>'+r.block+'</td><td>'+r.subset
+     +'</td><td>'+r.episodes+'</td><td>'+(r.median_run==null||r.median_run===''
+      ?'—':f(r.median_run,1))+'</td><td>'+(r.daily_flip_rate==null
+      ||r.daily_flip_rate===''?'—':f(r.daily_flip_rate,4))+'</td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Test 2 — does agreement add '
+    +'confidence?</b> Barely. Driver A: trending runs are 26.0 vs 20.0 bars '
+    +'in-sample when the gap is moving hard, but <b>19.0 vs 18.0 out of '
+    +'sample</b> — the gap collapses. Driver B: the daily flip rate is 0.0343 vs '
+    +'0.0332 in-sample and <b>0.0343 vs 0.0372 out of sample</b> — the sign '
+    +'flips. Neither is a usable confidence input. — '
+    +'<code>results/driver_confidence_a.csv</code></div></div>';
+
+   h+='<details class="panel" style="margin-top:14px" open>'
+    +'<summary style="cursor:pointer;font-weight:600">Drivers as confirmation '
+    +'<span class="count">plain English</span></summary>'
+    +'<div style="margin-top:10px;font-size:13px;line-height:1.65">'
+    +'<p><b>What it is.</b> Two readings from outside the price series — how hard '
+    +'the 2-year rate gap is moving, and how volatile the bond market is — checked '
+    +'against what the classifier already says the pair is doing.</p>'
+    +'<p><b>How it is calculated.</b> Driver A is the <i>absolute</i> 21-bar '
+    +'change in the rate differential: size, not direction. Driver B is the MOVE '
+    +'level and its 21-bar change. Both lagged one bar. States come from the '
+    +'committed classifier and are never modified.</p>'
+    +'<p><b>How to read it.</b> Separation is the group mean minus every other '
+    +'group, in standard deviations. Crisis days carry a MOVE reading about '
+    +'<b>0.9 sd</b> above everything else, consistently. That is the driver '
+    +'agreeing with the regime read.</p>'
+    +'<p><b>What it is good for.</b> A second opinion. When MOVE is elevated and '
+    +'the panel is not range-leaning, two independent things are saying the same '
+    +'thing.</p>'
+    +'<p style="color:var(--chop)"><b>What it is NOT.</b> <b>It does not predict '
+    +'price direction</b> — driver A is deliberately stripped of sign, and MOVE '
+    +'has no direction to give. It is <b>not a new state</b>: nothing here changes '
+    +'a label. It is <b>not yet a confidence input</b> either — test 2 asked '
+    +'whether agreement makes the state call better and the answer was no in both '
+    +'blocks. And <b>driver A should not be used at all</b>: it clears its null '
+    +'only because of 2020 onwards, and reads the wrong sign in 2016–19.</p>'
+    +'</div></details>';
+   $('#extdrv0').innerHTML=h;
   }
 
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
@@ -2942,6 +3056,7 @@ function boot(BUNDLE,root){
   buildCharacter();
   buildCurrentStates();
   buildExtDrivers();
+  buildDriversReframed();
   buildDrivers2();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
   (function(){

@@ -1,0 +1,15 @@
+Holdout separation, split by sub-period
+=======================================
+
+Both drivers scored their strongest separation on the HOLDOUT rather
+than in-sample, which is unusual enough to check before reporting. The
+holdout contains COVID and the 2022 rate cycle, so a result
+concentrated there is a result about two years, not about the sample.
+
+Driver A is NOT robust: the ranging separation is +0.160 in 2016-19,
+the WRONG SIGN, and only turns negative from 2020. Its holdout result
+is a post-COVID effect.
+
+Driver B IS robust: range-leaning is -0.538 / -0.314 / -0.648 across
+the three sub-periods and crisis is +0.932 / n-a / +0.852. Same sign,
+similar size, in every one.
