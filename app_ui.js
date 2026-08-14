@@ -215,6 +215,8 @@ separation, refit stability, coverage and two surrogate nulls.</div>
 <div id="splitblock"></div>
 <h3>Is the score three clusters, or one spread?</h3>
 <div id="distblock"></div>
+<h3>Final settings and full report</h3>
+<div id="finalblock"></div>
 <h3>Old nine-box vs new nine-state</h3>
 <div id="oldnewblock"></div>
 <h3>Three kinds of regime change</h3>
@@ -1569,6 +1571,63 @@ function boot(BUNDLE,root){
      +'layer1_states.csv so the boundary can be moved downstream without '
      +'re-deriving the score.</div></div>';
     $('#distblock').innerHTML=h;
+   }
+   const FR=BUN.finalrep||[],FP=BUN.finalpairs||[],CCH=BUN.chopcomp||[];
+   const f9=(v,n)=>v==null||v===''?'&mdash;':(+v).toFixed(n==null?3:n);
+   if(FR.length){
+    const row=k=>FR.find(r=>r.item===k)||{};
+    const tr=row('trend'),ch=row('chop'),gi=row('grid OOS'),gn=row('grid null');
+    let h='<div class="note"><b>Two decisions, both taken on in-sample only.</b> '
+     +'Chop drops the <code>tests</code> component (IS |sep| 0.140 &rarr; 0.151). '
+     +'Activity is cut <b>jointly</b> with a 0.75 bump, so a weak-activity bar '
+     +'must clear a higher trend bar &mdash; but it beats a separate cut by '
+     +'<b>0.002</b> on IS, which is a tie, and it costs coverage (min share '
+     +'0.049 &rarr; 0.026). Treat them as equivalent.</div>'
+     +'<div class="tw"><table><thead><tr><th>Axis</th><th>IS |sep|</th>'
+     +'<th>OOS |sep|</th><th>Surrogate</th><th>Corrected</th><th>Share</th>'
+     +'<th>Run</th><th>Diagonal</th></tr></thead><tbody>'
+     +[['trend',tr],['chop',ch]].map(([n,r])=>'<tr><td>'+n+'</td><td>'
+      +f9(r.is_sep)+'</td><td>'+f9(r.oos_sep)+'</td><td>'+f9(r.surrogate)
+      +'</td><td><b>'+(r.corrected>0?'+':'')+f9(r.corrected)+'</b></td><td>'
+      +f9(r.hi_share)+'</td><td>'+f9(r.hi_run,0)+'</td><td>'+f9(r.hi_diag)
+      +'</td></tr>').join('')+'</tbody></table>'
+     +'<div class="count"><b>Chop is the stronger axis and the only one that '
+     +'holds up out of sample</b> &mdash; 0.151 &rarr; 0.156, corrected '
+     +'&minus;0.011. Trend halves, 0.106 &rarr; 0.053, corrected &minus;0.044. '
+     +'Neither clears its surrogate.</div></div>'
+     +'<div class="note"><b>The full grid</b>, 12 cells: OOS mean |sep| '
+     +f9(gi.oos_sep)+', coverage <b>'+f9(gi.coverage)+'</b>, min share '
+     +f9(gi.min_share)+', median run '+f9(gi.median_run,0)+' bars, diagonal '
+     +f9(gi.diagonal)+'. Against its surrogate: '+f9(gn.oos_sep)+' vs '
+     +f9(gn.surrogate)+', corrected <b>'+(gn.corrected>0?'+':'')
+     +f9(gn.corrected)+'</b>. Significance is surrogate randomisation '
+     +'throughout &mdash; 74,004 holdout bars are only 4,604 episodes, so no '
+     +'per-bar t-statistic appears anywhere in this report.</div>';
+    if(FP.length){
+     const byax=a=>FP.filter(r=>r.axis===a).slice().sort((x,y)=>y.sep-x.sep);
+     h+='<div class="tw"><table><thead><tr><th>Pair</th><th>Trend |sep|</th>'
+      +'<th>Pair</th><th>Chop |sep|</th></tr></thead><tbody>'
+      +(function(){const t=byax('trend'),c=byax('chop');let o='';
+        for(let i=0;i<Math.max(t.length,c.length);i++){
+         o+='<tr><td>'+(t[i]?t[i].pair:'')+'</td><td>'+(t[i]?f9(t[i].sep):'')
+          +'</td><td>'+(c[i]?c[i].pair:'')+'</td><td>'+(c[i]?f9(c[i].sep):'')
+          +'</td></tr>';}
+        return o;})()
+      +'</tbody></table><div class="count">Per pair, holdout, the two axes '
+      +'reported separately and never blended. Trend median 0.118 (CADJPY 0.059 '
+      +'to GBPCAD 0.283); chop median 0.195 (CHFJPY 0.048 to EURJPY 0.478).'
+      +'</div></div>';}
+    if(CCH.length) h+='<div class="tw"><table><thead><tr><th>Chop component</th>'
+     +'<th>Real</th><th>Surrogate</th><th>Corrected</th></tr></thead><tbody>'
+     +CCH.map(r=>'<tr><td>'+r.component+'</td><td>'+f9(r.real)+'</td><td>'
+      +f9(r.surrogate)+'</td><td>'+(r.corrected>0?'+':'')+f9(r.corrected)
+      +'</td></tr>').join('')+'</tbody></table><div class="count">The three '
+     +'components added for redundancy. Adding all three made chop <i>worse</i> '
+     +'(0.124 &rarr; 0.082): <code>vr_short</code> separates better alone than '
+     +'the whole score but is uncorrelated with it, so summing dilutes; '
+     +'<code>hold_ratio</code> is 0.699 correlated with what was already there. '
+     +'Only <code>width_stab</code> clears its own surrogate.</div></div>';
+    $('#finalblock').innerHTML=h;
    }
    if(RS.length){
     const W=640,H=170,PL=40;
