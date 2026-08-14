@@ -1,0 +1,8 @@
+Per-state separation for every knob perturbation
+================================================
+
+Mean |one-vs-rest separation| over the four structural properties, in
+sd units, in-sample and out-of-sample. This answers whether a perturbed
+machine is a WORSE machine or merely a DIFFERENT one: a variant that
+disagrees heavily with shipped but holds separation is different, not
+worse.

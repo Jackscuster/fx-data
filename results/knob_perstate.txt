@@ -1,0 +1,7 @@
+Per-state agreement for every knob perturbation
+===============================================
+
+Agreement with the shipped label, computed within each shipped state.
+The residual cell (neither) and the overlap cell (trend-in-range) have
+been the fragile pair in both the refit and window tests; this is where
+that shows up per knob.

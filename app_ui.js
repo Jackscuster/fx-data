@@ -1171,7 +1171,14 @@ function boot(BUNDLE,root){
    const nref=IV.filter(r=>r.kind==='REFIT').reduce((a,r)=>a+ +r.count,0);
    const worst=post.reduce((a,r)=>r.agreement<a.agreement?r:a,post[0]);
 
-   let h='<h3>Refit stability &mdash; does re-estimating produce a different machine?</h3>'
+   let h='<h3>Sensitivity &mdash; refit, window, and every hand-picked knob</h3>'
+    +'<div class="note"><b>Three questions, one standard.</b> Does re-estimating '
+    +'the fitted numbers change the state calls (refit)? Does the one big '
+    +'unfitted number change them (window)? Does any other hand-picked constant '
+    +'(knobs)? All three use the same per-day agreement measure and the same '
+    +'control: the unperturbed build must reproduce the shipped states exactly, '
+    +'asserted in every run.</div>'
+    +'<h3 style="margin-top:22px">Refit stability &mdash; does re-estimating produce a different machine?</h3>'
     +'<div class="note" style="border-left:3px solid var(--dim)">'
     +'<b>The question.</b> If every fitted quantity is re-derived from data '
     +'ending at an earlier date, do the state calls stay the same? This matters '
@@ -1350,6 +1357,106 @@ function boot(BUNDLE,root){
      +'trending and ranging hold ~0.85 at both windows; <b>trend-in-range and '
      +'neither fall to 0.73</b> at 90 bars. The overlap cell and the residual '
      +'cell inherit the wobble of both cuts.</div>';}
+
+   const KR=BUN.knobrank||[],KS=BUN.knobs||[];
+   if(KR.length){
+    const ctl=KS.find(r=>r.knob==='(control)')||{};
+    const flag=KR.filter(r=>r.FLAG);
+    const rf=KS.filter(r=>r.run_failure===true||r.run_failure==='True');
+    h+='<h3 style="margin-top:26px">Knob sensitivity &mdash; every hand-picked '
+     +'constant, one at a time</h3>'
+     +'<div class="note" style="border-left:3px solid var(--dim)">'
+     +'<b>Why this exists.</b> The window turned out to be the biggest lever, '
+     +'and the window is derived from a hand-picked swing width. So every '
+     +'constant that was <i>chosen</i> rather than derived gets the same '
+     +'treatment, nudged ±20&ndash;25% one at a time.<br><br>'
+     +'<b>This measures. It changes nothing and picks nothing.</b> The shipped '
+     +'classifier is untouched, no setting is proposed, and no knob is compared '
+     +'in order to select a better value. A knob that scores badly here becomes '
+     +'a candidate for a properly motivated follow-up — chosen on in-sample data '
+     +'against a declared criterion, confirmed once out of sample — <b>in a '
+     +'later run</b>. The unperturbed build reproduces shipped at 1.0000, '
+     +'asserted.</div>'
+
+     +'<div class="tw"><table><thead><tr><th>Knob</th><th>What it is</th>'
+     +'<th>Worst agreement</th><th>Sensitivity</th><th>Min run</th>'
+     +'<th>Max flip</th><th>Rationale on file</th></tr></thead><tbody>'
+     +KR.map(r=>'<tr><td><code>'+r.knob+'</code></td><td>'+r.label+'</td><td>'
+      +f(r.worst_agreement,4)+'</td><td><b>'+f(r.sensitivity)+'</b></td><td>'
+      +f(r.min_run,0)+'</td><td>'+f(r.max_flip,4)+'</td><td><b style="color:'
+      +(r.rationale_tier==='FULL'?'var(--trend)':(r.rationale_tier==='NONE'
+        ?'var(--chop)':'var(--flat)'))+'">'+r.rationale_tier+'</b>'
+      +(r.FLAG?' <span style="color:'+(r.FLAG==='RED'?'var(--chop)':'var(--flat)')
+        +'">&#9679; '+r.FLAG+'</span>':'')+'</td></tr>').join('')
+     +'</tbody></table><div class="count"><b>sensitivity = 1 &minus; the worst '
+     +'agreement across that knob\'s two settings</b>, so higher means the state '
+     +'calls move more when the constant is nudged. — '
+     +'<code>results/knob_ranking.csv</code></div></div>'
+
+     +'<div class="note"><b>The reassuring result: the constants with no reason '
+     +'on file are not the ones steering.</b> The three with nothing recorded — '
+     +'<code>BAND</code> (0.014), <code>VOLWIN</code> (0.029) and '
+     +'<code>KFAIL</code> (0.062) — are the three <i>least</i> sensitive knobs '
+     +'in the whole set. The four that move the machine most all have a '
+     +'rationale on file. That is close to the opposite of the worry that '
+     +'prompted this run.</div>'
+
+     +'<div class="note" style="border-left:3px solid var(--flat)">'
+     +'<b>The one flag: <code>score_q</code>, AMBER.</b> The quantile the two '
+     +'scores are cut at is the <b>second most sensitive knob in the system</b> '
+     +'(0.202 — moving it from 0.50 to 0.40 changes one call in five), and its '
+     +'entire justification is “it is the median”. That is a construction rule, '
+     +'not a comparison: <b>no test of 0.45 or 0.55 against 0.50 is on file '
+     +'anywhere</b>. It is not wrong — a median split is a defensible default and '
+     +'separation barely moves (&minus;0.012 at 0.40, +0.001 at 0.60) — but it is '
+     +'a high-leverage constant resting on a convention. <b>This is the candidate '
+     +'for the next motivated follow-up.</b><br><br>'
+     +'<code>act_cuts</code> and <code>actL</code> are the same shape of argument '
+     +'(equal thirds; inherited from the 7/28/128 ribbon) but sit below the 0.10 '
+     +'sensitivity line, so they are recorded and not flagged.</div>'
+
+     +'<div class="tw"><table><thead><tr><th>Knob</th><th>Setting</th>'
+     +'<th>Agreement</th><th>Separation OOS</th><th>vs shipped</th>'
+     +'<th>Median run</th><th>Flip rate</th></tr></thead><tbody>'
+     +KS.map(r=>{const c=r.knob==='(control)';
+       return '<tr'+(c?' style="opacity:.75"':'')+'><td>'+(c?'<b>shipped</b>':
+        '<code>'+r.knob+'</code>')+'</td><td>'+(c?'unperturbed / control':r.variant)
+        +'</td><td>'+f(r.agreement,4)+'</td><td>'+f(r.sep_oos,4)+'</td><td'
+        +(r.sep_oos_vs_shipped<-0.01?' style="color:var(--chop)"':'')+'>'
+        +(c?'—':((r.sep_oos_vs_shipped>0?'+':'')+f(r.sep_oos_vs_shipped,4)))
+        +'</td><td'+((r.run_failure===true||r.run_failure==='True')
+          ?' style="color:var(--chop)"':'')+'>'+f(r.median_run,0)+'</td><td>'
+        +f(r.flip_rate,4)+'</td></tr>';}).join('')
+     +'</tbody></table><div class="count"><b>Separation says whether a perturbed '
+     +'machine is a <i>worse</i> machine or merely a <i>different</i> one.</b> '
+     +'Measured with a fixed ruler — the structural properties use their own '
+     +'window and are not perturbed by anything here. — '
+     +'<code>results/knob_sensitivity.csv</code></div></div>'
+
+     +'<div class="note"><b>Different, mostly, rather than worse.</b> Only '
+     +'<code>N=23</code> (&minus;0.038) and <code>DROP_TESTS=False</code> '
+     +'(&minus;0.019) degrade separation meaningfully — and the second of those '
+     +'is exactly the comparison that put <code>DROP_TESTS</code> on file in the '
+     +'first place, so the test recovers a decision already made. <b>Two settings '
+     +'score <i>higher</i> OOS separation than shipped</b> — <code>N=15</code> '
+     +'(+0.013) and <code>weights tilt down</code> (+0.012) — while agreeing with '
+     +'it only 71% and 88% of the time. Higher separation on a different machine '
+     +'is not a reason to switch: it is one number on one ruler, and the shipped '
+     +'settings were chosen against a stated tradeoff, not this one.</div>'
+
+     +'<div class="note" style="border-left:3px solid var(--trend)">'
+     +'<b>The daily-cadence check.</b> Entries are daily and holds run days to '
+     +'weeks, so a setting can preserve separation and still be useless by '
+     +'chopping runs to a few bars. <b>Median run stays between 16 and 22 bars '
+     +'across all 21 perturbations</b> — nothing collapses. The single practical '
+     +'failure is <b><code>DWELL=4</code>: 16 bars, a 15% drop from the shipped '
+     +'19</b>, with separation slightly <i>up</i> (+0.005). That is the shape of '
+     +'a trap — it looks fine on separation and costs run length, which is '
+     +'precisely why run length is reported here.<br><br>'
+     +'<b>Note the shipped classifier\'s own median run is 19 bars</b>, just under '
+     +'the ~20 the daily cadence wants. The failure test is therefore relative — a '
+     +'15% drop from shipped — because an absolute floor of 20 would flag the '
+     +'control itself.</div>';}
 
    h+='<div class="note" style="border-left:3px solid var(--kill)">'
     +'<b>What this does NOT establish.</b> <code>DROP_TESTS</code> and '
