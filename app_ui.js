@@ -1358,7 +1358,7 @@ function boot(BUNDLE,root){
      +'neither fall to 0.73</b> at 90 bars. The overlap cell and the residual '
      +'cell inherit the wobble of both cuts.</div>';}
 
-   const KR=BUN.knobrank||[],KS=BUN.knobs||[];
+   const KR=BUN.knobrank||[],KS=BUN.knobs||[],SQ=BUN.sqdec||[];
    if(KR.length){
     const ctl=KS.find(r=>r.knob==='(control)')||{};
     const flag=KR.filter(r=>r.FLAG);
@@ -1401,19 +1401,54 @@ function boot(BUNDLE,root){
      +'rationale on file. That is close to the opposite of the worry that '
      +'prompted this run.</div>'
 
-     +'<div class="note" style="border-left:3px solid var(--flat)">'
-     +'<b>The one flag: <code>score_q</code>, AMBER.</b> The quantile the two '
-     +'scores are cut at is the <b>second most sensitive knob in the system</b> '
-     +'(0.202 — moving it from 0.50 to 0.40 changes one call in five), and its '
-     +'entire justification is “it is the median”. That is a construction rule, '
-     +'not a comparison: <b>no test of 0.45 or 0.55 against 0.50 is on file '
-     +'anywhere</b>. It is not wrong — a median split is a defensible default and '
-     +'separation barely moves (&minus;0.012 at 0.40, +0.001 at 0.60) — but it is '
-     +'a high-leverage constant resting on a convention. <b>This is the candidate '
-     +'for the next motivated follow-up.</b><br><br>'
-     +'<code>act_cuts</code> and <code>actL</code> are the same shape of argument '
-     +'(equal thirds; inherited from the 7/28/128 ribbon) but sit below the 0.10 '
-     +'sensitivity line, so they are recorded and not flagged.</div>'
+     +'<div class="note" style="border-left:3px solid var(--trend)">'
+     +'<b><code>score_q</code>: the amber flag is cleared. Tested, median '
+     +'survived.</b> The quantile each score is cut at is the second most '
+     +'sensitive constant in the system and its whole justification used to be '
+     +'“it is the median”. It now has a decision behind it.<br><br>'
+     +'<b>The criterion was declared in full before any number was looked at:</b> '
+     +'candidates 0.40 / 0.45 / 0.50 / 0.55 / 0.60, judged on in-sample data only, '
+     +'on (a) separation for <i>both</i> the trend and the chop cell — so nothing '
+     +'wins by trading one for the other — (b) median state run ~20 bars for the '
+     +'daily cadence, and (c) no state pinned below 5% share. Ties go to the '
+     +'default, and “within noise” was given a number in advance: beat 0.50 by '
+     +'more than one standard error of the <i>paired</i> difference, moving-block '
+     +'bootstrap over calendar dates, 21-bar blocks, 200 draws.</div>'
+     +(SQ.length?'<div class="tw"><table><thead><tr><th>Candidate</th>'
+      +'<th>Trend sep</th><th>Chop sep</th><th>Worst of two</th><th>vs 0.50</th>'
+      +'<th>Paired SE</th><th>Median run</th><th>Min share</th></tr></thead>'
+      +'<tbody>'+SQ.filter(r=>r.block==='is').map(r=>{
+        const d=(+r.score_q===0.5);
+        return '<tr'+(d?' style="opacity:.8"':'')+'><td>'+(+r.score_q).toFixed(2)
+         +(d?' <span class="count">shipped</span>':'')+'</td><td>'
+         +f(r.sep_trending,4)+'</td><td>'+f(r.sep_ranging,4)+'</td><td><b>'
+         +f(r.sep_worst_of_two,4)+'</b></td><td>'+(d?'—':
+           ((r.margin_vs_default>0?'+':'')+f(r.margin_vs_default,4)))+'</td><td>'
+         +(d?'—':f(r.paired_se,4))+'</td><td>'+f(r.median_run,0)+'</td><td>'
+         +f(r.min_state_share,3)+'</td></tr>';}).join('')
+      +'</tbody></table><div class="count">In-sample only. — '
+      +'<code>results/scoreq_decision.csv</code></div></div>':'')
+     +'<div class="note"><b>And then it got interesting.</b> <b>0.40 won '
+     +'in-sample</b> — +0.0085 against a paired SE of 0.0077, clearing the bar by '
+     +'1.1 standard errors. A thin margin, but the declared rule is the declared '
+     +'rule, so 0.40 became the choice and the guardrail fired: nothing ships '
+     +'until the full regression suite passes.<br><br>'
+     +'<b>It did not pass.</b> On the holdout, measured on identical rows, 0.40 is '
+     +'worse than 0.50 on <i>both</i> axes — trend 0.1324 against 0.1354, chop '
+     +'<b>0.1130 against 0.1368</b>. The in-sample edge of +0.0085 reverses to '
+     +'<b>&minus;0.0224, about 1.9 paired SE the wrong way</b>. That is what a '
+     +'marginal in-sample edge usually turns out to be, and it is exactly why the '
+     +'holdout sits <i>after</i> the choice rather than inside it.</div>'
+     +'<div class="note" style="border-left:3px solid var(--trend)">'
+     +'<b>Result: score_q stays at 0.50, and no code changed.</b> What changed is '
+     +'its status — from an untested convention to a decision with a declared '
+     +'criterion, a challenger that beat it in-sample, and a holdout that killed '
+     +'the challenger. <b>Recorded as “tested, median survived.”</b> — '
+     +'<code>results/scoreq_regression.csv</code><br><br>'
+     +'<code>act_cuts</code> and <code>actL</code> rest on the same kind of '
+     +'construction rule (equal thirds; inherited from the 7/28/128 ribbon) but '
+     +'sit below the 0.10 sensitivity line, so they are recorded and not '
+     +'flagged.</div>'
 
      +'<div class="tw"><table><thead><tr><th>Knob</th><th>Setting</th>'
      +'<th>Agreement</th><th>Separation OOS</th><th>vs shipped</th>'
