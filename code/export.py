@@ -129,10 +129,18 @@ OUT = os.path.join(ROOTOUT, 'layer1_states.csv')
 TIERCSV = os.path.join(ROOTOUT, 'nine_tiers.csv')
 EXPL = os.path.join(ROOTOUT, 'app_explorer.json')
 BASE = 28                      # the medium ribbon window, and ninestate's W
-COLS = ['date', 'pair', 'state_7', 'state_28', 'state_128', 'tier', 'age_28',
-        'straight_28', 'scale_28', 'shape_35', 'shape', 'shape_247',
-        'shape_score', 'trend_score', 'chop_score', 'shape2', 'activity',
-        'combined', 'combined2', 'settling', 'sample']
+# THE CURRENT CLASSIFIER. Two independent scores, four shape states, a 106-bar
+# window, activity from the scale axis, and a graded confidence on age.
+COLS = ['date', 'pair', 'trend_score', 'chop_score', 'shape2', 'activity',
+        'scale_28', 'combined2', 'settling', 'm_fail', 'm_retr', 'm_space',
+        'm_panel', 'sample']
+# SUPERSEDED, written to layer1_legacy.csv rather than deleted. Three earlier
+# generations: the nine-box (state_7/28/128, straight_28, tier, age_28), the
+# single-axis shape score (shape_35/shape/shape_247/shape_score) and the
+# nine-state product built on it (combined).
+LEGACY = ['date', 'pair', 'state_7', 'state_28', 'state_128', 'tier', 'age_28',
+          'straight_28', 'shape_35', 'shape', 'shape_247', 'shape_score',
+          'combined', 'sample']
 
 
 def build(px):
@@ -165,6 +173,8 @@ def build(px):
                                     'strong': -1.0}).astype(float) * BUMP,
                   _ch, fit)
     _c2 = _grid(_tr, _ch, _a, fit, BUMP)
+    from measures import build_measures
+    _M, _ = build_measures(px)
     cage = age_of(comb)
     settle = (cage / DWELL).clip(upper=1.0)
     # the shape layer carries the dwell too, so the three columns are consistent
@@ -189,6 +199,10 @@ def build(px):
         'trend_score': flat(_tr),
         'chop_score': flat(_ch),
         'shape2': flat(_s2),
+        'm_fail': flat(_M['fail_count']),
+        'm_retr': flat(_M['retr_slope']),
+        'm_space': flat(_M['space_slope']),
+        'm_panel': flat(_M['panel_r2']),
         'activity': flat(act),
         'combined': flat(comb),
         'combined2': flat(_c2),
@@ -198,6 +212,8 @@ def build(px):
     keep = T[['state_7', 'state_28', 'state_128', 'combined']].notna().any(axis=1)
     T = T[keep].reset_index(drop=True)
     T['age_28'] = T.age_28.astype('Int64')
+    T[LEGACY].to_csv(os.path.join(ROOTOUT, 'layer1_legacy.csv'), index=False,
+                     float_format='%.6g')
     return T[COLS], multi, tier
 
 
@@ -245,20 +261,30 @@ def main():
     print('  windows %s, base %d, structural cell %s, dwell M=%d'
           % (str(MULTI), BASE, str(chosen_cell()), DWELL))
 
-    print('\nSTATE SHARE, 28-day window')
+    print('\nSHAPE2 SHARE (the current classifier)')
     for tag in ('is', 'oos'):
-        v = T[T['sample'] == tag].state_28.value_counts(normalize=True).reindex(STATES)
+        v = T[T['sample'] == tag].shape2.value_counts(normalize=True)
+        print('  %-4s %s' % (tag, '  '.join('%s %.3f' % (k, v[k])
+                                            for k in v.index)))
+
+    print('\nSTATE SHARE, 28-day window (LEGACY)')
+    for tag in ('is', 'oos'):
+        L = pd.read_csv(os.path.join(ROOTOUT, 'layer1_legacy.csv'),
+                        usecols=['state_28', 'sample'])
+        v = L[L['sample'] == tag].state_28.value_counts(normalize=True).reindex(STATES)
         print('  %-4s %s' % (tag, '  '.join('%s %.3f' % (s.split()[0][:6] + s.split()[1][:5], v[s])
                                             for s in STATES)))
 
-    print('\nTIER SHARE')
+    print('\nTIER SHARE (LEGACY)')
+    L = pd.read_csv(os.path.join(ROOTOUT, 'layer1_legacy.csv'),
+                    usecols=['tier', 'sample'])
     for tag in ('is', 'oos'):
-        v = T[T['sample'] == tag].tier.value_counts(normalize=True)
+        v = L[L['sample'] == tag].tier.value_counts(normalize=True)
         print('  %-4s %s' % (tag, '  '.join('%s %.3f' % (k[:11], v[k])
                                             for k in v.sort_index().index)))
 
     print('\nSHAPE RIBBON AND ACTIVITY SHARE')
-    for c in ('shape_35', 'shape', 'shape_247', 'activity'):
+    for c in ('activity',):
         for tag in ('is', 'oos'):
             v = T[T['sample'] == tag][c].value_counts(normalize=True)
             print('  %-9s %-4s %s' % (c, tag, '  '.join('%s %.3f' % (k, v[k])
@@ -269,13 +295,13 @@ def main():
     print('  ' + '  '.join('%.1f %.3f' % (k, v[k]) for k in sorted(v.index)))
 
     print('\nCOVERAGE, share of rows with a label')
-    for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape_35', 'shape',
-              'shape_247', 'shape_score', 'trend_score', 'chop_score', 'shape2',
-              'activity', 'combined', 'combined2', 'settling'):
+    for c in ('trend_score', 'chop_score', 'shape2', 'activity', 'scale_28',
+              'combined2', 'settling', 'm_fail', 'm_retr', 'm_space', 'm_panel'):
         print('  %-11s %.3f' % (c, T[c].notna().mean()))
 
     print('\nAGREEMENT WITH THE PUBLISHED OUTPUT')
-    check(T, multi, tier)
+    L = pd.read_csv(os.path.join(ROOTOUT, 'layer1_legacy.csv'))
+    check(L, multi, tier)
     print('\nwrote %s' % OUT)
 
 
