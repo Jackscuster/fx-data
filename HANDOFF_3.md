@@ -2300,6 +2300,62 @@ appear anywhere in the data. Measured, **GBPCHF is the second-least trending pai
 of the 28** at 23.2%, and EURGBP is 25.1%. The full ranking runs 23.2% to 36.2%
 and no pair reaches 51%. The Character screen shows the measured figures.
 
+### 16.4x Persistence: every generation named, and one restored from history
+
+**FIRST, A CORRECTION.** Nothing was ever written to `/tmp`. That directory holds
+only captured stdout logs — `axes2.txt`, `measures.txt` and so on. Every
+classifier output has been written to `results/` and committed throughout;
+`layer1_states.csv` (20 MB) and `layer1_legacy.csv` (26 MB) were both tracked
+before this commit. The app could always be built from them.
+
+**`nine_states.csv` does not hold four shape states.** It is a **9-row summary
+table** of the generation-1 nine-box — share, median run length and run count per
+state. The name is genuinely ambiguous, which is the real problem, and it is now
+documented rather than guessed at.
+
+**FIVE GENERATIONS, EACH IN ITS OWN NAMED FILE** (`persist.py`). Nothing renamed,
+nothing overwritten, nothing deleted — these are additions:
+
+| file | states | what it is |
+|---|---|---|
+| `states_g1_ninebox.csv` | 9 | straightness × scale terciles, 28-bar |
+| `states_g2_structural12.csv` | 12 | 4 shapes **incl. `broken`** × activity |
+| `states_g3_shapescore9.csv` | 3 | single continuous score cut at terciles |
+| `states_g4_twoscore4.csv` | 4 | the 2×2 on trend and chop — **current** |
+| `states_g4_twoscore12.csv` | 12 | that crossed with activity — **current** |
+
+Each has a companion `.txt` header saying what it contains, which column it came
+from, and what superseded it.
+
+**ONE GENERATION WAS NOT REPRODUCIBLE AND IS RESTORED FROM GIT.** Generation 2 —
+the four structural shapes including `broken` — cannot be regenerated: when
+`combined.layers()` was changed to the three-shape read, every current module
+started producing generation 3 under the old column name. Re-running `persist.py`
+against live code returned **9 states where there should be 12**, which is how it
+was caught.
+
+The intact copy is at **`f597f23:results/combined_states.csv`**, verified to hold
+all twelve `weak/medium/strong × trending/broken/range/drifting` cells over
+6,916 × 28. `persist.restore_g2()` pulls it from history verbatim and **asserts
+both the cell count and the presence of `broken`**, so a silent regeneration
+cannot replace it.
+
+**RUN LENGTHS RECOMPUTED**, not hunted for — `results/run_lengths.csv`, 3,478
+rows: per generation × per state × per pair × IS/OOS/all, with count, median,
+mean, longest and share. Pooled medians:
+
+| generation | median run, most-occupied states |
+|---|---|
+| g1 nine-box | 3–7 bars |
+| g2 structural | broken 13–16, range 13–14, trending 8 |
+| g3 shape score | trending 26, range 17, drifting 15 |
+| g4 two-score | ranging 23, trending 21, neither 18 |
+
+**`results/MANIFEST.md`** documents every ambiguous filename — what it actually
+contains and what superseded it. It is a separate file rather than a comment
+inside the CSVs deliberately: `bundle.py` reads several of them straight into the
+app feed, and a `#` header line would become a data row and break the app.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

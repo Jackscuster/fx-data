@@ -1,0 +1,8 @@
+states_g1_ninebox.csv
+============================================================
+
+Nine-box, generation 1. Straightness x scale terciles at a 28-bar window. The 7 and 128 legs are in layer1_legacy.csv as state_7 and state_128.
+
+Source column: state_28 in layer1_legacy.csv
+Shape: 6855 dates x 28 pairs. Every value is already lagged one bar.
+States: medium chop, medium transitional, medium trend, strong chop, strong transitional, strong trend, weak chop, weak transitional, weak trend

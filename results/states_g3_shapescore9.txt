@@ -1,0 +1,8 @@
+states_g3_shapescore9.csv
+============================================================
+
+Shape score, generation 3. One continuous trend-versus-range score cut at in-sample terciles into three shapes. Separates better than g4 (0.261 vs 0.104 on trending) but leaves 41% of days in an ambiguous middle.
+
+Source column: shape in layer1_legacy.csv
+Shape: 6855 dates x 28 pairs. Every value is already lagged one bar.
+States: drifting, range, trending

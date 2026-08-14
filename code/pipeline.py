@@ -61,6 +61,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('chopmore.py')       # chop redundancy, and what the 'both' cell is
     run('final.py')          # final settings on IS, full report on the holdout
     run('paircharacter.py')  # per-pair CHARACTER, and whether it is stable
+    run('persist.py')        # every generation to its own named file + manifest
     run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
