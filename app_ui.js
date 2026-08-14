@@ -165,6 +165,8 @@ all-bars baseline. No Sharpe, no Ret/DD — those belong to Phase 4.</div>
 <div class="note" id="mtsagree" style="margin-top:12px"></div></section>
 
 <section id="cr" hidden>
+<div id="chronic"></div>
+
 <div class="note" style="border-left:3px solid var(--kill);padding-left:10px"><b>PHASE 4 GROUNDWORK — crisis detection against news, not regime detection.</b> Lift here measures whether a detector fires near dated events. It is a different question from whether the estimator separates trend from chop, and a low lift is not a mark against a trend/chop signal.</div>
 <div class="note"><b>The only real accuracy numbers in the project.</b> Every other score here
 is measured against a target derived from price itself. These are measured against dated news
@@ -1671,6 +1673,123 @@ function boot(BUNDLE,root){
      +'order-book depth — all paid. <b>Layer 1 remains what it always was: a view '
      +'of the current regime, never judged on prediction.</b></div>';
     $('#drvprog').innerHTML=p;}
+  }
+
+  function buildChronic(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const EP=BUN.chronep||[],SP=BUN.chronsep||[],DT=BUN.chrondet||[];
+   if(!EP.length){$('#chronic').innerHTML='';return;}
+   const g=(d,gr)=>{const r=SP.find(x=>x.detector===d&&x.group===gr);return r?r.sep:null;};
+   const indep=[...new Set(EP.map(r=>r.macro_event))].length;
+   let h='<h3>Chronic crisis — sustained one-way debasement</h3>'
+    +'<div class="note"><b>Acute is a spike; chronic is a bleed.</b> The canonical '
+    +'JPY case reads 2.9&nbsp;sigma on the spike measure — nothing. Chronic is years '
+    +'of one-way movement with no violence, which the acute detector cannot see by '
+    +'construction.</div>'
+    +'<div class="note"><b>The episode list is dated from the NEWS record, never '
+    +'from the chart</b> — the same principle that made the 54-event acute calendar '
+    +'non-circular. Dating a "sustained depreciation" from where the chart started '
+    +'falling would make the detector\'s validation worthless, because the detector '
+    +'reads the chart. <b>'+EP.length+' rows, '+indep+' independent macro '
+    +'events.</b></div>'
+    +'<div class="tw"><table><thead><tr><th>Currency</th><th>Dir</th>'
+    +'<th>Start</th><th>End</th><th>Macro event</th><th>What was announced</th>'
+    +'</tr></thead><tbody>'+EP.map(r=>'<tr><td><b>'+r.currency+'</b></td><td>'
+     +(r.direction>0?'+':'')+r.direction+'</td><td>'+String(r.start).slice(0,10)
+     +'</td><td>'+String(r.end).slice(0,10)+'</td><td>'+r.macro_event+'</td><td>'
+     +r.what_happened+'</td></tr>').join('')+'</tbody></table>'
+    +'<div class="count">EUR-down and USD-up 2014–15 are the <b>same divergence '
+    +'seen from two sides</b> — any count of independent episodes must use the '
+    +'macro_event column, not the row count. — '
+    +'<code>results/chronic_episodes.csv</code></div></div>';
+
+   h+='<div class="tw"><table><thead><tr><th>Detector</th><th>chronic</th>'
+    +'<th>trending<br>(not chronic)</th><th>acute</th><th>other</th>'
+    +'<th>BOUNDARY<br>chronic vs trending</th></tr></thead><tbody>'
+    +['drift','onesided','starve'].map(d=>'<tr><td><b>'+d+'</b></td><td>'
+     +f(g(d,'chronic'))+'</td><td>'+f(g(d,'trending (not chronic)'))+'</td><td>'
+     +f(g(d,'acute'))+'</td><td>'+f(g(d,'other'))+'</td><td><b>'
+     +f(g(d,'BOUNDARY chronic vs trending'))+'</b></td></tr>').join('')
+    +'</tbody></table><div class="count"><b>The hard boundary is ordinary '
+    +'trending, not calm.</b> Chronic <i>is</i> a trend, so separating it from a '
+    +'quiet market says nothing — and 61% of the "everything else" comparison is '
+    +'quiet market. Selecting on the diluted metric would have picked '
+    +'<code>drift</code>; selecting on the boundary picks <code>onesided</code>. — '
+    +'<code>results/chronic_separation.csv</code></div></div>';
+
+   h+='<div class="note" style="border-left:3px solid var(--chop)">'
+    +'<b>It does not clear its null.</b> The boundary separation is '
+    +'<b>+0.237&nbsp;sd</b> against a shifted-window null of &minus;0.170&nbsp;± '
+    +'0.288 — <b>rank 20 of 51, p=0.392</b>. Against everything, +0.492, rank 8 of '
+    +'51, p=0.157. <b>Chronic episodes are not distinguishable from ordinary '
+    +'trending by any of the three declared constructions.</b></div>'
+    +'<div class="note"><b>And a reading of ~1.00 means "random walk".</b> The '
+    +'drift measure is a 250-bar move over its own volatility, so a random walk '
+    +'sits at 1.00 by construction. Chronic episodes read <b>1.037</b>. Ordinary '
+    +'trending reads 0.912, acute 0.714, everything else 0.667. So the apparent '
+    +'separation is not "chronic is unusually persistent" — it is <b>"everything '
+    +'else is unusually mean-reverting, and chronic is merely random-walk-like"</b>. '
+    +'That is a much weaker claim than the one the construction was built to '
+    +'test.</div>'
+    +'<div class="note"><b>Pullback starvation is simply false.</b> The premise was '
+    +'that chronic bleeds never retrace properly. Measured, <code>starve</code> '
+    +'separates chronic from trending by <b>+0.012&nbsp;sd</b> — nothing. Chronic '
+    +'episodes retrace like ordinary trends do.</div>';
+
+   const ac=g('acute maxabsmove','chronic'),ca=g('onesided','acute');
+   h+='<div class="tw"><table><thead><tr><th>Detector</th>'
+    +'<th>on CHRONIC episodes</th><th>on ACUTE episodes</th></tr></thead><tbody>'
+    +'<tr><td>chronic (onesided)</td><td><b>'+f(g('onesided','chronic'))
+    +'</b></td><td>'+f(ca)+'</td></tr>'
+    +'<tr><td>acute (maxabsmove)</td><td>'+f(ac)+'</td><td><b>'
+    +f(g('acute maxabsmove','acute'))+'</b></td></tr></tbody></table>'
+    +'<div class="count"><b>The cross-check is the one clean pass here.</b> Each '
+    +'alarm reads ~0 on the other\'s episodes (+0.095 and +0.032) while reading '
+    +'~+0.48 on its own. They are genuinely two different alarms and neither is a '
+    +'relabelling of the other.</div></div>';
+
+   const ev=[...new Set(DT.filter(r=>r.detector==='onesided').map(r=>r.macro_event))];
+   if(ev.length) h+='<div class="tw"><table><thead><tr><th>Macro event</th>'
+    +'<th>Pairs</th><th>chronic detector</th><th>acute detector</th></tr></thead>'
+    +'<tbody>'+ev.map(e=>{const c=DT.filter(r=>r.detector==='onesided'&&r.macro_event===e),
+      a=DT.filter(r=>r.detector==='acute maxabsmove'&&r.macro_event===e);
+      const m=x=>x.length?x.reduce((s,r)=>s+r.mean,0)/x.length:null;
+      return '<tr><td>'+e+'</td><td>'+c.length+'</td><td>'+f(m(c))+'</td><td>'
+       +f(m(a))+'</td></tr>';}).join('')+'</tbody></table>'
+    +'<div class="count">Per episode. The readings are <b>near-identical across '
+    +'all five macro events</b> (0.297–0.312) and the ordinary-trending mean is '
+    +'0.296 — which is the same finding stated a third way. — '
+    +'<code>results/chronic_detector.csv</code></div></div>';
+
+   h+='<details class="panel" style="margin-top:14px" open>'
+    +'<summary style="cursor:pointer;font-weight:600">Chronic crisis '
+    +'<span class="count">plain English</span></summary>'
+    +'<div style="margin-top:10px;font-size:13px;line-height:1.65">'
+    +'<p><b>What it is.</b> A currency ground one way for quarters or years by '
+    +'policy — not a crash. The anchor case is <b>the yen from April 2022 to July '
+    +'2024</b>: the Bank of Japan kept yield curve control while the Fed and ECB '
+    +'hiked, and the yen bled for two years without a single day that looked like '
+    +'a crisis.</p>'
+    +'<p><b>How it differs from acute.</b> Acute is one violent day across many '
+    +'pairs — a spike the currency-leg divergence measure catches. Chronic has no '
+    +'spike at all; the JPY case reads 2.9&nbsp;sigma on the spike measure, which '
+    +'is a normal week. They are meant to be two separate alarms, and the '
+    +'cross-check above confirms they are: each reads ~0 on the other\'s '
+    +'episodes.</p>'
+    +'<p><b>How to read the table.</b> Separation is in standard deviations, '
+    +'one group against all others. The only column that matters is the last one — '
+    +'chronic against <i>ordinary trending</i>.</p>'
+    +'<p style="color:var(--chop)"><b>What it is NOT.</b> It is <b>not a trend '
+    +'detector</b> — chronic is supposed to be trend <i>plus</i> starvation of '
+    +'pullbacks <i>plus</i> duration, and the whole point is separating it from a '
+    +'normal trend. <b>On this evidence it does not.</b> The boundary separation is '
+    +'+0.237&nbsp;sd at p=0.392, the starvation component is worth +0.012&nbsp;sd, '
+    +'and the drift component puts chronic episodes at a random walk. It is also '
+    +'<b>not validated out of sample</b>: five independent macro events, three '
+    +'before 2016 and three after, cannot support a holdout split — that is a '
+    +'limit of the phenomenon, which is rare, not of the method. <b>Do not route '
+    +'on this.</b></p></div></details>';
+   $('#chronic').innerHTML=h;
   }
 
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
@@ -3346,6 +3465,7 @@ function boot(BUNDLE,root){
   buildDriverC();
   buildForwardOdds();
   buildDriverDE();
+  buildChronic();
   buildDrivers2();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
   (function(){

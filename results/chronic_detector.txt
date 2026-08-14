@@ -1,0 +1,7 @@
+Chronic detector -- reading per pair-episode
+============================================
+
+One row per (pair, episode, detector): the mean reading inside the
+news-dated window. The acute detector (maxabsmove, reconstructed from
+crisis.py) is included on the same episodes so the two alarms can be
+checked against each other.
