@@ -394,6 +394,7 @@ No forward target and no money metrics &mdash; this describes what has happened.
 <section id="ns" hidden>
 <h3>Current classifier &mdash; states and validation</h3>
 <div id="curstates"></div>
+<div id="rfwrap"></div>
 
 <div class="note"><b>The nine states.</b> An explicit grid: size &times; cleanliness, each
 cut at that pair's own in-sample terciles with hysteresis. Both axes contribute by
@@ -1160,6 +1161,151 @@ function boot(BUNDLE,root){
   }
 
   // ================= CURRENT CLASSIFIER: STATES AND VALIDATION =================
+  function buildRefit(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const IV=BUN.rfinv||[],AG=BUN.rfagr||[],DG=BUN.rfdis||[],TH=BUN.rfthr||[];
+   if(!AG.length){$('#rfwrap').innerHTML='';return;}
+   const CE=['trending','ranging','trend-in-range','neither'];
+   const vints=[...new Set(AG.map(r=>r.vintage))].sort((a,b)=>a-b);
+   const post=AG.filter(r=>r.scope==='post-vintage only'&&r.state==='ALL');
+   const nref=IV.filter(r=>r.kind==='REFIT').reduce((a,r)=>a+ +r.count,0);
+   const worst=post.reduce((a,r)=>r.agreement<a.agreement?r:a,post[0]);
+
+   let h='<h3>Refit stability &mdash; does re-estimating produce a different machine?</h3>'
+    +'<div class="note" style="border-left:3px solid var(--dim)">'
+    +'<b>The question.</b> If every fitted quantity is re-derived from data '
+    +'ending at an earlier date, do the state calls stay the same? This matters '
+    +'because <b>live is a refit</b> — every day adds data that would move a cut '
+    +'point if anyone re-estimated it. If calls flip on refit, live behaviour '
+    +'will not match the validated history.<br><br>'
+    +'<b>Measurement only.</b> Nothing here changes a state call or the shipped '
+    +'classifier.</div>'
+
+    +'<div class="tw"><table><thead><tr><th>Component</th><th>Kind</th>'
+    +'<th>Numbers</th><th>Detail</th></tr></thead><tbody>'
+    +IV.map(r=>'<tr><td>'+r.component+'</td><td><b style="color:'
+     +(r.kind==='REFIT'?'var(--trend)':(r.kind==='FIXED'?'var(--dim)'
+      :'var(--chop)'))+'">'+r.kind+'</b></td><td>'+(+r.count||'—')+'</td><td>'
+     +'<span class="count">'+r.detail+'</span></td></tr>').join('')
+    +'</tbody></table><div class="count"><b>The inventory is a deliverable in '
+    +'itself</b> — “refit stability” means nothing until it says which numbers '
+    +'move. <b>'+nref+' numbers are estimated from data</b>; the window lengths, '
+    +'dwell, hysteresis band, equal weights and cell boundaries move with '
+    +'nothing. — <code>results/refit_inventory.csv</code></div></div>'
+
+    +'<div class="note" style="border-left:3px solid var(--trend)">'
+    +'<b>The control, and why it is here.</b> The shipped classifier fits on data '
+    +'before 2016, so <b>the 2015 vintage IS the shipped fit</b> and must '
+    +'reproduce it exactly. It does: <b>1.0000</b> over 189,211 labelled '
+    +'pair-bars, asserted in the run. A refit test that cannot reproduce its own '
+    +'starting point is measuring its own plumbing.<br><br>'
+    +'<b>An earlier version of this test returned exactly 100% and was wrong.</b> '
+    +'The cut points were built by ranking over the whole sample, so refitting '
+    +'changed nothing because nothing was actually being fitted. That bug is '
+    +'fixed — and a suspiciously perfect number here would mean it had '
+    +'returned.</div>'
+
+    +'<div class="tw"><table><thead><tr><th>Vintage</th><th>Fitted through</th>'
+    +'<th>Agreement, all days</th><th>Agreement, post-vintage</th>'
+    +'<th>Chance</th><th>kappa</th></tr></thead><tbody>'
+    +vints.map(v=>{
+      const a=AG.find(r=>r.vintage===v&&r.scope==='all overlapping days'&&r.state==='ALL'),
+            b=AG.find(r=>r.vintage===v&&r.scope==='post-vintage only'&&r.state==='ALL');
+      if(!a||!b)return '';
+      const ctl=(v===2015);
+      return '<tr'+(ctl?' style="opacity:.75"':'')+'><td>'+v+(ctl?
+        ' <span class="count">control</span>':'')+'</td><td>'+v+'-12-31</td><td>'
+       +f(a.agreement,4)+'</td><td><b>'+f(b.agreement,4)+'</b></td><td>'
+       +f(b.expected,4)+'</td><td>'+f(b.kappa)+'</td></tr>';}).join('')
+    +'</tbody></table><div class="count"><b>Post-vintage is the number that '
+    +'matters</b> — it is the live case, a cut point estimated on the past applied '
+    +'to data it never saw. Agreement is shown beside the agreement forced by the '
+    +'marginals alone (~27%), and kappa corrects for it. — '
+    +'<code>results/refit_agreement.csv</code></div></div>'
+
+    +'<div class="note"><b>The answer: the classifier survives re-estimation.</b> '
+    +'Post-vintage agreement runs <b>'+f(worst.agreement,3)+' to '
+    +f(Math.max(...post.filter(r=>r.vintage!==2015).map(r=>r.agreement)),3)
+    +'</b> across five independent refits, chance-corrected kappa <b>0.92 to '
+    +'0.95</b>. Refitting from a fit window seven years shorter still reproduces '
+    +'roughly <b>19 state calls in 20</b>.</div>'
+
+    +'<div class="tw"><table><thead><tr><th>Vintage</th>'
+    +CE.map(s2=>'<th>'+s2+'</th>').join('')+'</tr></thead><tbody>'
+    +vints.map(v=>'<tr><td>'+v+'</td>'+CE.map(s2=>{
+      const r=AG.find(x=>x.vintage===v&&x.scope==='post-vintage only'&&x.state===s2);
+      const q=r?r.agreement:null;
+      return '<td'+(q!=null&&q<0.9?' style="color:var(--chop)"':'')+'>'
+       +(q==null?'—':f(q))+'</td>';}).join('')+'</tr>').join('')
+    +'</tbody></table><div class="count"><b>Which states flip most?</b> Not the '
+    +'ones you would fear. <b>“trending” is the most stable</b> — 0.97 to 0.99 on '
+    +'every vintage after 2012. <b>“neither” is the least</b>, bottoming at 0.860 '
+    +'on the 2024 vintage: it is the residual cell, so a bar lands there by '
+    +'failing both cuts and it inherits the wobble of both.</div></div>';
+
+   if(DG.length){
+    h+='<div class="tw"><table><thead><tr><th>Vintage</th>'
+     +'<th>Disagreeing bars</th><th>Median run</th><th>In runs &ge;5</th>'
+     +'<th>In runs &ge;20</th><th>Episodes</th><th>Fully relabelled</th>'
+     +'</tr></thead><tbody>'
+     +DG.map(r=>'<tr><td>'+r.vintage+'</td><td>'+r.disagreeing_bars+'</td><td>'
+      +f(r.median_run,1)+'</td><td>'+f(r.share_of_bars_in_runs_ge5)+'</td><td>'
+      +f(r.share_of_bars_in_runs_ge20)+'</td><td>'+r.episodes+'</td><td><b>'
+      +f(r.share_fully_relabelled)+'</b></td></tr>').join('')
+     +'</tbody></table><div class="count"><b>Boundary noise or structural '
+     +'drift?</b> Two very different failures look identical in an agreement '
+     +'rate. Scattered days are bars sitting on a cut point — unavoidable and '
+     +'harmless. Whole episodes relabelled would be the classifier telling a '
+     +'different story about the same stretch of market. — '
+     +'<code>results/refit_disagreement.csv</code></div></div>'
+     +'<div class="note"><b>It is mostly boundary noise.</b> The median '
+     +'disagreement run is <b>3 to 4 bars — below the 5-bar confirmation '
+     +'dwell</b>, so most disagreement is shorter than the window the classifier '
+     +'needs to adopt a state at all. Only <b>3 to 6% of episodes are fully '
+     +'relabelled</b>. Read the “in runs &ge;5” column with care: the dwell means '
+     +'a relabelling cannot be one bar wide by construction, so that share is '
+     +'partly forced. The median being <i>below</i> the dwell is the informative '
+     +'part.</div>';}
+
+   if(TH.length){
+    const key=['mt','mc','mt_in_sd','mc_in_sd','act_cut_lo','act_cut_hi'];
+    const nm={mt:'trend score cut (mt)',mc:'chop score cut (mc)',
+              mt_in_sd:'mt, in sd of its score',mc_in_sd:'mc, in sd of its score',
+              act_cut_lo:'activity cut, lower',act_cut_hi:'activity cut, upper'};
+    h+='<div class="tw"><table><thead><tr><th>Parameter</th>'
+     +vints.map(v=>'<th>'+v+(v===2015?'*':'')+'</th>').join('')+'<th>Max move</th>'
+     +'</tr></thead><tbody>'
+     +key.map(k=>{
+       const vals=vints.map(v=>{const r=TH.find(x=>+x.vintage===v);
+         return r?+r[k]:null;});
+       const b=vals[vints.indexOf(2015)];
+       const mx=Math.max(...vals.map((x,i)=>vints[i]===2015?0:Math.abs(x-b)));
+       return '<tr><td>'+nm[k]+'</td>'+vals.map(x=>'<td>'+f(x,4)+'</td>').join('')
+        +'<td><b>'+f(mx,4)+'</b></td></tr>';}).join('')
+     +'</tbody></table><div class="count">* 2015 is the shipped fit and the '
+     +'reference row. — <code>results/refit_thresholds.csv</code></div></div>'
+     +'<div class="note"><b>The cut points barely move.</b> In sd units of the '
+     +'score they cut — <b>the only scale on which the question is answerable</b> '
+     +'— the trend cut moves at most <b>0.006 sd</b> and the chop cut <b>0.003 '
+     +'sd</b> across fifteen years of refitting. The activity cuts move <b>0.1%</b>. '
+     +'The standardisation statistics move most, and still only up to 5.1% '
+     +'(mean_hold, 2024 vintage).<br><br>'
+     +'<b>Why the percentages are not the headline.</b> mc sits within 0.005 of '
+     +'zero, so its <i>relative</i> change reads <b>+211%</b> while the absolute '
+     +'move is 0.006. That figure is in the file and is meaningless; the sd-unit '
+     +'row is the one to read.</div>';}
+
+   h+='<div class="note" style="border-left:3px solid var(--kill)">'
+    +'<b>What this does NOT establish.</b> <code>DROP_TESTS</code> and '
+    +'<code>BUMP = 0.75</code> were chosen by in-sample comparison and are held '
+    +'fixed across every vintage. So this measures the stability of the '
+    +'<b>estimated parameters</b>, not of the <b>selection decisions</b>. '
+    +'Re-running those choices at each vintage is a larger test and is not '
+    +'claimed here. It also says nothing about whether the states are '
+    +'<i>useful</i> — only that they are reproducible.</div>';
+   $('#rfwrap').innerHTML=h;
+  }
+
   function buildCurrentStates(){
    const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
    const RL=(BUN.runlen||[]).filter(r=>r.generation==='g4_twoscore4');
@@ -3145,7 +3291,14 @@ function boot(BUNDLE,root){
     median detection lag <b>${Y.median_lag_days} days</b> across ${Y.n_pairs} pairs.</div>`
     :'<div class="note">Not run in this build (rebuilds the composite; run with FX_FULL_VALIDATION).</div>';
    const RF=(BUN.val_refit||[])[0];
-   $('#valrefit').innerHTML=RF?`<div class="note">${RF.year} labels identical after
+   $('#valrefit').innerHTML=RF?`<div class="note" style="border-left:3px solid var(--kill)">
+    <b>SUPERSEDED &mdash; kept for the record, do not read this as the refit result.</b>
+    The 100.0% below is an artefact: the cut points were built by ranking over the whole
+    sample, so refitting changed nothing because <b>nothing was actually being fitted</b>.
+    That look-ahead is fixed. The real refit test is on the
+    <b>States and validation</b> screen: five independent refits of generation 4, and the
+    answer is <b>94&ndash;96%</b>, not 100%.</div>
+    <div class="note" style="opacity:.7">${RF.year} labels identical after
     refitting through 2020: <b>${(RF.label_agreement*100).toFixed(1)}%</b> of days across
     ${RF.n_pairs} pairs.<br><b>Limitation:</b> this refits the composite only. The 32
     survivors were selected by gates that read out-of-sample statistics, so the choice of
@@ -3801,6 +3954,7 @@ function boot(BUNDLE,root){
   buildCharacter();
   buildShared();
   buildCurrentStates();
+  buildRefit();
   buildExtDrivers();
   buildDriversReframed();
   buildDriverC();

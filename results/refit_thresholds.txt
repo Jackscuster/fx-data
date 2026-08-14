@@ -1,0 +1,10 @@
+How far each fitted parameter moves across vintages
+===================================================
+
+The 2015 row is the shipped fit and is the reference. mt and mc are the
+two score cut points; act_cut_lo/hi are the activity tercile cuts
+averaged across pairs; mean_* and sd_* are the zfit standardisation
+statistics averaged across the 28 pairs.
+
+refit_thresholds_relative.csv holds the same table as a fractional
+change from the 2015 values.

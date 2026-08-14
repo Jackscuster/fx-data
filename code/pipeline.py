@@ -77,6 +77,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('cot.py')            # DRIVER 6 data: CFTC positioning, with its release lag
     run('cot_test.py')       # DRIVER 6 separation + forward odds
     run('statecorr.py')      # cross-pair state sharing; the routing count
+    run('refit.py')          # REFIT STABILITY: re-estimate at 6 vintages, compare
     run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null

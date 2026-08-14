@@ -1,0 +1,21 @@
+Refit stability -- do the state calls survive re-estimation?
+============================================================
+
+Every fitted quantity is re-derived from data ending at each vintage
+year and the whole state history is regenerated for all 28 pairs. The
+shipped classifier fits on index < 2016-01-01, so the 2015 vintage is
+the shipped fit and MUST reproduce it exactly. The run asserts that;
+a refit test that cannot reproduce its own starting point is measuring
+its own plumbing.
+
+Two scopes are reported. "All overlapping days" includes days inside
+the vintage's own fit window. "POST-VINTAGE ONLY" is the number that
+matters -- it is the live case, where a cut point estimated on the past
+is applied to data it never saw.
+
+Agreement is reported beside the agreement expected from the two
+marginal distributions alone, and kappa corrects for it. Four states
+unevenly distributed agree ~27% of the time by coincidence.
+
+Worst post-vintage agreement: 0.939 (vintage 2024).
+

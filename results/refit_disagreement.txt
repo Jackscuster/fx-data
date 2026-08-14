@@ -1,0 +1,21 @@
+Are refit disagreements boundary noise or structural drift?
+===========================================================
+
+Two different failures look identical in an agreement rate. Scattered
+single days are BOUNDARY NOISE -- bars sitting on a cut point, which is
+unavoidable and harmless. Whole episodes relabelled are STRUCTURAL
+DRIFT -- the classifier telling a different story about the same
+stretch of market, which is not harmless.
+
+Runs are contiguous disagreeing bars within one pair. An episode is a
+run of one shipped state on one pair, at least 5 bars, wholly after the
+vintage date; it counts as fully relabelled only if EVERY one of its
+bars disagrees.
+
+READ THE RUN LENGTHS AGAINST THE DWELL. The classifier requires 5
+consecutive bars before adopting a new state, so a relabelling cannot
+be one bar wide by construction and the share of bars sitting in runs
+of 5 or more is partly forced. The median run of 3-4 bars is BELOW the
+dwell, which is the informative part: most disagreement is shorter than
+the confirmation window, i.e. edge-of-threshold noise rather than the
+classifier adopting a different story.
