@@ -2106,6 +2106,81 @@ efficiency 0.32** — the actual yen collapse — and EURNZD 2025-07→11 at 1.4
 Most 'both' episodes run ranging → both → ranging, which is what a boundary
 artefact looks like, not a distinct regime.
 
+### 16.4u Final settings and the full report. Chop holds, trend does not.
+
+`final.py`. Two decisions, both taken on **in-sample only**, then one holdout read.
+
+**DECISION 1 — chop component set.** 16.4t found that removing `tests` helped,
+but measured it on the holdout. Redone on IS: **0.140 → 0.151 without `tests`**.
+It holds, so it is adopted. Chop now has four components: `hold`, `fails`,
+`inside`, `revert`.
+
+**DECISION 2 — activity, joint or separate.** The earlier tests used a single
+arbitrary bump of 0.5; here it is swept.
+
+| bump | cells | IS mean \|sep\| | min share | usable |
+|---|---|---|---|---|
+| 0.00 (separate) | 12 | 0.062 | 0.049 | 12 |
+| 0.25 | 12 | 0.060 | 0.041 | 12 |
+| 0.50 | 12 | 0.063 | 0.034 | 12 |
+| **0.75** | 12 | **0.064** | 0.026 | 12 |
+| 1.00 | 12 | 0.062 | 0.020 | 12 |
+| 1.50 | 12 | 0.068 | 0.012 | 11 |
+
+Selection rule, pre-specified: highest IS separation subject to min share ≥ 2%.
+That picks **bump = 0.75, the joint cut** — but **it beats the separate cut by
+0.002**, which is a tie, and it costs coverage (min share 0.049 → 0.026). 1.50
+scores higher still and is excluded for leaving a cell at 1.2%. **Read them as
+equivalent**; the joint idea is sound and the data does not care.
+
+**THE TWO AXES, SEPARATELY, NEVER BLENDED:**
+
+| axis | IS \|sep\| | OOS \|sep\| | surrogate | corrected | share | run | diagonal |
+|---|---|---|---|---|---|---|---|
+| trend | 0.106 | **0.053** | 0.098 | **−0.044** | 0.429 | 28 | 0.980 |
+| chop | 0.151 | **0.156** | 0.167 | **−0.011** | 0.555 | 24 | 0.981 |
+
+**Chop is the stronger axis and the only one that holds up out of sample** —
+0.151 → 0.156, essentially unchanged, corrected −0.011. **Trend halves**, 0.106 →
+0.053, corrected −0.044. That is consistent with 16.4t, where the cell labelled
+`trending` had the lowest path efficiency of the four. The trend side is the weak
+half of this classifier and the evidence now says so twice, from different
+directions.
+
+**THE FULL GRID, 12 cells:**
+
+| | cells | mean \|sep\| | coverage | min share | median run | diagonal |
+|---|---|---|---|---|---|---|
+| IS | 12 | 0.064 | 0.962 | 0.026 | 12 | 0.935 |
+| OOS | 12 | 0.072 | **1.000** | 0.032 | 12 | 0.936 |
+
+Against its own surrogate: 0.072 vs 0.078, **corrected −0.006**.
+
+Per cell on the holdout, the best are `strong trending` (0.105, share 0.109, run
+17) and `medium neither` (0.105, share 0.075); the worst are `strong
+trend-in-range` and `weak trend-in-range`, both 0.035 — consistent with 16.4t's
+finding that the 'both' cell is overlap.
+
+**EPISODE-BASED SIGNIFICANCE.** 74,004 holdout bars are **4,604 episodes**, a
+16.1× overstatement. Every significance figure in this report is a surrogate
+randomisation, which carries the dependence in full. **No per-bar t-statistic
+appears anywhere in it.**
+
+**PER PAIR, holdout, the two axes separate:**
+
+- trend median **0.118**, from CADJPY 0.059 to GBPCAD 0.283
+- chop median **0.195**, from CHFJPY 0.048 to EURJPY 0.478
+
+Chop beats trend on the median pair by 65%, the same ordering as the pooled
+figures.
+
+**SHIPPED.** `layer1_states.csv` gains `trend_score`, `chop_score`, `shape2`
+(the 2×2) and `combined2` (the 12-cell joint grid), alongside everything already
+there. Nothing was removed — the single-axis `shape` and nine-state `combined`
+stay, because they separate better even though they leave more ambiguous. Holdout
+coverage 0.986 / 0.990 / 0.986 / 0.985. Both self-assertions still pass on all
+191,940 pair-days.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

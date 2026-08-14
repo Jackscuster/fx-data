@@ -45,6 +45,20 @@ SCHEMA of results/layer1_states.csv
   shape_35     the same score at a 35-bar median lookback  \  the shape ribbon,
   shape_106    ...at 106 bars, the LOCKED base              >  the analogue of
   shape_247    ...at 247 bars                              /   state_7/28/128.
+  trend_score  the TREND axis of the two-score classifier (TWO_SCORES.md), raw
+               and continuous. Higher is more directional.
+  chop_score   the CHOP axis, raw and continuous. Higher is more range-bound.
+               The two are only -0.35 correlated, so they are genuinely two
+               readings and not one axis wearing two names (16.4r). Chop is the
+               stronger of the two: it holds up out of sample (0.151 -> 0.156)
+               while trend halves (0.106 -> 0.053). See 16.4u.
+  shape2       the 2x2 on that pair -- trending | ranging | trend-in-range |
+               neither. 'trend-in-range' is measurement overlap on most bars,
+               not a real regime; see 16.4t before using it.
+  combined2    '<activity> <shape2>', twelve cells, activity cut JOINTLY with a
+               0.75 bump so a weak-activity bar must clear a higher trend bar.
+               Chosen on IS, and the margin over a separate cut is 0.002 -- a
+               tie in practice.
   shape_score  THE RAW SCORE at the base window, before any cut. The tercile
                boundaries are a DECISION, not a discovery: the score is one
                continuous right-skewed spread with a single KDE peak at every
@@ -117,7 +131,8 @@ EXPL = os.path.join(ROOTOUT, 'app_explorer.json')
 BASE = 28                      # the medium ribbon window, and ninestate's W
 COLS = ['date', 'pair', 'state_7', 'state_28', 'state_128', 'tier', 'age_28',
         'straight_28', 'scale_28', 'shape_35', 'shape', 'shape_247',
-        'shape_score', 'activity', 'combined', 'settling', 'sample']
+        'shape_score', 'trend_score', 'chop_score', 'shape2', 'activity',
+        'combined', 'combined2', 'settling', 'sample']
 
 
 def build(px):
@@ -141,6 +156,15 @@ def build(px):
         rib[lb], sc_ = score_at(px, n, fit)
         if n == N_SCORE:
             scr = sc_
+    # the two-score classifier, at the settings chosen on IS in final.py
+    from final import scores as _sc, activity as _act, grid as _grid, DROP_TESTS, BUMP
+    from twoscores import classify as _cls
+    _tr, _ch = _sc(px, fit, drop_tests=DROP_TESTS)
+    _a = _act(px, fit)
+    _s2, _ = _cls(_tr - _a.replace({'weak': 1.0, 'medium': 0.0,
+                                    'strong': -1.0}).astype(float) * BUMP,
+                  _ch, fit)
+    _c2 = _grid(_tr, _ch, _a, fit, BUMP)
     cage = age_of(comb)
     settle = (cage / DWELL).clip(upper=1.0)
     # the shape layer carries the dwell too, so the three columns are consistent
@@ -162,8 +186,12 @@ def build(px):
         'shape': flat(sh),
         'shape_247': flat(rib[247]),
         'shape_score': flat(scr),
+        'trend_score': flat(_tr),
+        'chop_score': flat(_ch),
+        'shape2': flat(_s2),
         'activity': flat(act),
         'combined': flat(comb),
+        'combined2': flat(_c2),
         'settling': flat(settle),
         'sample': np.where(np.repeat(fit, m), 'is', 'oos'),
     })
@@ -242,7 +270,8 @@ def main():
 
     print('\nCOVERAGE, share of rows with a label')
     for c in ('state_7', 'state_28', 'state_128', 'tier', 'shape_35', 'shape',
-              'shape_247', 'shape_score', 'activity', 'combined', 'settling'):
+              'shape_247', 'shape_score', 'trend_score', 'chop_score', 'shape2',
+              'activity', 'combined', 'combined2', 'settling'):
         print('  %-11s %.3f' % (c, T[c].notna().mean()))
 
     print('\nAGREEMENT WITH THE PUBLISHED OUTPUT')

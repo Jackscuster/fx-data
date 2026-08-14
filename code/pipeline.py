@@ -59,6 +59,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('twoscores.py')      # TWO_SCORES.md: trend and chop scored separately
     run('measures.py')       # the four measurements, both tests each
     run('chopmore.py')       # chop redundancy, and what the 'both' cell is
+    run('final.py')          # final settings on IS, full report on the holdout
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
     run('episodes.py')       # episode-basis and block-bootstrap significance
