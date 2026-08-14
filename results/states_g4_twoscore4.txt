@@ -1,0 +1,8 @@
+states_g4_twoscore4.csv
+============================================================
+
+Two-score, generation 4, CURRENT. Trend and chop scored independently and classified on the pair: trending / ranging / trend-in-range / neither. The ambiguous share falls to 20%.
+
+Source column: shape2 in layer1_states.csv
+Shape: 6855 dates x 28 pairs. Every value is already lagged one bar.
+States: neither, ranging, trend-in-range, trending

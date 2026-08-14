@@ -139,6 +139,7 @@ out = dict(
     finalpairs=cl(rd('final_pairs.csv')),
     paircha=cl(rd('pair_character.csv').rename(columns={'Unnamed: 0':'pair'})),
     pairrank=cl(rd('pair_ranking.csv').rename(columns={'Unnamed: 0':'pair'})),
+    runlen=cl(rd('run_lengths.csv').query("pair=='ALL'")),
     bothep=cl(rd('both_episodes.csv').sort_values('bars',ascending=False).head(15)),
     failsurf=cl(rd('measures_failsurface.csv')),
     scoreyears=cl(rd('scoredist_years.csv')),

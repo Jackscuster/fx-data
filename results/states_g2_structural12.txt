@@ -1,0 +1,11 @@
+states_g2_structural12.csv
+============================================================
+
+Structural, generation 2. Swings, breaks and retracements giving four shapes INCLUDING 'broken', crossed with the activity tercile = 12 cells.
+
+NOT REPRODUCIBLE FROM CURRENT CODE. combined.layers() was changed to the three-shape read, so re-running any current module yields generation 3 under the old column name. This file is RESTORED VERBATIM from git f597f23:results/combined_states.csv, which is the last commit where the twelve cells were written.
+
+'broken' was never in the spec and took 64% of days; that is why this generation was replaced.
+
+Shape: 6916 dates x 28 pairs. Already lagged one bar.
+States: medium broken, medium drifting, medium range, medium trending, strong broken, strong drifting, strong range, strong trending, weak broken, weak drifting, weak range, weak trending
