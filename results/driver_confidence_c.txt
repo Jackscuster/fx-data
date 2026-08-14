@@ -1,0 +1,11 @@
+Test 2 -- confidence, third and final attempt
+=============================================
+
+Episodes split at the in-sample median driver reading. The question is
+whether the STATE CALL is better when the driver agrees -- longer runs.
+
+This test has now failed on all three drivers: rate-gap momentum (run
+gap 26.0 vs 20.0 in-sample collapsing to 19.0 vs 18.0 out), MOVE (flip
+rate sign flipped between blocks) and equity correlation. THE TEST IS
+RETIRED. Agreement between a driver and the state call does not make
+the call more reliable, and three independent attempts is enough.

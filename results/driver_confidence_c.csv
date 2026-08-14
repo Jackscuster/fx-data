@@ -1,0 +1,9 @@
+driver,block,state,subset,episodes,median_run,mean_run
+C,is,trending,driver high (corr strong),511,24.0,37.02348336594912
+C,is,trending,driver low (corr weak),488,23.0,34.375
+C,is,ranging,driver high (corr strong),457,23.0,38.2910284463895
+C,is,ranging,driver low (corr weak),509,22.0,36.96463654223969
+C,oos,trending,driver high (corr strong),365,19.0,29.054794520547944
+C,oos,trending,driver low (corr weak),260,17.5,28.423076923076923
+C,oos,ranging,driver high (corr strong),378,28.5,45.28835978835979
+C,oos,ranging,driver low (corr weak),282,20.0,34.840425531914896

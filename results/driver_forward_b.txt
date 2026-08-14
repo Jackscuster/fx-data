@@ -1,0 +1,14 @@
+Driver B -- forward odds over the next 20 bars
+==============================================
+
+FORWARD, and reported as its own block. Layer 1 does not predict --
+only drivers carry forward odds, and nothing here changes a state
+label.
+
+P(crisis in 20 bars) is computed at DAY level against distinct
+event dates: ONE CRISIS IS ONE OBSERVATION however many bars or
+pairs it touches. Regime odds are per pair -- does the pair enter
+that state at any point in the next 20 bars.
+
+base is the unconditional rate in that block; lift is bucket over
+base. Terciles cut on in-sample only.

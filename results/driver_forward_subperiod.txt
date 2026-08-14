@@ -1,0 +1,5 @@
+Forward crisis lift, holdout split by sub-period
+================================================
+
+Lift of P(crisis in 20 bars) in the high driver bucket over the base
+rate for that window. Run before reporting any forward pass.
