@@ -1,0 +1,5 @@
+Driver E commodities -- holdout separation by sub-period
+========================================================
+
+Run BEFORE any holdout pass is reported. This check has killed two
+drivers already.

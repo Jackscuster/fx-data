@@ -508,6 +508,8 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 <div id="extdrv0"></div>
 <div id="drvc"></div>
 <div id="fwdodds"></div>
+<div id="drvde"></div>
+<div id="drvprog"></div>
 <h3>Direction tests (superseded, kept on file)</h3>
 <div id="extdrv"></div>
 <div id="extdrv2"></div>
@@ -1549,6 +1551,126 @@ function boot(BUNDLE,root){
     +'between in-sample and holdout, which is exactly what a spurious result looks '
     +'like.</p></div></details>';
    $('#fwdodds').innerHTML=h;
+  }
+
+  function buildDriverDE(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const SD=BUN.drvsepd||[],SE=BUN.drvsepe||[],FD=BUN.drvfwdd||[],
+         FE=BUN.drvfwde||[],UD=BUN.drvsubd||[],UE=BUN.drvsube||[],
+         RC=BUN.r10cov||[],PG=BUN.drvprog||[];
+   if(!SD.length){$('#drvde').innerHTML='';return;}
+   const per=['2016-19','2020-21','2022-26'];
+   const blk=(title,note,S,U,fwd,fwdnote)=>{
+    const sep=S.filter(r=>r.group&&r.real==null),nul=S.filter(r=>r.real!=null);
+    let x='<h3>'+title+'</h3><div class="note">'+note+'</div>'
+     +'<div class="tw"><table><thead><tr><th>Block</th><th>Group</th>'
+     +'<th>Episodes</th><th>Mean</th><th>Separation vs rest</th></tr></thead>'
+     +'<tbody>'+sep.map(r=>'<tr><td>'+r.block+'</td><td>'+r.group+'</td><td>'
+      +r.episodes+'</td><td>'+f(r.mean_drv,4)+'</td><td><b>'
+      +(r.sep_vs_rest>0?'+':'')+f(r.sep_vs_rest)+'</b></td></tr>').join('')
+     +'</tbody></table><div class="count">Test 1 — separation. This is the test '
+     +'that decides keep or kill.</div></div>';
+    if(U.length) x+='<div class="tw"><table><thead><tr><th>Group</th>'
+     +per.map(p=>'<th>'+p+'</th>').join('')+'</tr></thead><tbody>'
+     +['trending','ranging','crisis'].map(g=>'<tr><td>'+g+'</td>'
+      +per.map(p=>{const r=U.find(x2=>x2.group===g&&x2.period===p);
+        const v=r?r.sep:null;
+        return '<td'+(v!=null&&v<0?' style="color:var(--chop)"':'')+'>'
+         +(v==null?'—':((v>0?'+':'')+f(v)))+'</td>';}).join('')+'</tr>')
+      .join('')+'</tbody></table><div class="count"><b>Sub-period split, run '
+     +'before reporting.</b> A sign change across these columns is what kills a '
+     +'driver.</div></div>';
+    if(nul.length) x+='<div class="tw"><table><thead><tr><th>Block</th>'
+     +'<th>Chosen on IS</th><th>Real</th><th>Null</th><th>Rank</th><th>p</th>'
+     +'</tr></thead><tbody>'+nul.map(r=>'<tr><td>'+r.block+'</td><td>'+r.group
+      +'</td><td><b>'+(r.real>0?'+':'')+f(r.real,4)+'</b></td><td>'
+      +f(r.null_mean,4)+' ± '+f(r.null_sd,4)+'</td><td>'+r.rank_of_real+' of '
+      +r.n_compared+'</td><td>'+f(r.p)+'</td></tr>').join('')
+     +'</tbody></table></div>';
+    const fw=fwd.filter(r=>r.bucket);
+    if(fw.length){const mets=[...new Set(fw.map(r=>r.metric))];
+     x+='<div class="tw"><table><thead><tr><th>Block</th><th>Metric</th>'
+      +'<th>Base</th><th>Low</th><th>Mid</th><th>High</th></tr></thead><tbody>'
+      +mets.map(mt=>['is','oos'].map(bl=>{
+        const d=fw.filter(r=>r.metric===mt&&r.block===bl);
+        if(!d.length)return '';
+        const g=b=>{const r=d.find(x2=>x2.bucket===b);
+          return r?(f(r.p)+' <span class="count">×'+f(r.lift,2)+'</span>'):'—';};
+        return '<tr><td>'+bl+'</td><td>'+mt+'</td><td>'+f(d[0].base)+'</td><td>'
+         +g('low')+'</td><td>'+g('mid')+'</td><td>'+g('high')+'</td></tr>';})
+       .join('')).join('')+'</tbody></table><div class="count">Test 2 — forward '
+      +'odds. <b>Reported, and cannot kill a driver.</b> '+fwdnote+'</div></div>';}
+    return x;};
+
+   let h=blk('Driver 4 — yield curve shape (10y &minus; 2y)',
+    '<b>Only USD is daily on FRED</b> — every other G8 long-rate series there is '
+    +'monthly, so the 10-year comes from the same central-bank sources as the '
+    +'2-year: Bundesbank, BoE GLC, SNB and MoF. <b>AUD and CAD have a 2-year but '
+    +'no daily 10-year; NZD has neither</b>, so the driver runs on <b>10 of 28 '
+    +'pairs</b>. — <code>results/rates10y_coverage.csv</code>',
+    SD,UD,FD,
+    'The holdout "high" bucket is empty: the mean |slope gap| roughly halves '
+    +'between blocks, 0.728 to 0.369, so in-sample terciles do not partition the '
+    +'holdout at all. That is itself the finding — the level moved regime.');
+
+   h+=blk('Driver 5 — commodities (oil, gold)',
+    'Free on the Yahoo chart API: <b>WTI CL=F from 2000-08-23</b> and <b>gold '
+    +'GC=F from 2000-08-30</b> — both start ~1.6 years into the in-sample '
+    +'window. Scope is mechanism-led: <b>oil → CAD and JPY pairs</b> (Japan '
+    +'imports its energy), <b>gold → AUD pairs</b>, and <b>no test at all for '
+    +'EUR/GBP/CHF-only pairs</b> — no mechanism exists there, so a hit would be '
+    +'noise by construction. Iron ore TIO=F is free but only from 2010 and '
+    +'duplicates gold\'s scope; <b>coal and dairy are not free, so NZD '
+    +'commodities are recorded UNTESTABLE</b>.',
+    SE,UE,FE,
+    'The crisis lift is <b>×1.17 in both halves</b> — the most consistent '
+    +'forward number in the whole programme — but it fails its null in both '
+    +'(p=0.255 and p=0.235).');
+   $('#drvde').innerHTML=h;
+
+   if(PG.length){
+    let p='<h3>The five-driver programme, closed</h3>'
+     +'<div class="note" style="border-left:3px solid var(--trend)">'
+     +'<b>Confirmation is the bar.</b> A driver that reliably reads the current '
+     +'regime is a keeper even if it predicts nothing — failing the forward test '
+     +'never kills a driver. Drivers die only when their read on the <i>present</i> '
+     +'is unreliable: a sign flip between data halves or sub-periods.</div>'
+     +'<div class="tw"><table><thead><tr><th>Driver</th><th>Status</th>'
+     +'<th>Good for</th><th>Decided by</th><th>Evidence</th></tr></thead><tbody>'
+     +PG.map(r=>'<tr><td><b>'+r.driver+'</b></td><td><b style="color:'
+      +(r.status==='KEEPER'?'var(--trend)':(r.status==='UNTESTABLE'?'var(--mute)'
+       :'var(--chop)'))+'">'+r.status+'</b></td><td>'+r.good_for+'</td><td>'
+      +r.decided_by+'</td><td>'+r.evidence+'</td></tr>').join('')
+     +'</tbody></table><div class="count">— '
+     +'<code>results/driver_program_summary.csv</code></div></div>'
+     +'<div class="note"><b>One keeper out of five.</b> Bond volatility confirms '
+     +'a crisis reading that price structure has already made — crisis days carry '
+     +'a MOVE level ~0.9&nbsp;sd above everything else, in every sub-period. It is '
+     +'a second opinion on the present, worth having precisely because it comes '
+     +'from outside the price series the classifier is built on.</div>'
+     +'<div class="note"><b>What free external data cannot do, established rather '
+     +'than assumed.</b> It cannot make the state call more reliable — the '
+     +'confidence test ran on three drivers and failed on all three, and is '
+     +'retired. And it cannot see forward: every forward reading that looked like '
+     +'something either flipped sign between halves (equity ×1.21→×0.61, MOVE '
+     +'×0.83→×1.66) or failed its null (commodities ×1.17 both halves, p=0.255 / '
+     +'0.235).</div>'
+     +'<div class="note"><b>Why the failures look alike.</b> Four of five died the '
+     +'same death — real in one block or sub-period, gone or reversed in another. '
+     +'That is what a driver looks like when it tracks a regime of the world '
+     +'rather than a property of the market; <b>2020–21 dominates almost every one '
+     +'of these tables</b>. The sub-period split is what exposed it and it is now '
+     +'standard.</div>'
+     +'<div class="note" style="border-left:3px solid var(--mute)">'
+     +'<b>Where predictive value would have to come from.</b> Not from the prices '
+     +'of other assets, which is what all five of these are — from <b>positioning '
+     +'and expectations</b>. <b>CFTC Commitments of Traders is free, weekly, and '
+     +'not yet tested</b>: the one obvious gap left in the free universe, though '
+     +'weekly frequency is a real limit against a daily classifier and it is '
+     +'US-exchange only. Beyond that: FX options risk reversals, dealer flow and '
+     +'order-book depth — all paid. <b>Layer 1 remains what it always was: a view '
+     +'of the current regime, never judged on prediction.</b></div>';
+    $('#drvprog').innerHTML=p;}
   }
 
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
@@ -3223,6 +3345,7 @@ function boot(BUNDLE,root){
   buildDriversReframed();
   buildDriverC();
   buildForwardOdds();
+  buildDriverDE();
   buildDrivers2();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
   (function(){

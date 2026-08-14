@@ -2720,6 +2720,67 @@ more.
 `driver_forward_c.csv`, `driver_forward_b.csv`, `driver_subperiod_c.csv`,
 `driver_forward_subperiod.csv`, `driver_mechanism_c.csv`.
 
+### 16.5e Drivers 4 and 5 dead. The five-driver programme is closed.
+
+**DRIVER 4 — YIELD CURVE.** Data first: **only USD is daily on FRED** — every
+other G8 long-rate series there is monthly (median gap 31 days), useless against a
+daily panel. The 10-year came from the same sources as the 2-year: Bundesbank
+R10XX, BoE GLC, SNB 10J0, MoF JGB. **AUD and CAD have a 2-year but no daily
+10-year; NZD has neither**, so the driver runs on **10 of 28 pairs**.
+
+Crisis separation **−0.108 IS → +0.082 OOS**; sub-periods **+0.073 / −0.650 /
++0.224**. Fails both nulls (p=0.569, p=0.686). **DEAD — sign flips on both cuts.**
+
+A separate finding worth keeping: the holdout "high" bucket came out empty. Mean
+|slope gap| **0.728 IS → 0.369 OOS** — the level roughly halved, so in-sample
+terciles do not partition the holdout at all.
+
+**DRIVER 5 — COMMODITIES.** WTI **CL=F from 2000-08-23**, gold **GC=F from
+2000-08-30** — both start ~1.6 years into the in-sample window. Scope was
+mechanism-led: oil → CAD and JPY pairs, gold → AUD pairs, **no test for
+EUR/GBP/CHF-only pairs** because no mechanism exists there. Iron ore TIO=F is free
+but only from 2010 and duplicates gold's scope; **coal and dairy are not free, so
+NZD commodities are UNTESTABLE**.
+
+Trending separation **−0.199 IS (p=0.039) → −0.107 OOS (p=0.431)** — sign holds
+across halves but sub-periods flip: **−0.122 / −0.532 / +0.150**. **DEAD.**
+
+**Forward:** the crisis lift is **×1.17 in both halves** — the most consistent
+forward number in the programme — but fails its null in both (p=0.255, p=0.235).
+
+**THE PROGRAMME, CLOSED. One keeper out of five.**
+
+| driver | status | decided by |
+|---|---|---|
+| 1 rate-gap momentum | DEAD | sub-period sign flip |
+| **2 MOVE** | **KEEPER** | held sign everywhere |
+| 3 equity correlation | DEAD | sign flip between halves |
+| 4 yield curve | DEAD | sign flip, halves and sub-periods |
+| 5 commodities | DEAD | sub-period sign flip |
+| 5b NZD commodities | UNTESTABLE | no free data exists |
+
+**What free external data CAN do**: one thing. Bond volatility confirms a crisis
+reading price structure has already made — crisis days ~0.9 sd above everything
+else, in every sub-period. A second opinion on the present, valuable because it
+comes from outside the price series the classifier is built on.
+
+**What it CANNOT do**, established not assumed: it cannot make the state call more
+reliable (confidence test failed on three drivers, retired), and it cannot see
+forward (every forward reading either flipped sign between halves or failed its
+null).
+
+**Why four of five died the same death**: real in one block or sub-period, gone or
+reversed in another. That is what a driver looks like when it tracks a regime of
+the world rather than a property of the market — **2020-21 dominates almost every
+one of these tables**. The sub-period split exposed it and is now standard.
+
+**Where predictive value would have to come from**: not the prices of other
+assets, which is what all five were — **positioning and expectations**. **CFTC
+Commitments of Traders is free, weekly, and not yet tested** — the one obvious gap
+left in the free universe, limited by weekly frequency and US-exchange-only
+coverage. Beyond that: FX options risk reversals, dealer flow, order-book depth,
+all paid.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

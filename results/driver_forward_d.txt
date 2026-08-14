@@ -1,0 +1,9 @@
+Driver D yield curve -- forward odds over the next 20 bars
+==========================================================
+
+FORWARD, reported as its own block. Layer 1 does not predict --
+only drivers carry forward odds, and a forward failure NEVER kills
+a driver. All three regimes reported, not just crisis.
+
+One crisis is one observation: the crisis row is computed at day
+level against distinct event dates.
