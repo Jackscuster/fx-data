@@ -1,0 +1,43 @@
+Why each pair behaves the way it does
+=====================================
+
+THE RANKING IS MEASURED. It comes from pair_character.csv and it
+held across both halves of 27 years.
+
+THE MECHANISM IS AN EXPLANATION ATTACHED AFTERWARDS. It is
+economics, not output: nothing here was fitted and no sentence was
+tested. It is included because a ranking without a reason invites
+the reader to invent one, and a stated reason can be argued with.
+
+The sentences are COMPOSED from declared currency roles plus the
+pair's measured position in the ranking, so 28 sentences cannot
+quietly disagree with 28 numbers.
+
+  EURUSD: The dollar leg carries global risk and rates while EUR moves on ECB policy and growth differentials, so the pair trends when those two stories diverge and ranges when they agree. It sits at rank 1 of 28 on trendiness, so it is one of the more directional pairs in the set.
+  EURJPY: A haven leg against a large, slow bloc, so risk-off episodes move it in one direction for weeks at a time. It sits at rank 2 of 28 on trendiness, so it is one of the more directional pairs in the set.
+  USDJPY: The dollar leg carries global risk and rates while JPY strengthens when global risk rises and carry trades unwind, so the pair trends when those two stories diverge and ranges when they agree. It sits at rank 3 of 28 on trendiness, so it is one of the more directional pairs in the set.
+  AUDUSD: The dollar leg carries global risk and rates while AUD moves on industrial demand and global risk appetite, so the pair trends when those two stories diverge and ranges when they agree. It sits at rank 4 of 28 on trendiness, so it is one of the more directional pairs in the set.
+  AUDNZD: Two currencies driven by the same global demand cycle, so much of the move cancels and what is left is range-bound. It sits at rank 5 of 28 on trendiness, so it is one of the more directional pairs in the set.
+  AUDJPY: One side is bid when risk rises and the other is sold, so a single shift in global risk pushes both legs the same way at once -- the cleanest trending structure in the set. It sits at rank 6 of 28 on trendiness, so it is one of the more directional pairs in the set.
+  USDCAD: The dollar leg carries global risk and rates while CAD moves on crude and on the US economy it borders, so the pair trends when those two stories diverge and ranges when they agree. It sits at rank 7 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  NZDJPY: One side is bid when risk rises and the other is sold, so a single shift in global risk pushes both legs the same way at once -- the cleanest trending structure in the set. It sits at rank 8 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  GBPUSD: The dollar leg carries global risk and rates while GBP moves on UK policy and its own politics, so the pair trends when those two stories diverge and ranges when they agree. It sits at rank 9 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  GBPJPY: A haven leg against a mid-sized open economy, so risk-off episodes move it in one direction for weeks at a time. It sits at rank 10 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  CADJPY: One side is bid when risk rises and the other is sold, so a single shift in global risk pushes both legs the same way at once -- the cleanest trending structure in the set. It sits at rank 11 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  NZDCAD: Two currencies driven by the same global demand cycle, so much of the move cancels and what is left is range-bound. It sits at rank 12 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  CHFJPY: Both are bid when risk rises, so they largely offset and the pair moves on the difference between two central banks. It sits at rank 13 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  NZDUSD: The dollar leg carries global risk and rates while NZD moves on soft commodities and global risk appetite, with the thinnest liquidity of the eight, so the pair trends when those two stories diverge and ranges when they agree. It sits at rank 14 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  GBPAUD: A mid-sized open economy against a commodity and China-growth proxy, so it moves on the gap between two policy cycles. It sits at rank 15 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  AUDCHF: One side is bid when risk rises and the other is sold, so a single shift in global risk pushes both legs the same way at once -- the cleanest trending structure in the set. It sits at rank 16 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  EURNZD: A large, slow bloc against a small commodity currency, so it moves on the gap between two policy cycles. It sits at rank 17 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  USDCHF: The dollar leg carries global risk and rates while CHF strengthens when European risk rises, and is periodically managed by its central bank, so the pair trends when those two stories diverge and ranges when they agree. It sits at rank 18 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  EURCAD: A large, slow bloc against an oil-linked North American currency, so it moves on the gap between two policy cycles. It sits at rank 19 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  AUDCAD: Two currencies driven by the same global demand cycle, so much of the move cancels and what is left is range-bound. It sits at rank 20 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  EURCHF: A haven leg against a large, slow bloc, so risk-off episodes move it in one direction for weeks at a time. It sits at rank 21 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  NZDCHF: One side is bid when risk rises and the other is sold, so a single shift in global risk pushes both legs the same way at once -- the cleanest trending structure in the set. It sits at rank 22 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  EURAUD: A large, slow bloc against a commodity and China-growth proxy, so it moves on the gap between two policy cycles. It sits at rank 23 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  GBPNZD: A mid-sized open economy against a small commodity currency, so it moves on the gap between two policy cycles. It sits at rank 24 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  EURGBP: Two neighbouring economies on similar policy paths, so the two legs mostly cancel and the pair spends its time going nowhere. It sits at rank 25 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  CADCHF: One side is bid when risk rises and the other is sold, so a single shift in global risk pushes both legs the same way at once -- the cleanest trending structure in the set. It sits at rank 26 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  GBPCHF: A haven leg against a mid-sized open economy, so risk-off episodes move it in one direction for weeks at a time. It sits at rank 27 of 28 on trendiness, so it spends more of its life range-bound than trending.
+  GBPCAD: A mid-sized open economy against an oil-linked North American currency, so it moves on the gap between two policy cycles. It sits at rank 28 of 28 on trendiness, so it spends more of its life range-bound than trending.

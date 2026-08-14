@@ -1,0 +1,25 @@
+Today -- one row per pair, everything the product view shows
+============================================================
+
+Computed here and committed, never in the interface. Every state label
+comes from the shipped path and the run ASSERTS it reproduces
+states_g4_twoscore4.csv exactly.
+
+PENDING. The classifier needs 5 consecutive days before adopting a new
+state, so the pre-dwell label is already pointing somewhere new while
+the confirmed label still shows the old one. pending_days/pending_state
+expose that, so a switch is visible while it is forming rather than
+appearing from nowhere.
+
+FIRMNESS. Each score is cut at its in-sample median; firmness is the
+distance from that cut in in-sample standard deviations. The state is
+set by BOTH scores, so the reported figure is the SMALLER of the two --
+a call is only as firm as its weakest side. >= 0.50 sd solidly,
+>= 0.20 clearly, below that barely. Barely is not wrong; it is near the
+boundary.
+
+SHARED BET. Other pairs in the same state today that share a currency.
+28 labels are not 28 independent observations.
+
+DAYS_IN_STATE IS A FACT, NOT A WARNING. State age was tested and does
+not predict state death, so nothing here treats a long run as overdue.
