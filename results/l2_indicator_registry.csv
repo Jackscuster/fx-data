@@ -1,0 +1,12 @@
+name,slot,kind,n_outputs,defaults,defaults_confirmed,source
+adx_dmi,confirmation,TERNARY,4,length=14; threshold=25.0,False,"addition (work order), not ported from Pine"
+parabolic_sar,confirmation,BINARY,4,start=0.02; inc=0.02; maxaf=0.2,False,"addition (work order), not ported from Pine"
+donchian_breakout,confirmation,BINARY,4,length=20,False,"addition (work order), not ported from Pine"
+ichimoku,confirmation,TERNARY,4,tenkan=9; kijun=26; senkou=52,False,"addition (work order), not ported from Pine"
+linreg_slope,confirmation,TERNARY,4,length=14; min_r2=0.2,False,"addition (work order), not ported from Pine"
+choppiness_index,volume,FILTER,2,length=14; threshold=61.8,False,"addition (work order), not ported from Pine"
+efficiency_ratio,volume,FILTER,2,length=10; threshold=0.3,False,"addition (work order), not ported from Pine"
+vertical_horizontal_filter,volume,FILTER,2,length=28; threshold=0.35,False,"addition (work order), not ported from Pine"
+fractal_dimension,volume,FILTER,2,length=30; threshold=1.5,False,"addition (work order), not ported from Pine"
+baseline_sma,baseline,BASELINE,1,length=20,False,"addition (work order), not ported from Pine"
+baseline_lsma,baseline,BASELINE,1,length=20; offset=0,False,"addition (work order), not ported from Pine"

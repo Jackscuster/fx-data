@@ -1,0 +1,13 @@
+test,passed
+sizing,True
+two_leg_target,True
+leg2_breakeven,True
+leg2_trailing,True
+stop_before_target,True
+entry_bar_low,True
+reversal_reset,True
+bridge_continuation,True
+too_late,True
+ternary_block,True
+suspect_bar,True
+no_lookahead,True
