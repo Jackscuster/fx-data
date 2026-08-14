@@ -1,0 +1,30 @@
+Knob sensitivity -- every hand-picked constant, one at a time
+=============================================================
+
+THIS MEASURES. IT CHANGES NOTHING AND PICKS NOTHING. The shipped
+classifier is untouched, no setting is proposed, and no knob is
+compared in order to select a better value. A knob that scores badly
+here becomes a candidate for a properly motivated follow-up -- chosen
+on IS against a declared criterion, confirmed once out of sample -- in
+a LATER run.
+
+CONTROL: the unperturbed configuration reproduces the shipped states
+at 1.0000, asserted, the same standard refit.py and windowsens.py use.
+
+THE DAILY-CADENCE LENS. Agreement and separation are not sufficient. A
+setting can hold separation and still be a practical failure by cutting
+state runs to a few bars -- there is nothing to trade in a regime call
+that changes twice a week. Any variant whose median run falls 15% or
+more below the SHIPPED median is flagged run_failure -- relative, not
+absolute, because the shipped classifier itself sits at 19 bars and an
+absolute floor of 20 would flag the control. That is the same tradeoff
+as the one that picked the
+window (16.4q chose 106 bars for 21-bar episodes over the last 5% of
+separation).
+
+Separation is measured with a FIXED RULER: structval.properties uses
+its own window and is not perturbed by anything here. If the ruler
+moved with the machine, every machine would look equally good.
+
+FLAGGED: score_q (AMBER)
+

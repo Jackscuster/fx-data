@@ -68,15 +68,17 @@ PROPS = ['autocorr', 'range_to_path', 'dir_changes', 'mean_crossings']
 CELLS = ['trending', 'ranging', 'trend-in-range', 'neither']
 
 
-def raw_parts(px, N=N_SCORE, Wl=None):
+def raw_parts(px, N=N_SCORE, Wl=None, kfail=None, volwin=None):
     """-> (trend components, chop components). All lagged one bar.
 
-    Wl overrides the locked lookback W for window-sensitivity testing only. It
-    defaults to W, so every existing caller is unchanged -- refit.py's control
-    (the 2015 vintage must reproduce the shipped states exactly) is the
-    regression test for that.
+    Wl, kfail and volwin override the locked constants for SENSITIVITY TESTING
+    ONLY. All three default to the module values, so every existing caller is
+    unchanged -- refit.py's control (the 2015 vintage must reproduce the shipped
+    states exactly) is the regression test for that.
     """
     W = globals()['W'] if Wl is None else Wl
+    KFAIL = globals()['KFAIL'] if kfail is None else kfail
+    VOLWIN = globals()['VOLWIN'] if volwin is None else volwin
     lp = np.log(px.astype(float))
     rr = lp.diff()
     sig = rr.rolling(VOLWIN).std()

@@ -1,0 +1,17 @@
+The ranking, and which constants are steering without a reason on file
+======================================================================
+
+sensitivity = 1 - the worst agreement across that knob's variants, so
+higher means the state calls move more when the constant is nudged by
+20-25%%.
+
+FLAG has two tiers, both requiring sensitivity >= 0.10:
+  RED   nothing on file at all -- an arbitrary constant steering the
+        machine
+  AMBER a construction rule is on file (equal thirds, the median) but
+        no comparison against alternatives
+
+Rationale was searched for in code comments and HANDOFF_3.md. Each
+flagged knob is a candidate for a motivated follow-up -- chosen on IS
+against a declared criterion, confirmed once out of sample -- NOT a
+change made here.
