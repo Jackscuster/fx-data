@@ -1,0 +1,13 @@
+Chronic detector -- separation and boundaries
+=============================================
+
+Groups: chronic (news-dated windows, affected pairs), TRENDING BUT NOT
+CHRONIC -- the hard boundary, because chronic IS a trend -- acute (the
+54-event forward windows) and everything else.
+
+Rows tagged "chronic IS" / "chronic OOS" split the BARS. The EPISODE
+LIST cannot be split: 3 of 6 rows start before 2016 and 3 after, which
+leaves 2-3 independent events a side. No holdout claim is made.
+
+The null circularly shifts the episode WINDOWS in time, preserving
+their number and length, and recomputes the separation.

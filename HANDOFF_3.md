@@ -2781,6 +2781,59 @@ left in the free universe, limited by weekly frequency and US-exchange-only
 coverage. Beyond that: FX options risk reversals, dealer flow, order-book depth,
 all paid.
 
+### 16.5f Chronic crisis: built, and it does not separate from ordinary trending
+
+**PART 1 — the episode list, dated from news.** Six rows, **five independent macro
+events**: BoJ QQE 2013-15, BoJ YCC divergence 2022-24 (the anchor), ECB negative
+rates/QE 2014-15, the Fed side of that same divergence, the CHF haven bid 2010-11,
+and Brexit 2016. Every start and end is a policy announcement or intervention.
+EUR-down and USD-up 2014-15 are **the same divergence seen from two sides** — any
+count of independent episodes must use the `macro_event` column.
+
+**Stated before any detector was built**: 3 of 6 rows start before 2016 and 3
+after, so an IS/OOS split of the *episode list* leaves 2-3 events a side. **No
+holdout claim is possible.** That is a limit of the phenomenon, which is rare, not
+of the method.
+
+**PART 2/3 — the three declared constructions, and the boundary that matters.**
+
+| detector | chronic | trending (not chronic) | acute | other | **boundary: chronic vs trending** |
+|---|---|---|---|---|---|
+| drift | +0.510 | +0.347 | −0.072 | −0.364 | **+0.189** |
+| **onesided** | +0.492 | +0.287 | +0.095 | −0.377 | **+0.237** |
+| starve | +0.015 | +0.015 | +0.004 | −0.017 | **+0.012** |
+
+**Selecting on the diluted metric would have picked `drift`; selecting on the
+boundary picks `onesided`.** 61% of the "everything else" comparison is quiet
+market, which any trend measure wins without saying anything.
+
+**IT DOES NOT CLEAR ITS NULL.** Boundary separation **+0.237** against a
+shifted-window null of −0.170 ± 0.288 — **rank 20 of 51, p=0.392**. Against
+everything: +0.492, rank 8 of 51, p=0.157. **Chronic episodes are not
+distinguishable from ordinary trending by any of the three constructions.**
+
+**A reading of ~1.00 means random walk.** `drift` is a 250-bar move over its own
+volatility, so a random walk sits at 1.00 by construction. Chronic reads **1.037**;
+trending 0.912, acute 0.714, other 0.667. The apparent separation is not "chronic
+is unusually persistent" — it is **"everything else is unusually mean-reverting,
+and chronic is merely random-walk-like."** Much weaker than the claim the
+construction was built to test.
+
+**Pullback starvation is simply false.** The premise was that chronic bleeds never
+retrace. Measured: **+0.012 sd**. Chronic episodes retrace like ordinary trends.
+
+**THE CROSS-CHECK IS THE ONE CLEAN PASS.** Each alarm reads ~0 on the other's
+episodes — acute on chronic **+0.032**, chronic on acute **+0.095** — while reading
+~+0.48 on its own. They are genuinely two different alarms and neither is a
+relabelling of the other.
+
+**Per episode** the chronic readings are near-identical across all five macro
+events (0.297–0.312) against an ordinary-trending mean of 0.296 — the same finding
+a third way.
+
+**Verdict: do not route on this.** Acute stands; chronic is measured, recorded and
+not validated.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

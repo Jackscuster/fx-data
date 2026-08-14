@@ -72,6 +72,8 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('rates10y.py')       # daily 10y yields, for the curve driver
     run('drivers_de.py')     # DRIVERS 4 yield curve + 5 commodities
     run('driver_program.py') # the five-driver programme summary
+    run('chronic_events.py') # news-dated chronic episode list
+    run('chronic.py')        # CHRONIC crisis detector and its boundaries
     run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null

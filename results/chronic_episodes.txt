@@ -1,0 +1,28 @@
+Chronic currency episodes, dated from the news record
+=====================================================
+
+Every start and end date is a policy announcement, meeting outcome
+or intervention -- something reported on that day. Dating a
+"sustained depreciation" from where the chart started falling would
+make the detector's validation worthless, because the detector
+reads the chart. This is the same principle that made the 54-event
+acute calendar non-circular.
+
+6 rows, 5 INDEPENDENT macro events.
+
+THE OVERLAP MATTERS. EUR-down 2014-15 and USD-up 2014-15 are the
+same divergence seen from two sides. They are listed separately
+because the detector runs per currency, but any count of
+independent episodes must use the macro_event column, not the row
+count.
+
+SIX ROWS IS A SMALL SAMPLE AND FIVE INDEPENDENT EVENTS IS SMALLER.
+What that costs: no in-sample/out-of-sample split of the episode
+list is meaningful -- three of the six start before 2016 and three
+after, so a split leaves two or three events a side. Separation can
+be measured and null-tested; a holdout confirmation on the episode
+list cannot. That limit is stated here rather than discovered in
+the results.
+
+GBP 2016 is the least clean member: it begins with a shock, so it
+is part acute. Kept and flagged rather than quietly dropped.
