@@ -1,0 +1,11 @@
+Breadth -- how often is FX one market rather than 28?
+=====================================================
+
+Per day, how many of the 28 pairs share the modal state. The floor is
+7, not 1: four states over 28 pairs means the largest group cannot be
+smaller than ceil(28/4).
+
+The widest decile is tested against the 54-event crisis calendar with a
+circular-shift null on the breadth series, because "the widest days are
+crisis days" is exactly the kind of claim that is true by construction
+if crisis days are simply more common in some years.

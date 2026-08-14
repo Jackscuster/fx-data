@@ -493,6 +493,7 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 
 <section id="pc" hidden>
 <div id="pcwrap"></div>
+<div id="shwrap"></div>
 </section>
 
 <section id="gl" hidden>
@@ -908,6 +909,214 @@ function boot(BUNDLE,root){
   }
 
   // ================= PAIR CHARACTER =================
+  function buildShared(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const S=BUN.stcorrs||[],C=BUN.stcorr||[],BK=BUN.stblk||[],
+         BR=BUN.stbrd||[],NF=BUN.stneff||[],EX=BUN.stext||[];
+   if(!S.length){$('#shwrap').innerHTML='';return;}
+   const gs=b=>S.find(r=>r.block===b)||{};
+   const is=gs('is'),oos=gs('oos');
+
+   let h='<h3>Shared states &mdash; how many independent bets are there?</h3>'
+    +'<div class="note" style="border-left:3px solid var(--dim)">'
+    +'<b>What this is.</b> If fourteen pairs read “trending” on the same day, is '
+    +'that fourteen observations or one? This measures how much the 28 state '
+    +'calls overlap.<br><br>'
+    +'<b>What this is NOT.</b> It does <b>not change any state call</b>, does not '
+    +'feed the classifier, and is not a routing rule. It is a counting number for '
+    +'Layer 3/4: how many <i>independent</i> bets exist on a given day.</div>'
+    +'<div class="note" style="border-left:3px solid var(--kill)">'
+    +'<b>The rank-7 floor, which bounds every number below.</b> The 28 pairs are '
+    +'built from 8 currencies, so the panel has <b>rank 7, not 28</b>. EURJPY '
+    +'<i>is</i> EURUSD plus USDJPY — by construction, not by correlation. '
+    +'Agreement between pairs sharing a leg is partly an <b>identity</b> and is '
+    +'not evidence that the market moved together. The question was never whether '
+    +'these overlap; it is <i>how much</i>, and <i>where</i>.</div>'
+
+    +'<div class="tw"><table><thead><tr><th>Block</th><th>Days</th>'
+    +'<th>Raw agreement</th><th>Expected by chance</th><th>Excess</th>'
+    +'<th>Mean kappa</th><th>Range</th></tr></thead><tbody>'
+    +S.map(r=>'<tr><td>'+r.block+'</td><td>'+r.days+'</td><td>'+f(r.mean_observed)
+     +'</td><td>'+f(r.mean_expected)+'</td><td><b>+'+f(r.excess_over_chance)
+     +'</b></td><td><b>'+f(r.mean_kappa)+'</b></td><td>'+f(r.min_kappa)+' to '
+     +f(r.max_kappa)+'</td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Agreement is chance-corrected.</b> Two '
+    +'pairs both sitting in “ranging” 45% of the time agree ~27% of days by '
+    +'coincidence alone, so raw agreement would make everything look enormous. '
+    +'<b>kappa = (observed − expected) / (1 − expected)</b>: 0 means no more '
+    +'agreement than the marginals force. Complete-case days only, so kappa is '
+    +'exact rather than approximate. — <code>results/state_correlation.csv</code>'
+    +'</div></div>'
+
+    +'<div class="note"><b>The headline: raw agreement is ~30%, but almost all of '
+    +'that is coincidence.</b> The excess over chance is only <b>+'
+    +f(is.excess_over_chance)+'</b> in-sample and <b>+'+f(oos.excess_over_chance)
+    +'</b> out-of-sample, and mean kappa is <b>'+f(is.mean_kappa)+' → '
+    +f(oos.mean_kappa)+'</b>. <b>States are far less shared than they look.</b> '
+    +'And the figure repeats almost exactly across halves, which is the reason to '
+    +'trust it.</div>'
+
+    +'<div class="tw"><table><thead><tr><th>Block</th>'
+    +'<th>Pairs sharing a currency</th><th>Pairs sharing none</th><th>Gap</th>'
+    +'</tr></thead><tbody>'
+    +S.map(r=>'<tr><td>'+r.block+'</td><td><b>'+f(r.share_leg_kappa)+'</b> <span '
+     +'class="count">'+r.n_share_leg+' pairs-of-pairs</span></td><td>'
+     +f(r.no_leg_kappa)+' <span class="count">'+r.n_no_leg+'</span></td><td><b>'
+     +f(r.share_leg_kappa-r.no_leg_kappa)+'</b></td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Yes — states cluster around a shared '
+    +'currency leg.</b> Sharing a leg roughly <b>triples</b> agreement. A pair '
+    +'belongs to two blocks, so these are not a partition of the pairs but of the '
+    +'378 <i>pairs-of-pairs</i>, by whether the two share a leg.</div></div>';
+
+   // ---- the full 28x28 matrix ----
+   const PR=[...new Set(C.map(r=>r.pair_a).concat(C.map(r=>r.pair_b)))].sort();
+   const key=(a,b)=>a<b?a+'|'+b:b+'|'+a;
+   const MAP={is:{},oos:{}};
+   C.forEach(r=>{if(MAP[r.block])MAP[r.block][key(r.pair_a,r.pair_b)]=r.kappa;});
+   const cell=v=>{
+    if(v==null)return 'background:transparent';
+    const a=Math.min(1,Math.abs(v)/0.40).toFixed(2);
+    return 'background:rgba('+(v>=0?'86,166,124':'201,92,92')+','+a+')';};
+   const grid=b=>'<table style="border-collapse:collapse;font-size:9px">'
+    +'<thead><tr><th></th>'+PR.map(p=>'<th style="writing-mode:vertical-rl;'
+     +'text-orientation:mixed;padding:1px;font-weight:500">'+p+'</th>').join('')
+    +'</tr></thead><tbody>'
+    +PR.map(a=>'<tr><td style="padding:1px 4px;white-space:nowrap;font-weight:500">'
+      +a+'</td>'+PR.map(b2=>{
+        if(a===b2)return '<td style="background:var(--dim);width:14px;height:14px"'
+         +' title="'+a+' with itself"></td>';
+        const v=MAP[b][key(a,b2)];
+        return '<td style="width:14px;height:14px;'+cell(v)+'" title="'+a+' / '+b2
+         +': kappa '+(v==null?'—':f(v))+'"></td>';}).join('')+'</tr>').join('')
+    +'</tbody></table>';
+   h+='<div class="tw"><div style="margin-bottom:6px">'
+    +'<button type="button" class="shbtn" data-b="is" style="margin-right:6px">'
+    +'In-sample</button><button type="button" class="shbtn" data-b="oos">'
+    +'Out-of-sample</button></div>'
+    +'<div id="shmat-is">'+grid('is')+'</div>'
+    +'<div id="shmat-oos" hidden>'+grid('oos')+'</div>'
+    +'<div class="count"><b>The full 28&times;28 matrix.</b> Green is agreement '
+    +'above chance, red below; intensity saturates at |kappa| = 0.40. Hover any '
+    +'cell for the exact figure. <b>The visible block structure is currency '
+    +'blocks</b> — and it is largely the rank-7 identity, not co-movement. — '
+    +'<code>results/state_correlation.csv</code></div></div>';
+
+   if(BK.length){
+    const per=[...new Set(BK.map(r=>r.block_period))];
+    const ccys=[...new Set(BK.map(r=>r.block))];
+    h+='<div class="tw"><table><thead><tr><th>Currency block</th>'
+     +per.map(p=>'<th>'+p+'</th>').join('')+'</tr></thead><tbody>'
+     +ccys.map(c=>'<tr><td><b>'+c+'</b></td>'+per.map(p=>{
+       const r=BK.find(x=>x.block===c&&x.block_period===p);
+       return '<td>'+(r?f(r.mean_kappa):'—')+'</td>';}).join('')+'</tr>').join('')
+     +'</tbody></table><div class="count">Mean kappa among the 7 pairs carrying '
+     +'each currency. <b>JPY is the most synchronised block in both halves</b> — '
+     +'the yen pairs move as a group more than any other currency\'s do. '
+     +'<b>EUR and GBP are the least.</b> — <code>results/state_blocks.csv</code>'
+     +'</div></div>';}
+
+   const dist=BR.filter(r=>r.metric==='modal_count distribution');
+   if(dist.length){
+    const mx=Math.max(...dist.map(r=>r.share));
+    h+='<div class="tw"><table><thead><tr><th>Pairs sharing the modal state</th>'
+     +'<th>Days</th><th>Share</th><th></th><th>Usually</th></tr></thead><tbody>'
+     +dist.map(r=>'<tr><td>'+r.modal_count+' of 28</td><td>'+r.days+'</td><td>'
+      +f(r.share,3)+'</td><td style="min-width:120px"><div style="height:9px;'
+      +'background:var(--trend);width:'+(100*r.share/mx).toFixed(1)+'%"></div>'
+      +'</td><td>'+r.modal_state_mode+'</td></tr>').join('')
+     +'</tbody></table><div class="count"><b>Breadth. The floor is 7, not 1</b> — '
+     +'four states over 28 pairs means the biggest group cannot be smaller than '
+     +'ceil(28/4). — <code>results/state_breadth.csv</code></div></div>';}
+
+   const bs=BR.filter(r=>r.metric==='modal_count');
+   if(bs.length){
+    h+='<div class="note"><b>Is FX one market or 28?</b> Overwhelmingly the '
+     +'latter. The modal state is shared by a median of <b>'+f(bs[0].median,0)
+     +' of 28</b> pairs, 20 or more on only <b>'+f(100*bs[0].share_ge_20,1)
+     +'%</b> of days in-sample and <b>'+f(100*bs[1].share_ge_20,1)+'%</b> out-of-'
+     +'sample, and <b>never 24 or more</b> in 6,694 days. The widest day on record '
+     +'reached 23. <b>FX is not one market</b> — but it is not 28 separate ones '
+     +'either.</div>';}
+
+   const cr=BR.filter(r=>r.metric==='widest decile vs crisis calendar'&&r.p_null!=null);
+   if(cr.length){
+    const r=cr[0];
+    h+='<div class="tw"><table><thead><tr><th>Widest decile</th><th>Days</th>'
+     +'<th>In a crisis window</th><th>Base</th><th>Lift</th><th>Null</th>'
+     +'<th>p</th></tr></thead><tbody><tr><td>modal count ≥ '+f(r.threshold,0)
+     +'</td><td>'+r.days+'</td><td>'+f(r.p)+'</td><td>'+f(r.base)+'</td><td><b>×'
+     +f(r.lift,2)+'</b></td><td>×'+f(r.null_mean_lift,2)+' ± '+f(r.null_sd,2)
+     +'</td><td><b>'+f(r.p_null)+'</b></td></tr></tbody></table>'
+     +'<div class="count"><b>Do the widest days coincide with the '+r.events
+     +'-event crisis calendar? No.</b> The lift is ×'+f(r.lift,2)+', which looks '
+     +'like something until it is compared with a circular-shift null of the '
+     +'breadth series: <b>p='+f(r.p_null)+'</b>. Breadth and crisis are not the '
+     +'same phenomenon — <b>the widest days are usually broad <i>trending</i>, not '
+     +'panic</b>.</div></div>';}
+
+   h+='<div class="tw"><table><thead><tr><th>Block</th>'
+    +'<th>N<sub>eff</sub> full sample</th><th>Rolling mean</th><th>Rolling range</th>'
+    +'<th>Eigenvalue check</th></tr></thead><tbody>'
+    +['is','oos'].map(b=>{
+      const r=gs(b),n=NF.filter(x=>x.block===b);
+      if(!n.length)return '';
+      const mn=Math.min(...n.map(x=>x.neff_equicorr)),
+            mx=Math.max(...n.map(x=>x.neff_equicorr)),
+            av=n.reduce((a,x)=>a+x.neff_equicorr,0)/n.length,
+            ae=n.reduce((a,x)=>a+x.neff_eigen,0)/n.length;
+      return '<tr><td>'+b+'</td><td><b>'+f(r.neff_equicorr,2)+'</b> of 28</td><td>'
+       +f(av,2)+'</td><td>'+f(mn,2)+' to '+f(mx,2)+'</td><td>'+f(ae,2)+'</td></tr>';
+     }).join('')
+    +'</tbody></table><div class="count"><b>The routing number.</b> '
+    +'N<sub>eff</sub> = N / (1 + (N−1)·k̄) — 28 if states were independent, 1 if '
+    +'all 28 always agreed. Rolling 252-day windows, step 21. — '
+    +'<code>results/state_neff_rolling.csv</code></div></div>'
+
+    +'<div class="note" style="border-left:3px solid var(--trend)">'
+    +'<b>The number for Layer 3/4: a day of 28 state readings is worth about '
+    +'<span style="font-size:1.15em">13</span> independent observations, not 28.</b> '
+    +'It is stable across halves ('+f(is.neff_equicorr,1)+' → '
+    +f(oos.neff_equicorr,1)+') but it moves a lot through time — the rolling range '
+    +'runs from under 7 to over 26, so <b>on the most synchronised years fewer '
+    +'than a quarter of the pairs are telling you anything new</b>.</div>'
+
+    +'<div class="note"><b>Two constructions, and they disagree — stated rather '
+    +'than picked over.</b> The equicorrelation formula above gives ~13 on the '
+    +'full sample; an eigenvalue participation ratio on the same matrix gives '
+    +'~23. They agree closely on rolling windows (~15 both) and diverge on the '
+    +'full sample because equicorrelation assumes <i>every</i> pairing shares the '
+    +'same kappa, while the real structure is <b>a few strong currency blocks in a '
+    +'sea of near-zero</b>. <b>Use ~13</b>: it is the conservative one, and for '
+    +'counting independent bets the cost of overstating independence is higher '
+    +'than the cost of understating it.</div>';
+
+   if(EX.length){
+    const t=EX.filter(r=>r.block==='is'&&r.end==='top').slice(0,6);
+    h+='<div class="tw"><table><thead><tr><th>Strongest cells (IS)</th>'
+     +'<th>kappa</th><th>Raw</th><th>Chance</th><th>Shared leg</th></tr></thead>'
+     +'<tbody>'+t.map(r=>'<tr><td>'+r.pair_a+' / '+r.pair_b+'</td><td><b>'
+      +f(r.kappa)+'</b></td><td>'+f(r.observed)+'</td><td>'+f(r.expected)
+      +'</td><td>'+r.shared_leg+'</td></tr>').join('')
+     +'</tbody></table><div class="count"><b>Every one of the strongest cells '
+     +'shares a leg</b> — that is the rank-7 identity showing up, not a discovery. '
+     +'But sharing a leg does not <i>guarantee</i> agreement: GBPCAD/USDCAD is '
+     +'among the <b>weakest</b> cells on the holdout at −0.157 despite both '
+     +'carrying CAD. — <code>results/state_pairs_extremes.csv</code></div></div>';}
+
+   h+='<div class="note" style="border-left:3px solid var(--kill)">'
+    +'<b>The caveat that decides how this can be used.</b> The <i>aggregate</i> '
+    +'repeats almost perfectly across halves (mean kappa '+f(is.mean_kappa)+' → '
+    +f(oos.mean_kappa)+'), but <i>individual cells</i> repeat only moderately — '
+    +'Spearman <b>'+f(is.pairwise_is_oos_spearman)+'</b> over 378 pairs-of-pairs. '
+    +'<b>So use the aggregate; do not use a single cell as a lookup.</b> “These '
+    +'two pairs agreed last decade” is not a reliable statement about the next '
+    +'one.</div>';
+   $('#shwrap').innerHTML=h;
+   document.querySelectorAll('.shbtn').forEach(b=>b.onclick=()=>{
+    $('#shmat-is').hidden=(b.dataset.b!=='is');
+    $('#shmat-oos').hidden=(b.dataset.b!=='oos');});
+  }
+
   function buildCharacter(){
    const C=BUN.paircha||[],RK=BUN.pairrank||[];
    if(!C.length){$('#pcwrap').innerHTML='<div class="note">pair_character.csv not in the feed.</div>';return;}
@@ -3590,6 +3799,7 @@ function boot(BUNDLE,root){
   // ---- the four new screens ----
   $('#glwrap').innerHTML=glossHTML();
   buildCharacter();
+  buildShared();
   buildCurrentStates();
   buildExtDrivers();
   buildDriversReframed();
