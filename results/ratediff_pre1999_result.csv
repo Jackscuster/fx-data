@@ -1,0 +1,2 @@
+sample,pairs,pair_list,W,ranging_episodes,agree,base,excess,trending_episodes,trending_excess,null_shifts,null_mean,null_sd,rank_of_real,n_compared,p,rank_bar,verdict
+1990-1998,3,"GBPUSD, USDCHF, GBPCHF",5,39,0.5897435897435898,0.5368421052631579,0.05290148448043186,57,-0.010526315789473717,50,0.0056275303643724605,0.07517621232089679,18,51,0.35294117647058826,3,FAILED

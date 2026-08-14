@@ -1,0 +1,8 @@
+Question 2 -- MOVE before a transition
+======================================
+
+Mean MOVE level and 21-bar change on days that contain at least one
+transition into trending, against days that contain none. Both reads
+are lagged one bar, so they use MOVE through the previous close.
+
+Pooled by day: a day is one observation however many pairs turned.

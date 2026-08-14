@@ -1,0 +1,8 @@
+Question 1 -- MOVE and state occupancy
+======================================
+
+Mean cross-sectional share of the 28 pairs in each state, by MOVE
+tercile, pooled BY DAY. Terciles cut on in-sample only.
+
+spread = high bucket minus low bucket. MOVE is a level, not a
+direction, so this is an occupancy question and not a sign test.

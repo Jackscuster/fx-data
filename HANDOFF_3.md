@@ -2530,6 +2530,73 @@ a `.txt` companion. App gains a **Drivers** tab citing all five files, with the
 plain-English panel stating the most likely misreading — *this does not predict
 price direction; it is tested against regime shape only*.
 
+### 16.5b Pre-1999 confirmation FAILS. MOVE fails too. Both closed.
+
+**PART 1 — the ranging cell, one shot on 1990-1998.**
+
+**It ran on 3 pairs, not 21.** Only USD, GBP and CHF have 2-year yields before
+1999 — CAD starts 2001-02-15, AUD's cache is a 31-row fragment, JPY's will not
+parse, NZD does not exist. **And the three are not independent**: three
+currencies give three pairs and any one is the ratio of the other two, so the
+effective sample is nearer two series than three.
+
+FX *was* fully obtainable — H.10 is mirrored on FRED as the DEX* series back to
+1971 and FRED is reachable, while the Fed's own endpoint returns 403. The rebuild
+was checked against the committed panel over 6,916 shared bars: median relative
+difference **0.00004 / 0.00000 / 0.00004**.
+
+Everything frozen: W=5, one-bar lag, episode scoring imported from `ratediff.py`,
+classifier cut points fitted on 1999-2015 and carried backwards unchanged.
+
+| | episodes | agree | base | excess | null | rank | p |
+|---|---|---|---|---|---|---|---|
+| ranging, 1990-98 | 39 | 0.590 | 0.537 | **+0.0529** | +0.0056 ± **0.0752** | **18 of 51** | 0.353 |
+
+**Verdict rule, fixed before the read** (excess > 0 AND rank ≤ 3): **FAILED. The
+question is closed.**
+
+**Stated both ways, because both are true.** The point estimate did *not* flip —
+**+0.053** here against **+0.046** on the original holdout, same sign, nearly the
+same size. But the null spread is **0.075** against **0.019**, because 39 episodes
+is not 478. This is a **failure to confirm through lack of power, not a
+refutation**. By the rule set in advance that closes it either way, and the
+ranging cell stays unpromoted and is not revisited.
+
+**PART 2 — MOVE.** Overlap 2002-11-12 to 2026-07-31, 5,945 days (3,302 IS, 2,643
+OOS). The FX sample starts 1999-01-04, so **the first ~3.9 years have no MOVE at
+all** and IS is a 13-year window, not 17.
+
+**Pooled by day**, because MOVE is one global series hitting all 28 pairs at once
+— a day is one observation however many pairs move.
+
+| block | state | low MOVE | high MOVE | spread |
+|---|---|---|---|---|
+| is | **trending** | 0.286 | 0.357 | **+0.071** |
+| oos | **trending** | 0.236 | 0.251 | **+0.015** |
+
+Chosen on IS (trending, +0.071); holdout read once: **+0.015**, rank **31 of 46**,
+p=0.674. The 21-bar-change correlation with trending share **flips sign**, +0.143
+IS to −0.039 OOS.
+
+**Question 2 nulled as well**, because its differences were positive in both
+blocks and reporting that untested would repeat the mistake this project keeps
+catching:
+
+| block | statistic | real | null | rank | p |
+|---|---|---|---|---|---|
+| oos | Q2 chg21 difference | +2.09 | −0.16 ± 0.85 | **1 of 51** | **0.020** |
+| oos | Q2 level difference | +2.28 | +0.08 ± 1.21 | 4 of 51 | 0.078 |
+| is | Q2 chg21 difference | +1.51 | −0.10 ± 0.77 | 5 of 51 | 0.098 |
+
+MOVE *is* rising ahead of days when regimes turn. **It should not be read as an
+early-warning signal**: a day when FX regimes turn is a day something happened
+globally, and bond volatility rising on such days is close to a restatement of
+that rather than an independent forecast. Recorded, not promoted.
+
+**Files**: `ratediff_pre1999_{result,null}.csv`, `pre1999_coverage.csv`,
+`move_{coverage,q1,q1_chg,q2,null}.csv` — each with a `.txt` companion. Drivers
+tab carries both with plain-English panels and their "what it is NOT".
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

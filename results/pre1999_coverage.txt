@@ -1,0 +1,24 @@
+Pre-1999 coverage
+=================
+
+The brief assumed 21 pairs over 1990-1998. It is 3, and the
+reason is the yields, not the prices.
+
+FX is obtainable in full: H.10 is mirrored on FRED as the DEX*
+series back to 1971 and FRED is reachable. The Fed download
+endpoint returns 403 from here, which is why the repo copy of
+px28.csv starts 1999-01-04.
+
+2-year yields pre-1999:
+  USD  FRED DGS2, 1976 onward                 AVAILABLE
+  GBP  BoE GLC zip, 1979 onward               AVAILABLE
+  CHF  SNB cache, 1988 onward                 AVAILABLE
+  JPY  MoF cache parses to zero rows          NOT AVAILABLE
+  CAD  Bank of Canada cache starts 2001-02-15 NOT AVAILABLE
+  AUD  RBA current cache is 31 rows           NOT AVAILABLE
+  NZD  no data anywhere in the repo           NOT AVAILABLE
+
+AND THE RUNNABLE PAIRS ARE NOT INDEPENDENT. Three currencies
+give three pairs and any one is the ratio of the other two --
+GBPCHF is GBPUSD divided by USDCHF exactly. The effective
+sample is nearer two independent series than three.

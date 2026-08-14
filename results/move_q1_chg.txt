@@ -1,0 +1,6 @@
+Question 1b -- 21-bar MOVE change against daily state share
+===========================================================
+
+Pearson correlation between the lagged 21-bar change in MOVE and the
+daily cross-sectional share of pairs in each state. One observation
+per day.

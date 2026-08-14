@@ -1,0 +1,23 @@
+Pre-1999 confirmation
+=====================
+
+One-shot confirmation of the ranging cell on data never touched.
+
+FROZEN: W=5, one-bar lag, the episode scoring imported from
+ratediff.py rather than reimplemented, and the classifier cut points
+fitted on 1999-2015 carried backwards unchanged. Nothing was refitted.
+
+THREE PAIRS, NOT 21: GBPUSD, USDCHF, GBPCHF. Only USD, GBP and CHF have 2-year yields
+before 1999. And they are not independent -- three currencies give
+three pairs and any one is the ratio of the other two, so the
+effective sample is nearer two series than three. This is a weaker
+confirmation than the 21-pair original by construction.
+
+FX rebuilt from the FRED mirror of H.10 (the Fed endpoint returns 403
+here), checked against the committed panel over 6,916 shared bars from
+1999 on: median relative difference 0.00004 / 0.00000 / 0.00004.
+
+VERDICT RULE, fixed before the read: ranging excess > 0 AND rank <= 3
+of the null draws, the bar the original cleared on its holdout.
+
+RESULT: FAILED -- the question is closed. excess +0.0529, rank 18 of 51, p=0.353 over 50 shifts.
