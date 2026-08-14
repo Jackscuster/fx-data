@@ -1,0 +1,13 @@
+What is refit, what is fixed, and what was selected once
+========================================================
+
+Refit stability means nothing until it says which numbers move. 394
+numbers are estimated from data and move with the vintage; the window
+lengths, dwell, hysteresis band, equal weights and cell boundaries are
+fixed by construction and move with nothing.
+
+THE CAVEAT, STATED RATHER THAN BURIED: DROP_TESTS and BUMP were chosen
+by in-sample comparison and are held fixed across vintages. This
+measures the stability of the ESTIMATED parameters, not of the
+SELECTION decisions. Re-running those choices at every vintage is a
+larger test and is not claimed here.
