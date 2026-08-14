@@ -511,6 +511,7 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 <div id="drvc"></div>
 <div id="fwdodds"></div>
 <div id="drvde"></div>
+<div id="drvf"></div>
 <div id="drvprog"></div>
 <h3>Direction tests (superseded, kept on file)</h3>
 <div id="extdrv"></div>
@@ -1555,6 +1556,136 @@ function boot(BUNDLE,root){
    $('#fwdodds').innerHTML=h;
   }
 
+  function buildDriverF(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const S=BUN.cotsep||[],U=BUN.cotsub||[],F=BUN.cotfwd||[],CV=BUN.cotcov||[];
+   if(!S.length){$('#drvf').innerHTML='';return;}
+   const per=['2016-19','2020-21','2022-26'];
+   const names=[...new Set(S.map(r=>r.driver))];
+   let h='<h3>Driver 6 &mdash; CFTC positioning (Commitments of Traders)</h3>'
+    +'<div class="note" style="border-left:3px solid var(--chop)">'
+    +'<b>The release lag is the thing that fakes results here.</b> A COT report '
+    +'gives <b>Tuesday</b> positions and is published <b>Friday afternoon</b>, so '
+    +'a Tuesday reading is not usable until the <b>following Monday</b>: report '
+    +'date + 6 calendar days, then the standard one-bar shift on top. '
+    +'<b>Seven calendar days from snapshot to first usable bar.</b> Using the '
+    +'report date instead would grant a five-day head start on a weekly series. '
+    +'A reading is dropped once older than 12 days, so NZD does not get its final '
+    +'2022 report carried forward to today.</div>';
+
+   if(CV.length){
+    const cv=CV.filter(r=>r.reports>0);
+    h+='<div class="tw"><table><thead><tr><th>Currency</th><th>Reports</th>'
+     +'<th>First</th><th>Last</th><th>Daily coverage</th></tr></thead><tbody>'
+     +cv.map(r=>'<tr><td>'+r.currency+'</td><td>'+r.reports+'</td><td>'+r.first
+      +'</td><td>'+r.last+'</td><td>'+f(r.daily_coverage,3)+'</td></tr>').join('')
+     +'</tbody></table><div class="count"><b>Coverage is the binding limit, not '
+     +'frequency.</b> CME FX futures are quoted against USD, so this reaches '
+     +'<b>7 of 28 pairs and no cross at all</b>. <b>NZD stops being reported '
+     +'after 2022-02-01</b> — NZDUSD covers 65% of bars and none of the last four '
+     +'years. — <code>results/cot_coverage.csv</code></div></div>';}
+
+   h+='<div class="note"><b>Signed or absolute — declared before running, because '
+    +'it decides the answer.</b> State labels carry no direction: “trending” '
+    +'covers trending up and trending down. A <i>signed</i> position averaged over '
+    +'trending episodes therefore cancels toward zero <i>by construction</i>, and '
+    +'a null result would say nothing about positioning. So separation is decided '
+    +'on the <b>absolute</b> readings — |net| is crowding, |4-week change| is '
+    +'turnover — and the signed ones are reported beside them so the choice can be '
+    +'checked rather than trusted.</div>';
+
+   const sep=S.filter(r=>r.group&&r.real==null),nul=S.filter(r=>r.real!=null);
+   h+='<div class="tw"><table><thead><tr><th>Reading</th><th>Block</th>'
+    +'<th>Group</th><th>Episodes</th><th>Mean</th><th>Separation vs rest</th>'
+    +'</tr></thead><tbody>'
+    +sep.map(r=>'<tr><td>'+r.driver+(r.primary===true||r.primary==='True'
+      ?' <b>(primary)</b>':'')+'</td><td>'+r.block+'</td><td>'+r.group+'</td><td>'
+      +r.episodes+'</td><td>'+f(r.mean_drv,4)+'</td><td><b>'
+      +(r.sep_vs_rest>0?'+':'')+f(r.sep_vs_rest)+'</b></td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Test 1 — separation.</b> This is the '
+    +'test that decides keep or kill. Episode-based: one state run is one '
+    +'observation. — <code>results/cot_separation.csv</code></div></div>';
+
+   if(U.length){
+    h+='<div class="tw"><table><thead><tr><th>Reading</th><th>Group</th>'
+     +per.map(p=>'<th>'+p+'</th>').join('')+'</tr></thead><tbody>'
+     +names.map(n=>['trending','ranging','crisis'].map(g=>'<tr><td>'+n+'</td><td>'
+       +g+'</td>'+per.map(p=>{
+         const r=U.find(x=>x.driver===n&&x.group===g&&x.period===p);
+         const v=r?r.sep:null;
+         return '<td'+(v!=null&&v<0?' style="color:var(--chop)"':'')+'>'
+          +(v==null?'—':((v>0?'+':'')+f(v)))+'</td>';}).join('')+'</tr>').join(''))
+      .join('')
+     +'</tbody></table><div class="count"><b>Sub-period split, run before any '
+     +'holdout pass was reported.</b> A sign change across these columns is what '
+     +'kills a driver — and it has now killed four. — '
+     +'<code>results/cot_subperiod.csv</code></div></div>';}
+
+   if(nul.length){
+    h+='<div class="tw"><table><thead><tr><th>Reading</th><th>Block</th>'
+     +'<th>Chosen on IS</th><th>Real</th><th>Null</th><th>Rank</th><th>p</th>'
+     +'</tr></thead><tbody>'+nul.map(r=>'<tr><td>'+r.driver+'</td><td>'+r.block
+      +'</td><td>'+r.group+'</td><td><b>'+(r.real>0?'+':'')+f(r.real,4)
+      +'</b></td><td>'+f(r.null_mean,4)+' ± '+f(r.null_sd,4)+'</td><td>'
+      +r.rank_of_real+' of '+r.n_compared+'</td><td>'+f(r.p)+'</td></tr>').join('')
+     +'</tbody></table><div class="count">Circular-shift null of the positioning '
+     +'panel, exact draw count in <code>n_shifts</code>.</div></div>';}
+
+   const fw=F.filter(r=>r.bucket&&r.metric!=='NULL of the declared cell'),
+         fn=F.filter(r=>r.metric==='NULL of the declared cell');
+   if(fw.length){
+    const mets=[...new Set(fw.map(r=>r.metric))];
+    h+='<div class="tw"><table><thead><tr><th>Block</th><th>Metric</th>'
+     +'<th>Base</th><th>Low</th><th>Mid</th><th>High</th><th>Top decile</th>'
+     +'</tr></thead><tbody>'
+     +mets.map(mt=>['is','oos'].map(bl=>{
+       const d=fw.filter(r=>r.metric===mt&&r.block===bl);
+       if(!d.length)return '';
+       const g=b=>{const r=d.find(x=>x.bucket===b);
+         return r?(f(r.p)+' <span class="count">×'+f(r.lift,2)+'</span>'):'—';};
+       return '<tr><td>'+bl+'</td><td>'+mt+'</td><td>'+f(d[0].base)+'</td><td>'
+        +g('low')+'</td><td>'+g('mid')+'</td><td>'+g('high')+'</td><td>'
+        +g('top decile (declared cell)')+'</td></tr>';}).join('')).join('')
+     +'</tbody></table><div class="count"><b>Test 2 — forward odds. Reported, and '
+     +'cannot kill a driver.</b> Panel: one pair-bar with a reading is one '
+     +'observation, over the 7 USD pairs. Terciles cut in-sample and applied '
+     +'unchanged. The acute-crisis window is <b>global</b>, so the 7 pairs share '
+     +'it and those rows are not 7 independent samples. — '
+     +'<code>results/cot_forward.csv</code></div></div>';}
+
+   if(fn.length){
+    h+='<div class="tw"><table><thead><tr><th>Block</th><th>Real lift</th>'
+     +'<th>Null</th><th>Rank</th><th>p</th></tr></thead><tbody>'
+     +fn.map(r=>'<tr><td>'+r.block+'</td><td><b>×'+f(r.real_lift,2)+'</b></td>'
+      +'<td>×'+f(r.null_mean_lift,2)+' ± '+f(r.null_sd,2)+'</td><td>'
+      +r.rank_of_real+' of '+r.n_compared+'</td><td>'+f(r.p_null)+'</td></tr>')
+      .join('')
+     +'</tbody></table><div class="count"><b>The declared special cell, stated '
+     +'before running: the crowded-trade hypothesis.</b> Top decile of |net| '
+     +'against P(acute crisis within 20 bars). It <i>held direction</i> across '
+     +'both halves — ×1.32 in-sample, ×1.21 on the holdout — which is why it was '
+     +'null-tested rather than reported bare. <b>It fails in both.</b> '
+     +'Commodities looked exactly like this (×1.17 in both halves) before failing '
+     +'its null the same way.</div></div>';}
+
+   h+='<div class="note" style="border-left:3px solid var(--chop)">'
+    +'<b>Verdict: DEAD. All four readings flip sign.</b> The sharpest one is also '
+    +'the most instructive failure in the whole programme: |4-week change| '
+    +'separates ranging at <b>+0.246 in-sample (p=0.020)</b> and <b>reverses to '
+    +'−0.193 on the holdout (p=0.078)</b>. It beats its null in both halves '
+    +'<i>with opposite signs</i> — a real magnitude attached to a sign that cannot '
+    +'be relied on, which is worse than noise, because noise does not look '
+    +'significant twice.</div>'
+    +'<div class="note"><b>Why this one mattered.</b> Drivers 1–5 were all prices '
+    +'of other assets. The standing objection was that if predictive value existed '
+    +'anywhere free, it would live in <i>positioning</i> rather than realised '
+    +'prices. Positioning has now been tested directly and it died on the same '
+    +'fault as the rest. <b>The free external universe is fully worked '
+    +'through</b>: one confirmation signal (MOVE), no forecast. Everything left — '
+    +'options risk reversals, dealer flow, order-book depth — is paid.</div>';
+   $('#drvf').innerHTML=h;
+  }
+
   function buildDriverDE(){
    const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
    const SD=BUN.drvsepd||[],SE=BUN.drvsepe||[],FD=BUN.drvfwdd||[],
@@ -1631,7 +1762,7 @@ function boot(BUNDLE,root){
    $('#drvde').innerHTML=h;
 
    if(PG.length){
-    let p='<h3>The five-driver programme, closed</h3>'
+    let p='<h3>The driver programme, closed — the free universe is fully tested</h3>'
      +'<div class="note" style="border-left:3px solid var(--trend)">'
      +'<b>Confirmation is the bar.</b> A driver that reliably reads the current '
      +'regime is a keeper even if it predicts nothing — failing the forward test '
@@ -1645,7 +1776,7 @@ function boot(BUNDLE,root){
       +r.decided_by+'</td><td>'+r.evidence+'</td></tr>').join('')
      +'</tbody></table><div class="count">— '
      +'<code>results/driver_program_summary.csv</code></div></div>'
-     +'<div class="note"><b>One keeper out of five.</b> Bond volatility confirms '
+     +'<div class="note"><b>One keeper out of six.</b> Bond volatility confirms '
      +'a crisis reading that price structure has already made — crisis days carry '
      +'a MOVE level ~0.9&nbsp;sd above everything else, in every sub-period. It is '
      +'a second opinion on the present, worth having precisely because it comes '
@@ -1656,7 +1787,7 @@ function boot(BUNDLE,root){
      +'retired. And it cannot see forward: every forward reading that looked like '
      +'something either flipped sign between halves (equity ×1.21→×0.61, MOVE '
      +'×0.83→×1.66) or failed its null (commodities ×1.17 both halves, p=0.255 / '
-     +'0.235).</div>'
+     +'0.235; COT crowded-trade ×1.32→×1.21, p=0.196 / 0.412).</div>'
      +'<div class="note"><b>Why the failures look alike.</b> Four of five died the '
      +'same death — real in one block or sub-period, gone or reversed in another. '
      +'That is what a driver looks like when it tracks a regime of the world '
@@ -3465,6 +3596,7 @@ function boot(BUNDLE,root){
   buildDriverC();
   buildForwardOdds();
   buildDriverDE();
+  buildDriverF();
   buildChronic();
   buildDrivers2();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));

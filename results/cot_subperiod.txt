@@ -1,0 +1,7 @@
+Driver F -- holdout separation split by sub-period
+==================================================
+
+Run BEFORE any holdout pass was reported. This split has already
+killed three of the five earlier drivers: a result that is real in one
+sub-period and reversed in another is a result about two years, not
+about the market.

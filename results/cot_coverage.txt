@@ -1,0 +1,20 @@
+CFTC COT coverage and the release lag
+=====================================
+
+A COT report gives positions as of TUESDAY close and is published
+the following FRIDAY at 15:30 ET. Each report is mapped here to the
+first FX bar on or after report_date + 6 calendar days -- the
+following Monday -- held until the next report, then shifted one
+further bar like every other signal in this project.
+
+Effective lag from position snapshot to first usable bar: SEVEN
+calendar days. Using the report date directly would look like a
+five-day head start on a weekly series, which is exactly the error
+that manufactures a finding.
+
+CME FX futures are quoted against USD only, so COT reaches 7 of 28
+pairs: EURUSD, GBPUSD, AUDUSD, NZDUSD, USDCAD, USDCHF, USDJPY. Every cross has no positioning data at all.
+
+SIGN: COT reports the FOREIGN contract, so a long JPY future is
+short USDJPY. For USDxxx pairs the net is negated, so a positive
+reading always means speculators are long the pair as quoted here.

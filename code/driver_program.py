@@ -57,6 +57,20 @@ ROWS = [
                   '(p=0.255, p=0.235).',
          files='driver_separation_e.csv; driver_subperiod_e.csv; '
                'driver_forward_e.csv'),
+    dict(driver='6 CFTC positioning (COT)', status='DEAD',
+         good_for='nothing that survives',
+         decided_by='separation -- sign flips on every reading',
+         evidence='All four readings flip. |4-week change| is the sharpest: '
+                  'ranging +0.246 in-sample (p=0.020) reverses to -0.193 on the '
+                  'holdout (p=0.078) -- beats its null in BOTH halves with '
+                  'OPPOSITE signs, which is a real magnitude attached to an '
+                  'unreliable sign. The declared crowded-trade cell (top decile '
+                  '|net| vs P(acute crisis in 20 bars)) held direction, x1.32 '
+                  'in-sample and x1.21 on the holdout, but fails its null in '
+                  'both (p=0.196, p=0.412) -- the same shape as commodities. '
+                  'Reaches 7 of 28 pairs, no crosses; NZD ends 2022-02-01.',
+         files='cot_separation.csv; cot_subperiod.csv; cot_forward.csv; '
+               'cot_coverage.csv'),
     dict(driver='5b NZD commodities (dairy, coal)', status='UNTESTABLE',
          good_for='unknown -- no free data exists',
          decided_by='data availability, before any test',
@@ -67,16 +81,16 @@ ROWS = [
          files='driver_separation_e.txt'),
 ]
 
-CONCLUSION = """THE FIVE-DRIVER PROGRAMME, CLOSED
-=================================
+CONCLUSION = """THE DRIVER PROGRAMME, CLOSED -- THE FREE UNIVERSE IS NOW FULLY TESTED
+==============================================================================
 
-WHAT WAS TESTED. Five external drivers against the regime classifier, each on the
+WHAT WAS TESTED. Six external drivers against the regime classifier, each on the
 same terms: does it read differently across trending, ranging and crisis days,
 now. Lag one bar, in-sample 1999-2015 chooses, holdout 2016-2026 is read once,
 episodes not bars, circular-shift null with 50 draws, and a sub-period split of
 the holdout run BEFORE any pass is reported.
 
-THE RESULT. One keeper out of five.
+THE RESULT. One keeper out of six.
 
   1 rate differential momentum   DEAD        sub-period sign flip
   2 MOVE bond volatility         KEEPER      held sign everywhere
@@ -84,6 +98,7 @@ THE RESULT. One keeper out of five.
   4 yield curve shape            DEAD        sign flip, halves and sub-periods
   5 commodities (oil, gold)      DEAD        sub-period sign flip
   5b NZD commodities             UNTESTABLE  no free data exists
+  6 CFTC positioning (COT)       DEAD        sign flips on every reading
 
 WHAT FREE EXTERNAL DATA CAN DO FOR THIS SYSTEM. One thing: bond volatility
 confirms a crisis reading that price structure has already made. Crisis days
@@ -110,26 +125,42 @@ another. That is what a driver looks like when it tracks a regime of the world
 rather than a property of the market -- 2020-21 dominates almost every one of
 these tables. The sub-period split is what exposed it, and it is now standard.
 
-WHERE PREDICTIVE VALUE WOULD HAVE TO COME FROM. Not from prices of other assets,
-which is what all five of these are. The remaining candidates are all about
-POSITIONING and EXPECTATIONS rather than realised prices:
+POSITIONING WAS THE LAST FREE GAP, AND IT IS NOW CLOSED. Drivers 1-5 were all
+prices of other assets. The standing objection was that predictive value, if it
+existed anywhere free, would live in POSITIONING rather than realised prices.
+CFTC COT tested that directly and it died like the rest -- and it died on the
+same fault, not a new one: every reading reverses between blocks or sub-periods.
 
-  CFTC Commitments of Traders   FREE, weekly, and NOT YET TESTED. Speculative
-                                positioning in FX futures. Weekly frequency is a
-                                real limit against a daily classifier and the
-                                data is US-exchange only, but it is free and it
-                                is the one obvious gap left in the free universe.
-  FX options risk reversals     PAID. The clearest measure of what the market is
-                                paying for protection, which is the closest free
-                                analogue MOVE only approximates.
-  Dealer / bank flow            PAID, and mostly not redistributable.
-  Order book depth              PAID.
+Three things are worth keeping from that run rather than just the verdict.
 
-So the honest position is this: the free external universe has been worked
-through and it yields one confirmation signal and no forecast. Anything further
-requires either the CFTC positioning data -- free, weekly, untested -- or paid
-options data. Layer 1 remains what it always was: a view of the current regime,
-never judged on prediction.
+  The lag is what would have faked it. COT reports Tuesday positions on Friday
+  afternoon, so a Tuesday reading is not usable until the following Monday --
+  seven calendar days, not two. Anyone quoting a positioning result should be
+  asked which date they used.
+
+  Weekly data against a daily classifier costs less than expected, and coverage
+  costs more. The binding limit is not frequency: it is that CME FX futures are
+  quoted against USD, so COT reaches 7 of 28 pairs and NO CROSS AT ALL, and NZD
+  stops being reported after 2022-02-01.
+
+  The one result that looked real is the clearest example of the programme's
+  characteristic failure. |4-week change| separates ranging at +0.246 in-sample,
+  p=0.020, and REVERSES to -0.193 on the holdout at p=0.078. It beats its null
+  in both halves with opposite signs. That is a real magnitude attached to a
+  sign that cannot be relied on, which is worse than noise, because noise does
+  not look significant twice.
+
+WHAT IS LEFT, AND IT IS ALL PAID:
+
+  FX options risk reversals     The clearest measure of what the market pays for
+                                protection -- the thing MOVE only approximates.
+  Dealer / bank flow            Mostly not redistributable.
+  Order book depth              Paid.
+
+So the honest position is this: the free external universe has now been worked
+through end to end, and it yields ONE confirmation signal and NO forecast.
+Anything further requires paid options data. Layer 1 remains what it always was:
+a view of the current regime, never judged on prediction.
 """
 
 
