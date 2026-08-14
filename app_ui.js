@@ -35,7 +35,7 @@ const NAV=`<nav role="tablist">
 </nav>`;
 
 const PSTYLE=`<style>
-.prod{--c-trending:#2e9e6b;--c-ranging:#3b7fc4;--c-tir:#7b8493;--c-neither:#767b88;
+.prod{--c-trending:#2e9e6b;--c-ranging:#3b7fc4;--c-tir:#b8955f;--c-neither:#5a6069;
  max-width:1180px;margin:0 auto;padding:4px 2px 40px}
 .prod h2{font-size:20px;margin:26px 0 4px;font-weight:650;letter-spacing:-.01em}
 .prod h2:first-child{margin-top:6px}
@@ -1003,8 +1003,17 @@ function boot(BUNDLE,root){
   // ---------------- CHART: price action meets regime ----------------
   // One state colour map, used by Today (via CSS classes with the same hexes),
   // Pairs and Chart. Changing a colour here changes it everywhere it is drawn.
+  // THE ONE PALETTE. Today reads it as CSS variables, Pairs and Chart read it
+  // here; the boot test asserts all three agree.
+  // The two lower-confidence states stay visibly MUTED against the saturated
+  // green and blue, but they are separated by HUE AND LIGHTNESS rather than hue
+  // alone -- they were previously #7b8493 and #767b88, two greys nobody could
+  // tell apart on a regime strip. Lightness ladder, so the set also survives
+  // colourblindness: no-label 81, trend-in-range 66, trending 57, ranging 52,
+  // neither 38.
   const PCOL={'trending':'#2e9e6b','ranging':'#3b7fc4',
-              'trend-in-range':'#7b8493','neither':'#767b88'};
+              'trend-in-range':'#b8955f','neither':'#5a6069'};
+  const PNONE='#c8ccd3';        // warm-up bars with no confirmed label yet
   const ASHADE={'weak':0.00,'medium':0.05,'strong':0.11};
   const CHS={pair:'EURUSD',years:1,scores:false};
 
@@ -1082,7 +1091,7 @@ function boot(BUNDLE,root){
     const pts=[];for(let q=k;q<=Math.min(j+1,idx.length-1);q++)
       pts.push(xs(idx[q]).toFixed(1)+','+ys(P.px[idx[q]]).toFixed(1));
     path+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="'
-      +(st?PCOL[st]:'#9aa0ab')+'" stroke-width="1.6" stroke-linejoin="round"/>';
+      +(st?PCOL[st]:PNONE)+'" stroke-width="1.6" stroke-linejoin="round"/>';
     k=j+1;}
 
    // the regime strip
@@ -1092,7 +1101,7 @@ function boot(BUNDLE,root){
     while(j+1<idx.length&&stName(idx[j+1])===st)j++;
     strip+='<rect x="'+xs(idx[k]).toFixed(1)+'" y="'+SY+'" width="'
       +Math.max(0.6,(xs(idx[j])-xs(idx[k]))).toFixed(1)+'" height="'+STRIP
-      +'" fill="'+(st?PCOL[st]:'#c9ccd2')+'" opacity="'+(st?0.85:0.3)+'"/>';
+      +'" fill="'+(st?PCOL[st]:PNONE)+'" opacity="'+(st?0.85:0.55)+'"/>';
     k=j+1;}
 
    // acute crisis ticks
@@ -1163,9 +1172,9 @@ function boot(BUNDLE,root){
     +Object.keys(PCOL).map(k=>'<span class="lg"><i style="background:'+PCOL[k]
       +'"></i>'+k+' <span class="count">'+Math.round(100*(cnt[k]||0)/tot)
       +'%</span></span>').join('')
-    +'<span class="lg"><i style="background:#9aa0ab"></i>no label yet</span>'
+    +'<span class="lg"><i style="background:'+PNONE+'"></i>no label yet</span>'
     +'<span class="lg"><i style="background:#c0553f;opacity:.5"></i>acute crisis '
-    +'<span class="count">'+ncr+' days</span></span></div>'
+    +'<span class="count">'+ncr+(ncr===1?' day':' days')+'</span></span></div>'
     +'<div class="box"><h4>Reading this chart</h4>'
     +'<p><b style="color:'+PCOL.trending+'">Trending</b> is getting somewhere; '
     +'<b style="color:'+PCOL.ranging+'">ranging</b> is going nowhere. '
@@ -1364,8 +1373,9 @@ function boot(BUNDLE,root){
     +'<p>Cutting each score at its own historical midpoint gives four answers. '
     +'<b style="color:#2e9e6b">Trending</b> &mdash; getting somewhere, not '
     +'bouncing. <b style="color:#3b7fc4">Ranging</b> &mdash; bouncing, not '
-    +'getting anywhere. <b style="color:#7b8493">Trend-in-range</b> and '
-    +'<b style="color:#767b88">neither</b> &mdash; both high, or both low.</p>'
+    +'getting anywhere. <b style="color:'+PCOL['trend-in-range']+'">Trend-in-'
+    +'range</b> and <b style="color:'+PCOL.neither+'">neither</b> &mdash; both '
+    +'high, or both low.</p>'
     +'<p>Those last two are shown <b>muted everywhere</b>, deliberately. Testing '
     +'every hand-picked setting in the system showed they are the readings that '
     +'move most when anything is nudged, and “trend-in-range” is usually two '
