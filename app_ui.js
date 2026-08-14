@@ -3,9 +3,14 @@
 (function(){'use strict';
 const $=s=>document.querySelector(s);
 const NAV=`<nav role="tablist">
+<button role="tab" aria-selected="true" data-t="today">Today</button>
+<button role="tab" aria-selected="false" data-t="pairs2">Pairs</button>
+<button role="tab" aria-selected="false" data-t="how">How it works</button>
+<button role="tab" aria-selected="false" data-t="evid">Evidence</button>
+<button type="button" id="advbtn" class="advbtn" aria-pressed="false">Advanced &#9662;</button>
 <button role="tab" aria-selected="false" data-t="px">Explorer</button>
 <button role="tab" aria-selected="false" data-t="ns">States</button>
-<button role="tab" aria-selected="true" data-t="g">Gauntlet</button>
+<button role="tab" aria-selected="false" data-t="g">Gauntlet</button>
 <button role="tab" aria-selected="false" data-t="iv">Survivors</button>
 <button role="tab" aria-selected="false" data-t="s">All signals</button>
 <button role="tab" aria-selected="false" data-t="d">Decay</button>
@@ -27,6 +32,68 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="ar">Archive</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 </nav>`;
+
+const PSTYLE=`<style>
+.prod{--c-trending:#2e9e6b;--c-ranging:#3b7fc4;--c-tir:#7b8493;--c-neither:#767b88;
+ max-width:1180px;margin:0 auto;padding:4px 2px 40px}
+.prod h2{font-size:20px;margin:26px 0 4px;font-weight:650;letter-spacing:-.01em}
+.prod h2:first-child{margin-top:6px}
+.prod .sub{font-size:13px;opacity:.72;margin:0 0 14px;line-height:1.5}
+.prod .hdrbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+ gap:10px;margin:10px 0 18px}
+.prod .hcell{border:1px solid rgba(128,128,128,.22);border-radius:10px;padding:11px 13px}
+.prod .hcell .k{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.6}
+.prod .hcell .v{font-size:21px;font-weight:650;margin-top:3px;line-height:1.2}
+.prod .hcell .d{font-size:12px;opacity:.72;margin-top:4px;line-height:1.45}
+.prod .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(292px,1fr));gap:12px}
+.prod .card{border:1px solid rgba(128,128,128,.22);border-radius:10px;padding:12px 13px;
+ border-left-width:4px}
+.prod .card.s-trending{border-left-color:var(--c-trending)}
+.prod .card.s-ranging{border-left-color:var(--c-ranging)}
+.prod .card.s-trend-in-range{border-left-color:var(--c-tir)}
+.prod .card.s-neither{border-left-color:var(--c-neither)}
+.prod .card.dim{opacity:.82}
+.prod .cardtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.prod .pn{font-weight:650;font-size:15px;letter-spacing:.01em}
+.prod .st{font-size:13px;font-weight:600}
+.prod .st.s-trending{color:var(--c-trending)}
+.prod .st.s-ranging{color:var(--c-ranging)}
+.prod .st.s-trend-in-range{color:var(--c-tir)}
+.prod .st.s-neither{color:var(--c-neither)}
+.prod .pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:9px;
+ border:1px solid rgba(128,128,128,.35);opacity:.85;margin-left:6px}
+.prod .ln{font-size:12.5px;line-height:1.5;margin-top:7px;opacity:.9}
+.prod .ln b{font-weight:620}
+.prod .flag{font-size:12px;margin-top:7px;padding:5px 8px;border-radius:7px;
+ background:rgba(128,128,128,.1)}
+.prod .cite{font-size:11px;opacity:.5;margin-top:9px;font-family:ui-monospace,monospace;
+ word-break:break-word}
+.prod .box{border:1px solid rgba(128,128,128,.22);border-radius:10px;padding:14px 16px;
+ margin:12px 0;line-height:1.6;font-size:13.5px}
+.prod .box.warn{border-left:4px solid #c0553f}
+.prod .box.good{border-left:4px solid #2e9e6b}
+.prod .box h4{margin:0 0 7px;font-size:14px;font-weight:650}
+.prod .box p{margin:8px 0}
+.prod .meta{font-size:12px;line-height:1.55;opacity:.75;margin-top:6px}
+.prod .meta b{opacity:1}
+.prod table.pt{width:100%;border-collapse:collapse;font-size:12.5px}
+.prod table.pt th{text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;
+ letter-spacing:.05em;opacity:.62;padding:7px 8px;border-bottom:1px solid rgba(128,128,128,.25)}
+.prod table.pt td{padding:8px;border-bottom:1px solid rgba(128,128,128,.12);
+ vertical-align:top}
+.prod .bar{height:8px;border-radius:4px;overflow:hidden;display:flex;min-width:90px}
+.prod .bar i{display:block;height:100%}
+.advbtn{margin-left:auto;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;
+ border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit}
+.advbtn[aria-pressed="true"]{background:rgba(128,128,128,.18)}
+@media(max-width:640px){.prod .cards{grid-template-columns:1fr}}
+</style>`;
+const PROD=PSTYLE
++'<section id="today"><div class="prod" id="todaywrap"></div></section>'
++'<section id="pairs2" hidden><div class="prod" id="pairswrap"></div></section>'
++'<section id="how" hidden><div class="prod" id="howwrap"></div></section>'
++'<section id="evid" hidden><div class="prod" id="evidwrap"></div></section>';
+
 const BODY=`<div class="grid">
 <div>
 <div class="panel"><h3>Gates</h3><div id="gates"></div>
@@ -544,7 +611,7 @@ function boot(BUNDLE,root){
   // null metrics, so they are excluded from RENDERING while still being counted. The
   // data file keeps them; the tables just have nothing to draw.
   let D=DALL.filter(d=>d.ok!==false&&d.to!=null);
-  root.innerHTML=NAV+'<section id="g">'+BODY;
+  root.innerHTML=NAV+PROD+'<section id="g">'+BODY;
   const MT=BUN.meta||{};
   // TWO numbers, always both, never one ambiguous figure: everything built, and
   // the subset that could produce quintile statistics. The gap is signals with too
@@ -910,6 +977,302 @@ function boot(BUNDLE,root){
   }
 
   // ================= PAIR CHARACTER =================
+  // ================= THE PRODUCT VIEW =================
+  const PCT=v=>v==null||v===''||!isFinite(v)?'--':Math.round(v*100)+'%';
+  const SLUG=x=>'s-'+String(x||'').replace(/[^a-z-]/g,'');
+  const CAP=x=>String(x||'').charAt(0).toUpperCase()+String(x||'').slice(1);
+
+  function buildToday(){
+   const T=BUN.today||[],H=(BUN.todayhdr||[])[0];
+   const w=$('#todaywrap'); if(!w) return;
+   if(!T.length||!H){w.innerHTML='<div class="box">Today’s data is not in this '
+    +'feed yet. Run <code>python code/today.py</code> and rebuild.</div>';return;}
+   const nice=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString(undefined,
+     {weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch(e){return d;}};
+
+   let h='<h2>Today &mdash; '+nice(H.date)+'</h2>'
+    +'<p class="sub">What kind of market each of the 28 pairs is in <b>right now</b>. '
+    +'This describes the present. It does not forecast, and it does not trade.</p>'
+    +'<div class="hdrbar">'
+    +'<div class="hcell"><div class="k">Breadth</div><div class="v">'
+     +H.dominant_count+' of '+H.pairs+'</div><div class="d">pairs are <b>'
+     +H.dominant_state+'</b> today &mdash; the widest single group. A typical day '
+     +'sits near 11, and the lowest possible is 7, so this is '
+     +(H.dominant_count>=15?'a broad day':'an ordinary, split day')+'.</div></div>'
+    +'<div class="hcell"><div class="k">Outside witness (MOVE)</div><div class="v">'
+     +(H.move_level==null?'--':(+H.move_level).toFixed(1))+' &middot; '+H.move_word
+     +'</div><div class="d">Bond-market volatility, the one outside measure of six '
+     +'tested that survived. It <b>confirms</b> a stressed market; it does not '
+     +'predict one. '+PCT(H.move_pctile_is)+' of historical days sat below '
+     +'today’s level.</div></div>'
+    +'<div class="hcell"><div class="k">Acute crisis</div><div class="v">'
+     +(H.acute_crisis_window===true||H.acute_crisis_window==='True'
+       ?'Flagged':'None')+'</div><div class="d">'
+     +(H.acute_crisis_window===true||H.acute_crisis_window==='True'
+       ?'Today falls inside the 15-day window after a dated news event. The window '
+        +'opens on the event and never before it &mdash; this is a record, not a '
+        +'warning shot.'
+       :'Today is not inside the window after any dated news event.')+'</div></div>'
+    +'<div class="hcell"><div class="k">Moving parts</div><div class="v">'
+     +H.n_changed_5d+' changed</div><div class="d">'+H.n_changed_5d+' pairs changed '
+     +'state or activity in the last 5 trading days, and <b>'+H.n_pending
+     +'</b> are part-way through confirming a switch.</div></div></div>';
+
+   h+='<div class="cards">'+T.map(r=>{
+     const dim=(r.lower_confidence===true||r.lower_confidence==='True');
+     let c='<div class="card '+SLUG(r.state)+(dim?' dim':'')+'">'
+      +'<div class="cardtop"><span class="pn">'+r.pair+'</span>'
+      +'<span class="st '+SLUG(r.state)+'">'+CAP(r.state)
+      +'<span class="pill">'+(r.activity||'--')+'</span></span></div>';
+     if(dim) c+='<div class="ln" style="opacity:.75">This is one of the two '
+      +'lower-confidence readings &mdash; '+(r.state==='neither'
+      ?'neither score is high, so the pair is not doing either thing clearly'
+      :'both scores are high at once, which is usually two measurements '
+       +'overlapping rather than a real third regime')+'.</div>';
+     c+='<div class="ln">'+(r.changed
+       ?('<b>'+(r.changed==='state'?'Flipped to '+r.state:'Activity moved to '
+         +(r.activity||'--'))+' on '+r.change_weekday+'</b>'
+         +(r.changed==='state'&&r.prev_run>0?' after '+r.prev_run+' days '
+           +r.changed_from:'')+'.')
+       :'<b>No change</b> in the last 5 trading days.')+'</div>';
+     if(r.pending_state) c+='<div class="flag">Brewing: <b>'+r.pending_days+' of '
+      +r.dwell_needed+' days toward '+r.pending_state+'</b>. It needs '
+      +r.dwell_needed+' in a row before the label moves.</div>';
+     c+='<div class="ln">Held for <b>'+r.days_in_state+' days</b>. '
+      +'The call is <b>'+r.firmness_word+' '+r.state+'</b> &mdash; '
+      +(r.firmness_word==='barely'
+        ?'the scores sit close to the boundary, so a small move could change it'
+        :'the scores sit well clear of the boundary')+'.</div>';
+     c+='<div class="ln">'+(r.shared_same_state_same_ccy>0
+       ?('Shared with <b>'+r.shared_same_state_same_ccy+' other '
+         +(r.shared_top_currency||'')+'-linked pair'
+         +(r.shared_same_state_same_ccy===1?'':'s')+'</b> today. One '
+         +(r.shared_top_currency||'currency')+' move can produce all of them.')
+       :'No other pair sharing a currency reads the same today.')+'</div>';
+     return c+'</div>';}).join('')+'</div>';
+
+   h+='<div class="box"><h4>How to read this page</h4>'
+    +'<p><b>Regime</b> is what the pair is doing now: <i>trending</i> (going '
+    +'somewhere), <i>ranging</i> (going nowhere), <i>trend-in-range</i> and '
+    +'<i>neither</i> (the two muted, lower-confidence readings). '
+    +'<b>Activity</b> &mdash; strong, medium, weak &mdash; is how much ground the '
+    +'pair is covering, which is a separate question from direction.</p>'
+    +'<p><b>Good for:</b> deciding what kind of tactic suits a pair today, and '
+    +'seeing how many of your ideas are secretly the same bet.</p>'
+    +'<p><b>NOT for:</b> predicting anything. No number on this page says what '
+    +'happens next. Days held is a <b>fact, not a countdown</b> &mdash; a long run '
+    +'was tested and does <i>not</i> make a change more likely. And a switch takes '
+    +'5 days to confirm, so the label is deliberately late rather than jumpy.</p>'
+    +'<div class="cite">results/today_pairs.csv &middot; results/today_header.csv '
+    +'&middot; results/states_g4_twoscore4.csv</div></div>';
+   w.innerHTML=h;
+  }
+
+  function buildPairs2(){
+   const C=BUN.paircha||[],R=BUN.pairrank||[],M=BUN.pairmech||[],
+         RS=BUN.rankstab||[];
+   const w=$('#pairswrap'); if(!w) return;
+   if(!C.length){w.innerHTML='';return;}
+   const rank={},mech={};
+   R.forEach(r=>rank[r.pair]=r.rank); M.forEach(r=>mech[r.pair]=r.mechanism);
+   const rows=C.slice().sort((a,b)=>b.trendiness-a.trendiness);
+   const corr=(RS.find(r=>/rank/i.test(r.statistic))||{}).rank_corr;
+   let h='<h2>Pairs &mdash; what each one is like</h2>'
+    +'<p class="sub">The 28 ranked from <b>most trending</b> to <b>most '
+    +'ranging</b>, measured over 27 years. This is character, not a forecast: it '
+    +'says how a pair usually behaves, not what it will do next.</p>'
+    +'<div class="box good"><b>The ranking is stable.</b> Split the 27 years in '
+    +'half and rank the pairs separately in each: the two orderings agree'
+    +(corr!=null?' at a rank correlation of <b>'+(+corr).toFixed(2)+'</b>':'')
+    +'. Pair character is one of the most durable things measured here &mdash; '
+    +'which is what makes it worth acting on at all.'
+    +'<div class="cite">results/pair_character.csv &middot; '
+    +'results/pair_rank_stability.csv</div></div>'
+    +'<div style="overflow-x:auto"><table class="pt"><thead><tr><th>#</th>'
+    +'<th>Pair</th><th>Time in each state</th><th>Trending</th><th>Ranging</th>'
+    +'<th>Typical run</th></tr></thead><tbody>'
+    +rows.map((r,i)=>{
+      const seg=[['trending','#2e9e6b'],['ranging','#3b7fc4'],
+                 ['trend-in-range','#7b8493'],['neither','#767b88']];
+      const bar='<div class="bar">'+seg.map(([k,c])=>'<i style="background:'+c
+        +';width:'+(100*(r['share_'+k]||0)).toFixed(1)+'%"></i>').join('')+'</div>';
+      const run=r['med_trending'],runr=r['med_ranging'];
+      return '<tr><td>'+(i+1)+'</td><td><b>'+r.pair+'</b></td><td style="min-width:110px">'
+       +bar+'</td><td>'+PCT(r.share_trending)+'</td><td>'+PCT(r.share_ranging)
+       +'</td><td>'+(run?Math.round(run)+'d trending':'--')
+       +(runr?' / '+Math.round(runr)+'d ranging':'')+'</td></tr>'
+       +'<tr><td></td><td colspan="5" class="meta">'+(mech[r.pair]||'')+'</td></tr>';
+     }).join('')+'</tbody></table></div>'
+    +'<div class="box"><h4>How to read this</h4>'
+    +'<p><b>Time in each state</b> is the share of all days that pair spent in '
+    +'each regime. The coloured bar uses the same four colours as the Today page. '
+    +'<b>Typical run</b> is the median unbroken stretch &mdash; how long a call '
+    +'usually lasts once made.</p>'
+    +'<p><b>Good for:</b> knowing which pairs reward patience and which punish it, '
+    +'and setting expectations before you look at today.</p>'
+    +'<p><b>NOT for:</b> picking today’s trade. A pair that trends 30% of the '
+    +'time is not trending today unless the Today page says so. And the '
+    +'<i>why</i> sentences are economics attached to the measurement afterwards '
+    +'&mdash; they were not tested, only the ranking was.</p>'
+    +'<div class="cite">results/pair_character.csv &middot; '
+    +'results/pair_mechanism.csv</div></div>';
+   w.innerHTML=h;
+  }
+
+  function buildHow(){
+   const w=$('#howwrap'); if(!w) return;
+   w.innerHTML='<h2>How it works</h2>'
+    +'<p class="sub">The whole method in plain English. No formulas, no jargon '
+    +'that is not defined in the same sentence.</p>'
+    +'<div class="box warn"><h4>What this is NOT</h4>'
+    +'<p><b>It does not predict.</b> Nothing here estimates what price will do '
+    +'next. Every forward-looking test run against it either failed or reversed '
+    +'out of sample, and those attempts are on the Evidence page rather than '
+    +'quietly dropped.</p>'
+    +'<p><b>It does not trade.</b> There are no entries, exits, position sizes or '
+    +'returns anywhere in this system.</p>'
+    +'<p><b>It describes the present.</b> That is the entire product: a careful, '
+    +'tested answer to “what kind of market is this pair in right now.”</p></div>'
+    +'<div class="box"><h4>Two questions, not one</h4>'
+    +'<p>Most tools put trend and chop at opposite ends of one dial. This asks '
+    +'them <b>separately</b>, because they are separate questions and a pair can '
+    +'score high or low on both. One score measures <b>how much the pair is '
+    +'getting somewhere</b> &mdash; distance covered against ground travelled, '
+    +'and whether each push extends the last. The other measures <b>how much it '
+    +'is bouncing</b> &mdash; how often it turns back from its own edges and '
+    +'returns to the middle.</p>'
+    +'<p>The two only disagree about a third of the time, which is the point: '
+    +'they are genuinely two readings rather than one wearing two hats.</p></div>'
+    +'<div class="box"><h4>Four states</h4>'
+    +'<p>Cutting each score at its own historical midpoint gives four answers. '
+    +'<b style="color:#2e9e6b">Trending</b> &mdash; getting somewhere, not '
+    +'bouncing. <b style="color:#3b7fc4">Ranging</b> &mdash; bouncing, not '
+    +'getting anywhere. <b style="color:#7b8493">Trend-in-range</b> and '
+    +'<b style="color:#767b88">neither</b> &mdash; both high, or both low.</p>'
+    +'<p>Those last two are shown <b>muted everywhere</b>, deliberately. Testing '
+    +'every hand-picked setting in the system showed they are the readings that '
+    +'move most when anything is nudged, and “trend-in-range” is usually two '
+    +'measurements overlapping rather than a real third regime. They are honest '
+    +'answers of “this is unclear”, and the interface says so rather than '
+    +'dressing them up.</p></div>'
+    +'<div class="box"><h4>Activity: the third dimension</h4>'
+    +'<p>Direction is not size. A pair can range quietly or range violently, and '
+    +'those want different handling. <b>Strong, medium, weak</b> is how much '
+    +'ground the pair is covering relative to its own normal &mdash; each pair '
+    +'judged against itself, so a quiet pair is not permanently labelled weak.</p>'
+    +'</div>'
+    +'<div class="box"><h4>Why the label is deliberately late</h4>'
+    +'<p>A new state must hold for <b>5 days in a row</b> before it is adopted. '
+    +'Without that the labels flicker &mdash; median runs of 3 days, which is '
+    +'untradeable at a daily cadence. The cost is that every switch is confirmed '
+    +'about 4 days after it began. That cost was measured, and three faster '
+    +'signals were tested to see if any could bridge the gap. None beat chance. '
+    +'So the delay is accepted and shown to you as “brewing: 3 of 5 days” rather '
+    +'than hidden.</p></div>'
+    +'<div class="box"><h4>Crisis, and being honest about lead time</h4>'
+    +'<p>Crisis days are dated from the <b>news record</b> &mdash; 54 events, each '
+    +'one something announced on that day &mdash; never from the chart. That is '
+    +'the only thing that keeps the check honest, because the detector reads the '
+    +'chart.</p>'
+    +'<p><b>The detector has zero lead time, and this is stated plainly rather '
+    +'than buried.</b> The window opens on the event date and never before it. An '
+    +'earlier version opened five days early and produced a flattering “fires 2.5 '
+    +'days ahead” result that vanished the moment the window was fixed.</p></div>'
+    +'<div class="box"><h4>MOVE: confirmation, not prediction</h4>'
+    +'<p>Six outside measures were tested as second opinions &mdash; interest '
+    +'rate gaps, share-market correlation, the yield curve, commodities, and '
+    +'speculative positioning. <b>Five failed.</b> One survived: <b>MOVE</b>, '
+    +'bond-market volatility, which reads about 0.9 standard deviations higher on '
+    +'crisis days and holds that in every sub-period tested.</p>'
+    +'<p>It is a <b>witness on the present</b>, not a forecast. Every attempt to '
+    +'make it say what happens next either reversed between halves of the data or '
+    +'failed its own randomised control.</p></div>'
+    +'<div class="box"><h4>One more thing worth knowing</h4>'
+    +'<p>The 28 pairs are built from 8 currencies, so they are not 28 independent '
+    +'opinions. A day of 28 readings is worth about <b>13</b> independent ones, '
+    +'and pairs sharing a currency agree about three times as often as pairs that '
+    +'do not. That is why each card tells you who else shares its call.</p></div>'
+    +'<div class="box"><p style="margin:0"><b>The full research record</b> '
+    +'&mdash; every superseded version, every failed idea, every validation table '
+    +'&mdash; sits behind the <b>Advanced</b> button in the top bar. Nothing has '
+    +'been deleted; it is only out of the way.</p></div>';
+  }
+
+  function buildEvidence(){
+   const w=$('#evidwrap'); if(!w) return;
+   const rf=(BUN.rfagr||[]).filter(r=>r.scope==='post-vintage only'&&r.state==='ALL'
+     &&r.vintage!==2015);
+   const lo=rf.length?Math.min.apply(null,rf.map(r=>r.agreement)):null;
+   const hi=rf.length?Math.max.apply(null,rf.map(r=>r.agreement)):null;
+   const pg=BUN.drvprog||[];
+   const keep=pg.filter(r=>r.status==='KEEPER').length,
+         dead=pg.filter(r=>r.status==='DEAD').length,
+         // 'tested' excludes the UNTESTABLE row -- no free data existed for it,
+         // so counting it as a failure would overstate what was actually run
+         tested=keep+dead;
+   w.innerHTML='<h2>Evidence &mdash; why believe any of this</h2>'
+    +'<p class="sub">Four claims, each with the file behind it. Where something '
+    +'failed, it is here too.</p>'
+    +'<div class="box good"><h4>1. It works on data it never saw</h4>'
+    +'<p>Every cut point was set on 1999&ndash;2015 and then applied, unchanged, '
+    +'to 2016&ndash;2026. The measure is <b>separation</b>: whether days the '
+    +'system calls “ranging” actually behave differently from the rest &mdash; '
+    +'more turns, more crossings back and forth, less ground covered per step.</p>'
+    +'<p><b>The chop reading is slightly stronger out of sample than in it</b> '
+    +'(0.151 &rarr; 0.156). That is the opposite of what overfitting looks like. '
+    +'The trend reading roughly halves (0.106 &rarr; 0.053), and that is reported '
+    +'here rather than left out.</p>'
+    +'<div class="cite">results/twoscores_cells.csv &middot; '
+    +'results/final_report.csv</div></div>'
+    +'<div class="box good"><h4>2. Re-estimating it barely changes it</h4>'
+    +'<p>The 394 numbers the system learns from data were re-derived from scratch '
+    +'using only data up to 2009, 2012, 2018, 2021 and 2024, and the whole history '
+    +'rebuilt each time. Roughly <b>'
+    +(lo!=null?Math.round(lo*100)+'&ndash;'+Math.round(hi*100):'94&ndash;96')
+    +'% of daily calls came back identical</b> &mdash; about 19 in 20.</p>'
+    +'<p>Where they differed, the disagreements were <b>short</b> &mdash; typically '
+    +'3 to 4 days, shorter than the 5-day confirmation window &mdash; meaning bars '
+    +'sitting near a boundary rather than the system telling a different story.</p>'
+    +'<div class="cite">results/refit_agreement.csv &middot; '
+    +'results/refit_disagreement.csv</div></div>'
+    +'<div class="box"><h4>3. Every hand-picked setting was tested</h4>'
+    +'<p>Eleven constants were nudged 20&ndash;25% one at a time. The reassuring '
+    +'part: <b>the three settings with no recorded reason behind them turned out '
+    +'to be the three that matter least.</b> The settings that move the machine '
+    +'most all had a reason on file.</p>'
+    +'<p>One did not, and it got a proper decision. The <b>score cut</b> &mdash; '
+    +'the midpoint each score is split at &mdash; is the second most influential '
+    +'setting, and its only justification was “it is the midpoint”. Five '
+    +'alternatives were tested against a rule written down in advance. '
+    +'<b>A challenger genuinely beat the midpoint on the first half of the data '
+    +'&mdash; and then lost on the second half, on both measures.</b> The midpoint '
+    +'stayed, now as a tested decision rather than a habit.</p>'
+    +'<div class="cite">results/knob_ranking.csv &middot; '
+    +'results/scoreq_decision.csv &middot; results/scoreq_regression.csv</div></div>'
+    +'<div class="box warn"><h4>4. What was tried and killed</h4>'
+    +'<p><b>'+(dead||5)+' of '+(tested||6)+' outside data sources failed.</b> '
+    +'Interest-rate gaps, share-market correlation, the yield curve, commodities '
+    +'and speculative positioning were each tested on the same terms. All died the '
+    +'same death: a result that was real in one stretch of years and reversed in '
+    +'another. Only <b>'+(keep||1)+'</b> survived &mdash; bond volatility, and only '
+    +'as confirmation of the present.</p>'
+    +'<p><b>Every attempt to predict failed.</b> Not one forward-looking reading '
+    +'survived. The closest was a positioning measure that raised the odds of '
+    +'trouble by a third in the first half of the data and reversed in the second. '
+    +'The free data universe is now fully worked through, and it yields one '
+    +'confirmation signal and no forecast.</p>'
+    +'<p>This is the most useful page in the product. A system that only shows its '
+    +'wins is a brochure.</p>'
+    +'<div class="cite">results/driver_program_summary.csv &middot; '
+    +'results/cot_separation.csv</div></div>'
+    +'<div class="box"><h4>What would change our mind</h4>'
+    +'<p>If the chop reading stopped separating out of sample, if refitting '
+    +'started disagreeing with itself more than about one call in ten, or if pair '
+    +'character stopped holding between halves of the data &mdash; any one of '
+    +'those would undermine the system, and all three are re-measured on every '
+    +'rebuild.</p></div>';
+  }
+
   function buildShared(){
    const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
    const S=BUN.stcorrs||[],C=BUN.stcorr||[],BK=BUN.stblk||[],
@@ -4150,18 +4513,45 @@ function boot(BUNDLE,root){
     <td>${e.ccy||'—'}</td><td>${e.severity}</td><td>${e.description}</td></tr>`).join('')
     ||'<tr><td colspan="5">none</td></tr>';})();
 
-  const TABS=['px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
+  const TABS=['today','pairs2','how','evid',
+              'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
               'ex','pt','hz','rd','xd','pc','gl','ar','vd'];
-  document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
-   document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
-   TABS.forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});
+  // The default view is the product: four tabs. Everything else -- the
+  // sensitivity work, the driver detail, the shared-states matrix, the
+  // validation tables and the whole archive of superseded generations -- is
+  // HIDDEN, not removed. Every feed still loads and every panel still builds;
+  // the Advanced button only toggles which nav buttons are reachable.
+  const DEFAULT_TABS=['today','pairs2','how','evid'];
+  let ADV=false;                       // deliberately NOT persisted
+  const show=t=>{
+   document.querySelectorAll('nav button[data-t]').forEach(
+    x=>x.setAttribute('aria-selected',x.dataset.t===t));
+   TABS.forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==t);});
    // the regime feed is ~9 MB, so it is fetched only when that tab is first opened
-   if(b.dataset.t==='rd'&&!REG&&!$('#rdpair'))initRegime();});
+   if(t==='rd'&&!REG&&!$('#rdpair'))initRegime();};
+  const applyAdv=()=>{
+   document.querySelectorAll('nav button[data-t]').forEach(b=>{
+    b.style.display=(ADV||DEFAULT_TABS.indexOf(b.dataset.t)>=0)?'':'none';});
+   const ab=$('#advbtn');
+   if(ab){ab.setAttribute('aria-pressed',ADV?'true':'false');
+    ab.innerHTML=ADV?'Advanced \u25B4':'Advanced \u25BE';}
+   const cur=document.querySelector('nav button[aria-selected="true"]');
+   if(!ADV&&cur&&DEFAULT_TABS.indexOf(cur.dataset.t)<0)show('today');};
+  document.querySelectorAll('nav button[data-t]').forEach(
+   b=>b.onclick=()=>show(b.dataset.t));
+  const _ab=$('#advbtn');
+  if(_ab)_ab.onclick=()=>{ADV=!ADV;applyAdv();};
+  applyAdv();
+  show('today');
   drawG();drawA();buildScatter();buildFam();buildNew();
   // ---- the four new screens ----
   $('#glwrap').innerHTML=glossHTML();
   buildCharacter();
   buildShared();
+  buildToday();
+  buildPairs2();
+  buildHow();
+  buildEvidence();
   buildCurrentStates();
   buildRefit();
   buildExtDrivers();

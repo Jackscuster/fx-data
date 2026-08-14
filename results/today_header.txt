@@ -1,0 +1,15 @@
+Today -- the market-wide header
+===============================
+
+Breadth is how many of the 28 pairs share the dominant state. The floor
+is 7, not 1: four states over 28 pairs means the largest group cannot
+be smaller than ceil(28/4). A median day sits near 11.
+
+MOVE is the bond-volatility index, the ONE external driver of six that
+survived testing. It is a witness on the present, not a forecast: it
+reads about 0.9 sd higher on crisis days in every sub-period, and every
+attempt to make it predict failed.
+
+acute_crisis_window is whether today falls inside a forward-only window
+from a news-dated event in the 54-event calendar. The window opens ON
+the event date and never before it.

@@ -80,6 +80,8 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('refit.py')          # REFIT STABILITY: re-estimate at 6 vintages, compare
     run('windowsens.py')     # WINDOW SENSITIVITY: 90/120 vs the locked 106
     run('scoreq.py')         # score_q: the declared decision behind the median
+    run('today.py')          # THE PRODUCT VIEW's data: one row per pair, today
+    run('mechanism.py')      # one composed why-sentence per pair
     run('knobs.py')          # KNOB SENSITIVITY: every hand-picked constant
     run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery
