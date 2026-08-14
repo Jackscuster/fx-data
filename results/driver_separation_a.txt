@@ -1,0 +1,12 @@
+Driver A -- does the SIZE of the rate-gap move separate the states?
+===================================================================
+
+Driver is |differential - its value 21 bars ago|, lagged one bar. SIZE,
+not sign: the question is whether the gap is moving hard.
+
+Episode-based: one state run is one observation. An episode counts as
+crisis if any of its bars falls in a forward-only window from an event
+date to +15 bars (54 events in events.py).
+
+sep_vs_rest is the group mean minus every other group, in sd units of
+the driver. Null rows carry the exact shift count.

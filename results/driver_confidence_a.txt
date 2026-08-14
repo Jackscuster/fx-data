@@ -1,0 +1,13 @@
+Test 2 -- does agreement add confidence?
+========================================
+
+Driver A: trending episodes split at the in-sample median driver size.
+"Agrees" means the rate gap was moving hard while the state was
+trending. The question is whether the state CALL is better there --
+longer runs -- not whether price did anything.
+
+Driver B: daily flip rate, the share of the 28 pairs changing state
+that day, on high-MOVE against low-MOVE days. Pooled by day.
+
+This is a confidence input for sizing later. It is NOT a new state and
+nothing here changes a label.

@@ -1,0 +1,13 @@
+Driver B -- does MOVE separate the day types?
+=============================================
+
+POOLED BY DAY. MOVE is one global series, so a day is one observation
+however many of the 28 pairs sit in a given state. Pooling by pair
+would let one world event count 28 times.
+
+Day types: crisis (forward-only window, event date to +15 bars), then
+among the rest, trend-leaning if the trending share exceeds the ranging
+share and range-leaning otherwise.
+
+sep_level and sep_chg are the group mean minus every other day, in sd
+units of that block.

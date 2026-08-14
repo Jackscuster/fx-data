@@ -1,0 +1,9 @@
+driver,block,subset,episodes,median_run,mean_run,daily_flip_rate
+A,is,driver agrees (gap moving hard),409,26.0,39.665036674816626,
+A,is,driver disagrees (gap quiet),310,20.0,32.354838709677416,
+A,oos,driver agrees (gap moving hard),201,19.0,30.09452736318408,
+A,oos,driver disagrees (gap quiet),271,18.0,28.15129151291513,
+B,is,MOVE low,1101,,,0.03425457376411054
+B,is,MOVE high,1100,,,0.03321428571428571
+B,oos,MOVE low,1453,,,0.03431324353554222
+B,oos,MOVE high,670,,,0.03715351812366737
