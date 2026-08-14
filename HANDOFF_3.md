@@ -2471,6 +2471,65 @@ EURUSD peak **1.6010** and USDCHF low **0.7296** both hold; eight app feeds matc
 their source files row for row with an end-to-end spot check; headless boot
 completes and the new panel cites five filenames. Zero deletions.
 
+### 16.5a External driver #1: rate differential MOMENTUM. It gives nothing.
+
+`ratediff.py`. The **level** was tested before and gave nothing; this tests the
+**change**. Separate output — it does not feed the shape or activity scores.
+
+**THREE DATA FACTS, none of which were in the brief:**
+
+1. `rates2y.csv` starts **1998-06-01, not 1990**. Still covers IS from 1999, so
+   nothing is lost.
+2. **NZD has no 2-year yield data at all** — the column exists and is entirely
+   empty. Seven pairs are not constructible (EURNZD, GBPNZD, AUDNZD, NZDUSD,
+   NZDCAD, NZDCHF, NZDJPY). **The test runs on 21 pairs, not 28.**
+3. CAD starts 2001-01-02 and CHF ends 2025-07-31, so those pairs lose part of
+   each block. Per-pair coverage is in `ratediff_momentum_coverage.csv`.
+
+**QUESTION 1 — present-tense association**, episode-based, three declared windows:
+
+| W | block | state | episodes | agree | base | excess |
+|---|---|---|---|---|---|---|
+| 5 | is | **trending** | 721 | 0.630 | 0.616 | **+0.014** |
+| 5 | is | ranging | 698 | 0.648 | 0.616 | +0.032 |
+| 5 | oos | **trending** | 472 | 0.576 | 0.601 | **−0.024** |
+| 5 | oos | ranging | 478 | 0.646 | 0.601 | +0.046 |
+| 21 | oos | trending | 472 | 0.542 | 0.565 | −0.022 |
+| 63 | oos | trending | 472 | 0.508 | 0.546 | −0.038 |
+
+**W=5 chosen on IS** (excess +0.014). **Holdout, read once: −0.024.** The sign
+flips. Trending excess is negative on the holdout at *every* window. Per pair,
+9 of 21 positive, median excess −0.027.
+
+**QUESTION 2 — lead into trending.** IS excess **−0.023**, OOS **+0.026**. The
+sign flips between blocks on 708 and 468 transitions. That is noise.
+
+**NULL — 50 circular shifts**, offsets ≥1,000 bars:
+
+| block | statistic | real | null | rank | p |
+|---|---|---|---|---|---|
+| is | trending | +0.0141 | +0.0061 ± 0.0184 | 18 of 51 | 0.353 |
+| oos | **trending** | **−0.0242** | +0.0015 ± 0.0222 | **45 of 51** | 0.882 |
+| is | ranging | +0.0320 | −0.0030 ± 0.0159 | 3 of 51 | 0.059 |
+| oos | ranging | +0.0459 | +0.0045 ± 0.0194 | **2 of 51** | 0.039 |
+
+**The answer to the question asked is no.** Trending ranks 45th of 51 on the
+holdout — worse than most shifted alignments.
+
+**One cell survives and it is not the one asked about.** Ranging clears its null
+on the holdout (rank 2 of 51, p=0.039) and nearly does on IS. I nulled it only
+because it showed a positive excess in all six cells and reporting an untested
+pattern would repeat a mistake this project keeps catching. **It should not be
+promoted**: it was not the hypothesis, one surviving cell in four tested is about
+what chance delivers at p<0.05, and there is no mechanism on offer for why a
+yield-gap change would track price direction during a *range* and not a trend.
+It is recorded, not claimed.
+
+**Files**: `results/ratediff_momentum_{coverage,q1,pairs,q2,null}.csv`, each with
+a `.txt` companion. App gains a **Drivers** tab citing all five files, with the
+plain-English panel stating the most likely misreading — *this does not predict
+price direction; it is tested against regime shape only*.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

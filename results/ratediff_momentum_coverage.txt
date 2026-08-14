@@ -1,0 +1,6 @@
+Rate differential coverage, per pair
+====================================
+
+Share of price bars with a differential available after a 10-bar forward fill, and the first and last date each pair has one.
+
+NZD has NO 2-year yield data at all, so its seven pairs are absent entirely. CAD starts 2001-01-02 and CHF ends 2025-07-31.

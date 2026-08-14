@@ -1,0 +1,6 @@
+Question 1 per pair, at the IS-chosen window
+============================================
+
+Trending-episode agreement against that pair's own all-state base.
+Pairs with fewer than 3 trending episodes in a block are omitted.
+NZD pairs are absent: no 2-year yield data exists for NZD.

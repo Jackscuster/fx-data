@@ -21,6 +21,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="pt">Pairs</button>
 <button role="tab" aria-selected="false" data-t="hz">Horizon</button>
 <button role="tab" aria-selected="false" data-t="rd">Regime</button>
+<button role="tab" aria-selected="false" data-t="xd">Drivers</button>
 <button role="tab" aria-selected="false" data-t="pc">Character</button>
 <button role="tab" aria-selected="false" data-t="gl">Explain</button>
 <button role="tab" aria-selected="false" data-t="ar">Archive</button>
@@ -499,6 +500,12 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 
 <section id="ar" hidden>
 <div id="arwrap"></div>
+</section>
+
+
+<section id="xd" hidden>
+<h3>External drivers</h3>
+<div id="extdrv"></div>
 </section>
 `;
 // The feed is split in two: app_data.json (small, everything except signals) and
@@ -1043,6 +1050,104 @@ function boot(BUNDLE,root){
      +'(0.0337).</div></div>';
    }
    $('#curstates').innerHTML=h;
+  }
+
+  // ================= EXTERNAL DRIVERS =================
+  function buildExtDrivers(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const Q1=BUN.rdq1||[],Q2=BUN.rdq2||[],NL=BUN.rdnull||[],PR=BUN.rdpairs||[];
+   if(!Q1.length){$('#extdrv').innerHTML='<div class="note">ratediff feeds not in the bundle.</div>';return;}
+   const W=NL.length?NL[0].W:5;
+   let h='<div class="note"><b>Rate differential momentum against regime shape.</b> '
+    +'The <i>level</i> of the 2-year yield differential was tested before and gave '
+    +'nothing. This tests the <b>change</b>. It is a <b>separate output</b> — it does '
+    +'not feed the shape or activity scores, and it never has.</div>'
+    +'<div class="note" style="border-left:3px solid var(--chop)"><b>Three data facts '
+    +'that limit what this covers.</b> <code>rates2y.csv</code> starts 1998-06-01, not '
+    +'1990. <b>NZD has no 2-year yield data at all</b>, so seven pairs are absent and '
+    +'the test runs on <b>21 pairs, not 28</b>. CAD starts 2001 and CHF ends July 2025, '
+    +'so those pairs lose part of each block. Per-pair coverage is in '
+    +'<code>results/ratediff_momentum_coverage.csv</code>.</div>';
+
+   h+='<div class="tw"><table><thead><tr><th>Window</th><th>Block</th><th>State</th>'
+    +'<th>Episodes</th><th>Agreement</th><th>Base (all states)</th><th>Excess</th>'
+    +'</tr></thead><tbody>'
+    +Q1.filter(r=>r.state==='trending'||r.state==='ranging')
+      .map(r=>'<tr><td>'+r.W+'</td><td>'+r.block+'</td><td>'+r.state+'</td><td>'
+       +r.episodes+'</td><td>'+f(r.agree)+'</td><td>'+f(r.base_all_states)
+       +'</td><td><b style="color:'+(r.excess>0?'var(--trend)':'var(--chop)')+'">'
+       +(r.excess>0?'+':'')+f(r.excess)+'</b></td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Question 1 — present-tense association.</b> '
+    +'Episode-based: one state run is one observation, so a 40-bar episode contributes '
+    +'a single agree/disagree, not forty. — <code>results/ratediff_momentum_q1.csv</code>'
+    +'</div></div>';
+
+   h+='<div class="tw"><table><thead><tr><th>Block</th><th>Kind</th><th>n</th>'
+    +'<th>Agreement</th><th>Excess over control</th></tr></thead><tbody>'
+    +Q2.map(r=>'<tr><td>'+r.block+'</td><td>'+r.kind+'</td><td>'+r.n+'</td><td>'
+     +f(r.agree)+'</td><td>'+(r.excess==null||r.excess===''?'—':
+       ((r.excess>0?'+':'')+f(r.excess)))+'</td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Question 2 — lead into trending.</b> '
+    +'Momentum read at the bar <i>before</i> the state changes; since momentum is '
+    +'already lagged one bar that value uses yields through t&minus;2. The control '
+    +'draws non-transition bars with the same forward horizon, three per transition. '
+    +'— <code>results/ratediff_momentum_q2.csv</code></div></div>';
+
+   h+='<div class="tw"><table><thead><tr><th>Block</th><th>Statistic</th>'
+    +'<th>Real</th><th>Null mean</th><th>Null sd</th><th>Shifts</th>'
+    +'<th>Rank of real</th><th>p</th></tr></thead><tbody>'
+    +NL.map(r=>'<tr><td>'+r.block+'</td><td>'+r.statistic+'</td><td><b>'
+     +(r.real>0?'+':'')+f(r.real,4)+'</b></td><td>'+(r.null_mean>0?'+':'')
+     +f(r.null_mean,4)+'</td><td>'+f(r.null_sd,4)+'</td><td>'+r.n_shifts
+     +'</td><td>'+r.rank_of_real+' of '+(r.n_shifts+1)+'</td><td>'+f(r.p)
+     +'</td></tr>').join('')
+    +'</tbody></table><div class="count"><b>Null — circular shift of the yield panel '
+    +'against price</b>, offsets of at least 1,000 bars. Both series keep their own '
+    +'behaviour; only the alignment between them breaks. <b>'+(NL.length?NL[0].n_shifts:0)
+    +' shifts</b>, the exact count run. — <code>results/ratediff_momentum_null.csv</code>'
+    +'</div></div>';
+
+   const op=PR.filter(r=>r.block==='oos');
+   if(op.length) h+='<div class="tw"><table><thead><tr><th>Pair</th>'
+    +'<th>Trending episodes</th><th>Agreement</th><th>Base</th><th>Excess</th>'
+    +'</tr></thead><tbody>'+op.slice().sort((a,b)=>b.excess-a.excess)
+     .map(r=>'<tr><td>'+r.pair+'</td><td>'+r.episodes+'</td><td>'+f(r.agree)
+      +'</td><td>'+f(r.base)+'</td><td>'+(r.excess>0?'+':'')+f(r.excess)
+      +'</td></tr>').join('')+'</tbody></table><div class="count">Per pair, holdout, '
+    +'at the IS-chosen window W='+W+'. — <code>results/ratediff_momentum_pairs.csv</code>'
+    +'</div></div>';
+
+   h+='<details class="panel" style="margin-top:14px" open>'
+    +'<summary style="cursor:pointer;font-weight:600">Rate differential momentum '
+    +'<span class="count">plain English</span></summary>'
+    +'<div style="margin-top:10px;font-size:13px;line-height:1.65">'
+    +'<p><b>What it is.</b> For each pair, the base currency&rsquo;s 2-year government '
+    +'yield minus the quote currency&rsquo;s, and then how much that gap has '
+    +'<i>changed</i> over the last W days. Not the gap itself &mdash; the gap was '
+    +'tested before and gave nothing.</p>'
+    +'<p><b>How it is calculated.</b> differential = base 2y &minus; quote 2y, '
+    +'forward-filled at most 10 bars. momentum = differential &minus; its value W bars '
+    +'ago, then lagged one bar. Three windows only &mdash; 5, 21 and 63 days, chosen '
+    +'as a week, one median state run and a quarter. No sweep: the menu was fixed '
+    +'before the test ran, the winner picked on 1999&ndash;2015 and the holdout read '
+    +'once.</p>'
+    +'<p><b>How to read it.</b> During each trending episode, does the sign of the '
+    +'differential momentum match the direction price actually moved? Compare that '
+    +'agreement rate with the same rate over episodes of <i>every</i> state. The '
+    +'baseline is not 50% &mdash; price and yields both drift, so agreement runs above '
+    +'a half by default. Only the <b>excess</b> column means anything.</p>'
+    +'<p><b>What it is good for.</b> Ruling the idea in or out cheaply, and doing it '
+    +'on episodes rather than bars so a long trend cannot count forty times.</p>'
+    +'<p style="color:var(--chop)"><b>What it is NOT.</b> <b>This does not predict '
+    +'price direction.</b> It is tested against <i>regime shape only</i> &mdash; '
+    +'whether momentum agrees with the move that already happened during an episode, '
+    +'and whether it was already leaning the right way before a state changed. Nothing '
+    +'here is a directional forecast, nothing here is sized, and no money metric '
+    +'appears anywhere in it. The second most likely misreading is treating the '
+    +'ranging row as a finding: it is the one cell that clears its null on the '
+    +'holdout, it was <i>not</i> the question asked, and a single surviving cell out '
+    +'of four tested is roughly what chance delivers.</p></div></details>';
+   $('#extdrv').innerHTML=h;
   }
 
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
@@ -2702,7 +2807,7 @@ function boot(BUNDLE,root){
     ||'<tr><td colspan="5">none</td></tr>';})();
 
   const TABS=['px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
-              'ex','pt','hz','rd','pc','gl','ar','vd'];
+              'ex','pt','hz','rd','xd','pc','gl','ar','vd'];
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
    document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
    TABS.forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==b.dataset.t);});
@@ -2713,6 +2818,7 @@ function boot(BUNDLE,root){
   $('#glwrap').innerHTML=glossHTML();
   buildCharacter();
   buildCurrentStates();
+  buildExtDrivers();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
   (function(){
    const names={nb:'9-Box',mt:'Timeframes',ld:'Detectors',st:'Strategies'};
