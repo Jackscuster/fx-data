@@ -1295,6 +1295,62 @@ function boot(BUNDLE,root){
      +'move is 0.006. That figure is in the file and is meaningless; the sd-unit '
      +'row is the one to read.</div>';}
 
+   const WS=BUN.wsens||[];
+   if(WS.length){
+    const wins=[...new Set(WS.map(r=>r.window))].sort((a,b)=>a-b);
+    const all=w=>WS.find(r=>r.window===w&&r.state==='ALL')||{};
+    h+='<h3 style="margin-top:26px">Window sensitivity &mdash; the companion check</h3>'
+     +'<div class="note" style="border-left:3px solid var(--dim)">'
+     +'<b>Refit asked whether re-estimating the fitted numbers changes the '
+     +'calls. This asks about the one big number that is <i>not</i> fitted:</b> '
+     +'the lookback, fixed by construction at <b>106 bars</b>. Does it sit on a '
+     +'cliff or a plateau?<br><br>'
+     +'<b>This is not a re-tune.</b> The shipped window stays at 106. Nothing is '
+     +'selected, no window is compared on separation or any quality measure, and '
+     +'none is proposed. 90 and 120 were declared before running, chosen only as '
+     +'“near”, and the measure is the <b>same per-day agreement</b> the refit '
+     +'test uses so the two read against each other.</div>'
+     +'<div class="tw"><table><thead><tr><th>Lookback</th><th>Agreement</th>'
+     +'<th>Chance</th><th>kappa</th>'
+     +CE.map(s2=>'<th>'+s2+'</th>').join('')+'</tr></thead><tbody>'
+     +wins.map(w=>{const a=all(w),ctl=(w===106);
+       return '<tr'+(ctl?' style="opacity:.75"':'')+'><td>'+w+' bars'+(ctl?
+        ' <span class="count">shipped / control</span>':'')+'</td><td><b>'
+        +f(a.agreement,4)+'</b></td><td>'+f(a.expected,4)+'</td><td>'+f(a.kappa)
+        +'</td>'+CE.map(s2=>{const r=WS.find(x=>x.window===w&&x.state===s2);
+          const q=r?r.agreement:null;
+          return '<td'+(q!=null&&q<0.8?' style="color:var(--chop)"':'')+'>'
+           +(q==null?'—':f(q))+'</td>';}).join('')+'</tr>';}).join('')
+     +'</tbody></table><div class="count">Rebuilding at 106 reproduces the '
+     +'shipped states exactly (1.0000, asserted in the run). The lookback moves '
+     +'<code>disp</code>, <code>tests</code>, <code>inside</code> and '
+     +'<code>revert</code>; it does not touch <code>fails</code>, '
+     +'<code>seq</code>, the swing width, the activity axis, the dwell or any '
+     +'cut rule. — <code>results/window_sensitivity.csv</code></div></div>'
+     +'<div class="note" style="border-left:3px solid var(--kill)">'
+     +'<b>The result, and it is not the comfortable one.</b> '
+     +f(all(90).agreement,3)+' at 90 bars and '+f(all(120).agreement,3)+' at 120, '
+     +'against <b>0.939&ndash;0.964</b> for refit. Moving the lookback by 15% '
+     +'changes roughly <b>one call in six</b>; re-estimating every fitted number '
+     +'from a fit window seven years shorter changes <b>one in twenty</b>. '
+     +'<b>The window is a bigger lever than the fitting.</b><br><br>'
+     +'The disagreements are a different <i>kind</i>, too. Under refit the median '
+     +'run was 3&ndash;4 bars — <b>below</b> the 5-bar dwell — and 3&ndash;6% of '
+     +'episodes were fully relabelled: boundary noise. Here the median run is '
+     +'<b>7 bars, above the dwell</b>, and <b>15&ndash;16% of episodes are fully '
+     +'relabelled</b>. Changing the window does not jitter the edges; it tells a '
+     +'different story about whole stretches of market.<br><br>'
+     +'<b>It is still not a cliff</b> — kappa 0.74 and 0.77 is substantial, and '
+     +'120 sits closer to the shipped read than 90, a monotone drift rather than '
+     +'a discontinuity. What it means: the lookback is a <b>real choice with real '
+     +'consequences</b>, not a free parameter. That argues for leaving it locked '
+     +'and documented, and against reading any single state call as though the '
+     +'window were incidental to it.</div>'
+     +'<div class="note"><b>The same cells are fragile as in the refit test.</b> '
+     +'trending and ranging hold ~0.85 at both windows; <b>trend-in-range and '
+     +'neither fall to 0.73</b> at 90 bars. The overlap cell and the residual '
+     +'cell inherit the wobble of both cuts.</div>';}
+
    h+='<div class="note" style="border-left:3px solid var(--kill)">'
     +'<b>What this does NOT establish.</b> <code>DROP_TESTS</code> and '
     +'<code>BUMP = 0.75</code> were chosen by in-sample comparison and are held '
@@ -1313,9 +1369,20 @@ function boot(BUNDLE,root){
          CB=BUN.charblocks||[],RS=BUN.rankstab||[];
    const row=k=>FR.find(r=>r.item===k)||{};
    let h='<div class="note"><b>The current classifier &mdash; generation 4.</b> '
-    +'Two independent scores, four shape states, a 106-bar lookback, a 5-bar '
+    +'Two independent scores, four shape states, a <b>106</b>-bar lookback, a 5-bar '
     +'confirmation dwell. Every number on this screen traces to a committed file; '
-    +'the file is named under each table.</div>';
+    +'the file is named under each table.</div>'
+    +'<div class="note"><b>On the lookback constant, since two numbers are in '
+    +'circulation.</b> The shipped value is <b>106</b> — <code>twoscores.py:55</code>, '
+    +'<code>W = 106</code>, matched by <code>RIBBON = ((6,35),(19,106),(44,247))</code>. '
+    +'<b>105 is not wrong, it is the same quantity on a different window.</b> The '
+    +'settable parameter is the integer swing width <b>N=19</b>; the lookback is a '
+    +'<i>measured</i> consequence of it — the pooled median distance back to the '
+    +'previous confirmed swing — which is <b>106.0 bars measured in-sample</b> and '
+    +'<b>105.0 measured on the full sample</b>. 105 was also the nominal figure the '
+    +'sweep pointed at, so the decision was phrased in it. <code>TWO_SCORES.md</code> '
+    +'still says 105 and now carries a correction note; the handoff and this app say '
+    +'106 and are correct.</div>';
 
    // coverage + run length + diagonal
    if(RL.length){
