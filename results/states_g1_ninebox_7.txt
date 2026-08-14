@@ -1,0 +1,8 @@
+states_g1_ninebox_7.csv
+============================================================
+
+Generation 1, fast ribbon leg. Nine-box at a 7-bar window.
+
+REGENERATED from committed code by code/regenerate.py -- not restored from a blob.
+Shape: 6916 dates x 28 pairs. Already lagged one bar.
+States: medium chop; medium transitional; medium trend; strong chop; strong transitional; strong trend; weak chop; weak transitional; weak trend

@@ -1,0 +1,8 @@
+states_x_dwell13.csv
+============================================================
+
+Generation 3b at a 13-bar dwell -- past the point where states collapse.
+
+REGENERATED from committed code by code/regenerate.py -- not restored from a blob.
+Shape: 6916 dates x 28 pairs. Already lagged one bar.
+States: drifting; range; trending

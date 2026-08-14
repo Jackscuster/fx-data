@@ -2356,6 +2356,57 @@ contains and what superseded it. It is a separate file rather than a comment
 inside the CSVs deliberately: `bundle.py` reads several of them straight into the
 app feed, and a `#` header line would become a data row and break the app.
 
+### 16.4y Everything rebuilds. And a double dwell found by trying.
+
+**16.4x WAS WRONG about generation 2**, and the correction is the point. I said it
+was "not reproducible from current code". What actually changed was the *pipeline
+path* — `combined.layers()` stopped calling `structure.five_state` — but the
+function is untouched on `main`. Calling it directly rebuilds g2 exactly. **A
+rewired caller is not a deleted function.**
+
+`regenerate.py` enumerates every variant, rebuilds it from committed code, and
+checks it against the archived copy where one exists:
+
+| variant | states | vs archive |
+|---|---|---|
+| `g1_ninebox_7` / `g1_ninebox` / `g1_ninebox_128` | 9 | **100.000%** (base) |
+| `g2_structural4` | 4 | — |
+| `g2_structural12` | 12 | **100.000%** |
+| `g3_gate3` | 3 | — |
+| `g3_shapescore9` | 3 | **100.000%** |
+| `g3_score_N6` / `g3_score_N44` | 3 | — |
+| `g4_twoscore4` | 4 | **100.000%** |
+| `g4_twoscore12` | 12 | **100.000%** |
+| `x_weighted3` | 3 | — |
+| `x_dwell1` / `x_dwell13` | 3 | — |
+
+**14 of 14 rebuild. Nothing is genuinely gone.** Fourteen `states_*.csv` files now
+sit in `results/`, each with a `.txt` header. The git-restore of g2 is kept as an
+independent cross-check: two paths to the same file beats either alone.
+
+**A REAL BUG, FOUND ONLY BY TRYING TO REGENERATE.** The archived `shape` column
+did not match its rebuild — 83.410%. Sweeping the lag found **+4 bars → 100.000%**,
+and `confirm(score_at(19), DWELL)` matched at 100.000% unshifted. **The dwell was
+being applied twice.** `export.py` carried `sh = confirm(sh, DWELL)`, correct when
+the shape came from `five_state` (which does not dwell) and a double dwell once
+`layers()` was switched to `score_at` (which dwells internally). The shipped
+`shape` column had an **8-bar effective confirmation and a 4-bar lag** against
+everything else in the file.
+
+`combined` was built before that line and was never affected, and so were
+`shape2`, `combined2` and every current column. Fixed, regenerated, and all five
+archived comparisons now match at 100.000%.
+
+**Two bugs in one pass, both caught by the same discipline**: `_act` filtered
+against `list(ACT3)`, which returns the numeric *keys* rather than the labels, so
+both 12-cell rebuilds came back with zero states. A rebuild that returns nothing
+is loud; a rebuild that returns something slightly wrong is not — which is why
+every comparison here is reported as MATCHES or MISMATCH rather than assumed.
+
+**RULE GOING FORWARD, recorded in `results/REGENERATE.md`**: nothing runs to
+`/tmp`. If a result is worth reporting it is written to `results/` and committed.
+Stdout is for progress, not for findings.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.

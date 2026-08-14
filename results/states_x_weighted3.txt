@@ -1,0 +1,8 @@
+states_x_weighted3.csv
+============================================================
+
+The original three-state weighted classifier (97.3% scale by variance). Predates the nine-box and is still on main.
+
+REGENERATED from committed code by code/regenerate.py -- not restored from a blob.
+Shape: 6916 dates x 28 pairs. Already lagged one bar.
+States: high; low; mid
