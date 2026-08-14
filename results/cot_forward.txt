@@ -1,0 +1,16 @@
+Driver F -- forward odds over the next 20 bars
+==============================================
+
+REPORTED, CANNOT KILL. Confirmation of the present is the keep/kill
+bar; a forward failure never kills a driver.
+
+Panel: one pair-bar with a reading is one observation, over the 7 USD
+pairs. Terciles cut on the in-sample pooled |net| distribution and
+applied unchanged to the holdout.
+
+THE DECLARED SPECIAL CELL, stated before running: the top DECILE of
+|net| against P(acute crisis within 20 bars) -- the crowded-trade
+hypothesis, that extreme speculative positioning precedes a break.
+
+Note the acute-crisis window is GLOBAL (one event calendar), so the 7
+pairs share it and the crisis rows are not 7 independent samples.

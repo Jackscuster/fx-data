@@ -1,0 +1,33 @@
+Driver F -- does CFTC positioning separate the states?
+======================================================
+
+THE LAG, which is what fakes results here. A COT report is TUESDAY
+positions published FRIDAY afternoon, treated as usable from the
+following MONDAY: report_date + 6 calendar days, then the standard
+one-bar shift. Seven calendar days from snapshot to first usable bar.
+A reading is dropped once older than 12 days, so NZD does not get its
+final 2022 report carried to 2026.
+
+COVERAGE. CME FX futures are quoted against USD, so this reaches 7 of
+28 pairs and no cross at all. NZD stops being reported after
+2022-02-01.
+
+SIGNED OR ABSOLUTE, declared before running. State labels carry no
+direction -- "trending" covers up and down -- so a signed position
+averaged over trending episodes cancels toward zero by construction.
+Separation is therefore decided on the ABSOLUTE readings (F1 crowding,
+F2 turnover); the signed ones (F3, F4) are reported beside them so the
+choice can be checked, and are not decisive.
+
+Episode-based: one state run is one observation. Circular-shift null,
+exact draw count in n_shifts. Sub-period split ran before any holdout
+pass was reported.
+
+VERDICTS
+  F1 |net share| (crowding)        chosen group ranging   DEAD -- sign flips
+  F2 |4-week change| (turnover)    chosen group ranging   DEAD -- sign flips
+  F3 net share, signed             chosen group trending  DEAD -- sign flips
+  F4 4-week change, signed         chosen group ranging   DEAD -- sign flips
+
+OVERALL: DEAD
+
