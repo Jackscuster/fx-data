@@ -2181,6 +2181,81 @@ stay, because they separate better even though they leave more ambiguous. Holdou
 coverage 0.986 / 0.990 / 0.986 / 0.985. Both self-assertions still pass on all
 191,940 pair-days.
 
+### 16.4v Per-pair CHARACTER. It is not there, and pairs differ less than noise.
+
+`paircharacter.py`. Not how well the classifier reads each pair (16.4u) — what
+each pair **is**.
+
+**A METHODOLOGICAL FAULT HAD TO BE FIXED FIRST, and the first run of this file
+was void without it.** `classifier.zfit` z-scores each axis **per pair** —
+`v[fit].mean()` on a frame is per column — so every pair's in-sample score is
+forced to mean 0, sd 1. Cutting that at a panel threshold hands every pair almost
+identical state shares *by construction*, and any cross-pair spread that emerges
+is holdout drift, not character. Per-pair z-scoring is right for **classifying**
+(each pair judged against its own history) and wrong for **comparing**. This file
+standardises **pooled**: one mean and one sd over the whole IS panel.
+
+The fix widens the spread, as it should — trending share range 0.095 → 0.130 —
+and changes nothing about the conclusion.
+
+**RANKING, most trending to most ranging** (full sample, pooled z):
+
+| rank | pair | trending | ranging | trendiness |
+|---|---|---|---|---|
+| 1 | EURUSD | 0.361 | 0.263 | **+0.098** |
+| 2 | EURJPY | 0.362 | 0.292 | +0.070 |
+| 3 | USDJPY | 0.334 | 0.303 | +0.032 |
+| 4 | AUDUSD | 0.323 | 0.293 | +0.030 |
+| … | | | | |
+| 25 | EURGBP | 0.251 | 0.378 | −0.127 |
+| 26 | CADCHF | 0.257 | 0.397 | −0.140 |
+| 27 | GBPCHF | 0.232 | 0.406 | −0.173 |
+| 28 | GBPCAD | 0.234 | 0.409 | **−0.175** |
+
+**No pair is trend-dominant.** Trending share runs 0.232 to 0.362 — every one of
+the 28 sits between 23% and 36%. Only 6 of 28 have positive trendiness and the
+largest is +0.098. The panel is range-leaning throughout.
+
+**THE RANKING DOES NOT HOLD ACROSS HALVES:**
+
+| statistic | IS-to-OOS rank correlation |
+|---|---|
+| share_trending | **+0.002** |
+| share_ranging | −0.130 |
+| trendiness | **−0.087** |
+| med_trending | +0.104 |
+| med_ranging | −0.293 |
+
+Individual moves are violent: NZDJPY rank 2 → 23, NZDUSD 4 → 26, NZDCAD 3 → 24,
+CHFJPY 24 → 2, GBPNZD 26 → 15.
+
+**AND PAIRS DIFFER LESS THAN SURROGATE PAIRS DO:**
+
+| | real | surrogate |
+|---|---|---|
+| cross-pair sd of trending share | 0.0337 | **0.0430 ± 0.0061** |
+| cross-pair range | 0.130 | **0.180** |
+| IS-to-OOS rank correlation | −0.087 | +0.045 ± 0.245 |
+
+p(dispersion) = 1.000, p(rank correlation) = 0.625. **28 sign-surrogate pairs,
+which have no character at all, spread wider than the real ones.**
+
+**So the answer is the one you said you also wanted: it is not true.** There is no
+structurally trendy set and no structurally choppy set to route on — not on this
+classifier. Whatever pair-level differences exist are smaller than noise and do
+not persist between halves.
+
+**TRANSITIONS, which do show something.** Pooled, leaving `trending`: **neither
+0.454, trend-in-range 0.426, ranging 0.120**. Leaving `ranging`: neither 0.399,
+trend-in-range 0.507, trending 0.095. **Direct trend↔range transitions are rare
+— about 10-12%.** Pairs pass through an intermediate state almost every time.
+Per pair the direct share runs 0.021 to 0.208: most direct are CHFJPY 0.208,
+USDJPY 0.204, EURJPY 0.172 — all JPY crosses; least direct GBPCAD 0.021, GBPJPY
+0.038.
+
+**Longest runs on record**: trending EURAUD 237, EURCAD 234, USDCAD 227 bars;
+ranging GBPCHF 291, CADCHF 258, NZDJPY 245. Median across pairs 148 and 165 bars.
+
 ### 16.5 DO NOT REBUILD — everything ruled out, with the number
 
 **Trend detection.** Dead by every route tried.
