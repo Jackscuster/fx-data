@@ -1,0 +1,13 @@
+Question 2 -- lead into trending
+================================
+
+At each transition INTO trending, the differential momentum read at the
+bar BEFORE the change. Momentum is already lagged one bar, so that value
+uses yields through t-2 -- strictly before the bar the state changes on.
+
+Direction is the sign of the price move over the trending episode that
+follows, which is forward-looking BY DESIGN: this is the lead test, and
+it is reported separately from question 1 for exactly that reason.
+
+The control draws non-transition bars with the same forward horizon and
+reads them identically, three per transition.

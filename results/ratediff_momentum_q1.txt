@@ -1,0 +1,15 @@
+Question 1 -- present-tense association
+=======================================
+
+One row per (window, block, state). EPISODE-BASED: one state run is one
+observation, so a 40-bar trending episode contributes a single
+agree/disagree rather than forty.
+
+agree  = share of episodes where sign(price move over the episode)
+         matches sign(mean differential momentum during it)
+base_all_states = the same share pooled over episodes of EVERY state,
+         which is the honest baseline -- 0.50 is not, because price and
+         yields both drift
+excess = agree minus base
+
+W was chosen on IS only (W=5) and the holdout read once.

@@ -1,0 +1,11 @@
+Null -- circular shift of yields against price
+==============================================
+
+The yield panel is rolled by a random offset of at least 1000 bars and
+the whole statistic recomputed. Both series keep their own internal
+behaviour and only the ALIGNMENT between them is broken, which is the
+thing being tested.
+
+n_shifts is the exact draw count actually used, not a target.
+rank_of_real is where the real number sits among (nulls + itself),
+1 being the largest.

@@ -1,0 +1,5 @@
+block,W,kind,n,agree,excess
+is,5,transition into trending,708,0.4788135593220339,-0.023069679849340885
+is,5,matched non-transition bars,2124,0.5018832391713748,
+oos,5,transition into trending,468,0.49786324786324787,0.02564102564102566
+oos,5,matched non-transition bars,1404,0.4722222222222222,
