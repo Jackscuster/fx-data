@@ -151,6 +151,13 @@ def main():
             frames.append(fetch_year(y))
         except Exception as e:
             print('  %d FAILED %s' % (y, str(e)[:45]))
+    if not frames:
+        # cftc.gov unreachable. This runs in CI, and a dead external host must
+        # not halt the whole rebuild -- the existing file is stale, not wrong.
+        print('  NO YEARS FETCHED -- cftc.gov unreachable. Keeping the existing')
+        print('  data/cot.csv and leaving results untouched.')
+        assert os.path.exists(OUT), 'no COT data and no cached file to fall back on'
+        return
     raw = pd.concat(frames, ignore_index=True).drop_duplicates(['date', 'ccy'])
     raw['net_share'] = (raw['long'] - raw['short']) / raw['oi'].replace(0, np.nan)
     print('\n  coverage per currency (weekly reports):')
