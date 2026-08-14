@@ -7,6 +7,13 @@ R = ROOTOUT + os.sep
 
 
 def rd(f, **k):
+    """Read a results CSV, ignoring '#' header notes.
+
+    persist2.py annotates superseded filenames with a comment header saying what
+    they actually contain. Without comment='#' those lines become data rows and
+    the app renders them, so every reader here is comment-aware by default.
+    """
+    k.setdefault('comment', '#')
     try:
         return pd.read_csv(R + f, **k)
     except Exception:
@@ -141,6 +148,10 @@ out = dict(
     pairrank=cl(rd('pair_ranking.csv').rename(columns={'Unnamed: 0':'pair'})),
     runlen=cl(rd('run_lengths.csv').query("pair=='ALL'")),
     regen=cl(rd('regenerate_audit.csv')),
+    pairtrans=cl(rd('pair_transitions.csv')),
+    charblocks=cl(rd('pair_character_blocks.csv')),
+    rankstab=cl(rd('pair_rank_stability.csv')),
+    rankmoves=cl(rd('pair_rank_moves.csv')),
     bothep=cl(rd('both_episodes.csv').sort_values('bars',ascending=False).head(15)),
     failsurf=cl(rd('measures_failsurface.csv')),
     scoreyears=cl(rd('scoredist_years.csv')),

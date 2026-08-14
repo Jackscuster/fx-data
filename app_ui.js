@@ -389,6 +389,9 @@ No forward target and no money metrics &mdash; this describes what has happened.
 </section>
 
 <section id="ns" hidden>
+<h3>Current classifier &mdash; states and validation</h3>
+<div id="curstates"></div>
+
 <div class="note"><b>The nine states.</b> An explicit grid: size &times; cleanliness, each
 cut at that pair's own in-sample terciles with hysteresis. Both axes contribute by
 construction &mdash; the states are the cross, not terciles of a weighted score, so neither
@@ -928,6 +931,118 @@ function boot(BUNDLE,root){
     +'EURJPY 0.172) against GBPCAD 0.021. That is untested against a null and is an '
     +'observation, not a finding.</div>';
    $('#pcwrap').innerHTML=h;
+  }
+
+  // ================= CURRENT CLASSIFIER: STATES AND VALIDATION =================
+  function buildCurrentStates(){
+   const f=(v,n)=>v==null||v===''?'—':(+v).toFixed(n==null?3:n);
+   const RL=(BUN.runlen||[]).filter(r=>r.generation==='g4_twoscore4');
+   const PT=BUN.pairtrans||[],FR=BUN.finalrep||[],FP=BUN.finalpairs||[],
+         CB=BUN.charblocks||[],RS=BUN.rankstab||[];
+   const row=k=>FR.find(r=>r.item===k)||{};
+   let h='<div class="note"><b>The current classifier &mdash; generation 4.</b> '
+    +'Two independent scores, four shape states, a 106-bar lookback, a 5-bar '
+    +'confirmation dwell. Every number on this screen traces to a committed file; '
+    +'the file is named under each table.</div>';
+
+   // coverage + run length + diagonal
+   if(RL.length){
+    const blocks=['is','oos','all'];
+    h+='<div class="tw"><table><thead><tr><th>State</th>'
+     +blocks.map(b=>'<th colspan="4">'+b.toUpperCase()+'</th>').join('')
+     +'</tr><tr><th></th>'+blocks.map(()=>'<th>share</th><th>median run</th>'
+      +'<th>mean</th><th>longest</th>').join('')+'</tr></thead><tbody>'
+     +['trending','ranging','trend-in-range','neither'].map(st=>{
+       let r='<tr><td><b>'+st+'</b></td>';
+       blocks.forEach(b=>{const x=RL.find(v=>v.state===st&&v.block===b&&v.pair==='ALL');
+        r+=x?('<td>'+f(x.share)+'</td><td><b>'+f(x.median,0)+'</b></td><td>'
+             +f(x.mean,1)+'</td><td>'+f(x.longest,0)+'</td>')
+            :'<td>—</td><td>—</td><td>—</td><td>—</td>';});
+       return r+'</tr>';}).join('')
+     +'</tbody></table><div class="count">Coverage and run lengths &mdash; '
+     +'<code>results/run_lengths.csv</code>, generation <code>g4_twoscore4</code>. '
+     +'Recomputed by <code>code/persist.py</code>, not carried forward.</div></div>';
+   }
+
+   // transition matrix
+   if(PT.length){
+    const ST=['trending','ranging','trend-in-range','neither'];
+    const agg={};
+    PT.forEach(r=>{const k=r.frm+'|'+r.to;(agg[k]=agg[k]||[]).push(+r.share);});
+    h+='<div class="tw"><table><thead><tr><th>From ↓ &nbsp; To →</th>'
+     +ST.map(s=>'<th>'+s+'</th>').join('')+'</tr></thead><tbody>'
+     +ST.map(a=>'<tr><td><b>'+a+'</b></td>'+ST.map(b=>{
+       if(a===b)return '<td style="opacity:.35">—</td>';
+       const v=agg[a+'|'+b];
+       const m=v?v.reduce((x,y)=>x+y,0)/v.length:null;
+       return '<td'+(m!=null&&m<0.15?' style="color:var(--chop)"':'')+'>'
+        +f(m)+'</td>';}).join('')+'</tr>').join('')
+     +'</tbody></table><div class="count">Mean transition share across the 28 '
+     +'pairs, conditional on leaving that state &mdash; '
+     +'<code>results/pair_transitions.csv</code>. <b>Direct trend&harr;range '
+     +'moves are rare</b> (0.120 and 0.095): pairs pass through an intermediate '
+     +'state almost every time.</div></div>';
+   }
+
+   // separation IS vs OOS + null
+   if(FR.length){
+    const tr=row('trend'),ch=row('chop'),gO=row('grid OOS'),gN=row('grid null');
+    h+='<div class="tw"><table><thead><tr><th>Axis</th><th>IS separation</th>'
+     +'<th>OOS separation</th><th>Surrogate</th><th>Corrected</th></tr></thead>'
+     +'<tbody>'+[['trend',tr],['chop',ch]].map(([n,r])=>
+      '<tr><td><b>'+n+'</b></td><td>'+f(r.is_sep)+'</td><td>'+f(r.oos_sep)
+      +'</td><td>'+f(r.surrogate)+'</td><td><b>'+(r.corrected>0?'+':'')
+      +f(r.corrected)+'</b></td></tr>').join('')
+     +'<tr><td><b>full grid</b></td><td>'+f(gO.oos_sep)+' <span class="count">'
+     +'(12 cells)</span></td><td>'+f(gN.oos_sep)+'</td><td>'+f(gN.surrogate)
+     +'</td><td><b>'+(gN.corrected>0?'+':'')+f(gN.corrected)+'</b></td></tr>'
+     +'</tbody></table><div class="count">One-versus-rest separation on four '
+     +'properties the classifier is not built from &mdash; '
+     +'<code>results/final_report.csv</code>. <b>Chop is the only axis that '
+     +'holds up out of sample</b> (0.151&rarr;0.156); trend halves. Neither '
+     +'clears its surrogate.</div></div>';
+   }
+
+   // the null, stated at its real draw count
+   h+='<div class="note"><b>The null, at its actual size.</b> Every corrected '
+    +'figure above is a <i>surrogate randomisation</i>: price is rebuilt with its '
+    +'sign structure destroyed, the whole classifier is rebuilt on it, and the '
+    +'statistic is recomputed. The draw counts are what was run, not a round '
+    +'number &mdash; 15 draws for the final report '
+    +'(<code>code/final.py</code>), 120 for the shape-window confirmation '
+    +'(<code>results/shapescore_confirm.csv</code>), 200 for the lead-time '
+    +'holdout reads (<code>results/masweep_confirm.csv</code>). '
+    +'<b>There is no 200-shuffle null on the generation-4 classifier</b>; the '
+    +'200-draw figures belong to the lead-time work, and quoting them here would '
+    +'be wrong.</div>';
+
+   // per-pair separation
+   if(FP.length){
+    const t=FP.filter(r=>r.axis==='trend').sort((a,b)=>b.sep-a.sep),
+          c=FP.filter(r=>r.axis==='chop').sort((a,b)=>b.sep-a.sep);
+    h+='<div class="tw"><table><thead><tr><th>#</th><th>Pair</th>'
+     +'<th>Trend separation</th><th>Pair</th><th>Chop separation</th></tr>'
+     +'</thead><tbody>'+t.map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+x.pair
+      +'</td><td>'+f(x.sep)+'</td><td>'+(c[i]?c[i].pair:'')+'</td><td>'
+      +(c[i]?f(c[i].sep):'')+'</td></tr>').join('')
+     +'</tbody></table><div class="count">Per-pair separation, holdout, the two '
+     +'axes never blended &mdash; <code>results/final_pairs.csv</code>. Trend '
+     +'median 0.118, chop median 0.195.</div></div>';
+   }
+
+   // IS vs OOS character stability
+   if(RS.length){
+    h+='<div class="tw"><table><thead><tr><th>Per-pair statistic</th>'
+     +'<th>1999&ndash;2015 vs 2016&ndash;2026 rank correlation</th></tr></thead>'
+     +'<tbody>'+RS.map(r=>'<tr><td>'+r.statistic+'</td><td><b>'
+      +(r.rank_corr>0?'+':'')+f(r.rank_corr)+'</b></td></tr>').join('')
+     +'</tbody></table><div class="count">Does a pair keep its character between '
+     +'halves? &mdash; <code>results/pair_rank_stability.csv</code>. It does not: '
+     +'trendiness correlates <b>&minus;0.087</b> across the split, and 28 '
+     +'sign-surrogate pairs spread wider (sd 0.0430) than the real ones '
+     +'(0.0337).</div></div>';
+   }
+   $('#curstates').innerHTML=h;
   }
 
   function svg(w,h,inner){return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;}
@@ -2597,6 +2712,7 @@ function boot(BUNDLE,root){
   // ---- the four new screens ----
   $('#glwrap').innerHTML=glossHTML();
   buildCharacter();
+  buildCurrentStates();
   Object.keys(ARCHIVED).forEach(k=>archiveBanner(k,ARCHIVED[k][0],ARCHIVED[k][1]));
   (function(){
    const names={nb:'9-Box',mt:'Timeframes',ld:'Detectors',st:'Strategies'};

@@ -1,0 +1,16 @@
+# Nine-box state summary -- generation 1.
+# Share of days, median run length and run count for each of the NINE nine-box states
+# (strong/medium/weak x trend/transitional/chop) at the 28-bar window.
+# This is a 9-row SUMMARY table, not per-day labels and not four shape states.
+# Per-day labels for this generation: states_g1_ninebox.csv.
+# Renamed copy of nine_states.csv, whose name did not say which classifier it came from.
+,share,median_len,runs
+strong trend,0.1018026466604147,7.0,1943
+medium trend,0.107085547566948,5.0,2879
+weak trend,0.0892831093049911,6.0,2151
+strong transitional,0.1063665728873606,4.0,3988
+medium transitional,0.1346775033864749,3.0,5749
+weak transitional,0.1158643326039387,3.0,4851
+strong chop,0.0979681150359487,5.0,2838
+medium chop,0.1332395540273002,4.0,4414
+weak chop,0.1137126185266229,5.0,3553
