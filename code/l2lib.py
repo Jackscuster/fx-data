@@ -1310,5 +1310,403 @@ LOOKAHEAD_OPTION.update({'dpo_signals', 'dpo_exit'})   # only if centered=True
 KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
 
 
+
+# ==========================================================================
+# CONFIRMATION BATCH B -- the patch-replaced ones, plus three more from the
+# library. Every function here that the patch touches exists ONLY in its
+# patched form.
+# ==========================================================================
+
+
+def vortex(o, h, l, c, vx_length=14):
+    h = np.asarray(h, float); l = np.asarray(l, float)
+    vmp = P.msum(np.abs(h - P.shift(l, 1)), vx_length)
+    vmm = P.msum(np.abs(l - P.shift(h, 1)), vx_length)
+    strr = P.msum(P.atr(h, l, c, 1), vx_length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(strr != 0, vmp / strr, np.nan), \
+               np.where(strr != 0, vmm / strr, np.nan)
+
+
+def vortex_signals(o, h, l, c, period=14):
+    vip, vim = vortex(o, h, l, c, period)
+    pvip, pvim = P.shift(vip, 1), P.shift(vim, 1)
+    return (P.F((vip > vim) & (pvip < pvim)), P.F((vip < vim) & (pvip > pvim)),
+            P.F(vip > vim), P.F(vip < vim))
+
+
+def vortex_exit(o, h, l, c, period=14):
+    vip, vim = vortex(o, h, l, c, period)
+    return P.crossunder(vip, vim), P.crossover(vip, vim)
+
+
+def trend_direction_force_index(o, h, l, c, tdfi_lookback=13,
+                                tdfi_filter_high=0.05, tdfi_filter_low=-0.05):
+    """lib. The `for i = 1 to Tpow - 1` loop with Tpow=3 runs TWICE (i = 1 and
+    i = 2). On i=1 Tresult is seeded to Tnumber and then multiplied by it, on
+    i=2 it is multiplied again -- so the result is Tnumber CUBED.
+
+    Reading it as a square gives an always-positive numerator, and the
+    indicator then never confirms short at all: the sanity pass showed 51.2%
+    long and 0.0% short before this was corrected. An odd power preserves the
+    sign, which is the whole point of a direction indicator."""
+    mma = P.ema(np.asarray(c, float) * 1000.0, tdfi_lookback)
+    smma = P.ema(mma, tdfi_lookback)
+    imp1 = mma - P.shift(mma, 1)
+    imp2 = smma - P.shift(smma, 1)
+    divma = np.abs(mma - smma)
+    aver = (imp1 + imp2) / 2.0
+    result = aver * aver * aver
+    tdf = divma * result
+    denom = P.highest(np.abs(tdf), tdfi_lookback * 3)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(denom != 0, tdf / denom, np.nan)
+
+
+def trend_direction_force_index_signals(o, h, l, c, lookback=13, fhigh=0.05,
+                                        flow=-0.05):
+    """TERNARY: between the two filter levels it confirms neither side."""
+    v = trend_direction_force_index(o, h, l, c, lookback, fhigh, flow)
+    fh = np.full(v.shape, fhigh); fl = np.full(v.shape, flow)
+    return (P.crossover(v, fh), P.crossunder(v, fl), P.F(v > fhigh), P.F(v < flow))
+
+
+def trend_direction_force_index_exit(o, h, l, c, lookback=13, fhigh=0.05,
+                                     flow=-0.05):
+    v = trend_direction_force_index(o, h, l, c, lookback, fhigh, flow)
+    return (P.crossunder(v, np.full(v.shape, fhigh)),
+            P.crossover(v, np.full(v.shape, flow)))
+
+
+def halftrend(o, h, l, c, amplitude=50):
+    """lib, with its var-scoped state. Returns (ht, buy, sell) where ht is 0.0
+    for the up state and -1.0 for the down state."""
+    h = np.asarray(h, float); l = np.asarray(l, float); c = np.asarray(c, float)
+    n = c.size
+    hi_price = np.empty(n); lo_price = np.empty(n)
+    hb = P.highestbars(h, amplitude); lb = P.lowestbars(l, amplitude)
+    for i in range(n):
+        oh = int(abs(hb[i])) if np.isfinite(hb[i]) else 0
+        ol = int(abs(lb[i])) if np.isfinite(lb[i]) else 0
+        hi_price[i] = h[max(0, i - oh)]
+        lo_price[i] = l[max(0, i - ol)]
+    highma = P.sma(h, amplitude); lowma = P.sma(l, amplitude)
+    trend = 0.0; nxt = 0
+    max_low = l[0]; min_high = h[0]
+    ht = np.empty(n); buy = np.zeros(n); sell = np.zeros(n)
+    prev_trend = 0.0
+    for i in range(n):
+        pl = l[i - 1] if i else l[i]
+        ph = h[i - 1] if i else h[i]
+        if nxt == 1:
+            max_low = max(lo_price[i], max_low)
+            if np.isfinite(highma[i]) and highma[i] < max_low and c[i] < pl:
+                trend = 1.0; nxt = 0; min_high = hi_price[i]
+        else:
+            min_high = min(hi_price[i], min_high)
+            if np.isfinite(lowma[i]) and lowma[i] > min_high and c[i] > ph:
+                trend = 0.0; nxt = 1; max_low = lo_price[i]
+        ht[i] = 0.0 if trend == 0 else -1.0
+        if i:
+            if trend == 0 and prev_trend == 1:
+                buy[i] = 1.0
+            elif trend == 1 and prev_trend == 0:
+                sell[i] = 1.0
+        prev_trend = trend
+    return ht, buy, sell
+
+
+def halftrend_signals(o, h, l, c, amplitude=50):
+    ht, buy, sell = halftrend(o, h, l, c, amplitude)
+    return P.F(buy == 1.0), P.F(sell == 1.0), P.F(ht == 0), P.F(ht != 0)
+
+
+def halftrend_exit(o, h, l, c, amplitude=50):
+    ht, buy, sell = halftrend(o, h, l, c, amplitude)
+    return P.F(sell == 1.0), P.F(buy == 1.0)
+
+
+def coral(o, h, l, c, smoothing_period=10, constant_d=14):
+    """patch A9 -- latches the previous state on a flat bar instead of na."""
+    c = np.asarray(c, float)
+    d = float(constant_d)
+    di = (smoothing_period - 1.0) / 2.0 + 1.0
+    c1 = 2.0 / (di + 1.0); c2 = 1.0 - c1
+    c3 = 3.0 * (d * d + d ** 3)
+    c4 = -3.0 * (2.0 * d * d + d + d ** 3)
+    c5 = 3.0 * d + 1.0 + d ** 3 + 3.0 * d * d
+    i1 = i2 = i3 = i4 = i5 = i6 = 0.0
+    n = c.size
+    bfr = np.empty(n)
+    for k in range(n):
+        i1 = c1 * c[k] + c2 * i1
+        i2 = c1 * i1 + c2 * i2
+        i3 = c1 * i2 + c2 * i3
+        i4 = c1 * i3 + c2 * i4
+        i5 = c1 * i4 + c2 * i5
+        i6 = c1 * i5 + c2 * i6
+        bfr[k] = -(d ** 3) * i6 + c3 * i5 + c4 * i4 + c5 * i3
+    out = np.empty(n); state = 0.0
+    for k in range(n):
+        prev = bfr[k - 1] if k else 0.0
+        state = 1.0 if bfr[k] > prev else (0.0 if bfr[k] < prev else state)
+        out[k] = state
+    return out
+
+
+def coral_signals(o, h, l, c, smooth_period=10, const_d=14):
+    v = coral(o, h, l, c, smooth_period, const_d)
+    pv = P.shift(v, 1)
+    return (P.F((pv == 0) & (v == 1)), P.F((pv == 1) & (v == 0)),
+            P.F(v == 1), P.F(v == 0))
+
+
+def coral_exit(o, h, l, c, smooth_period=10, const_d=14):
+    v = coral(o, h, l, c, smooth_period, const_d)
+    pv = P.shift(v, 1)
+    return P.F((pv == 1) & (v == 0)), P.F((pv == 0) & (v == 1))
+
+
+def didi_index(o, h, l, c, didi_medium=8, didi_long=20):
+    """patch A10 -- the two dead avg_ assignments removed. Ratio around 1.0."""
+    media = P.sma(c, didi_medium)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(media != 0, P.sma(c, didi_long) / media, np.nan)
+
+
+def didi_index_signals(o, h, l, c, medium=8, long_p=20):
+    """The pivot is 1.0, not 0, and BELOW one is long."""
+    v = didi_index(o, h, l, c, medium, long_p)
+    pv = P.shift(v, 1)
+    return (P.F((pv >= 1) & (v < 1)), P.F((pv <= 1) & (v > 1)),
+            P.F(v < 1), P.F(v > 1))
+
+
+def didi_index_exit(o, h, l, c, medium=8, long_p=20):
+    v = didi_index(o, h, l, c, medium, long_p)
+    pv = P.shift(v, 1)
+    return P.F((pv <= 1) & (v > 1)), P.F((pv >= 1) & (v < 1))
+
+
+def kase_peak_oscillator(o, h, l, c, kpo_short_cycle=8, kpo_long_cycle=65,
+                         kpo_sensitivity=40.0):
+    """patch A10 -- x1/xs no longer read from the prior bar, and the divide by
+    a zero average is guarded."""
+    h = np.asarray(h, float); l = np.asarray(l, float); c = np.asarray(c, float)
+    cclog = np.log(c / P.nz(P.shift(c, 1), c))
+    avg = P.sma(P.stdev(cclog, 9), 30)
+    n = c.size
+    max1 = np.zeros(n); maxs = np.zeros(n)
+    for k in range(kpo_short_cycle, kpo_long_cycle):
+        lo_k = P.nz(P.shift(l, k), l); hi_k = P.nz(P.shift(h, k), h)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            max1 = np.maximum(np.log(h / lo_k) / np.sqrt(k), max1)
+            maxs = np.maximum(np.log(hi_k / l) / np.sqrt(k), maxs)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        x1 = np.where(avg != 0, max1 / avg, 0.0)
+        xs = np.where(avg != 0, maxs / avg, 0.0)
+    return kpo_sensitivity * (P.sma(x1, 3) - P.sma(xs, 3))
+
+
+def kase_peak_oscillator_signals(o, h, l, c, short_cycle=8, long_cycle=65,
+                                 sharpness=40.0):
+    return _zero_cross(kase_peak_oscillator(o, h, l, c, short_cycle,
+                                            long_cycle, sharpness))
+
+
+def kase_peak_oscillator_exit(o, h, l, c, short_cycle=8, long_cycle=65,
+                              sharpness=40.0):
+    return _zero_cross_exit(kase_peak_oscillator(o, h, l, c, short_cycle,
+                                                 long_cycle, sharpness))
+
+
+def qqe_mod(o, h, l, c, qqe_rsi_period2=6, qqe_rsi_smoothing2=5,
+            qqe_fast_factor2=1.61):
+    """patch A8 -- the ~50 dead lines of the first QQE block removed. Output is
+    identical to the original by construction; nothing fed from that block."""
+    c = np.asarray(c, float)
+    wilders = qqe_rsi_period2 * 2 - 1
+    rsi_ = P.rsi(c, qqe_rsi_period2)
+    rsima = P.ema(rsi_, qqe_rsi_smoothing2)
+    atrrsi = np.abs(P.shift(rsima, 1) - rsima)
+    dar = P.ema(P.ema(atrrsi, wilders), wilders) * qqe_fast_factor2
+    n = c.size
+    longb = np.zeros(n); shortb = np.zeros(n); trend = np.ones(n)
+    lb = sb = 0.0; tr = 1
+    for i in range(n):
+        r = rsima[i]; pr = rsima[i - 1] if i else np.nan
+        d = dar[i] if np.isfinite(dar[i]) else 0.0
+        if not np.isfinite(r):
+            longb[i] = lb; shortb[i] = sb; trend[i] = tr; continue
+        newsb = r + d; newlb = r - d
+        plb, psb = lb, sb
+        lb = max(plb, newlb) if (np.isfinite(pr) and pr > plb and r > plb) else newlb
+        sb = min(psb, newsb) if (np.isfinite(pr) and pr < psb and r < psb) else newsb
+        prr = rsima[i - 1] if i else r
+        cross_up = (prr <= psb) and (r > psb)
+        cross_dn = (plb >= prr) != (plb >= r)
+        tr = 1 if cross_up else (-1 if cross_dn else tr)
+        longb[i] = lb; shortb[i] = sb; trend[i] = tr
+    return np.where(trend == 1, longb, shortb) - 50.0
+
+
+def qqe_mod_signals(o, h, l, c, rsi_period=6, rsi_len=5, fast_factor=1.61):
+    return _zero_cross(qqe_mod(o, h, l, c, rsi_period, rsi_len, fast_factor))
+
+
+def qqe_mod_exit(o, h, l, c, rsi_period=6, rsi_len=5, fast_factor=1.61):
+    return _zero_cross_exit(qqe_mod(o, h, l, c, rsi_period, rsi_len, fast_factor))
+
+
+def schaff_trend_cycle(o, h, l, c, stc_macd_fast_length=23,
+                       stc_macd_slow_length=50, stc_cycle_length=10,
+                       stc_1st_d_length=3, stc_2nd_d_length=3,
+                       stc_upper_hline=75, stc_lower_hline=25):
+    macd = P.ema(c, stc_macd_fast_length) - P.ema(c, stc_macd_slow_length)
+    k = P.nz(P.fixnan(P.stoch(macd, macd, macd, stc_cycle_length)), 0.0)
+    d = P.ema(k, stc_1st_d_length)
+    kd = P.nz(P.fixnan(P.stoch(d, d, d, stc_cycle_length)), 0.0)
+    stc = np.clip(P.ema(kd, stc_2nd_d_length), 0.0, 100.0)
+    return (stc,
+            P.crossover(stc, np.full(stc.shape, float(stc_lower_hline))),
+            P.crossunder(stc, np.full(stc.shape, float(stc_upper_hline))))
+
+
+def schaff_trend_cycle_signals(o, h, l, c, macdFast=23, macdSlow=50,
+                               cycleLen=10, d1=3, d2=3, upperBand=75,
+                               lowerBand=25, stc_midline=50.0):
+    """patch A5. lc/sc split on the MIDLINE and are now mutually exclusive; the
+    original had both true anywhere between the bands, so as a confirmation it
+    agreed with whatever C1 said across the middle of its range. The triggers
+    are still the band crosses. SIGNATURE GAINED stc_midline -- 50 keeps the
+    natural default, as the patch says."""
+    stc, bsig, ssig = schaff_trend_cycle(o, h, l, c, macdFast, macdSlow,
+                                         cycleLen, d1, d2, upperBand, lowerBand)
+    return bsig, ssig, P.F(stc > stc_midline), P.F(stc < stc_midline)
+
+
+def schaff_trend_cycle_exit(o, h, l, c, macdFast=23, macdSlow=50, cycleLen=10,
+                            d1=3, d2=3, upperBand=75, lowerBand=25,
+                            stc_midline=50.0):
+    stc, bsig, ssig = schaff_trend_cycle(o, h, l, c, macdFast, macdSlow,
+                                         cycleLen, d1, d2, upperBand, lowerBand)
+    return ssig, bsig
+
+
+def glitch_index(o, h, l, c, length=30, multiplier=5.0, smooth=3):
+    """patch A7. Was a z-score whose multiplier could not change a trade
+    because every read was sign-based. Now a normalised displacement measured
+    in units of average range, with the multiplier as a REAL threshold."""
+    src = (np.asarray(h, float) + np.asarray(l, float)) / 2.0
+    ma = P.sma(src, length)
+    rng = P.sma(np.asarray(h, float) - np.asarray(l, float), length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        disp = np.where(rng != 0, (src - ma) / rng, 0.0)
+    return P.ema(disp, smooth), float(multiplier)
+
+
+def glitch_index_signals(o, h, l, c, length=30, multiplier=5.0, smooth=3):
+    """TERNARY -- inside the band it confirms neither side, which is what a
+    glitch detector should do."""
+    g, lvl = glitch_index(o, h, l, c, length, multiplier, smooth)
+    return (P.crossover(g, np.full(g.shape, lvl)),
+            P.crossunder(g, np.full(g.shape, -lvl)),
+            P.F(g > lvl), P.F(g < -lvl))
+
+
+def glitch_index_exit(o, h, l, c, length=30, multiplier=5.0, smooth=3):
+    g, lvl = glitch_index(o, h, l, c, length, multiplier, smooth)
+    return (P.crossunder(g, np.full(g.shape, lvl)),
+            P.crossover(g, np.full(g.shape, -lvl)))
+
+
+def ehlers_reverse_ema(o, h, l, c, alpha=0.1):
+    """patch A6. The real S&C April 2017 cascade of eight reverse-weighted
+    stages, not the dual-EMA cross that wore its name. `length` is gone: it had
+    no role in the actual indicator.
+
+    Each stage is re_k[i] = pow_k * re_{k-1}[i] + re_{k-1}[i-1] -- it feeds off
+    the PREVIOUS STAGE's prior bar, not its own, so the cascade is eight plain
+    passes and not eight recursions."""
+    c = np.asarray(c, float)
+    n = c.size
+    if n == 0:
+        return np.zeros(0)
+    ev = P.recur_nz(c, alpha, seed=c[0])
+    om = 1.0 - alpha
+    stage = ev
+    for k in range(1, 9):
+        pw = om ** (2 ** (k - 1))
+        stage = pw * stage + P.nz(P.shift(stage, 1), 0.0)
+    return ev - alpha * stage
+
+
+def ehlers_reverse_ema_signals(o, h, l, c, alpha=0.1):
+    w = ehlers_reverse_ema(o, h, l, c, alpha)
+    z = np.zeros_like(w)
+    return P.crossover(w, z), P.crossunder(w, z), P.F(w > 0), P.F(w < 0)
+
+
+def ehlers_reverse_ema_exit(o, h, l, c, alpha=0.1):
+    w = ehlers_reverse_ema(o, h, l, c, alpha)
+    z = np.zeros_like(w)
+    return P.crossunder(w, z), P.crossover(w, z)
+
+
+# --- confirmation batch B. Defaults from strategy input() lines 176-340.
+for _n, _f, _slot, _d, _ln in [
+        ('vortex_signals', vortex_signals, 'confirmation', dict(period=14), 'strat 295'),
+        ('vortex_exit', vortex_exit, 'exit', dict(period=14), 'strat 295'),
+        ('trend_direction_force_index_signals', trend_direction_force_index_signals,
+         'confirmation', dict(lookback=13, fhigh=0.05, flow=-0.05), 'strat 288-290'),
+        ('trend_direction_force_index_exit', trend_direction_force_index_exit,
+         'exit', dict(lookback=13, fhigh=0.05, flow=-0.05), 'strat 288-290'),
+        ('halftrend_signals', halftrend_signals, 'confirmation',
+         dict(amplitude=50), 'strat 254'),
+        ('halftrend_exit', halftrend_exit, 'exit', dict(amplitude=50), 'strat 254'),
+        ('coral_signals', coral_signals, 'confirmation',
+         dict(smooth_period=10, const_d=14), 'strat 188-189 / patch A9'),
+        ('coral_exit', coral_exit, 'exit',
+         dict(smooth_period=10, const_d=14), 'strat 188-189 / patch A9'),
+        ('didi_index_signals', didi_index_signals, 'confirmation',
+         dict(medium=8, long_p=20), 'strat 192-193 / patch A10'),
+        ('didi_index_exit', didi_index_exit, 'exit',
+         dict(medium=8, long_p=20), 'strat 192-193 / patch A10'),
+        ('kase_peak_oscillator_signals', kase_peak_oscillator_signals,
+         'confirmation', dict(short_cycle=8, long_cycle=65, sharpness=40.0),
+         'strat 260-262 / patch A10'),
+        ('kase_peak_oscillator_exit', kase_peak_oscillator_exit, 'exit',
+         dict(short_cycle=8, long_cycle=65, sharpness=40.0),
+         'strat 260-262 / patch A10'),
+        ('qqe_mod_signals', qqe_mod_signals, 'confirmation',
+         dict(rsi_period=6, rsi_len=5, fast_factor=1.61),
+         'strat 277-279 / patch A8'),
+        ('qqe_mod_exit', qqe_mod_exit, 'exit',
+         dict(rsi_period=6, rsi_len=5, fast_factor=1.61),
+         'strat 277-279 / patch A8'),
+        ('schaff_trend_cycle_signals', schaff_trend_cycle_signals, 'confirmation',
+         dict(macdFast=23, macdSlow=50, cycleLen=10, d1=3, d2=3, upperBand=75,
+              lowerBand=25, stc_midline=50.0), 'patch A5'),
+        ('schaff_trend_cycle_exit', schaff_trend_cycle_exit, 'exit',
+         dict(macdFast=23, macdSlow=50, cycleLen=10, d1=3, d2=3, upperBand=75,
+              lowerBand=25, stc_midline=50.0), 'patch A5'),
+        ('glitch_index_signals', glitch_index_signals, 'confirmation',
+         dict(length=30, multiplier=5.0, smooth=3), 'strat 249-251 / patch A7'),
+        ('glitch_index_exit', glitch_index_exit, 'exit',
+         dict(length=30, multiplier=5.0, smooth=3), 'strat 249-251 / patch A7'),
+        ('ehlers_reverse_ema_signals', ehlers_reverse_ema_signals, 'confirmation',
+         dict(alpha=0.1), 'strat 198 / patch A6'),
+        ('ehlers_reverse_ema_exit', ehlers_reverse_ema_exit, 'exit',
+         dict(alpha=0.1), 'strat 198 / patch A6')]:
+    _reg(_n, _f, _slot, _d, _ln, True)
+
+TERNARY.update({'trend_direction_force_index', 'glitch_index'})
+KIND.update({k: ('TERNARY' if k.replace('_signals', '') in TERNARY and
+                 v['slot'] == 'confirmation' else v['kind'])
+             for k, v in REGISTRY.items()})
+for _k in REGISTRY:
+    REGISTRY[_k]['kind'] = KIND[_k]
+
+
 if __name__ == '__main__':
     main()
