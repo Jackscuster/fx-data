@@ -208,13 +208,22 @@ def t_bridge_blocks_continuation():
 
     def setup():
         # cross at bar 8, enter on the C1 flip at 10, exit on the indicator at
-        # 12. From bar 13 the continuation route is live and the cross is 5+
-        # bars old, so the bridge is the only thing that can refuse it.
+        # 12, then C1 flips AGAIN at 14. Pine's longcondition3 needs that second
+        # trigger -- continuation is not "re-enter whenever onside". At bar 14
+        # the cross is 6 bars old, so the bridge is the only thing left that can
+        # refuse the re-entry.
         A = blank(); fire_c1_long(A, 10); A['x_el'][12] = True
+        A['c1_lc'][13] = False            # drop the state so bar 14 is a flip
+        fire_c1_long(A, 14)
         return A
 
-    tight = go(setup(), plan=1, use_continuation=True, bridge_bars=3)
-    loose = go(setup(), plan=1, use_continuation=True, bridge_bars=10000)
+    # the C1-flip route is switched OFF so that bar 14's flip can only be taken
+    # by the continuation route -- otherwise longcondition2 claims it first and
+    # the test passes while proving nothing about continuations.
+    opt = dict(plan=1, use_base_cross=True, use_c1_flip=False,
+               use_continuation=True)
+    tight = go(setup(), bridge_bars=3, **opt)
+    loose = go(setup(), bridge_bars=10000, **opt)
     check('continuation blocked as stale at bridge = 3',
           tight['_blocked_stale'] > 0, True)
     check('only the first entry survives', tight['_n'], 1)
