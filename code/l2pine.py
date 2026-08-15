@@ -388,3 +388,21 @@ def supertrend(h, l, c, factor, atr_period):
         direction[i] = dirn
         pu, pd_, pdir = u, d, dirn
     return line, direction
+
+
+def stoch(src, hi, lo, length):
+    """ta.stoch(src, high, low, length)."""
+    hh, ll = highest(hi, length), lowest(lo, length)
+    rng = hh - ll
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(rng != 0, 100.0 * (_a(src) - ll) / rng, np.nan)
+
+
+def rsi(src, length):
+    """ta.rsi -- Wilder-smoothed gains over losses, so it uses rma, not sma."""
+    d = change(src)
+    up = rma(np.where(np.isfinite(d), np.maximum(d, 0.0), np.nan), length)
+    dn = rma(np.where(np.isfinite(d), np.maximum(-d, 0.0), np.nan), length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(dn == 0, 100.0, np.where(up == 0, 0.0,
+                                                 100.0 - 100.0 / (1.0 + up / dn)))

@@ -69,3 +69,23 @@ aroon_signals,confirmation,BINARY,4,length=25,True,strat 177,library,True,False,
 aroon_exit,exit,BINARY,2,length=25,True,strat 177,library,True,False,False
 center_of_gravity_signals,confirmation,BINARY,4,length=10; signal_length=3,True,strat 179-180,library,True,False,False
 center_of_gravity_exit,exit,BINARY,2,length=10; signal_length=3,True,strat 179-180,library,True,False,False
+vortex_signals,confirmation,BINARY,4,period=14,True,strat 295,library,True,False,False
+vortex_exit,exit,BINARY,2,period=14,True,strat 295,library,True,False,False
+trend_direction_force_index_signals,confirmation,TERNARY,4,lookback=13; fhigh=0.05; flow=-0.05,True,strat 288-290,library,True,False,False
+trend_direction_force_index_exit,exit,BINARY,2,lookback=13; fhigh=0.05; flow=-0.05,True,strat 288-290,library,True,False,False
+halftrend_signals,confirmation,BINARY,4,amplitude=50,True,strat 254,library,True,False,False
+halftrend_exit,exit,BINARY,2,amplitude=50,True,strat 254,library,True,False,False
+coral_signals,confirmation,BINARY,4,smooth_period=10; const_d=14,True,strat 188-189 / patch A9,library,True,False,False
+coral_exit,exit,BINARY,2,smooth_period=10; const_d=14,True,strat 188-189 / patch A9,library,True,False,False
+didi_index_signals,confirmation,BINARY,4,medium=8; long_p=20,True,strat 192-193 / patch A10,library,True,False,False
+didi_index_exit,exit,BINARY,2,medium=8; long_p=20,True,strat 192-193 / patch A10,library,True,False,False
+kase_peak_oscillator_signals,confirmation,BINARY,4,short_cycle=8; long_cycle=65; sharpness=40.0,True,strat 260-262 / patch A10,library,True,False,False
+kase_peak_oscillator_exit,exit,BINARY,2,short_cycle=8; long_cycle=65; sharpness=40.0,True,strat 260-262 / patch A10,library,True,False,False
+qqe_mod_signals,confirmation,BINARY,4,rsi_period=6; rsi_len=5; fast_factor=1.61,True,strat 277-279 / patch A8,library,True,False,False
+qqe_mod_exit,exit,BINARY,2,rsi_period=6; rsi_len=5; fast_factor=1.61,True,strat 277-279 / patch A8,library,True,False,False
+schaff_trend_cycle_signals,confirmation,TERNARY,4,macdFast=23; macdSlow=50; cycleLen=10; d1=3; d2=3; upperBand=75; lowerBand=25; stc_midline=50.0,True,patch A5,library,True,False,False
+schaff_trend_cycle_exit,exit,BINARY,2,macdFast=23; macdSlow=50; cycleLen=10; d1=3; d2=3; upperBand=75; lowerBand=25; stc_midline=50.0,True,patch A5,library,True,False,False
+glitch_index_signals,confirmation,TERNARY,4,length=30; multiplier=5.0; smooth=3,True,strat 249-251 / patch A7,library,True,False,False
+glitch_index_exit,exit,BINARY,2,length=30; multiplier=5.0; smooth=3,True,strat 249-251 / patch A7,library,True,False,False
+ehlers_reverse_ema_signals,confirmation,BINARY,4,alpha=0.1,True,strat 198 / patch A6,library,True,False,False
+ehlers_reverse_ema_exit,exit,BINARY,2,alpha=0.1,True,strat 198 / patch A6,library,True,False,False
