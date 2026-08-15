@@ -1,0 +1,1922 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+
+//@version=6
+strategy("JC's NNFX ALGO {Backtesting Suite} V5.1", overlay=true, currency=currency.USD, pyramiding=2, calc_on_every_tick=false, margin_long=0, margin_short=0)
+
+// V5 — EXIT LOGIC OVERHAUL
+//   - Dropdown reduced from 4 options to 3: "Static", "Static / Exit IND", "NNFX Phased"
+//   - Default Exit Type changed from "Static / Exit IND" to "NNFX Phased"
+//   - "Trail SL" and "Trail S/L / Exit IND" removed (rolled into NNFX Phased)
+//   - 'breakeven' user toggle removed; breakeven is hardcoded into "Static / Exit IND"
+//     and is part of NNFX Phased's Phase 2 by design
+//   - Starting balance default changed from $1,000,000 to $100,000
+//
+// NNFX Phased — Leg 2 trade management (long-side example; short mirrors):
+//   Phase 1 (entry → Leg 1 TP hits): SL at entry − atrMulti_Loss × ATR (fixed, no TP)
+//   Phase 2 (Leg 1 TP fills → price reaches 2× ATR profit from entry): SL at entry (breakeven)
+//   Phase 3 (price hits 2× ATR profit → close): trailing SL at 1.5 × ATR below highest close
+//     since Phase 3 activated
+// Leg 1 always: SL at atrMulti_Loss × ATR, TP at atrMulti_Loss × RR × ATR. Exit ind (C1 flip
+//   or Slot 5) can also close it.
+//
+// Phase activation is per-trade, latched in `var` state. Phase 3's "highest close since
+// activation" tracker resets on each new entry. Trail activation uses raw ATR multiples
+// (2× and 1.5×), independent of atrMulti_Loss setting, per design call.
+//
+// V3.2 base preserved otherwise. All indicator slot wiring, library calls, BTF/OCR/ATR
+// nuance rules, and stats tables unchanged.
+//
+// V5.1 — UI / SETTINGS PANEL CLEANUP
+//   - Per-indicator inputs reorganized by slot, alphabetical within slot:
+//     [C1] (A→Z), [C2] (A→Z), [V] (A→Z), [EX] (A→Z).
+//   - Group labels prefixed with slot tags ([C1], [C2], [V], [EX]) so the
+//     TradingView Settings panel keeps each slot's indicators visually clustered.
+//   - Every per-indicator input is gated with active=(<selector> == "<name>").
+//     Non-selected indicators show greyed-out, unclickable inputs. Only the
+//     currently selected indicator in each slot is editable.
+//   - Baseline inputs unchanged in V5.1 — they were already conditional via
+//     if-blocks in the BASELINE section downstream, so they already only render
+//     for the selected baseline.
+//   - No logic, variable name, library call, or signal-routing changes vs V5.
+//     V5.1 should produce identical trades to V5 on the same settings.
+
+// V8.1 library import — uses jacktime/JCs_Indicators_and_Functions_Lib (Pine v6)
+// UPDATE THE /2 BELOW to the new version number TradingView assigns when you
+// republish the library.
+import jacktime/JCs_Indicators_and_Functions_Lib/2 as jcif
+
+// ============================================================
+// CHART AND BACKTEST SETTINGS
+// ============================================================
+chrtMode = "Chart Mode"
+ChartMode = input.string(title="Chart Settings", defval="Live Trading", options=["Live Trading", "Backtesting"], group=chrtMode)
+
+Gchart = "Chart Settings"
+drawtester    = input.bool(title="Draw Backtest Stats Table ", defval=true, group=Gchart)
+title_Plot    = input.bool(title="Algorithm Settings Table ",  defval=true, group=Gchart)
+P_ltc         = input.bool(title="Live Trading Chart Plot",    defval=true, group=Gchart)
+color_theme1  = input.color(title="Chart Border Color",        defval=color.rgb(255, 60, 0), group=Gchart)
+Text_color1   = input.color(title="Chart Text Color",          defval=color.white, group=Gchart)
+BckGRnd_color1= input.color(title="Chart Background Color",    defval=color.rgb(0, 0, 0), group=Gchart)
+
+bcktstSettings = "Backtest Settings"
+startDate  = input.int(title='Start Date',  defval=1,    minval=1, maxval=31, group=bcktstSettings)
+startMonth = input.int(title='Start Month', defval=1,    minval=1, maxval=12, group=bcktstSettings)
+startYear  = input.int(title='Start Year',  defval=1900, minval=1800, maxval=2100, group=bcktstSettings)
+endDate    = input.int(title='End Date',    defval=1,    minval=1, maxval=31, group=bcktstSettings)
+endMonth   = input.int(title='End Month',   defval=1,    minval=1, maxval=12, group=bcktstSettings)
+endYear    = input.int(title='End Year',    defval=2100, minval=1800, maxval=2100, group=bcktstSettings)
+
+inDateRange = time >= timestamp(syminfo.timezone, startYear, startMonth, startDate, 0, 0) and time < timestamp(syminfo.timezone, endYear, endMonth, endDate, 0, 0)
+dateWindow() => inDateRange
+
+// V5: starting balance default 100k (was 1M)
+startBalance    = input.float(title="Account Starting Balance", defval=100000, group=bcktstSettings)
+compoundProfits = input.bool(title="Compound Profits (size off live balance)", defval=true, group=bcktstSettings, tooltip="When ON, position size grows/shrinks with strategy P&L. When OFF, every trade sizes off the starting balance.")
+
+G_Alerts = "Alert Messages"
+l_AlertMSG = input.string(title="Alert for Long Entry",  defval="Enter Long Trade on:",  group=G_Alerts)
+s_AlertMSG = input.string(title="Alert for Short Entry", defval="Enter Short Trade on:", group=G_Alerts)
+e_AlertMSG = input.string(title="Alert for Trade Exit",  defval="Close Open Positions on:", group=G_Alerts)
+
+// ============================================================
+// RISK MANAGEMENT
+// ============================================================
+// V5: 'breakeven' input removed. Behavior is now hardcoded where it applies.
+riskManagment     = "Risk Management"
+fixedpositionsize = input.bool(title="Fixed position size",                       defval=false,  group=riskManagment)
+dollarsPC         = input.float(title="Dollars per contract For Fixed Position Size", defval=100000, group=riskManagment)
+contracts         = input.float(title="Fixed Position Size Contracts",            defval=1,      group=riskManagment)
+doubletrades      = input.bool(title="Double Position Trade",                     defval=true,   group=riskManagment)
+shortrades        = input.bool(title="Take Short Trades?",                        defval=true,   group=riskManagment)
+iMainindExit      = input.bool(title="Exit Trade When Main Confirmation Ind flips", defval=false, group=riskManagment)
+inputRisk         = input.float(title="Default Risk Per Trade %",                 defval=2.0, minval=0.001, group=riskManagment)
+percentRisk       = inputRisk / 100
+
+atrLength      = input.int(title="ATR Length",        defval=14,  group=riskManagment)
+RR             = input.float(title="Risk to Reward Ratio", defval=1.5, group=riskManagment)
+atrMulti_Loss  = input.float(title="ATR Loss Multiple",   defval=1.0, group=riskManagment)
+atrMulti_Profit = atrMulti_Loss * RR
+atr             = ta.atr(atrLength)
+
+// V5: Exit Type dropdown reduced and reordered. Default = "NNFX Phased".
+Exit_Type = input.string(defval="NNFX Phased", title="Exit Condition Type", options=["Static", "Static / Exit IND", "NNFX Phased"], group=riskManagment)
+
+truncate(number, decimals) =>
+    factor = math.pow(10, decimals)
+    int(number * factor) / factor
+
+// ============================================================
+// INDICATOR SLOT SELECTORS AND TOGGLES
+// ============================================================
+INDI1 = "Indicator 1 (Main Confirmation Indicator)"
+Ind_1_Check_Trig = input.bool(true, title="Main Confirmation Indicator - Trigger", group=INDI1, inline="1")
+Ind_1_Check_Conf = input.bool(true, title="Main Confirmation Indicator - Confirmation", group=INDI1, inline="1")
+IND_1_SLCT = input.string(title="Main Confirmation Indicator", defval="SSL Channel",
+  options=["Chaikin Money Flow", "Chandelier Exit", "Coppock Curve", "Coral", "DiDi Index", "Detrended Price Oscillator", "Detrended Synthetic Price Oscillator",
+   "Ease Of Movement", "Half Trend", "Heiken Ashi Smoothed", "J_TPO", "Kallman Filter", "Kase Peak Oscillator", "Laguerre Filter", "Price Momentum Oscillator",
+   "Polychrmatic Momentum", "QQE Mod", "Relative Vigor Index", "Rex Oscillator", "Schaff Trend Cycle", "SSL Channel", "Supertrend", "Trend Direction Force Index",
+   "Volatility Quality", "Vortex Indicator", "Waddah Attar Explosion",
+   "Fisher Transform", "Aroon", "MAMA FAMA", "Center of Gravity", "Kuskus Starlight",
+   "Bears Bulls Impulse", "FX Sniper Ergodic CCI", "Lemantrend", "Glitch Index", "Ehlers Reverse EMA"], group=INDI1)
+
+INDI2 = "Indicator 2 (Second Confirmation Indicator)"
+Ind_2_Check_Conf = input.bool(true, title="Second Confirmation Indicator - Confirmation", group=INDI2)
+IND_2_SLCT = input.string(title="Second Confirmation Indicator", defval="Detrended Synthetic Price Oscillator",
+  options=["Chaikin Money Flow", "Chandelier Exit", "Coppock Curve", "Coral", "DiDi Index", "Detrended Price Oscillator", "Detrended Synthetic Price Oscillator",
+   "Ease Of Movement", "Half Trend", "Heiken Ashi Smoothed", "J_TPO", "Kallman Filter", "Kase Peak Oscillator", "Laguerre Filter", "Price Momentum Oscillator",
+   "Polychrmatic Momentum", "QQE Mod", "Relative Vigor Index", "Rex Oscillator", "Schaff Trend Cycle", "SSL Channel", "Supertrend", "Trend Direction Force Index",
+   "Volatility Quality", "Vortex Indicator", "Waddah Attar Explosion",
+   "Fisher Transform", "Aroon", "MAMA FAMA", "Center of Gravity", "Kuskus Starlight",
+   "Bears Bulls Impulse", "FX Sniper Ergodic CCI", "Lemantrend", "Glitch Index", "Ehlers Reverse EMA"], group=INDI2)
+
+INDI3 = "Volume Indicator"
+Ind_3_Check_Conf = input(true, title="Indicator 3 (Volume Indicator)", group=INDI3)
+IND_3_SLCT = input.string(title="Volume Indicator", defval="Variance",
+  options=["Chaikin Oscillator", "Chaikin Volatility", "Elders Force Index", "Normalized Volume", "Variance", "Volume Zone Oscilator", "Waddah Attar Explosion",
+   "Damiani Volatmeter", "TTM Squeeze", "Williams VIX Fix", "Volatility Ratio", "Mass Index"])
+
+INDI4 = "Baseline"
+Ind_4_Check_Conf = input(true, title="Baseline: Confirmation", group=INDI4)
+Ind_4_Check_Trig = input(true, title="Baseline: Trigger",      group=INDI4)
+maType = input.string(title="Baseline", defval="Triangular Moving Average",
+  options=["EMA", "HMA", "Fantail VMA", "McGinley Dynamic Index", "RMA", "Triangular Moving Average", "VIDYA", "VWMA", "WMA",
+   "KAMA", "ALMA", "T3 Tillson", "Super Smoother 2-Pole", "FRAMA"], group=INDI4)
+
+INDI6 = "Continuation Trades"
+Ind_6_Check = input(true, title="Indicator 6 - Continuation Trades", group=INDI6)
+
+INDI5 = "Exit Indicator"
+Ind_5_Check_Exit  = input(true, title="Indicator 5 - Exit", group=INDI5)
+IND_5_SLCT = input.string(title="Exit Indicator", defval="SSL Channel",
+  options=["Chaikin Money Flow", "Chandelier Exit", "Coppock Curve", "Coral", "DiDi Index", "Detrended Price Oscillator", "Detrended Synthetic Price Oscillator",
+   "Ease Of Movement", "Half Trend", "Heiken Ashi Smoothed", "J_TPO", "Kallman Filter", "Kase Peak Oscillator", "Laguerre Filter", "Price Momentum Oscillator",
+   "Polychrmatic Momentum", "QQE Mod", "Relative Vigor Index", "Rex Oscillator", "Schaff Trend Cycle", "SSL Channel", "Supertrend", "Trend Direction Force Index",
+   "Volatility Quality", "Vortex Indicator", "Waddah Attar Explosion",
+   "Fisher Transform", "Aroon", "MAMA FAMA", "Center of Gravity", "Kuskus Starlight",
+   "Bears Bulls Impulse", "FX Sniper Ergodic CCI", "Lemantrend", "Glitch Index", "Ehlers Reverse EMA"], group=INDI5)
+Ind_4_Check_Exit  = input(true, title="Baseline - Exit", group=INDI5)
+
+ENTRY_GROUP = "Entry Conditions"
+useBaselineEntry     = input.bool(true, title="Enable Baseline-Cross Entry (longcondition1)", group=ENTRY_GROUP)
+useC1Entry           = input.bool(true, title="Enable C1-Trigger Entry (longcondition2)",     group=ENTRY_GROUP)
+useContinuationEntry = input.bool(true, title="Enable Continuation Entry (longcondition3)",   group=ENTRY_GROUP)
+
+NAU = "Nuances"
+NAU_OCR_Check_Conf = input(false, title="One Candle Rule",        group=NAU)
+NAU_ATR_Check_Conf = input(true,  title="1X Atr Rule",            group=NAU)
+ATR_VAR             = input(title="Baseline ATR Rule", defval=1.5, group=NAU)
+NAU_BTF_Check_Conf = input(true,  title="Bridge Too Far",         group=NAU)
+BTF_VAR             = input(title="Bridge Too Far Variable", defval=7, group=NAU)
+
+
+// ============================================================
+// V5.1 — REORGANIZED INPUT BLOCK
+// ============================================================
+// Order: C1 A->Z, C2 A->Z, V A->Z, EX A->Z
+// Every input gates with active=(<selector> == "<name>"). Non-selected
+// indicators show greyed-out, unmovable inputs. Group labels prefixed
+// [C1], [C2], [V], [EX] so TradingView's settings panel keeps slot
+// clusters visually grouped.
+// Baseline inputs remain in their original if-block downstream — they're
+// already conditional and only render when their maType matches.
+
+// ----- Heiken Ashi Smoothed: shared HA candle data (used by all 3 slot instances) -----
+HA_open  = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, open)
+HA_high  = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, high)
+HA_low   = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, low)
+HA_close = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, close)
+
+// ============================================================
+// [C1] PER-INDICATOR INPUTS (alphabetical, active=gated)
+// ============================================================
+
+// ----- [C1] Aroon -----
+aroon_c1_len = input.int(25, title="Aroon: Length", group="[C1] Aroon", active=(IND_1_SLCT == "Aroon"))
+
+// ----- [C1] Bears Bulls Impulse -----
+bbi_c1_len = input.int(13, title="Bears Bulls Impulse: Length", group="[C1] Bears Bulls Impulse", active=(IND_1_SLCT == "Bears Bulls Impulse"))
+
+// ----- [C1] Center of Gravity -----
+cog_c1_len = input.int(10, title="Center of Gravity: Length", group="[C1] Center of Gravity", active=(IND_1_SLCT == "Center of Gravity"))
+cog_c1_sig = input.int(3, title="Center of Gravity: Signal Length", group="[C1] Center of Gravity", active=(IND_1_SLCT == "Center of Gravity"))
+
+// ----- [C1] Chaikin Money Flow -----
+cmf_c1_lookback = input.int(50, title="Chaikin Money Flow: Length", group="[C1] Chaikin Money Flow", active=(IND_1_SLCT == "Chaikin Money Flow"))
+
+// ----- [C1] Chandelier Exit -----
+ce_c1_atr = input.int(22, title="Chandelier Exit: ATR period", group="[C1] Chandelier Exit", active=(IND_1_SLCT == "Chandelier Exit"))
+ce_c1_mult = input.float(3.0, title="Chandelier Exit: ATR Multiplier", group="[C1] Chandelier Exit", active=(IND_1_SLCT == "Chandelier Exit"))
+ce_c1_close = input.bool(true, title="Chandelier Exit: Use Close Price for Extremums?", group="[C1] Chandelier Exit", active=(IND_1_SLCT == "Chandelier Exit"))
+
+// ----- [C1] Coppock Curve -----
+cc_c1_smooth = input.int(10, title="Coppock Curve: Smoothing Length", group="[C1] Coppock Curve", active=(IND_1_SLCT == "Coppock Curve"))
+cc_c1_longROC = input.int(14, title="Coppock Curve: Long ROC Length", group="[C1] Coppock Curve", active=(IND_1_SLCT == "Coppock Curve"))
+cc_c1_shortROC = input.int(11, title="Coppock Curve: Short ROC Length", group="[C1] Coppock Curve", active=(IND_1_SLCT == "Coppock Curve"))
+
+// ----- [C1] Coral -----
+coral_c1_smooth = input.int(10, title="Coral: Smoothing Period", group="[C1] Coral", active=(IND_1_SLCT == "Coral"))
+coral_c1_d = input.float(14, title="Coral: Constant D", group="[C1] Coral", active=(IND_1_SLCT == "Coral"))
+
+// ----- [C1] Detrended Price Oscillator -----
+dpo_c1_len = input.int(50, title="Detrended Price Oscillator: Length", group="[C1] Detrended Price Oscillator", active=(IND_1_SLCT == "Detrended Price Oscillator"))
+dpo_c1_cent = input.bool(false, title="Detrended Price Oscillator: Centered?", group="[C1] Detrended Price Oscillator", active=(IND_1_SLCT == "Detrended Price Oscillator"))
+
+// ----- [C1] Detrended Synthetic Price Oscillator -----
+dspo_c1_len = input.int(14, title="Detrended Synthetic Price Oscillator: Length", group="[C1] Detrended Synthetic Price Oscillator", active=(IND_1_SLCT == "Detrended Synthetic Price Oscillator"))
+
+// ----- [C1] DiDi Index -----
+didi_c1_med = input.int(8, title="DiDi Index: Medium Value", group="[C1] DiDi Index", active=(IND_1_SLCT == "DiDi Index"))
+didi_c1_long = input.int(20, title="Didi Index: Long Value", group="[C1] DiDi Index", active=(IND_1_SLCT == "DiDi Index"))
+
+// ----- [C1] Ease Of Movement -----
+eom_c1_len = input.int(14, title="Ease Of Movement: Length", group="[C1] Ease Of Movement", active=(IND_1_SLCT == "Ease Of Movement"))
+eom_c1_div = input.int(10000, title="Ease Of Movent: Divisor", group="[C1] Ease Of Movement", active=(IND_1_SLCT == "Ease Of Movement"))
+
+// ----- [C1] Ehlers Reverse EMA -----
+ere_c1_len = input.int(14, title="Ehlers Reverse EMA: Signal Length", group="[C1] Ehlers Reverse EMA", active=(IND_1_SLCT == "Ehlers Reverse EMA"))
+ere_c1_alpha = input.float(0.1, title="Ehlers Reverse EMA: Alpha", group="[C1] Ehlers Reverse EMA", active=(IND_1_SLCT == "Ehlers Reverse EMA"))
+
+// ----- [C1] Fisher Transform -----
+ft_c1_len = input.int(10, title="Fisher Transform: Length", group="[C1] Fisher Transform", active=(IND_1_SLCT == "Fisher Transform"))
+
+// ----- [C1] FX Sniper Ergodic CCI -----
+fxs_c1_cci = input.int(14, title="FX Sniper Ergodic: CCI Period", group="[C1] FX Sniper Ergodic CCI", active=(IND_1_SLCT == "FX Sniper Ergodic CCI"))
+fxs_c1_p1 = input.int(5, title="FX Sniper Ergodic: 1st EMA Period", group="[C1] FX Sniper Ergodic CCI", active=(IND_1_SLCT == "FX Sniper Ergodic CCI"))
+fxs_c1_p2 = input.int(3, title="FX Sniper Ergodic: 2nd EMA Period", group="[C1] FX Sniper Ergodic CCI", active=(IND_1_SLCT == "FX Sniper Ergodic CCI"))
+fxs_c1_trig = input.int(5, title="FX Sniper Ergodic: Trigger Period", group="[C1] FX Sniper Ergodic CCI", active=(IND_1_SLCT == "FX Sniper Ergodic CCI"))
+
+// ----- [C1] Glitch Index -----
+gli_c1_len = input.int(30, title="Glitch Index: Length", group="[C1] Glitch Index", active=(IND_1_SLCT == "Glitch Index"))
+gli_c1_mult = input.float(5.0, title="Glitch Index: Multiplier", group="[C1] Glitch Index", active=(IND_1_SLCT == "Glitch Index"))
+gli_c1_smooth = input.int(3, title="Glitch Index: Smoothing", group="[C1] Glitch Index", active=(IND_1_SLCT == "Glitch Index"))
+
+// ----- [C1] Half Trend -----
+ht_c1_amp = input.int(50, title="Half Trend: Amplitude", group="[C1] Half Trend", active=(IND_1_SLCT == "Half Trend"))
+
+// ----- [C1] Heiken Ashi Smoothed -----
+ha_c1_t1 = input.string(defval="T3", title="HeikenAshi Smoothed: Type of first moving average", options=["TRIMA","VIDYA","FAMA","AMA","HMA","TEMA","SMMA","WMA","EMA","SMA","T3","DEMA","ALMA","LSMA"], group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_l1 = input.int(8, title="HeikenAshi Smoothed: Length of First Moving Average", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_t2 = input.string(defval="T3", title="HeikenAshi Smoothed: Type of second moving average", options=["TRIMA","VIDYA","FAMA","AMA","HMA","TEMA","SMMA","WMA","EMA","SMA","T3","DEMA","ALMA","LSMA"], group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_l2 = input.int(8, title="HeikenAshi Smoothed: Length of Second Moving Average", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_ss = input.bool(false, title="HeikenAshi Smoothed: Single Smooth", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_vf1 = input.float(0.82, title="HeikenAshi Smoothed: Volume Factor of T3 for 1st Moving Average", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_ao1 = input.float(0.85, title="HiekenAshi Smoothed: Offset of Arnaud Legoux Moving Average type 1", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_as1 = input.int(6, title="HeikenAshi Smoothed: Sigma of Arnaud Legoux Moving Average type 1", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_ls1 = input.int(0, title="HeikenAshi Smoothed: Least Squares Moving Average offset as type 1", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_am1 = input.float(0.181, title="HeikenAshi Smoothed: Smooth Constant of AMA as Type 1", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_fr1a = input.int(1, title="HeikenAshi Smoothed: FRAMA as type 1", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_fr1b = input.int(168, title="HeikenAshi Smoothed: FRAMA as type 1(input 2)", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_vf2 = input.float(0.82, title="HeikenAshi Smoothed: Volume Factor of T3 for 2nd Moving Average", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_ao2 = input.float(0.85, title="HiekenAshi Smoothed: Offset of Arnaud Legoux Moving Average type 2", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_as2 = input.int(6, title="HeikenAshi Smoothed: Sigma of Arnaud Legoux Moving Average type 2", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_ls2 = input.int(0, title="HeikenAshi Smoothed: Least Squares Moving Average offset as type 2", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_am2 = input.float(0.181, title="HeikenAshi Smoothed: Smooth Constant of AMA as Type 2", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_fr2a = input.int(1, title="HeikenAshi Smoothed: FRAMA as type 2", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+ha_c1_fr2b = input.int(168, title="HeikenAshi Smoothed: FRAMA as type 2(input 2)", group="[C1] Heiken Ashi Smoothed", active=(IND_1_SLCT == "Heiken Ashi Smoothed"))
+
+// ----- [C1] J_TPO -----
+jtpo_c1_len = input.int(40, title="J_TPO: Length", group="[C1] J_TPO", active=(IND_1_SLCT == "J_TPO"))
+jtpo_c1_emaL = input.int(200, title="J_TPO: EMA Length", group="[C1] J_TPO", active=(IND_1_SLCT == "J_TPO"))
+jtpo_c1_emaF = input.bool(false, title="Will filter trade signals based on ema on J_TPO", group="[C1] J_TPO", active=(IND_1_SLCT == "J_TPO"))
+
+// ----- [C1] Kallman Filter -----
+kf_c1_sharp = input.float(1.0, title="Kalman Filter: Sharpness", group="[C1] Kallman Filter", active=(IND_1_SLCT == "Kallman Filter"))
+kf_c1_k = input.float(1.0, title="Kalman Filter: K", group="[C1] Kallman Filter", active=(IND_1_SLCT == "Kallman Filter"))
+
+// ----- [C1] Kase Peak Oscillator -----
+kpo_c1_short = input.int(8, title="Kase Peak Oscillator: Short Cycle", group="[C1] Kase Peak Oscillator", active=(IND_1_SLCT == "Kase Peak Oscillator"))
+kpo_c1_long = input.int(65, title="Kase Peak Oscillator: Long Cycle", group="[C1] Kase Peak Oscillator", active=(IND_1_SLCT == "Kase Peak Oscillator"))
+kpo_c1_sharp = input.float(40.0, title="Kase Peak Oscillator: Sharpness", group="[C1] Kase Peak Oscillator", active=(IND_1_SLCT == "Kase Peak Oscillator"))
+
+// ----- [C1] Kuskus Starlight -----
+ks_c1_range = input.int(30, title="Kuskus Starlight: Range Periods", group="[C1] Kuskus Starlight", active=(IND_1_SLCT == "Kuskus Starlight"))
+ks_c1_psm = input.float(0.7, title="Kuskus Starlight: Price Smoothing", group="[C1] Kuskus Starlight", active=(IND_1_SLCT == "Kuskus Starlight"))
+ks_c1_ism = input.float(0.7, title="Kuskus Starlight: Index Smoothing", group="[C1] Kuskus Starlight", active=(IND_1_SLCT == "Kuskus Starlight"))
+
+// ----- [C1] Laguerre Filter -----
+lf_c1_alpha = input.float(0.2, title="Laguerre Filter: Alpha", group="[C1] Laguerre Filter", active=(IND_1_SLCT == "Laguerre Filter"))
+
+// ----- [C1] Lemantrend -----
+lmt_c1_p1 = input.int(13, title="Lemantrend: Period 1", group="[C1] Lemantrend", active=(IND_1_SLCT == "Lemantrend"))
+lmt_c1_p2 = input.int(21, title="Lemantrend: Period 2", group="[C1] Lemantrend", active=(IND_1_SLCT == "Lemantrend"))
+lmt_c1_p3 = input.int(34, title="Lemantrend: Period 3", group="[C1] Lemantrend", active=(IND_1_SLCT == "Lemantrend"))
+lmt_c1_smooth = input.int(3, title="Lemantrend: Smoothing", group="[C1] Lemantrend", active=(IND_1_SLCT == "Lemantrend"))
+
+// ----- [C1] MAMA FAMA -----
+mama_c1_fast = input.float(0.5, title="MAMA FAMA: Fast Limit", group="[C1] MAMA FAMA", active=(IND_1_SLCT == "MAMA FAMA"))
+mama_c1_slow = input.float(0.05, title="MAMA FAMA: Slow Limit", group="[C1] MAMA FAMA", active=(IND_1_SLCT == "MAMA FAMA"))
+
+// ----- [C1] Polychrmatic Momentum -----
+poly_c1_len = input.int(14, title="Polychromatic Momentum: Length", group="[C1] Polychrmatic Momentum", active=(IND_1_SLCT == "Polychrmatic Momentum"))
+
+// ----- [C1] Price Momentum Oscillator -----
+pmo_c1_s1 = input.int(35, title="Price Momentum Oscillator: 1st Smoothing Length", group="[C1] Price Momentum Oscillator", active=(IND_1_SLCT == "Price Momentum Oscillator"))
+pmo_c1_s2 = input.int(20, title="Price Momentum Oscillator: 2nd Smoothing Length", group="[C1] Price Momentum Oscillator", active=(IND_1_SLCT == "Price Momentum Oscillator"))
+pmo_c1_sg = input.int(10, title="Price Momentum Oscillator: Signal Length", group="[C1] Price Momentum Oscillator", active=(IND_1_SLCT == "Price Momentum Oscillator"))
+
+// ----- [C1] QQE Mod -----
+qqe_c1_rsiP = input.int(6, title="QQE Mod: RSI Period", group="[C1] QQE Mod", active=(IND_1_SLCT == "QQE Mod"))
+qqe_c1_rsiL = input.int(5, title="QQE Mod: RSI Length", group="[C1] QQE Mod", active=(IND_1_SLCT == "QQE Mod"))
+qqe_c1_fac = input.float(1.61, title="QQE Mod: Fast QQE Factor", group="[C1] QQE Mod", active=(IND_1_SLCT == "QQE Mod"))
+
+// ----- [C1] Relative Vigor Index -----
+rvi_c1_len = input.int(10, title="Relative Vigor Index: Length", group="[C1] Relative Vigor Index", active=(IND_1_SLCT == "Relative Vigor Index"))
+
+// ----- [C1] Rex Oscillator -----
+rex_c1_t1 = input.string(defval="SMA", title="Rex Oscillator: Type moving average", options=['ALMA','EMA','DEMA','TEMA','FRAMA','HMA','JMA','LSMA','MF','RDMA','RMA','SMA','T3','TMA','UMA','VAMA','WMA'], group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_l1 = input.int(13, title="Rex Oscillator:  Smooth Length", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_ao1 = input.float(0.85, title="Rex Oscillator: Alma Offset", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_as1 = input.float(6, title="Rex Oscillator: Alma Sigma", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_ff1 = input.int(34, title="Rex Oscillator:  FRAMA Fast Period", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_fs1 = input.int(89, title="Rex Oscillator:  FRAMA Slow Period", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_jp1 = input.int(1, title="Rex Oscillator:  Jurik Phase", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_jpw1 = input.int(1, title="Rex Oscillator:  Jurik Power", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_ls1 = input.int(0, title="Rex Oscillator:  Least Squares Offset", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_mf1 = input.float(0.8, title="Rex Oscillator:  Modular Filter", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_mfb1 = input.bool(false, title="Rex Oscillator:  Modular Filter Feedback", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_mfw1 = input.float(0.5, title="Rex Oscillator:  Modular Filter Feedback Weighting", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_va1 = input.int(10, title="Rex Oscillator:  Volatility Adjusted Lookback", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_t2 = input.string(defval="SMA", title="Rex Oscillator: Signal Type moving average", options=['ALMA','EMA','DEMA','TEMA','FRAMA','HMA','JMA','LSMA','MF','RDMA','RMA','SMA','T3','TMA','UMA','VAMA','WMA'], group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_l2 = input.int(13, title="Rex Oscillator:  Signal Smooth Length", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_ao2 = input.float(0.85, title="Rex Oscillator: Signal Alma Offset", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_as2 = input.float(6, title="Rex Oscillator: Signal Alma Sigma", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_ff2 = input.int(34, title="Rex Oscillator:  Signal FRAMA Fast Period", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_fs2 = input.int(89, title="Rex Oscillator:  Signal FRAMA Slow Period", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_jp2 = input.int(1, title="Rex Oscillator:  Signal Jurik Phase", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_jpw2 = input.int(1, title="Rex Oscillator:  Signal Jurik Power", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_ls2 = input.int(0, title="Rex Oscillator: Signal Least Squares Offset", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_mf2 = input.float(0.8, title="Rex Oscillator: Signal Modular Filter", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_mfb2 = input.bool(false, title="Rex Oscillator: Signal Modular Filter Feedback", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_mfw2 = input.float(0.5, title="Rex Oscillator: Signal Modular Filter Feedback Weighting", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+rex_c1_va2 = input.int(10, title="Rex Oscillator: Signal Volatility Adjusted Lookback", group="[C1] Rex Oscillator", active=(IND_1_SLCT == "Rex Oscillator"))
+
+// ----- [C1] Schaff Trend Cycle -----
+stc_c1_macdF = input.int(12, title="Schaff Trend Cycle: MACD Fast Length", group="[C1] Schaff Trend Cycle", active=(IND_1_SLCT == "Schaff Trend Cycle"))
+stc_c1_macdS = input.int(26, title="Schaff Trend Cycle: MACD Slow Length", group="[C1] Schaff Trend Cycle", active=(IND_1_SLCT == "Schaff Trend Cycle"))
+stc_c1_cyc = input.int(10, title="Schaff Trend Cycle: Cycle Length", group="[C1] Schaff Trend Cycle", active=(IND_1_SLCT == "Schaff Trend Cycle"))
+stc_c1_d1 = input.int(5, title="Schaff Trend Cycle: 1st % D Length", group="[C1] Schaff Trend Cycle", active=(IND_1_SLCT == "Schaff Trend Cycle"))
+stc_c1_d2 = input.int(3, title="Schaff Trend Cycle: 2nd % D Length", group="[C1] Schaff Trend Cycle", active=(IND_1_SLCT == "Schaff Trend Cycle"))
+stc_c1_up = input.int(65, title="Schaff Trend Cycle: Upper Band", group="[C1] Schaff Trend Cycle", active=(IND_1_SLCT == "Schaff Trend Cycle"))
+stc_c1_lo = input.int(35, title="Schaff Trend Cycle: Lower Band", group="[C1] Schaff Trend Cycle", active=(IND_1_SLCT == "Schaff Trend Cycle"))
+
+// ----- [C1] SSL Channel -----
+ssl_c1_len = input.int(10, title="SSL Channel: Length", group="[C1] SSL Channel", active=(IND_1_SLCT == "SSL Channel"))
+
+// ----- [C1] Supertrend -----
+st_c1_atr = input.int(10, title="SuperTrend: ATR Period", group="[C1] Supertrend", active=(IND_1_SLCT == "Supertrend"))
+st_c1_fac = input.float(3.0, title="SuperTrend: Factor", group="[C1] Supertrend", active=(IND_1_SLCT == "Supertrend"))
+
+// ----- [C1] Trend Direction Force Index -----
+tdfi_c1_lb = input.int(13, title="Trend Direction Force Index: Lookback", group="[C1] Trend Direction Force Index", active=(IND_1_SLCT == "Trend Direction Force Index"))
+tdfi_c1_fh = input.float(0.05, title="Trend Direction Force Index: Filter High", group="[C1] Trend Direction Force Index", active=(IND_1_SLCT == "Trend Direction Force Index"))
+tdfi_c1_fl = input.float(-0.05, title="Trend Direction Force Index: Filter Low", group="[C1] Trend Direction Force Index", active=(IND_1_SLCT == "Trend Direction Force Index"))
+
+// ----- [C1] Volatility Quality -----
+vq_c1_ma = input.string("WMA", options=["EMA","WMA","RMA","SMA"], title="Volatility Quality: Lookback", group="[C1] Volatility Quality", active=(IND_1_SLCT == "Volatility Quality"))
+vq_c1_smo = input.int(10, title="Volatility Quality: Smoothing", group="[C1] Volatility Quality", active=(IND_1_SLCT == "Volatility Quality"))
+vq_c1_atr = input.float(7.5, title="Volatility Quality: ATR %", group="[C1] Volatility Quality", active=(IND_1_SLCT == "Volatility Quality"))
+
+// ----- [C1] Vortex Indicator -----
+vortex_c1_p = input.int(14, title="Vortex Indicator: Period", group="[C1] Vortex Indicator", active=(IND_1_SLCT == "Vortex Indicator"))
+
+// ----- [C1] Waddah Attar Explosion -----
+wae_c1_sens = input.int(150, title="Waddah Attar Explosion: Sensetivity", group="[C1] Waddah Attar Explosion", active=(IND_1_SLCT == "Waddah Attar Explosion"))
+wae_c1_fast = input.int(20, title="Waddah Attar Explosion: Fast EMA Length", group="[C1] Waddah Attar Explosion", active=(IND_1_SLCT == "Waddah Attar Explosion"))
+wae_c1_slow = input.int(40, title="Waddah Attar Explosion: Slow EMA Length", group="[C1] Waddah Attar Explosion", active=(IND_1_SLCT == "Waddah Attar Explosion"))
+wae_c1_bbL = input.int(20, title="Waddah Attar Explosion: BB Channel Length", group="[C1] Waddah Attar Explosion", active=(IND_1_SLCT == "Waddah Attar Explosion"))
+wae_c1_bbS = input.float(2.0, title="Waddah Attar Explosion: BB STDEV Multiplier", group="[C1] Waddah Attar Explosion", active=(IND_1_SLCT == "Waddah Attar Explosion"))
+
+// ============================================================
+// [C2] PER-INDICATOR INPUTS (alphabetical, active=gated)
+// ============================================================
+
+// ----- [C2] Aroon -----
+aroon_c2_len = input.int(25, title="Aroon: Length", group="[C2] Aroon", active=(IND_2_SLCT == "Aroon"))
+
+// ----- [C2] Bears Bulls Impulse -----
+bbi_c2_len = input.int(13, title="Bears Bulls Impulse: Length", group="[C2] Bears Bulls Impulse", active=(IND_2_SLCT == "Bears Bulls Impulse"))
+
+// ----- [C2] Center of Gravity -----
+cog_c2_len = input.int(10, title="Center of Gravity: Length", group="[C2] Center of Gravity", active=(IND_2_SLCT == "Center of Gravity"))
+cog_c2_sig = input.int(3, title="Center of Gravity: Signal Length", group="[C2] Center of Gravity", active=(IND_2_SLCT == "Center of Gravity"))
+
+// ----- [C2] Chaikin Money Flow -----
+cmf_c2_lookback = input.int(50, title="Chaikin Money Flow: Length", group="[C2] Chaikin Money Flow", active=(IND_2_SLCT == "Chaikin Money Flow"))
+
+// ----- [C2] Chandelier Exit -----
+ce_c2_atr = input.int(22, title="Chandelier Exit: ATR period", group="[C2] Chandelier Exit", active=(IND_2_SLCT == "Chandelier Exit"))
+ce_c2_mult = input.float(3.0, title="Chandelier Exit: ATR Multiplier", group="[C2] Chandelier Exit", active=(IND_2_SLCT == "Chandelier Exit"))
+ce_c2_close = input.bool(true, title="Chandelier Exit: Use Close Price for Extremums?", group="[C2] Chandelier Exit", active=(IND_2_SLCT == "Chandelier Exit"))
+
+// ----- [C2] Coppock Curve -----
+cc_c2_smooth = input.int(10, title="Coppock Curve: Smoothing Length", group="[C2] Coppock Curve", active=(IND_2_SLCT == "Coppock Curve"))
+cc_c2_longROC = input.int(14, title="Coppock Curve: Long ROC Length", group="[C2] Coppock Curve", active=(IND_2_SLCT == "Coppock Curve"))
+cc_c2_shortROC = input.int(11, title="Coppock Curve: Short ROC Length", group="[C2] Coppock Curve", active=(IND_2_SLCT == "Coppock Curve"))
+
+// ----- [C2] Coral -----
+coral_c2_smooth = input.int(10, title="Coral: Smoothing Period", group="[C2] Coral", active=(IND_2_SLCT == "Coral"))
+coral_c2_d = input.float(14, title="Coral: Constant D", group="[C2] Coral", active=(IND_2_SLCT == "Coral"))
+
+// ----- [C2] Detrended Price Oscillator -----
+dpo_c2_len = input.int(50, title="Detrended Price Oscillator: Length", group="[C2] Detrended Price Oscillator", active=(IND_2_SLCT == "Detrended Price Oscillator"))
+dpo_c2_cent = input.bool(false, title="Detrended Price Oscillator: Centered?", group="[C2] Detrended Price Oscillator", active=(IND_2_SLCT == "Detrended Price Oscillator"))
+
+// ----- [C2] Detrended Synthetic Price Oscillator -----
+dspo_c2_len = input.int(14, title="Detrended Synthetic Price Oscillator: Length", group="[C2] Detrended Synthetic Price Oscillator", active=(IND_2_SLCT == "Detrended Synthetic Price Oscillator"))
+
+// ----- [C2] DiDi Index -----
+didi_c2_med = input.int(8, title="DiDi Index: Medium Value", group="[C2] DiDi Index", active=(IND_2_SLCT == "DiDi Index"))
+didi_c2_long = input.int(20, title="Didi Index: Long Value", group="[C2] DiDi Index", active=(IND_2_SLCT == "DiDi Index"))
+
+// ----- [C2] Ease Of Movement -----
+eom_c2_len = input.int(14, title="Ease Of Movement: Length", group="[C2] Ease Of Movement", active=(IND_2_SLCT == "Ease Of Movement"))
+eom_c2_div = input.int(10000, title="Ease Of Movent: Divisor", group="[C2] Ease Of Movement", active=(IND_2_SLCT == "Ease Of Movement"))
+
+// ----- [C2] Ehlers Reverse EMA -----
+ere_c2_len = input.int(14, title="Ehlers Reverse EMA: Signal Length", group="[C2] Ehlers Reverse EMA", active=(IND_2_SLCT == "Ehlers Reverse EMA"))
+ere_c2_alpha = input.float(0.1, title="Ehlers Reverse EMA: Alpha", group="[C2] Ehlers Reverse EMA", active=(IND_2_SLCT == "Ehlers Reverse EMA"))
+
+// ----- [C2] Fisher Transform -----
+ft_c2_len = input.int(10, title="Fisher Transform: Length", group="[C2] Fisher Transform", active=(IND_2_SLCT == "Fisher Transform"))
+
+// ----- [C2] FX Sniper Ergodic CCI -----
+fxs_c2_cci = input.int(14, title="FX Sniper Ergodic: CCI Period", group="[C2] FX Sniper Ergodic CCI", active=(IND_2_SLCT == "FX Sniper Ergodic CCI"))
+fxs_c2_p1 = input.int(5, title="FX Sniper Ergodic: 1st EMA Period", group="[C2] FX Sniper Ergodic CCI", active=(IND_2_SLCT == "FX Sniper Ergodic CCI"))
+fxs_c2_p2 = input.int(3, title="FX Sniper Ergodic: 2nd EMA Period", group="[C2] FX Sniper Ergodic CCI", active=(IND_2_SLCT == "FX Sniper Ergodic CCI"))
+fxs_c2_trig = input.int(5, title="FX Sniper Ergodic: Trigger Period", group="[C2] FX Sniper Ergodic CCI", active=(IND_2_SLCT == "FX Sniper Ergodic CCI"))
+
+// ----- [C2] Glitch Index -----
+gli_c2_len = input.int(30, title="Glitch Index: Length", group="[C2] Glitch Index", active=(IND_2_SLCT == "Glitch Index"))
+gli_c2_mult = input.float(5.0, title="Glitch Index: Multiplier", group="[C2] Glitch Index", active=(IND_2_SLCT == "Glitch Index"))
+gli_c2_smooth = input.int(3, title="Glitch Index: Smoothing", group="[C2] Glitch Index", active=(IND_2_SLCT == "Glitch Index"))
+
+// ----- [C2] Half Trend -----
+ht_c2_amp = input.int(50, title="Half Trend: Amplitude", group="[C2] Half Trend", active=(IND_2_SLCT == "Half Trend"))
+
+// ----- [C2] Heiken Ashi Smoothed -----
+ha_c2_t1 = input.string(defval="T3", title="HeikenAshi Smoothed: Type of first moving average", options=["TRIMA","VIDYA","FAMA","AMA","HMA","TEMA","SMMA","WMA","EMA","SMA","T3","DEMA","ALMA","LSMA"], group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_l1 = input.int(8, title="HeikenAshi Smoothed: Length of First Moving Average", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_t2 = input.string(defval="T3", title="HeikenAshi Smoothed: Type of second moving average", options=["TRIMA","VIDYA","FAMA","AMA","HMA","TEMA","SMMA","WMA","EMA","SMA","T3","DEMA","ALMA","LSMA"], group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_l2 = input.int(8, title="HeikenAshi Smoothed: Length of Second Moving Average", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_ss = input.bool(false, title="HeikenAshi Smoothed: Single Smooth", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_vf1 = input.float(0.82, title="HeikenAshi Smoothed: Volume Factor of T3 for 1st Moving Average", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_ao1 = input.float(0.85, title="HiekenAshi Smoothed: Offset of Arnaud Legoux Moving Average type 1", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_as1 = input.int(6, title="HeikenAshi Smoothed: Sigma of Arnaud Legoux Moving Average type 1", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_ls1 = input.int(0, title="HeikenAshi Smoothed: Least Squares Moving Average offset as type 1", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_am1 = input.float(0.181, title="HeikenAshi Smoothed: Smooth Constant of AMA as Type 1", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_fr1a = input.int(1, title="HeikenAshi Smoothed: FRAMA as type 1", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_fr1b = input.int(168, title="HeikenAshi Smoothed: FRAMA as type 1(input 2)", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_vf2 = input.float(0.82, title="HeikenAshi Smoothed: Volume Factor of T3 for 2nd Moving Average", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_ao2 = input.float(0.85, title="HiekenAshi Smoothed: Offset of Arnaud Legoux Moving Average type 2", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_as2 = input.int(6, title="HeikenAshi Smoothed: Sigma of Arnaud Legoux Moving Average type 2", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_ls2 = input.int(0, title="HeikenAshi Smoothed: Least Squares Moving Average offset as type 2", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_am2 = input.float(0.181, title="HeikenAshi Smoothed: Smooth Constant of AMA as Type 2", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_fr2a = input.int(1, title="HeikenAshi Smoothed: FRAMA as type 2", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+ha_c2_fr2b = input.int(168, title="HeikenAshi Smoothed: FRAMA as type 2(input 2)", group="[C2] Heiken Ashi Smoothed", active=(IND_2_SLCT == "Heiken Ashi Smoothed"))
+
+// ----- [C2] J_TPO -----
+jtpo_c2_len = input.int(40, title="J_TPO: Length", group="[C2] J_TPO", active=(IND_2_SLCT == "J_TPO"))
+jtpo_c2_emaL = input.int(200, title="J_TPO: EMA Length", group="[C2] J_TPO", active=(IND_2_SLCT == "J_TPO"))
+jtpo_c2_emaF = input.bool(false, title="Will filter trade signals based on ema on J_TPO", group="[C2] J_TPO", active=(IND_2_SLCT == "J_TPO"))
+
+// ----- [C2] Kallman Filter -----
+kf_c2_sharp = input.float(1.0, title="Kalman Filter: Sharpness", group="[C2] Kallman Filter", active=(IND_2_SLCT == "Kallman Filter"))
+kf_c2_k = input.float(1.0, title="Kalman Filter: K", group="[C2] Kallman Filter", active=(IND_2_SLCT == "Kallman Filter"))
+
+// ----- [C2] Kase Peak Oscillator -----
+kpo_c2_short = input.int(8, title="Kase Peak Oscillator: Short Cycle", group="[C2] Kase Peak Oscillator", active=(IND_2_SLCT == "Kase Peak Oscillator"))
+kpo_c2_long = input.int(65, title="Kase Peak Oscillator: Long Cycle", group="[C2] Kase Peak Oscillator", active=(IND_2_SLCT == "Kase Peak Oscillator"))
+kpo_c2_sharp = input.float(40.0, title="Kase Peak Oscillator: Sharpness", group="[C2] Kase Peak Oscillator", active=(IND_2_SLCT == "Kase Peak Oscillator"))
+
+// ----- [C2] Kuskus Starlight -----
+ks_c2_range = input.int(30, title="Kuskus Starlight: Range Periods", group="[C2] Kuskus Starlight", active=(IND_2_SLCT == "Kuskus Starlight"))
+ks_c2_psm = input.float(0.7, title="Kuskus Starlight: Price Smoothing", group="[C2] Kuskus Starlight", active=(IND_2_SLCT == "Kuskus Starlight"))
+ks_c2_ism = input.float(0.7, title="Kuskus Starlight: Index Smoothing", group="[C2] Kuskus Starlight", active=(IND_2_SLCT == "Kuskus Starlight"))
+
+// ----- [C2] Laguerre Filter -----
+lf_c2_alpha = input.float(0.2, title="Laguerre Filter: Alpha", group="[C2] Laguerre Filter", active=(IND_2_SLCT == "Laguerre Filter"))
+
+// ----- [C2] Lemantrend -----
+lmt_c2_p1 = input.int(13, title="Lemantrend: Period 1", group="[C2] Lemantrend", active=(IND_2_SLCT == "Lemantrend"))
+lmt_c2_p2 = input.int(21, title="Lemantrend: Period 2", group="[C2] Lemantrend", active=(IND_2_SLCT == "Lemantrend"))
+lmt_c2_p3 = input.int(34, title="Lemantrend: Period 3", group="[C2] Lemantrend", active=(IND_2_SLCT == "Lemantrend"))
+lmt_c2_smooth = input.int(3, title="Lemantrend: Smoothing", group="[C2] Lemantrend", active=(IND_2_SLCT == "Lemantrend"))
+
+// ----- [C2] MAMA FAMA -----
+mama_c2_fast = input.float(0.5, title="MAMA FAMA: Fast Limit", group="[C2] MAMA FAMA", active=(IND_2_SLCT == "MAMA FAMA"))
+mama_c2_slow = input.float(0.05, title="MAMA FAMA: Slow Limit", group="[C2] MAMA FAMA", active=(IND_2_SLCT == "MAMA FAMA"))
+
+// ----- [C2] Polychrmatic Momentum -----
+poly_c2_len = input.int(14, title="Polychromatic Momentum: Length", group="[C2] Polychrmatic Momentum", active=(IND_2_SLCT == "Polychrmatic Momentum"))
+
+// ----- [C2] Price Momentum Oscillator -----
+pmo_c2_s1 = input.int(35, title="Price Momentum Oscillator: 1st Smoothing Length", group="[C2] Price Momentum Oscillator", active=(IND_2_SLCT == "Price Momentum Oscillator"))
+pmo_c2_s2 = input.int(20, title="Price Momentum Oscillator: 2nd Smoothing Length", group="[C2] Price Momentum Oscillator", active=(IND_2_SLCT == "Price Momentum Oscillator"))
+pmo_c2_sg = input.int(10, title="Price Momentum Oscillator: Signal Length", group="[C2] Price Momentum Oscillator", active=(IND_2_SLCT == "Price Momentum Oscillator"))
+
+// ----- [C2] QQE Mod -----
+qqe_c2_rsiP = input.int(6, title="QQE Mod: RSI Period", group="[C2] QQE Mod", active=(IND_2_SLCT == "QQE Mod"))
+qqe_c2_rsiL = input.int(5, title="QQE Mod: RSI Length", group="[C2] QQE Mod", active=(IND_2_SLCT == "QQE Mod"))
+qqe_c2_fac = input.float(1.61, title="QQE Mod: Fast QQE Factor", group="[C2] QQE Mod", active=(IND_2_SLCT == "QQE Mod"))
+
+// ----- [C2] Relative Vigor Index -----
+rvi_c2_len = input.int(10, title="Relative Vigor Index: Length", group="[C2] Relative Vigor Index", active=(IND_2_SLCT == "Relative Vigor Index"))
+
+// ----- [C2] Rex Oscillator -----
+rex_c2_t1 = input.string(defval="SMA", title="Rex Oscillator: Type moving average", options=['ALMA','EMA','DEMA','TEMA','FRAMA','HMA','JMA','LSMA','MF','RDMA','RMA','SMA','T3','TMA','UMA','VAMA','WMA'], group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_l1 = input.int(13, title="Rex Oscillator:  Smooth Length", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_ao1 = input.float(0.85, title="Rex Oscillator: Alma Offset", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_as1 = input.float(6, title="Rex Oscillator: Alma Sigma", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_ff1 = input.int(34, title="Rex Oscillator:  FRAMA Fast Period", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_fs1 = input.int(89, title="Rex Oscillator:  FRAMA Slow Period", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_jp1 = input.int(1, title="Rex Oscillator:  Jurik Phase", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_jpw1 = input.int(1, title="Rex Oscillator:  Jurik Power", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_ls1 = input.int(0, title="Rex Oscillator:  Least Squares Offset", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_mf1 = input.float(0.8, title="Rex Oscillator:  Modular Filter", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_mfb1 = input.bool(false, title="Rex Oscillator:  Modular Filter Feedback", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_mfw1 = input.float(0.5, title="Rex Oscillator:  Modular Filter Feedback Weighting", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_va1 = input.int(10, title="Rex Oscillator:  Volatility Adjusted Lookback", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_t2 = input.string(defval="SMA", title="Rex Oscillator: Signal Type moving average", options=['ALMA','EMA','DEMA','TEMA','FRAMA','HMA','JMA','LSMA','MF','RDMA','RMA','SMA','T3','TMA','UMA','VAMA','WMA'], group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_l2 = input.int(13, title="Rex Oscillator:  Signal Smooth Length", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_ao2 = input.float(0.85, title="Rex Oscillator: Signal Alma Offset", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_as2 = input.float(6, title="Rex Oscillator: Signal Alma Sigma", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_ff2 = input.int(34, title="Rex Oscillator:  Signal FRAMA Fast Period", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_fs2 = input.int(89, title="Rex Oscillator:  Signal FRAMA Slow Period", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_jp2 = input.int(1, title="Rex Oscillator:  Signal Jurik Phase", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_jpw2 = input.int(1, title="Rex Oscillator:  Signal Jurik Power", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_ls2 = input.int(0, title="Rex Oscillator: Signal Least Squares Offset", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_mf2 = input.float(0.8, title="Rex Oscillator: Signal Modular Filter", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_mfb2 = input.bool(false, title="Rex Oscillator: Signal Modular Filter Feedback", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_mfw2 = input.float(0.5, title="Rex Oscillator: Signal Modular Filter Feedback Weighting", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+rex_c2_va2 = input.int(10, title="Rex Oscillator: Signal Volatility Adjusted Lookback", group="[C2] Rex Oscillator", active=(IND_2_SLCT == "Rex Oscillator"))
+
+// ----- [C2] Schaff Trend Cycle -----
+stc_c2_macdF = input.int(12, title="Schaff Trend Cycle: MACD Fast Length", group="[C2] Schaff Trend Cycle", active=(IND_2_SLCT == "Schaff Trend Cycle"))
+stc_c2_macdS = input.int(26, title="Schaff Trend Cycle: MACD Slow Length", group="[C2] Schaff Trend Cycle", active=(IND_2_SLCT == "Schaff Trend Cycle"))
+stc_c2_cyc = input.int(10, title="Schaff Trend Cycle: Cycle Length", group="[C2] Schaff Trend Cycle", active=(IND_2_SLCT == "Schaff Trend Cycle"))
+stc_c2_d1 = input.int(5, title="Schaff Trend Cycle: 1st % D Length", group="[C2] Schaff Trend Cycle", active=(IND_2_SLCT == "Schaff Trend Cycle"))
+stc_c2_d2 = input.int(3, title="Schaff Trend Cycle: 2nd % D Length", group="[C2] Schaff Trend Cycle", active=(IND_2_SLCT == "Schaff Trend Cycle"))
+stc_c2_up = input.int(65, title="Schaff Trend Cycle: Upper Band", group="[C2] Schaff Trend Cycle", active=(IND_2_SLCT == "Schaff Trend Cycle"))
+stc_c2_lo = input.int(35, title="Schaff Trend Cycle: Lower Band", group="[C2] Schaff Trend Cycle", active=(IND_2_SLCT == "Schaff Trend Cycle"))
+
+// ----- [C2] SSL Channel -----
+ssl_c2_len = input.int(10, title="SSL Channel: Length", group="[C2] SSL Channel", active=(IND_2_SLCT == "SSL Channel"))
+
+// ----- [C2] Supertrend -----
+st_c2_atr = input.int(10, title="SuperTrend: ATR Period", group="[C2] Supertrend", active=(IND_2_SLCT == "Supertrend"))
+st_c2_fac = input.float(3.0, title="SuperTrend: Factor", group="[C2] Supertrend", active=(IND_2_SLCT == "Supertrend"))
+
+// ----- [C2] Trend Direction Force Index -----
+tdfi_c2_lb = input.int(13, title="Trend Direction Force Index: Lookback", group="[C2] Trend Direction Force Index", active=(IND_2_SLCT == "Trend Direction Force Index"))
+tdfi_c2_fh = input.float(0.05, title="Trend Direction Force Index: Filter High", group="[C2] Trend Direction Force Index", active=(IND_2_SLCT == "Trend Direction Force Index"))
+tdfi_c2_fl = input.float(-0.05, title="Trend Direction Force Index: Filter Low", group="[C2] Trend Direction Force Index", active=(IND_2_SLCT == "Trend Direction Force Index"))
+
+// ----- [C2] Volatility Quality -----
+vq_c2_ma = input.string("WMA", options=["EMA","WMA","RMA","SMA"], title="Volatility Quality: Lookback", group="[C2] Volatility Quality", active=(IND_2_SLCT == "Volatility Quality"))
+vq_c2_smo = input.int(10, title="Volatility Quality: Smoothing", group="[C2] Volatility Quality", active=(IND_2_SLCT == "Volatility Quality"))
+vq_c2_atr = input.float(7.5, title="Volatility Quality: ATR %", group="[C2] Volatility Quality", active=(IND_2_SLCT == "Volatility Quality"))
+
+// ----- [C2] Vortex Indicator -----
+vortex_c2_p = input.int(14, title="Vortex Indicator: Period", group="[C2] Vortex Indicator", active=(IND_2_SLCT == "Vortex Indicator"))
+
+// ----- [C2] Waddah Attar Explosion -----
+wae_c2_sens = input.int(150, title="Waddah Attar Explosion: Sensetivity", group="[C2] Waddah Attar Explosion", active=(IND_2_SLCT == "Waddah Attar Explosion"))
+wae_c2_fast = input.int(20, title="Waddah Attar Explosion: Fast EMA Length", group="[C2] Waddah Attar Explosion", active=(IND_2_SLCT == "Waddah Attar Explosion"))
+wae_c2_slow = input.int(40, title="Waddah Attar Explosion: Slow EMA Length", group="[C2] Waddah Attar Explosion", active=(IND_2_SLCT == "Waddah Attar Explosion"))
+wae_c2_bbL = input.int(20, title="Waddah Attar Explosion: BB Channel Length", group="[C2] Waddah Attar Explosion", active=(IND_2_SLCT == "Waddah Attar Explosion"))
+wae_c2_bbS = input.float(2.0, title="Waddah Attar Explosion: BB STDEV Multiplier", group="[C2] Waddah Attar Explosion", active=(IND_2_SLCT == "Waddah Attar Explosion"))
+
+// ============================================================
+// [V] VOLUME INDICATOR INPUTS (alphabetical, active=gated)
+// ============================================================
+
+// ----- [V] Chaikin Oscillator -----
+co_v_fast = input.int(3, title="Chaikin Oscillator: Fast Length", group="[V] Chaikin Oscillator", active=(IND_3_SLCT == "Chaikin Oscillator"))
+co_v_slow = input.int(10, title="Chaikin Oscillator: Slow Length", group="[V] Chaikin Oscillator", active=(IND_3_SLCT == "Chaikin Oscillator"))
+
+// ----- [V] Chaikin Volatility -----
+cv_v_cvi = input.int(10, title="Chaikin Volatility: CVI Length", group="[V] Chaikin Volatility", active=(IND_3_SLCT == "Chaikin Volatility"))
+cv_v_roc = input.int(12, title="Chaikin Volatility: ROC Length", group="[V] Chaikin Volatility", active=(IND_3_SLCT == "Chaikin Volatility"))
+
+// ----- [V] Damiani Volatmeter -----
+dam_visc = input.int(7, title="Damiani Volatmeter: Viscosity", group="[V] Damiani Volatmeter", active=(IND_3_SLCT == "Damiani Volatmeter"))
+dam_sed = input.int(50, title="Damiani Volatmeter: Sedimentation", group="[V] Damiani Volatmeter", active=(IND_3_SLCT == "Damiani Volatmeter"))
+dam_thresh = input.float(1.4, title="Damiani Volatmeter: Threshold", group="[V] Damiani Volatmeter", active=(IND_3_SLCT == "Damiani Volatmeter"))
+dam_lag = input.float(1.4, title="Damiani Volatmeter: Lag", group="[V] Damiani Volatmeter", active=(IND_3_SLCT == "Damiani Volatmeter"))
+dam_uselag = input.bool(true, title="Damiani Volatmeter: Use Lag", group="[V] Damiani Volatmeter", active=(IND_3_SLCT == "Damiani Volatmeter"))
+
+// ----- [V] Elders Force Index -----
+efi_v_len = input.int(10, title="Elders Force Index: Length", group="[V] Elders Force Index", active=(IND_3_SLCT == "Elders Force Index"))
+
+// ----- [V] Mass Index -----
+mi_length = input.int(25, title="Mass Index: Length", group="[V] Mass Index", active=(IND_3_SLCT == "Mass Index"))
+mi_ema_len = input.int(9, title="Mass Index: EMA Length", group="[V] Mass Index", active=(IND_3_SLCT == "Mass Index"))
+
+// ----- [V] Normalized Volume -----
+nv_v_len = input.int(10, title="Normalized Volume: Volume Period", group="[V] Normalized Volume", active=(IND_3_SLCT == "Normalized Volume"))
+
+// ----- [V] TTM Squeeze -----
+ttm_bb_len = input.int(20, title="TTM Squeeze: BB Length", group="[V] TTM Squeeze", active=(IND_3_SLCT == "TTM Squeeze"))
+ttm_bb_mult = input.float(2.0, title="TTM Squeeze: BB Multiplier", group="[V] TTM Squeeze", active=(IND_3_SLCT == "TTM Squeeze"))
+ttm_kc_len = input.int(20, title="TTM Squeeze: KC Length", group="[V] TTM Squeeze", active=(IND_3_SLCT == "TTM Squeeze"))
+ttm_kc_mult = input.float(1.5, title="TTM Squeeze: KC Multiplier", group="[V] TTM Squeeze", active=(IND_3_SLCT == "TTM Squeeze"))
+
+// ----- [V] Variance -----
+var_v_mode = input.string("Price", title="Variance: Mode", options=["Price", "Logarithmic Returns"], group="[V] Variance", active=(IND_3_SLCT == "Variance"))
+var_v_hl = input.float(0.0, title="Variance: Hline Filter", group="[V] Variance", active=(IND_3_SLCT == "Variance"))
+var_v_method = input.string("MA > Variance", title="Variance Method", options=["Variance", "Variance MA", "MA > Variance"], group="[V] Variance", active=(IND_3_SLCT == "Variance"))
+var_v_lb = input.int(20, title="Variance: Lookback", group="[V] Variance", active=(IND_3_SLCT == "Variance"))
+var_v_filtLb = input.int(20, minval=1, title="Variance: filter lookback", group="[V] Variance", active=(IND_3_SLCT == "Variance"))
+var_v_emaLen = input.int(10, minval=1, title="Variance: EMA length", group="[V] Variance", active=(IND_3_SLCT == "Variance"))
+
+// ----- [V] Volatility Ratio -----
+vr_length = input.int(14, title="Volatility Ratio: Length", group="[V] Volatility Ratio", active=(IND_3_SLCT == "Volatility Ratio"))
+
+// ----- [V] Volume Zone Oscilator -----
+vzo_v_len = input.int(20, title="Volume Zone Oscilator: Length", group="[V] Volume Zone Oscilator", active=(IND_3_SLCT == "Volume Zone Oscilator"))
+vzo_v_sm = input.bool(true, title="Volume Zone Oscilator: Smooth", group="[V] Volume Zone Oscilator", active=(IND_3_SLCT == "Volume Zone Oscilator"))
+vzo_v_smLen = input.int(20, minval=1, title="Volume Zone Oscilator: Smooth Length", group="[V] Volume Zone Oscilator", active=(IND_3_SLCT == "Volume Zone Oscilator"))
+vzo_v_nz = input.int(10, minval=1, title="Volume Zone Oscilator: Neutral Zone", group="[V] Volume Zone Oscilator", active=(IND_3_SLCT == "Volume Zone Oscilator"))
+
+// ----- [V] Waddah Attar Explosion -----
+wae_v_sens = input.int(150, title="Waddah Attar Explosion: Sensetivity", group="[V] Waddah Attar Explosion", active=(IND_3_SLCT == "Waddah Attar Explosion"))
+wae_v_fast = input.int(20, title="Waddah Attar Explosion: Fast EMA Length", group="[V] Waddah Attar Explosion", active=(IND_3_SLCT == "Waddah Attar Explosion"))
+wae_v_slow = input.int(40, title="Waddah Attar Explosion: Slow EMA Length", group="[V] Waddah Attar Explosion", active=(IND_3_SLCT == "Waddah Attar Explosion"))
+wae_v_bbL = input.int(20, title="Waddah Attar Explosion: BB Channel Length", group="[V] Waddah Attar Explosion", active=(IND_3_SLCT == "Waddah Attar Explosion"))
+wae_v_bbS = input.float(2.0, title="Waddah Attar Explosion: BB STDEV Multiplier", group="[V] Waddah Attar Explosion", active=(IND_3_SLCT == "Waddah Attar Explosion"))
+
+// ----- [V] Williams VIX Fix -----
+wvf_lookback = input.int(22, title="Williams VIX Fix: Lookback", group="[V] Williams VIX Fix", active=(IND_3_SLCT == "Williams VIX Fix"))
+wvf_bb_len = input.int(20, title="Williams VIX Fix: BB Length", group="[V] Williams VIX Fix", active=(IND_3_SLCT == "Williams VIX Fix"))
+wvf_bb_mult = input.float(2.0, title="Williams VIX Fix: BB Multiplier", group="[V] Williams VIX Fix", active=(IND_3_SLCT == "Williams VIX Fix"))
+
+// ============================================================
+// [EX] PER-INDICATOR INPUTS (alphabetical, active=gated)
+// ============================================================
+
+// ----- [EX] Aroon -----
+aroon_ex_len = input.int(25, title="Aroon: Length", group="[EX] Aroon", active=(IND_5_SLCT == "Aroon"))
+
+// ----- [EX] Bears Bulls Impulse -----
+bbi_ex_len = input.int(13, title="Bears Bulls Impulse: Length", group="[EX] Bears Bulls Impulse", active=(IND_5_SLCT == "Bears Bulls Impulse"))
+
+// ----- [EX] Center of Gravity -----
+cog_ex_len = input.int(10, title="Center of Gravity: Length", group="[EX] Center of Gravity", active=(IND_5_SLCT == "Center of Gravity"))
+cog_ex_sig = input.int(3, title="Center of Gravity: Signal Length", group="[EX] Center of Gravity", active=(IND_5_SLCT == "Center of Gravity"))
+
+// ----- [EX] Chaikin Money Flow -----
+cmf_ex_lookback = input.int(50, title="Chaikin Money Flow: Length", group="[EX] Chaikin Money Flow", active=(IND_5_SLCT == "Chaikin Money Flow"))
+
+// ----- [EX] Chandelier Exit -----
+ce_ex_atr = input.int(22, title="Chandelier Exit: ATR period", group="[EX] Chandelier Exit", active=(IND_5_SLCT == "Chandelier Exit"))
+ce_ex_mult = input.float(3.0, title="Chandelier Exit: ATR Multiplier", group="[EX] Chandelier Exit", active=(IND_5_SLCT == "Chandelier Exit"))
+ce_ex_close = input.bool(true, title="Chandelier Exit: Use Close Price for Extremums?", group="[EX] Chandelier Exit", active=(IND_5_SLCT == "Chandelier Exit"))
+
+// ----- [EX] Coppock Curve -----
+cc_ex_smooth = input.int(10, title="Coppock Curve: Smoothing Length", group="[EX] Coppock Curve", active=(IND_5_SLCT == "Coppock Curve"))
+cc_ex_longROC = input.int(14, title="Coppock Curve: Long ROC Length", group="[EX] Coppock Curve", active=(IND_5_SLCT == "Coppock Curve"))
+cc_ex_shortROC = input.int(11, title="Coppock Curve: Short ROC Length", group="[EX] Coppock Curve", active=(IND_5_SLCT == "Coppock Curve"))
+
+// ----- [EX] Coral -----
+coral_ex_smooth = input.int(10, title="Coral: Smoothing Period", group="[EX] Coral", active=(IND_5_SLCT == "Coral"))
+coral_ex_d = input.float(14, title="Coral: Constant D", group="[EX] Coral", active=(IND_5_SLCT == "Coral"))
+
+// ----- [EX] Detrended Price Oscillator -----
+dpo_ex_len = input.int(50, title="Detrended Price Oscillator: Length", group="[EX] Detrended Price Oscillator", active=(IND_5_SLCT == "Detrended Price Oscillator"))
+dpo_ex_cent = input.bool(false, title="Detrended Price Oscillator: Centered?", group="[EX] Detrended Price Oscillator", active=(IND_5_SLCT == "Detrended Price Oscillator"))
+
+// ----- [EX] Detrended Synthetic Price Oscillator -----
+dspo_ex_len = input.int(14, title="Detrended Synthetic Price Oscillator: Length", group="[EX] Detrended Synthetic Price Oscillator", active=(IND_5_SLCT == "Detrended Synthetic Price Oscillator"))
+
+// ----- [EX] DiDi Index -----
+didi_ex_med = input.int(8, title="DiDi Index: Medium Value", group="[EX] DiDi Index", active=(IND_5_SLCT == "DiDi Index"))
+didi_ex_long = input.int(20, title="Didi Index: Long Value", group="[EX] DiDi Index", active=(IND_5_SLCT == "DiDi Index"))
+
+// ----- [EX] Ease Of Movement -----
+eom_ex_len = input.int(14, title="Ease Of Movement: Length", group="[EX] Ease Of Movement", active=(IND_5_SLCT == "Ease Of Movement"))
+eom_ex_div = input.int(10000, title="Ease Of Movent: Divisor", group="[EX] Ease Of Movement", active=(IND_5_SLCT == "Ease Of Movement"))
+
+// ----- [EX] Ehlers Reverse EMA -----
+ere_ex_len = input.int(14, title="Ehlers Reverse EMA: Signal Length", group="[EX] Ehlers Reverse EMA", active=(IND_5_SLCT == "Ehlers Reverse EMA"))
+ere_ex_alpha = input.float(0.1, title="Ehlers Reverse EMA: Alpha", group="[EX] Ehlers Reverse EMA", active=(IND_5_SLCT == "Ehlers Reverse EMA"))
+
+// ----- [EX] Fisher Transform -----
+ft_ex_len = input.int(10, title="Fisher Transform: Length", group="[EX] Fisher Transform", active=(IND_5_SLCT == "Fisher Transform"))
+
+// ----- [EX] FX Sniper Ergodic CCI -----
+fxs_ex_cci = input.int(14, title="FX Sniper Ergodic: CCI Period", group="[EX] FX Sniper Ergodic CCI", active=(IND_5_SLCT == "FX Sniper Ergodic CCI"))
+fxs_ex_p1 = input.int(5, title="FX Sniper Ergodic: 1st EMA Period", group="[EX] FX Sniper Ergodic CCI", active=(IND_5_SLCT == "FX Sniper Ergodic CCI"))
+fxs_ex_p2 = input.int(3, title="FX Sniper Ergodic: 2nd EMA Period", group="[EX] FX Sniper Ergodic CCI", active=(IND_5_SLCT == "FX Sniper Ergodic CCI"))
+fxs_ex_trig = input.int(5, title="FX Sniper Ergodic: Trigger Period", group="[EX] FX Sniper Ergodic CCI", active=(IND_5_SLCT == "FX Sniper Ergodic CCI"))
+
+// ----- [EX] Glitch Index -----
+gli_ex_len = input.int(30, title="Glitch Index: Length", group="[EX] Glitch Index", active=(IND_5_SLCT == "Glitch Index"))
+gli_ex_mult = input.float(5.0, title="Glitch Index: Multiplier", group="[EX] Glitch Index", active=(IND_5_SLCT == "Glitch Index"))
+gli_ex_smooth = input.int(3, title="Glitch Index: Smoothing", group="[EX] Glitch Index", active=(IND_5_SLCT == "Glitch Index"))
+
+// ----- [EX] Half Trend -----
+ht_ex_amp = input.int(50, title="Half Trend: Amplitude", group="[EX] Half Trend", active=(IND_5_SLCT == "Half Trend"))
+
+// ----- [EX] Heiken Ashi Smoothed -----
+ha_ex_t1 = input.string(defval="T3", title="HeikenAshi Smoothed: Type of first moving average", options=["TRIMA","VIDYA","FAMA","AMA","HMA","TEMA","SMMA","WMA","EMA","SMA","T3","DEMA","ALMA","LSMA"], group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_l1 = input.int(8, title="HeikenAshi Smoothed: Length of First Moving Average", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_t2 = input.string(defval="T3", title="HeikenAshi Smoothed: Type of second moving average", options=["TRIMA","VIDYA","FAMA","AMA","HMA","TEMA","SMMA","WMA","EMA","SMA","T3","DEMA","ALMA","LSMA"], group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_l2 = input.int(8, title="HeikenAshi Smoothed: Length of Second Moving Average", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_ss = input.bool(false, title="HeikenAshi Smoothed: Single Smooth", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_vf1 = input.float(0.82, title="HeikenAshi Smoothed: Volume Factor of T3 for 1st Moving Average", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_ao1 = input.float(0.85, title="HiekenAshi Smoothed: Offset of Arnaud Legoux Moving Average type 1", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_as1 = input.int(6, title="HeikenAshi Smoothed: Sigma of Arnaud Legoux Moving Average type 1", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_ls1 = input.int(0, title="HeikenAshi Smoothed: Least Squares Moving Average offset as type 1", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_am1 = input.float(0.181, title="HeikenAshi Smoothed: Smooth Constant of AMA as Type 1", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_fr1a = input.int(1, title="HeikenAshi Smoothed: FRAMA as type 1", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_fr1b = input.int(168, title="HeikenAshi Smoothed: FRAMA as type 1(input 2)", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_vf2 = input.float(0.82, title="HeikenAshi Smoothed: Volume Factor of T3 for 2nd Moving Average", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_ao2 = input.float(0.85, title="HiekenAshi Smoothed: Offset of Arnaud Legoux Moving Average type 2", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_as2 = input.int(6, title="HeikenAshi Smoothed: Sigma of Arnaud Legoux Moving Average type 2", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_ls2 = input.int(0, title="HeikenAshi Smoothed: Least Squares Moving Average offset as type 2", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_am2 = input.float(0.181, title="HeikenAshi Smoothed: Smooth Constant of AMA as Type 2", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_fr2a = input.int(1, title="HeikenAshi Smoothed: FRAMA as type 2", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+ha_ex_fr2b = input.int(168, title="HeikenAshi Smoothed: FRAMA as type 2(input 2)", group="[EX] Heiken Ashi Smoothed", active=(IND_5_SLCT == "Heiken Ashi Smoothed"))
+
+// ----- [EX] J_TPO -----
+jtpo_ex_len = input.int(40, title="J_TPO: Length", group="[EX] J_TPO", active=(IND_5_SLCT == "J_TPO"))
+jtpo_ex_emaL = input.int(200, title="J_TPO: EMA Length", group="[EX] J_TPO", active=(IND_5_SLCT == "J_TPO"))
+jtpo_ex_emaF = input.bool(false, title="Will filter trade signals based on ema on J_TPO", group="[EX] J_TPO", active=(IND_5_SLCT == "J_TPO"))
+
+// ----- [EX] Kallman Filter -----
+kf_ex_sharp = input.float(1.0, title="Kalman Filter: Sharpness", group="[EX] Kallman Filter", active=(IND_5_SLCT == "Kallman Filter"))
+kf_ex_k = input.float(1.0, title="Kalman Filter: K", group="[EX] Kallman Filter", active=(IND_5_SLCT == "Kallman Filter"))
+
+// ----- [EX] Kase Peak Oscillator -----
+kpo_ex_short = input.int(8, title="Kase Peak Oscillator: Short Cycle", group="[EX] Kase Peak Oscillator", active=(IND_5_SLCT == "Kase Peak Oscillator"))
+kpo_ex_long = input.int(65, title="Kase Peak Oscillator: Long Cycle", group="[EX] Kase Peak Oscillator", active=(IND_5_SLCT == "Kase Peak Oscillator"))
+kpo_ex_sharp = input.float(40.0, title="Kase Peak Oscillator: Sharpness", group="[EX] Kase Peak Oscillator", active=(IND_5_SLCT == "Kase Peak Oscillator"))
+
+// ----- [EX] Kuskus Starlight -----
+ks_ex_range = input.int(30, title="Kuskus Starlight: Range Periods", group="[EX] Kuskus Starlight", active=(IND_5_SLCT == "Kuskus Starlight"))
+ks_ex_psm = input.float(0.7, title="Kuskus Starlight: Price Smoothing", group="[EX] Kuskus Starlight", active=(IND_5_SLCT == "Kuskus Starlight"))
+ks_ex_ism = input.float(0.7, title="Kuskus Starlight: Index Smoothing", group="[EX] Kuskus Starlight", active=(IND_5_SLCT == "Kuskus Starlight"))
+
+// ----- [EX] Laguerre Filter -----
+lf_ex_alpha = input.float(0.2, title="Laguerre Filter: Alpha", group="[EX] Laguerre Filter", active=(IND_5_SLCT == "Laguerre Filter"))
+
+// ----- [EX] Lemantrend -----
+lmt_ex_p1 = input.int(13, title="Lemantrend: Period 1", group="[EX] Lemantrend", active=(IND_5_SLCT == "Lemantrend"))
+lmt_ex_p2 = input.int(21, title="Lemantrend: Period 2", group="[EX] Lemantrend", active=(IND_5_SLCT == "Lemantrend"))
+lmt_ex_p3 = input.int(34, title="Lemantrend: Period 3", group="[EX] Lemantrend", active=(IND_5_SLCT == "Lemantrend"))
+lmt_ex_smooth = input.int(3, title="Lemantrend: Smoothing", group="[EX] Lemantrend", active=(IND_5_SLCT == "Lemantrend"))
+
+// ----- [EX] MAMA FAMA -----
+mama_ex_fast = input.float(0.5, title="MAMA FAMA: Fast Limit", group="[EX] MAMA FAMA", active=(IND_5_SLCT == "MAMA FAMA"))
+mama_ex_slow = input.float(0.05, title="MAMA FAMA: Slow Limit", group="[EX] MAMA FAMA", active=(IND_5_SLCT == "MAMA FAMA"))
+
+// ----- [EX] Polychrmatic Momentum -----
+poly_ex_len = input.int(14, title="Polychromatic Momentum: Length", group="[EX] Polychrmatic Momentum", active=(IND_5_SLCT == "Polychrmatic Momentum"))
+
+// ----- [EX] Price Momentum Oscillator -----
+pmo_ex_s1 = input.int(35, title="Price Momentum Oscillator: 1st Smoothing Length", group="[EX] Price Momentum Oscillator", active=(IND_5_SLCT == "Price Momentum Oscillator"))
+pmo_ex_s2 = input.int(20, title="Price Momentum Oscillator: 2nd Smoothing Length", group="[EX] Price Momentum Oscillator", active=(IND_5_SLCT == "Price Momentum Oscillator"))
+pmo_ex_sg = input.int(10, title="Price Momentum Oscillator: Signal Length", group="[EX] Price Momentum Oscillator", active=(IND_5_SLCT == "Price Momentum Oscillator"))
+
+// ----- [EX] QQE Mod -----
+qqe_ex_rsiP = input.int(6, title="QQE Mod: RSI Period", group="[EX] QQE Mod", active=(IND_5_SLCT == "QQE Mod"))
+qqe_ex_rsiL = input.int(5, title="QQE Mod: RSI Length", group="[EX] QQE Mod", active=(IND_5_SLCT == "QQE Mod"))
+qqe_ex_fac = input.float(1.61, title="QQE Mod: Fast QQE Factor", group="[EX] QQE Mod", active=(IND_5_SLCT == "QQE Mod"))
+
+// ----- [EX] Relative Vigor Index -----
+rvi_ex_len = input.int(10, title="Relative Vigor Index: Length", group="[EX] Relative Vigor Index", active=(IND_5_SLCT == "Relative Vigor Index"))
+
+// ----- [EX] Rex Oscillator -----
+rex_ex_t1 = input.string(defval="SMA", title="Rex Oscillator: Type moving average", options=['ALMA','EMA','DEMA','TEMA','FRAMA','HMA','JMA','LSMA','MF','RDMA','RMA','SMA','T3','TMA','UMA','VAMA','WMA'], group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_l1 = input.int(13, title="Rex Oscillator:  Smooth Length", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_ao1 = input.float(0.85, title="Rex Oscillator: Alma Offset", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_as1 = input.float(6, title="Rex Oscillator: Alma Sigma", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_ff1 = input.int(34, title="Rex Oscillator:  FRAMA Fast Period", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_fs1 = input.int(89, title="Rex Oscillator:  FRAMA Slow Period", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_jp1 = input.int(1, title="Rex Oscillator:  Jurik Phase", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_jpw1 = input.int(1, title="Rex Oscillator:  Jurik Power", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_ls1 = input.int(0, title="Rex Oscillator:  Least Squares Offset", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_mf1 = input.float(0.8, title="Rex Oscillator:  Modular Filter", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_mfb1 = input.bool(false, title="Rex Oscillator:  Modular Filter Feedback", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_mfw1 = input.float(0.5, title="Rex Oscillator:  Modular Filter Feedback Weighting", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_va1 = input.int(10, title="Rex Oscillator:  Volatility Adjusted Lookback", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_t2 = input.string(defval="SMA", title="Rex Oscillator: Signal Type moving average", options=['ALMA','EMA','DEMA','TEMA','FRAMA','HMA','JMA','LSMA','MF','RDMA','RMA','SMA','T3','TMA','UMA','VAMA','WMA'], group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_l2 = input.int(13, title="Rex Oscillator:  Signal Smooth Length", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_ao2 = input.float(0.85, title="Rex Oscillator: Signal Alma Offset", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_as2 = input.float(6, title="Rex Oscillator: Signal Alma Sigma", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_ff2 = input.int(34, title="Rex Oscillator:  Signal FRAMA Fast Period", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_fs2 = input.int(89, title="Rex Oscillator:  Signal FRAMA Slow Period", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_jp2 = input.int(1, title="Rex Oscillator:  Signal Jurik Phase", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_jpw2 = input.int(1, title="Rex Oscillator:  Signal Jurik Power", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_ls2 = input.int(0, title="Rex Oscillator: Signal Least Squares Offset", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_mf2 = input.float(0.8, title="Rex Oscillator: Signal Modular Filter", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_mfb2 = input.bool(false, title="Rex Oscillator: Signal Modular Filter Feedback", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_mfw2 = input.float(0.5, title="Rex Oscillator: Signal Modular Filter Feedback Weighting", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+rex_ex_va2 = input.int(10, title="Rex Oscillator: Signal Volatility Adjusted Lookback", group="[EX] Rex Oscillator", active=(IND_5_SLCT == "Rex Oscillator"))
+
+// ----- [EX] Schaff Trend Cycle -----
+stc_ex_macdF = input.int(12, title="Schaff Trend Cycle: MACD Fast Length", group="[EX] Schaff Trend Cycle", active=(IND_5_SLCT == "Schaff Trend Cycle"))
+stc_ex_macdS = input.int(26, title="Schaff Trend Cycle: MACD Slow Length", group="[EX] Schaff Trend Cycle", active=(IND_5_SLCT == "Schaff Trend Cycle"))
+stc_ex_cyc = input.int(10, title="Schaff Trend Cycle: Cycle Length", group="[EX] Schaff Trend Cycle", active=(IND_5_SLCT == "Schaff Trend Cycle"))
+stc_ex_d1 = input.int(5, title="Schaff Trend Cycle: 1st % D Length", group="[EX] Schaff Trend Cycle", active=(IND_5_SLCT == "Schaff Trend Cycle"))
+stc_ex_d2 = input.int(3, title="Schaff Trend Cycle: 2nd % D Length", group="[EX] Schaff Trend Cycle", active=(IND_5_SLCT == "Schaff Trend Cycle"))
+stc_ex_up = input.int(65, title="Schaff Trend Cycle: Upper Band", group="[EX] Schaff Trend Cycle", active=(IND_5_SLCT == "Schaff Trend Cycle"))
+stc_ex_lo = input.int(35, title="Schaff Trend Cycle: Lower Band", group="[EX] Schaff Trend Cycle", active=(IND_5_SLCT == "Schaff Trend Cycle"))
+
+// ----- [EX] SSL Channel -----
+ssl_ex_len = input.int(10, title="SSL Channel: Length", group="[EX] SSL Channel", active=(IND_5_SLCT == "SSL Channel"))
+
+// ----- [EX] Supertrend -----
+st_ex_atr = input.int(10, title="SuperTrend: ATR Period", group="[EX] Supertrend", active=(IND_5_SLCT == "Supertrend"))
+st_ex_fac = input.float(3.0, title="SuperTrend: Factor", group="[EX] Supertrend", active=(IND_5_SLCT == "Supertrend"))
+
+// ----- [EX] Trend Direction Force Index -----
+tdfi_ex_lb = input.int(13, title="Trend Direction Force Index: Lookback", group="[EX] Trend Direction Force Index", active=(IND_5_SLCT == "Trend Direction Force Index"))
+tdfi_ex_fh = input.float(0.05, title="Trend Direction Force Index: Filter High", group="[EX] Trend Direction Force Index", active=(IND_5_SLCT == "Trend Direction Force Index"))
+tdfi_ex_fl = input.float(-0.05, title="Trend Direction Force Index: Filter Low", group="[EX] Trend Direction Force Index", active=(IND_5_SLCT == "Trend Direction Force Index"))
+
+// ----- [EX] Volatility Quality -----
+vq_ex_ma = input.string("WMA", options=["EMA","WMA","RMA","SMA"], title="Volatility Quality: Lookback", group="[EX] Volatility Quality", active=(IND_5_SLCT == "Volatility Quality"))
+vq_ex_smo = input.int(10, title="Volatility Quality: Smoothing", group="[EX] Volatility Quality", active=(IND_5_SLCT == "Volatility Quality"))
+vq_ex_atr = input.float(7.5, title="Volatility Quality: ATR %", group="[EX] Volatility Quality", active=(IND_5_SLCT == "Volatility Quality"))
+
+// ----- [EX] Vortex Indicator -----
+vortex_ex_p = input.int(14, title="Vortex Indicator: Period", group="[EX] Vortex Indicator", active=(IND_5_SLCT == "Vortex Indicator"))
+
+// ----- [EX] Waddah Attar Explosion -----
+wae_ex_sens = input.int(150, title="Waddah Attar Explosion: Sensetivity", group="[EX] Waddah Attar Explosion", active=(IND_5_SLCT == "Waddah Attar Explosion"))
+wae_ex_fast = input.int(20, title="Waddah Attar Explosion: Fast EMA Length", group="[EX] Waddah Attar Explosion", active=(IND_5_SLCT == "Waddah Attar Explosion"))
+wae_ex_slow = input.int(40, title="Waddah Attar Explosion: Slow EMA Length", group="[EX] Waddah Attar Explosion", active=(IND_5_SLCT == "Waddah Attar Explosion"))
+wae_ex_bbL = input.int(20, title="Waddah Attar Explosion: BB Channel Length", group="[EX] Waddah Attar Explosion", active=(IND_5_SLCT == "Waddah Attar Explosion"))
+wae_ex_bbS = input.float(2.0, title="Waddah Attar Explosion: BB STDEV Multiplier", group="[EX] Waddah Attar Explosion", active=(IND_5_SLCT == "Waddah Attar Explosion"))
+
+
+
+// ============================================================
+// SLOT RESOLUTION — call the right helper for each slot
+// ============================================================
+
+// ----- Initialize slot outputs -----
+Ind_1_L_Trigger = false
+Ind_1_S_Trigger = false
+Ind_1_L_Conf    = false
+Ind_1_S_Conf    = false
+
+Ind_2_L_Conf    = false
+Ind_2_S_Conf    = false
+
+Ind_3_L_Conf    = false
+Ind_3_S_Conf    = false
+
+Ind_5_L_Exit    = false
+Ind_5_S_Exit    = false
+
+// ----- C1 Slot: helper calls -----
+[c1_lt_cmf, c1_st_cmf, c1_lc_cmf, c1_sc_cmf] = jcif.chaikin_money_flow_signals(cmf_c1_lookback)
+[c1_lt_ce,  c1_st_ce,  c1_lc_ce,  c1_sc_ce ] = jcif.chandelier_exit_signals(ce_c1_atr, ce_c1_mult, ce_c1_close)
+[c1_lt_cc,  c1_st_cc,  c1_lc_cc,  c1_sc_cc ] = jcif.coppock_curve_signals(cc_c1_smooth, cc_c1_longROC, cc_c1_shortROC)
+[c1_lt_co,  c1_st_co,  c1_lc_co,  c1_sc_co ] = jcif.coral_signals(coral_c1_smooth, coral_c1_d)
+[c1_lt_di,  c1_st_di,  c1_lc_di,  c1_sc_di ] = jcif.didi_index_signals(didi_c1_med, didi_c1_long)
+[c1_lt_dp,  c1_st_dp,  c1_lc_dp,  c1_sc_dp ] = jcif.dpo_signals(dpo_c1_len, dpo_c1_cent)
+[c1_lt_ds,  c1_st_ds,  c1_lc_ds,  c1_sc_ds ] = jcif.dspo_signals(dspo_c1_len)
+[c1_lt_eo,  c1_st_eo,  c1_lc_eo,  c1_sc_eo ] = jcif.ease_of_movement_signals(eom_c1_len, eom_c1_div)
+[c1_lt_ht,  c1_st_ht,  c1_lc_ht,  c1_sc_ht ] = jcif.halftrend_signals(ht_c1_amp)
+[c1_lt_ha,  c1_st_ha,  c1_lc_ha,  c1_sc_ha ] = jcif.hieken_ashi_smoothed_signals(HA_open, HA_high, HA_low, HA_close, ha_c1_t1, ha_c1_l1, ha_c1_t2, ha_c1_l2, ha_c1_ss, ha_c1_vf1, ha_c1_ao1, ha_c1_as1, ha_c1_ls1, ha_c1_am1, ha_c1_fr1a, ha_c1_fr1b, ha_c1_vf2, ha_c1_ao2, ha_c1_as2, ha_c1_ls2, ha_c1_am2, ha_c1_fr2a, ha_c1_fr2b)
+[c1_lt_jt,  c1_st_jt,  c1_lc_jt,  c1_sc_jt ] = jcif.j_tpo_signals(jtpo_c1_len, jtpo_c1_emaL, jtpo_c1_emaF)
+[c1_lt_kf,  c1_st_kf,  c1_lc_kf,  c1_sc_kf ] = jcif.kalman_filter_signals(kf_c1_sharp, kf_c1_k)
+[c1_lt_kp,  c1_st_kp,  c1_lc_kp,  c1_sc_kp ] = jcif.kase_peak_oscillator_signals(kpo_c1_short, kpo_c1_long, kpo_c1_sharp)
+[c1_lt_lf,  c1_st_lf,  c1_lc_lf,  c1_sc_lf ] = jcif.laguerre_filter_signals(lf_c1_alpha)
+[c1_lt_pmo, c1_st_pmo, c1_lc_pmo, c1_sc_pmo] = jcif.price_momentum_oscillator_signals(pmo_c1_s1, pmo_c1_s2, pmo_c1_sg)
+[c1_lt_pm,  c1_st_pm,  c1_lc_pm,  c1_sc_pm ] = jcif.polychromatic_momentum_signals(poly_c1_len)
+[c1_lt_qq,  c1_st_qq,  c1_lc_qq,  c1_sc_qq ] = jcif.qqe_mod_signals(qqe_c1_rsiP, qqe_c1_rsiL, qqe_c1_fac)
+[c1_lt_rv,  c1_st_rv,  c1_lc_rv,  c1_sc_rv ] = jcif.relative_vigor_index_signals(rvi_c1_len)
+[c1_lt_rx,  c1_st_rx,  c1_lc_rx,  c1_sc_rx ] = jcif.rex_oscillator_signals(rex_c1_t1, rex_c1_l1, rex_c1_ao1, rex_c1_as1, rex_c1_ff1, rex_c1_fs1, rex_c1_jp1, rex_c1_jpw1, rex_c1_ls1, rex_c1_mf1, rex_c1_mfb1, rex_c1_mfw1, rex_c1_va1, rex_c1_t2, rex_c1_l2, rex_c1_ao2, rex_c1_as2, rex_c1_ff2, rex_c1_fs2, rex_c1_jp2, rex_c1_jpw2, rex_c1_ls2, rex_c1_mf2, rex_c1_mfb2, rex_c1_mfw2, rex_c1_va2)
+[c1_lt_st,  c1_st_st,  c1_lc_st,  c1_sc_st ] = jcif.schaff_trend_cycle_signals(stc_c1_macdF, stc_c1_macdS, stc_c1_cyc, stc_c1_d1, stc_c1_d2, stc_c1_up, stc_c1_lo)
+[c1_lt_ss,  c1_st_ss,  c1_lc_ss,  c1_sc_ss ] = jcif.ssl_channel_signals(ssl_c1_len)
+[c1_lt_su,  c1_st_su,  c1_lc_su,  c1_sc_su ] = jcif.supertrend_signals(st_c1_fac, st_c1_atr)
+[c1_lt_td,  c1_st_td,  c1_lc_td,  c1_sc_td ] = jcif.trend_direction_force_index_signals(tdfi_c1_lb, tdfi_c1_fh, tdfi_c1_fl)
+[c1_lt_vq,  c1_st_vq,  c1_lc_vq,  c1_sc_vq ] = jcif.volatility_quality_signals(vq_c1_ma, vq_c1_smo, vq_c1_atr)
+[c1_lt_vx,  c1_st_vx,  c1_lc_vx,  c1_sc_vx ] = jcif.vortex_signals(vortex_c1_p)
+[c1_lt_wa,  c1_st_wa,  c1_lc_wa,  c1_sc_wa ] = jcif.waddah_attar_explosion_signals(wae_c1_sens, wae_c1_fast, wae_c1_slow, wae_c1_bbL, wae_c1_bbS)
+[c1_lt_ft, c1_st_ft, c1_lc_ft, c1_sc_ft] = jcif.fisher_transform_signals(ft_c1_len)
+[c1_lt_ar, c1_st_ar, c1_lc_ar, c1_sc_ar] = jcif.aroon_signals(aroon_c1_len)
+[c1_lt_mm, c1_st_mm, c1_lc_mm, c1_sc_mm] = jcif.mama_fama_signals(mama_c1_fast, mama_c1_slow)
+[c1_lt_cg, c1_st_cg, c1_lc_cg, c1_sc_cg] = jcif.center_of_gravity_signals(cog_c1_len, cog_c1_sig)
+[c1_lt_ks, c1_st_ks, c1_lc_ks, c1_sc_ks] = jcif.kuskus_starlight_signals(ks_c1_range, ks_c1_psm, ks_c1_ism)
+[c1_lt_bbi, c1_st_bbi, c1_lc_bbi, c1_sc_bbi] = jcif.bears_bulls_impulse_signals(bbi_c1_len)
+[c1_lt_fxs, c1_st_fxs, c1_lc_fxs, c1_sc_fxs] = jcif.fx_sniper_ergodic_cci_signals(fxs_c1_cci, fxs_c1_p1, fxs_c1_p2, fxs_c1_trig)
+[c1_lt_lmt, c1_st_lmt, c1_lc_lmt, c1_sc_lmt] = jcif.lemantrend_signals(lmt_c1_p1, lmt_c1_p2, lmt_c1_p3, lmt_c1_smooth)
+[c1_lt_gli, c1_st_gli, c1_lc_gli, c1_sc_gli] = jcif.glitch_index_signals(gli_c1_len, gli_c1_mult, gli_c1_smooth)
+[c1_lt_ere, c1_st_ere, c1_lc_ere, c1_sc_ere] = jcif.ehlers_reverse_ema_signals(ere_c1_len, ere_c1_alpha)
+
+// ----- C1 Slot: dispatch -----
+if IND_1_SLCT == "Chaikin Money Flow"
+    Ind_1_L_Trigger := c1_lt_cmf
+    Ind_1_S_Trigger := c1_st_cmf
+    Ind_1_L_Conf := c1_lc_cmf
+    Ind_1_S_Conf := c1_sc_cmf
+else if IND_1_SLCT == "Chandelier Exit"
+    Ind_1_L_Trigger := c1_lt_ce
+    Ind_1_S_Trigger := c1_st_ce
+    Ind_1_L_Conf := c1_lc_ce
+    Ind_1_S_Conf := c1_sc_ce
+else if IND_1_SLCT == "Coppock Curve"
+    Ind_1_L_Trigger := c1_lt_cc
+    Ind_1_S_Trigger := c1_st_cc
+    Ind_1_L_Conf := c1_lc_cc
+    Ind_1_S_Conf := c1_sc_cc
+else if IND_1_SLCT == "Coral"
+    Ind_1_L_Trigger := c1_lt_co
+    Ind_1_S_Trigger := c1_st_co
+    Ind_1_L_Conf := c1_lc_co
+    Ind_1_S_Conf := c1_sc_co
+else if IND_1_SLCT == "DiDi Index"
+    Ind_1_L_Trigger := c1_lt_di
+    Ind_1_S_Trigger := c1_st_di
+    Ind_1_L_Conf := c1_lc_di
+    Ind_1_S_Conf := c1_sc_di
+else if IND_1_SLCT == "Detrended Price Oscillator"
+    Ind_1_L_Trigger := c1_lt_dp
+    Ind_1_S_Trigger := c1_st_dp
+    Ind_1_L_Conf := c1_lc_dp
+    Ind_1_S_Conf := c1_sc_dp
+else if IND_1_SLCT == "Detrended Synthetic Price Oscillator"
+    Ind_1_L_Trigger := c1_lt_ds
+    Ind_1_S_Trigger := c1_st_ds
+    Ind_1_L_Conf := c1_lc_ds
+    Ind_1_S_Conf := c1_sc_ds
+else if IND_1_SLCT == "Ease Of Movement"
+    Ind_1_L_Trigger := c1_lt_eo
+    Ind_1_S_Trigger := c1_st_eo
+    Ind_1_L_Conf := c1_lc_eo
+    Ind_1_S_Conf := c1_sc_eo
+else if IND_1_SLCT == "Half Trend"
+    Ind_1_L_Trigger := c1_lt_ht
+    Ind_1_S_Trigger := c1_st_ht
+    Ind_1_L_Conf := c1_lc_ht
+    Ind_1_S_Conf := c1_sc_ht
+else if IND_1_SLCT == "Heiken Ashi Smoothed"
+    Ind_1_L_Trigger := c1_lt_ha
+    Ind_1_S_Trigger := c1_st_ha
+    Ind_1_L_Conf := c1_lc_ha
+    Ind_1_S_Conf := c1_sc_ha
+else if IND_1_SLCT == "J_TPO"
+    Ind_1_L_Trigger := c1_lt_jt
+    Ind_1_S_Trigger := c1_st_jt
+    Ind_1_L_Conf := c1_lc_jt
+    Ind_1_S_Conf := c1_sc_jt
+else if IND_1_SLCT == "Kallman Filter"
+    Ind_1_L_Trigger := c1_lt_kf
+    Ind_1_S_Trigger := c1_st_kf
+    Ind_1_L_Conf := c1_lc_kf
+    Ind_1_S_Conf := c1_sc_kf
+else if IND_1_SLCT == "Kase Peak Oscillator"
+    Ind_1_L_Trigger := c1_lt_kp
+    Ind_1_S_Trigger := c1_st_kp
+    Ind_1_L_Conf := c1_lc_kp
+    Ind_1_S_Conf := c1_sc_kp
+else if IND_1_SLCT == "Laguerre Filter"
+    Ind_1_L_Trigger := c1_lt_lf
+    Ind_1_S_Trigger := c1_st_lf
+    Ind_1_L_Conf := c1_lc_lf
+    Ind_1_S_Conf := c1_sc_lf
+else if IND_1_SLCT == "Price Momentum Oscillator"
+    Ind_1_L_Trigger := c1_lt_pmo
+    Ind_1_S_Trigger := c1_st_pmo
+    Ind_1_L_Conf := c1_lc_pmo
+    Ind_1_S_Conf := c1_sc_pmo
+else if IND_1_SLCT == "Polychrmatic Momentum"
+    Ind_1_L_Trigger := c1_lt_pm
+    Ind_1_S_Trigger := c1_st_pm
+    Ind_1_L_Conf := c1_lc_pm
+    Ind_1_S_Conf := c1_sc_pm
+else if IND_1_SLCT == "QQE Mod"
+    Ind_1_L_Trigger := c1_lt_qq
+    Ind_1_S_Trigger := c1_st_qq
+    Ind_1_L_Conf := c1_lc_qq
+    Ind_1_S_Conf := c1_sc_qq
+else if IND_1_SLCT == "Relative Vigor Index"
+    Ind_1_L_Trigger := c1_lt_rv
+    Ind_1_S_Trigger := c1_st_rv
+    Ind_1_L_Conf := c1_lc_rv
+    Ind_1_S_Conf := c1_sc_rv
+else if IND_1_SLCT == "Rex Oscillator"
+    Ind_1_L_Trigger := c1_lt_rx
+    Ind_1_S_Trigger := c1_st_rx
+    Ind_1_L_Conf := c1_lc_rx
+    Ind_1_S_Conf := c1_sc_rx
+else if IND_1_SLCT == "Schaff Trend Cycle"
+    Ind_1_L_Trigger := c1_lt_st
+    Ind_1_S_Trigger := c1_st_st
+    Ind_1_L_Conf := c1_lc_st
+    Ind_1_S_Conf := c1_sc_st
+else if IND_1_SLCT == "SSL Channel"
+    Ind_1_L_Trigger := c1_lt_ss
+    Ind_1_S_Trigger := c1_st_ss
+    Ind_1_L_Conf := c1_lc_ss
+    Ind_1_S_Conf := c1_sc_ss
+else if IND_1_SLCT == "Supertrend"
+    Ind_1_L_Trigger := c1_lt_su
+    Ind_1_S_Trigger := c1_st_su
+    Ind_1_L_Conf := c1_lc_su
+    Ind_1_S_Conf := c1_sc_su
+else if IND_1_SLCT == "Trend Direction Force Index"
+    Ind_1_L_Trigger := c1_lt_td
+    Ind_1_S_Trigger := c1_st_td
+    Ind_1_L_Conf := c1_lc_td
+    Ind_1_S_Conf := c1_sc_td
+else if IND_1_SLCT == "Volatility Quality"
+    Ind_1_L_Trigger := c1_lt_vq
+    Ind_1_S_Trigger := c1_st_vq
+    Ind_1_L_Conf := c1_lc_vq
+    Ind_1_S_Conf := c1_sc_vq
+else if IND_1_SLCT == "Vortex Indicator"
+    Ind_1_L_Trigger := c1_lt_vx
+    Ind_1_S_Trigger := c1_st_vx
+    Ind_1_L_Conf := c1_lc_vx
+    Ind_1_S_Conf := c1_sc_vx
+else if IND_1_SLCT == "Waddah Attar Explosion"
+    Ind_1_L_Trigger := c1_lt_wa
+    Ind_1_S_Trigger := c1_st_wa
+    Ind_1_L_Conf := c1_lc_wa
+    Ind_1_S_Conf := c1_sc_wa
+else if IND_1_SLCT == "Fisher Transform"
+    Ind_1_L_Trigger := c1_lt_ft
+    Ind_1_S_Trigger := c1_st_ft
+    Ind_1_L_Conf := c1_lc_ft
+    Ind_1_S_Conf := c1_sc_ft
+else if IND_1_SLCT == "Aroon"
+    Ind_1_L_Trigger := c1_lt_ar
+    Ind_1_S_Trigger := c1_st_ar
+    Ind_1_L_Conf := c1_lc_ar
+    Ind_1_S_Conf := c1_sc_ar
+else if IND_1_SLCT == "MAMA FAMA"
+    Ind_1_L_Trigger := c1_lt_mm
+    Ind_1_S_Trigger := c1_st_mm
+    Ind_1_L_Conf := c1_lc_mm
+    Ind_1_S_Conf := c1_sc_mm
+else if IND_1_SLCT == "Center of Gravity"
+    Ind_1_L_Trigger := c1_lt_cg
+    Ind_1_S_Trigger := c1_st_cg
+    Ind_1_L_Conf := c1_lc_cg
+    Ind_1_S_Conf := c1_sc_cg
+else if IND_1_SLCT == "Kuskus Starlight"
+    Ind_1_L_Trigger := c1_lt_ks
+    Ind_1_S_Trigger := c1_st_ks
+    Ind_1_L_Conf := c1_lc_ks
+    Ind_1_S_Conf := c1_sc_ks
+else if IND_1_SLCT == "Bears Bulls Impulse"
+    Ind_1_L_Trigger := c1_lt_bbi
+    Ind_1_S_Trigger := c1_st_bbi
+    Ind_1_L_Conf := c1_lc_bbi
+    Ind_1_S_Conf := c1_sc_bbi
+else if IND_1_SLCT == "FX Sniper Ergodic CCI"
+    Ind_1_L_Trigger := c1_lt_fxs
+    Ind_1_S_Trigger := c1_st_fxs
+    Ind_1_L_Conf := c1_lc_fxs
+    Ind_1_S_Conf := c1_sc_fxs
+else if IND_1_SLCT == "Lemantrend"
+    Ind_1_L_Trigger := c1_lt_lmt
+    Ind_1_S_Trigger := c1_st_lmt
+    Ind_1_L_Conf := c1_lc_lmt
+    Ind_1_S_Conf := c1_sc_lmt
+else if IND_1_SLCT == "Glitch Index"
+    Ind_1_L_Trigger := c1_lt_gli
+    Ind_1_S_Trigger := c1_st_gli
+    Ind_1_L_Conf := c1_lc_gli
+    Ind_1_S_Conf := c1_sc_gli
+else if IND_1_SLCT == "Ehlers Reverse EMA"
+    Ind_1_L_Trigger := c1_lt_ere
+    Ind_1_S_Trigger := c1_st_ere
+    Ind_1_L_Conf := c1_lc_ere
+    Ind_1_S_Conf := c1_sc_ere
+
+if not Ind_1_Check_Trig
+    Ind_1_L_Trigger := true
+    Ind_1_S_Trigger := true
+if not Ind_1_Check_Conf
+    Ind_1_L_Conf := true
+    Ind_1_S_Conf := true
+
+// ----- C2 Slot: helper calls -----
+[c2_lt_cmf, c2_st_cmf, c2_lc_cmf, c2_sc_cmf] = jcif.chaikin_money_flow_signals(cmf_c2_lookback)
+[c2_lt_ce,  c2_st_ce,  c2_lc_ce,  c2_sc_ce ] = jcif.chandelier_exit_signals(ce_c2_atr, ce_c2_mult, ce_c2_close)
+[c2_lt_cc,  c2_st_cc,  c2_lc_cc,  c2_sc_cc ] = jcif.coppock_curve_signals(cc_c2_smooth, cc_c2_longROC, cc_c2_shortROC)
+[c2_lt_co,  c2_st_co,  c2_lc_co,  c2_sc_co ] = jcif.coral_signals(coral_c2_smooth, coral_c2_d)
+[c2_lt_di,  c2_st_di,  c2_lc_di,  c2_sc_di ] = jcif.didi_index_signals(didi_c2_med, didi_c2_long)
+[c2_lt_dp,  c2_st_dp,  c2_lc_dp,  c2_sc_dp ] = jcif.dpo_signals(dpo_c2_len, dpo_c2_cent)
+[c2_lt_ds,  c2_st_ds,  c2_lc_ds,  c2_sc_ds ] = jcif.dspo_signals(dspo_c2_len)
+[c2_lt_eo,  c2_st_eo,  c2_lc_eo,  c2_sc_eo ] = jcif.ease_of_movement_signals(eom_c2_len, eom_c2_div)
+[c2_lt_ht,  c2_st_ht,  c2_lc_ht,  c2_sc_ht ] = jcif.halftrend_signals(ht_c2_amp)
+[c2_lt_ha,  c2_st_ha,  c2_lc_ha,  c2_sc_ha ] = jcif.hieken_ashi_smoothed_signals(HA_open, HA_high, HA_low, HA_close, ha_c2_t1, ha_c2_l1, ha_c2_t2, ha_c2_l2, ha_c2_ss, ha_c2_vf1, ha_c2_ao1, ha_c2_as1, ha_c2_ls1, ha_c2_am1, ha_c2_fr1a, ha_c2_fr1b, ha_c2_vf2, ha_c2_ao2, ha_c2_as2, ha_c2_ls2, ha_c2_am2, ha_c2_fr2a, ha_c2_fr2b)
+[c2_lt_jt,  c2_st_jt,  c2_lc_jt,  c2_sc_jt ] = jcif.j_tpo_signals(jtpo_c2_len, jtpo_c2_emaL, jtpo_c2_emaF)
+[c2_lt_kf,  c2_st_kf,  c2_lc_kf,  c2_sc_kf ] = jcif.kalman_filter_signals(kf_c2_sharp, kf_c2_k)
+[c2_lt_kp,  c2_st_kp,  c2_lc_kp,  c2_sc_kp ] = jcif.kase_peak_oscillator_signals(kpo_c2_short, kpo_c2_long, kpo_c2_sharp)
+[c2_lt_lf,  c2_st_lf,  c2_lc_lf,  c2_sc_lf ] = jcif.laguerre_filter_signals(lf_c2_alpha)
+[c2_lt_pmo, c2_st_pmo, c2_lc_pmo, c2_sc_pmo] = jcif.price_momentum_oscillator_signals(pmo_c2_s1, pmo_c2_s2, pmo_c2_sg)
+[c2_lt_pm,  c2_st_pm,  c2_lc_pm,  c2_sc_pm ] = jcif.polychromatic_momentum_signals(poly_c2_len)
+[c2_lt_qq,  c2_st_qq,  c2_lc_qq,  c2_sc_qq ] = jcif.qqe_mod_signals(qqe_c2_rsiP, qqe_c2_rsiL, qqe_c2_fac)
+[c2_lt_rv,  c2_st_rv,  c2_lc_rv,  c2_sc_rv ] = jcif.relative_vigor_index_signals(rvi_c2_len)
+[c2_lt_rx,  c2_st_rx,  c2_lc_rx,  c2_sc_rx ] = jcif.rex_oscillator_signals(rex_c2_t1, rex_c2_l1, rex_c2_ao1, rex_c2_as1, rex_c2_ff1, rex_c2_fs1, rex_c2_jp1, rex_c2_jpw1, rex_c2_ls1, rex_c2_mf1, rex_c2_mfb1, rex_c2_mfw1, rex_c2_va1, rex_c2_t2, rex_c2_l2, rex_c2_ao2, rex_c2_as2, rex_c2_ff2, rex_c2_fs2, rex_c2_jp2, rex_c2_jpw2, rex_c2_ls2, rex_c2_mf2, rex_c2_mfb2, rex_c2_mfw2, rex_c2_va2)
+[c2_lt_st,  c2_st_st,  c2_lc_st,  c2_sc_st ] = jcif.schaff_trend_cycle_signals(stc_c2_macdF, stc_c2_macdS, stc_c2_cyc, stc_c2_d1, stc_c2_d2, stc_c2_up, stc_c2_lo)
+[c2_lt_ss,  c2_st_ss,  c2_lc_ss,  c2_sc_ss ] = jcif.ssl_channel_signals(ssl_c2_len)
+[c2_lt_su,  c2_st_su,  c2_lc_su,  c2_sc_su ] = jcif.supertrend_signals(st_c2_fac, st_c2_atr)
+[c2_lt_td,  c2_st_td,  c2_lc_td,  c2_sc_td ] = jcif.trend_direction_force_index_signals(tdfi_c2_lb, tdfi_c2_fh, tdfi_c2_fl)
+[c2_lt_vq,  c2_st_vq,  c2_lc_vq,  c2_sc_vq ] = jcif.volatility_quality_signals(vq_c2_ma, vq_c2_smo, vq_c2_atr)
+[c2_lt_vx,  c2_st_vx,  c2_lc_vx,  c2_sc_vx ] = jcif.vortex_signals(vortex_c2_p)
+[c2_lt_wa,  c2_st_wa,  c2_lc_wa,  c2_sc_wa ] = jcif.waddah_attar_explosion_signals(wae_c2_sens, wae_c2_fast, wae_c2_slow, wae_c2_bbL, wae_c2_bbS)
+[c2_lt_ft, c2_st_ft, c2_lc_ft, c2_sc_ft] = jcif.fisher_transform_signals(ft_c2_len)
+[c2_lt_ar, c2_st_ar, c2_lc_ar, c2_sc_ar] = jcif.aroon_signals(aroon_c2_len)
+[c2_lt_mm, c2_st_mm, c2_lc_mm, c2_sc_mm] = jcif.mama_fama_signals(mama_c2_fast, mama_c2_slow)
+[c2_lt_cg, c2_st_cg, c2_lc_cg, c2_sc_cg] = jcif.center_of_gravity_signals(cog_c2_len, cog_c2_sig)
+[c2_lt_ks, c2_st_ks, c2_lc_ks, c2_sc_ks] = jcif.kuskus_starlight_signals(ks_c2_range, ks_c2_psm, ks_c2_ism)
+[c2_lt_bbi, c2_st_bbi, c2_lc_bbi, c2_sc_bbi] = jcif.bears_bulls_impulse_signals(bbi_c2_len)
+[c2_lt_fxs, c2_st_fxs, c2_lc_fxs, c2_sc_fxs] = jcif.fx_sniper_ergodic_cci_signals(fxs_c2_cci, fxs_c2_p1, fxs_c2_p2, fxs_c2_trig)
+[c2_lt_lmt, c2_st_lmt, c2_lc_lmt, c2_sc_lmt] = jcif.lemantrend_signals(lmt_c2_p1, lmt_c2_p2, lmt_c2_p3, lmt_c2_smooth)
+[c2_lt_gli, c2_st_gli, c2_lc_gli, c2_sc_gli] = jcif.glitch_index_signals(gli_c2_len, gli_c2_mult, gli_c2_smooth)
+[c2_lt_ere, c2_st_ere, c2_lc_ere, c2_sc_ere] = jcif.ehlers_reverse_ema_signals(ere_c2_len, ere_c2_alpha)
+
+// ----- C2 Slot: dispatch -----
+if IND_2_SLCT == "Chaikin Money Flow"
+    Ind_2_L_Conf := c2_lc_cmf
+    Ind_2_S_Conf := c2_sc_cmf
+else if IND_2_SLCT == "Chandelier Exit"
+    Ind_2_L_Conf := c2_lc_ce
+    Ind_2_S_Conf := c2_sc_ce
+else if IND_2_SLCT == "Coppock Curve"
+    Ind_2_L_Conf := c2_lc_cc
+    Ind_2_S_Conf := c2_sc_cc
+else if IND_2_SLCT == "Coral"
+    Ind_2_L_Conf := c2_lc_co
+    Ind_2_S_Conf := c2_sc_co
+else if IND_2_SLCT == "DiDi Index"
+    Ind_2_L_Conf := c2_lc_di
+    Ind_2_S_Conf := c2_sc_di
+else if IND_2_SLCT == "Detrended Price Oscillator"
+    Ind_2_L_Conf := c2_lc_dp
+    Ind_2_S_Conf := c2_sc_dp
+else if IND_2_SLCT == "Detrended Synthetic Price Oscillator"
+    Ind_2_L_Conf := c2_lc_ds
+    Ind_2_S_Conf := c2_sc_ds
+else if IND_2_SLCT == "Ease Of Movement"
+    Ind_2_L_Conf := c2_lc_eo
+    Ind_2_S_Conf := c2_sc_eo
+else if IND_2_SLCT == "Half Trend"
+    Ind_2_L_Conf := c2_lc_ht
+    Ind_2_S_Conf := c2_sc_ht
+else if IND_2_SLCT == "Heiken Ashi Smoothed"
+    Ind_2_L_Conf := c2_lc_ha
+    Ind_2_S_Conf := c2_sc_ha
+else if IND_2_SLCT == "J_TPO"
+    Ind_2_L_Conf := c2_lc_jt
+    Ind_2_S_Conf := c2_sc_jt
+else if IND_2_SLCT == "Kallman Filter"
+    Ind_2_L_Conf := c2_lc_kf
+    Ind_2_S_Conf := c2_sc_kf
+else if IND_2_SLCT == "Kase Peak Oscillator"
+    Ind_2_L_Conf := c2_lc_kp
+    Ind_2_S_Conf := c2_sc_kp
+else if IND_2_SLCT == "Laguerre Filter"
+    Ind_2_L_Conf := c2_lc_lf
+    Ind_2_S_Conf := c2_sc_lf
+else if IND_2_SLCT == "Price Momentum Oscillator"
+    Ind_2_L_Conf := c2_lc_pmo
+    Ind_2_S_Conf := c2_sc_pmo
+else if IND_2_SLCT == "Polychrmatic Momentum"
+    Ind_2_L_Conf := c2_lc_pm
+    Ind_2_S_Conf := c2_sc_pm
+else if IND_2_SLCT == "QQE Mod"
+    Ind_2_L_Conf := c2_lc_qq
+    Ind_2_S_Conf := c2_sc_qq
+else if IND_2_SLCT == "Relative Vigor Index"
+    Ind_2_L_Conf := c2_lc_rv
+    Ind_2_S_Conf := c2_sc_rv
+else if IND_2_SLCT == "Rex Oscillator"
+    Ind_2_L_Conf := c2_lc_rx
+    Ind_2_S_Conf := c2_sc_rx
+else if IND_2_SLCT == "Schaff Trend Cycle"
+    Ind_2_L_Conf := c2_lc_st
+    Ind_2_S_Conf := c2_sc_st
+else if IND_2_SLCT == "SSL Channel"
+    Ind_2_L_Conf := c2_lc_ss
+    Ind_2_S_Conf := c2_sc_ss
+else if IND_2_SLCT == "Supertrend"
+    Ind_2_L_Conf := c2_lc_su
+    Ind_2_S_Conf := c2_sc_su
+else if IND_2_SLCT == "Trend Direction Force Index"
+    Ind_2_L_Conf := c2_lc_td
+    Ind_2_S_Conf := c2_sc_td
+else if IND_2_SLCT == "Volatility Quality"
+    Ind_2_L_Conf := c2_lc_vq
+    Ind_2_S_Conf := c2_sc_vq
+else if IND_2_SLCT == "Vortex Indicator"
+    Ind_2_L_Conf := c2_lc_vx
+    Ind_2_S_Conf := c2_sc_vx
+else if IND_2_SLCT == "Waddah Attar Explosion"
+    Ind_2_L_Conf := c2_lc_wa
+    Ind_2_S_Conf := c2_sc_wa
+else if IND_2_SLCT == "Fisher Transform"
+    Ind_2_L_Conf := c2_lc_ft
+    Ind_2_S_Conf := c2_sc_ft
+else if IND_2_SLCT == "Aroon"
+    Ind_2_L_Conf := c2_lc_ar
+    Ind_2_S_Conf := c2_sc_ar
+else if IND_2_SLCT == "MAMA FAMA"
+    Ind_2_L_Conf := c2_lc_mm
+    Ind_2_S_Conf := c2_sc_mm
+else if IND_2_SLCT == "Center of Gravity"
+    Ind_2_L_Conf := c2_lc_cg
+    Ind_2_S_Conf := c2_sc_cg
+else if IND_2_SLCT == "Kuskus Starlight"
+    Ind_2_L_Conf := c2_lc_ks
+    Ind_2_S_Conf := c2_sc_ks
+else if IND_2_SLCT == "Bears Bulls Impulse"
+    Ind_2_L_Conf := c2_lc_bbi
+    Ind_2_S_Conf := c2_sc_bbi
+else if IND_2_SLCT == "FX Sniper Ergodic CCI"
+    Ind_2_L_Conf := c2_lc_fxs
+    Ind_2_S_Conf := c2_sc_fxs
+else if IND_2_SLCT == "Lemantrend"
+    Ind_2_L_Conf := c2_lc_lmt
+    Ind_2_S_Conf := c2_sc_lmt
+else if IND_2_SLCT == "Glitch Index"
+    Ind_2_L_Conf := c2_lc_gli
+    Ind_2_S_Conf := c2_sc_gli
+else if IND_2_SLCT == "Ehlers Reverse EMA"
+    Ind_2_L_Conf := c2_lc_ere
+    Ind_2_S_Conf := c2_sc_ere
+
+if not Ind_2_Check_Conf
+    Ind_2_L_Conf := true
+    Ind_2_S_Conf := true
+
+// ----- Volume Slot: helper calls -----
+[v_lc_co,  v_sc_co ] = jcif.chaikin_oscillator_volume_signals(co_v_fast, co_v_slow)
+[v_lc_cv,  v_sc_cv ] = jcif.chaikin_volatility_volume_signals(cv_v_cvi, cv_v_roc)
+[v_lc_efi, v_sc_efi] = jcif.elders_force_index_volume_signals(efi_v_len)
+[v_lc_nv,  v_sc_nv ] = jcif.normalized_volume_volume_signals(nv_v_len)
+[v_lc_var, v_sc_var] = jcif.variance_volume_signals(var_v_mode, var_v_hl, var_v_method, var_v_lb, var_v_filtLb, var_v_emaLen)
+[v_lc_vzo, v_sc_vzo] = jcif.volume_zone_oscillator_volume_signals(vzo_v_len, vzo_v_sm, vzo_v_smLen, vzo_v_nz)
+[v_lc_wa,  v_sc_wa ] = jcif.waddah_attar_explosion_volume_signals(wae_v_sens, wae_v_fast, wae_v_slow, wae_v_bbL, wae_v_bbS)
+[v_lc_dam, v_sc_dam] = jcif.damiani_volatmeter_volume_signals(dam_visc, dam_sed, dam_thresh, dam_lag, dam_uselag)
+[v_lc_ttm, v_sc_ttm] = jcif.ttm_squeeze_volume_signals(ttm_bb_len, ttm_bb_mult, ttm_kc_len, ttm_kc_mult)
+[v_lc_wvf, v_sc_wvf] = jcif.williams_vix_fix_volume_signals(wvf_lookback, wvf_bb_len, wvf_bb_mult)
+[v_lc_vr,  v_sc_vr ] = jcif.volatility_ratio_volume_signals(vr_length)
+[v_lc_mi,  v_sc_mi ] = jcif.mass_index_volume_signals(mi_length, mi_ema_len)
+
+// ----- Volume Slot: dispatch -----
+if IND_3_SLCT == "Chaikin Oscillator"
+    Ind_3_L_Conf := v_lc_co
+    Ind_3_S_Conf := v_sc_co
+else if IND_3_SLCT == "Chaikin Volatility"
+    Ind_3_L_Conf := v_lc_cv
+    Ind_3_S_Conf := v_sc_cv
+else if IND_3_SLCT == "Elders Force Index"
+    Ind_3_L_Conf := v_lc_efi
+    Ind_3_S_Conf := v_sc_efi
+else if IND_3_SLCT == "Normalized Volume"
+    Ind_3_L_Conf := v_lc_nv
+    Ind_3_S_Conf := v_sc_nv
+else if IND_3_SLCT == "Variance"
+    Ind_3_L_Conf := v_lc_var
+    Ind_3_S_Conf := v_sc_var
+else if IND_3_SLCT == "Volume Zone Oscilator"
+    Ind_3_L_Conf := v_lc_vzo
+    Ind_3_S_Conf := v_sc_vzo
+else if IND_3_SLCT == "Waddah Attar Explosion"
+    Ind_3_L_Conf := v_lc_wa
+    Ind_3_S_Conf := v_sc_wa
+else if IND_3_SLCT == "Damiani Volatmeter"
+    Ind_3_L_Conf := v_lc_dam
+    Ind_3_S_Conf := v_sc_dam
+else if IND_3_SLCT == "TTM Squeeze"
+    Ind_3_L_Conf := v_lc_ttm
+    Ind_3_S_Conf := v_sc_ttm
+else if IND_3_SLCT == "Williams VIX Fix"
+    Ind_3_L_Conf := v_lc_wvf
+    Ind_3_S_Conf := v_sc_wvf
+else if IND_3_SLCT == "Volatility Ratio"
+    Ind_3_L_Conf := v_lc_vr
+    Ind_3_S_Conf := v_sc_vr
+else if IND_3_SLCT == "Mass Index"
+    Ind_3_L_Conf := v_lc_mi
+    Ind_3_S_Conf := v_sc_mi
+
+if not Ind_3_Check_Conf
+    Ind_3_L_Conf := true
+    Ind_3_S_Conf := true
+
+// ----- Exit Slot: helper calls -----
+[ex_le_cmf, ex_se_cmf] = jcif.chaikin_money_flow_exit(cmf_ex_lookback)
+[ex_le_ce,  ex_se_ce ] = jcif.chandelier_exit_exit(ce_ex_atr, ce_ex_mult, ce_ex_close)
+[ex_le_cc,  ex_se_cc ] = jcif.coppock_curve_exit(cc_ex_smooth, cc_ex_longROC, cc_ex_shortROC)
+[ex_le_co,  ex_se_co ] = jcif.coral_exit(coral_ex_smooth, coral_ex_d)
+[ex_le_di,  ex_se_di ] = jcif.didi_index_exit(didi_ex_med, didi_ex_long)
+[ex_le_dp,  ex_se_dp ] = jcif.dpo_exit(dpo_ex_len, dpo_ex_cent)
+[ex_le_ds,  ex_se_ds ] = jcif.dspo_exit(dspo_ex_len)
+[ex_le_eo,  ex_se_eo ] = jcif.ease_of_movement_exit(eom_ex_len, eom_ex_div)
+[ex_le_ht,  ex_se_ht ] = jcif.halftrend_exit(ht_ex_amp)
+[ex_le_ha,  ex_se_ha ] = jcif.hieken_ashi_smoothed_exit(HA_open, HA_high, HA_low, HA_close, ha_ex_t1, ha_ex_l1, ha_ex_t2, ha_ex_l2, ha_ex_ss, ha_ex_vf1, ha_ex_ao1, ha_ex_as1, ha_ex_ls1, ha_ex_am1, ha_ex_fr1a, ha_ex_fr1b, ha_ex_vf2, ha_ex_ao2, ha_ex_as2, ha_ex_ls2, ha_ex_am2, ha_ex_fr2a, ha_ex_fr2b)
+[ex_le_jt,  ex_se_jt ] = jcif.j_tpo_exit(jtpo_ex_len, jtpo_ex_emaL, jtpo_ex_emaF)
+[ex_le_kf,  ex_se_kf ] = jcif.kalman_filter_exit(kf_ex_sharp, kf_ex_k)
+[ex_le_kp,  ex_se_kp ] = jcif.kase_peak_oscillator_exit(kpo_ex_short, kpo_ex_long, kpo_ex_sharp)
+[ex_le_lf,  ex_se_lf ] = jcif.laguerre_filter_exit(lf_ex_alpha)
+[ex_le_pmo, ex_se_pmo] = jcif.price_momentum_oscillator_exit(pmo_ex_s1, pmo_ex_s2, pmo_ex_sg)
+[ex_le_pm,  ex_se_pm ] = jcif.polychromatic_momentum_exit(poly_ex_len)
+[ex_le_qq,  ex_se_qq ] = jcif.qqe_mod_exit(qqe_ex_rsiP, qqe_ex_rsiL, qqe_ex_fac)
+[ex_le_rv,  ex_se_rv ] = jcif.relative_vigor_index_exit(rvi_ex_len)
+[ex_le_rx,  ex_se_rx ] = jcif.rex_oscillator_exit(rex_ex_t1, rex_ex_l1, rex_ex_ao1, rex_ex_as1, rex_ex_ff1, rex_ex_fs1, rex_ex_jp1, rex_ex_jpw1, rex_ex_ls1, rex_ex_mf1, rex_ex_mfb1, rex_ex_mfw1, rex_ex_va1, rex_ex_t2, rex_ex_l2, rex_ex_ao2, rex_ex_as2, rex_ex_ff2, rex_ex_fs2, rex_ex_jp2, rex_ex_jpw2, rex_ex_ls2, rex_ex_mf2, rex_ex_mfb2, rex_ex_mfw2, rex_ex_va2)
+[ex_le_st,  ex_se_st ] = jcif.schaff_trend_cycle_exit(stc_ex_macdF, stc_ex_macdS, stc_ex_cyc, stc_ex_d1, stc_ex_d2, stc_ex_up, stc_ex_lo)
+[ex_le_ss,  ex_se_ss ] = jcif.ssl_channel_exit(ssl_ex_len)
+[ex_le_su,  ex_se_su ] = jcif.supertrend_exit(st_ex_fac, st_ex_atr)
+[ex_le_td,  ex_se_td ] = jcif.trend_direction_force_index_exit(tdfi_ex_lb, tdfi_ex_fh, tdfi_ex_fl)
+[ex_le_vq,  ex_se_vq ] = jcif.volatility_quality_exit(vq_ex_ma, vq_ex_smo, vq_ex_atr)
+[ex_le_vx,  ex_se_vx ] = jcif.vortex_exit(vortex_ex_p)
+[ex_le_wa,  ex_se_wa ] = jcif.waddah_attar_explosion_exit(wae_ex_sens, wae_ex_fast, wae_ex_slow, wae_ex_bbL, wae_ex_bbS)
+[ex_le_ft, ex_se_ft] = jcif.fisher_transform_exit(ft_ex_len)
+[ex_le_ar, ex_se_ar] = jcif.aroon_exit(aroon_ex_len)
+[ex_le_mm, ex_se_mm] = jcif.mama_fama_exit(mama_ex_fast, mama_ex_slow)
+[ex_le_cg, ex_se_cg] = jcif.center_of_gravity_exit(cog_ex_len, cog_ex_sig)
+[ex_le_ks, ex_se_ks] = jcif.kuskus_starlight_exit(ks_ex_range, ks_ex_psm, ks_ex_ism)
+[ex_le_bbi, ex_se_bbi] = jcif.bears_bulls_impulse_exit(bbi_ex_len)
+[ex_le_fxs, ex_se_fxs] = jcif.fx_sniper_ergodic_cci_exit(fxs_ex_cci, fxs_ex_p1, fxs_ex_p2, fxs_ex_trig)
+[ex_le_lmt, ex_se_lmt] = jcif.lemantrend_exit(lmt_ex_p1, lmt_ex_p2, lmt_ex_p3, lmt_ex_smooth)
+[ex_le_gli, ex_se_gli] = jcif.glitch_index_exit(gli_ex_len, gli_ex_mult, gli_ex_smooth)
+[ex_le_ere, ex_se_ere] = jcif.ehlers_reverse_ema_exit(ere_ex_len, ere_ex_alpha)
+
+raw_le = false
+raw_se = false
+if IND_5_SLCT == "Chaikin Money Flow"
+    raw_le := ex_le_cmf
+    raw_se := ex_se_cmf
+else if IND_5_SLCT == "Chandelier Exit"
+    raw_le := ex_le_ce
+    raw_se := ex_se_ce
+else if IND_5_SLCT == "Coppock Curve"
+    raw_le := ex_le_cc
+    raw_se := ex_se_cc
+else if IND_5_SLCT == "Coral"
+    raw_le := ex_le_co
+    raw_se := ex_se_co
+else if IND_5_SLCT == "DiDi Index"
+    raw_le := ex_le_di
+    raw_se := ex_se_di
+else if IND_5_SLCT == "Detrended Price Oscillator"
+    raw_le := ex_le_dp
+    raw_se := ex_se_dp
+else if IND_5_SLCT == "Detrended Synthetic Price Oscillator"
+    raw_le := ex_le_ds
+    raw_se := ex_se_ds
+else if IND_5_SLCT == "Ease Of Movement"
+    raw_le := ex_le_eo
+    raw_se := ex_se_eo
+else if IND_5_SLCT == "Half Trend"
+    raw_le := ex_le_ht
+    raw_se := ex_se_ht
+else if IND_5_SLCT == "Heiken Ashi Smoothed"
+    raw_le := ex_le_ha
+    raw_se := ex_se_ha
+else if IND_5_SLCT == "J_TPO"
+    raw_le := ex_le_jt
+    raw_se := ex_se_jt
+else if IND_5_SLCT == "Kallman Filter"
+    raw_le := ex_le_kf
+    raw_se := ex_se_kf
+else if IND_5_SLCT == "Kase Peak Oscillator"
+    raw_le := ex_le_kp
+    raw_se := ex_se_kp
+else if IND_5_SLCT == "Laguerre Filter"
+    raw_le := ex_le_lf
+    raw_se := ex_se_lf
+else if IND_5_SLCT == "Price Momentum Oscillator"
+    raw_le := ex_le_pmo
+    raw_se := ex_se_pmo
+else if IND_5_SLCT == "Polychrmatic Momentum"
+    raw_le := ex_le_pm
+    raw_se := ex_se_pm
+else if IND_5_SLCT == "QQE Mod"
+    raw_le := ex_le_qq
+    raw_se := ex_se_qq
+else if IND_5_SLCT == "Relative Vigor Index"
+    raw_le := ex_le_rv
+    raw_se := ex_se_rv
+else if IND_5_SLCT == "Rex Oscillator"
+    raw_le := ex_le_rx
+    raw_se := ex_se_rx
+else if IND_5_SLCT == "Schaff Trend Cycle"
+    raw_le := ex_le_st
+    raw_se := ex_se_st
+else if IND_5_SLCT == "SSL Channel"
+    raw_le := ex_le_ss
+    raw_se := ex_se_ss
+else if IND_5_SLCT == "Supertrend"
+    raw_le := ex_le_su
+    raw_se := ex_se_su
+else if IND_5_SLCT == "Trend Direction Force Index"
+    raw_le := ex_le_td
+    raw_se := ex_se_td
+else if IND_5_SLCT == "Volatility Quality"
+    raw_le := ex_le_vq
+    raw_se := ex_se_vq
+else if IND_5_SLCT == "Vortex Indicator"
+    raw_le := ex_le_vx
+    raw_se := ex_se_vx
+else if IND_5_SLCT == "Waddah Attar Explosion"
+    raw_le := ex_le_wa
+    raw_se := ex_se_wa
+else if IND_5_SLCT == "Fisher Transform"
+    raw_le := ex_le_ft
+    raw_se := ex_se_ft
+else if IND_5_SLCT == "Aroon"
+    raw_le := ex_le_ar
+    raw_se := ex_se_ar
+else if IND_5_SLCT == "MAMA FAMA"
+    raw_le := ex_le_mm
+    raw_se := ex_se_mm
+else if IND_5_SLCT == "Center of Gravity"
+    raw_le := ex_le_cg
+    raw_se := ex_se_cg
+else if IND_5_SLCT == "Kuskus Starlight"
+    raw_le := ex_le_ks
+    raw_se := ex_se_ks
+else if IND_5_SLCT == "Bears Bulls Impulse"
+    raw_le := ex_le_bbi
+    raw_se := ex_se_bbi
+else if IND_5_SLCT == "FX Sniper Ergodic CCI"
+    raw_le := ex_le_fxs
+    raw_se := ex_se_fxs
+else if IND_5_SLCT == "Lemantrend"
+    raw_le := ex_le_lmt
+    raw_se := ex_se_lmt
+else if IND_5_SLCT == "Glitch Index"
+    raw_le := ex_le_gli
+    raw_se := ex_se_gli
+else if IND_5_SLCT == "Ehlers Reverse EMA"
+    raw_le := ex_le_ere
+    raw_se := ex_se_ere
+
+if Ind_5_Check_Exit
+    Ind_5_L_Exit := raw_le and strategy.position_size > 0
+    Ind_5_S_Exit := raw_se and strategy.position_size < 0
+
+// ============================================================
+// BASELINE
+// ============================================================
+float baseline = na
+if maType == "HMA"
+    baseline := jcif.moving_average("HMA", input.int(20, title="HMA: Length", group="HMA Settings As Baseline"))
+if maType == "EMA"
+    baseline := jcif.moving_average("EMA", input.int(20, title="EMA: Length", group="EMA Settings As Baseline"))
+if maType == "RMA"
+    baseline := jcif.moving_average("RMA", input.int(20, title="RMA: Length", group="RMA Settings As Baseline"))
+if maType == "WMA"
+    baseline := jcif.moving_average("WMA", input.int(20, title="WMA: Length", group="WMA Settings As Baseline"))
+if maType == "VWMA"
+    baseline := jcif.moving_average("VWMA", input.int(20, title="VWMA: Length", group="VWMA Settings As Baseline"))
+if maType == "Fantail VMA"
+    fv_adx = input.int(2, title="Fantail VMA: ADX Length", group="Fantail VMA Settings As Baseline")
+    fv_len = input.float(10.0, title="Fantail VMA: Length", group="Fantail VMA Settings As Baseline")
+    fv_l2  = input.int(6, title="Fantail VMA: Length", group="Fantail VMA Settings As Baseline")
+    baseline := jcif.fantail_vma(fv_adx, fv_len, fv_l2)
+if maType == "McGinley Dynamic Index"
+    baseline := jcif.mcginley_dynamic_index(input.int(14, title="McGinley Dynamic Index: Length", group="McGinley Dynamic Index Settings As Baseline"))
+if maType == "Triangular Moving Average"
+    baseline := jcif.triangular_moving_average(input.int(20, title="Triangular Moving Average: Length", group="Triangular Moving Average Settings As Baseline"))
+if maType == "VIDYA"
+    vd_len = input.int(2, title="VIDYA: Length", group="VIDYA Settings As Baseline")
+    vd_fix = input.bool(true, title="VIDYA: Fixed CMO Length", group="VIDYA Settings As Baseline")
+    vd_alt = input.bool(true, title="VIDYA: Calculation Method: CMO/StDev", group="VIDYA Settings As Baseline")
+    baseline := jcif.vidya(vd_len, vd_fix, vd_alt)
+if maType == "KAMA"
+    kama_len  = input.int(10, title="KAMA: Length",      group="KAMA Settings As Baseline")
+    kama_fast = input.int(2,  title="KAMA: Fast Length", group="KAMA Settings As Baseline")
+    kama_slow = input.int(30, title="KAMA: Slow Length", group="KAMA Settings As Baseline")
+    baseline := jcif.kama_baseline(kama_len, kama_fast, kama_slow)
+if maType == "ALMA"
+    alma_len   = input.int(9,    title="ALMA: Length", group="ALMA Settings As Baseline")
+    alma_off   = input.float(0.85, title="ALMA: Offset", group="ALMA Settings As Baseline")
+    alma_sigma = input.int(6,    title="ALMA: Sigma",  group="ALMA Settings As Baseline")
+    baseline := jcif.alma_baseline(alma_len, alma_off, alma_sigma)
+if maType == "T3 Tillson"
+    t3_len = input.int(10,   title="T3 Tillson: Length",  group="T3 Tillson Settings As Baseline")
+    t3_vf  = input.float(0.7, title="T3 Tillson: V Factor", group="T3 Tillson Settings As Baseline")
+    baseline := jcif.t3_baseline(t3_len, t3_vf)
+if maType == "Super Smoother 2-Pole"
+    ss_cut = input.int(15, title="Super Smoother: Cutoff Period", group="Super Smoother 2-Pole Settings As Baseline")
+    baseline := jcif.super_smoother_2pole_baseline(ss_cut)
+if maType == "FRAMA"
+    frama_len = input.int(10, title="FRAMA: Length", group="FRAMA Settings As Baseline")
+    baseline := jcif.frama_baseline(frama_len)
+
+Ind_4_L_Conf = Ind_4_Check_Conf ? close > baseline : true
+Ind_4_S_Conf = Ind_4_Check_Conf ? close < baseline : true
+
+Ind_4_L_Trig = Ind_4_Check_Trig and ta.crossover(close, baseline)  and Ind_3_L_Conf and Ind_2_L_Conf and Ind_1_L_Conf
+Ind_4_S_Trig = Ind_4_Check_Trig and ta.crossunder(close, baseline) and Ind_3_S_Conf and Ind_2_S_Conf and Ind_1_S_Conf
+
+Ind_4_L_Conf_ATR = Ind_4_Check_Conf and NAU_ATR_Check_Conf ? close < baseline + ATR_VAR * atr : true
+Ind_4_S_Conf_ATR = Ind_4_Check_Conf and NAU_ATR_Check_Conf ? close > baseline - ATR_VAR * atr : true
+
+Ind_4_L_Exit = Ind_4_Check_Exit and ta.crossunder(close, baseline) and strategy.position_size > 0
+Ind_4_S_Exit = Ind_4_Check_Exit and ta.crossover(close, baseline)  and strategy.position_size < 0
+
+// ============================================================
+// CONTINUATION TRADES + BRIDGE TOO FAR
+// ============================================================
+Count_CON = float(0.0)
+Count_CON := ta.cross(close, baseline) ? 0 : strategy.position_size != 0 ? 1 : strategy.position_size[1] != 0 and strategy.position_size == 0 ? 2 : Count_CON[1]
+Ind_CON_Trig = Ind_6_Check and Count_CON == 2
+
+Count_BTF = float(0.0)
+Count_BTF := ta.cross(close, baseline) ? 0 : Count_BTF[1] + 1
+Ind_BTF_Conf = Ind_4_Check_Conf and NAU_BTF_Check_Conf ? Count_BTF <= BTF_VAR : true
+
+// ============================================================
+// POSITION SIZING
+// ============================================================
+var balance = startBalance
+balance := compoundProfits ? startBalance + strategy.netprofit : startBalance
+
+posSize = 0.0
+if fixedpositionsize
+    posSize := dollarsPC * contracts
+else
+    posSize := math.round(balance[1] * percentRisk / (atrMulti_Loss * atr))
+
+// ============================================================
+// ENTRY CONDITIONS (3 separate, each toggleable)
+// ============================================================
+longcondition1  = useBaselineEntry     and strategy.position_size <= 0 and Ind_1_L_Conf and Ind_2_L_Conf and Ind_3_L_Conf and (Ind_4_L_Trig or Ind_4_L_Trig[1] and NAU_OCR_Check_Conf) and Ind_4_L_Conf_ATR and Ind_BTF_Conf
+shortcondition1 = useBaselineEntry     and strategy.position_size >= 0 and Ind_1_S_Conf and Ind_2_S_Conf and Ind_3_S_Conf and (Ind_4_S_Trig or Ind_4_S_Trig[1] and NAU_OCR_Check_Conf) and Ind_4_S_Conf_ATR and Ind_BTF_Conf
+longcondition2  = useC1Entry           and strategy.position_size <= 0 and (Ind_1_L_Trigger or Ind_1_L_Trigger[1] and NAU_OCR_Check_Conf) and Ind_2_L_Conf and Ind_3_L_Conf and Ind_4_L_Conf and Ind_4_L_Conf_ATR and Ind_BTF_Conf
+shortcondition2 = useC1Entry           and strategy.position_size >= 0 and (Ind_1_S_Trigger or Ind_1_S_Trigger[1] and NAU_OCR_Check_Conf) and Ind_2_S_Conf and Ind_3_S_Conf and Ind_4_S_Conf and Ind_4_S_Conf_ATR and Ind_BTF_Conf
+longcondition3  = useContinuationEntry and strategy.position_size <= 0 and Ind_1_L_Trigger and Ind_2_L_Conf and Ind_3_L_Conf and Ind_4_L_Conf and Ind_4_L_Conf_ATR and Ind_CON_Trig
+shortcondition3 = useContinuationEntry and strategy.position_size >= 0 and Ind_1_S_Trigger and Ind_2_S_Conf and Ind_3_S_Conf and Ind_4_S_Conf and Ind_4_S_Conf_ATR and Ind_CON_Trig
+
+plotshape(longcondition1,  color=color.new(color.green,  75), style=shape.triangleup,   location=location.bottom, size=size.tiny)
+plotshape(shortcondition1, color=color.new(color.green,  75), style=shape.triangledown, location=location.bottom, size=size.tiny)
+plotshape(longcondition2,  color=color.new(color.purple, 75), style=shape.triangleup,   location=location.bottom, size=size.tiny)
+plotshape(shortcondition2, color=color.new(color.purple, 75), style=shape.triangledown, location=location.bottom, size=size.tiny)
+plotshape(longcondition3,  color=color.new(color.blue,   75), style=shape.triangleup,   location=location.bottom, size=size.tiny)
+plotshape(shortcondition3, color=color.new(color.blue,   75), style=shape.triangledown, location=location.bottom, size=size.tiny)
+
+entry_long  = (longcondition1  or longcondition2  or longcondition3 ) and dateWindow()
+entry_short = (shortcondition1 or shortcondition2 or shortcondition3) and dateWindow() and shortrades
+
+// ============================================================
+// ORDER MANAGEMENT
+// ============================================================
+idLE1 = str.tostring(close - (atr*atrMulti_Loss))
+idSE1 = str.tostring(close + (atr*atrMulti_Loss))
+A_Lalert = l_AlertMSG + " " + syminfo.ticker
+A_Salert = s_AlertMSG + " " + syminfo.ticker
+A_Ealert = e_AlertMSG + " " + syminfo.ticker
+
+if entry_long
+    strategy.entry(id='Long Entry 1', comment=idLE1, direction=strategy.long, qty=doubletrades ? posSize * 0.5 : posSize)
+    alert(A_Lalert, alert.freq_all)
+if entry_long and doubletrades
+    strategy.entry(id='Long Entry 2', comment=idLE1, direction=strategy.long, qty=posSize * 0.5)
+if entry_short
+    strategy.entry(id='Short Entry 1', comment=idSE1, direction=strategy.short, qty=doubletrades ? posSize * 0.5 : posSize)
+    alert(A_Salert, alert.freq_all)
+if entry_short and doubletrades
+    strategy.entry(id='Short Entry 2', comment=idSE1, direction=strategy.short, qty=posSize * 0.5)
+
+entry_atr   = float(0.0)
+entry_price = float(0.0)
+entry_atr   := strategy.position_size == 0 or entry_long or entry_short ? atr   : entry_atr[1]
+entry_price := strategy.position_size == 0 or entry_long or entry_short ? close : entry_price[1]
+
+nLoss   = entry_atr * atrMulti_Loss
+nProfit = entry_atr * atrMulti_Profit
+
+// ============================================================
+// V5: NNFX PHASED — phase tracking + trail state
+// ============================================================
+// Phase 1: SL at entry +/- nLoss, no special handling
+// Phase 2: SL at entry (breakeven), triggered when Leg 1 TP hits
+// Phase 3: trailing SL at 1.5x ATR below highest close since activation,
+//          triggered when price reaches 2x ATR profit from entry
+//
+// Phase tracking is per-trade. State is reset on new entry (entry_long /
+// entry_short) and persists otherwise via prev-bar nz() reads. The
+// activation gates check current bar's high/low against the entry-relative
+// thresholds, since Pine fills SL/TP intrabar against high/low.
+
+NNFX_TRAIL_ACTIVATION_MULT = 2.0  // price must reach entry +/- 2.0 * ATR-at-entry to activate trail
+NNFX_TRAIL_DISTANCE_MULT   = 1.5  // trail sits 1.5 * current ATR below highest close (long) / above lowest close (short)
+
+var int   nnfx_phase_long    = 0      // 0 = no position, 1 = Phase 1, 2 = Phase 2 (breakeven), 3 = Phase 3 (trail)
+var int   nnfx_phase_short   = 0
+var float nnfx_trail_high_long  = na  // highest close since trail (Phase 3) activated, long side
+var float nnfx_trail_low_short  = na  // lowest close since trail activated, short side
+
+// Reset phase state on new entry
+if entry_long
+    nnfx_phase_long := 1
+    nnfx_trail_high_long := na
+if entry_short
+    nnfx_phase_short := 1
+    nnfx_trail_low_short := na
+
+// Phase progression for long side (only when in a long position)
+if strategy.position_size > 0 and not entry_long
+    leg1_tp_long_level = entry_price + nProfit
+    trail_activation_long = entry_price + NNFX_TRAIL_ACTIVATION_MULT * entry_atr
+
+    // Phase 1 -> 2: Leg 1 TP hit (price touched TP level intrabar)
+    if nnfx_phase_long == 1 and high >= leg1_tp_long_level
+        nnfx_phase_long := 2
+
+    // Phase 2 -> 3: price reached 2x ATR profit (must be in Phase 2 first)
+    if nnfx_phase_long == 2 and high >= trail_activation_long
+        nnfx_phase_long := 3
+        nnfx_trail_high_long := close  // seed trail tracker with current close
+
+    // Update trail high while in Phase 3
+    if nnfx_phase_long == 3
+        nnfx_trail_high_long := math.max(close, nz(nnfx_trail_high_long, close))
+
+// Phase progression for short side (mirror)
+if strategy.position_size < 0 and not entry_short
+    leg1_tp_short_level = entry_price - nProfit
+    trail_activation_short = entry_price - NNFX_TRAIL_ACTIVATION_MULT * entry_atr
+
+    if nnfx_phase_short == 1 and low <= leg1_tp_short_level
+        nnfx_phase_short := 2
+
+    if nnfx_phase_short == 2 and low <= trail_activation_short
+        nnfx_phase_short := 3
+        nnfx_trail_low_short := close
+
+    if nnfx_phase_short == 3
+        nnfx_trail_low_short := math.min(close, nz(nnfx_trail_low_short, close))
+
+// Reset phase state when flat
+if strategy.position_size == 0
+    nnfx_phase_long  := 0
+    nnfx_phase_short := 0
+    nnfx_trail_high_long := na
+    nnfx_trail_low_short := na
+
+// ============================================================
+// STOP / PROFIT LEVELS PER EXIT TYPE
+// ============================================================
+long_stop_level    = float(0.0)
+long_profit_level  = float(0.0)
+short_stop_level   = float(0.0)
+short_profit_level = float(0.0)
+
+// Leg-2-specific stops (only used by NNFX Phased and Static / Exit IND)
+long_stop_level_leg2  = float(0.0)
+short_stop_level_leg2 = float(0.0)
+
+// ----- Static (unchanged from V3.2) -----
+if Exit_Type == "Static"
+    long_stop_level    := entry_price - nLoss
+    long_profit_level  := entry_price + nProfit
+    short_stop_level   := entry_price + nLoss
+    short_profit_level := entry_price - nProfit
+    long_stop_level_leg2  := long_stop_level
+    short_stop_level_leg2 := short_stop_level
+
+// ----- Static / Exit IND (V5: breakeven now hardcoded ON, no longer toggleable) -----
+if Exit_Type == "Static / Exit IND"
+    // Leg 1: always fixed SL + TP
+    long_stop_level   := entry_price - nLoss
+    long_profit_level := entry_price + nProfit
+    short_stop_level  := entry_price + nLoss
+    short_profit_level := entry_price - nProfit
+    // Leg 2: breakeven move when Leg 1 closes (strategy.opentrades drops from 2 to 1)
+    long_stop_level_leg2  := strategy.opentrades == 2 ? entry_price - nLoss : strategy.opentrades == 1 ? entry_price : na
+    short_stop_level_leg2 := strategy.opentrades == 2 ? entry_price + nLoss : strategy.opentrades == 1 ? entry_price : na
+
+// ----- NNFX Phased (V5: NEW) -----
+if Exit_Type == "NNFX Phased"
+    // Leg 1: always fixed SL + TP
+    long_stop_level    := entry_price - nLoss
+    long_profit_level  := entry_price + nProfit
+    short_stop_level   := entry_price + nLoss
+    short_profit_level := entry_price - nProfit
+
+    // Leg 2 by phase
+    if nnfx_phase_long == 1
+        long_stop_level_leg2 := entry_price - nLoss
+    else if nnfx_phase_long == 2
+        long_stop_level_leg2 := entry_price
+    else if nnfx_phase_long == 3
+        long_stop_level_leg2 := math.max(nz(nnfx_trail_high_long, close) - NNFX_TRAIL_DISTANCE_MULT * atr, nz(long_stop_level_leg2[1], entry_price))
+    else
+        long_stop_level_leg2 := na
+
+    if nnfx_phase_short == 1
+        short_stop_level_leg2 := entry_price + nLoss
+    else if nnfx_phase_short == 2
+        short_stop_level_leg2 := entry_price
+    else if nnfx_phase_short == 3
+        short_stop_level_leg2 := math.min(nz(nnfx_trail_low_short, close) + NNFX_TRAIL_DISTANCE_MULT * atr, nz(short_stop_level_leg2[1], entry_price))
+    else
+        short_stop_level_leg2 := na
+
+// ============================================================
+// PLOT STOPS & PROFIT LINES
+// ============================================================
+entryprice1 = plot(strategy.position_size != 0 or entry_long or entry_short ? entry_price : na, color=color.new(color.white, 0), style=plot.style_linebr, linewidth=2)
+longstop    = plot(strategy.position_size <= 0 or entry_long or entry_short ? na : long_stop_level,   color=color.new(color.red,  100), style=plot.style_linebr, linewidth=2)
+longprofit  = plot(strategy.position_size <= 0 or entry_long or entry_short ? na : long_profit_level, color=color.new(color.lime, 100), style=plot.style_linebr, linewidth=2)
+shortstop   = plot(strategy.position_size >= 0 or entry_long or entry_short ? na : short_stop_level,  color=color.new(color.red,  100), style=plot.style_linebr, linewidth=2)
+shortprofit = plot(strategy.position_size >= 0 or entry_long or entry_short ? na : short_profit_level,color=color.new(color.lime, 100), style=plot.style_linebr, linewidth=2)
+fill(entryprice1, longstop,    color=color.new(color.red,  50))
+fill(entryprice1, longprofit,  color=color.new(color.lime, 50))
+fill(entryprice1, shortstop,   color=color.new(color.red,  50))
+fill(entryprice1, shortprofit, color=color.new(color.lime, 50))
+
+// ============================================================
+// EXIT ORDERS
+// ============================================================
+if Exit_Type == "Static"
+    strategy.exit("SL/TP 1", "Long Entry 1",  stop=long_stop_level,  limit=long_profit_level)
+    strategy.exit("SL/TP 1", "Short Entry 1", stop=short_stop_level, limit=short_profit_level)
+    strategy.exit("SL/TP 2", "Long Entry 2",  stop=long_stop_level_leg2,  limit=long_profit_level)
+    strategy.exit("SL/TP 2", "Short Entry 2", stop=short_stop_level_leg2, limit=short_profit_level)
+if Exit_Type == "Static / Exit IND"
+    strategy.exit("SL/TP 1", "Long Entry 1",  stop=long_stop_level,  limit=long_profit_level)
+    strategy.exit("SL/TP 1", "Short Entry 1", stop=short_stop_level, limit=short_profit_level)
+    strategy.exit("SL 2",    "Long Entry 2",  stop=long_stop_level_leg2,  limit=na)
+    strategy.exit("SL 2",    "Short Entry 2", stop=short_stop_level_leg2, limit=na)
+if Exit_Type == "NNFX Phased"
+    strategy.exit("SL/TP 1", "Long Entry 1",  stop=long_stop_level,  limit=long_profit_level)
+    strategy.exit("SL/TP 1", "Short Entry 1", stop=short_stop_level, limit=short_profit_level)
+    strategy.exit("SL 2",    "Long Entry 2",  stop=long_stop_level_leg2,  limit=na)
+    strategy.exit("SL 2",    "Short Entry 2", stop=short_stop_level_leg2, limit=na)
+
+// Exit indicator (Slot 5) closes BOTH legs — applies to Static / Exit IND and NNFX Phased
+if Exit_Type == "Static / Exit IND" or Exit_Type == "NNFX Phased"
+    if Ind_5_L_Exit
+        strategy.close(id="Long Entry 1",  comment="Exit Long 1")
+        strategy.close(id="Long Entry 2",  comment="Exit Long 2")
+        alert(A_Ealert, alert.freq_all)
+    if Ind_5_S_Exit
+        strategy.close(id="Short Entry 1", comment="Exit Short 1")
+        strategy.close(id="Short Entry 2", comment="Exit Short 2")
+        alert(A_Ealert, alert.freq_all)
+    if Ind_4_L_Exit
+        strategy.close(id="Long Entry 1",  comment="BL Exit Long 1")
+        strategy.close(id="Long Entry 2",  comment="BL Exit Long 2")
+        alert(A_Ealert, alert.freq_all)
+    if Ind_4_S_Exit
+        strategy.close(id="Short Entry 1", comment="BL Exit Short 1")
+        strategy.close(id="Short Entry 2", comment="BL Exit Short 2")
+        alert(A_Ealert, alert.freq_all)
+
+// Main C1 flip exit — independent of Exit_Type, applies whenever iMainindExit is on
+if iMainindExit and strategy.position_size > 0 and Ind_1_S_Trigger
+    strategy.close(id="Long Entry 1",  comment="Exit Long 1")
+    strategy.close(id="Long Entry 2",  comment="Exit Long 2")
+    alert(A_Ealert, alert.freq_all)
+if iMainindExit and strategy.position_size < 0 and Ind_1_L_Trigger
+    strategy.close(id="Short Entry 1", comment="Exit Short 1")
+    strategy.close(id="Short Entry 2", comment="Exit Short 2")
+    alert(A_Ealert, alert.freq_all)
+
+// ============================================================
+// STATS TABLES (unchanged from V3.2)
+// ============================================================
+theme_color = color_theme1
+txt_color   = Text_color1
+bgcolor     = BckGRnd_color1
+
+reward = 0.0
+risk   = 0.0
+if strategy.wintrades != strategy.wintrades[1]
+    reward := (math.abs((strategy.closedtrades.entry_price(strategy.closedtrades - 1)) - (strategy.closedtrades.exit_price(strategy.closedtrades - 1))) * strategy.closedtrades.size(strategy.closedtrades - 1)) / balance[1]
+if strategy.losstrades != strategy.losstrades[1]
+    risk := (math.abs((strategy.closedtrades.entry_price(strategy.closedtrades - 1)) - (strategy.closedtrades.exit_price(strategy.closedtrades - 1))) * strategy.closedtrades.size(strategy.closedtrades - 1)) / balance[1]
+
+totalWins   = strategy.wintrades
+totalLoss   = strategy.losstrades
+totaltrades = strategy.closedtrades
+BarsIT      = (strategy.closedtrades.exit_bar_index(strategy.closedtrades - 1)) - (strategy.closedtrades.entry_bar_index(strategy.closedtrades - 1))
+
+var Bars_intrade = array.new_int(totaltrades)
+array.push(Bars_intrade, BarsIT)
+AbarsIT = array.avg(Bars_intrade)
+
+ProfitF    = strategy.grossprofit / strategy.grossloss
+Expectancy = (strategy.netprofit / startBalance) / totaltrades
+AVGwin     = ((strategy.grossprofit / totalWins) / startBalance) * 100
+AVGloss    = ((strategy.grossloss   / totalLoss) / startBalance) * 100
+
+ms_per_year = 365.25 * 24 * 60 * 60 * 1000
+ms_total    = timestamp(syminfo.timezone, endYear, endMonth, endDate, 0, 0) - timestamp(syminfo.timezone, startYear, startMonth, startDate, 0, 0)
+totalyears  = ms_total / ms_per_year
+
+totalCagr = totalyears > 0 and balance > 0 and startBalance > 0 ? math.pow(balance / startBalance, 1/totalyears) - 1 : 0.0
+
+var table testTable = table.new(position.middle_right, 10, 10, frame_color=theme_color, frame_width=2, border_color=theme_color, border_width=2)
+f_fillCell(_table, _column, _row, _title, _value, _bgcolor, _txtcolor) =>
+    _cellText = _title + "\n" + _value
+    table.cell(_table, _column, _row, _cellText, bgcolor=_bgcolor, text_color=_txtcolor)
+
+if drawtester and ChartMode == "Backtesting"
+    if barstate.islastconfirmedhistory
+        f_fillCell(testTable, 0, 0, "Total Trades:",  str.tostring(strategy.closedtrades), bgcolor, txt_color)
+        f_fillCell(testTable, 1, 0, "Win Rate:",      str.tostring(truncate((strategy.wintrades/strategy.closedtrades)*100, 2)) + "%", bgcolor, txt_color)
+        f_fillCell(testTable, 0, 1, "Profit Factor",  str.tostring(truncate(ProfitF, 4)),  bgcolor, ProfitF > 1 ? color.green : color.red)
+        f_fillCell(testTable, 1, 1, "Expectancy",     str.tostring(truncate(Expectancy*100, 4)) + " %", bgcolor, Expectancy > 0 ? color.green : color.red)
+        f_fillCell(testTable, 0, 2, "Average Win:",   str.tostring(truncate(AVGwin, 4))  + " %", bgcolor, color.green)
+        f_fillCell(testTable, 1, 2, "Average Loss:",  str.tostring(truncate(AVGloss, 4)) + " %", bgcolor, color.red)
+        f_fillCell(testTable, 0, 3, "R:R:",           str.tostring(truncate(AVGwin/AVGloss, 4)),  bgcolor, ProfitF > 1 ? color.green : color.red)
+        f_fillCell(testTable, 1, 3, "Average Bars In Trade:", str.tostring(math.round(AbarsIT)), bgcolor, txt_color)
+        f_fillCell(testTable, 0, 4, "CAGR",           str.tostring(truncate(totalCagr*100, 2)) + " %", bgcolor, totalCagr > 0 ? color.green : color.red)
+        f_fillCell(testTable, 1, 4, "Years Tested",   str.tostring(truncate(totalyears, 2)),     bgcolor, txt_color)
+
+// Live trading table
+INDA_Color = color.black
+if (Ind_1_L_Conf and Ind_2_L_Conf and Ind_3_L_Conf and Ind_4_L_Conf) or (Ind_1_S_Conf and Ind_2_S_Conf and Ind_3_S_Conf and Ind_4_S_Conf)
+    INDA_Color := color.gray
+
+B_Atr = math.abs(close - baseline)
+B_ATRcolor = B_Atr > (ATR_VAR*atr) ? color.red : color.green
+C_BTF = Count_BTF > BTF_VAR ? color.red : color.green
+
+string T_SL    = na
+string T_TP    = na
+string T_IND1  = Ind_1_L_Conf ? "Long" : "Short"
+string T_IND2  = Ind_2_L_Conf ? "Long" : "Short"
+string T_IND3  = Ind_3_L_Conf ? "True" : "False"
+string T_IND4  = Ind_4_L_Conf ? "Long" : "Short"
+string T_PositionS = "No Position"
+string T_PositionE = "Maintain Positions"
+string T_IND1Entry = "No Entry Signal"
+string T_AccoB     = "$ " + str.tostring(truncate(balance, 2))
+string T_PosSZ     = str.tostring(posSize)
+string T_BTF       = str.tostring(Count_BTF)
+string T_AtrD      = str.tostring(truncate(B_Atr, 4))
+
+if strategy.opentrades == 1
+    T_PositionS := "1"
+if strategy.opentrades == 2
+    T_PositionS := "2"
+
+EX_color = color.gray
+if Ind_5_L_Exit or Ind_5_S_Exit
+    T_PositionE := "Exit Positions"
+    EX_color := color.red
+
+E_color = color.gray
+if entry_long
+    T_IND1Entry := "Enter Long"
+    E_color := color.green
+if entry_short
+    T_IND1Entry := "Enter Short"
+    E_color := color.green
+
+T_LsLoss = close - (atr*atrMulti_Loss)
+T_SsLoss = close + (atr*atrMulti_Loss)
+T_LTP    = close + (atr*atrMulti_Profit)
+T_STP    = close - (atr*atrMulti_Profit)
+
+T_SL := Ind_1_L_Conf ? str.tostring(truncate(T_LsLoss, 4)) : Ind_1_S_Conf ? str.tostring(truncate(T_SsLoss, 4)) : na
+T_TP := Ind_1_L_Conf ? str.tostring(truncate(T_LTP, 4))    : Ind_1_S_Conf ? str.tostring(truncate(T_STP, 4))    : na
+
+string indicator1 = IND_1_SLCT
+string indicator2 = IND_2_SLCT
+string indicator3 = IND_3_SLCT
+string indicator4 = maType
+string indicator5 = IND_5_SLCT
+
+var table testTable1 = table.new(position.top_right, 2, 14, frame_color=theme_color, frame_width=2, border_color=theme_color, border_width=2)
+f_fillCell1(_table, _column, _row, _value, _bgcolor, _txtcolor, _txtSize) =>
+    table.cell(_table, _column, _row, _value, bgcolor=_bgcolor, text_color=_txtcolor, text_size=_txtSize)
+
+if P_ltc and ChartMode == "Live Trading"
+    if barstate.islastconfirmedhistory
+        f_fillCell1(testTable1, 0,  0, "Stop Loss",            bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  0, T_SL,                   bgcolor, color.red, size.small)
+        f_fillCell1(testTable1, 0,  1, "Profit Target",        bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  1, T_TP,                   bgcolor, color.green, size.small)
+        f_fillCell1(testTable1, 0,  2, indicator1 + " Bias: ", bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  2, T_IND1,                 bgcolor, Ind_1_L_Conf ? color.green : color.red, size.small)
+        f_fillCell1(testTable1, 0,  3, indicator2 + " Bias: ", bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  3, T_IND2,                 bgcolor, Ind_2_L_Conf ? color.green : color.red, size.small)
+        f_fillCell1(testTable1, 0,  4, indicator3 + " Bias",   bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  4, T_IND3,                 bgcolor, Ind_3_L_Conf ? color.green : color.red, size.small)
+        f_fillCell1(testTable1, 0,  5, indicator4 + " Bias: ", bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  5, T_IND4,                 bgcolor, Ind_4_L_Conf ? color.green : color.red, size.small)
+        f_fillCell1(testTable1, 0,  6, "Open Positions",       bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  6, T_PositionS,            bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 0,  7, "Entry Signal",         bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  7, T_IND1Entry,            E_color, color.black, size.small)
+        f_fillCell1(testTable1, 0,  8, "Exit Signal",          bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  8, T_PositionE,            EX_color, color.black, size.small)
+        f_fillCell1(testTable1, 0,  9, "Account Balance",      bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1,  9, T_AccoB,                bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 0, 10, "Contracts",            bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1, 10, T_PosSZ,                bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 0, 11, "BTF Count",            bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1, 11, T_BTF,                  bgcolor, C_BTF, size.small)
+        f_fillCell1(testTable1, 0, 12, "Distance From BL",     bgcolor, txt_color, size.small)
+        f_fillCell1(testTable1, 1, 12, T_AtrD,                 bgcolor, B_ATRcolor, size.small)
