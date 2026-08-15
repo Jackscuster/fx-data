@@ -155,7 +155,7 @@ def run_bars(o, h, l, c, atr,
              plan, risk_dollars,
              atr_mult, tp_mult, trail_mult, trail_start_mult,
              max_atr_dist, bridge_bars,
-             block_suspect,
+             block_suspect, bridge_all_routes,
              t_entry_bar, t_exit_bar, t_dir, t_leg, t_entry_px, t_exit_px,
              t_units, t_r, t_reason, t_route):
     """The bar loop. Returns (n_trades, n_both_touched, n_blocked_late,
@@ -410,7 +410,14 @@ def run_bars(o, h, l, c, atr,
            (want == -1 and cl < b - max_atr_dist * a):
             blocked_late += 1
             continue
-        if i - last_cross_bar > bridge_bars:
+        # PARITY SWITCH. Pine's longcondition3/shortcondition3 carry
+        # Ind_CON_Trig but not Ind_BTF_Conf, so continuation entries skip the
+        # bridge -- the known bug. bridge_all_routes=True (the default, and
+        # what the sweep uses) applies it everywhere. Setting it False
+        # reproduces the Pine behaviour EXACTLY, which is what a TradingView
+        # comparison has to run against; otherwise the fix is scored as a
+        # disagreement.
+        if (bridge_all_routes or rt != 3) and i - last_cross_bar > bridge_bars:
             blocked_stale += 1
             continue
         if want == pos:
@@ -533,7 +540,8 @@ def prepare(d, c1, c2, vol, base, exit_ind, params=None):
 def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         trail_mult=1.5, trail_start_mult=2.0, max_atr_dist=1.5, bridge_bars=7,
         use_base_cross=True, use_c1_flip=True, use_continuation=True,
-        exit_on_c1_flip=False, one_candle_rule=False, block_suspect=True):
+        exit_on_c1_flip=False, one_candle_rule=False, block_suspect=True,
+        bridge_all_routes=True):
     n = A['c'].size
     cap = 4 * n + 8                      # a hard ceiling on trade records
     t = {k: np.zeros(cap, dt) for k, dt in
@@ -552,6 +560,7 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         int(plan), float(risk_dollars),
         float(atr_mult), float(tp_mult), float(trail_mult), float(trail_start_mult),
         float(max_atr_dist), int(bridge_bars), bool(block_suspect),
+        bool(bridge_all_routes),
         t['entry_bar'], t['exit_bar'], t['dir'], t['leg'], t['entry_px'],
         t['exit_px'], t['units'], t['r'], t['reason'], t['route'])
     out = {k: v[:nt] for k, v in t.items()}
