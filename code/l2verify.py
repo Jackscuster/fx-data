@@ -274,8 +274,7 @@ def t_no_lookahead():
     print('\n12. NO LOOK-AHEAD -- truncation cannot change a completed trade')
     import l2engine as EE
     d = EE.load_pair('EURUSD')
-    A = EE.prepare(d, 'parabolic_sar', 'donchian_breakout', 'efficiency_ratio',
-                   'baseline_sma', 'parabolic_sar')
+    A = EE.prepare(d, **EE.DEFAULT_SLOTS)
     full = EE.run(A, plan=2)
     cut = int(0.7 * len(d))
     A2 = {k: (v[:cut] if isinstance(v, np.ndarray) else v) for k, v in A.items()}
@@ -298,9 +297,11 @@ def t_no_lookahead():
 def debug_run(pair='EURUSD', **kw):
     import pandas as pd
     d = E.load_pair(pair)
-    A = E.prepare(d, kw.pop('c1', 'parabolic_sar'), kw.pop('c2', 'donchian_breakout'),
-                  kw.pop('vol', 'efficiency_ratio'), kw.pop('base', 'baseline_sma'),
-                  kw.pop('exit_ind', 'parabolic_sar'))
+    slots = dict(E.DEFAULT_SLOTS)
+    for k in list(slots):
+        if k in kw:
+            slots[k] = kw.pop(k)
+    A = E.prepare(d, **slots)
     r = E.run(A, **kw)
     T = E.trade_frame(r, d)
     T.insert(0, 'pair', pair)
@@ -327,8 +328,8 @@ def main():
     D.to_csv(os.path.join(ROOTOUT, 'l2_debug_trades.csv'), index=False)
     S = pd.DataFrame(summ)
     pd.set_option('display.width', 240)
-    print('\nDEBUG RUN -- PSAR / Donchian / EfficiencyRatio / SMA20 / PSAR-exit, '
-          'two-leg plan')
+    print('\nDEBUG RUN -- %s, two-leg plan'
+          % ' / '.join('%s=%s' % kv for kv in E.DEFAULT_SLOTS.items()))
     print(S[['label', 'trades', 'expectancy_R', 'total_R', 'win_rate',
              'profit_factor', 'sortino', 'max_dd_R', 'both_touched',
              'blocked_late', 'blocked_stale']].to_string(index=False))
