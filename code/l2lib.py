@@ -447,7 +447,9 @@ def registry_frame():
                               defaults='; '.join('%s=%s' % kv for kv in v['defaults'].items()),
                               defaults_confirmed=v['confirmed'],
                               pine_line=v['pine_line'], source=v['source'],
-                              available=k not in UNAVAILABLE)
+                              available=k not in UNAVAILABLE,
+                              inverted_vs_tradingview=k in INVERTED,
+                              lookahead_if_nondefault=k in LOOKAHEAD_OPTION)
                          for k, v in REGISTRY.items()])
 
 
@@ -976,6 +978,334 @@ for _n, _f, _d, _ln, _av in [
     _reg(_n, _f, 'volume', _d, _ln, True)
     if not _av:
         UNAVAILABLE.add(_n)
+
+KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
+
+
+# ==========================================================================
+# CONFIRMATION SLOT (C1 / C2 / exit). Batch A -- the oscillators and the
+# structural ones whose maths is self-contained.
+#
+# The dominant idiom in this library's signal helpers is the ZERO CROSS
+# written by hand as `v[1] < 0 and v > 0` rather than ta.crossover(v, 0).
+# They differ when v is exactly 0 on the previous bar: ta.crossover requires
+# prev <= 0, the hand-written form requires prev < 0. Kept as written.
+# ==========================================================================
+
+
+def _zero_cross(v):
+    """The library's standard four-tuple off a single oscillator."""
+    pv = P.shift(v, 1)
+    return (P.F((pv < 0) & (v > 0)), P.F((pv > 0) & (v < 0)),
+            P.F(v > 0), P.F(v < 0))
+
+
+def _zero_cross_exit(v):
+    pv = P.shift(v, 1)
+    return P.F((pv > 0) & (v < 0)), P.F((pv < 0) & (v > 0))
+
+
+def chaikin_money_flow(o, h, l, c, lookback=50, volume=None):
+    """UNAVAILABLE -- the accumulation term is multiplied by volume."""
+    return _novol(c)
+
+
+def chaikin_money_flow_signals(o, h, l, c, lookback=50):
+    return _zero_cross(chaikin_money_flow(o, h, l, c, lookback))
+
+
+def chaikin_money_flow_exit(o, h, l, c, lookback=50):
+    return _zero_cross_exit(chaikin_money_flow(o, h, l, c, lookback))
+
+
+def coppock_curve(o, h, l, c, cc_smoothing_length=10, cc_long_roc_length=14,
+                  cc_short_roc_length=11):
+    return P.wma(P.roc(c, cc_long_roc_length) + P.roc(c, cc_short_roc_length),
+                 cc_smoothing_length)
+
+
+def coppock_curve_signals(o, h, l, c, smooth_len=10, long_roc=14, short_roc=11):
+    return _zero_cross(coppock_curve(o, h, l, c, smooth_len, long_roc, short_roc))
+
+
+def coppock_curve_exit(o, h, l, c, smooth_len=10, long_roc=14, short_roc=11):
+    return _zero_cross_exit(coppock_curve(o, h, l, c, smooth_len, long_roc,
+                                          short_roc))
+
+
+def dpo(o, h, l, c, dpo_length=50, dpo_centered=False):
+    """Detrended Price Oscillator. CENTERED IS A LOOK-AHEAD: it reads
+    close[barsback], which is fine, but the UNcentred branch shifts the MA
+    instead, and only the uncentred branch is causal. The strategy's default is
+    centered=false, so the shipped configuration is safe; a sweep that turns it
+    on is reading the future and the registry flags it."""
+    barsback = int(P.idiv(int(dpo_length), 2)) + 1
+    ma = P.sma(c, dpo_length)
+    if dpo_centered:
+        return P.shift(c, barsback) - ma
+    return np.asarray(c, float) - P.shift(ma, barsback)
+
+
+def dpo_signals(o, h, l, c, len=50, centered=False):
+    return _zero_cross(dpo(o, h, l, c, len, centered))
+
+
+def dpo_exit(o, h, l, c, len=50, centered=False):
+    return _zero_cross_exit(dpo(o, h, l, c, len, centered))
+
+
+def ease_of_movement(o, h, l, c, eom_length=14, eom_divisor=10000, volume=None):
+    """UNAVAILABLE -- divides by volume."""
+    return _novol(c)
+
+
+def ease_of_movement_signals(o, h, l, c, len=14, divisor=10000):
+    return _zero_cross(ease_of_movement(o, h, l, c, len, divisor))
+
+
+def ease_of_movement_exit(o, h, l, c, len=14, divisor=10000):
+    return _zero_cross_exit(ease_of_movement(o, h, l, c, len, divisor))
+
+
+def kalman_filter(o, h, l, c, k_sharpness=1.0, kf_k=1.0):
+    """lib. Both recursions seed off the source, not zero."""
+    src = (np.asarray(o, float) + np.asarray(h, float) + np.asarray(l, float)
+           + np.asarray(c, float)) / 4.0
+    n = src.size
+    vel = np.empty(n); filt = np.empty(n)
+    pv, pf = 0.0, np.nan
+    rt = np.sqrt(k_sharpness * kf_k / 100.0)
+    for i in range(n):
+        base = src[i] if not np.isfinite(pf) else pf
+        dist = src[i] - base
+        err = base + dist * rt
+        pv = pv + dist * kf_k / 100.0
+        pf = err + pv
+        vel[i] = pv; filt[i] = pf
+    return vel
+
+
+def kalman_filter_signals(o, h, l, c, sharpness=1.0, k=1.0):
+    v = kalman_filter(o, h, l, c, sharpness, k)
+    pv = P.shift(v, 1)
+    return (P.F((v > 0) & (pv < 0)), P.F((v < 0) & (pv > 0)),
+            P.F(v > 0), P.F(v < 0))
+
+
+def kalman_filter_exit(o, h, l, c, sharpness=1.0, k=1.0):
+    return _zero_cross_exit(kalman_filter(o, h, l, c, sharpness, k))
+
+
+def laguerre_filter(o, h, l, c, lf_alpha=0.2):
+    """Four-stage Laguerre cascade, every stage nz-seeded at zero."""
+    src = (np.asarray(h, float) + np.asarray(l, float)) / 2.0
+    g = 1.0 - lf_alpha
+    n = src.size
+    out = np.empty(n)
+    l0 = l1 = l2 = l3 = 0.0
+    for i in range(n):
+        p0, p1, p2 = l0, l1, l2
+        l0 = (1 - g) * src[i] + g * l0
+        l1 = -g * l0 + p0 + g * l1
+        l2 = -g * l1 + p1 + g * l2
+        l3 = -g * l2 + p2 + g * l3
+        out[i] = (l0 + 2 * l1 + 2 * l2 + l3) / 6.0
+    return out
+
+
+def laguerre_filter_signals(o, h, l, c, alpha=0.2):
+    v = laguerre_filter(o, h, l, c, alpha)
+    col = P.F(v > P.shift(v, 1))
+    prev = np.concatenate([[False], col[:-1]])
+    return col & ~prev, ~col & prev, col, ~col
+
+
+def laguerre_filter_exit(o, h, l, c, alpha=0.2):
+    v = laguerre_filter(o, h, l, c, alpha)
+    col = P.F(v > P.shift(v, 1))
+    prev = np.concatenate([[False], col[:-1]])
+    return ~col & prev, col & ~prev
+
+
+def price_momentum_oscillator(o, h, l, c, pmo_1st_length=35, pmo_2nd_length=20,
+                              pmo_signal_length=10):
+    return P.ema(10.0 * P.ema(P.nz(P.roc(c, 1), 0.0), pmo_1st_length),
+                 pmo_2nd_length)
+
+
+def price_momentum_oscillator_signals(o, h, l, c, s1=35, s2=20, sig=10):
+    return _zero_cross(price_momentum_oscillator(o, h, l, c, s1, s2, sig))
+
+
+def price_momentum_oscillator_exit(o, h, l, c, s1=35, s2=20, sig=10):
+    return _zero_cross_exit(price_momentum_oscillator(o, h, l, c, s1, s2, sig))
+
+
+def relative_vigor_index(o, h, l, c, relative_vigor_length=10):
+    num = P.msum(P.swma(np.asarray(c, float) - np.asarray(o, float)),
+                 relative_vigor_length)
+    den = P.msum(P.swma(np.asarray(h, float) - np.asarray(l, float)),
+                 relative_vigor_length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        rvi = np.where(den != 0, num / den, np.nan)
+    return rvi, P.swma(rvi)
+
+
+def relative_vigor_index_signals(o, h, l, c, len=10):
+    """NOTE the direction: lc is SIGNAL above VALUE, which is the opposite of
+    the usual RVI reading. As written in the library."""
+    v, sg = relative_vigor_index(o, h, l, c, len)
+    return P.crossover(sg, v), P.crossunder(sg, v), P.F(sg > v), P.F(sg < v)
+
+
+def relative_vigor_index_exit(o, h, l, c, len=10):
+    v, sg = relative_vigor_index(o, h, l, c, len)
+    return P.crossunder(sg, v), P.crossover(sg, v)
+
+
+def supertrend_signals(o, h, l, c, factor=3.0, atr_period=10):
+    """lib. THE DIRECTION IS READ BACKWARDS AND THE PATCH DOES NOT FIX IT.
+
+    ta.supertrend returns -1 for an UP trend and +1 for a down trend. This
+    helper sets lc = dir > 0, i.e. it confirms LONG while the supertrend says
+    DOWN. Ported exactly as written, because the patch is the authority on what
+    is a bug and it does not mention this one -- silently inverting it would
+    make every TradingView comparison on Supertrend disagree. Flagged in the
+    registry as inverted_vs_tradingview."""
+    line, d = P.supertrend(h, l, c, factor, atr_period)
+    pd_ = P.shift(d, 1)
+    return (P.F((d > 0) & (pd_ < 0)), P.F((d < 0) & (pd_ > 0)),
+            P.F(d > 0), P.F(d < 0))
+
+
+def supertrend_exit(o, h, l, c, factor=3.0, atr_period=10):
+    line, d = P.supertrend(h, l, c, factor, atr_period)
+    pd_ = P.shift(d, 1)
+    return P.F((d < 0) & (pd_ > 0)), P.F((d > 0) & (pd_ < 0))
+
+
+def fisher_transform(o, h, l, c, length=10):
+    src = (np.asarray(h, float) + np.asarray(l, float)) / 2.0
+    hi, lo = P.highest(src, length), P.lowest(src, length)
+    rng = hi - lo
+    with np.errstate(invalid='ignore', divide='ignore'):
+        raw = np.where(rng == 0, 0.0, 0.66 * ((src - lo) / rng - 0.5))
+    n = src.size
+    fish = np.empty(n); val = 0.0; f = 0.0
+    for i in range(n):
+        r = raw[i] if np.isfinite(raw[i]) else 0.0
+        val = 0.67 * r + 0.33 * val
+        cl = min(max(val, -0.999), 0.999)
+        f = 0.5 * np.log((1 + cl) / (1 - cl)) + 0.5 * f
+        fish[i] = f
+    return fish, P.shift(fish, 1)
+
+
+def fisher_transform_signals(o, h, l, c, length=10):
+    f, t = fisher_transform(o, h, l, c, length)
+    return P.crossover(f, t), P.crossunder(f, t), P.F(f > t), P.F(f < t)
+
+
+def fisher_transform_exit(o, h, l, c, length=10):
+    f, t = fisher_transform(o, h, l, c, length)
+    return P.crossunder(f, t), P.crossover(f, t)
+
+
+def aroon_updown(o, h, l, c, length=25):
+    up = 100.0 * (length - (-P.highestbars(h, length + 1))) / length
+    dn = 100.0 * (length - (-P.lowestbars(l, length + 1))) / length
+    return up, dn
+
+
+def aroon_signals(o, h, l, c, length=25):
+    up, dn = aroon_updown(o, h, l, c, length)
+    return P.crossover(up, dn), P.crossunder(up, dn), P.F(up > dn), P.F(up < dn)
+
+
+def aroon_exit(o, h, l, c, length=25):
+    up, dn = aroon_updown(o, h, l, c, length)
+    return P.crossunder(up, dn), P.crossover(up, dn)
+
+
+def center_of_gravity(o, h, l, c, length=10, signal_length=3):
+    src = (np.asarray(h, float) + np.asarray(l, float)) / 2.0
+    W = P._roll(src, length)                 # window ending at i, oldest first
+    w = np.arange(length, 0, -1, dtype=float)   # (1+i) with i counting back
+    num = (W * w).sum(axis=1)
+    den = W.sum(axis=1)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        cog = np.where(den != 0, -num / den + (length + 1) / 2.0, 0.0)
+    return cog, P.sma(cog, signal_length)
+
+
+def center_of_gravity_signals(o, h, l, c, length=10, signal_length=3):
+    v, sg = center_of_gravity(o, h, l, c, length, signal_length)
+    return P.crossover(v, sg), P.crossunder(v, sg), P.F(v > sg), P.F(v < sg)
+
+
+def center_of_gravity_exit(o, h, l, c, length=10, signal_length=3):
+    v, sg = center_of_gravity(o, h, l, c, length, signal_length)
+    return P.crossunder(v, sg), P.crossover(v, sg)
+
+
+# --- confirmation batch A. Defaults from strategy input() lines 176-262.
+INVERTED = set()          # ported as written, but reads its source backwards
+LOOKAHEAD_OPTION = set()  # has a non-default setting that reads the future
+
+for _n, _f, _slot, _d, _ln in [
+        ('chaikin_money_flow_signals', chaikin_money_flow_signals, 'confirmation',
+         dict(lookback=50), 'strat 181'),
+        ('chaikin_money_flow_exit', chaikin_money_flow_exit, 'exit',
+         dict(lookback=50), 'strat 181'),
+        ('coppock_curve_signals', coppock_curve_signals, 'confirmation',
+         dict(smooth_len=10, long_roc=14, short_roc=11), 'strat 185-187'),
+        ('coppock_curve_exit', coppock_curve_exit, 'exit',
+         dict(smooth_len=10, long_roc=14, short_roc=11), 'strat 185-187'),
+        ('dpo_signals', dpo_signals, 'confirmation',
+         dict(len=50, centered=False), 'strat 190-191'),
+        ('dpo_exit', dpo_exit, 'exit', dict(len=50, centered=False), 'strat 190-191'),
+        ('ease_of_movement_signals', ease_of_movement_signals, 'confirmation',
+         dict(len=14, divisor=10000), 'strat 195-196'),
+        ('ease_of_movement_exit', ease_of_movement_exit, 'exit',
+         dict(len=14, divisor=10000), 'strat 195-196'),
+        ('kalman_filter_signals', kalman_filter_signals, 'confirmation',
+         dict(sharpness=1.0, k=1.0), 'strat 258-259'),
+        ('kalman_filter_exit', kalman_filter_exit, 'exit',
+         dict(sharpness=1.0, k=1.0), 'strat 258-259'),
+        ('laguerre_filter_signals', laguerre_filter_signals, 'confirmation',
+         dict(alpha=0.2), 'strat 266'),
+        ('laguerre_filter_exit', laguerre_filter_exit, 'exit',
+         dict(alpha=0.2), 'strat 266'),
+        ('price_momentum_oscillator_signals', price_momentum_oscillator_signals,
+         'confirmation', dict(s1=35, s2=20, sig=10), 'strat 274-276'),
+        ('price_momentum_oscillator_exit', price_momentum_oscillator_exit, 'exit',
+         dict(s1=35, s2=20, sig=10), 'strat 274-276'),
+        ('relative_vigor_index_signals', relative_vigor_index_signals,
+         'confirmation', dict(len=10), 'strat 280'),
+        ('relative_vigor_index_exit', relative_vigor_index_exit, 'exit',
+         dict(len=10), 'strat 280'),
+        ('supertrend_signals', supertrend_signals, 'confirmation',
+         dict(factor=3.0, atr_period=10), 'strat 283-284'),
+        ('supertrend_exit', supertrend_exit, 'exit',
+         dict(factor=3.0, atr_period=10), 'strat 283-284'),
+        ('fisher_transform_signals', fisher_transform_signals, 'confirmation',
+         dict(length=10), 'strat 200'),
+        ('fisher_transform_exit', fisher_transform_exit, 'exit',
+         dict(length=10), 'strat 200'),
+        ('aroon_signals', aroon_signals, 'confirmation', dict(length=25),
+         'strat 177'),
+        ('aroon_exit', aroon_exit, 'exit', dict(length=25), 'strat 177'),
+        ('center_of_gravity_signals', center_of_gravity_signals, 'confirmation',
+         dict(length=10, signal_length=3), 'strat 179-180'),
+        ('center_of_gravity_exit', center_of_gravity_exit, 'exit',
+         dict(length=10, signal_length=3), 'strat 179-180')]:
+    _reg(_n, _f, _slot, _d, _ln, True)
+
+for _n in ('chaikin_money_flow_signals', 'chaikin_money_flow_exit',
+           'ease_of_movement_signals', 'ease_of_movement_exit'):
+    UNAVAILABLE.add(_n)
+INVERTED.update({'supertrend_signals', 'supertrend_exit'})
+LOOKAHEAD_OPTION.update({'dpo_signals', 'dpo_exit'})   # only if centered=True
 
 KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
 

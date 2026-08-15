@@ -324,3 +324,67 @@ def latch(up, dn, init=0):
             cur = -1
         out[i] = cur
     return out
+
+
+def roc(src, length):
+    prev = shift(src, int(length))
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(prev != 0, 100.0 * (_a(src) - prev) / prev, np.nan)
+
+
+def swma(src):
+    """ta.swma: the symmetrically weighted 4-bar average, weights 1/6 2/6 2/6
+    1/6 with the OLDEST bar first."""
+    s = _a(src)
+    return (shift(s, 3) / 6.0 + shift(s, 2) * 2.0 / 6.0
+            + shift(s, 1) * 2.0 / 6.0 + s / 6.0)
+
+
+def highestbars(src, length):
+    """Offset (<= 0) to the highest bar in the window. 0 means it is this bar."""
+    W = _roll(src, int(length))
+    idx = np.argmax(np.where(np.isnan(W), -np.inf, W), axis=1)
+    out = (idx - (int(length) - 1)).astype(float)
+    out[np.isnan(W).any(axis=1)] = np.nan
+    return out
+
+
+def lowestbars(src, length):
+    W = _roll(src, int(length))
+    idx = np.argmin(np.where(np.isnan(W), np.inf, W), axis=1)
+    out = (idx - (int(length) - 1)).astype(float)
+    out[np.isnan(W).any(axis=1)] = np.nan
+    return out
+
+
+def supertrend(h, l, c, factor, atr_period):
+    """ta.supertrend -> (line, direction).
+
+    DIRECTION IS -1 WHEN THE TREND IS UP and +1 when it is down. That is
+    TradingView's convention, not a transcription error, and the library's
+    own supertrend_signals reads it the other way round -- see l2lib."""
+    h, l, c = _a(h), _a(l), _a(c)
+    a = atr(h, l, c, atr_period)
+    hl2 = (h + l) / 2.0
+    n = c.size
+    up = hl2 + factor * a
+    dn = hl2 - factor * a
+    line = np.full(n, np.nan); direction = np.full(n, np.nan)
+    pu = pd_ = np.nan; pdir = 1
+    for i in range(n):
+        if not np.isfinite(a[i]):
+            continue
+        u, d = up[i], dn[i]
+        if np.isfinite(pu):
+            u = min(u, pu) if (c[i - 1] <= pu) else u
+            d = max(d, pd_) if (c[i - 1] >= pd_) else d
+        if not np.isfinite(pu):
+            dirn = 1
+        elif line[i - 1] == pu:
+            dirn = -1 if c[i] > u else 1
+        else:
+            dirn = 1 if c[i] < d else -1
+        line[i] = d if dirn == -1 else u
+        direction[i] = dirn
+        pu, pd_, pdir = u, d, dirn
+    return line, direction
