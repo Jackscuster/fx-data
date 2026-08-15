@@ -511,10 +511,45 @@ def _conf(name, o, h, l, c, params=None, as_written_mode=False):
     return lt, st, lc, sc, L.KIND[name] == 'TERNARY'
 
 
-def load_pair(pair, clean=True):
+PRIMARY_FEED = 'oanda'     # decided 2026-08-15; see results/l2_feed_verdict.md
+
+
+def load_pair(pair, feed=None):
+    """THE SWEEP'S FEED IS OANDA DAILY MID.
+
+    Decided on the evidence in results/l2_feed_verdict.md: the engine's parity
+    proof is a proof about OANDA bars (185 of 189 entries against TradingView),
+    winners must port back to TradingView whose FX charts are OANDA, and OANDA
+    needs none of the four repairs Yahoo needed. The cost is history -- clean
+    OANDA starts 2005-01-03 for all 28 pairs.
+
+    THE LEADING PLACEHOLDER BLOCK IS DROPPED. OANDA's practice feed serves
+    close-only bars (high = low = close, volume = 1) for its earliest years.
+    They are not neutral: sma(high) then equals sma(low), SSL Channel confirms
+    neither direction, and the engine trades nothing -- which reads as "no edge"
+    rather than "no data".
+
+    feed='yahoo' reaches the cleaned Yahoo set, which stays in the repo FROZEN
+    as a cross-check. It is never mixed into a sweep: two feeds in one result is
+    two experiments in one number.
+    """
     import pandas as pd
-    d = pd.read_csv(os.path.join(ROOTDATA, 'ohlc_clean' if clean else 'ohlc',
-                                 '%s.csv' % pair), index_col=0, parse_dates=True)
+    import numpy as np
+    f = feed or PRIMARY_FEED
+    if f == 'yahoo':
+        return pd.read_csv(os.path.join(ROOTDATA, 'ohlc_clean', '%s.csv' % pair),
+                           index_col=0, parse_dates=True)
+    if f == 'yahoo_raw':
+        return pd.read_csv(os.path.join(ROOTDATA, 'ohlc', '%s.csv' % pair),
+                           index_col=0, parse_dates=True)
+    d = pd.read_csv(os.path.join(ROOTDATA, 'oanda_ohlc', '%s_mid.csv' % pair),
+                    index_col=0, parse_dates=True)
+    flat = (d.high.values == d.low.values)
+    i = 0
+    while i < len(flat) and flat[i]:
+        i += 1
+    d = d.iloc[i:].copy()
+    d['suspect'] = False
     return d
 
 
