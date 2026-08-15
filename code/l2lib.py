@@ -431,10 +431,22 @@ KIND = {k: v['kind'] for k, v in REGISTRY.items()}
 NOUT = {'confirmation': 4, 'volume': 2, 'exit': 2, 'baseline': 1}
 
 
-def compute(name, o, h, l, c, **kw):
+def compute(name, o, h, l, c, as_written_mode=False, **kw):
+    """as_written_mode=True runs the PRE-V9.1 function and its pre-V9.1
+    defaults. It exists for one caller -- l2parity.py -- because a TradingView
+    comparison has to reproduce what TradingView does, bugs included. It must
+    never be set for a sweep: it puts Supertrend back on the wrong side of its
+    own line and Chandelier back to agreeing with everything."""
     r = REGISTRY[name]
+    if as_written_mode and name in AS_WRITTEN:
+        p = dict(PRE_V91_DEFAULTS.get(name, r['defaults'])); p.update(kw)
+        return _shape(r, AS_WRITTEN[name](o, h, l, c, **p))
     p = dict(r['defaults']); p.update(kw)
     out = r['fn'](o, h, l, c, **p)
+    return _shape(r, out)
+
+
+def _shape(r, out):
     if r['slot'] == 'baseline':
         return np.asarray(out, float)
     return tuple(np.asarray(x, bool) for x in out)
@@ -449,6 +461,8 @@ def registry_frame():
                               pine_line=v['pine_line'], source=v['source'],
                               available=k not in UNAVAILABLE,
                               inert_at_defaults=k in globals().get('INERT_AT_DEFAULTS', set()),
+                              redeclared_v91=k in globals().get('REDECLARED_V91', set()),
+                              bugfix_v91=k in globals().get('FIXED_V91', set()),
                               inverted_vs_tradingview=k in INVERTED,
                               lookahead_if_nondefault=k in LOOKAHEAD_OPTION)
                          for k, v in REGISTRY.items()])
@@ -1709,7 +1723,7 @@ for _n, _f, _slot, _d, _ln in [
               lowerBand=25, stc_midline=50.0), 'patch A5'),
         ('schaff_trend_cycle_exit', schaff_trend_cycle_exit, 'exit',
          dict(macdFast=23, macdSlow=50, cycleLen=10, d1=3, d2=3, upperBand=75,
-              lowerBand=25, stc_midline=50.0), 'patch A5'),
+              lowerBand=25), 'patch A5'),
         ('glitch_index_signals', glitch_index_signals, 'confirmation',
          dict(length=30, multiplier=5.0, smooth=3), 'strat 249-251 / patch A7'),
         ('glitch_index_exit', glitch_index_exit, 'exit',
@@ -2616,6 +2630,125 @@ INERT_AT_DEFAULTS = {
     'volatility_quality_signals',          # dead band 859x too wide; 0 triggers
     'rex_oscillator_signals',              # osc and its signal are one series
 }
+
+
+
+# ==========================================================================
+# V9.1 ADDENDUM -- JCs_Indicators_Lib_V9_1_addendum.pine
+#
+# Section C fixes two bugs V9 missed; Section D re-declares four defaults that
+# were chosen while the parameter they set was dead.
+#
+# THESE ARE THE VERSIONS THE SWEEP USES. The as-written functions above are
+# kept, unchanged, ONLY so a TradingView parity run can reproduce what
+# TradingView actually does. `as_written(name)` is the single door to them and
+# nothing but l2parity.py should walk through it.
+# ==========================================================================
+
+AS_WRITTEN = {}          # name -> the pre-V9.1 callable, for parity runs only
+PRE_V91_DEFAULTS = {}    # ...and the defaults it had before D1/D2/D4
+
+
+def _supersede(name, fn, defaults=None):
+    """Replace a registry entry with its V9.1 version, keeping the original
+    reachable by name. The tag stays on the row: the record has to show that a
+    default was RE-DECLARED, not that it was always this."""
+    AS_WRITTEN[name] = REGISTRY[name]['fn']
+    PRE_V91_DEFAULTS[name] = dict(REGISTRY[name]['defaults'])
+    REGISTRY[name]['fn'] = fn
+    REGISTRY[name]['pine_line'] += ' / V9.1'
+    if defaults:
+        REGISTRY[name]['defaults'] = dict(REGISTRY[name]['defaults'], **defaults)
+    globals()[name] = fn
+
+
+def as_written(name):
+    """The pre-V9.1 function. PARITY COMPARISONS ONLY -- it reproduces a bug on
+    purpose. Using it anywhere else puts the known-wrong version into a result."""
+    return AS_WRITTEN[name]
+
+
+# --- C1. ta.supertrend returns -1 for UP. The original read it backwards.
+def supertrend_signals_v91(o, h, l, c, factor=3.0, atr_period=10):
+    line, d = P.supertrend(h, l, c, factor, atr_period)
+    pd_ = P.shift(d, 1)
+    return (P.F((d < 0) & (pd_ > 0)), P.F((d > 0) & (pd_ < 0)),
+            P.F(d < 0), P.F(d > 0))
+
+
+def supertrend_exit_v91(o, h, l, c, factor=3.0, atr_period=10):
+    line, d = P.supertrend(h, l, c, factor, atr_period)
+    pd_ = P.shift(d, 1)
+    return P.F((d > 0) & (pd_ < 0)), P.F((d < 0) & (pd_ > 0))
+
+
+# --- C2. Resolved to one direction off Cdir, the way A5 fixed Schaff.
+def chandelier_exit_signals_v91(o, h, l, c, atr_period=22, atr_mult=3.0,
+                                use_close=True):
+    ls, ss, d = chandelier_exit(o, h, l, c, atr_period, atr_mult, use_close)
+    pd_ = np.concatenate([[1.0], d[:-1]])
+    return (P.F((d == 1.0) & (pd_ != 1.0)), P.F((d == -1.0) & (pd_ != -1.0)),
+            P.F(d == 1.0), P.F(d == -1.0))
+
+
+def chandelier_exit_exit_v91(o, h, l, c, atr_period=22, atr_mult=3.0,
+                             use_close=True):
+    ls, ss, d = chandelier_exit(o, h, l, c, atr_period, atr_mult, use_close)
+    pd_ = np.concatenate([[1.0], d[:-1]])
+    return P.F((d == -1.0) & (pd_ != -1.0)), P.F((d == 1.0) & (pd_ != 1.0))
+
+
+# --- D3. Damiani: use the anti-threshold the original computes and discards.
+def damiani_volatmeter_v91(o, h, l, c, viscosity=7, sedimentation=50,
+                           threshold=1.4, lag=1.4, use_lag=True):
+    short = P.atr(h, l, c, viscosity)
+    long_ = P.atr(h, l, c, sedimentation)
+    ss = P.stdev(c, viscosity); sl = P.stdev(c, sedimentation)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        ratio = np.where(long_ != 0, short / long_, 0.0)
+        anti = np.where(sl != 0, ss / sl, 0.0)
+    eff = threshold - anti
+    return ratio, eff, P.F(ratio > eff)
+
+
+def damiani_volatmeter_volume_signals_v91(o, h, l, c, viscosity=7,
+                                          sedimentation=50, threshold=1.4,
+                                          lag=1.4, use_lag=True):
+    _, _, t = damiani_volatmeter_v91(o, h, l, c, viscosity, sedimentation,
+                                     threshold, lag, use_lag)
+    return t, t
+
+
+_supersede('supertrend_signals', supertrend_signals_v91)
+_supersede('supertrend_exit', supertrend_exit_v91)
+_supersede('chandelier_exit_signals', chandelier_exit_signals_v91)
+_supersede('chandelier_exit_exit', chandelier_exit_exit_v91)
+_supersede('damiani_volatmeter_volume_signals',
+           damiani_volatmeter_volume_signals_v91)
+
+# --- D1, D2, D4: same functions, re-declared defaults.
+_supersede('rex_oscillator_signals', rex_oscillator_signals,
+           dict(smooth=14, sigSmooth=22))
+_supersede('rex_oscillator_exit', rex_oscillator_exit,
+           dict(smooth=14, sigSmooth=22))
+_supersede('volatility_quality_signals', volatility_quality_signals,
+           dict(atr_pct=0.075))
+_supersede('volatility_quality_exit', volatility_quality_exit,
+           dict(atr_pct=0.075))
+_supersede('glitch_index_signals', glitch_index_signals, dict(multiplier=1.0))
+_supersede('glitch_index_exit', glitch_index_exit, dict(multiplier=1.0))
+
+# INERT_AT_DEFAULTS is a HISTORICAL tag and is deliberately not cleared: the
+# record has to show these four were re-declared, not that they were always
+# live. `redeclared_v91` is what says they are fixed now.
+REDECLARED_V91 = {'rex_oscillator_signals', 'rex_oscillator_exit',
+                  'volatility_quality_signals', 'volatility_quality_exit',
+                  'glitch_index_signals', 'glitch_index_exit',
+                  'damiani_volatmeter_volume_signals'}
+FIXED_V91 = {'supertrend_signals', 'supertrend_exit',
+             'chandelier_exit_signals', 'chandelier_exit_exit',
+             'damiani_volatmeter_volume_signals'}
+KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
 
 
 if __name__ == '__main__':
