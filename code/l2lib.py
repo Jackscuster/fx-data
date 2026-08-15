@@ -1603,8 +1603,11 @@ def schaff_trend_cycle_signals(o, h, l, c, macdFast=23, macdSlow=50,
 
 
 def schaff_trend_cycle_exit(o, h, l, c, macdFast=23, macdSlow=50, cycleLen=10,
-                            d1=3, d2=3, upperBand=75, lowerBand=25,
-                            stc_midline=50.0):
+                            d1=3, d2=3, upperBand=75, lowerBand=25):
+    # NO stc_midline HERE. The patch adds that parameter to
+    # schaff_trend_cycle_signals only; the exit keeps its original seven, and
+    # carrying the extra one would break the call signature a winner has to be
+    # reproduced with.
     stc, bsig, ssig = schaff_trend_cycle(o, h, l, c, macdFast, macdSlow,
                                          cycleLen, d1, d2, upperBand, lowerBand)
     return ssig, bsig
@@ -2394,8 +2397,18 @@ def hieken_ashi_smoothed_signals(o, h, l, c, ma_type1='T3', ma_len1=8,
                                 frama_t2_b)
 
 
-def hieken_ashi_smoothed_exit(o, h, l, c, **kw):
-    lt, st, lc, sc = hieken_ashi_smoothed_signals(o, h, l, c, **kw)
+def hieken_ashi_smoothed_exit(o, h, l, c, ma_type1='T3', ma_len1=8,
+                              ma_type2='T3', ma_len2=8, single_smooth=False,
+                              vol_factor1=0.82, alma_offset1=0.85,
+                              alma_sigma1=6, lsma_offset1=0, ama_smooth1=0.181,
+                              frama_t1_a=1, frama_t1_b=168, vol_factor2=0.82,
+                              alma_offset2=0.85, alma_sigma2=6, lsma_offset2=0,
+                              ama_smooth2=0.181, frama_t2_a=1, frama_t2_b=168):
+    lt, st, lc, sc = hieken_ashi_smoothed_signals(
+        o, h, l, c, ma_type1, ma_len1, ma_type2, ma_len2, single_smooth,
+        vol_factor1, alma_offset1, alma_sigma1, lsma_offset1, ama_smooth1,
+        frama_t1_a, frama_t1_b, vol_factor2, alma_offset2, alma_sigma2,
+        lsma_offset2, ama_smooth2, frama_t2_a, frama_t2_b)
     return st, lt
 
 
@@ -2551,8 +2564,20 @@ def rex_oscillator_signals(o, h, l, c, maType='SMA', smooth=13,
             P.F(rex > sig), P.F(rex < sig))
 
 
-def rex_oscillator_exit(o, h, l, c, **kw):
-    lt, st, lc, sc = rex_oscillator_signals(o, h, l, c, **kw)
+def rex_oscillator_exit(o, h, l, c, maType='SMA', smooth=13, almaOffset=0.85,
+                        almaSigma=6, framaFast=34, framaSlow=89, jurikPhase=1,
+                        jurikPower=1, lsOffset=0, modFilter=0.8, modFB=False,
+                        modFBW=0.5, volAdj=10, sigMaType='SMA', sigSmooth=13,
+                        sigAlmaOff=0.85, sigAlmaSig=6, sigFramaFast=34,
+                        sigFramaSlow=89, sigJurikPhase=1, sigJurikPower=1,
+                        sigLsOff=0, sigModFilter=0.8, sigModFB=False,
+                        sigModFBW=0.5, sigVolAdj=10):
+    lt, st, lc, sc = rex_oscillator_signals(
+        o, h, l, c, maType, smooth, almaOffset, almaSigma, framaFast,
+        framaSlow, jurikPhase, jurikPower, lsOffset, modFilter, modFB, modFBW,
+        volAdj, sigMaType, sigSmooth, sigAlmaOff, sigAlmaSig, sigFramaFast,
+        sigFramaSlow, sigJurikPhase, sigJurikPower, sigLsOff, sigModFilter,
+        sigModFB, sigModFBW, sigVolAdj)
     return st, lt
 
 
@@ -2567,7 +2592,8 @@ for _n, _f, _slot, _d, _ln in [
               alma_sigma2=6, lsma_offset2=0, ama_smooth2=0.181, frama_t2_a=1,
               frama_t2_b=168), 'strat 258-276'),
         ('hieken_ashi_smoothed_exit', hieken_ashi_smoothed_exit, 'exit',
-         dict(), 'strat 258-276'),
+         dict(ma_type1='T3', ma_len1=8, ma_type2='T3', ma_len2=8,
+              single_smooth=False), 'strat 258-276'),
         ('rex_oscillator_signals', rex_oscillator_signals, 'confirmation',
          dict(maType='SMA', smooth=13, almaOffset=0.85, almaSigma=6,
               framaFast=34, framaSlow=89, jurikPhase=1, jurikPower=1,
@@ -2576,7 +2602,8 @@ for _n, _f, _slot, _d, _ln in [
               sigFramaFast=34, sigFramaSlow=89, sigJurikPhase=1,
               sigJurikPower=1, sigLsOff=0, sigModFilter=0.8, sigModFB=False,
               sigModFBW=0.5, sigVolAdj=10), 'strat 327-352'),
-        ('rex_oscillator_exit', rex_oscillator_exit, 'exit', dict(),
+        ('rex_oscillator_exit', rex_oscillator_exit, 'exit',
+         dict(maType='SMA', smooth=13, sigMaType='SMA', sigSmooth=13),
          'strat 327-352')]:
     _reg(_n, _f, _slot, _d, _ln, True)
 KIND.update({k: v['kind'] for k, v in REGISTRY.items()})

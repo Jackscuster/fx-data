@@ -1,0 +1,522 @@
+pair,entry_date,direction,status,ours_px,tv_px,rel_px,cause,route,reason
+EURUSD,2008-12-01,short,matched,1.259906,1.2617,0.0014218910993105123,,baseline cross,baseline cross
+EURUSD,2009-03-02,short,matched,1.256408,1.2559,0.00040449080340787714,,c1 flip,stop
+EURUSD,2009-06-25,long,matched,1.405304,1.3994,0.00421895097899109,price gap > 0.40%,baseline cross,baseline cross
+EURUSD,2009-07-03,long,matched,1.397702,1.3974,0.00021611564333764454,,baseline cross,exit indicator
+EURUSD,2010-03-18,short,matched,1.361396,1.3607,0.0005115014330859337,,baseline cross,target
+EURUSD,2012-07-05,short,matched,1.239157,1.23899,0.00013478720570789775,,c1 flip,target
+EURUSD,2014-04-30,long,matched,1.386924,1.38651,0.00029859142739694375,,baseline cross,target
+EURUSD,2014-07-04,short,matched,1.358843,1.35908,0.00017438267063016357,,baseline cross,baseline cross
+EURUSD,2015-10-06,long,matched,1.126799,1.12684,3.6384934862054715e-05,,baseline cross,target
+EURUSD,2016-09-26,long,matched,1.124986,1.12517,0.00016353084422794954,,c1 flip,stop
+EURUSD,2016-10-06,short,matched,1.114455,1.11466,0.00018391258320923934,,c1 flip,target
+EURUSD,2018-03-26,long,matched,1.245749,1.24569,4.736330868838254e-05,,baseline cross,stop
+EURUSD,2020-04-22,short,matched,1.080964,1.08058,0.0003553647115437449,,c1 flip,stop
+EURUSD,2020-05-06,short,matched,1.079855,1.07976,8.798251463284084e-05,,c1 flip,stop
+EURUSD,2020-07-06,long,matched,1.131286,1.1312,7.602545968885299e-05,,baseline cross,target
+EURUSD,2020-08-28,long,matched,1.191824,1.19058,0.001044868887433035,,baseline cross,stop
+EURUSD,2021-08-06,short,matched,1.17495,1.17583,0.0007484075078880382,,baseline cross,exit indicator
+EURUSD,2022-08-15,short,matched,1.016198,1.01612,7.676258709603443e-05,,baseline cross,target
+EURUSD,2023-05-02,long,matched,1.101091,1.10104,4.631984305749405e-05,,baseline cross,baseline cross
+EURUSD,2023-09-01,short,matched,1.077586,1.07727,0.00029333407595123133,,c1 flip,target
+EURUSD,2025-05-20,long,matched,1.128796,1.12821,0.0005194068480158618,,baseline cross,exit indicator
+EURUSD,2025-09-05,long,matched,1.171317,1.17199,0.0005742369815443354,,baseline cross,target
+EURUSD,2004-04-01,short,ours only,1.2129,,,,baseline cross,target
+EURUSD,2006-03-09,short,ours only,1.190405,,,,baseline cross,baseline cross
+EURUSD,2006-07-24,short,ours only,1.2584,,,,c1 flip,stop
+EURUSD,2006-09-01,long,ours only,1.285694,,,,c1 flip,stop
+EURUSD,2008-06-09,short,ours only,1.546408,,,,baseline cross,stop
+EURUSD,2008-07-09,long,ours only,1.578507,,,,c1 flip,exit indicator
+EURUSD,2009-02-23,short,ours only,1.267813,,,,baseline cross,exit indicator
+EURUSD,2009-04-24,short,ours only,1.301897,,,,baseline cross,stop
+EURUSD,2009-06-22,long,ours only,1.407202,,,,baseline cross,baseline cross
+EURUSD,2010-01-19,short,ours only,1.428102,,,,baseline cross,target
+EURUSD,2010-11-03,long,ours only,1.403607,,,,baseline cross,stop
+EURUSD,2011-01-06,short,ours only,1.315686,,,,baseline cross,target
+EURUSD,2011-04-20,long,ours only,1.4514,,,,c1 flip,target
+EURUSD,2012-03-21,long,ours only,1.323767,,,,baseline cross,exit indicator
+EURUSD,2012-06-22,short,ours only,1.253761,,,,baseline cross,stop
+EURUSD,2014-04-09,long,ours only,1.385502,,,,baseline cross,exit indicator
+EURUSD,2014-10-30,short,ours only,1.26328,,,,baseline cross,target
+EURUSD,2014-12-18,short,ours only,1.233898,,,,baseline cross,target
+EURUSD,2015-02-27,short,ours only,1.120536,,,,c1 flip,target
+EURUSD,2015-06-02,long,ours only,1.115001,,,,baseline cross,target
+EURUSD,2015-08-04,short,ours only,1.088898,,,,c1 flip,baseline cross
+EURUSD,2016-01-18,long,ours only,1.092001,,,,baseline cross,stop
+EURUSD,2016-01-25,short,ours only,1.079902,,,,c1 flip,stop
+EURUSD,2016-04-29,long,ours only,1.146303,,,,c1 flip,target
+EURUSD,2018-03-07,long,ours only,1.241665,,,,baseline cross,stop
+EURUSD,2018-04-10,long,ours only,1.236308,,,,baseline cross,stop
+EURUSD,2018-08-01,short,ours only,1.166589,,,,baseline cross,target
+EURUSD,2018-12-03,short,ours only,1.134224,,,,baseline cross,baseline cross
+EURUSD,2018-12-28,long,ours only,1.143105,,,,baseline cross,stop
+EURUSD,2019-01-08,long,ours only,1.147974,,,,c1 flip,stop
+EURUSD,2019-03-27,short,ours only,1.127485,,,,baseline cross,exit indicator
+EURUSD,2019-11-25,short,ours only,1.102256,,,,baseline cross,stop
+EURUSD,2021-01-06,long,ours only,1.230027,,,,c1 flip,stop
+EURUSD,2021-03-02,short,ours only,1.20511,,,,c1 flip,target
+EURUSD,2021-11-01,short,ours only,1.155668,,,,baseline cross,baseline cross
+EURUSD,2021-11-05,short,ours only,1.155535,,,,baseline cross,target
+EURUSD,2022-01-05,short,ours only,1.128363,,,,c1 flip,baseline cross
+EURUSD,2022-01-07,short,ours only,1.129688,,,,baseline cross,baseline cross
+EURUSD,2022-11-08,long,ours only,1.001863,,,,c1 flip,target
+EURUSD,2023-01-10,long,ours only,1.073318,,,,c1 flip,target
+EURUSD,2025-02-03,short,ours only,1.024779,,,,baseline cross,stop
+EURUSD,2025-05-29,long,ours only,1.137838,,,,baseline cross,target
+EURUSD,2025-08-12,long,ours only,1.167706,,,,baseline cross,exit indicator
+EURUSD,2026-01-23,long,ours only,1.175461,,,,baseline cross,target
+EURUSD,2026-06-17,short,ours only,1.150735,,,,baseline cross,target
+EURUSD,2001-06-28,short,tv only,,0.8444,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2001-06-28,short,tv only,,0.8444,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-01-14,long,tv only,,0.8945,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-01-14,long,tv only,,0.8945,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-01-15,short,tv only,,0.8836,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-01-15,short,tv only,,0.8836,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-08-15,long,tv only,,0.9827,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-08-15,long,tv only,,0.9827,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-10-09,long,tv only,,0.9902,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2002-10-09,long,tv only,,0.9902,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-20,long,tv only,,1.0823,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-20,long,tv only,,1.0823,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-24,long,tv only,,1.0789,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-24,long,tv only,,1.0789,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-26,long,tv only,,1.079,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-26,long,tv only,,1.079,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-28,long,tv only,,1.08,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-02-28,long,tv only,,1.08,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-08-06,short,tv only,,1.1337,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-08-06,short,tv only,,1.1337,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-08-08,short,tv only,,1.1308,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2003-08-08,short,tv only,,1.1308,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2004-04-02,short,tv only,,1.2137,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2004-04-02,short,tv only,,1.2137,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2004-05-18,short,tv only,,1.1955,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2004-05-18,short,tv only,,1.1955,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2005-04-27,short,tv only,,1.2926,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2005-04-27,short,tv only,,1.2926,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2006-01-03,long,tv only,,1.2016,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2006-01-03,long,tv only,,1.2016,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2006-09-04,long,tv only,,1.2863,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2006-09-04,long,tv only,,1.2863,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2008-06-10,short,tv only,,1.5459,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2008-06-10,short,tv only,,1.5459,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2009-04-27,short,tv only,,1.302,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2009-04-27,short,tv only,,1.302,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2009-06-23,long,tv only,,1.4075,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2009-06-23,long,tv only,,1.4075,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2009-07-31,long,tv only,,1.4251,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2009-07-31,long,tv only,,1.4251,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2010-04-07,short,tv only,,1.3338,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2010-04-07,short,tv only,,1.3338,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2010-11-02,long,tv only,,1.403,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2010-11-02,long,tv only,,1.403,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2011-01-05,short,tv only,,1.3149,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2011-01-05,short,tv only,,1.3149,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2012-05-04,short,tv only,,1.30877,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2012-05-04,short,tv only,,1.30877,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2012-06-25,short,tv only,,1.25007,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2012-06-25,short,tv only,,1.25007,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2014-10-29,short,tv only,,1.26381,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2014-10-29,short,tv only,,1.26381,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2014-12-11,short,tv only,,1.24064,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2014-12-11,short,tv only,,1.24064,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2014-12-17,short,tv only,,1.23311,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2014-12-17,short,tv only,,1.23311,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2015-02-26,short,tv only,,1.11954,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2015-02-26,short,tv only,,1.11954,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2016-01-15,long,tv only,,1.09185,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2016-01-15,long,tv only,,1.09185,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2016-04-28,long,tv only,,1.1353,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2016-04-28,long,tv only,,1.1353,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2016-06-24,short,tv only,,1.11083,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2016-06-24,short,tv only,,1.11083,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-03-06,long,tv only,,1.24154,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-03-06,long,tv only,,1.24154,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-07-24,short,tv only,,1.16843,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-07-24,short,tv only,,1.16843,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-08-02,short,tv only,,1.15851,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-08-02,short,tv only,,1.15851,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-11-27,short,tv only,,1.1297,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-11-27,short,tv only,,1.1297,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-11-30,short,tv only,,1.13152,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-11-30,short,tv only,,1.13152,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-12-27,long,tv only,,1.14301,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2018-12-27,long,tv only,,1.14301,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2019-01-07,long,tv only,,1.14784,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2019-01-07,long,tv only,,1.14784,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2019-03-26,short,tv only,,1.12738,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2019-03-26,short,tv only,,1.12738,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2019-11-22,short,tv only,,1.10192,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2019-11-22,short,tv only,,1.10192,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2021-02-17,short,tv only,,1.20448,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2021-02-17,short,tv only,,1.20448,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2021-10-29,short,tv only,,1.15621,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2021-10-29,short,tv only,,1.15621,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2021-11-04,short,tv only,,1.15551,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2021-11-04,short,tv only,,1.15551,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2022-01-04,short,tv only,,1.12826,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2022-01-04,short,tv only,,1.12826,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2022-01-06,short,tv only,,1.12945,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2022-01-06,short,tv only,,1.12945,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2022-11-07,long,tv only,,1.00171,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2022-11-07,long,tv only,,1.00171,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2023-01-09,long,tv only,,1.07326,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2023-01-09,long,tv only,,1.07326,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2025-01-31,short,tv only,,1.03583,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2025-01-31,short,tv only,,1.03583,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2025-09-03,long,tv only,,1.16605,,EXPECTED if a continuation entry past the bridge,,
+EURUSD,2025-09-03,long,tv only,,1.16605,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2004-07-02,long,matched,1.830999,1.8336,0.0014185209424082972,,c1 flip,target
+GBPUSD,2005-11-04,short,matched,1.750087,1.7524,0.0013199041314768372,,baseline cross,target
+GBPUSD,2006-03-23,short,matched,1.734305,1.7345,0.00011242432977800244,,baseline cross,stop
+GBPUSD,2007-01-12,long,matched,1.957215,1.9591,0.0009621765096218348,,baseline cross,target
+GBPUSD,2007-03-02,short,matched,1.942615,1.9437,0.0005582137161084543,,c1 flip,target
+GBPUSD,2008-02-05,short,matched,1.964791,1.9643,0.0002499618184595119,,baseline cross,target
+GBPUSD,2008-12-22,short,matched,1.4828,1.4825,0.00020236087689711095,,baseline cross,stop
+GBPUSD,2009-03-02,short,matched,1.403509,1.4035,6.4125400783225755e-06,,c1 flip,stop
+GBPUSD,2012-07-23,short,matched,1.551831,1.55012,0.001103785513379621,,baseline cross,stop
+GBPUSD,2013-04-25,long,matched,1.543686,1.54336,0.00021122745179337704,,baseline cross,exit indicator
+GBPUSD,2015-08-14,long,matched,1.56519,1.56479,0.0002556253554791237,,c1 flip,stop
+GBPUSD,2016-04-13,short,matched,1.419205,1.42014,0.0006583857929499261,,baseline cross,stop
+GBPUSD,2016-08-04,short,matched,1.312922,1.31108,0.0014049485920004112,,baseline cross,exit indicator
+GBPUSD,2017-06-07,long,matched,1.29621,1.29632,8.485559121191716e-05,,baseline cross,stop
+GBPUSD,2018-08-02,short,matched,1.301812,1.30157,0.0001859293007675926,,c1 flip,target
+GBPUSD,2019-12-03,long,matched,1.294063,1.29963,0.004283526849949678,price gap > 0.40%,c1 flip,target
+GBPUSD,2021-04-07,short,matched,1.374382,1.3741,0.00020522523833774357,,c1 flip,stop
+GBPUSD,2021-08-12,short,matched,1.381158,1.38102,9.992614154769195e-05,,baseline cross,target
+GBPUSD,2023-01-09,long,matched,1.211637,1.21832,0.00548542254908398,price gap > 0.40%,baseline cross,target
+GBPUSD,2023-08-31,short,matched,1.267283,1.26707,0.00016810436676743885,,baseline cross,target
+GBPUSD,2023-10-25,short,matched,1.210346,1.21015,0.00016196339296770064,,c1 flip,stop
+GBPUSD,2025-09-08,long,matched,1.355307,1.35441,0.0006622809932001002,,c1 flip,exit indicator
+GBPUSD,2004-10-01,short,ours only,1.784312,,,,baseline cross,stop
+GBPUSD,2004-10-11,short,ours only,1.791088,,,,baseline cross,stop
+GBPUSD,2005-06-28,short,ours only,1.806815,,,,c1 flip,target
+GBPUSD,2006-03-30,short,ours only,1.73771,,,,baseline cross,stop
+GBPUSD,2006-07-14,short,ours only,1.819604,,,,baseline cross,stop
+GBPUSD,2006-09-19,long,ours only,1.887291,,,,baseline cross,target
+GBPUSD,2007-09-26,long,ours only,2.026794,,,,baseline cross,target
+GBPUSD,2008-02-01,short,ours only,1.966491,,,,baseline cross,baseline cross
+GBPUSD,2008-09-29,short,ours only,1.782086,,,,baseline cross,target
+GBPUSD,2009-07-14,long,ours only,1.643196,,,,baseline cross,exit indicator
+GBPUSD,2009-07-29,long,ours only,1.650792,,,,baseline cross,target
+GBPUSD,2009-12-02,long,ours only,1.666056,,,,baseline cross,baseline cross
+GBPUSD,2010-11-01,long,ours only,1.604802,,,,baseline cross,exit indicator
+GBPUSD,2011-03-21,long,ours only,1.622297,,,,baseline cross,stop
+GBPUSD,2011-12-29,short,ours only,1.544402,,,,baseline cross,stop
+GBPUSD,2012-01-09,short,ours only,1.541949,,,,c1 flip,exit indicator
+GBPUSD,2012-03-19,long,ours only,1.583707,,,,baseline cross,exit indicator
+GBPUSD,2012-06-27,short,ours only,1.557147,,,,baseline cross,stop
+GBPUSD,2012-10-16,long,ours only,1.613007,,,,baseline cross,stop
+GBPUSD,2014-02-13,long,ours only,1.660992,,,,baseline cross,target
+GBPUSD,2014-12-18,short,ours only,1.557341,,,,baseline cross,target
+GBPUSD,2015-11-06,short,ours only,1.521005,,,,baseline cross,exit indicator
+GBPUSD,2015-11-24,short,ours only,1.512905,,,,c1 flip,target
+GBPUSD,2015-12-17,short,ours only,1.497791,,,,c1 flip,target
+GBPUSD,2016-02-17,short,ours only,1.43039,,,,baseline cross,target
+GBPUSD,2016-11-21,short,ours only,1.232438,,,,baseline cross,stop
+GBPUSD,2016-11-24,short,ours only,1.243317,,,,baseline cross,baseline cross
+GBPUSD,2017-11-03,short,ours only,1.30533,,,,baseline cross,stop
+GBPUSD,2018-02-27,long,ours only,1.396648,,,,baseline cross,stop
+GBPUSD,2019-01-03,short,ours only,1.252191,,,,baseline cross,stop
+GBPUSD,2019-07-01,short,ours only,1.264462,,,,baseline cross,target
+GBPUSD,2020-01-23,long,ours only,1.314475,,,,baseline cross,baseline cross
+GBPUSD,2020-01-31,long,ours only,1.3089,,,,baseline cross,stop
+GBPUSD,2020-02-04,short,ours only,1.299748,,,,baseline cross,exit indicator
+GBPUSD,2020-02-20,short,ours only,1.292825,,,,c1 flip,baseline cross
+GBPUSD,2020-02-27,short,ours only,1.290689,,,,baseline cross,target
+GBPUSD,2020-03-12,short,ours only,1.281821,,,,c1 flip,target
+GBPUSD,2020-04-30,long,ours only,1.258147,,,,c1 flip,stop
+GBPUSD,2020-05-06,short,ours only,1.232559,,,,baseline cross,target
+GBPUSD,2020-11-04,long,ours only,1.312164,,,,baseline cross,stop
+GBPUSD,2020-11-06,long,ours only,1.31394,,,,baseline cross,target
+GBPUSD,2021-08-10,short,ours only,1.383604,,,,baseline cross,baseline cross
+GBPUSD,2022-02-04,long,ours only,1.359841,,,,baseline cross,stop
+GBPUSD,2022-02-08,long,ours only,1.353781,,,,baseline cross,stop
+GBPUSD,2024-07-03,long,ours only,1.274778,,,,baseline cross,target
+GBPUSD,2024-11-11,short,ours only,1.291706,,,,baseline cross,target
+GBPUSD,2024-12-19,short,ours only,1.256771,,,,baseline cross,stop
+GBPUSD,2025-04-10,long,ours only,1.299207,,,,baseline cross,target
+GBPUSD,2026-01-23,long,ours only,1.350129,,,,baseline cross,target
+GBPUSD,2026-06-17,short,ours only,1.330123,,,,baseline cross,target
+GBPUSD,2000-11-06,short,tv only,,1.4285,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2000-11-06,short,tv only,,1.4285,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2001-05-23,short,tv only,,1.4195,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2001-05-23,short,tv only,,1.4195,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2002-06-10,long,tv only,,1.4603,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2002-06-10,long,tv only,,1.4603,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2003-04-04,short,tv only,,1.5611,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2003-04-04,short,tv only,,1.5611,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2003-04-21,short,tv only,,1.5614,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2003-04-21,short,tv only,,1.5614,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2003-11-13,long,tv only,,1.6876,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2003-11-13,long,tv only,,1.6876,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2004-10-04,short,tv only,,1.7844,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2004-10-04,short,tv only,,1.7844,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2004-10-12,short,tv only,,1.7917,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2004-10-12,short,tv only,,1.7917,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2005-02-07,short,tv only,,1.8572,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2005-02-07,short,tv only,,1.8572,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2005-06-29,short,tv only,,1.8071,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2005-06-29,short,tv only,,1.8071,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-03-28,short,tv only,,1.7429,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-03-28,short,tv only,,1.7429,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-03-31,short,tv only,,1.7368,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-03-31,short,tv only,,1.7368,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-07-17,short,tv only,,1.82,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-07-17,short,tv only,,1.82,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-09-20,long,tv only,,1.8877,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2006-09-20,long,tv only,,1.8877,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2007-09-27,long,tv only,,2.0271,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2007-09-27,long,tv only,,2.0271,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-02-19,short,tv only,,1.9487,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-02-19,short,tv only,,1.9487,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-04-29,short,tv only,,1.97,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-04-29,short,tv only,,1.97,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-05-01,short,tv only,,1.9766,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-05-01,short,tv only,,1.9766,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-09-30,short,tv only,,1.7836,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2008-09-30,short,tv only,,1.7836,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2009-01-13,short,tv only,,1.4512,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2009-01-13,short,tv only,,1.4512,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2009-07-15,long,tv only,,1.642,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2009-07-15,long,tv only,,1.642,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2010-01-26,short,tv only,,1.6149,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2010-01-26,short,tv only,,1.6149,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2010-10-28,long,tv only,,1.5938,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2010-10-28,long,tv only,,1.5938,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2011-03-09,long,tv only,,1.62,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2011-03-09,long,tv only,,1.62,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2011-03-18,long,tv only,,1.6232,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2011-03-18,long,tv only,,1.6232,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2011-12-28,short,tv only,,1.54495,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2011-12-28,short,tv only,,1.54495,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2012-01-05,short,tv only,,1.5494,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2012-01-05,short,tv only,,1.5494,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2012-06-28,short,tv only,,1.55145,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2012-06-28,short,tv only,,1.55145,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2012-10-17,long,tv only,,1.61394,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2012-10-17,long,tv only,,1.61394,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2014-02-12,long,tv only,,1.66098,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2014-02-12,long,tv only,,1.66098,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2014-05-21,long,tv only,,1.68978,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2014-05-21,long,tv only,,1.68978,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2014-12-17,short,tv only,,1.55688,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2014-12-17,short,tv only,,1.55688,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2015-11-23,short,tv only,,1.51209,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2015-11-23,short,tv only,,1.51209,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2015-12-16,short,tv only,,1.49804,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2015-12-16,short,tv only,,1.49804,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2016-02-16,short,tv only,,1.43054,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2016-02-16,short,tv only,,1.43054,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2016-11-18,short,tv only,,1.23547,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2016-11-18,short,tv only,,1.23547,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2016-11-23,short,tv only,,1.24211,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2016-11-23,short,tv only,,1.24211,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2017-11-02,short,tv only,,1.30531,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2017-11-02,short,tv only,,1.30531,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2017-11-13,short,tv only,,1.31204,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2017-11-13,short,tv only,,1.31204,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2019-01-02,short,tv only,,1.25144,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2019-01-02,short,tv only,,1.25144,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2019-07-02,short,tv only,,1.25967,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2019-07-02,short,tv only,,1.25967,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-01-22,long,tv only,,1.31435,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-01-22,long,tv only,,1.31435,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-02-19,short,tv only,,1.29252,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-02-19,short,tv only,,1.29252,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-02-26,short,tv only,,1.29056,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-02-26,short,tv only,,1.29056,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-03-11,short,tv only,,1.28166,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-03-11,short,tv only,,1.28166,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-11-03,long,tv only,,1.31186,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-11-03,long,tv only,,1.31186,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-11-05,long,tv only,,1.31377,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2020-11-05,long,tv only,,1.31377,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2021-02-04,long,tv only,,1.36716,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2021-02-04,long,tv only,,1.36716,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2022-02-03,long,tv only,,1.35972,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2022-02-03,long,tv only,,1.35972,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2022-02-07,long,tv only,,1.35364,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2022-02-07,long,tv only,,1.35364,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2022-08-09,short,tv only,,1.20709,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2022-08-09,short,tv only,,1.20709,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2024-11-08,short,tv only,,1.29184,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2024-11-08,short,tv only,,1.29184,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2024-12-18,short,tv only,,1.25728,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2024-12-18,short,tv only,,1.25728,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2025-04-11,long,tv only,,1.30735,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2025-04-11,long,tv only,,1.30735,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2026-01-22,long,tv only,,1.35005,,EXPECTED if a continuation entry past the bridge,,
+GBPUSD,2026-01-22,long,tv only,,1.35005,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2005-01-12,short,matched,102.440002,102.45,9.758906783793025e-05,,c1 flip,stop
+USDJPY,2005-03-21,long,matched,105.209999,105.21,9.504799899964288e-09,,c1 flip,target
+USDJPY,2007-02-22,long,matched,121.489998,121.55,0.0004936404771698661,,c1 flip,stop
+USDJPY,2008-02-27,short,matched,106.370003,106.41,0.00037587632741283353,,c1 flip,target
+USDJPY,2010-02-25,short,matched,89.269997,89.16,0.0012337034544639637,,baseline cross,stop
+USDJPY,2011-05-27,short,matched,80.831001,80.85,0.0002349907235620751,,baseline cross,stop
+USDJPY,2011-06-01,short,matched,80.893997,80.86,0.00042044274053919603,,baseline cross,exit indicator
+USDJPY,2011-07-11,short,matched,80.290001,80.22,0.0008726128147594723,,baseline cross,target
+USDJPY,2011-09-14,short,matched,76.677002,76.69,0.00016948754726817144,,c1 flip,exit indicator
+USDJPY,2011-10-21,short,matched,76.209999,76.13,0.0010508209641402972,,baseline cross,stop
+USDJPY,2012-05-17,short,matched,79.407997,79.319,0.0011220136411199334,,baseline cross,baseline cross
+USDJPY,2012-08-28,short,matched,78.57,78.527,0.0005475823602072174,,baseline cross,exit indicator
+USDJPY,2012-09-07,short,matched,78.219002,78.263,0.0005621813628407035,,baseline cross,target
+USDJPY,2014-10-23,long,matched,108.161003,108.303,0.001311108648883258,,baseline cross,target
+USDJPY,2014-12-22,long,matched,119.497002,120.065,0.004730754174821996,price gap > 0.40%,baseline cross,exit indicator
+USDJPY,2015-05-19,long,matched,120.652,120.636,0.00013263039225442939,,c1 flip,target
+USDJPY,2016-09-12,short,matched,101.750999,101.92,0.0016581730769231614,,baseline cross,stop
+USDJPY,2016-09-15,short,matched,102.008003,102.042,0.00033316673526586493,,baseline cross,target
+USDJPY,2018-06-06,long,matched,110.125,110.134,8.171863366444823e-05,,baseline cross,stop
+USDJPY,2018-06-11,long,matched,110.386002,110.389,2.7158503111641127e-05,,baseline cross,stop
+USDJPY,2018-09-11,long,matched,111.607002,111.629,0.00019706348708678408,,c1 flip,target
+USDJPY,2019-07-12,short,matched,107.832001,107.891,0.0005468389392998491,,baseline cross,baseline cross
+USDJPY,2019-07-17,short,matched,107.936996,107.929,7.408574155223762e-05,,baseline cross,exit indicator
+USDJPY,2020-09-08,short,matched,105.968002,105.966,1.8892852424405e-05,,baseline cross,baseline cross
+USDJPY,2021-05-19,long,matched,109.273003,109.258,0.00013731717585904196,,baseline cross,stop
+USDJPY,2021-07-23,long,matched,110.543999,110.52,0.00021714621787914798,,baseline cross,stop
+USDJPY,2021-08-19,short,matched,109.767998,109.765,2.7312895731837683e-05,,baseline cross,baseline cross
+USDJPY,2021-09-20,short,matched,109.436996,109.432,4.565392207024765e-05,,baseline cross,stop
+USDJPY,2022-05-31,long,matched,128.735992,128.736,6.214267943544884e-08,,baseline cross,target
+USDJPY,2024-09-04,short,matched,143.324005,143.724,0.002783077287022278,,c1 flip,target
+USDJPY,2025-09-12,long,matched,147.666,147.667,6.771993742710117e-06,,baseline cross,stop
+USDJPY,1999-02-02,short,ours only,111.910004,,,,baseline cross,stop
+USDJPY,1999-03-26,long,ours only,120.300003,,,,baseline cross,stop
+USDJPY,1999-10-14,short,ours only,105.660004,,,,baseline cross,exit indicator
+USDJPY,1999-11-22,short,ours only,104.68,,,,baseline cross,target
+USDJPY,2000-04-13,short,ours only,104.760002,,,,baseline cross,baseline cross
+USDJPY,2000-08-11,long,ours only,109.43,,,,baseline cross,stop
+USDJPY,2001-02-09,long,ours only,117.5,,,,baseline cross,stop
+USDJPY,2001-04-26,long,ours only,124.019997,,,,baseline cross,stop
+USDJPY,2001-07-27,long,ours only,125.169998,,,,baseline cross,stop
+USDJPY,2001-11-15,long,ours only,122.449997,,,,baseline cross,target
+USDJPY,2002-02-08,long,ours only,134.669998,,,,c1 flip,stop
+USDJPY,2002-08-12,short,ours only,118.230003,,,,baseline cross,target
+USDJPY,2002-08-30,short,ours only,117.989998,,,,c1 flip,stop
+USDJPY,2003-04-24,long,ours only,120.160004,,,,baseline cross,baseline cross
+USDJPY,2003-06-25,long,ours only,119.260002,,,,baseline cross,stop
+USDJPY,2003-11-10,short,ours only,108.730003,,,,baseline cross,exit indicator
+USDJPY,2004-01-22,short,ours only,106.129997,,,,baseline cross,baseline cross
+USDJPY,2004-07-16,short,ours only,108.269997,,,,baseline cross,stop
+USDJPY,2004-09-15,short,ours only,109.610001,,,,baseline cross,baseline cross
+USDJPY,2006-07-13,long,ours only,116.080002,,,,baseline cross,target
+USDJPY,2006-09-08,long,ours only,117.550003,,,,c1 flip,stop
+USDJPY,2006-09-27,long,ours only,117.730003,,,,c1 flip,target
+USDJPY,2008-05-27,long,ours only,104.650002,,,,baseline cross,target
+USDJPY,2008-07-21,long,ours only,107.230003,,,,baseline cross,target
+USDJPY,2009-04-30,long,ours only,99.190002,,,,baseline cross,stop
+USDJPY,2010-07-29,short,ours only,86.440002,,,,c1 flip,target
+USDJPY,2010-08-31,short,ours only,84.139999,,,,c1 flip,stop
+USDJPY,2011-12-29,long,ours only,77.945999,,,,baseline cross,stop
+USDJPY,2013-03-07,long,ours only,93.927002,,,,baseline cross,target
+USDJPY,2014-01-23,long,ours only,104.635002,,,,baseline cross,stop
+USDJPY,2014-03-14,short,ours only,101.779999,,,,baseline cross,baseline cross
+USDJPY,2014-03-24,short,ours only,102.240997,,,,baseline cross,exit indicator
+USDJPY,2015-04-24,short,ours only,118.927002,,,,c1 flip,stop
+USDJPY,2015-10-14,short,ours only,118.830002,,,,c1 flip,stop
+USDJPY,2016-04-01,short,ours only,111.722,,,,c1 flip,target
+USDJPY,2016-07-29,short,ours only,102.332001,,,,baseline cross,target
+USDJPY,2017-02-24,short,ours only,112.681999,,,,baseline cross,stop
+USDJPY,2018-01-08,long,ours only,113.153999,,,,baseline cross,stop
+USDJPY,2018-03-22,short,ours only,105.929001,,,,baseline cross,stop
+USDJPY,2018-12-14,long,ours only,113.559998,,,,c1 flip,stop
+USDJPY,2019-04-01,long,ours only,111.450996,,,,baseline cross,exit indicator
+USDJPY,2019-08-01,short,ours only,107.431,,,,baseline cross,target
+USDJPY,2019-11-26,long,ours only,108.991997,,,,baseline cross,target
+USDJPY,2019-12-13,long,ours only,109.413002,,,,baseline cross,stop
+USDJPY,2021-01-22,short,ours only,103.505997,,,,baseline cross,baseline cross
+USDJPY,2021-01-27,short,ours only,103.602997,,,,baseline cross,stop
+USDJPY,2021-01-28,long,ours only,104.142998,,,,baseline cross,target
+USDJPY,2021-08-13,short,ours only,109.624001,,,,baseline cross,baseline cross
+USDJPY,2021-09-10,long,ours only,109.915001,,,,baseline cross,stop
+USDJPY,2021-09-14,short,ours only,109.719002,,,,baseline cross,baseline cross
+USDJPY,2022-01-28,long,ours only,115.351997,,,,baseline cross,stop
+USDJPY,2022-03-08,long,ours only,115.373001,,,,baseline cross,target
+USDJPY,2024-03-20,long,ours only,151.035004,,,,baseline cross,target
+USDJPY,2024-06-11,long,ours only,157.104996,,,,c1 flip,target
+USDJPY,2025-04-02,short,ours only,147.871994,,,,baseline cross,target
+USDJPY,2025-06-02,short,ours only,142.451996,,,,c1 flip,stop
+USDJPY,2025-09-16,short,ours only,146.412994,,,,c1 flip,stop
+USDJPY,2025-10-03,long,ours only,149.606003,,,,baseline cross,target
+USDJPY,2026-04-10,long,ours only,159.679993,,,,baseline cross,stop
+USDJPY,2001-02-22,long,tv only,,116.95,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-02-22,long,tv only,,116.95,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-02-26,long,tv only,,116.49,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-02-26,long,tv only,,116.49,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-02-28,long,tv only,,117.39,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-02-28,long,tv only,,117.39,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-04-27,long,tv only,,124.03,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-04-27,long,tv only,,124.03,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-07-30,long,tv only,,125.15,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-07-30,long,tv only,,125.15,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-11-19,long,tv only,,123.15,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2001-11-19,long,tv only,,123.15,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2002-02-21,long,tv only,,134.27,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2002-02-21,long,tv only,,134.27,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2002-08-13,short,tv only,,118.28,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2002-08-13,short,tv only,,118.28,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2002-09-02,short,tv only,,118.16,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2002-09-02,short,tv only,,118.16,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2003-06-26,long,tv only,,119.45,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2003-06-26,long,tv only,,119.45,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2003-11-11,short,tv only,,108.78,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2003-11-11,short,tv only,,108.78,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2004-07-19,short,tv only,,108.27,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2004-07-19,short,tv only,,108.27,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2006-09-11,long,tv only,,117.66,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2006-09-11,long,tv only,,117.66,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2006-09-28,long,tv only,,117.79,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2006-09-28,long,tv only,,117.79,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2008-05-28,long,tv only,,104.72,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2008-05-28,long,tv only,,104.72,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2009-03-31,long,tv only,,98.91,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2009-03-31,long,tv only,,98.91,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2009-05-01,long,tv only,,99.3,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2009-05-01,long,tv only,,99.3,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2010-07-30,short,tv only,,86.42,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2010-07-30,short,tv only,,86.42,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2011-12-13,long,tv only,,77.957,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2011-12-13,long,tv only,,77.957,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2011-12-28,long,tv only,,77.926,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2011-12-28,long,tv only,,77.926,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2012-06-15,short,tv only,,78.656,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2012-06-15,short,tv only,,78.656,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2012-07-11,long,tv only,,79.714,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2012-07-11,long,tv only,,79.714,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2015-04-23,short,tv only,,119.588,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2015-04-23,short,tv only,,119.588,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2015-10-06,short,tv only,,120.217,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2015-10-06,short,tv only,,120.217,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2015-10-12,short,tv only,,120.046,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2015-10-12,short,tv only,,120.046,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2016-03-16,short,tv only,,112.761,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2016-03-16,short,tv only,,112.761,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2016-11-08,long,tv only,,105.102,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2016-11-08,long,tv only,,105.102,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2017-09-05,short,tv only,,108.603,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2017-09-05,short,tv only,,108.603,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-01-05,long,tv only,,113.115,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-01-05,long,tv only,,113.115,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-03-01,short,tv only,,106.17,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-03-01,short,tv only,,106.17,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-03-21,short,tv only,,105.94,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-03-21,short,tv only,,105.94,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-06-04,long,tv only,,109.965,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-06-04,long,tv only,,109.965,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-12-13,long,tv only,,113.568,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2018-12-13,long,tv only,,113.568,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2019-11-25,long,tv only,,108.993,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2019-11-25,long,tv only,,108.993,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2019-12-12,long,tv only,,109.403,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2019-12-12,long,tv only,,109.403,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2021-01-26,short,tv only,,103.597,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2021-01-26,short,tv only,,103.597,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2022-03-07,long,tv only,,115.364,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2022-03-07,long,tv only,,115.364,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2024-06-14,long,tv only,,157.382,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2024-06-14,long,tv only,,157.382,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2025-07-07,long,tv only,,146.064,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2025-07-07,long,tv only,,146.064,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2026-04-22,long,tv only,,159.433,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2026-04-22,long,tv only,,159.433,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2026-07-08,long,tv only,,162.562,,EXPECTED if a continuation entry past the bridge,,
+USDJPY,2026-07-08,long,tv only,,162.562,,EXPECTED if a continuation entry past the bridge,,

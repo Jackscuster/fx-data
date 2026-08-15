@@ -1,0 +1,115 @@
+name,slot,pine_source,n_pine,n_python,signature_confirmed,pine_params,python_params,wired_into_strategy,defaults_confirmed
+ssl_channel_signals,confirmation,library,1,1,True,len,len,False,True
+ssl_channel_exit,exit,library,1,1,True,len,len,False,True
+dspo_signals,confirmation,library,1,1,True,len,len,False,True
+dspo_exit,exit,library,1,1,True,len,len,False,True
+variance_volume_signals,volume,library,6,6,True,mode; hline; method; lookback; filter_lookback; ema_len,mode; hline; method; lookback; filter_lookback; ema_len,False,True
+tma_baseline,baseline,wrapper of triangular_moving_average,1,1,True,length,length,False,True
+adx_dmi_signals,confirmation,patch,3,3,True,di_length; adx_smoothing; adx_threshold,di_length; adx_smoothing; adx_threshold,False,False
+adx_dmi_exit,exit,patch,3,3,True,di_length; adx_smoothing; adx_threshold,di_length; adx_smoothing; adx_threshold,False,False
+parabolic_sar_signals,confirmation,patch,3,3,True,sar_start; sar_increment; sar_maximum,sar_start; sar_increment; sar_maximum,False,False
+parabolic_sar_exit,exit,patch,3,3,True,sar_start; sar_increment; sar_maximum,sar_start; sar_increment; sar_maximum,False,False
+donchian_breakout_signals,confirmation,patch,1,1,True,length,length,False,False
+donchian_breakout_exit,exit,patch,1,1,True,length,length,False,False
+ichimoku_signals,confirmation,patch,4,4,True,conversion_len; base_len; span_b_len; displacement,conversion_len; base_len; span_b_len; displacement,False,False
+ichimoku_exit,exit,patch,4,4,True,conversion_len; base_len; span_b_len; displacement,conversion_len; base_len; span_b_len; displacement,False,False
+linreg_slope_signals,confirmation,patch,2,2,True,length; r2_floor,length; r2_floor,False,False
+linreg_slope_exit,exit,patch,2,2,True,length; r2_floor,length; r2_floor,False,False
+choppiness_index_volume_signals,volume,patch,2,2,True,length; ci_threshold,length; ci_threshold,False,False
+efficiency_ratio_volume_signals,volume,patch,2,2,True,length; er_threshold,length; er_threshold,False,False
+vertical_horizontal_filter_volume_signals,volume,patch,2,2,True,length; vhf_threshold,length; vhf_threshold,False,False
+fractal_dimension_volume_signals,volume,patch,2,2,True,length; fd_threshold,length; fd_threshold,False,False
+sma_baseline,baseline,patch,1,1,True,length,length,False,False
+lsma_baseline,baseline,patch,2,2,True,length; lsma_offset,length; lsma_offset,False,False
+ema_baseline,baseline,wrapper of moving_average,1,1,True,ma_length,ma_length,True,True
+hma_baseline,baseline,wrapper of moving_average,1,1,True,ma_length,ma_length,False,True
+rma_baseline,baseline,wrapper of moving_average,1,1,True,ma_length,ma_length,False,True
+wma_baseline,baseline,wrapper of moving_average,1,1,True,ma_length,ma_length,False,True
+vwma_baseline,baseline,wrapper of moving_average,1,1,True,ma_length,ma_length,False,True
+fantail_vma,baseline,library,3,3,True,fma_adx_length; fma_weighting; fma_ma_length,fma_adx_length; fma_weighting; fma_ma_length,True,True
+mcginley_dynamic_index,baseline,library,1,1,True,mci_length,mci_length,True,True
+vidya,baseline,patch,3,3,True,vda_length; vda_fixed_cmo_length; vda_calculation_method,vda_length; vda_fixed_cmo_length; vda_calculation_method,True,True
+kama_baseline,baseline,library,3,3,True,length; fast_length; slow_length,length; fast_length; slow_length,False,True
+alma_baseline,baseline,library,3,3,True,length; offset; sigma,length; offset; sigma,False,True
+t3_baseline,baseline,library,2,2,True,length; volume_factor,length; volume_factor,False,True
+super_smoother_2pole_baseline,baseline,library,1,1,True,cutoff_period,cutoff_period,False,True
+frama_baseline,baseline,library,1,1,True,length,length,False,True
+chaikin_oscillator_volume_signals,volume,patch,2,2,True,fast_len; slow_len,fast_len; slow_len,False,True
+chaikin_volatility_volume_signals,volume,patch,2,2,True,cvi_len; roc_len,cvi_len; roc_len,False,True
+elders_force_index_volume_signals,volume,patch,1,1,True,len,len,False,True
+normalized_volume_volume_signals,volume,library,1,1,True,vol_period,vol_period,False,True
+volume_zone_oscillator_volume_signals,volume,library,4,4,True,len; smooth; smooth_len; neutral_zone,len; smooth; smooth_len; neutral_zone,False,True
+waddah_attar_explosion_volume_signals,volume,library,5,5,True,sensitivity; fastEma; slowEma; bbLen; bbStd,sensitivity; fastEma; slowEma; bbLen; bbStd,False,True
+damiani_volatmeter_volume_signals,volume,library,5,5,True,viscosity; sedimentation; threshold; lag; use_lag,viscosity; sedimentation; threshold; lag; use_lag,False,True
+ttm_squeeze_volume_signals,volume,library,4,4,True,bb_length; bb_mult; kc_length; kc_mult,bb_length; bb_mult; kc_length; kc_mult,False,True
+williams_vix_fix_volume_signals,volume,library,3,3,True,lookback; bb_length; bb_mult,lookback; bb_length; bb_mult,False,True
+volatility_ratio_volume_signals,volume,library,1,1,True,length,length,False,True
+mass_index_volume_signals,volume,library,2,2,True,length; ema_length,length; ema_length,False,True
+chaikin_money_flow_signals,confirmation,library,1,1,True,lookback,lookback,False,True
+chaikin_money_flow_exit,exit,library,1,1,True,lookback,lookback,False,True
+coppock_curve_signals,confirmation,library,3,3,True,smooth_len; long_roc; short_roc,smooth_len; long_roc; short_roc,False,True
+coppock_curve_exit,exit,library,3,3,True,smooth_len; long_roc; short_roc,smooth_len; long_roc; short_roc,False,True
+dpo_signals,confirmation,library,2,2,True,len; centered,len; centered,False,True
+dpo_exit,exit,library,2,2,True,len; centered,len; centered,False,True
+ease_of_movement_signals,confirmation,library,2,2,True,len; divisor,len; divisor,False,True
+ease_of_movement_exit,exit,library,2,2,True,len; divisor,len; divisor,False,True
+kalman_filter_signals,confirmation,library,2,2,True,sharpness; k,sharpness; k,False,True
+kalman_filter_exit,exit,library,2,2,True,sharpness; k,sharpness; k,False,True
+laguerre_filter_signals,confirmation,library,1,1,True,alpha,alpha,False,True
+laguerre_filter_exit,exit,library,1,1,True,alpha,alpha,False,True
+price_momentum_oscillator_signals,confirmation,library,3,3,True,s1; s2; sig,s1; s2; sig,False,True
+price_momentum_oscillator_exit,exit,library,3,3,True,s1; s2; sig,s1; s2; sig,False,True
+relative_vigor_index_signals,confirmation,library,1,1,True,len,len,False,True
+relative_vigor_index_exit,exit,library,1,1,True,len,len,False,True
+supertrend_signals,confirmation,library,2,2,True,factor; atr_period,factor; atr_period,False,True
+supertrend_exit,exit,library,2,2,True,factor; atr_period,factor; atr_period,False,True
+fisher_transform_signals,confirmation,library,1,1,True,length,length,False,True
+fisher_transform_exit,exit,library,1,1,True,length,length,False,True
+aroon_signals,confirmation,library,1,1,True,length,length,False,True
+aroon_exit,exit,library,1,1,True,length,length,False,True
+center_of_gravity_signals,confirmation,library,2,2,True,length; signal_length,length; signal_length,False,True
+center_of_gravity_exit,exit,library,2,2,True,length; signal_length,length; signal_length,False,True
+vortex_signals,confirmation,library,1,1,True,period,period,False,True
+vortex_exit,exit,library,1,1,True,period,period,False,True
+trend_direction_force_index_signals,confirmation,library,3,3,True,lookback; fhigh; flow,lookback; fhigh; flow,False,True
+trend_direction_force_index_exit,exit,library,3,3,True,lookback; fhigh; flow,lookback; fhigh; flow,False,True
+halftrend_signals,confirmation,library,1,1,True,amplitude,amplitude,False,True
+halftrend_exit,exit,library,1,1,True,amplitude,amplitude,False,True
+coral_signals,confirmation,library,2,2,True,smooth_period; const_d,smooth_period; const_d,False,True
+coral_exit,exit,library,2,2,True,smooth_period; const_d,smooth_period; const_d,False,True
+didi_index_signals,confirmation,library,2,2,True,medium; long_p,medium; long_p,False,True
+didi_index_exit,exit,library,2,2,True,medium; long_p,medium; long_p,False,True
+kase_peak_oscillator_signals,confirmation,library,3,3,True,short_cycle; long_cycle; sharpness,short_cycle; long_cycle; sharpness,False,True
+kase_peak_oscillator_exit,exit,library,3,3,True,short_cycle; long_cycle; sharpness,short_cycle; long_cycle; sharpness,False,True
+qqe_mod_signals,confirmation,library,3,3,True,rsi_period; rsi_len; fast_factor,rsi_period; rsi_len; fast_factor,False,True
+qqe_mod_exit,exit,library,3,3,True,rsi_period; rsi_len; fast_factor,rsi_period; rsi_len; fast_factor,False,True
+schaff_trend_cycle_signals,confirmation,patch,8,8,True,macdFast; macdSlow; cycleLen; d1; d2; upperBand; lowerBand; stc_midline,macdFast; macdSlow; cycleLen; d1; d2; upperBand; lowerBand; stc_midline,False,True
+schaff_trend_cycle_exit,exit,library,7,7,True,macdFast; macdSlow; cycleLen; d1; d2; upperBand; lowerBand,macdFast; macdSlow; cycleLen; d1; d2; upperBand; lowerBand,False,True
+glitch_index_signals,confirmation,patch,3,3,True,length; multiplier; smooth,length; multiplier; smooth,False,True
+glitch_index_exit,exit,patch,3,3,True,length; multiplier; smooth,length; multiplier; smooth,False,True
+ehlers_reverse_ema_signals,confirmation,patch,1,1,True,alpha,alpha,False,True
+ehlers_reverse_ema_exit,exit,patch,1,1,True,alpha,alpha,False,True
+chandelier_exit_signals,confirmation,library,3,3,True,atr_period; atr_mult; use_close,atr_period; atr_mult; use_close,False,True
+chandelier_exit_exit,exit,library,3,3,True,atr_period; atr_mult; use_close,atr_period; atr_mult; use_close,False,True
+polychromatic_momentum_signals,confirmation,library,1,1,True,len,len,False,True
+polychromatic_momentum_exit,exit,library,1,1,True,len,len,False,True
+mama_fama_signals,confirmation,library,2,2,True,fast_limit; slow_limit,fast_limit; slow_limit,False,True
+mama_fama_exit,exit,library,2,2,True,fast_limit; slow_limit,fast_limit; slow_limit,False,True
+kuskus_starlight_signals,confirmation,library,3,3,True,range_periods; price_smooth; index_smooth,range_periods; price_smooth; index_smooth,False,True
+kuskus_starlight_exit,exit,library,3,3,True,range_periods; price_smooth; index_smooth,range_periods; price_smooth; index_smooth,False,True
+bears_bulls_impulse_signals,confirmation,library,1,1,True,length,length,False,True
+bears_bulls_impulse_exit,exit,library,1,1,True,length,length,False,True
+fx_sniper_ergodic_cci_signals,confirmation,library,4,4,True,cci_length; ema1_length; ema2_length; trigger_length,cci_length; ema1_length; ema2_length; trigger_length,False,True
+fx_sniper_ergodic_cci_exit,exit,library,4,4,True,cci_length; ema1_length; ema2_length; trigger_length,cci_length; ema1_length; ema2_length; trigger_length,False,True
+lemantrend_signals,confirmation,library,4,4,True,slow_period; medium_period; fast_period; smooth,slow_period; medium_period; fast_period; smooth,False,True
+lemantrend_exit,exit,library,4,4,True,slow_period; medium_period; fast_period; smooth,slow_period; medium_period; fast_period; smooth,False,True
+waddah_attar_explosion_signals,confirmation,library,5,5,True,sensitivity; fastEma; slowEma; bbLen; bbStd,sensitivity; fastEma; slowEma; bbLen; bbStd,False,True
+waddah_attar_explosion_exit,exit,library,5,5,True,sensitivity; fastEma; slowEma; bbLen; bbStd,sensitivity; fastEma; slowEma; bbLen; bbStd,False,True
+volatility_quality_signals,confirmation,library,3,3,True,ma_type; smooth; atr_pct,ma_type; smooth; atr_pct,False,True
+volatility_quality_exit,exit,library,3,3,True,ma_type; smooth; atr_pct,ma_type; smooth; atr_pct,False,True
+j_tpo_signals,confirmation,library,3,3,True,len; ema_len; ema_filter,len; ema_len; ema_filter,False,True
+j_tpo_exit,exit,library,3,3,True,len; ema_len; ema_filter,len; ema_len; ema_filter,False,True
+hieken_ashi_smoothed_signals,confirmation,library,19,19,True,ma_type1; ma_len1; ma_type2; ma_len2; single_smooth; vol_factor1; alma_offset1; alma_sigma1; lsma_offset1; ama_smooth1; frama_t1_a; frama_t1_b; vol_factor2; alma_offset2; alma_sigma2; lsma_offset2; ama_smooth2; frama_t2_a; frama_t2_b,ma_type1; ma_len1; ma_type2; ma_len2; single_smooth; vol_factor1; alma_offset1; alma_sigma1; lsma_offset1; ama_smooth1; frama_t1_a; frama_t1_b; vol_factor2; alma_offset2; alma_sigma2; lsma_offset2; ama_smooth2; frama_t2_a; frama_t2_b,False,True
+hieken_ashi_smoothed_exit,exit,library,19,19,True,ma_type1; ma_len1; ma_type2; ma_len2; single_smooth; vol_factor1; alma_offset1; alma_sigma1; lsma_offset1; ama_smooth1; frama_t1_a; frama_t1_b; vol_factor2; alma_offset2; alma_sigma2; lsma_offset2; ama_smooth2; frama_t2_a; frama_t2_b,ma_type1; ma_len1; ma_type2; ma_len2; single_smooth; vol_factor1; alma_offset1; alma_sigma1; lsma_offset1; ama_smooth1; frama_t1_a; frama_t1_b; vol_factor2; alma_offset2; alma_sigma2; lsma_offset2; ama_smooth2; frama_t2_a; frama_t2_b,False,True
+rex_oscillator_signals,confirmation,library,26,26,True,maType; smooth; almaOffset; almaSigma; framaFast; framaSlow; jurikPhase; jurikPower; lsOffset; modFilter; modFB; modFBW; volAdj; sigMaType; sigSmooth; sigAlmaOff; sigAlmaSig; sigFramaFast; sigFramaSlow; sigJurikPhase; sigJurikPower; sigLsOff; sigModFilter; sigModFB; sigModFBW; sigVolAdj,maType; smooth; almaOffset; almaSigma; framaFast; framaSlow; jurikPhase; jurikPower; lsOffset; modFilter; modFB; modFBW; volAdj; sigMaType; sigSmooth; sigAlmaOff; sigAlmaSig; sigFramaFast; sigFramaSlow; sigJurikPhase; sigJurikPower; sigLsOff; sigModFilter; sigModFB; sigModFBW; sigVolAdj,False,True
+rex_oscillator_exit,exit,library,26,26,True,maType; smooth; almaOffset; almaSigma; framaFast; framaSlow; jurikPhase; jurikPower; lsOffset; modFilter; modFB; modFBW; volAdj; sigMaType; sigSmooth; sigAlmaOff; sigAlmaSig; sigFramaFast; sigFramaSlow; sigJurikPhase; sigJurikPower; sigLsOff; sigModFilter; sigModFB; sigModFBW; sigVolAdj,maType; smooth; almaOffset; almaSigma; framaFast; framaSlow; jurikPhase; jurikPower; lsOffset; modFilter; modFB; modFBW; volAdj; sigMaType; sigSmooth; sigAlmaOff; sigAlmaSig; sigFramaFast; sigFramaSlow; sigJurikPhase; sigJurikPower; sigLsOff; sigModFilter; sigModFB; sigModFBW; sigVolAdj,False,True
