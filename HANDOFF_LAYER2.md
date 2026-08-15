@@ -154,6 +154,39 @@ Sharpe. Zero survivors is a legitimate result.
 - ~13 effective independent bets per day across 28 pairs; JPY block clusters.
 - State age carries no hazard information.
 
+## LAYER 2 TRAPS ALREADY HIT (do not rediscover these)
+
+- **A RESUME CHECKPOINT MUST BE KEYED ON THE WORK, NOT THE UNIT OF WORK.**
+  `l2engine.run_all_pairs` first keyed its per-pair checkpoint on the pair name
+  alone. Running a DIFFERENT slot combination then found a file for every pair,
+  skipped all of them, and reported the PREVIOUS combination's results in
+  0.01 seconds with no error and no warning. It was caught only because an
+  SSL/DSPO/Variance/TMA run printed numbers identical to a PSAR run. At sweep
+  scale that is a wrong answer wearing the costume of a fast one. The checkpoint
+  now carries a `combo` column built from every slot AND every risk parameter,
+  and refuses a file whose signature differs. **Any resumable job added later
+  must do the same** -- rule 9 says jobs are resumable, and this is the failure
+  mode resumability introduces.
+
+- **Yahoo stamps the last FX bar of the week on Sunday during US daylight
+  saving.** 19,662 bars carry a date two days late. `data/ohlc_clean/` fixes it;
+  never read `data/ohlc/` directly. See `code/l2clean.py`.
+
+- **The engine's semantics come from `JCs_NNFX_ALGO_V5_1.pine`, not from prose.**
+  Four mechanics were wrong when built from a description and right only after
+  reading the source: continuation needs the C1 TRIGGER not its confirmation;
+  the trail activates on the bar's HIGH/LOW not its close; the trail tracker is
+  seeded at activation not at entry; and the trail distance uses the CURRENT ATR
+  while stop and target use the ATR AT ENTRY.
+
+- **The shipped V5.1 does not set `process_orders_on_close=true`.** Close-fill is
+  the true spec (Jack enters at the close of the signal bar); the file predates
+  that fix and it is added on the TradingView side before exporting.
+
+- **Six indicators need a volume series that spot FX does not have** -- Chaikin
+  Oscillator, Elders Force Index, Normalized Volume, Volume Zone Oscillator,
+  Chaikin Money Flow, Ease Of Movement. Tagged UNAVAILABLE on this data.
+
 ## BINDING METHODOLOGY RULES (proven in Layer 1 at 175,634-signal scale)
 
 1. Nothing runs to /tmp — results to results/, committed.
