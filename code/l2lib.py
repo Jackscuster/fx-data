@@ -1708,5 +1708,322 @@ for _k in REGISTRY:
     REGISTRY[_k]['kind'] = KIND[_k]
 
 
+
+# ==========================================================================
+# CONFIRMATION BATCH C
+# ==========================================================================
+
+
+def chandelier_exit(o, h, l, c, atr_length=22, atr_multiplier=3.0,
+                    close_for_Extremums=True):
+    """lib, with its CW10003 fix: both highest/lowest variants are computed
+    every bar so the ratcheting state stays consistent whichever the toggle."""
+    c = np.asarray(c, float)
+    ca = atr_multiplier * P.atr(h, l, c, atr_length)
+    hi = P.highest(c, atr_length) if close_for_Extremums else P.highest(h, atr_length)
+    lo = P.lowest(c, atr_length) if close_for_Extremums else P.lowest(l, atr_length)
+    n = c.size
+    ls = np.full(n, np.nan); ss = np.full(n, np.nan); dr = np.ones(n)
+    pls = pss = np.nan; d = 1
+    for i in range(n):
+        raw_l = hi[i] - ca[i]; raw_s = lo[i] + ca[i]
+        pl = pls if np.isfinite(pls) else raw_l
+        ps = pss if np.isfinite(pss) else raw_s
+        cur_l = max(raw_l, pl) if (i and c[i - 1] > pl) else raw_l
+        cur_s = min(raw_s, ps) if (i and c[i - 1] < ps) else raw_s
+        d = 1 if c[i] > ps else (-1 if c[i] < pl else d)
+        ls[i] = cur_l; ss[i] = cur_s; dr[i] = d
+        pls, pss = cur_l, cur_s
+    return ls, ss, dr
+
+
+def chandelier_exit_signals(o, h, l, c, atr_period=22, atr_mult=3.0,
+                            use_close=True):
+    ls, ss, d = chandelier_exit(o, h, l, c, atr_period, atr_mult, use_close)
+    c = np.asarray(c, float)
+    pd_ = np.concatenate([[1.0], d[:-1]])
+    return (P.F((d == 1.0) & (pd_ != 1.0)), P.F((d == -1.0) & (pd_ != -1.0)),
+            P.F(c > ls), P.F(c < ss))
+
+
+def chandelier_exit_exit(o, h, l, c, atr_period=22, atr_mult=3.0,
+                         use_close=True):
+    ls, ss, d = chandelier_exit(o, h, l, c, atr_period, atr_mult, use_close)
+    pd_ = np.concatenate([[1.0], d[:-1]])
+    return P.F((d == -1.0) & (pd_ != -1.0)), P.F((d == 1.0) & (pd_ != 1.0))
+
+
+def polychromatic_momentum(o, h, l, c, ply_length=14):
+    c = np.asarray(c, float)
+    mom = c - P.shift(c, ply_length)
+    pdm = P.msum(np.maximum(mom, 0.0), ply_length)
+    ndm = P.msum(np.maximum(-mom, 0.0), ply_length)
+    tot = pdm + ndm
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(tot != 0, 100.0 * (pdm - ndm) / tot, np.nan)
+
+
+def polychromatic_momentum_signals(o, h, l, c, len=14):
+    return _zero_cross(polychromatic_momentum(o, h, l, c, len))
+
+
+def polychromatic_momentum_exit(o, h, l, c, len=14):
+    return _zero_cross_exit(polychromatic_momentum(o, h, l, c, len))
+
+
+def mama_fama(o, h, l, c, fast_limit=0.5, slow_limit=0.05):
+    """Ehlers' MESA Adaptive MA. Everything is held until bar 6, exactly as the
+    `if bar_index > 5` guard in the source does."""
+    src = (np.asarray(h, float) + np.asarray(l, float)) / 2.0
+    n = src.size
+    sm = np.zeros(n); det = np.zeros(n); q1 = np.zeros(n); i1 = np.zeros(n)
+    ji = np.zeros(n); jq = np.zeros(n); i2 = np.zeros(n); q2 = np.zeros(n)
+    re = np.zeros(n); im = np.zeros(n); per = np.zeros(n); sper = np.zeros(n)
+    ph = np.zeros(n); mama = np.zeros(n); fama = np.zeros(n)
+
+    def g(a, i, k):
+        return a[i - k] if i - k >= 0 else 0.0
+
+    for i in range(n):
+        if i <= 5:
+            continue
+        sm[i] = (4 * src[i] + 3 * g(src, i, 1) + 2 * g(src, i, 2) + g(src, i, 3)) / 10.0
+        pf = 0.075 * per[i - 1] + 0.54
+        det[i] = (.0962 * sm[i] + .5769 * g(sm, i, 2) - .5769 * g(sm, i, 4)
+                  - .0962 * g(sm, i, 6)) * pf
+        q1[i] = (.0962 * det[i] + .5769 * g(det, i, 2) - .5769 * g(det, i, 4)
+                 - .0962 * g(det, i, 6)) * pf
+        i1[i] = g(det, i, 3)
+        ji[i] = (.0962 * i1[i] + .5769 * g(i1, i, 2) - .5769 * g(i1, i, 4)
+                 - .0962 * g(i1, i, 6)) * pf
+        jq[i] = (.0962 * q1[i] + .5769 * g(q1, i, 2) - .5769 * g(q1, i, 4)
+                 - .0962 * g(q1, i, 6)) * pf
+        a2 = i1[i] - jq[i]; b2 = q1[i] + ji[i]
+        i2[i] = .2 * a2 + .8 * i2[i - 1]
+        q2[i] = .2 * b2 + .8 * q2[i - 1]
+        r = i2[i] * i2[i - 1] + q2[i] * q2[i - 1]
+        m = i2[i] * q2[i - 1] - q2[i] * i2[i - 1]
+        re[i] = .2 * r + .8 * re[i - 1]
+        im[i] = .2 * m + .8 * im[i - 1]
+        p = per[i - 1]
+        if im[i] != 0 and re[i] != 0:
+            p = 2 * np.pi / np.arctan(im[i] / re[i])
+        if p > 1.5 * per[i - 1]:
+            p = 1.5 * per[i - 1]
+        if p < 0.67 * per[i - 1]:
+            p = 0.67 * per[i - 1]
+        p = max(6.0, min(50.0, p))
+        per[i] = .2 * p + .8 * per[i - 1]
+        sper[i] = .33 * per[i] + .67 * sper[i - 1]
+        ph[i] = np.arctan(q1[i] / i1[i]) * 180 / np.pi if i1[i] != 0 else 0.0
+        dp = max(1.0, ph[i - 1] - ph[i])
+        al = min(max(fast_limit / dp, slow_limit), fast_limit)
+        mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+        fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+    return mama, fama
+
+
+def mama_fama_signals(o, h, l, c, fast_limit=0.5, slow_limit=0.05):
+    m, f = mama_fama(o, h, l, c, fast_limit, slow_limit)
+    return P.crossover(m, f), P.crossunder(m, f), P.F(m > f), P.F(m < f)
+
+
+def mama_fama_exit(o, h, l, c, fast_limit=0.5, slow_limit=0.05):
+    m, f = mama_fama(o, h, l, c, fast_limit, slow_limit)
+    return P.crossunder(m, f), P.crossover(m, f)
+
+
+def kuskus_starlight(o, h, l, c, range_periods=30, price_smooth=0.7,
+                     index_smooth=0.7):
+    c = np.asarray(c, float)
+    hi, lo = P.highest(h, range_periods), P.lowest(l, range_periods)
+    rng = hi - lo
+    with np.errstate(invalid='ignore', divide='ignore'):
+        raw = np.where(rng == 0, 0.0, (c - lo) / rng - 0.5)
+    n = c.size
+    out = np.empty(n); sm = np.nan; st = np.nan
+    for i in range(n):
+        r = raw[i] if np.isfinite(raw[i]) else 0.0
+        sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+        cl = min(max(sm, -0.499), 0.499)
+        fr = 0.5 * np.log((1 + 2 * cl) / (1 - 2 * cl))
+        st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+        out[i] = st
+    return out
+
+
+def kuskus_starlight_signals(o, h, l, c, range_periods=30, price_smooth=0.7,
+                             index_smooth=0.7):
+    return _zero_cross(kuskus_starlight(o, h, l, c, range_periods,
+                                        price_smooth, index_smooth))
+
+
+def kuskus_starlight_exit(o, h, l, c, range_periods=30, price_smooth=0.7,
+                          index_smooth=0.7):
+    return _zero_cross_exit(kuskus_starlight(o, h, l, c, range_periods,
+                                             price_smooth, index_smooth))
+
+
+def bears_bulls_impulse(o, h, l, c, length=13):
+    e = P.ema(c, length)
+    return np.asarray(h, float) - e, np.asarray(l, float) - e
+
+
+def bears_bulls_impulse_signals(o, h, l, c, length=13):
+    """TERNARY, and asymmetric on purpose: long when the LOW clears the EMA,
+    short when the HIGH fails to. Between those it confirms neither."""
+    bulls, bears = bears_bulls_impulse(o, h, l, c, length)
+    pbe, pbu = P.shift(bears, 1), P.shift(bulls, 1)
+    return (P.F((pbe < 0) & (bears > 0)), P.F((pbu > 0) & (bulls < 0)),
+            P.F(bears > 0), P.F(bulls < 0))
+
+
+def bears_bulls_impulse_exit(o, h, l, c, length=13):
+    bulls, bears = bears_bulls_impulse(o, h, l, c, length)
+    pbe, pbu = P.shift(bears, 1), P.shift(bulls, 1)
+    return P.F((pbu > 0) & (bulls < 0)), P.F((pbe < 0) & (bears > 0))
+
+
+def fx_sniper_ergodic_cci(o, h, l, c, cci_length=14, ema1_length=5,
+                          ema2_length=3, trigger_length=5):
+    e2 = P.ema(P.ema(P.cci(c, cci_length), ema1_length), ema2_length)
+    return e2, P.sma(e2, trigger_length)
+
+
+def fx_sniper_ergodic_cci_signals(o, h, l, c, cci_length=14, ema1_length=5,
+                                  ema2_length=3, trigger_length=5):
+    m, t = fx_sniper_ergodic_cci(o, h, l, c, cci_length, ema1_length,
+                                 ema2_length, trigger_length)
+    return P.crossover(m, t), P.crossunder(m, t), P.F(m > t), P.F(m < t)
+
+
+def fx_sniper_ergodic_cci_exit(o, h, l, c, cci_length=14, ema1_length=5,
+                               ema2_length=3, trigger_length=5):
+    m, t = fx_sniper_ergodic_cci(o, h, l, c, cci_length, ema1_length,
+                                 ema2_length, trigger_length)
+    return P.crossunder(m, t), P.crossover(m, t)
+
+
+def lemantrend(o, h, l, c, slow_period=13, medium_period=21, fast_period=34,
+               smooth=3):
+    """NOTE THE PARAMETER ORDER. The strategy passes 13, 21, 34 into
+    (slow, medium, fast), so the 'slow' EMA is the SHORTEST and the 'fast' one
+    the longest -- the names are back to front relative to the values. Ported
+    positionally, which is what the strategy actually calls."""
+    slow = P.ema(c, slow_period)
+    med = P.ema(c, medium_period)
+    fast = P.ema(c, fast_period)
+    return (P.ema((fast - med) + (med - slow), smooth),
+            P.ema((slow - med) + (med - fast), smooth))
+
+
+def lemantrend_signals(o, h, l, c, slow_period=13, medium_period=21,
+                       fast_period=34, smooth=3):
+    bulls, bears = lemantrend(o, h, l, c, slow_period, medium_period,
+                              fast_period, smooth)
+    return (P.crossover(bulls, bears), P.crossunder(bulls, bears),
+            P.F(bulls > bears), P.F(bulls < bears))
+
+
+def lemantrend_exit(o, h, l, c, slow_period=13, medium_period=21,
+                    fast_period=34, smooth=3):
+    bulls, bears = lemantrend(o, h, l, c, slow_period, medium_period,
+                              fast_period, smooth)
+    return P.crossunder(bulls, bears), P.crossover(bulls, bears)
+
+
+def waddah_attar_explosion_signals(o, h, l, c, sensitivity=150, fastEma=20,
+                                   slowEma=40, bbLen=20, bbStd=2.0):
+    """NOTE: st is a CROSSOVER of wDown, not a crossunder -- both triggers fire
+    on something rising through the explosion line. As written."""
+    e1, up, dn = waddah_attar_explosion(o, h, l, c, sensitivity, fastEma,
+                                        slowEma, bbLen, bbStd)
+    return (P.crossover(up, e1), P.crossover(dn, e1),
+            P.F(up > e1), P.F(dn > e1))
+
+
+def waddah_attar_explosion_exit(o, h, l, c, sensitivity=150, fastEma=20,
+                                slowEma=40, bbLen=20, bbStd=2.0):
+    e1, up, dn = waddah_attar_explosion(o, h, l, c, sensitivity, fastEma,
+                                        slowEma, bbLen, bbStd)
+    return P.crossover(dn, e1), P.crossover(up, e1)
+
+
+# --- confirmation batch C. Defaults from strategy input() lines 176-340.
+for _n, _f, _slot, _d, _ln in [
+        ('chandelier_exit_signals', chandelier_exit_signals, 'confirmation',
+         dict(atr_period=22, atr_mult=3.0, use_close=True), 'strat 182-184'),
+        ('chandelier_exit_exit', chandelier_exit_exit, 'exit',
+         dict(atr_period=22, atr_mult=3.0, use_close=True), 'strat 182-184'),
+        ('polychromatic_momentum_signals', polychromatic_momentum_signals,
+         'confirmation', dict(len=14), 'strat 273'),
+        ('polychromatic_momentum_exit', polychromatic_momentum_exit, 'exit',
+         dict(len=14), 'strat 273'),
+        ('mama_fama_signals', mama_fama_signals, 'confirmation',
+         dict(fast_limit=0.5, slow_limit=0.05), 'strat 271-272'),
+        ('mama_fama_exit', mama_fama_exit, 'exit',
+         dict(fast_limit=0.5, slow_limit=0.05), 'strat 271-272'),
+        ('kuskus_starlight_signals', kuskus_starlight_signals, 'confirmation',
+         dict(range_periods=30, price_smooth=0.7, index_smooth=0.7),
+         'strat 263-265'),
+        ('kuskus_starlight_exit', kuskus_starlight_exit, 'exit',
+         dict(range_periods=30, price_smooth=0.7, index_smooth=0.7),
+         'strat 263-265'),
+        ('bears_bulls_impulse_signals', bears_bulls_impulse_signals,
+         'confirmation', dict(length=13), 'strat 178'),
+        ('bears_bulls_impulse_exit', bears_bulls_impulse_exit, 'exit',
+         dict(length=13), 'strat 178'),
+        ('fx_sniper_ergodic_cci_signals', fx_sniper_ergodic_cci_signals,
+         'confirmation', dict(cci_length=14, ema1_length=5, ema2_length=3,
+                              trigger_length=5), 'strat 202-205'),
+        ('fx_sniper_ergodic_cci_exit', fx_sniper_ergodic_cci_exit, 'exit',
+         dict(cci_length=14, ema1_length=5, ema2_length=3, trigger_length=5),
+         'strat 202-205'),
+        ('lemantrend_signals', lemantrend_signals, 'confirmation',
+         dict(slow_period=13, medium_period=21, fast_period=34, smooth=3),
+         'strat 267-270'),
+        ('lemantrend_exit', lemantrend_exit, 'exit',
+         dict(slow_period=13, medium_period=21, fast_period=34, smooth=3),
+         'strat 267-270'),
+        ('waddah_attar_explosion_signals', waddah_attar_explosion_signals,
+         'confirmation', dict(sensitivity=150, fastEma=20, slowEma=40, bbLen=20,
+                              bbStd=2.0), 'strat 296-300'),
+        ('waddah_attar_explosion_exit', waddah_attar_explosion_exit, 'exit',
+         dict(sensitivity=150, fastEma=20, slowEma=40, bbLen=20, bbStd=2.0),
+         'strat 296-300')]:
+    _reg(_n, _f, _slot, _d, _ln, True)
+
+TERNARY.update({'bears_bulls_impulse'})
+for _k in REGISTRY:
+    if REGISTRY[_k]['slot'] == 'confirmation':
+        REGISTRY[_k]['kind'] = ('TERNARY'
+                                if _k.replace('_signals', '') in TERNARY
+                                else 'BINARY')
+KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
+
+
+def both_directions_audit(o, h, l, c):
+    """THE A5 CHECK, RUN OVER EVERY CONFIRMATION.
+
+    The patch fixed Schaff Trend Cycle because lc and sc were both true across
+    the middle of its range -- as a C2 that votes for whatever C1 says and
+    filters nothing. Nothing checks the rest of the library for the same fault,
+    so this does: any confirmation that confirms BOTH directions on any bar is
+    reported with the share of bars it does it on.
+    """
+    import pandas as pd
+    rows = []
+    for k, v in REGISTRY.items():
+        if v['slot'] != 'confirmation':
+            continue
+        lt, st, lc, sc = compute(k, o, h, l, c)
+        both = lc & sc
+        rows.append(dict(name=k, both_pct=round(100 * both.mean(), 2),
+                         long_pct=round(100 * lc.mean(), 1),
+                         short_pct=round(100 * sc.mean(), 1),
+                         neutral_pct=round(100 * (~lc & ~sc).mean(), 1)))
+    return pd.DataFrame(rows).sort_values('both_pct', ascending=False)
+
+
 if __name__ == '__main__':
     main()
