@@ -2025,5 +2025,178 @@ def both_directions_audit(o, h, l, c):
     return pd.DataFrame(rows).sort_values('both_pct', ascending=False)
 
 
+
+# ==========================================================================
+# CONFIRMATION BATCH D -- Volatility Quality and J_TPO
+# ==========================================================================
+
+
+def volatility_quality(o, h, l, c, vq_ma_type='WMA', vq_source_smoothing=10,
+                       vq_atr_percentage=7.5):
+    """lib. Two things worth stating.
+
+    The vqi recursion is written twice on consecutive lines: the first assigns
+    a ratio, the SECOND immediately overwrites it with |vqi| times a price
+    difference. So the first line's value is used only through its absolute
+    value, and the ratio's sign is discarded. That is what the source does.
+
+    inpFilter is a DEAD BAND, not a threshold: a new value is accepted only if
+    it moves more than inpFilter x ATR from the last accepted one, otherwise
+    the old value is held. At the default 7.5 that is a very wide band."""
+    o = np.asarray(o, float); h = np.asarray(h, float)
+    l = np.asarray(l, float); c = np.asarray(c, float)
+    pcl_src = P.nz(P.shift(c, 1), 0.0)
+    f = {'SMA': P.sma, 'EMA': P.ema, 'WMA': P.wma, 'RMA': P.rma}.get(vq_ma_type)
+    if f is None:
+        z = np.zeros(c.shape)
+        chigh = clow = cclose = copen = pclose = z
+    else:
+        n = vq_source_smoothing
+        chigh, clow = f(h, n), f(l, n)
+        cclose, copen, pclose = f(c, n), f(o, n), f(pcl_src, n)
+    tr_ = np.where(chigh > pclose, chigh, pclose) - np.where(clow < pclose, clow, pclose)
+    rng = chigh - clow
+    n = c.size
+    val_raw = np.zeros(n); vqi = 0.0
+    for i in range(n):
+        ok = np.isfinite(rng[i]) and np.isfinite(tr_[i]) and rng[i] > 0 and tr_[i] > 0
+        if ok:
+            vqi = ((cclose[i] - pclose[i]) / tr_[i]
+                   + (cclose[i] - copen[i]) / rng[i]) * 0.5
+        elif i == 0:
+            vqi = 0.0
+        # else: hold the previous vqi
+        if i > 0:
+            vqi = (vqi if vqi > 0 else -vqi) * (cclose[i] - pclose[i]
+                                                + cclose[i] - copen[i]) * 0.5
+        else:
+            vqi = 0.0
+        val_raw[i] = vqi
+    vqatr = P.atr(h, l, c, vq_source_smoothing)
+    val = np.zeros(n); prev = 0.0
+    for i in range(n):
+        vr = val_raw[i]
+        delta = abs(vr - prev)
+        a = vqatr[i] if np.isfinite(vqatr[i]) else 0.0
+        prev = prev if (vq_atr_percentage > 0 and i > 0 and delta < vq_atr_percentage * a) else vr
+        val[i] = prev
+    mid = np.zeros(n)
+    return val, mid, P.crossover(val, mid), P.crossunder(val, mid)
+
+
+def volatility_quality_signals(o, h, l, c, ma_type='WMA', smooth=10,
+                               atr_pct=7.5):
+    val, mid, lo_, sh = volatility_quality(o, h, l, c, ma_type, smooth, atr_pct)
+    return lo_, sh, P.F(val > 0), P.F(val < 0)
+
+
+def volatility_quality_exit(o, h, l, c, ma_type='WMA', smooth=10, atr_pct=7.5):
+    val, mid, lo_, sh = volatility_quality(o, h, l, c, ma_type, smooth, atr_pct)
+    return sh, lo_
+
+
+try:
+    from numba import njit as _njit
+except ImportError:                                     # pragma: no cover
+    def _njit(*a, **k):
+        return (lambda f: f) if not a else a[0]
+
+
+@_njit(cache=True)
+def _jtpo_values(c, length):
+    """patch A4's getValue, per bar.
+
+    The original accumulated with `array.get(arr3, m)` and `array.get(arr2, m)`
+    where m is FIXED after the preceding while loop, so it added the same
+    product `length` times instead of summing across the series. Every J_TPO
+    value in the project was wrong. This indexes with i, as the patch does.
+
+    O(length^2) per bar, so it is njit-compiled -- at the default length 40
+    over 5,869 bars that is ~9.4M inner iterations per pair."""
+    n = c.size
+    out = np.zeros(n)
+    L = length
+    half = (L + 1) * 0.5
+    a1 = np.zeros(L + 2); a2 = np.zeros(L + 2); a3 = np.zeros(L + 2)
+    for t in range(n):
+        if t < L:
+            continue
+        for i in range(1, L + 1):
+            a2[i] = i
+            a3[i] = i
+            a1[i] = c[t - (L - i)]
+        for i in range(1, L):
+            maxval = a1[i]; maxloc = i
+            for j in range(i + 1, L + 1):
+                if a1[j] < maxval:
+                    maxval = a1[j]; maxloc = j
+            t1 = a1[i]; a1[i] = a1[maxloc]; a1[maxloc] = t1
+            t2 = a2[i]; a2[i] = a2[maxloc]; a2[maxloc] = t2
+        m = 1
+        while m < L - 1:
+            j = m + 1
+            flag = True
+            accum = a3[m]
+            while flag:
+                if a1[m] != a1[j]:
+                    if j - m > 1:
+                        accum = accum / (j - m)
+                        for q in range(m, j):
+                            a3[q] = accum
+                    flag = False
+                else:
+                    accum = accum + a3[j]
+                    j = j + 1
+                    if j >= L + 1:
+                        flag = False
+            m = j
+        tot = 0.0
+        for i in range(1, L + 1):
+            tot += (a3[i] - half) * (a2[i] - half)
+        out[t] = tot
+    return out
+
+
+def j_tpo_indicator(o, h, l, c, jtpo_len=40, jtpo_ema_length=200,
+                    jtpo_emaf=False):
+    c = np.asarray(c, float)
+    L = int(jtpo_len)
+    norm = 12.0 / (L * (L - 1) * (L + 1))
+    rng = P.highest(c, L) - P.lowest(c, L)
+    j = (norm * _jtpo_values(c, L)) * rng / L
+    jema = P.ema(j, jtpo_ema_length)
+    z = np.zeros_like(j)
+    up = P.crossover(j, z); dn = P.crossunder(j, z)
+    if jtpo_emaf:
+        ls = up & P.F(jema > 0); ss = dn & P.F(jema < 0)
+    else:
+        ls, ss = up, dn
+    return j, ls, ss
+
+
+def j_tpo_signals(o, h, l, c, len=40, ema_len=200, ema_filter=False):
+    j, ls, ss = j_tpo_indicator(o, h, l, c, len, ema_len, ema_filter)
+    return ls, ss, P.F(j > 0), P.F(j < 0)
+
+
+def j_tpo_exit(o, h, l, c, len=40, ema_len=200, ema_filter=False):
+    j, ls, ss = j_tpo_indicator(o, h, l, c, len, ema_len, ema_filter)
+    return ss, ls
+
+
+# --- confirmation batch D.
+for _n, _f, _slot, _d, _ln in [
+        ('volatility_quality_signals', volatility_quality_signals, 'confirmation',
+         dict(ma_type='WMA', smooth=10, atr_pct=7.5), 'strat 376-378'),
+        ('volatility_quality_exit', volatility_quality_exit, 'exit',
+         dict(ma_type='WMA', smooth=10, atr_pct=7.5), 'strat 376-378'),
+        ('j_tpo_signals', j_tpo_signals, 'confirmation',
+         dict(len=40, ema_len=200, ema_filter=False), 'strat 256-258 / patch A4'),
+        ('j_tpo_exit', j_tpo_exit, 'exit',
+         dict(len=40, ema_len=200, ema_filter=False), 'strat 256-258 / patch A4')]:
+    _reg(_n, _f, _slot, _d, _ln, True)
+KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
+
+
 if __name__ == '__main__':
     main()

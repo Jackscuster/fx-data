@@ -89,3 +89,23 @@ glitch_index_signals,confirmation,TERNARY,4,length=30; multiplier=5.0; smooth=3,
 glitch_index_exit,exit,BINARY,2,length=30; multiplier=5.0; smooth=3,True,strat 249-251 / patch A7,library,True,False,False
 ehlers_reverse_ema_signals,confirmation,BINARY,4,alpha=0.1,True,strat 198 / patch A6,library,True,False,False
 ehlers_reverse_ema_exit,exit,BINARY,2,alpha=0.1,True,strat 198 / patch A6,library,True,False,False
+chandelier_exit_signals,confirmation,BINARY,4,atr_period=22; atr_mult=3.0; use_close=True,True,strat 182-184,library,True,False,False
+chandelier_exit_exit,exit,BINARY,2,atr_period=22; atr_mult=3.0; use_close=True,True,strat 182-184,library,True,False,False
+polychromatic_momentum_signals,confirmation,BINARY,4,len=14,True,strat 273,library,True,False,False
+polychromatic_momentum_exit,exit,BINARY,2,len=14,True,strat 273,library,True,False,False
+mama_fama_signals,confirmation,BINARY,4,fast_limit=0.5; slow_limit=0.05,True,strat 271-272,library,True,False,False
+mama_fama_exit,exit,BINARY,2,fast_limit=0.5; slow_limit=0.05,True,strat 271-272,library,True,False,False
+kuskus_starlight_signals,confirmation,BINARY,4,range_periods=30; price_smooth=0.7; index_smooth=0.7,True,strat 263-265,library,True,False,False
+kuskus_starlight_exit,exit,BINARY,2,range_periods=30; price_smooth=0.7; index_smooth=0.7,True,strat 263-265,library,True,False,False
+bears_bulls_impulse_signals,confirmation,TERNARY,4,length=13,True,strat 178,library,True,False,False
+bears_bulls_impulse_exit,exit,BINARY,2,length=13,True,strat 178,library,True,False,False
+fx_sniper_ergodic_cci_signals,confirmation,BINARY,4,cci_length=14; ema1_length=5; ema2_length=3; trigger_length=5,True,strat 202-205,library,True,False,False
+fx_sniper_ergodic_cci_exit,exit,BINARY,2,cci_length=14; ema1_length=5; ema2_length=3; trigger_length=5,True,strat 202-205,library,True,False,False
+lemantrend_signals,confirmation,BINARY,4,slow_period=13; medium_period=21; fast_period=34; smooth=3,True,strat 267-270,library,True,False,False
+lemantrend_exit,exit,BINARY,2,slow_period=13; medium_period=21; fast_period=34; smooth=3,True,strat 267-270,library,True,False,False
+waddah_attar_explosion_signals,confirmation,BINARY,4,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 296-300,library,True,False,False
+waddah_attar_explosion_exit,exit,BINARY,2,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 296-300,library,True,False,False
+volatility_quality_signals,confirmation,BINARY,4,ma_type=WMA; smooth=10; atr_pct=7.5,True,strat 376-378,library,True,False,False
+volatility_quality_exit,exit,BINARY,2,ma_type=WMA; smooth=10; atr_pct=7.5,True,strat 376-378,library,True,False,False
+j_tpo_signals,confirmation,BINARY,4,len=40; ema_len=200; ema_filter=False,True,strat 256-258 / patch A4,library,True,False,False
+j_tpo_exit,exit,BINARY,2,len=40; ema_len=200; ema_filter=False,True,strat 256-258 / patch A4,library,True,False,False
