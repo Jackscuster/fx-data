@@ -1,0 +1,3019 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © jacktime
+
+//@version=6
+
+//A Library of All my Indicators and Functions for backtesting different strategies.
+//Credits To all people who openly published all of these indicators for all to use.
+
+// V8.1 — VIDYA CW10004 warning fix: math.sum calls extracted from ternary
+// V8   — TWENTY NEW INDICATORS ADDED ACROSS C1, C2, VOLUME, AND BASELINE SLOTS
+//
+// V2 fixes (preserved):
+//   - rex_oscillator signal-MA HMA branch: assigned to result instead of result2
+//   - hieken_ashi_smoothed type-1 low FRAMA: Fractal_Dimension formula used wrong variable
+//   - hieken_ashi_smoothed type-2 low FRAMA: same class of bug in second smoothing stage
+//   - hieken_ashi_smoothed type-2 close FRAMA: cross-contamination from type-1 variable
+//
+// V3 helpers (preserved):
+//   - {indicator}_signals(...) helpers returning [long_trig, short_trig, long_conf, short_conf]
+//   - {indicator}_volume_signals(...) helpers returning [long_conf, short_conf]
+//   - {indicator}_exit(...) helpers returning [long_exit, short_exit]
+//
+// V4 changes (Pine v6, preserved):
+//   - //@version bumped to 6
+//   - All v5 boolean/numeric patterns audited and v6-compatible
+//   - All existing exports are signature-stable
+//
+// V5 additions (5 new C1/C2/Exit-eligible confirmation indicators):
+//   - fisher_transform, aroon_updown, mama_fama, center_of_gravity, kuskus_starlight
+//
+// V6 additions (5 more C1/C2/Exit-eligible, C2-leaning):
+//   - bears_bulls_impulse, fx_sniper_ergodic_cci, lemantrend, glitch_index, ehlers_reverse_ema
+//
+// V7 additions (5 new Volume/Volatility filters — non-directional):
+//   - damiani_volatmeter, ttm_squeeze, williams_vix_fix, volatility_ratio, mass_index
+//
+// V8 additions (5 new Baseline moving averages):
+//   - kama_baseline, alma_baseline, t3_baseline, super_smoother_2pole_baseline, frama_baseline
+
+// @description JC'S NNFX Indicators
+library("JCs_Indicators_and_Functions_Lib")
+
+// @function Chaikin Money Flow Indicator
+// @returns Chaikin Money Indicator Value
+export chaikin_money_flow(int lookback) =>
+	ad = close == high and close == low or high == low ? 0 : (2 * close - low - high) / (high - low) * volume
+	mf = math.sum(ad, lookback) / math.sum(volume, lookback)
+
+
+// @function Chaikin Oscillator Indicator
+// @returns Chaikin Oscillator Value
+export chaikin_oscillator(int fastlength, int slowlength) =>
+	var cumVol = 0.0
+	cumVol += nz(volume)
+	if barstate.islast and cumVol == 0
+		runtime.error("No volume is provided by the data vendor.")
+	osc = ta.ema(ta.accdist, fastlength) - ta.ema(ta.accdist, slowlength)
+
+
+// @function Chaikin Volatility Indicator
+// @returns Chaikin Volatility Value
+export chaikin_volatility(int cv_length, int roc_length) =>
+	xPrice1 = high
+	xPrice2 = low
+	xPrice = xPrice1 - xPrice2
+	xROC_EMA = ta.roc(ta.ema(xPrice, cv_length), roc_length)
+
+
+// @function Chandelier Exit Indicator
+// @returns An array With, Long stop Value, Short stop value, Buy/Sell signal
+export chandelier_exit(simple int atr_length, float atr_multiplier, bool close_for_Extremums) =>
+	Catr = atr_multiplier * ta.atr(atr_length)
+
+	// CW10003 fix: compute both highest/lowest variants every bar so internal
+	// state stays consistent regardless of the close_for_Extremums toggle.
+	highest_close = ta.highest(close, atr_length)
+	highest_high  = ta.highest(atr_length)
+	lowest_close  = ta.lowest(close, atr_length)
+	lowest_low    = ta.lowest(atr_length)
+
+	ClongStop = (close_for_Extremums ? highest_close : highest_high) - Catr
+	ClongStopPrev = nz(ClongStop[1], ClongStop)
+	ClongStop := close[1] > ClongStopPrev ? math.max(ClongStop, ClongStopPrev) : ClongStop
+
+	CshortStop = (close_for_Extremums ? lowest_close : lowest_low) + Catr
+	CshortStopPrev = nz(CshortStop[1], CshortStop)
+	CshortStop := close[1] < CshortStopPrev ? math.min(CshortStop, CshortStopPrev) : CshortStop
+
+	var int Cdir = 1
+	Cdir := close > CshortStopPrev ? 1 : close < ClongStopPrev ? -1 : Cdir//1 is long, -1 is short
+	float[] values = array.from(ClongStop,CshortStop,Cdir)
+
+
+// @function coppock_curve
+// @returns Coppock Curve Value
+export coppock_curve(int cc_smoothing_length, int cc_long_roc_length, int cc_short_roc_length) =>
+	length = cc_smoothing_length
+	longRocLength = cc_long_roc_length
+	shortRocLength = cc_short_roc_length
+	src = close
+
+	coppock = ta.wma(ta.roc(src, longRocLength) + ta.roc(src, shortRocLength), length)//Coppock Curve Value
+
+
+
+
+// @function Coral Indicator
+// @returns Coral Indicator Value
+export coral(int smoothing_period, float constant_d) =>
+	Csrc=close
+	di = (smoothing_period - 1.0) / 2.0 + 1.0
+	Cc1 = 2 / (di + 1.0)
+	Cc2 = 1 - Cc1
+	Cc3 = 3.0 * (constant_d * constant_d + constant_d * constant_d * constant_d)
+	Cc4 = -3.0 * (2.0 * constant_d * constant_d + constant_d + constant_d * constant_d * constant_d)
+	c5 = 3.0 * constant_d + 1.0 + constant_d * constant_d * constant_d + 3.0 * constant_d * constant_d
+
+	i1 = 0.0
+	i2 = 0.0
+	i3 = 0.0
+	i4 = 0.0
+	i5 = 0.0
+	i6 = 0.0
+
+	i1 := Cc1*Csrc + Cc2*nz(i1[1])
+	i2 := Cc1*i1 + Cc2*nz(i2[1])
+	i3 := Cc1*i2 + Cc2*nz(i3[1])
+	i4 := Cc1*i3 + Cc2*nz(i4[1])
+	i5 := Cc1*i4 + Cc2*nz(i5[1])
+	i6 := Cc1*i5 + Cc2*nz(i6[1])
+
+	bfr = -constant_d*constant_d*constant_d*i6 + Cc3*(i5) + Cc4*(i4) + c5*(i3)
+	bfrC = bfr > nz(bfr[1]) ? 1 : bfr < nz(bfr[1])  ? 0 : na
+
+
+// @function Detrended price Oscillator
+// @returns Detrended Price Oscillator Indicator Value
+export dpo(int dpo_length, bool dpo_centered) =>
+	Dbarsback = dpo_length/2 + 1
+	Dma = ta.sma(close, dpo_length)
+	dpo = dpo_centered ? close[Dbarsback] - Dma : close - Dma[Dbarsback]
+
+// @function Detrended Synthetic Price Oscillator
+// @returns Detrended Price Oscillator Indicator Value
+export detrended_synthetic_price_oscillator(int dspo_length) =>
+	Length = dspo_length
+	xHL2 = hl2
+	xEMA1 = ta.ema(xHL2, Length)
+	xEMA2 = ta.ema(xHL2, 2 * Length)
+	xEMA1_EMA2 = xEMA1 - xEMA2
+
+
+// @function Didi Index
+// @returns Didi Index Value
+export didi_index(int didi_medium, int didi_long) =>
+	Gsrc = close
+	media = ta.sma(Gsrc, didi_medium)
+	longa = ta.sma(Gsrc, didi_long) / media
+
+	avg_1 = math.avg(longa, longa[1])
+	avg_2 = math.avg(longa, longa[1])
+	didi_val = longa//use the long didi value to enter or exit trades.
+
+
+// @function Ease Of Movement
+// @returns Ease of Movement Value
+export ease_of_movement(int eom_length, int eom_divisor) =>
+	var EOMcumVol = 0.
+	EOMcumVol += nz(volume)
+	if barstate.islast and EOMcumVol == 0
+		runtime.error("No volume is provided by the data vendor.")
+	eom = ta.sma(eom_divisor * ta.change(hl2) * (high - low) / volume, eom_length)
+
+
+// @function Elders Force Index
+// @returns Elders Force Index
+export elders_force_index(int efi_length) =>
+	var EFcumVol = 0.
+	EFcumVol += nz(volume)
+	if barstate.islast and EFcumVol == 0
+		runtime.error("No volume is provided by the data vendor.")
+	efi = ta.ema(ta.change(close) * volume, efi_length)
+
+
+// @function Fantail VMA
+// @returns Fantail VMA
+export fantail_vma(int fma_adx_length, float fma_weighting, int fma_ma_length) =>
+	// CW10018 fix: declare all recursive state at function-body scope as `var`
+	// so that [1] history refs are valid every bar regardless of branch taken.
+	var float sPDI  = 0.0
+	var float sMDI  = 0.0
+	var float FSTR  = 0.0
+	var float ADX   = 0.0
+	var float VarMA = close
+
+	Hi = high
+	Hi1 = high[1]
+	Lo = low
+	Lo1 = low[1]
+	Close1 = close[1]
+
+	FBulls1 = 0.5 * (math.abs(Hi - Hi1) + Hi - Hi1)
+	FBears1 = 0.5 * (math.abs(Lo1 - Lo) + Lo1 - Lo)
+
+	FBears = FBulls1 > FBears1 ? 0 : FBulls1 == FBears1 ? 0 : FBears1
+	FBulls = FBulls1 < FBears1 ? 0 : FBulls1 == FBears1 ? 0 : FBulls1
+
+	if bar_index > 0
+		sPDI := (fma_weighting * nz(sPDI[1]) + FBulls) / (fma_weighting + 1)
+		sMDI := (fma_weighting * nz(sMDI[1]) + FBears) / (fma_weighting + 1)
+
+	TR = math.max(Hi - Lo, Hi - Close1)
+	if bar_index > 0
+		FSTR := (fma_weighting * nz(FSTR[1]) + TR) / (fma_weighting + 1)
+	else
+		FSTR := high - low
+
+	PDI = FSTR > 0 ? sPDI / FSTR : 0
+	MDI = FSTR > 0 ? sMDI / FSTR : 0
+	DX  = PDI + MDI > 0 ? math.abs(PDI - MDI) / (PDI + MDI) : 0
+	if bar_index > 0
+		ADX := (fma_weighting * nz(ADX[1]) + DX) / (fma_weighting + 1)
+
+	vADX = ADX
+
+	// CW10003 fix: ta.lowest/highest at function-body scope.
+	adxlow = ta.lowest(ADX, fma_adx_length)
+	adxmax = ta.highest(ADX, fma_adx_length)
+	ADXmin = math.min(1000000.0, adxlow)
+	ADXmax = math.max(-1.0, adxmax)
+	Diff   = ADXmax - ADXmin
+
+	Const = Diff > 0 ? (vADX - ADXmin) / Diff : 0
+
+	if bar_index > 0
+		VarMA := ((2 - Const) * nz(VarMA[1]) + Const * close) / 2
+
+	FMA = ta.sma(VarMA, fma_ma_length)
+	FMA
+
+
+// @function Half Trend
+// @returns An Array with values of Half trend as Follows: ht(0=Long Confirmation, not 0 = short confirmation ), buysignal(=1.0), sellsignal(=1.0)
+export halftrend(int amplitude) =>
+	var float Htrend = 0.0
+	var int nextTrend = 0
+	var float maxLowPrice = nz(low[1], low)
+	var float minHighPrice = nz(high[1], high)
+
+	var float up = 0.0
+	var float down = 0.0
+	float atrHigh = 0.0
+	float atrLow = 0.0
+	float arrowUp = na
+	float arrowDown = na
+	atr2 = ta.atr(100) / 2
+
+	highPrice = high[math.abs(ta.highestbars(amplitude))]
+	lowPrice = low[math.abs(ta.lowestbars(amplitude))]
+	highma = ta.sma(high, amplitude)
+	lowma = ta.sma(low, amplitude)
+
+	if nextTrend == 1
+		maxLowPrice := math.max(lowPrice, maxLowPrice)
+
+		if highma < maxLowPrice and close < nz(low[1], low)
+			Htrend := 1
+			nextTrend := 0
+			minHighPrice := highPrice
+			minHighPrice
+	else
+		minHighPrice := math.min(highPrice, minHighPrice)
+
+		if lowma > minHighPrice and close > nz(high[1], high)
+			Htrend := 0
+			nextTrend := 1
+			maxLowPrice := lowPrice
+			maxLowPrice
+
+	if Htrend == 0
+		if not na(Htrend[1]) and Htrend[1] != 0
+			up := na(down[1]) ? down : down[1]
+			arrowUp := up - atr2
+			arrowUp
+	else
+		if not na(Htrend[1]) and Htrend[1] != 1
+			down := na(up[1]) ? up : up[1]
+			arrowDown := down + atr2
+			arrowDown
+
+	ht = Htrend == 0 ? 0.0 : -1.0
+	buySignal = not na(arrowUp) and Htrend == 0 and Htrend[1] == 1 ? 1.0 : 0.0
+	sellSignal = not na(arrowDown) and Htrend == 1 and Htrend[1] == 0 ? 1.0 : 0.0
+
+	float[] htvalues = array.from(ht,buySignal,sellSignal)
+
+
+//Thank you to CryptoJoncis for publishing the code for the Heiken Ashi Smoothed!
+// @function Heiken Ashi Smoothed
+// @returns an array with the following Values: Long signal, Short Signal, Long Confirmation, Short Confirmation
+export hieken_ashi_smoothed(float ha_open, float ha_high, float ha_low, float ha_close, string ha_ma1, simple int ha_ma1_length, string ha_ma2, simple int ha_ma2_length, bool ha_signal_smoothed, float ha_vfac_type_1,
+ simple float ha_offset_ALMA, simple float ha_sigma_ALMA, simple int ha_LSMAO, float ha_AMA_weight_v1, int ha_FAMA_i2, int ha_FAMA_i3, float ha_vfac_type_2, simple float ha_offset_ALMA2, simple float ha_sigma_ALMA2, simple int ha_LSMAO2,
+ float ha_AMA_weight_v2, int ha_FAMA_i4, int ha_FAMA_i5) =>
+	HA_open_default = ha_open
+	HA_high_default = ha_high
+	HA_low_default = ha_low
+	HA_close_default = ha_close
+
+	Moving_average_Type_1 = ha_ma1
+	Lenght_of_Moving_average_Type_1 = ha_ma1_length
+	Moving_average_Type_2 = ha_ma2
+	Lenght_of_Moving_average_Type_2 = ha_ma2_length
+	Exponential = 2.7182818284590452353602874713527
+
+	single_smoothed = ha_signal_smoothed
+
+	// Tillson Moving Average as type 1
+	Vfact_type_1 = ha_vfac_type_1
+	c1x = -Vfact_type_1 * Vfact_type_1 * Vfact_type_1
+	c2x = 3 * Vfact_type_1 * Vfact_type_1 + 3 * Vfact_type_1 * Vfact_type_1 * Vfact_type_1
+	c3x = -6 * Vfact_type_1 * Vfact_type_1 - 3 * Vfact_type_1 - 3 * Vfact_type_1 * Vfact_type_1 * Vfact_type_1
+	c4x = 1 + 3 * Vfact_type_1 + Vfact_type_1 * Vfact_type_1 * Vfact_type_1 + 3 * Vfact_type_1 * Vfact_type_1
+
+	First_EMA_open = ta.ema(HA_open_default, Lenght_of_Moving_average_Type_1)
+	Second_EMA_open = ta.ema(First_EMA_open, Lenght_of_Moving_average_Type_1)
+	Third_EMA_open = ta.ema(Second_EMA_open, Lenght_of_Moving_average_Type_1)
+	Fourth_EMA_open = ta.ema(Third_EMA_open, Lenght_of_Moving_average_Type_1)
+	Fifth_EMA_open = ta.ema(Fourth_EMA_open, Lenght_of_Moving_average_Type_1)
+	Sixth_EMA_open = ta.ema(Fifth_EMA_open, Lenght_of_Moving_average_Type_1)
+	T3_open = c1x * Sixth_EMA_open + c2x * Fifth_EMA_open + c3x * Fourth_EMA_open + c4x * Third_EMA_open
+
+	First_EMA_high = ta.ema(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Second_EMA_high = ta.ema(First_EMA_high, Lenght_of_Moving_average_Type_1)
+	Third_EMA_high = ta.ema(Second_EMA_high, Lenght_of_Moving_average_Type_1)
+	Fourth_EMA_high = ta.ema(Third_EMA_high, Lenght_of_Moving_average_Type_1)
+	Fifth_EMA_high = ta.ema(Fourth_EMA_high, Lenght_of_Moving_average_Type_1)
+	Sixth_EMA_high = ta.ema(Fifth_EMA_high, Lenght_of_Moving_average_Type_1)
+	T3_high = c1x * Sixth_EMA_high + c2x * Fifth_EMA_high + c3x * Fourth_EMA_high + c4x * Third_EMA_high
+
+	First_EMA_low = ta.ema(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Second_EMA_low = ta.ema(First_EMA_low, Lenght_of_Moving_average_Type_1)
+	Third_EMA_low = ta.ema(Second_EMA_low, Lenght_of_Moving_average_Type_1)
+	Fourth_EMA_low = ta.ema(Third_EMA_low, Lenght_of_Moving_average_Type_1)
+	Fifth_EMA_low = ta.ema(Fourth_EMA_low, Lenght_of_Moving_average_Type_1)
+	Sixth_EMA_low = ta.ema(Fifth_EMA_low, Lenght_of_Moving_average_Type_1)
+	T3_low = c1x * Sixth_EMA_low + c2x * Fifth_EMA_low + c3x * Fourth_EMA_low + c4x * Third_EMA_low
+
+	First_EMA_close = ta.ema(HA_close_default, Lenght_of_Moving_average_Type_1)
+	Second_EMA_close = ta.ema(First_EMA_close, Lenght_of_Moving_average_Type_1)
+	Third_EMA_close = ta.ema(Second_EMA_close, Lenght_of_Moving_average_Type_1)
+	Fourth_EMA_close = ta.ema(Third_EMA_close, Lenght_of_Moving_average_Type_1)
+	Fifth_EMA_close = ta.ema(Fourth_EMA_close, Lenght_of_Moving_average_Type_1)
+	Sixth_EMA_close = ta.ema(Fifth_EMA_close, Lenght_of_Moving_average_Type_1)
+	T3_close = c1x * Sixth_EMA_close + c2x * Fifth_EMA_close + c3x * Fourth_EMA_close + c4x * Third_EMA_close
+
+	// DEMA type 1
+	Double_Moving_Average_Exponential_nr_1_open = ta.ema(HA_open_default, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_nr_2_open = ta.ema(Double_Moving_Average_Exponential_nr_1_open, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_open = 2 * Double_Moving_Average_Exponential_nr_1_open - Double_Moving_Average_Exponential_nr_2_open
+
+	Double_Moving_Average_Exponential_nr_1_high = ta.ema(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_nr_2_high = ta.ema(Double_Moving_Average_Exponential_nr_1_high, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_high = 2 * Double_Moving_Average_Exponential_nr_1_high - Double_Moving_Average_Exponential_nr_2_high
+
+	Double_Moving_Average_Exponential_nr_1_low = ta.ema(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_nr_2_low = ta.ema(Double_Moving_Average_Exponential_nr_1_low, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_low = 2 * Double_Moving_Average_Exponential_nr_1_low - Double_Moving_Average_Exponential_nr_2_low
+
+	Double_Moving_Average_Exponential_nr_1_close = ta.ema(HA_close_default, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_nr_2_close = ta.ema(Double_Moving_Average_Exponential_nr_1_close, Lenght_of_Moving_average_Type_1)
+	Double_Moving_Average_Exponential_close = 2 * Double_Moving_Average_Exponential_nr_1_close - Double_Moving_Average_Exponential_nr_2_close
+
+	// ALMA type 1
+	offset_of_ALMA = ha_offset_ALMA
+	sigma_of_ALMA = ha_sigma_ALMA
+
+	Arnaud_Legoux_Moving_Average_open = ta.alma(HA_open_default, Lenght_of_Moving_average_Type_1, offset_of_ALMA, sigma_of_ALMA)
+	Arnaud_Legoux_Moving_Average_high = ta.alma(HA_high_default, Lenght_of_Moving_average_Type_1, offset_of_ALMA, sigma_of_ALMA)
+	Arnaud_Legoux_Moving_Average_low = ta.alma(HA_low_default, Lenght_of_Moving_average_Type_1, offset_of_ALMA, sigma_of_ALMA)
+	Arnaud_Legoux_Moving_Average_close = ta.alma(HA_close_default, Lenght_of_Moving_average_Type_1, offset_of_ALMA, sigma_of_ALMA)
+
+	// LSMA type 1
+	Least_Squares_Moving_Average_offset = ha_LSMAO
+	Least_Squares_Moving_Average_open = ta.linreg(HA_open_default, Lenght_of_Moving_average_Type_1, Least_Squares_Moving_Average_offset)
+	Least_Squares_Moving_Average_high = ta.linreg(HA_high_default, Lenght_of_Moving_average_Type_1, Least_Squares_Moving_Average_offset)
+	Least_Squares_Moving_Average_low = ta.linreg(HA_low_default, Lenght_of_Moving_average_Type_1, Least_Squares_Moving_Average_offset)
+	Least_Squares_Moving_Average_close = ta.linreg(HA_close_default, Lenght_of_Moving_average_Type_1, Least_Squares_Moving_Average_offset)
+
+	// SMA type 1
+	Moving_Average_open = ta.sma(HA_open_default, Lenght_of_Moving_average_Type_1)
+	Moving_Average_high = ta.sma(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Moving_Average_low = ta.sma(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Moving_Average_close = ta.sma(HA_close_default, Lenght_of_Moving_average_Type_1)
+
+	// EMA type 1
+	eMoving_Average_open = ta.ema(HA_open_default, Lenght_of_Moving_average_Type_1)
+	eMoving_Average_high = ta.ema(HA_high_default, Lenght_of_Moving_average_Type_1)
+	eMoving_Average_low = ta.ema(HA_low_default, Lenght_of_Moving_average_Type_1)
+	eMoving_Average_close = ta.ema(HA_close_default, Lenght_of_Moving_average_Type_1)
+
+	// WMA type 1
+	wMoving_Average_open = ta.wma(HA_open_default, Lenght_of_Moving_average_Type_1)
+	wMoving_Average_high = ta.wma(HA_high_default, Lenght_of_Moving_average_Type_1)
+	wMoving_Average_low = ta.wma(HA_low_default, Lenght_of_Moving_average_Type_1)
+	wMoving_Average_close = ta.wma(HA_close_default, Lenght_of_Moving_average_Type_1)
+
+	// SMMA type 1
+	smma_open = 0.0
+	sma_1 = ta.sma(HA_open_default, Lenght_of_Moving_average_Type_1)
+	smma_open := na(smma_open[1]) ? sma_1 : (smma_open[1] * (Lenght_of_Moving_average_Type_1 - 1) + HA_open_default) / Lenght_of_Moving_average_Type_1
+
+	smma_high = 0.0
+	sma_2 = ta.sma(HA_high_default, Lenght_of_Moving_average_Type_1)
+	smma_high := na(smma_high[1]) ? sma_2 : (smma_high[1] * (Lenght_of_Moving_average_Type_1 - 1) + HA_high_default) / Lenght_of_Moving_average_Type_1
+
+	smma_low = 0.0
+	sma_3 = ta.sma(HA_low_default, Lenght_of_Moving_average_Type_1)
+	smma_low := na(smma_low[1]) ? sma_3 : (smma_low[1] * (Lenght_of_Moving_average_Type_1 - 1) + HA_low_default) / Lenght_of_Moving_average_Type_1
+
+	smma_close = 0.0
+	sma_4 = ta.sma(HA_close_default, Lenght_of_Moving_average_Type_1)
+	smma_close := na(smma_close[1]) ? sma_4 : (smma_close[1] * (Lenght_of_Moving_average_Type_1 - 1) + HA_close_default) / Lenght_of_Moving_average_Type_1
+
+	// TEMA type 1
+	Triple_EMA_1 = ta.ema(HA_open_default, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_2 = ta.ema(Triple_EMA_1, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_3 = ta.ema(Triple_EMA_2, Lenght_of_Moving_average_Type_1)
+
+	Triple_EMA_4 = ta.ema(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_5 = ta.ema(Triple_EMA_4, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_6 = ta.ema(Triple_EMA_5, Lenght_of_Moving_average_Type_1)
+
+	Triple_EMA_7 = ta.ema(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_8 = ta.ema(Triple_EMA_7, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_9 = ta.ema(Triple_EMA_8, Lenght_of_Moving_average_Type_1)
+
+	Triple_EMA_10 = ta.ema(HA_close_default, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_11 = ta.ema(Triple_EMA_10, Lenght_of_Moving_average_Type_1)
+	Triple_EMA_12 = ta.ema(Triple_EMA_11, Lenght_of_Moving_average_Type_1)
+
+	// HMA type 1
+	Hull_Moving_Average_lenght_sqrt_open = math.sqrt(Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_lenght_rounded_open = math.round(Hull_Moving_Average_lenght_sqrt_open)
+	Hull_Moving_Average_1_open = ta.wma(HA_open_default, Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_2_open = ta.wma(HA_open_default, Lenght_of_Moving_average_Type_1 / 2)
+	Hull_Moving_Average_3_open = 2 * Hull_Moving_Average_2_open - Hull_Moving_Average_1_open
+	Hull_Moving_Average_open = ta.wma(Hull_Moving_Average_3_open, Hull_Moving_Average_lenght_rounded_open)
+
+	Hull_Moving_Average_lenght_sqrt_high = math.sqrt(Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_lenght_rounded_high = math.round(Hull_Moving_Average_lenght_sqrt_high)
+	Hull_Moving_Average_1_high = ta.wma(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_2_high = ta.wma(HA_high_default, Lenght_of_Moving_average_Type_1 / 2)
+	Hull_Moving_Average_3_high = 2 * Hull_Moving_Average_2_high - Hull_Moving_Average_1_high
+	Hull_Moving_Average_high = ta.wma(Hull_Moving_Average_3_high, Hull_Moving_Average_lenght_rounded_high)
+
+	Hull_Moving_Average_lenght_sqrt_low = math.sqrt(Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_lenght_rounded_low = math.round(Hull_Moving_Average_lenght_sqrt_low)
+	Hull_Moving_Average_1_low = ta.wma(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_2_low = ta.wma(HA_low_default, Lenght_of_Moving_average_Type_1 / 2)
+	Hull_Moving_Average_3_low = 2 * Hull_Moving_Average_2_low - Hull_Moving_Average_1_low
+	Hull_Moving_Average_low = ta.wma(Hull_Moving_Average_3_low, Hull_Moving_Average_lenght_rounded_low)
+
+	Hull_Moving_Average_lenght_sqrt_close = math.sqrt(Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_lenght_rounded_close = math.round(Hull_Moving_Average_lenght_sqrt_close)
+	Hull_Moving_Average_1_close = ta.wma(HA_close_default, Lenght_of_Moving_average_Type_1)
+	Hull_Moving_Average_2_close = ta.wma(HA_close_default, Lenght_of_Moving_average_Type_1 / 2)
+	Hull_Moving_Average_3_close = 2 * Hull_Moving_Average_2_close - Hull_Moving_Average_1_close
+	Hull_Moving_Average_close = ta.wma(Hull_Moving_Average_3_close, Hull_Moving_Average_lenght_rounded_close)
+
+	// AMA type 1
+	AMA_Weight_value_1 = ha_AMA_weight_v1
+
+	Adaptive_moving_average_open = 0.0
+	Adaptive_moving_average_open := na(Adaptive_moving_average_open[1]) ? HA_open_default * AMA_Weight_value_1 * AMA_Weight_value_1 + 1 - AMA_Weight_value_1 * AMA_Weight_value_1 : HA_open_default * AMA_Weight_value_1 * AMA_Weight_value_1 + (1 - AMA_Weight_value_1 * AMA_Weight_value_1) * Adaptive_moving_average_open[1]
+
+	Adaptive_moving_average_high = 0.0
+	Adaptive_moving_average_high := na(Adaptive_moving_average_high[1]) ? HA_high_default * AMA_Weight_value_1 * AMA_Weight_value_1 + 1 - AMA_Weight_value_1 * AMA_Weight_value_1 : HA_high_default * AMA_Weight_value_1 * AMA_Weight_value_1 + (1 - AMA_Weight_value_1 * AMA_Weight_value_1) * Adaptive_moving_average_high[1]
+
+	Adaptive_moving_average_low = 0.0
+	Adaptive_moving_average_low := na(Adaptive_moving_average_low[1]) ? HA_low_default * AMA_Weight_value_1 * AMA_Weight_value_1 + 1 - AMA_Weight_value_1 * AMA_Weight_value_1 : HA_low_default * AMA_Weight_value_1 * AMA_Weight_value_1 + (1 - AMA_Weight_value_1 * AMA_Weight_value_1) * Adaptive_moving_average_low[1]
+
+	Adaptive_moving_average_close = 0.0
+	Adaptive_moving_average_close := na(Adaptive_moving_average_close[1]) ? HA_close_default * AMA_Weight_value_1 * AMA_Weight_value_1 + 1 - AMA_Weight_value_1 * AMA_Weight_value_1 : HA_close_default * AMA_Weight_value_1 * AMA_Weight_value_1 + (1 - AMA_Weight_value_1 * AMA_Weight_value_1) * Adaptive_moving_average_close[1]
+
+	// FRAMA type 1 (open)
+	Fractal_Adaptive_Moving_Average_input2 = ha_FAMA_i2
+	Fractal_Adaptive_Moving_Average_input3 = ha_FAMA_i3
+
+	Fractal_Adaptive_Moving_Average_lenght_part2_open = Lenght_of_Moving_average_Type_1 / 2
+	Natural_Logorithm_workaround_open = math.log(2 / (Fractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	Highest_price_nr1_open = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2_open)
+	Lowest_price_nr1_open = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2_open)
+	Native_price_1_open = (Highest_price_nr1_open - Lowest_price_nr1_open) / Fractal_Adaptive_Moving_Average_lenght_part2_open
+
+	Highest_price_nr2_open = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2_open)[Fractal_Adaptive_Moving_Average_lenght_part2_open]
+	Lowest_price_nr2_open = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2_open)[Fractal_Adaptive_Moving_Average_lenght_part2_open]
+	Native_price_2_open = (Highest_price_nr2_open - Lowest_price_nr2_open) / Fractal_Adaptive_Moving_Average_lenght_part2_open
+
+	Highest_price_nr3_open = ta.highest(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Lowest_price_nr3_open = ta.lowest(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Native_price_3_open = (Highest_price_nr3_open - Lowest_price_nr3_open) / Lenght_of_Moving_average_Type_1
+
+	Fractal_Dimension_1_open = (math.log(Native_price_1_open + Native_price_2_open) - math.log(Native_price_3_open)) / math.log(2)
+	Fractal_Dimension_2_open = Native_price_1_open > 0 and Native_price_2_open > 0 and Native_price_3_open > 0 ? Fractal_Dimension_1_open : nz(Fractal_Dimension_1_open[1])
+
+	factor_of_exponential_smoothing_1_open = math.exp(Natural_Logorithm_workaround_open * (Fractal_Dimension_2_open - 1))
+	factor_of_exponential_smoothing_old_open = factor_of_exponential_smoothing_1_open > 1 ? 1 : factor_of_exponential_smoothing_1_open < 0.01 ? 0.01 : factor_of_exponential_smoothing_1_open
+
+	Native_price_old_open = (2 - factor_of_exponential_smoothing_old_open) / factor_of_exponential_smoothing_old_open
+	Native_price_open = (Fractal_Adaptive_Moving_Average_input3 - Fractal_Adaptive_Moving_Average_input2) * (Native_price_old_open - 1) / (Fractal_Adaptive_Moving_Average_input3 - 1) + Fractal_Adaptive_Moving_Average_input2
+
+	factor_of_exponential_smoothing_2_open = 2 / (Native_price_open + 1)
+	factor_of_exponential_smoothing_open = factor_of_exponential_smoothing_2_open < 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) : factor_of_exponential_smoothing_2_open > 1 ? 1 : factor_of_exponential_smoothing_2_open
+
+	Fractal_Adaptive_Moving_Average_open = 0.0
+	Fractal_Adaptive_Moving_Average_open := (1 - factor_of_exponential_smoothing_open) * nz(Fractal_Adaptive_Moving_Average_open[1]) + factor_of_exponential_smoothing_open * HA_open_default
+
+	// FRAMA type 1 (high)
+	Fractal_Adaptive_Moving_Average_lenght_part2_high = Lenght_of_Moving_average_Type_1 / 2
+	Natural_Logorithm_workaround_high = math.log(2 / (Fractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	Highest_price_nr1_high = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2_high)
+	Lowest_price_nr1_high = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2_high)
+	Native_price_1_high = (Highest_price_nr1_high - Lowest_price_nr1_high) / Fractal_Adaptive_Moving_Average_lenght_part2_high
+
+	Highest_price_nr2_high = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2_high)[Fractal_Adaptive_Moving_Average_lenght_part2_high]
+	Lowest_price_nr2_high = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2_high)[Fractal_Adaptive_Moving_Average_lenght_part2_high]
+	Native_price_2_high = (Highest_price_nr2_high - Lowest_price_nr2_high) / Fractal_Adaptive_Moving_Average_lenght_part2_high
+
+	Highest_price_nr3_high = ta.highest(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Lowest_price_nr3_high = ta.lowest(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Native_price_3_high = (Highest_price_nr3_high - Lowest_price_nr3_high) / Lenght_of_Moving_average_Type_1
+
+	Fractal_Dimension_1_high = (math.log(Native_price_1_high + Native_price_2_high) - math.log(Native_price_3_high)) / math.log(2)
+	Fractal_Dimension_2_high = Native_price_1_high > 0 and Native_price_2_high > 0 and Native_price_3_high > 0 ? Fractal_Dimension_1_high : nz(Fractal_Dimension_1_high[1])
+
+	factor_of_exponential_smoothing_1_high = math.exp(Natural_Logorithm_workaround_high * (Fractal_Dimension_2_high - 1))
+	factor_of_exponential_smoothing_old_high = factor_of_exponential_smoothing_1_high > 1 ? 1 : factor_of_exponential_smoothing_1_high < 0.01 ? 0.01 : factor_of_exponential_smoothing_1_high
+
+	Native_price_old_high = (2 - factor_of_exponential_smoothing_old_high) / factor_of_exponential_smoothing_old_high
+	Native_price_high = (Fractal_Adaptive_Moving_Average_input3 - Fractal_Adaptive_Moving_Average_input2) * (Native_price_old_high - 1) / (Fractal_Adaptive_Moving_Average_input3 - 1) + Fractal_Adaptive_Moving_Average_input2
+
+	factor_of_exponential_smoothing_2_high = 2 / (Native_price_high + 1)
+	factor_of_exponential_smoothing_high = factor_of_exponential_smoothing_2_high < 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) : factor_of_exponential_smoothing_2_high > 1 ? 1 : factor_of_exponential_smoothing_2_high
+
+	Fractal_Adaptive_Moving_Average_high = 0.0
+	Fractal_Adaptive_Moving_Average_high := (1 - factor_of_exponential_smoothing_high) * nz(Fractal_Adaptive_Moving_Average_high[1]) + factor_of_exponential_smoothing_high * HA_high_default
+
+	// FRAMA type 1 (low) — V2 patch preserved (uses Native_price_2_low, not Lowest_price_nr2_low)
+	Fractal_Adaptive_Moving_Average_lenght_part2_low = Lenght_of_Moving_average_Type_1 / 2
+	Natural_Logorithm_workaround_low = math.log(2 / (Fractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	Highest_price_nr1_low = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2_low)
+	Lowest_price_nr1_low = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2_low)
+	Native_price_1_low = (Highest_price_nr1_low - Lowest_price_nr1_low) / Fractal_Adaptive_Moving_Average_lenght_part2_low
+
+	Highest_price_nr2_low = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2_low)[Fractal_Adaptive_Moving_Average_lenght_part2_low]
+	Lowest_price_nr2_low = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2_low)[Fractal_Adaptive_Moving_Average_lenght_part2_low]
+	Native_price_2_low = (Highest_price_nr2_low - Lowest_price_nr2_low) / Fractal_Adaptive_Moving_Average_lenght_part2_low
+
+	Highest_price_nr3_low = ta.highest(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Lowest_price_nr3_low = ta.lowest(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Native_price_3_low = (Highest_price_nr3_low - Lowest_price_nr3_low) / Lenght_of_Moving_average_Type_1
+
+	Fractal_Dimension_1_low = (math.log(Native_price_1_low + Native_price_2_low) - math.log(Native_price_3_low)) / math.log(2)
+	Fractal_Dimension_2_low = Native_price_1_low > 0 and Native_price_2_low > 0 and Native_price_3_low > 0 ? Fractal_Dimension_1_low : nz(Fractal_Dimension_1_low[1])
+
+	factor_of_exponential_smoothing_1_low = math.exp(Natural_Logorithm_workaround_low * (Fractal_Dimension_2_low - 1))
+	factor_of_exponential_smoothing_old_low = factor_of_exponential_smoothing_1_low > 1 ? 1 : factor_of_exponential_smoothing_1_low < 0.01 ? 0.01 : factor_of_exponential_smoothing_1_low
+
+	Native_price_old_low = (2 - factor_of_exponential_smoothing_old_low) / factor_of_exponential_smoothing_old_low
+	Native_price_low = (Fractal_Adaptive_Moving_Average_input3 - Fractal_Adaptive_Moving_Average_input2) * (Native_price_old_low - 1) / (Fractal_Adaptive_Moving_Average_input3 - 1) + Fractal_Adaptive_Moving_Average_input2
+
+	factor_of_exponential_smoothing_2_low = 2 / (Native_price_low + 1)
+	factor_of_exponential_smoothing_low = factor_of_exponential_smoothing_2_low < 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) : factor_of_exponential_smoothing_2_low > 1 ? 1 : factor_of_exponential_smoothing_2_low
+
+	Fractal_Adaptive_Moving_Average_low = 0.0
+	Fractal_Adaptive_Moving_Average_low := (1 - factor_of_exponential_smoothing_low) * nz(Fractal_Adaptive_Moving_Average_low[1]) + factor_of_exponential_smoothing_low * HA_low_default
+
+	// FRAMA type 1 (close)
+	Fractal_Adaptive_Moving_Average_lenght_part2__close = Lenght_of_Moving_average_Type_1 / 2
+	Natural_Logorithm_workaround__close = math.log(2 / (Fractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	Highest_price_nr1__close = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2__close)
+	Lowest_price_nr1__close = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2__close)
+	Native_price_1__close = (Highest_price_nr1__close - Lowest_price_nr1__close) / Fractal_Adaptive_Moving_Average_lenght_part2__close
+
+	Highest_price_nr2_close = ta.highest(HA_high_default, Fractal_Adaptive_Moving_Average_lenght_part2__close)[Fractal_Adaptive_Moving_Average_lenght_part2__close]
+	Lowest_price_nr2_close = ta.lowest(HA_low_default, Fractal_Adaptive_Moving_Average_lenght_part2__close)[Fractal_Adaptive_Moving_Average_lenght_part2__close]
+	Native_price_2_close = (Highest_price_nr2_close - Lowest_price_nr2_close) / Fractal_Adaptive_Moving_Average_lenght_part2__close
+
+	Highest_price_nr3_close = ta.highest(HA_high_default, Lenght_of_Moving_average_Type_1)
+	Lowest_price_nr3_close = ta.lowest(HA_low_default, Lenght_of_Moving_average_Type_1)
+	Native_price_3_close = (Highest_price_nr3_close - Lowest_price_nr3_close) / Lenght_of_Moving_average_Type_1
+
+	Fractal_Dimension_1_close = (math.log(Native_price_1__close + Native_price_2_close) - math.log(Native_price_3_close)) / math.log(2)
+	Fractal_Dimension_2_close = Native_price_1__close > 0 and Native_price_2_close > 0 and Native_price_3_close > 0 ? Fractal_Dimension_1_close : nz(Fractal_Dimension_1_close[1])
+
+	factor_of_exponential_smoothing_1_close = math.exp(Natural_Logorithm_workaround__close * (Fractal_Dimension_2_close - 1))
+	factor_of_exponential_smoothing_old_close = factor_of_exponential_smoothing_1_close > 1 ? 1 : factor_of_exponential_smoothing_1_close < 0.01 ? 0.01 : factor_of_exponential_smoothing_1_close
+
+	Native_price_old_close = (2 - factor_of_exponential_smoothing_old_close) / factor_of_exponential_smoothing_old_close
+	Native_price_close = (Fractal_Adaptive_Moving_Average_input3 - Fractal_Adaptive_Moving_Average_input2) * (Native_price_old_close - 1) / (Fractal_Adaptive_Moving_Average_input3 - 1) + Fractal_Adaptive_Moving_Average_input2
+
+	factor_of_exponential_smoothing_2_close = 2 / (Native_price_close + 1)
+	factor_of_exponential_smoothing_close = factor_of_exponential_smoothing_2_close < 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (Fractal_Adaptive_Moving_Average_input3 + 1) : factor_of_exponential_smoothing_2_close > 1 ? 1 : factor_of_exponential_smoothing_2_close
+
+	Fractal_Adaptive_Moving_Average_close = 0.0
+	Fractal_Adaptive_Moving_Average_close := (1 - factor_of_exponential_smoothing_close) * nz(Fractal_Adaptive_Moving_Average_close[1]) + factor_of_exponential_smoothing_close * HA_close_default
+
+	// VIDYA type 1 (open)
+	Difference_open = ta.change(HA_open_default)
+	Sum_of_UP_open = math.sum(Difference_open >= 0.0 ? Difference_open : 0.0, Lenght_of_Moving_average_Type_1)
+	Sum_of_DOWN_open = math.sum(Difference_open >= 0.0 ? 0.0 : -Difference_open, Lenght_of_Moving_average_Type_1)
+
+	CMO_open = (Sum_of_UP_open - Sum_of_DOWN_open) / (Sum_of_UP_open + Sum_of_DOWN_open)
+	factor_open = 2 / (Lenght_of_Moving_average_Type_1 + 1)
+
+	VIDYA_open = 0.0
+	VIDYA_open := HA_open_default * factor_open * math.abs(CMO_open) + nz(VIDYA_open[1]) * (1 - factor_open * math.abs(CMO_open))
+
+	// VIDYA type 1 (high)
+	Difference_high = ta.change(HA_high_default)
+	m_high = Difference_high
+	Sum_of_UP_high = math.sum(m_high >= 0.0 ? m_high : 0.0, Lenght_of_Moving_average_Type_1)
+	Sum_of_DOWN_high = math.sum(m_high >= 0.0 ? 0.0 : -m_high, Lenght_of_Moving_average_Type_1)
+
+	CMO_high = (Sum_of_UP_high - Sum_of_DOWN_high) / (Sum_of_UP_high + Sum_of_DOWN_high)
+	factor_high = 2 / (Lenght_of_Moving_average_Type_1 + 1)
+
+	VIDYA_high = 0.0
+	VIDYA_high := HA_high_default * factor_high * math.abs(CMO_high) + nz(VIDYA_high[1]) * (1 - factor_high * math.abs(CMO_high))
+
+	// VIDYA type 1 (low)
+	Difference_low = ta.change(HA_low_default)
+	m_low = Difference_low
+	Sum_of_UP_low = math.sum(m_low >= 0.0 ? m_low : 0.0, Lenght_of_Moving_average_Type_1)
+	Sum_of_DOWN_low = math.sum(m_low >= 0.0 ? 0.0 : -m_low, Lenght_of_Moving_average_Type_1)
+
+	CMO_low = (Sum_of_UP_low - Sum_of_DOWN_low) / (Sum_of_UP_low + Sum_of_DOWN_low)
+	factor_low = 2 / (Lenght_of_Moving_average_Type_1 + 1)
+
+	VIDYA_low = 0.0
+	VIDYA_low := HA_low_default * factor_low * math.abs(CMO_low) + nz(VIDYA_low[1]) * (1 - factor_low * math.abs(CMO_low))
+
+	// VIDYA type 1 (close)
+	Difference_close = ta.change(HA_close_default)
+	m_close = Difference_close
+	Sum_of_UP_close = math.sum(m_close >= 0.0 ? m_close : 0.0, Lenght_of_Moving_average_Type_1)
+	Sum_of_DOWN_close = math.sum(m_close >= 0.0 ? 0.0 : -m_close, Lenght_of_Moving_average_Type_1)
+
+	CMO_close = (Sum_of_UP_close - Sum_of_DOWN_close) / (Sum_of_UP_close + Sum_of_DOWN_close)
+	factor_close = 2 / (Lenght_of_Moving_average_Type_1 + 1)
+
+	VIDYA_close = 0.0
+	VIDYA_close := HA_close_default * factor_close * math.abs(CMO_close) + nz(VIDYA_close[1]) * (1 - factor_close * math.abs(CMO_close))
+
+	// TRIMA type 1
+	Triangular_Moving_Average_open = ta.sma(ta.sma(HA_open_default, Lenght_of_Moving_average_Type_1), Lenght_of_Moving_average_Type_1)
+	Triangular_Moving_Average_high = ta.sma(ta.sma(HA_high_default, Lenght_of_Moving_average_Type_1), Lenght_of_Moving_average_Type_1)
+	Triangular_Moving_Average_low = ta.sma(ta.sma(HA_low_default, Lenght_of_Moving_average_Type_1), Lenght_of_Moving_average_Type_1)
+	Triangular_Moving_Average_close = ta.sma(ta.sma(HA_close_default, Lenght_of_Moving_average_Type_1), Lenght_of_Moving_average_Type_1)
+
+	// STAGE 2: pick MA type 1, then HA recompute
+	HA_open_stage1 = Moving_average_Type_1 == 'TRIMA' ? Triangular_Moving_Average_open : Moving_average_Type_1 == 'VIDYA' ? VIDYA_open : Moving_average_Type_1 == 'FAMA' ? Fractal_Adaptive_Moving_Average_open : Moving_average_Type_1 == 'AMA' ? Adaptive_moving_average_open : Moving_average_Type_1 == 'HMA' ? Hull_Moving_Average_open : Moving_average_Type_1 == 'TEMA' ? Triple_EMA_3 : Moving_average_Type_1 == 'SMMA' ? smma_open : Moving_average_Type_1 == 'WMA' ? wMoving_Average_open : Moving_average_Type_1 == 'EMA' ? eMoving_Average_open : Moving_average_Type_1 == 'SMA' ? Moving_Average_open : Moving_average_Type_1 == 'LSMA' ? Least_Squares_Moving_Average_open : Moving_average_Type_1 == 'T3' ? T3_open : Moving_average_Type_1 == 'DEMA' ? Double_Moving_Average_Exponential_open : Moving_average_Type_1 == 'ALMA' ? Arnaud_Legoux_Moving_Average_open : Moving_average_Type_1 == 'DEFAULT' ? HA_open_default : na
+	HA_high_stage1 = Moving_average_Type_1 == 'TRIMA' ? Triangular_Moving_Average_high : Moving_average_Type_1 == 'VIDYA' ? VIDYA_high : Moving_average_Type_1 == 'FAMA' ? Fractal_Adaptive_Moving_Average_high : Moving_average_Type_1 == 'AMA' ? Adaptive_moving_average_high : Moving_average_Type_1 == 'HMA' ? Hull_Moving_Average_high : Moving_average_Type_1 == 'TEMA' ? Triple_EMA_6 : Moving_average_Type_1 == 'SMMA' ? smma_high : Moving_average_Type_1 == 'WMA' ? wMoving_Average_high : Moving_average_Type_1 == 'EMA' ? eMoving_Average_high : Moving_average_Type_1 == 'SMA' ? Moving_Average_high : Moving_average_Type_1 == 'LSMA' ? Least_Squares_Moving_Average_high : Moving_average_Type_1 == 'T3' ? T3_high : Moving_average_Type_1 == 'DEMA' ? Double_Moving_Average_Exponential_high : Moving_average_Type_1 == 'ALMA' ? Arnaud_Legoux_Moving_Average_high : Moving_average_Type_1 == 'DEFAULT' ? HA_open_default : na
+	HA_low_stage1 = Moving_average_Type_1 == 'TRIMA' ? Triangular_Moving_Average_low : Moving_average_Type_1 == 'VIDYA' ? VIDYA_low : Moving_average_Type_1 == 'FAMA' ? Fractal_Adaptive_Moving_Average_low : Moving_average_Type_1 == 'AMA' ? Adaptive_moving_average_low : Moving_average_Type_1 == 'HMA' ? Hull_Moving_Average_low : Moving_average_Type_1 == 'TEMA' ? Triple_EMA_9 : Moving_average_Type_1 == 'SMMA' ? smma_low : Moving_average_Type_1 == 'WMA' ? wMoving_Average_low : Moving_average_Type_1 == 'EMA' ? eMoving_Average_low : Moving_average_Type_1 == 'SMA' ? Moving_Average_low : Moving_average_Type_1 == 'LSMA' ? Least_Squares_Moving_Average_low : Moving_average_Type_1 == 'T3' ? T3_low : Moving_average_Type_1 == 'DEMA' ? Double_Moving_Average_Exponential_low : Moving_average_Type_1 == 'ALMA' ? Arnaud_Legoux_Moving_Average_low : Moving_average_Type_1 == 'DEFAULT' ? HA_open_default : na
+	HA_close_stage1 = Moving_average_Type_1 == 'TRIMA' ? Triangular_Moving_Average_close : Moving_average_Type_1 == 'VIDYA' ? VIDYA_close : Moving_average_Type_1 == 'FAMA' ? Fractal_Adaptive_Moving_Average_close : Moving_average_Type_1 == 'AMA' ? Adaptive_moving_average_close : Moving_average_Type_1 == 'HMA' ? Hull_Moving_Average_close : Moving_average_Type_1 == 'TEMA' ? Triple_EMA_12 : Moving_average_Type_1 == 'SMMA' ? smma_close : Moving_average_Type_1 == 'WMA' ? wMoving_Average_close : Moving_average_Type_1 == 'EMA' ? eMoving_Average_close : Moving_average_Type_1 == 'SMA' ? Moving_Average_close : Moving_average_Type_1 == 'LSMA' ? Least_Squares_Moving_Average_close : Moving_average_Type_1 == 'T3' ? T3_close : Moving_average_Type_1 == 'DEMA' ? Double_Moving_Average_Exponential_close : Moving_average_Type_1 == 'ALMA' ? Arnaud_Legoux_Moving_Average_close : Moving_average_Type_1 == 'DEFAULT' ? HA_close_default : na
+
+	HA_ohlc4 = (HA_open_stage1 + HA_high_stage1 + HA_low_stage1 + HA_close_stage1) / 4
+
+	HA_close_stage2 = HA_ohlc4
+	HA_open_stage2 = (HA_open_stage1[1] + HA_close_stage1[1]) / 2
+	HA_high_stage2 = math.max(HA_high_stage1, math.max(HA_open_stage1, HA_close_stage1))
+	HA_low_stage2 = math.min(HA_low_stage1, math.min(HA_open_stage1, HA_close_stage1))
+
+	// Tillson type 2
+	Vfact_type_2 = ha_vfac_type_2
+	c1 = -Vfact_type_2 * Vfact_type_2 * Vfact_type_2
+	c2 = 3 * Vfact_type_2 * Vfact_type_2 + 3 * Vfact_type_2 * Vfact_type_2 * Vfact_type_2
+	c3 = -6 * Vfact_type_2 * Vfact_type_2 - 3 * Vfact_type_2 - 3 * Vfact_type_2 * Vfact_type_2 * Vfact_type_2
+	c4 = 1 + 3 * Vfact_type_2 + Vfact_type_2 * Vfact_type_2 * Vfact_type_2 + 3 * Vfact_type_2 * Vfact_type_2
+
+	First_EMA_open_2 = ta.ema(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	Second_EMA_open_2 = ta.ema(First_EMA_open_2, Lenght_of_Moving_average_Type_2)
+	Third_EMA_open_2 = ta.ema(Second_EMA_open_2, Lenght_of_Moving_average_Type_2)
+	Fourth_EMA_open_2 = ta.ema(Third_EMA_open_2, Lenght_of_Moving_average_Type_2)
+	Fifth_EMA_open_2 = ta.ema(Fourth_EMA_open_2, Lenght_of_Moving_average_Type_2)
+	Sixth_EMA_open_2 = ta.ema(Fifth_EMA_open_2, Lenght_of_Moving_average_Type_2)
+	T3_open_2 = c1 * Sixth_EMA_open_2 + c2 * Fifth_EMA_open_2 + c3 * Fourth_EMA_open_2 + c4 * Third_EMA_open_2
+
+	First_EMA_high_2 = ta.ema(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	Second_EMA_high_2 = ta.ema(First_EMA_high_2, Lenght_of_Moving_average_Type_2)
+	Third_EMA_high_2 = ta.ema(Second_EMA_high_2, Lenght_of_Moving_average_Type_2)
+	Fourth_EMA_high_2 = ta.ema(Third_EMA_high_2, Lenght_of_Moving_average_Type_2)
+	Fifth_EMA_high_2 = ta.ema(Fourth_EMA_high_2, Lenght_of_Moving_average_Type_2)
+	Sixth_EMA_high_2 = ta.ema(Fifth_EMA_high_2, Lenght_of_Moving_average_Type_2)
+	T3_high_2 = c1 * Sixth_EMA_high_2 + c2 * Fifth_EMA_high_2 + c3 * Fourth_EMA_high_2 + c4 * Third_EMA_high_2
+
+	First_EMA_low_2 = ta.ema(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	Second_EMA_low_2 = ta.ema(First_EMA_low_2, Lenght_of_Moving_average_Type_2)
+	Third_EMA_low_2 = ta.ema(Second_EMA_low_2, Lenght_of_Moving_average_Type_2)
+	Fourth_EMA_low_2 = ta.ema(Third_EMA_low_2, Lenght_of_Moving_average_Type_2)
+	Fifth_EMA_low_2 = ta.ema(Fourth_EMA_low_2, Lenght_of_Moving_average_Type_2)
+	Sixth_EMA_low_2 = ta.ema(Fifth_EMA_low_2, Lenght_of_Moving_average_Type_2)
+	T3_low_2 = c1 * Sixth_EMA_low_2 + c2 * Fifth_EMA_low_2 + c3 * Fourth_EMA_low_2 + c4 * Third_EMA_low_2
+
+	First_EMA_close_2 = ta.ema(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+	Second_EMA_close_2 = ta.ema(First_EMA_close_2, Lenght_of_Moving_average_Type_2)
+	Third_EMA_close_2 = ta.ema(Second_EMA_close_2, Lenght_of_Moving_average_Type_2)
+	Fourth_EMA_close_2 = ta.ema(Third_EMA_close_2, Lenght_of_Moving_average_Type_2)
+	Fifth_EMA_close_2 = ta.ema(Fourth_EMA_close_2, Lenght_of_Moving_average_Type_2)
+	Sixth_EMA_close_2 = ta.ema(Fifth_EMA_close_2, Lenght_of_Moving_average_Type_2)
+	T3_close_2 = c1 * Sixth_EMA_close_2 + c2 * Fifth_EMA_close_2 + c3 * Fourth_EMA_close_2 + c4 * Third_EMA_close_2
+
+	// DEMA type 2
+	Double_Moving_Average_Exponential_nr_1_open2 = ta.ema(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_nr_2_open2 = ta.ema(Double_Moving_Average_Exponential_nr_1_open2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_open2 = 2 * Double_Moving_Average_Exponential_nr_1_open2 - Double_Moving_Average_Exponential_nr_2_open2
+
+	Double_Moving_Average_Exponential_nr_1_high2 = ta.ema(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_nr_2_high2 = ta.ema(Double_Moving_Average_Exponential_nr_1_high2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_high2 = 2 * Double_Moving_Average_Exponential_nr_1_high2 - Double_Moving_Average_Exponential_nr_2_high2
+
+	Double_Moving_Average_Exponential_nr_1_low2 = ta.ema(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_nr_2_low2 = ta.ema(Double_Moving_Average_Exponential_nr_1_low2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_low2 = 2 * Double_Moving_Average_Exponential_nr_1_low2 - Double_Moving_Average_Exponential_nr_2_low2
+
+	Double_Moving_Average_Exponential_nr_1_close2 = ta.ema(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_nr_2_close2 = ta.ema(Double_Moving_Average_Exponential_nr_1_close2, Lenght_of_Moving_average_Type_2)
+	Double_Moving_Average_Exponential_close2 = 2 * Double_Moving_Average_Exponential_nr_1_close2 - Double_Moving_Average_Exponential_nr_2_close2
+
+	// ALMA type 2
+	offset_of_ALMA2 = ha_offset_ALMA2
+	sigma_of_ALMA2 = ha_sigma_ALMA2
+
+	Arnaud_Legoux_Moving_Average_open2 = ta.alma(HA_open_stage2, Lenght_of_Moving_average_Type_2, offset_of_ALMA2, sigma_of_ALMA2)
+	Arnaud_Legoux_Moving_Average_high2 = ta.alma(HA_high_stage2, Lenght_of_Moving_average_Type_2, offset_of_ALMA2, sigma_of_ALMA2)
+	Arnaud_Legoux_Moving_Average_low2 = ta.alma(HA_low_stage2, Lenght_of_Moving_average_Type_2, offset_of_ALMA2, sigma_of_ALMA2)
+	Arnaud_Legoux_Moving_Average_close2 = ta.alma(HA_close_stage2, Lenght_of_Moving_average_Type_2, offset_of_ALMA2, sigma_of_ALMA2)
+
+	// LSMA type 2
+	Least_Squares_Moving_Average_offset2 = ha_LSMAO2
+	Least_Squares_Moving_Average_open2 = ta.linreg(HA_open_stage2, Lenght_of_Moving_average_Type_2, Least_Squares_Moving_Average_offset2)
+	Least_Squares_Moving_Average_high2 = ta.linreg(HA_high_stage2, Lenght_of_Moving_average_Type_2, Least_Squares_Moving_Average_offset2)
+	Least_Squares_Moving_Average_low2 = ta.linreg(HA_low_stage2, Lenght_of_Moving_average_Type_2, Least_Squares_Moving_Average_offset2)
+	Least_Squares_Moving_Average_close2 = ta.linreg(HA_close_stage2, Lenght_of_Moving_average_Type_2, Least_Squares_Moving_Average_offset2)
+
+	// SMA type 2
+	Moving_Average_open2 = ta.sma(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	Moving_Average_high2 = ta.sma(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	Moving_Average_low2 = ta.sma(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	Moving_Average_close2 = ta.sma(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+
+	// EMA type 2
+	eMoving_Average_open2 = ta.ema(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	eMoving_Average_high2 = ta.ema(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	eMoving_Average_low2 = ta.ema(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	eMoving_Average_close2 = ta.ema(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+
+	// WMA type 2
+	wMoving_Average_open2 = ta.wma(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	wMoving_Average_high2 = ta.wma(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	wMoving_Average_low2 = ta.wma(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	wMoving_Average_close2 = ta.wma(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+
+	// SMMA type 2
+	smma_open2 = 0.0
+	sma_5 = ta.sma(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	smma_open2 := na(smma_open2[1]) ? sma_5 : (smma_open2[1] * (Lenght_of_Moving_average_Type_2 - 1) + HA_open_stage2) / Lenght_of_Moving_average_Type_2
+
+	smma_high2 = 0.0
+	sma_6 = ta.sma(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	smma_high2 := na(smma_high2[1]) ? sma_6 : (smma_high2[1] * (Lenght_of_Moving_average_Type_2 - 1) + HA_high_stage2) / Lenght_of_Moving_average_Type_2
+
+	smma_low2 = 0.0
+	sma_7 = ta.sma(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	smma_low2 := na(smma_low2[1]) ? sma_7 : (smma_low2[1] * (Lenght_of_Moving_average_Type_2 - 1) + HA_low_stage2) / Lenght_of_Moving_average_Type_2
+
+	smma_close2 = 0.0
+	sma_8 = ta.sma(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+	smma_close2 := na(smma_close2[1]) ? sma_8 : (smma_close2[1] * (Lenght_of_Moving_average_Type_2 - 1) + HA_close_stage2) / Lenght_of_Moving_average_Type_2
+
+	// TEMA type 2
+	xTriple_EMA_1 = ta.ema(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_2 = ta.ema(xTriple_EMA_1, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_3 = ta.ema(xTriple_EMA_2, Lenght_of_Moving_average_Type_2)
+
+	xTriple_EMA_4 = ta.ema(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_5 = ta.ema(xTriple_EMA_4, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_6 = ta.ema(xTriple_EMA_5, Lenght_of_Moving_average_Type_2)
+
+	xTriple_EMA_7 = ta.ema(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_8 = ta.ema(xTriple_EMA_7, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_9 = ta.ema(xTriple_EMA_8, Lenght_of_Moving_average_Type_2)
+
+	xTriple_EMA_10 = ta.ema(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_11 = ta.ema(xTriple_EMA_10, Lenght_of_Moving_average_Type_2)
+	xTriple_EMA_12 = ta.ema(xTriple_EMA_11, Lenght_of_Moving_average_Type_2)
+
+	// HMA type 2
+	eHull_Moving_Average_lenght_sqrt_open = math.sqrt(Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_lenght_rounded_open = math.round(eHull_Moving_Average_lenght_sqrt_open)
+	eHull_Moving_Average_1_open = ta.wma(HA_open_stage2, Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_2_open = ta.wma(HA_open_stage2, Lenght_of_Moving_average_Type_2 / 2)
+	eHull_Moving_Average_3_open = 2 * eHull_Moving_Average_2_open - eHull_Moving_Average_1_open
+	eHull_Moving_Average_open = ta.wma(eHull_Moving_Average_3_open, eHull_Moving_Average_lenght_rounded_open)
+
+	eHull_Moving_Average_lenght_sqrt_high = math.sqrt(Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_lenght_rounded_high = math.round(eHull_Moving_Average_lenght_sqrt_high)
+	eHull_Moving_Average_1_high = ta.wma(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_2_high = ta.wma(HA_high_stage2, Lenght_of_Moving_average_Type_2 / 2)
+	eHull_Moving_Average_3_high = 2 * eHull_Moving_Average_2_high - eHull_Moving_Average_1_high
+	eHull_Moving_Average_high = ta.wma(eHull_Moving_Average_3_high, eHull_Moving_Average_lenght_rounded_high)
+
+	eHull_Moving_Average_lenght_sqrt_low = math.sqrt(Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_lenght_rounded_low = math.round(eHull_Moving_Average_lenght_sqrt_low)
+	eHull_Moving_Average_1_low = ta.wma(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_2_low = ta.wma(HA_low_stage2, Lenght_of_Moving_average_Type_2 / 2)
+	eHull_Moving_Average_3_low = 2 * eHull_Moving_Average_2_low - eHull_Moving_Average_1_low
+	eHull_Moving_Average_low = ta.wma(eHull_Moving_Average_3_low, eHull_Moving_Average_lenght_rounded_low)
+
+	eHull_Moving_Average_lenght_sqrt_close = math.sqrt(Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_lenght_rounded_close = math.round(eHull_Moving_Average_lenght_sqrt_close)
+	eHull_Moving_Average_1_close = ta.wma(HA_close_stage2, Lenght_of_Moving_average_Type_2)
+	eHull_Moving_Average_2_close = ta.wma(HA_close_stage2, Lenght_of_Moving_average_Type_2 / 2)
+	eHull_Moving_Average_3_close = 2 * eHull_Moving_Average_2_close - eHull_Moving_Average_1_close
+	eHull_Moving_Average_close = ta.wma(eHull_Moving_Average_3_close, eHull_Moving_Average_lenght_rounded_close)
+
+	// AMA type 2
+	AMA_Weight_value_2 = ha_AMA_weight_v2
+
+	eAdaptive_moving_average_open = 0.0
+	eAdaptive_moving_average_open := na(eAdaptive_moving_average_open[1]) ? HA_open_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + 1 - AMA_Weight_value_2 * AMA_Weight_value_2 : HA_open_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + (1 - AMA_Weight_value_2 * AMA_Weight_value_2) * eAdaptive_moving_average_open[1]
+
+	eAdaptive_moving_average_high = 0.0
+	eAdaptive_moving_average_high := na(eAdaptive_moving_average_high[1]) ? HA_high_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + 1 - AMA_Weight_value_2 * AMA_Weight_value_2 : HA_high_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + (1 - AMA_Weight_value_2 * AMA_Weight_value_2) * eAdaptive_moving_average_high[1]
+
+	eAdaptive_moving_average_low = 0.0
+	eAdaptive_moving_average_low := na(eAdaptive_moving_average_low[1]) ? HA_low_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + 1 - AMA_Weight_value_2 * AMA_Weight_value_2 : HA_low_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + (1 - AMA_Weight_value_2 * AMA_Weight_value_2) * eAdaptive_moving_average_low[1]
+
+	eAdaptive_moving_average_close = 0.0
+	eAdaptive_moving_average_close := na(eAdaptive_moving_average_close[1]) ? HA_close_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + 1 - AMA_Weight_value_2 * AMA_Weight_value_2 : HA_close_stage2 * AMA_Weight_value_2 * AMA_Weight_value_2 + (1 - AMA_Weight_value_2 * AMA_Weight_value_2) * eAdaptive_moving_average_close[1]
+
+	// FRAMA type 2 (open)
+	eFractal_Adaptive_Moving_Average_input2 = ha_FAMA_i4
+	eFractal_Adaptive_Moving_Average_input3 = ha_FAMA_i5
+
+	eFractal_Adaptive_Moving_Average_lenght_part2_open = Lenght_of_Moving_average_Type_2 / 2
+	eNatural_Logorithm_workaround_open = math.log(2 / (eFractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	eHighest_price_nr1_open = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_open)
+	eLowest_price_nr1_open = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_open)
+	eNative_price_1_open = (eHighest_price_nr1_open - Lowest_price_nr1_open) / eFractal_Adaptive_Moving_Average_lenght_part2_open
+
+	eHighest_price_nr2_open = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_open)[eFractal_Adaptive_Moving_Average_lenght_part2_open]
+	eLowest_price_nr2_open = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_open)[eFractal_Adaptive_Moving_Average_lenght_part2_open]
+	eNative_price_2_open = (eHighest_price_nr2_open - eLowest_price_nr2_open) / eFractal_Adaptive_Moving_Average_lenght_part2_open
+
+	eHighest_price_nr3_open = ta.highest(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	eLowest_price_nr3_open = ta.lowest(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	eNative_price_3_open = (eHighest_price_nr3_open - eLowest_price_nr3_open) / Lenght_of_Moving_average_Type_2
+
+	eFractal_Dimension_1_open = (math.log(eNative_price_1_open + eNative_price_2_open) - math.log(eNative_price_3_open)) / math.log(2)
+	eFractal_Dimension_2_open = eNative_price_1_open > 0 and eNative_price_2_open > 0 and eNative_price_3_open > 0 ? eFractal_Dimension_1_open : nz(eFractal_Dimension_1_open[1])
+
+	efactor_of_exponential_smoothing_1_open = math.exp(eNatural_Logorithm_workaround_open * (eFractal_Dimension_2_open - 1))
+	efactor_of_exponential_smoothing_old_open = efactor_of_exponential_smoothing_1_open > 1 ? 1 : efactor_of_exponential_smoothing_1_open < 0.01 ? 0.01 : efactor_of_exponential_smoothing_1_open
+
+	eNative_price_old_open = (2 - efactor_of_exponential_smoothing_old_open) / efactor_of_exponential_smoothing_old_open
+	eNative_price_open = (eFractal_Adaptive_Moving_Average_input3 - eFractal_Adaptive_Moving_Average_input2) * (eNative_price_old_open - 1) / (eFractal_Adaptive_Moving_Average_input3 - 1) + eFractal_Adaptive_Moving_Average_input2
+
+	efactor_of_exponential_smoothing_2_open = 2 / (eNative_price_open + 1)
+	efactor_of_exponential_smoothing_open = efactor_of_exponential_smoothing_2_open < 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) : efactor_of_exponential_smoothing_2_open > 1 ? 1 : efactor_of_exponential_smoothing_2_open
+
+	eFractal_Adaptive_Moving_Average_open = 0.0
+	eFractal_Adaptive_Moving_Average_open := (1 - efactor_of_exponential_smoothing_open) * nz(eFractal_Adaptive_Moving_Average_open[1]) + efactor_of_exponential_smoothing_open * HA_open_stage2
+
+	// FRAMA type 2 (high)
+	eFractal_Adaptive_Moving_Average_lenght_part2_high = Lenght_of_Moving_average_Type_2 / 2
+	eNatural_Logorithm_workaround_high = math.log(2 / (eFractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	eHighest_price_nr1_high = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_high)
+	eLowest_price_nr1_high = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_high)
+	eNative_price_1_high = (eHighest_price_nr1_high - eLowest_price_nr1_high) / eFractal_Adaptive_Moving_Average_lenght_part2_high
+
+	eHighest_price_nr2_high = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_high)[eFractal_Adaptive_Moving_Average_lenght_part2_high]
+	eLowest_price_nr2_high = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_high)[eFractal_Adaptive_Moving_Average_lenght_part2_high]
+	eNative_price_2_high = (eHighest_price_nr2_high - eLowest_price_nr2_high) / eFractal_Adaptive_Moving_Average_lenght_part2_high
+
+	eHighest_price_nr3_high = ta.highest(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	eLowest_price_nr3_high = ta.lowest(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	eNative_price_3_high = (eHighest_price_nr3_high - eLowest_price_nr3_high) / Lenght_of_Moving_average_Type_2
+
+	eFractal_Dimension_1_high = (math.log(eNative_price_1_high + eNative_price_2_high) - math.log(eNative_price_3_high)) / math.log(2)
+	eFractal_Dimension_2_high = eNative_price_1_high > 0 and eNative_price_2_high > 0 and eNative_price_3_high > 0 ? eFractal_Dimension_1_high : nz(eFractal_Dimension_1_high[1])
+
+	efactor_of_exponential_smoothing_1_high = math.exp(eNatural_Logorithm_workaround_high * (eFractal_Dimension_2_high - 1))
+	efactor_of_exponential_smoothing_old_high = efactor_of_exponential_smoothing_1_high > 1 ? 1 : efactor_of_exponential_smoothing_1_high < 0.01 ? 0.01 : efactor_of_exponential_smoothing_1_high
+
+	eNative_price_old_high = (2 - efactor_of_exponential_smoothing_old_high) / efactor_of_exponential_smoothing_old_high
+	eNative_price_high = (eFractal_Adaptive_Moving_Average_input3 - eFractal_Adaptive_Moving_Average_input2) * (eNative_price_old_high - 1) / (eFractal_Adaptive_Moving_Average_input3 - 1) + eFractal_Adaptive_Moving_Average_input2
+
+	efactor_of_exponential_smoothing_2_high = 2 / (eNative_price_high + 1)
+	efactor_of_exponential_smoothing_high = efactor_of_exponential_smoothing_2_high < 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) : efactor_of_exponential_smoothing_2_high > 1 ? 1 : efactor_of_exponential_smoothing_2_high
+
+	eFractal_Adaptive_Moving_Average_high = 0.0
+	eFractal_Adaptive_Moving_Average_high := (1 - efactor_of_exponential_smoothing_high) * nz(eFractal_Adaptive_Moving_Average_high[1]) + efactor_of_exponential_smoothing_high * HA_high_stage2
+
+	// FRAMA type 2 (low) — V2 patch preserved (uses eNative_price_2_low, not eLowest_price_nr2_low)
+	eFractal_Adaptive_Moving_Average_lenght_part2_low = Lenght_of_Moving_average_Type_2 / 2
+	eNatural_Logorithm_workaround_low = math.log(2 / (eFractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	eHighest_price_nr1_low = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_low)
+	eLowest_price_nr1_low = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_low)
+	eNative_price_1_low = (eHighest_price_nr1_low - eLowest_price_nr1_low) / eFractal_Adaptive_Moving_Average_lenght_part2_low
+
+	eHighest_price_nr2_low = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_low)[eFractal_Adaptive_Moving_Average_lenght_part2_low]
+	eLowest_price_nr2_low = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2_low)[eFractal_Adaptive_Moving_Average_lenght_part2_low]
+	eNative_price_2_low = (eHighest_price_nr2_low - eLowest_price_nr2_low) / eFractal_Adaptive_Moving_Average_lenght_part2_low
+
+	eHighest_price_nr3_low = ta.highest(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	eLowest_price_nr3_low = ta.lowest(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	eNative_price_3_low = (eHighest_price_nr3_low - eLowest_price_nr3_low) / Lenght_of_Moving_average_Type_2
+
+	eFractal_Dimension_1_low = (math.log(eNative_price_1_low + eNative_price_2_low) - math.log(eNative_price_3_low)) / math.log(2)
+	eFractal_Dimension_2_low = eNative_price_1_low > 0 and eNative_price_2_low > 0 and eNative_price_3_low > 0 ? eFractal_Dimension_1_low : nz(eFractal_Dimension_1_low[1])
+
+	efactor_of_exponential_smoothing_1_low = math.exp(eNatural_Logorithm_workaround_low * (eFractal_Dimension_2_low - 1))
+	efactor_of_exponential_smoothing_old_low = efactor_of_exponential_smoothing_1_low > 1 ? 1 : efactor_of_exponential_smoothing_1_low < 0.01 ? 0.01 : efactor_of_exponential_smoothing_1_low
+
+	eNative_price_old_low = (2 - efactor_of_exponential_smoothing_old_low) / efactor_of_exponential_smoothing_old_low
+	eNative_price_low = (eFractal_Adaptive_Moving_Average_input3 - eFractal_Adaptive_Moving_Average_input2) * (eNative_price_old_low - 1) / (eFractal_Adaptive_Moving_Average_input3 - 1) + eFractal_Adaptive_Moving_Average_input2
+
+	efactor_of_exponential_smoothing_2_low = 2 / (eNative_price_low + 1)
+	efactor_of_exponential_smoothing_low = efactor_of_exponential_smoothing_2_low < 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) : efactor_of_exponential_smoothing_2_low > 1 ? 1 : efactor_of_exponential_smoothing_2_low
+
+	eFractal_Adaptive_Moving_Average_low = 0.0
+	eFractal_Adaptive_Moving_Average_low := (1 - efactor_of_exponential_smoothing_low) * nz(eFractal_Adaptive_Moving_Average_low[1]) + efactor_of_exponential_smoothing_low * HA_low_stage2
+
+	// FRAMA type 2 (close) — V2 patch preserved (uses eNative_price_2_close, not Native_price_2_close from type-1)
+	eFractal_Adaptive_Moving_Average_lenght_part2__close = Lenght_of_Moving_average_Type_2 / 2
+	eNatural_Logorithm_workaround__close = math.log(2 / (eFractal_Adaptive_Moving_Average_input3 + 1)) / math.log(Exponential)
+
+	eHighest_price_nr1__close = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2__close)
+	eLowest_price_nr1__close = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2__close)
+	eNative_price_1__close = (eHighest_price_nr1__close - eLowest_price_nr1__close) / eFractal_Adaptive_Moving_Average_lenght_part2__close
+
+	eHighest_price_nr2_close = ta.highest(HA_high_stage2, eFractal_Adaptive_Moving_Average_lenght_part2__close)[eFractal_Adaptive_Moving_Average_lenght_part2__close]
+	eLowest_price_nr2_close = ta.lowest(HA_low_stage2, eFractal_Adaptive_Moving_Average_lenght_part2__close)[eFractal_Adaptive_Moving_Average_lenght_part2__close]
+	eNative_price_2_close = (eHighest_price_nr2_close - eLowest_price_nr2_close) / eFractal_Adaptive_Moving_Average_lenght_part2__close
+
+	eHighest_price_nr3_close = ta.highest(HA_high_stage2, Lenght_of_Moving_average_Type_2)
+	eLowest_price_nr3_close = ta.lowest(HA_low_stage2, Lenght_of_Moving_average_Type_2)
+	eNative_price_3_close = (eHighest_price_nr3_close - eLowest_price_nr3_close) / Lenght_of_Moving_average_Type_2
+
+	eFractal_Dimension_1_close = (math.log(eNative_price_1__close + eNative_price_2_close) - math.log(eNative_price_3_close)) / math.log(2)
+	eFractal_Dimension_2_close = eNative_price_1__close > 0 and eNative_price_2_close > 0 and eNative_price_3_close > 0 ? eFractal_Dimension_1_close : nz(eFractal_Dimension_1_close[1])
+
+	efactor_of_exponential_smoothing_1_close = math.exp(eNatural_Logorithm_workaround__close * (eFractal_Dimension_2_close - 1))
+	efactor_of_exponential_smoothing_old_close = efactor_of_exponential_smoothing_1_close > 1 ? 1 : efactor_of_exponential_smoothing_1_close < 0.01 ? 0.01 : efactor_of_exponential_smoothing_1_close
+
+	eNative_price_old_close = (2 - efactor_of_exponential_smoothing_old_close) / efactor_of_exponential_smoothing_old_close
+	eNative_price_close = (eFractal_Adaptive_Moving_Average_input3 - eFractal_Adaptive_Moving_Average_input2) * (eNative_price_old_close - 1) / (eFractal_Adaptive_Moving_Average_input3 - 1) + eFractal_Adaptive_Moving_Average_input2
+
+	efactor_of_exponential_smoothing_2_close = 2 / (eNative_price_close + 1)
+	efactor_of_exponential_smoothing_close = efactor_of_exponential_smoothing_2_close < 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) ? 2 / (eFractal_Adaptive_Moving_Average_input3 + 1) : efactor_of_exponential_smoothing_2_close > 1 ? 1 : efactor_of_exponential_smoothing_2_close
+
+	eFractal_Adaptive_Moving_Average_close = 0.0
+	eFractal_Adaptive_Moving_Average_close := (1 - efactor_of_exponential_smoothing_close) * nz(eFractal_Adaptive_Moving_Average_close[1]) + efactor_of_exponential_smoothing_close * HA_close_stage2
+
+	// VIDYA type 2 (open)
+	eDifference_open = ta.change(HA_open_stage2)
+	em_open = eDifference_open
+	eSum_of_UP_open = math.sum(em_open >= 0.0 ? em_open : 0.0, Lenght_of_Moving_average_Type_2)
+	eSum_of_DOWN_open = math.sum(em_open >= 0.0 ? 0.0 : -em_open, Lenght_of_Moving_average_Type_2)
+
+	eCMO_open = (eSum_of_UP_open - eSum_of_DOWN_open) / (eSum_of_UP_open + eSum_of_DOWN_open)
+	efactor_open = 2 / (Lenght_of_Moving_average_Type_2 + 1)
+
+	eVIDYA_open = 0.0
+	eVIDYA_open := HA_open_stage2 * efactor_open * math.abs(eCMO_open) + nz(eVIDYA_open[1]) * (1 - efactor_open * math.abs(eCMO_open))
+
+	// VIDYA type 2 (high)
+	eDifference_high = ta.change(HA_high_stage2)
+	em_high = eDifference_high
+	eSum_of_UP_high = math.sum(em_high >= 0.0 ? em_high : 0.0, Lenght_of_Moving_average_Type_2)
+	eSum_of_DOWN_high = math.sum(em_high >= 0.0 ? 0.0 : -em_high, Lenght_of_Moving_average_Type_2)
+
+	eCMO_high = (eSum_of_UP_high - eSum_of_DOWN_high) / (eSum_of_UP_high + eSum_of_DOWN_high)
+	efactor_high = 2 / (Lenght_of_Moving_average_Type_2 + 1)
+
+	eVIDYA_high = 0.0
+	eVIDYA_high := HA_high_stage2 * efactor_high * math.abs(eCMO_high) + nz(eVIDYA_high[1]) * (1 - efactor_high * math.abs(eCMO_high))
+
+	// VIDYA type 2 (low)
+	eDifference_low = ta.change(HA_low_stage2)
+	em_low = eDifference_low
+	eSum_of_UP_low = math.sum(em_low >= 0.0 ? em_low : 0.0, Lenght_of_Moving_average_Type_2)
+	eSum_of_DOWN_low = math.sum(em_low >= 0.0 ? 0.0 : -em_low, Lenght_of_Moving_average_Type_2)
+
+	eCMO_low = (eSum_of_UP_low - eSum_of_DOWN_low) / (eSum_of_UP_low + eSum_of_DOWN_low)
+	efactor_low = 2 / (Lenght_of_Moving_average_Type_2 + 1)
+
+	eVIDYA_low = 0.0
+	eVIDYA_low := HA_low_stage2 * efactor_low * math.abs(eCMO_low) + nz(eVIDYA_low[1]) * (1 - efactor_low * math.abs(eCMO_low))
+
+	// VIDYA type 2 (close)
+	eDifference_close = ta.change(HA_close_stage2)
+	em_close = eDifference_close
+	eSum_of_UP_close = math.sum(em_close >= 0.0 ? em_close : 0.0, Lenght_of_Moving_average_Type_2)
+	eSum_of_DOWN_close = math.sum(em_close >= 0.0 ? 0.0 : -em_close, Lenght_of_Moving_average_Type_2)
+
+	eCMO_close = (eSum_of_UP_close - eSum_of_DOWN_close) / (eSum_of_UP_close + eSum_of_DOWN_close)
+	efactor_close = 2 / (Lenght_of_Moving_average_Type_2 + 1)
+
+	eVIDYA_close = 0.0
+	eVIDYA_close := HA_close_stage2 * efactor_close * math.abs(eCMO_close) + nz(eVIDYA_close[1]) * (1 - efactor_close * math.abs(eCMO_close))
+
+	// TRIMA type 2
+	eTriangular_Moving_Average_open = ta.sma(ta.sma(HA_open_stage2, Lenght_of_Moving_average_Type_2), Lenght_of_Moving_average_Type_2)
+	eTriangular_Moving_Average_high = ta.sma(ta.sma(HA_high_stage2, Lenght_of_Moving_average_Type_2), Lenght_of_Moving_average_Type_2)
+	eTriangular_Moving_Average_low = ta.sma(ta.sma(HA_low_stage2, Lenght_of_Moving_average_Type_2), Lenght_of_Moving_average_Type_2)
+	eTriangular_Moving_Average_close = ta.sma(ta.sma(HA_close_stage2, Lenght_of_Moving_average_Type_2), Lenght_of_Moving_average_Type_2)
+
+	// STAGE 3: pick MA type 2
+	HA_open_stage_final = Moving_average_Type_2 == 'TRIMA' ? eTriangular_Moving_Average_open : Moving_average_Type_2 == 'VIDYA' ? eVIDYA_open : Moving_average_Type_2 == 'FAMA' ? eFractal_Adaptive_Moving_Average_open : Moving_average_Type_2 == 'AMA' ? eAdaptive_moving_average_open : Moving_average_Type_2 == 'HMA' ? eHull_Moving_Average_open : Moving_average_Type_2 == 'TEMA' ? xTriple_EMA_3 : Moving_average_Type_2 == 'SMMA' ? smma_open2 : Moving_average_Type_2 == 'WMA' ? wMoving_Average_open2 : Moving_average_Type_2 == 'EMA' ? eMoving_Average_open2 : Moving_average_Type_2 == 'SMA' ? Moving_Average_open2 : Moving_average_Type_2 == 'LSMA' ? Least_Squares_Moving_Average_open2 : Moving_average_Type_2 == 'T3' ? T3_open_2 : Moving_average_Type_2 == 'DEMA' ? Double_Moving_Average_Exponential_open2 : Moving_average_Type_2 == 'ALMA' ? Arnaud_Legoux_Moving_Average_open2 : Moving_average_Type_2 == 'DEFAULT' ? HA_open_default : na
+	HA_high_stage_final = Moving_average_Type_2 == 'TRIMA' ? eTriangular_Moving_Average_high : Moving_average_Type_2 == 'VIDYA' ? eVIDYA_high : Moving_average_Type_2 == 'FAMA' ? eFractal_Adaptive_Moving_Average_high : Moving_average_Type_2 == 'AMA' ? eAdaptive_moving_average_high : Moving_average_Type_2 == 'HMA' ? eHull_Moving_Average_high : Moving_average_Type_2 == 'TEMA' ? xTriple_EMA_6 : Moving_average_Type_2 == 'SMMA' ? smma_high2 : Moving_average_Type_2 == 'WMA' ? wMoving_Average_high2 : Moving_average_Type_2 == 'EMA' ? eMoving_Average_high2 : Moving_average_Type_2 == 'SMA' ? Moving_Average_high2 : Moving_average_Type_2 == 'LSMA' ? Least_Squares_Moving_Average_high2 : Moving_average_Type_2 == 'T3' ? T3_high_2 : Moving_average_Type_2 == 'DEMA' ? Double_Moving_Average_Exponential_high2 : Moving_average_Type_2 == 'ALMA' ? Arnaud_Legoux_Moving_Average_high2 : Moving_average_Type_2 == 'DEFAULT' ? HA_high_default : na
+	HA_low_stage_final = Moving_average_Type_2 == 'TRIMA' ? eTriangular_Moving_Average_low : Moving_average_Type_2 == 'VIDYA' ? eVIDYA_low : Moving_average_Type_2 == 'FAMA' ? eFractal_Adaptive_Moving_Average_low : Moving_average_Type_2 == 'AMA' ? eAdaptive_moving_average_low : Moving_average_Type_2 == 'HMA' ? eHull_Moving_Average_low : Moving_average_Type_2 == 'TEMA' ? xTriple_EMA_9 : Moving_average_Type_2 == 'SMMA' ? smma_low2 : Moving_average_Type_2 == 'WMA' ? wMoving_Average_low2 : Moving_average_Type_2 == 'EMA' ? eMoving_Average_low2 : Moving_average_Type_2 == 'SMA' ? Moving_Average_low2 : Moving_average_Type_2 == 'LSMA' ? Least_Squares_Moving_Average_low2 : Moving_average_Type_2 == 'T3' ? T3_low_2 : Moving_average_Type_2 == 'DEMA' ? Double_Moving_Average_Exponential_low2 : Moving_average_Type_2 == 'ALMA' ? Arnaud_Legoux_Moving_Average_low2 : Moving_average_Type_2 == 'DEFAULT' ? HA_low_default : na
+	HA_close_stage_final = Moving_average_Type_2 == 'TRIMA' ? eTriangular_Moving_Average_close : Moving_average_Type_2 == 'VIDYA' ? eVIDYA_close : Moving_average_Type_2 == 'FAMA' ? eFractal_Adaptive_Moving_Average_close : Moving_average_Type_2 == 'AMA' ? eAdaptive_moving_average_close : Moving_average_Type_2 == 'HMA' ? eHull_Moving_Average_close : Moving_average_Type_2 == 'TEMA' ? xTriple_EMA_12 : Moving_average_Type_2 == 'SMMA' ? smma_close2 : Moving_average_Type_2 == 'WMA' ? wMoving_Average_close2 : Moving_average_Type_2 == 'EMA' ? eMoving_Average_close2 : Moving_average_Type_2 == 'SMA' ? Moving_Average_close2 : Moving_average_Type_2 == 'LSMA' ? Least_Squares_Moving_Average_close2 : Moving_average_Type_2 == 'T3' ? T3_close_2 : Moving_average_Type_2 == 'DEMA' ? Double_Moving_Average_Exponential_close2 : Moving_average_Type_2 == 'ALMA' ? Arnaud_Legoux_Moving_Average_close2 : Moving_average_Type_2 == 'DEFAULT' ? HA_close_default : na
+
+	Open = single_smoothed == false ? HA_open_stage_final : HA_open_stage2
+	High = single_smoothed == false ? HA_high_stage_final : HA_high_stage2
+	Low = single_smoothed == false ? HA_low_stage_final : HA_low_stage2
+	Close = single_smoothed == false ? HA_close_stage_final : HA_close_stage2
+
+	has_long_sig = Open[1] > Close[1] and Open < Close ? 1 : 0
+	has_short_sig = Open[1] < Close[1] and Open > Close ? 1 : 0
+
+	has_long_conf = Open < Close ? 1 : 0
+	has_short_conf = Open > Close ? 1 : 0
+
+	int[] has_values = array.from(has_long_sig,has_short_sig,has_long_conf,has_short_conf)
+
+
+// @function Kalman Filter
+// @returns An Array with values of Half trend as Follows: Kvelocity(>0 = Long Confirmation, <0 = Short Confirmation ), Kbuys(=1.0), Ksells(=1.0)
+export kalman_filter(float k_sharpness, float kf_k) =>
+	Ksrc = ohlc4
+	KSharpness = k_sharpness
+	K = kf_k
+
+	Kvelocity = 0.0
+	kfilt = 0.0
+
+	KDistance = Ksrc - nz(kfilt[1], Ksrc)
+	KError = nz(kfilt[1], Ksrc) + KDistance * math.sqrt(KSharpness*K/ 100)
+	Kvelocity := nz(Kvelocity[1], 0) + KDistance*K / 100
+	kfilt := KError + Kvelocity
+
+	Kbuys = Kvelocity > 0 and Kvelocity[1] < 0 ? 1.0 : 0.0
+	Ksells = Kvelocity < 0 and Kvelocity[1] > 0 ? 1.0 : 0.0
+	float[] kvalues = array.from(Kvelocity,Kbuys,Ksells)
+
+
+// @function Kase Peak Oscillator
+// @returns Kase Peak Oscillator Value
+export kase_peak_oscillator(int kpo_short_cycle, int kpo_long_cycle, float kpo_sensitivity) =>
+	kpoShortCycle = kpo_short_cycle
+	kpoLongCycle = kpo_long_cycle
+	kpoSensitivity = kpo_sensitivity
+
+	x1 = 0.
+	xs = 0.
+
+	x1 := nz(x1[1])
+	xs := nz(xs[1])
+
+	ccLog = math.log(close / nz(close[1]))
+	ccDev = ta.stdev(ccLog, 9)
+	avg = ta.sma(ccDev, 30)
+
+
+	max1 = 0.
+	maxs = 0.
+
+	for k = kpoShortCycle to kpoLongCycle - 1
+		max1 := math.max(math.log(high / nz(low[k])) / math.sqrt(k), max1)
+		maxs := math.max(math.log(nz(high[k]) / low) / math.sqrt(k), maxs)
+
+	x1 := max1 / avg
+	xs := maxs / avg
+
+	xp = kpoSensitivity * (ta.sma(x1, 3) - ta.sma(xs, 3))
+
+
+// @function laguerre_filter
+// @returns An array with the following values: laguerre filter value, long signal, short signal, long conf, short conf. true values = 1.0
+export laguerre_filter(float lf_alpha) =>
+	src = hl2
+	alpha = lf_alpha
+	gamma=1-alpha
+	L0 = 0.0
+	L0 := (1-gamma) * src + gamma * nz(L0[1])
+	L1 = 0.0
+	L1 := -gamma * L0 + nz(L0[1]) + gamma * nz(L1[1])
+
+	L2 = 0.0
+	L2 := -gamma * L1 + nz(L1[1]) + gamma * nz(L2[1])
+
+	L3 = 0.0
+	L3 := -gamma * L2 + nz(L2[1]) + gamma * nz(L3[1])
+
+	LagF = (L0 + 2 * L1 + 2 * L2 + L3) / 6
+
+	Color =  (LagF > LagF[1] ? 1.0 : 0.0)
+	lagf_long_signal = Color[1] == 0.0 and Color == 1.0 ? 1.0 : 0.0
+	lagf_short_signal = Color[1] == 1.0 and Color == 0.0 ? 1.0 : 0.0
+	lagf_long_conf = Color == 1.0 ? 1.0 : 0.0
+	lagf_short_conf = Color == 0.0 ? 1.0 : 0.0
+	float[] lagf_values = array.from(LagF, lagf_long_signal, lagf_short_signal, lagf_long_conf, lagf_short_conf)
+
+
+// @function McGinly Dynamic Index
+// @returns Mcginely Dynamic Index Value
+export mcginley_dynamic_index(simple int mci_length) =>
+	Mclength = mci_length
+	Mcsource = close
+	mcdma = ta.ema(Mcsource, Mclength)
+	mg = 0.0
+	mg := na(mg[1]) ? mcdma : mg[1] + (Mcsource - mg[1]) / (Mclength * math.pow(Mcsource/mg[1], 4))
+
+
+// @function Normalized Volume
+// @returns Normalized Volume Value
+export normalized_volume(int nv_volume_period) =>
+	input_period = nv_volume_period
+	nvo = (volume/ta.sma(volume, input_period)) * 100 - 100
+
+
+//----------------------------------------------------------------------------------------------------
+//JTPO Functions()
+getRange(jtpo_length) =>
+    float H = ta.highest(jtpo_length)
+    float L = ta.lowest(jtpo_length)
+    H - L
+
+getValue(int jtpo_length) =>
+	var float Lenp1half     = (jtpo_length + 1) * 0.5
+	JTsrc = close
+    float[] arr1 = array.new_float(jtpo_length + 2, 0)
+    float[] arr2 = array.new_float(jtpo_length + 2, 0)
+    float[] arr3 = array.new_float(jtpo_length + 2, 0)
+    float accum     = 0.0
+    int m = 1
+    for int i = 1 to jtpo_length
+        array.set(arr2, i, i)
+        array.set(arr3, i, i)
+        array.set(arr1, i, JTsrc[jtpo_length - i])
+
+    for int i = 1 to jtpo_length - 1
+        float maxval = array.get(arr1, i)
+        int maxloc = i
+        for j = i + 1 to jtpo_length
+            if array.get(arr1, j) < maxval
+                maxval := array.get(arr1, j)
+                maxloc := j
+
+        float tmp1 = array.get(arr1, i)
+        array.set(arr1, i, array.get(arr1, maxloc))
+        array.set(arr1, maxloc, tmp1)
+        float tmp2 = array.get(arr2, i)
+        array.set(arr2, i, array.get(arr2, maxloc))
+        array.set(arr2, maxloc, tmp2)
+    while m < jtpo_length - 1
+        int j = m + 1
+        bool flag = true
+        accum := array.get(arr3, m)
+
+        while flag
+            if array.get(arr1, m) != array.get(arr1, j)
+                if j - m > 1
+                    accum := accum / (j - m)
+                    for int n = m to j - 1
+                        array.set(arr3, n, accum)
+                flag := false
+            else
+                accum := accum + array.get(arr3, j)
+                j := j + 1
+                if j >= array.size(arr1) - 1
+                    flag := false
+        m := j
+
+    accum := 0.0
+    for int i = 1 to jtpo_length
+        accum := accum + (array.get(arr3, m) - Lenp1half) * (array.get(arr2, m) - Lenp1half)
+    accum
+//--------------------------------------------------------------------------------------------------
+
+
+// @function j_tpo_indicator
+// @returns an array with the following values: j_tpo, JTLS: long signal = 1.0, JTSS: short signal = 1.0
+export j_tpo_indicator(int jtpo_len,  simple int jtpo_ema_length, bool jtpo_emaf) =>
+	int JTlength        = jtpo_len
+	int JTemaLength     = jtpo_ema_length
+	float JTsrc         = close
+	bool  JTEMAF        = jtpo_emaf
+
+	var bool crossedUp      = false
+	var float normalization = 12 / (JTlength * (JTlength - 1) * (JTlength + 1))
+
+	float j_tpo = (normalization * getValue(JTlength)) * getRange(JTlength) / JTlength
+	float JTema = ta.ema(j_tpo, JTemaLength)
+
+	bool jtpo_cross_up   = ta.crossover(j_tpo, 0)
+	bool jtpo_cross_down = ta.crossunder(j_tpo, 0)
+
+	float JTLS = 0.0
+	float JTSS = 0.0
+
+	if JTEMAF
+		if jtpo_cross_up and JTema > 0
+			JTLS := 1.0
+		if jtpo_cross_down and JTema < 0
+			JTSS := 1.0
+	else if not JTEMAF
+		if jtpo_cross_up
+			JTLS := 1.0
+		if jtpo_cross_down
+			JTSS := 1.0
+	float[] jtpo_values = array.from(j_tpo, JTLS, JTSS)
+
+
+// @function Price Momentum Oscillator
+// @returns Price Momentum Oscillator Value
+export price_momentum_oscillator(int pmo_1st_length, int pmo_2nd_length, int pmo_signal_length) =>
+	firstLength = pmo_1st_length
+	secondLength = pmo_2nd_length
+	signalLength = pmo_signal_length
+	srcPMO = close
+
+	pmo = ta.ema(10 * ta.ema(nz(ta.roc(srcPMO, 1)), firstLength), secondLength)
+	signal = ta.ema(pmo, signalLength)
+
+
+// @function polychromatic_momentum
+// @returns Polychromatic Momentum Value
+export polychromatic_momentum(int ply_length) =>
+	len = ply_length
+	src = close
+
+	mom = src - src[len]
+	pdm = math.sum(math.max(mom, 0), len)
+	ndm = math.sum(math.max(-mom, 0), len)
+	pdi = 100 * pdm / (pdm + ndm)
+	ndi = 100 * ndm / (pdm + ndm)
+	pmi = pdi - ndi
+
+
+// @function QQE Mod
+// @returns QQE Mod Value
+export qqe_mod(simple int qqe_rsi_period2, simple int qqe_rsi_smoothing2,
+ float qqe_fast_factor2) =>
+	RSI_Period = 6
+	SF = 5
+	QQE = 3
+	ThreshHold = 3
+	Qsrc = close
+
+	Wilders_Period = RSI_Period * 2 - 1
+
+	QRsi = ta.rsi(Qsrc, RSI_Period)
+	RsiMa = ta.ema(QRsi, SF)
+	AtrRsi = math.abs(RsiMa[1] - RsiMa)
+	MaAtrRsi = ta.ema(AtrRsi, Wilders_Period)
+	dar = ta.ema(MaAtrRsi, Wilders_Period) * QQE
+
+	longband = 0.0
+	shortband = 0.0
+	trend = 0
+
+	DeltaFastAtrRsi = dar
+	RSIndex = RsiMa
+	newshortband = RSIndex + DeltaFastAtrRsi
+	newlongband = RSIndex - DeltaFastAtrRsi
+	longband := RSIndex[1] > longband[1] and RSIndex > longband[1] ? 
+	   math.max(longband[1], newlongband) : newlongband
+	shortband := RSIndex[1] < shortband[1] and RSIndex < shortband[1] ? 
+	   math.min(shortband[1], newshortband) : newshortband
+	cross_1 = ta.cross(longband[1], RSIndex)
+	trend := ta.cross(RSIndex, shortband[1]) ? 1 : cross_1 ? -1 : nz(trend[1], 1)
+	FastAtrRsiTL = trend == 1 ? longband : shortband
+
+	Qlength = 50
+	Qmult = 0.35
+	Qbasis = ta.sma(FastAtrRsiTL - 50, Qlength)
+	Qdev = Qmult * ta.stdev(FastAtrRsiTL - 50, Qlength)
+	Qupper = Qbasis + Qdev
+	Qlower = Qbasis - Qdev
+	color_bar = RsiMa - 50 > Qupper ? #00c3ff : RsiMa - 50 < Qlower ? #ff0062 : color.gray
+
+	QQEzlong = 0
+	QQEzlong := nz(QQEzlong[1])
+	QQEzshort = 0
+	QQEzshort := nz(QQEzshort[1])
+	QQEzlong := RSIndex >= 50 ? QQEzlong + 1 : 0
+	QQEzshort := RSIndex < 50 ? QQEzshort + 1 : 0
+
+	RSI_Period2 = qqe_rsi_period2
+	SF2 = qqe_rsi_smoothing2
+	QQE2 = qqe_fast_factor2
+	ThreshHold2 = 3
+
+	src2 = close
+	Wilders_Period2 = RSI_Period2 * 2 - 1
+
+	Rsi2 = ta.rsi(src2, RSI_Period2)
+	RsiMa2 = ta.ema(Rsi2, SF2)
+	AtrRsi2 = math.abs(RsiMa2[1] - RsiMa2)
+	MaAtrRsi2 = ta.ema(AtrRsi2, Wilders_Period2)
+	dar2 = ta.ema(MaAtrRsi2, Wilders_Period2) * QQE2
+	longband2 = 0.0
+	shortband2 = 0.0
+	trend2 = 0
+
+	DeltaFastAtrRsi2 = dar2
+	RSIndex2 = RsiMa2
+	newshortband2 = RSIndex2 + DeltaFastAtrRsi2
+	newlongband2 = RSIndex2 - DeltaFastAtrRsi2
+	longband2 := RSIndex2[1] > longband2[1] and RSIndex2 > longband2[1] ? 
+	   math.max(longband2[1], newlongband2) : newlongband2
+	shortband2 := RSIndex2[1] < shortband2[1] and RSIndex2 < shortband2[1] ? 
+	   math.min(shortband2[1], newshortband2) : newshortband2
+	cross_2 = ta.cross(longband2[1], RSIndex2)
+	trend2 := ta.cross(RSIndex2, shortband2[1]) ? 1 : cross_2 ? -1 : nz(trend2[1], 1)
+	FastAtrRsi2TL = trend2 == 1 ? longband2 : shortband2
+
+	QQE2zlong = 0
+	QQE2zlong := nz(QQE2zlong[1])
+	QQE2zshort = 0
+	QQE2zshort := nz(QQE2zshort[1])
+	QQE2zlong := RSIndex2 >= 50 ? QQE2zlong + 1 : 0
+	QQE2zshort := RSIndex2 < 50 ? QQE2zshort + 1 : 0
+
+	hcolor2 = RsiMa2 - 50 > ThreshHold2 ? color.silver :
+	   RsiMa2 - 50 < 0 - ThreshHold2 ? color.silver : na
+
+	Greenbar1 = RsiMa2 - 50 > ThreshHold2
+	Greenbar2 = RsiMa - 50 > Qupper
+
+	Redbar1 = RsiMa2 - 50 < 0 - ThreshHold2
+	Redbar2 = RsiMa - 50 < Qlower
+
+	QQE0_Cross = FastAtrRsi2TL - 50
+
+
+// @function Relative Vigor Index
+// @returns an array with rvi value and rviSig value
+export relative_vigor_index(int relative_vigor_length) =>
+	RVIlen = relative_vigor_length
+	rvi = math.sum(ta.swma(close-open), RVIlen)/math.sum(ta.swma(high-low),RVIlen)
+	RVIsig = ta.swma(rvi)
+	float[] rvi_values = array.from(rvi,RVIsig)
+
+
+// @function rex_oscillator
+// @returns an array with the following values, rex ma value, rex signal value, long signal, short signal, long conf, short conf.(True Values will = 1.0)
+// V4 REWRITE: All MA-type computations and state variables are now declared at
+// function-body scope. Pine v6 requires `ta.*` functions to be called every bar
+// for their internal state to remain valid (CW10003), and recursive vars used
+// with [N] must be at function-body scope (CW10018). The previous v5 code put
+// them inside `if rex_ma_type == 'X'` blocks, which silently produced wrong
+// values whenever the active MA type changed. This version computes all 17 MA
+// types every bar and then picks the active one via switch.
+export rex_oscillator(string rex_ma_type1, simple int rex_smooth_length, simple float rex_alma_offset, simple float rex_alma_sigma, int rex_frama_fast, int rex_frama_slow, 
+   int rex_jma_phase, int rex_jma_power,  simple int rex_least_squares_offset, float rex_modular_filter_beta, bool rex_modular_filter_feedback, float rex_modular_feedback_weight, 
+   int rex_volatility_lookback, string rex_signal_ma_type, simple int rex_signal_smoothing, simple float rex_signal_ma_alma_offset, simple float rex_signal_ma_alma_sigma, int rex_signal_ma_frama_fast,
+   int rex_signal_ma_frama_slow, int rex_signal_ma_jma_phase, int rex_signal_ma_jma_power, simple int rex_signal_ma_least_squares_offset, float rex_signal_ma_modular_filter_beta,
+   bool rex_signal_ma_modular_filter_feedback, float rex_signal_ma_modular_feedback_weight, int rex_signal_ma_volatility_lookback) =>
+
+	tvb = close - low + close - open - (high - close)
+
+	rex_ma_type   = rex_ma_type1
+	rex_smooth    = rex_smooth_length
+	Ralma_offset  = rex_alma_offset
+	Ralma_sigma   = rex_alma_sigma
+	fc            = rex_frama_fast
+	sc            = rex_frama_slow
+	jurik_phase   = rex_jma_phase
+	jurik_power   = rex_jma_power
+	offset        = rex_least_squares_offset
+	mf_beta       = rex_modular_filter_beta
+	feedback      = rex_modular_filter_feedback
+	z             = rex_modular_feedback_weight
+	volatility_lookback = rex_volatility_lookback
+
+	rex_smooth_half = rex_smooth / 2
+
+	alma_v = ta.alma(tvb, rex_smooth, Ralma_offset, Ralma_sigma)
+
+	ema_v = ta.ema(tvb, rex_smooth)
+
+	dema_e1 = ta.ema(tvb, rex_smooth)
+	dema_v  = 2 * dema_e1 - ta.ema(dema_e1, rex_smooth)
+
+	tema_e1 = ta.ema(tvb, rex_smooth)
+	tema_e2 = ta.ema(tema_e1, rex_smooth)
+	tema_e3 = ta.ema(tema_e2, rex_smooth)
+	tema_v  = 3 * (tema_e1 - tema_e2) + tema_e3
+
+	frama_e_const = 2.7182818284590452353602874713527
+	frama_w  = math.log(2 / (sc + 1)) / math.log(frama_e_const)
+	frama_h1 = ta.highest(high, rex_smooth_half)
+	frama_l1 = ta.lowest(low,  rex_smooth_half)
+	frama_n1 = (frama_h1 - frama_l1) / rex_smooth_half
+	frama_h2_raw = ta.highest(high, rex_smooth_half)
+	frama_l2_raw = ta.lowest(low,  rex_smooth_half)
+	frama_h2 = frama_h2_raw[rex_smooth_half]
+	frama_l2 = frama_l2_raw[rex_smooth_half]
+	frama_n2 = (frama_h2 - frama_l2) / rex_smooth_half
+	frama_h3 = ta.highest(high, rex_smooth)
+	frama_l3 = ta.lowest(low,  rex_smooth)
+	frama_n3 = (frama_h3 - frama_l3) / rex_smooth
+	var float frama_dimen_prev = 0.0
+	frama_dimen1 = (math.log(frama_n1 + frama_n2) - math.log(frama_n3)) / math.log(2)
+	frama_dimen  = frama_n1 > 0 and frama_n2 > 0 and frama_n3 > 0 ? frama_dimen1 : nz(frama_dimen_prev)
+	frama_dimen_prev := frama_dimen
+	frama_alpha1   = math.exp(frama_w * (frama_dimen - 1))
+	frama_oldalpha = frama_alpha1 > 1 ? 1 : frama_alpha1 < 0.01 ? 0.01 : frama_alpha1
+	frama_oldn     = (2 - frama_oldalpha) / frama_oldalpha
+	frama_n        = (sc - fc) * (frama_oldn - 1) / (sc - 1) + fc
+	frama_alpha_   = 2 / (frama_n + 1)
+	frama_alpha    = frama_alpha_ < 2 / (sc + 1) ? 2 / (sc + 1) : frama_alpha_ > 1 ? 1 : frama_alpha_
+	var float frama_state = 0.0
+	frama_state := (1 - frama_alpha) * nz(frama_state[1]) + frama_alpha * tvb
+	frama_v = frama_state
+
+	hma_v = ta.wma(2 * ta.wma(tvb, rex_smooth_half) - ta.wma(tvb, rex_smooth), math.round(math.sqrt(rex_smooth)))
+
+	jma_phaseRatio = jurik_phase < -100 ? 0.5 : jurik_phase > 100 ? 2.5 : jurik_phase / 100 + 1.5
+	jma_beta       = 0.45 * (rex_smooth - 1) / (0.45 * (rex_smooth - 1) + 2)
+	jma_alpha      = math.pow(jma_beta, jurik_power)
+	var float jma_state = 0.0
+	var float jma_e0 = 0.0
+	var float jma_e1 = 0.0
+	var float jma_e2 = 0.0
+	jma_e0 := (1 - jma_alpha) * tvb + jma_alpha * nz(jma_e0[1])
+	jma_e1 := (tvb - jma_e0) * (1 - jma_beta) + jma_beta * nz(jma_e1[1])
+	jma_e2 := (jma_e0 + jma_phaseRatio * jma_e1 - nz(jma_state[1])) * math.pow(1 - jma_alpha, 2) + math.pow(jma_alpha, 2) * nz(jma_e2[1])
+	jma_state := jma_e2 + nz(jma_state[1])
+	jma_v = jma_state
+
+	lsma_v = ta.linreg(tvb, rex_smooth, offset)
+
+	mf_alpha = 2 / (rex_smooth + 1)
+	var float mf_ts_state = 0.0
+	var float mf_b_state  = 0.0
+	var float mf_c_state  = 0.0
+	var float mf_os_state = 0.0
+	mf_a_in = feedback ? z * tvb + (1 - z) * nz(mf_ts_state[1], tvb) : tvb
+	mf_b_state := mf_a_in > mf_alpha * mf_a_in + (1 - mf_alpha) * nz(mf_b_state[1], mf_a_in) ? mf_a_in : mf_alpha * mf_a_in + (1 - mf_alpha) * nz(mf_b_state[1], mf_a_in)
+	mf_c_state := mf_a_in < mf_alpha * mf_a_in + (1 - mf_alpha) * nz(mf_c_state[1], mf_a_in) ? mf_a_in : mf_alpha * mf_a_in + (1 - mf_alpha) * nz(mf_c_state[1], mf_a_in)
+	mf_os_state := mf_a_in == mf_b_state ? 1 : mf_a_in == mf_c_state ? 0 : nz(mf_os_state[1])
+	mf_upper = mf_beta * mf_b_state + (1 - mf_beta) * mf_c_state
+	mf_lower = mf_beta * mf_c_state + (1 - mf_beta) * mf_b_state
+	mf_ts_state := mf_os_state * mf_upper + (1 - mf_os_state) * mf_lower
+	mf_v = mf_ts_state
+
+	rdma_sma_200 = ta.sma(tvb, 200)
+	rdma_sma_100 = ta.sma(tvb, 100)
+	rdma_sma_50  = ta.sma(tvb, 50)
+	rdma_sma_24  = ta.sma(tvb, 24)
+	rdma_sma_9   = ta.sma(tvb, 9)
+	rdma_sma_5   = ta.sma(tvb, 5)
+	rdma_v = (rdma_sma_200 + rdma_sma_100 + rdma_sma_50 + rdma_sma_24 + rdma_sma_9 + rdma_sma_5) / 6
+
+	rma_v = ta.rma(tvb, rex_smooth)
+	sma_v = ta.sma(tvb, rex_smooth)
+
+	t3_xe1 = ta.ema(tvb, rex_smooth)
+	t3_xe2 = ta.ema(t3_xe1, rex_smooth)
+	t3_xe3 = ta.ema(t3_xe2, rex_smooth)
+	t3_xe4 = ta.ema(t3_xe3, rex_smooth)
+	t3_xe5 = ta.ema(t3_xe4, rex_smooth)
+	t3_xe6 = ta.ema(t3_xe5, rex_smooth)
+	t3_b   = 0.7
+	t3_c1  = -t3_b * t3_b * t3_b
+	t3_c2  = 3 * t3_b * t3_b + 3 * t3_b * t3_b * t3_b
+	t3_c3  = -6 * t3_b * t3_b - 3 * t3_b - 3 * t3_b * t3_b * t3_b
+	t3_c4  = 1 + 3 * t3_b + t3_b * t3_b * t3_b + 3 * t3_b * t3_b
+	t3_v   = t3_c1 * t3_xe6 + t3_c2 * t3_xe5 + t3_c3 * t3_xe4 + t3_c4 * t3_xe3
+
+	tma_v = ta.sma(ta.sma(tvb, math.ceil(rex_smooth / 2)), math.floor(rex_smooth / 2) + 1)
+
+	uma_sma_144 = ta.sma(tvb, 144)
+	uma_sma_89  = ta.sma(tvb, 89)
+	uma_sma_55  = ta.sma(tvb, 55)
+	uma_sma_34  = ta.sma(tvb, 34)
+	uma_sma_21  = ta.sma(tvb, 21)
+	uma_sma_13  = ta.sma(tvb, 13)
+	uma_sma_8   = ta.sma(tvb, 8)
+	uma_sma_5   = ta.sma(tvb, 5)
+	uma_v = (uma_sma_144 + uma_sma_89 + uma_sma_55 + uma_sma_34 + uma_sma_21 + uma_sma_13 + uma_sma_8 + uma_sma_5) / 8
+
+	vama_mid     = ta.ema(tvb, rex_smooth)
+	vama_dev     = tvb - vama_mid
+	vama_vol_up  = ta.highest(vama_dev, volatility_lookback)
+	vama_vol_dn  = ta.lowest(vama_dev, volatility_lookback)
+	vama_v = vama_mid + math.avg(vama_vol_up, vama_vol_dn)
+
+	wma_v = ta.wma(tvb, rex_smooth)
+
+	rex_ma = switch rex_ma_type
+		'ALMA'  => alma_v
+		'EMA'   => ema_v
+		'DEMA'  => dema_v
+		'TEMA'  => tema_v
+		'FRAMA' => frama_v
+		'HMA'   => hma_v
+		'JMA'   => jma_v
+		'LSMA'  => lsma_v
+		'MF'    => mf_v
+		'RDMA'  => rdma_v
+		'RMA'   => rma_v
+		'SMA'   => sma_v
+		'T3'    => t3_v
+		'TMA'   => tma_v
+		'UMA'   => uma_v
+		'VAMA'  => vama_v
+		'WMA'   => wma_v
+		=> 0.0
+
+	sig_ma_type     = rex_signal_ma_type
+	signal_smooth   = rex_signal_smoothing
+	sig_alma_offset = rex_signal_ma_alma_offset
+	sig_alma_sigma  = rex_signal_ma_alma_sigma
+	sig_fc          = rex_signal_ma_frama_fast
+	sig_sc          = rex_signal_ma_frama_slow
+	sig_jurik_phase = rex_signal_ma_jma_phase
+	sig_jurik_power = rex_signal_ma_jma_power
+	sig_offset      = rex_signal_ma_least_squares_offset
+	mf_sig_beta     = rex_signal_ma_modular_filter_beta
+	sig_feedback    = rex_signal_ma_modular_filter_feedback
+	sig_z           = rex_signal_ma_modular_feedback_weight
+	sig_volatility_lookback = rex_signal_ma_volatility_lookback
+
+	signal_smooth_half = signal_smooth / 2
+
+	sig_alma_v = ta.alma(rex_ma, signal_smooth, sig_alma_offset, sig_alma_sigma)
+	sig_ema_v = ta.ema(rex_ma, signal_smooth)
+
+	sig_dema_e1 = ta.ema(rex_ma, signal_smooth)
+	sig_dema_v  = 2 * sig_dema_e1 - ta.ema(sig_dema_e1, signal_smooth)
+
+	sig_tema_e1 = ta.ema(rex_ma, signal_smooth)
+	sig_tema_e2 = ta.ema(sig_tema_e1, signal_smooth)
+	sig_tema_e3 = ta.ema(sig_tema_e2, signal_smooth)
+	sig_tema_v  = 3 * (sig_tema_e1 - sig_tema_e2) + sig_tema_e3
+
+	sig_frama_e_const = 2.7182818284590452353602874713527
+	sig_frama_w  = math.log(2 / (sig_sc + 1)) / math.log(sig_frama_e_const)
+	sig_frama_h1 = ta.highest(high, signal_smooth_half)
+	sig_frama_l1 = ta.lowest(low,  signal_smooth_half)
+	sig_frama_n1 = (sig_frama_h1 - sig_frama_l1) / signal_smooth_half
+	sig_frama_h2_raw = ta.highest(high, signal_smooth_half)
+	sig_frama_l2_raw = ta.lowest(low,  signal_smooth_half)
+	sig_frama_h2 = sig_frama_h2_raw[signal_smooth_half]
+	sig_frama_l2 = sig_frama_l2_raw[signal_smooth_half]
+	sig_frama_n2 = (sig_frama_h2 - sig_frama_l2) / signal_smooth_half
+	sig_frama_h3 = ta.highest(high, signal_smooth)
+	sig_frama_l3 = ta.lowest(low,  signal_smooth)
+	sig_frama_n3 = (sig_frama_h3 - sig_frama_l3) / signal_smooth
+	var float sig_frama_dimen_prev = 0.0
+	sig_frama_dimen1 = (math.log(sig_frama_n1 + sig_frama_n2) - math.log(sig_frama_n3)) / math.log(2)
+	sig_frama_dimen  = sig_frama_n1 > 0 and sig_frama_n2 > 0 and sig_frama_n3 > 0 ? sig_frama_dimen1 : nz(sig_frama_dimen_prev)
+	sig_frama_dimen_prev := sig_frama_dimen
+	sig_frama_alpha1   = math.exp(sig_frama_w * (sig_frama_dimen - 1))
+	sig_frama_oldalpha = sig_frama_alpha1 > 1 ? 1 : sig_frama_alpha1 < 0.01 ? 0.01 : sig_frama_alpha1
+	sig_frama_oldn     = (2 - sig_frama_oldalpha) / sig_frama_oldalpha
+	sig_frama_n        = (sig_sc - sig_fc) * (sig_frama_oldn - 1) / (sig_sc - 1) + sig_fc
+	sig_frama_alpha_   = 2 / (sig_frama_n + 1)
+	sig_frama_alpha    = sig_frama_alpha_ < 2 / (sig_sc + 1) ? 2 / (sig_sc + 1) : sig_frama_alpha_ > 1 ? 1 : sig_frama_alpha_
+	var float sig_frama_state = 0.0
+	sig_frama_state := (1 - sig_frama_alpha) * nz(sig_frama_state[1]) + sig_frama_alpha * rex_ma
+	sig_frama_v = sig_frama_state
+
+	sig_hma_v = ta.wma(2 * ta.wma(rex_ma, signal_smooth_half) - ta.wma(rex_ma, signal_smooth), math.round(math.sqrt(signal_smooth)))
+
+	sig_jma_phaseRatio = sig_jurik_phase < -100 ? 0.5 : sig_jurik_phase > 100 ? 2.5 : sig_jurik_phase / 100 + 1.5
+	sig_jma_beta       = 0.45 * (signal_smooth - 1) / (0.45 * (signal_smooth - 1) + 2)
+	sig_jma_alpha      = math.pow(sig_jma_beta, sig_jurik_power)
+	var float sig_jma_state = 0.0
+	var float sig_jma_e0 = 0.0
+	var float sig_jma_e1 = 0.0
+	var float sig_jma_e2 = 0.0
+	sig_jma_e0 := (1 - sig_jma_alpha) * rex_ma + sig_jma_alpha * nz(sig_jma_e0[1])
+	sig_jma_e1 := (rex_ma - sig_jma_e0) * (1 - sig_jma_beta) + sig_jma_beta * nz(sig_jma_e1[1])
+	sig_jma_e2 := (sig_jma_e0 + sig_jma_phaseRatio * sig_jma_e1 - nz(sig_jma_state[1])) * math.pow(1 - sig_jma_alpha, 2) + math.pow(sig_jma_alpha, 2) * nz(sig_jma_e2[1])
+	sig_jma_state := sig_jma_e2 + nz(sig_jma_state[1])
+	sig_jma_v = sig_jma_state
+
+	sig_lsma_v = ta.linreg(rex_ma, signal_smooth, sig_offset)
+
+	sig_mf_alpha = 2 / (signal_smooth + 1)
+	var float sig_mf_ts_state = 0.0
+	var float sig_mf_b_state  = 0.0
+	var float sig_mf_c_state  = 0.0
+	var float sig_mf_os_state = 0.0
+	sig_mf_a_in = sig_feedback ? sig_z * rex_ma + (1 - sig_z) * nz(sig_mf_ts_state[1], rex_ma) : rex_ma
+	sig_mf_b_state := sig_mf_a_in > sig_mf_alpha * sig_mf_a_in + (1 - sig_mf_alpha) * nz(sig_mf_b_state[1], sig_mf_a_in) ? sig_mf_a_in : sig_mf_alpha * sig_mf_a_in + (1 - sig_mf_alpha) * nz(sig_mf_b_state[1], sig_mf_a_in)
+	sig_mf_c_state := sig_mf_a_in < sig_mf_alpha * sig_mf_a_in + (1 - sig_mf_alpha) * nz(sig_mf_c_state[1], sig_mf_a_in) ? sig_mf_a_in : sig_mf_alpha * sig_mf_a_in + (1 - sig_mf_alpha) * nz(sig_mf_c_state[1], sig_mf_a_in)
+	sig_mf_os_state := sig_mf_a_in == sig_mf_b_state ? 1 : sig_mf_a_in == sig_mf_c_state ? 0 : nz(sig_mf_os_state[1])
+	sig_mf_upper = mf_sig_beta * sig_mf_b_state + (1 - mf_sig_beta) * sig_mf_c_state
+	sig_mf_lower = mf_sig_beta * sig_mf_c_state + (1 - mf_sig_beta) * sig_mf_b_state
+	sig_mf_ts_state := sig_mf_os_state * sig_mf_upper + (1 - sig_mf_os_state) * sig_mf_lower
+	sig_mf_v = sig_mf_ts_state
+
+	sig_rdma_sma_200 = ta.sma(rex_ma, 200)
+	sig_rdma_sma_100 = ta.sma(rex_ma, 100)
+	sig_rdma_sma_50  = ta.sma(rex_ma, 50)
+	sig_rdma_sma_24  = ta.sma(rex_ma, 24)
+	sig_rdma_sma_9   = ta.sma(rex_ma, 9)
+	sig_rdma_sma_5   = ta.sma(rex_ma, 5)
+	sig_rdma_v = (sig_rdma_sma_200 + sig_rdma_sma_100 + sig_rdma_sma_50 + sig_rdma_sma_24 + sig_rdma_sma_9 + sig_rdma_sma_5) / 6
+
+	sig_rma_v = ta.rma(rex_ma, signal_smooth)
+	sig_sma_v = ta.sma(rex_ma, signal_smooth)
+
+	sig_t3_xe1 = ta.ema(rex_ma, signal_smooth)
+	sig_t3_xe2 = ta.ema(sig_t3_xe1, signal_smooth)
+	sig_t3_xe3 = ta.ema(sig_t3_xe2, signal_smooth)
+	sig_t3_xe4 = ta.ema(sig_t3_xe3, signal_smooth)
+	sig_t3_xe5 = ta.ema(sig_t3_xe4, signal_smooth)
+	sig_t3_xe6 = ta.ema(sig_t3_xe5, signal_smooth)
+	sig_t3_b   = 0.7
+	sig_t3_c1  = -sig_t3_b * sig_t3_b * sig_t3_b
+	sig_t3_c2  = 3 * sig_t3_b * sig_t3_b + 3 * sig_t3_b * sig_t3_b * sig_t3_b
+	sig_t3_c3  = -6 * sig_t3_b * sig_t3_b - 3 * sig_t3_b - 3 * sig_t3_b * sig_t3_b * sig_t3_b
+	sig_t3_c4  = 1 + 3 * sig_t3_b + sig_t3_b * sig_t3_b * sig_t3_b + 3 * sig_t3_b * sig_t3_b
+	sig_t3_v   = sig_t3_c1 * sig_t3_xe6 + sig_t3_c2 * sig_t3_xe5 + sig_t3_c3 * sig_t3_xe4 + sig_t3_c4 * sig_t3_xe3
+
+	sig_tma_v = ta.sma(ta.sma(rex_ma, math.ceil(signal_smooth / 2)), math.floor(signal_smooth / 2) + 1)
+
+	sig_uma_sma_144 = ta.sma(rex_ma, 144)
+	sig_uma_sma_89  = ta.sma(rex_ma, 89)
+	sig_uma_sma_55  = ta.sma(rex_ma, 55)
+	sig_uma_sma_34  = ta.sma(rex_ma, 34)
+	sig_uma_sma_21  = ta.sma(rex_ma, 21)
+	sig_uma_sma_13  = ta.sma(rex_ma, 13)
+	sig_uma_sma_8   = ta.sma(rex_ma, 8)
+	sig_uma_sma_5   = ta.sma(rex_ma, 5)
+	sig_uma_v = (sig_uma_sma_144 + sig_uma_sma_89 + sig_uma_sma_55 + sig_uma_sma_34 + sig_uma_sma_21 + sig_uma_sma_13 + sig_uma_sma_8 + sig_uma_sma_5) / 8
+
+	sig_vama_mid    = ta.ema(rex_ma, signal_smooth)
+	sig_vama_dev    = rex_ma - sig_vama_mid
+	sig_vama_vol_up = ta.highest(sig_vama_dev, sig_volatility_lookback)
+	sig_vama_vol_dn = ta.lowest(sig_vama_dev, sig_volatility_lookback)
+	sig_vama_v      = sig_vama_mid + math.avg(sig_vama_vol_up, sig_vama_vol_dn)
+
+	sig_wma_v = ta.wma(rex_ma, signal_smooth)
+
+	signal_ma = switch sig_ma_type
+		'ALMA'  => sig_alma_v
+		'EMA'   => sig_ema_v
+		'DEMA'  => sig_dema_v
+		'TEMA'  => sig_tema_v
+		'FRAMA' => sig_frama_v
+		'HMA'   => sig_hma_v
+		'JMA'   => sig_jma_v
+		'LSMA'  => sig_lsma_v
+		'MF'    => sig_mf_v
+		'RDMA'  => sig_rdma_v
+		'RMA'   => sig_rma_v
+		'SMA'   => sig_sma_v
+		'T3'    => sig_t3_v
+		'TMA'   => sig_tma_v
+		'UMA'   => sig_uma_v
+		'VAMA'  => sig_vama_v
+		'WMA'   => sig_wma_v
+		=> 0.0
+
+	cross_up   = ta.crossover(rex_ma,  signal_ma)
+	cross_down = ta.crossunder(rex_ma, signal_ma)
+
+	RexconfLong  = rex_ma > signal_ma ? 1.0 : 0.0
+	RexconfShort = rex_ma < signal_ma ? 1.0 : 0.0
+	RexLongSignal  = cross_up   ? 1.0 : 0.0
+	RexShortSignal = cross_down ? 1.0 : 0.0
+
+	float[] rex_values = array.from(rex_ma, signal_ma, RexLongSignal, RexShortSignal, RexconfLong, RexconfShort)
+
+
+// @function Shaff Trend Cycle
+// @returns an array With the following Values: stc value, buysignal true =1.0, sellsignal true = 1.0
+export schaff_trend_cycle(simple int stc_macd_fast_length, simple int stc_macd_slow_length, int stc_cycle_length, simple int stc_1st_d_length, simple int stc_2nd_d_length, int stc_upper_hline, int stc_lower_hline) =>
+	fastLength = stc_macd_fast_length
+	slowLength = stc_macd_slow_length
+	cycleLength = stc_cycle_length
+	d1Length = stc_1st_d_length
+	d2Length = stc_2nd_d_length
+	src = close
+	STCupper = stc_upper_hline
+	STClower = stc_lower_hline
+	macd = ta.ema(src, fastLength) - ta.ema(src, slowLength)
+	k = nz(fixnan(ta.stoch(macd, macd, macd, cycleLength)))
+	d = ta.ema(k, d1Length)
+	kd = nz(fixnan(ta.stoch(d, d, d, cycleLength)))
+	stc = ta.ema(kd, d2Length)
+	stc := math.max(math.min(stc, 100), 0)
+
+	buySignal = ta.crossover(stc, STClower) ? 1.0 : 0.0
+	sellSignal = ta.crossunder(stc, STCupper) ? 1.0 : 0.0
+	float[] stc_values = array.from(stc,buySignal, sellSignal)
+
+
+// @function SSL Channel
+// @returns an array With the following Values: sslup, ssldown
+export ssl_channel(int ssl_length) =>
+	SSLlen = ssl_length
+	smaHigh = ta.sma(high, SSLlen)
+	smaLow = ta.sma(low, SSLlen)
+	Hlv = int(na)
+	Hlv := close > smaHigh ? 1 : close < smaLow ? -1 : Hlv[1]
+	sslDown = Hlv < 0 ? smaHigh : smaLow
+	sslUp = Hlv < 0 ? smaLow : smaHigh
+	float[] ssl_values = array.from(sslUp, sslDown)
+
+
+// @function Super Trend
+// @returns the Super Trend Value
+export supertrend(int st_atr_period, float st_factor) =>
+	[supertrend,direction] = ta.supertrend(st_factor,st_atr_period)
+
+
+// @function Trend Direction Force Index
+// @returns an array With the following Values: Tntdf, Tfilterhigh, TfilterLow
+export trend_direction_force_index(simple int tdfi_lookback, float tdfi_filter_high, float tdfi_filter_low) =>
+	Tlookback = tdfi_lookback
+	TfilterHigh = tdfi_filter_high
+	TfilterLow = tdfi_filter_low
+	Tprice = close
+
+	Tmma = ta.ema(Tprice * 1000, Tlookback)
+	Tsmma = ta.ema(Tmma, Tlookback)
+
+	Timpetmma = Tmma - Tmma[1]
+	Timpetsmma = Tsmma - Tsmma[1]
+	Tdivma = math.abs(Tmma - Tsmma)
+	Taverimpet = (Timpetmma + Timpetsmma) / 2
+
+	Tnumber = Taverimpet
+	Tpow = 3
+	Tresult = float(na)
+
+	for i = 1 to Tpow - 1 by 1
+		if i == 1
+			Tresult := Tnumber
+			Tresult
+		Tresult *= Tnumber
+		Tresult
+
+	Ttdf = Tdivma * Tresult
+	Tntdf = Ttdf / ta.highest(math.abs(Ttdf), Tlookback * 3)
+	float[] tdfi_values = array.from(Tntdf,TfilterHigh,TfilterLow)
+
+
+// @function Triangular Moving Average
+// @returns Triangular Moving Average Value
+export triangular_moving_average(int tma_length) =>
+	TMAlength = tma_length
+	TMAsrc = close
+
+	tma = ta.sma(ta.sma(TMAsrc, math.ceil(TMAlength / 2)), math.floor(TMAlength / 2) + 1)
+
+
+// @function Variance
+// @returns VVT Value, >1 = valid trade, <1 = not valid
+export variance(string v_mode, float v_hline_filter, string v_method, int v_lookback, int v_filter_lookback, simple int v_ema_lookback) =>
+	HP = v_mode
+	H_line = v_hline_filter
+	V_method = v_method
+	logr = math.log(close / close[1]) * 100
+	Vasrc = if HP == "Logarithmic Returns"
+		logr
+	else if HP == "Price"
+		close
+	else
+		na
+	Vsource = Vasrc
+	Vlookback = v_lookback
+	annual = 30
+
+	mean = ta.sma(Vsource, Vlookback)
+	s = array.new_float(0)
+	for i = 0 to Vlookback - 1 by 1
+		array.push(s, math.pow(Vsource[i] - mean, 2))
+	sum = array.sum(s)
+
+	variance = sum / (Vlookback - 1)
+	stdev = math.sqrt(variance)
+	emaperiod = 20
+	ema1 = ta.ema(variance, emaperiod)
+
+	source2 = variance
+	lookback2 = v_filter_lookback
+	length22 = v_ema_lookback
+	stdv = ta.stdev(source2, lookback2)
+	Vama = ta.sma(source2, lookback2)
+	zsc = (source2 - Vama) / stdv
+	Vaema = ta.ema(zsc, length22)
+
+	VVT = false
+
+	if V_method == "Variance" 
+		VVT := zsc > H_line ? true : false
+
+	if V_method == "Variance MA" 
+		VVT := Vaema > H_line ? true : false
+
+	if V_method == "MA > Variance" 
+		VVT := zsc > Vaema ? true : false
+	VVT
+
+
+// @function Vidya
+// @returns Vidya Value
+export vidya(int vda_length, bool vda_fixed_cmo_length, bool vda_calculation_method) =>
+	Vsrc = close
+	pds = vda_length
+	fixCMO = vda_fixed_cmo_length
+	select = vda_calculation_method
+	alpha = 2 / (pds + 1)
+	momm = ta.change(Vsrc)
+	m1 = momm >= 0.0 ? momm : 0.0
+	m2 = momm >= 0.0 ? 0.0 : -momm
+	// CW10004 fix: compute both sum variants unconditionally, then select.
+	sm1_fixed = math.sum(m1, 9)
+	sm1_var   = math.sum(m1, pds)
+	sm2_fixed = math.sum(m2, 9)
+	sm2_var   = math.sum(m2, pds)
+	sm1 = fixCMO ? sm1_fixed : sm1_var
+	sm2 = fixCMO ? sm2_fixed : sm2_var
+	chandeMO =nz(100*((sm1 - sm2)/(sm1 + sm2)))                                          
+	stdev_v = ta.stdev(Vsrc, pds)
+	Vk = select ? math.abs(chandeMO) / 100 : stdev_v
+	VIDYA = 0.0
+	VIDYA := nz(alpha * Vk * Vsrc) + (1 - alpha * Vk) * nz(VIDYA[1])
+	col12 = VIDYA > VIDYA[1]
+	col32 = VIDYA < VIDYA[1]
+	VIDYA
+
+
+// @function Volatility Quality
+// @returns an array with following items: val, mid, goLong(1.0 = true), goshort(1.0 = true)
+export volatility_quality(string vq_ma_type, simple int vq_source_smoothing, float vq_atr_percentage) =>
+	ma_type = vq_ma_type
+	inpPriceSmoothing = vq_source_smoothing
+	inpFilter = vq_atr_percentage
+
+	pclose_src = nz(close[1])
+
+	sma_high = ta.sma(high, inpPriceSmoothing)
+	sma_low  = ta.sma(low,  inpPriceSmoothing)
+	sma_cls  = ta.sma(close, inpPriceSmoothing)
+	sma_opn  = ta.sma(open,  inpPriceSmoothing)
+	sma_pcl  = ta.sma(pclose_src, inpPriceSmoothing)
+
+	ema_high = ta.ema(high, inpPriceSmoothing)
+	ema_low  = ta.ema(low,  inpPriceSmoothing)
+	ema_cls  = ta.ema(close, inpPriceSmoothing)
+	ema_opn  = ta.ema(open,  inpPriceSmoothing)
+	ema_pcl  = ta.ema(pclose_src, inpPriceSmoothing)
+
+	wma_high = ta.wma(high, inpPriceSmoothing)
+	wma_low  = ta.wma(low,  inpPriceSmoothing)
+	wma_cls  = ta.wma(close, inpPriceSmoothing)
+	wma_opn  = ta.wma(open,  inpPriceSmoothing)
+	wma_pcl  = ta.wma(pclose_src, inpPriceSmoothing)
+
+	rma_high = ta.rma(high, inpPriceSmoothing)
+	rma_low  = ta.rma(low,  inpPriceSmoothing)
+	rma_cls  = ta.rma(close, inpPriceSmoothing)
+	rma_opn  = ta.rma(open,  inpPriceSmoothing)
+	rma_pcl  = ta.rma(pclose_src, inpPriceSmoothing)
+
+	chigh  = switch ma_type
+		"SMA" => sma_high
+		"EMA" => ema_high
+		"WMA" => wma_high
+		"RMA" => rma_high
+		=> 0.0
+	clow   = switch ma_type
+		"SMA" => sma_low
+		"EMA" => ema_low
+		"WMA" => wma_low
+		"RMA" => rma_low
+		=> 0.0
+	cclose = switch ma_type
+		"SMA" => sma_cls
+		"EMA" => ema_cls
+		"WMA" => wma_cls
+		"RMA" => rma_cls
+		=> 0.0
+	copen  = switch ma_type
+		"SMA" => sma_opn
+		"EMA" => ema_opn
+		"WMA" => wma_opn
+		"RMA" => rma_opn
+		=> 0.0
+	pclose = switch ma_type
+		"SMA" => sma_pcl
+		"EMA" => ema_pcl
+		"WMA" => wma_pcl
+		"RMA" => rma_pcl
+		=> 0.0
+
+	trueRange = (chigh > pclose ? chigh : pclose) - (clow < pclose ? clow : pclose)
+	rng = chigh - clow
+
+	vqi = 0.
+	vqi := (rng > 0 and trueRange > 0) ? ((cclose - pclose) / trueRange + (cclose - copen) / rng) * 0.5 : (bar_index > 0) ? nz(vqi[1]) : 0
+	vqi := (bar_index > 0) ? (vqi > 0 ? vqi : -vqi) * (cclose - pclose + cclose - copen) * 0.5 : 0
+	val_raw = vqi
+
+	vqatr = ta.atr(inpPriceSmoothing)
+	var float val = 0.0
+	prev_val = nz(val[1])
+	delta = val_raw > prev_val ? val_raw - prev_val : prev_val - val_raw
+	val := (inpFilter > 0 and bar_index > 0 and delta < inpFilter * vqatr) ? prev_val : val_raw
+
+	valc = 0
+	valc := (val > 0) ? 1 : (val < 0) ? 2 : (bar_index > 0) ? nz(valc[1]) : 0
+
+	mid = 0.
+
+	goLong  = ta.crossover(val, mid)  ? 1.0 : 0.0
+	goShort = ta.crossunder(val, mid) ? 1.0 : 0.0
+
+	float[] vq_values = array.from(val, mid, goLong, goShort)
+
+
+// @function Volume Zone Oscillator
+// @returns an array with following items: vzo_val, long_conf, short_conf
+export volume_zone_oscillator(simple int vzo_length, bool vzo_smooth_enabled_, simple int vzo_smooth_, int vzo_nuetral_zone) =>
+	vzo_len = vzo_length
+	vzo_smooth_enabled = vzo_smooth_enabled_
+	vzo_smooth = vzo_smooth_
+
+	vzo_neutral = vzo_nuetral_zone
+
+	svol = open < close ? volume : -volume
+	vp = ta.ema(svol, vzo_len)
+	tv = ta.ema(volume, vzo_len)
+
+	vzo_raw = 100 * (vp / tv)
+
+	vzo_smoothed = ta.ema(vzo_raw, vzo_smooth)
+	vzo_val = vzo_smooth_enabled ? vzo_smoothed : vzo_raw
+
+	vzo_long_conf = vzo_val > (vzo_neutral/2) ? 1.0 : 0.0
+	vzo_short_conf = vzo_val < -(vzo_neutral/2) ? 1.0 : 0.0
+
+	float[] vzo_values = array.from(vzo_val, vzo_long_conf, vzo_short_conf)
+
+
+// @function Vortex Indicator
+// @returns an array with following items: VIP, VIM
+export vortex(int vx_length) =>
+	Vperiod_ = vx_length
+	VMP = math.sum( math.abs( high - low[1]), Vperiod_ )
+	VMM = math.sum( math.abs( low - high[1]), Vperiod_ )
+	STR = math.sum( ta.atr(1), Vperiod_ )
+	VIP = VMP / STR
+	VIM = VMM / STR
+	float[] vx_values = array.from(VIP,VIM)
+
+
+// @function Waddah Attar Explosion
+// @returns an array with following items: e1, WtrendUp, WtrendDown
+export waddah_attar_explosion(int wea_sensetivity, simple int wea_fast_ema_length, simple int wea_slow_length, int wea_bb_channel_length, float wea_stdev_multiplier) =>
+	Wsensitivity = wea_sensetivity
+	WfastLength = wea_fast_ema_length
+	WslowLength = wea_slow_length
+	WchannelLength = wea_bb_channel_length
+	Wmult = wea_stdev_multiplier
+
+	weafastMA = ta.ema(close, WfastLength)
+	weaslowMA = ta.ema(close, WslowLength)
+
+	weafastMA1 = ta.ema(close[1], WfastLength)
+	weaslowMA1 = ta.ema(close[1], WslowLength)
+
+	weafastMA2 = ta.ema(close[2], WfastLength)
+	weaslowMA2 = ta.ema(close[2], WslowLength)
+
+	weafastMA3 = ta.ema(close[3], WfastLength)
+	weaslowMA3 = ta.ema(close[3], WslowLength)
+
+	basisu = ta.sma(close, WchannelLength)
+	devu = Wmult * ta.stdev(close, WchannelLength)
+
+	basiss = ta.sma(close, WchannelLength)
+	devs = Wmult * ta.stdev(close, WchannelLength)
+
+	t1 = (weafastMA - weaslowMA) - (weafastMA1-weaslowMA1)*Wsensitivity
+	t2 = (weafastMA2 - weaslowMA2) - (weafastMA3 - weaslowMA3)*Wsensitivity
+
+	e1 = (basisu + devu) - (basiss - devs)
+
+	WtrendUp = (t1 >= 0) ? t1 : 0
+	WtrendDown = (t1 < 0) ? (-1*t1) : 0
+
+	float[] wea_values =  array.from(e1,WtrendUp,WtrendDown)
+
+
+// @function moving_average
+// @returns the value of the selected moving average
+export moving_average(string ma_type, simple int ma_length) =>
+	EMAsrc = close
+	hma_v  = ta.hma(EMAsrc, ma_length)
+	ema_v  = ta.ema(EMAsrc, ma_length)
+	rma_v  = ta.rma(EMAsrc, ma_length)
+	wma_v  = ta.wma(EMAsrc, ma_length)
+	vwma_v = ta.vwma(EMAsrc, ma_length)
+	EMAout = switch ma_type
+		"HMA"  => hma_v
+		"EMA"  => ema_v
+		"RMA"  => rma_v
+		"WMA"  => wma_v
+		"VWMA" => vwma_v
+		=> 0.0
+	EMAout
+
+
+// ============================================================================
+// V3 SIGNAL HELPERS
+// ============================================================================
+// One helper per indicator. Each returns a 4-tuple [long_trig, short_trig,
+// long_conf, short_conf] for confirmation indicators, a 2-tuple
+// [long_conf, short_conf] for volume indicators, and a 2-tuple
+// [long_exit, short_exit] for exit indicators.
+// ============================================================================
+
+// ----- Confirmation Indicator Helpers (4-tuple: lt, st, lc, sc) -----
+
+export chaikin_money_flow_signals(int lookback) =>
+	v = chaikin_money_flow(lookback)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export chandelier_exit_signals(simple int atr_period, float atr_mult, bool use_close) =>
+	a = chandelier_exit(atr_period, atr_mult, use_close)
+	ce_long  = array.get(a, 0)
+	ce_short = array.get(a, 1)
+	ce_bs    = array.get(a, 2)
+	lt = ce_bs == 1.0
+	st = ce_bs == -1.0
+	lc = close > ce_long
+	sc = close < ce_short
+	[lt, st, lc, sc]
+
+export coppock_curve_signals(int smooth_len, int long_roc, int short_roc) =>
+	v = coppock_curve(smooth_len, long_roc, short_roc)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export coral_signals(int smooth_period, float const_d) =>
+	v = coral(smooth_period, const_d)
+	lt = v[1] == 0 and v == 1
+	st = v[1] == 1 and v == 0
+	lc = v == 1
+	sc = v == 0
+	[lt, st, lc, sc]
+
+export didi_index_signals(int medium, int long_p) =>
+	v = didi_index(medium, long_p)
+	lt = v[1] >= 1 and v < 1
+	st = v[1] <= 1 and v > 1
+	lc = v < 1
+	sc = v > 1
+	[lt, st, lc, sc]
+
+export dpo_signals(int len, bool centered) =>
+	v = dpo(len, centered)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export dspo_signals(int len) =>
+	v = detrended_synthetic_price_oscillator(len)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export ease_of_movement_signals(int len, int divisor) =>
+	v = ease_of_movement(len, divisor)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export halftrend_signals(int amplitude) =>
+	a = halftrend(amplitude)
+	ht_conf  = array.get(a, 0)
+	ht_long  = array.get(a, 1)
+	ht_short = array.get(a, 2)
+	lt = ht_long == 1.0
+	st = ht_short == 1.0
+	lc = ht_conf == 0
+	sc = ht_conf != 0
+	[lt, st, lc, sc]
+
+export hieken_ashi_smoothed_signals(float ha_o, float ha_h, float ha_l, float ha_c, string ma_type1, simple int ma_len1, string ma_type2, simple int ma_len2, bool single_smooth, float vol_factor1, simple float alma_offset1, simple float alma_sigma1, simple int lsma_offset1, float ama_smooth1, int frama_t1_a, int frama_t1_b, float vol_factor2, simple float alma_offset2, simple float alma_sigma2, simple int lsma_offset2, float ama_smooth2, int frama_t2_a, int frama_t2_b) =>
+	a = hieken_ashi_smoothed(ha_o, ha_h, ha_l, ha_c, ma_type1, ma_len1, ma_type2, ma_len2, single_smooth, vol_factor1, alma_offset1, alma_sigma1, lsma_offset1, ama_smooth1, frama_t1_a, frama_t1_b, vol_factor2, alma_offset2, alma_sigma2, lsma_offset2, ama_smooth2, frama_t2_a, frama_t2_b)
+	hl = array.get(a, 0)
+	hs = array.get(a, 1)
+	hlc = array.get(a, 2)
+	hsc = array.get(a, 3)
+	lt = hl == 1
+	st = hs == 1
+	lc = hlc == 1
+	sc = hsc == 1
+	[lt, st, lc, sc]
+
+export j_tpo_signals(int len, simple int ema_len, bool ema_filter) =>
+	a = j_tpo_indicator(len, ema_len, ema_filter)
+	j_v   = array.get(a, 0)
+	j_buy = array.get(a, 1)
+	j_sell = array.get(a, 2)
+	lt = j_buy == 1.0
+	st = j_sell == 1.0
+	lc = j_v > 0
+	sc = j_v < 0
+	[lt, st, lc, sc]
+
+export kalman_filter_signals(float sharpness, float k) =>
+	a = kalman_filter(sharpness, k)
+	k_v   = array.get(a, 0)
+	k_buy = array.get(a, 1)
+	k_sell = array.get(a, 2)
+	lt = k_buy == 1.0
+	st = k_sell == 1.0
+	lc = k_v > 0
+	sc = k_v < 0
+	[lt, st, lc, sc]
+
+export kase_peak_oscillator_signals(int short_cycle, int long_cycle, float sharpness) =>
+	v = kase_peak_oscillator(short_cycle, long_cycle, sharpness)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export laguerre_filter_signals(float alpha) =>
+	a = laguerre_filter(alpha)
+	lf_long_sig   = array.get(a, 1)
+	lf_short_sig  = array.get(a, 2)
+	lf_long_conf  = array.get(a, 3)
+	lf_short_conf = array.get(a, 4)
+	lt = lf_long_sig == 1.0
+	st = lf_short_sig == 1.0
+	lc = lf_long_conf == 1.0
+	sc = lf_short_conf == 1.0
+	[lt, st, lc, sc]
+
+export price_momentum_oscillator_signals(int s1, int s2, int sig) =>
+	v = price_momentum_oscillator(s1, s2, sig)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export polychromatic_momentum_signals(int len) =>
+	v = polychromatic_momentum(len)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export qqe_mod_signals(simple int rsi_period, simple int rsi_len, float fast_factor) =>
+	v = qqe_mod(rsi_period, rsi_len, fast_factor)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export relative_vigor_index_signals(int len) =>
+	a = relative_vigor_index(len)
+	rvi_v = array.get(a, 0)
+	rvi_s = array.get(a, 1)
+	lt = rvi_s > rvi_v and rvi_s[1] < rvi_v[1]
+	st = rvi_s < rvi_v and rvi_s[1] > rvi_v[1]
+	lc = rvi_s > rvi_v
+	sc = rvi_s < rvi_v
+	[lt, st, lc, sc]
+
+export rex_oscillator_signals(string maType, simple int smooth, simple float almaOffset, simple float almaSigma, int framaFast, int framaSlow, int jurikPhase, int jurikPower, simple int lsOffset, float modFilter, bool modFB, float modFBW, int volAdj, string sigMaType, simple int sigSmooth, simple float sigAlmaOff, simple float sigAlmaSig, int sigFramaFast, int sigFramaSlow, int sigJurikPhase, int sigJurikPower, simple int sigLsOff, float sigModFilter, bool sigModFB, float sigModFBW, int sigVolAdj) =>
+	a = rex_oscillator(maType, smooth, almaOffset, almaSigma, framaFast, framaSlow, jurikPhase, jurikPower, lsOffset, modFilter, modFB, modFBW, volAdj, sigMaType, sigSmooth, sigAlmaOff, sigAlmaSig, sigFramaFast, sigFramaSlow, sigJurikPhase, sigJurikPower, sigLsOff, sigModFilter, sigModFB, sigModFBW, sigVolAdj)
+	rex_long_sig  = array.get(a, 2)
+	rex_short_sig = array.get(a, 3)
+	rex_long_conf = array.get(a, 4)
+	rex_short_conf = array.get(a, 5)
+	lt = rex_long_sig == 1.0
+	st = rex_short_sig == 1.0
+	lc = rex_long_conf == 1.0
+	sc = rex_short_conf == 1.0
+	[lt, st, lc, sc]
+
+export schaff_trend_cycle_signals(simple int macdFast, simple int macdSlow, int cycleLen, simple int d1, simple int d2, int upperBand, int lowerBand) =>
+	a = schaff_trend_cycle(macdFast, macdSlow, cycleLen, d1, d2, upperBand, lowerBand)
+	stc_v = array.get(a, 0)
+	stc_b = array.get(a, 1)
+	stc_s = array.get(a, 2)
+	lt = stc_b == 1.0
+	st = stc_s == 1.0
+	lc = stc_v > lowerBand
+	sc = stc_v < upperBand
+	[lt, st, lc, sc]
+
+export ssl_channel_signals(int len) =>
+	a = ssl_channel(len)
+	ssl_up   = array.get(a, 0)
+	ssl_down = array.get(a, 1)
+	lt = ta.crossover(ssl_up, ssl_down)
+	st = ta.crossunder(ssl_up, ssl_down)
+	lc = ssl_up > ssl_down
+	sc = ssl_up < ssl_down
+	[lt, st, lc, sc]
+
+export supertrend_signals(simple float factor, simple int atr_period) =>
+	[stv, dir] = ta.supertrend(factor, atr_period)
+	lt = dir > 0 and dir[1] < 0
+	st = dir < 0 and dir[1] > 0
+	lc = dir > 0
+	sc = dir < 0
+	[lt, st, lc, sc]
+
+export trend_direction_force_index_signals(simple int lookback, float fhigh, float flow) =>
+	a = trend_direction_force_index(lookback, fhigh, flow)
+	tdfi = array.get(a, 0)
+	fH   = array.get(a, 1)
+	fL   = array.get(a, 2)
+	lt = ta.crossover(tdfi, fH)
+	st = ta.crossunder(tdfi, fL)
+	lc = tdfi > fH
+	sc = tdfi < fL
+	[lt, st, lc, sc]
+
+export volatility_quality_signals(string ma_type, simple int smooth, float atr_pct) =>
+	a = volatility_quality(ma_type, smooth, atr_pct)
+	vq_v   = array.get(a, 0)
+	vq_mid = array.get(a, 1)
+	vq_long  = array.get(a, 2)
+	vq_short = array.get(a, 3)
+	lt = vq_long == 1.0
+	st = vq_short == 1.0
+	lc = vq_v > vq_mid
+	sc = vq_v < vq_mid
+	[lt, st, lc, sc]
+
+export vortex_signals(int period) =>
+	a = vortex(period)
+	vip = array.get(a, 0)
+	vim = array.get(a, 1)
+	lt = vip > vim and vip[1] < vim[1]
+	st = vip < vim and vip[1] > vim[1]
+	lc = vip > vim
+	sc = vip < vim
+	[lt, st, lc, sc]
+
+export waddah_attar_explosion_signals(int sensitivity, simple int fastEma, simple int slowEma, int bbLen, float bbStd) =>
+	a = waddah_attar_explosion(sensitivity, fastEma, slowEma, bbLen, bbStd)
+	e1   = array.get(a, 0)
+	wUp   = array.get(a, 1)
+	wDown = array.get(a, 2)
+	lt = ta.crossover(wUp, e1)
+	st = ta.crossover(wDown, e1)
+	lc = wUp > e1
+	sc = wDown > e1
+	[lt, st, lc, sc]
+
+// ----- Volume Indicator Helpers (2-tuple: lc, sc) -----
+
+export chaikin_oscillator_volume_signals(int fast_len, int slow_len) =>
+	v = chaikin_oscillator(fast_len, slow_len)
+	pass = not na(v)
+	[pass, pass]
+
+export chaikin_volatility_volume_signals(int cvi_len, int roc_len) =>
+	v = chaikin_volatility(cvi_len, roc_len)
+	pass = not na(v)
+	[pass, pass]
+
+export elders_force_index_volume_signals(int len) =>
+	v = elders_force_index(len)
+	pass = not na(v)
+	[pass, pass]
+
+export normalized_volume_volume_signals(int vol_period) =>
+	v = normalized_volume(vol_period)
+	pass = v > 0
+	[pass, pass]
+
+export variance_volume_signals(string mode, float hline, string method, int lookback, int filter_lookback, simple int ema_len) =>
+	v = variance(mode, hline, method, lookback, filter_lookback, ema_len)
+	[v, v]
+
+export volume_zone_oscillator_volume_signals(simple int len, bool smooth, simple int smooth_len, int neutral_zone) =>
+	a = volume_zone_oscillator(len, smooth, smooth_len, neutral_zone)
+	vzo_lc = array.get(a, 1)
+	vzo_sc = array.get(a, 2)
+	lc = vzo_lc == 1.0
+	sc = vzo_sc == 1.0
+	[lc, sc]
+
+export waddah_attar_explosion_volume_signals(int sensitivity, simple int fastEma, simple int slowEma, int bbLen, float bbStd) =>
+	a = waddah_attar_explosion(sensitivity, fastEma, slowEma, bbLen, bbStd)
+	e1    = array.get(a, 0)
+	wUp   = array.get(a, 1)
+	wDown = array.get(a, 2)
+	lc = wUp > e1
+	sc = wDown > e1
+	[lc, sc]
+
+// ----- Exit Indicator Helpers (2-tuple: long_exit_signal, short_exit_signal) -----
+
+export chaikin_money_flow_exit(int lookback) =>
+	v = chaikin_money_flow(lookback)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export chandelier_exit_exit(simple int atr_period, float atr_mult, bool use_close) =>
+	a = chandelier_exit(atr_period, atr_mult, use_close)
+	bs = array.get(a, 2)
+	le = bs == -1.0
+	se = bs == 1.0
+	[le, se]
+
+export coppock_curve_exit(int smooth_len, int long_roc, int short_roc) =>
+	v = coppock_curve(smooth_len, long_roc, short_roc)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export coral_exit(int smooth_period, float const_d) =>
+	v = coral(smooth_period, const_d)
+	le = v[1] == 1 and v == 0
+	se = v[1] == 0 and v == 1
+	[le, se]
+
+export didi_index_exit(int medium, int long_p) =>
+	v = didi_index(medium, long_p)
+	le = v[1] < 1 and v > 1
+	se = v[1] > 1 and v < 1
+	[le, se]
+
+export dpo_exit(int len, bool centered) =>
+	v = dpo(len, centered)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export dspo_exit(int len) =>
+	v = detrended_synthetic_price_oscillator(len)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export ease_of_movement_exit(int len, int divisor) =>
+	v = ease_of_movement(len, divisor)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export halftrend_exit(int amplitude) =>
+	a = halftrend(amplitude)
+	ht_long  = array.get(a, 1)
+	ht_short = array.get(a, 2)
+	le = ht_short == 1.0
+	se = ht_long == 1.0
+	[le, se]
+
+export hieken_ashi_smoothed_exit(float ha_o, float ha_h, float ha_l, float ha_c, string ma_type1, simple int ma_len1, string ma_type2, simple int ma_len2, bool single_smooth, float vol_factor1, simple float alma_offset1, simple float alma_sigma1, simple int lsma_offset1, float ama_smooth1, int frama_t1_a, int frama_t1_b, float vol_factor2, simple float alma_offset2, simple float alma_sigma2, simple int lsma_offset2, float ama_smooth2, int frama_t2_a, int frama_t2_b) =>
+	a = hieken_ashi_smoothed(ha_o, ha_h, ha_l, ha_c, ma_type1, ma_len1, ma_type2, ma_len2, single_smooth, vol_factor1, alma_offset1, alma_sigma1, lsma_offset1, ama_smooth1, frama_t1_a, frama_t1_b, vol_factor2, alma_offset2, alma_sigma2, lsma_offset2, ama_smooth2, frama_t2_a, frama_t2_b)
+	hl = array.get(a, 0)
+	hs = array.get(a, 1)
+	le = hs == 1
+	se = hl == 1
+	[le, se]
+
+export j_tpo_exit(int len, simple int ema_len, bool ema_filter) =>
+	a = j_tpo_indicator(len, ema_len, ema_filter)
+	j_buy = array.get(a, 1)
+	j_sell = array.get(a, 2)
+	le = j_sell == 1.0
+	se = j_buy == 1.0
+	[le, se]
+
+export kalman_filter_exit(float sharpness, float k) =>
+	a = kalman_filter(sharpness, k)
+	k_buy = array.get(a, 1)
+	k_sell = array.get(a, 2)
+	le = k_sell == 1.0
+	se = k_buy == 1.0
+	[le, se]
+
+export kase_peak_oscillator_exit(int short_cycle, int long_cycle, float sharpness) =>
+	v = kase_peak_oscillator(short_cycle, long_cycle, sharpness)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export laguerre_filter_exit(float alpha) =>
+	a = laguerre_filter(alpha)
+	lf_long_sig   = array.get(a, 1)
+	lf_short_sig  = array.get(a, 2)
+	le = lf_short_sig == 1.0
+	se = lf_long_sig == 1.0
+	[le, se]
+
+export price_momentum_oscillator_exit(int s1, int s2, int sig) =>
+	v = price_momentum_oscillator(s1, s2, sig)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export polychromatic_momentum_exit(int len) =>
+	v = polychromatic_momentum(len)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export qqe_mod_exit(simple int rsi_period, simple int rsi_len, float fast_factor) =>
+	v = qqe_mod(rsi_period, rsi_len, fast_factor)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+export relative_vigor_index_exit(int len) =>
+	a = relative_vigor_index(len)
+	rvi_v = array.get(a, 0)
+	rvi_s = array.get(a, 1)
+	le = rvi_s < rvi_v and rvi_s[1] > rvi_v[1]
+	se = rvi_s > rvi_v and rvi_s[1] < rvi_v[1]
+	[le, se]
+
+export rex_oscillator_exit(string maType, simple int smooth, simple float almaOffset, simple float almaSigma, int framaFast, int framaSlow, int jurikPhase, int jurikPower, simple int lsOffset, float modFilter, bool modFB, float modFBW, int volAdj, string sigMaType, simple int sigSmooth, simple float sigAlmaOff, simple float sigAlmaSig, int sigFramaFast, int sigFramaSlow, int sigJurikPhase, int sigJurikPower, simple int sigLsOff, float sigModFilter, bool sigModFB, float sigModFBW, int sigVolAdj) =>
+	a = rex_oscillator(maType, smooth, almaOffset, almaSigma, framaFast, framaSlow, jurikPhase, jurikPower, lsOffset, modFilter, modFB, modFBW, volAdj, sigMaType, sigSmooth, sigAlmaOff, sigAlmaSig, sigFramaFast, sigFramaSlow, sigJurikPhase, sigJurikPower, sigLsOff, sigModFilter, sigModFB, sigModFBW, sigVolAdj)
+	rex_long_sig  = array.get(a, 2)
+	rex_short_sig = array.get(a, 3)
+	le = rex_long_sig == 1.0
+	se = rex_short_sig == 1.0
+	[le, se]
+
+export schaff_trend_cycle_exit(simple int macdFast, simple int macdSlow, int cycleLen, simple int d1, simple int d2, int upperBand, int lowerBand) =>
+	a = schaff_trend_cycle(macdFast, macdSlow, cycleLen, d1, d2, upperBand, lowerBand)
+	stc_b = array.get(a, 1)
+	stc_s = array.get(a, 2)
+	le = stc_s == 1.0
+	se = stc_b == 1.0
+	[le, se]
+
+export ssl_channel_exit(int len) =>
+	a = ssl_channel(len)
+	ssl_up   = array.get(a, 0)
+	ssl_down = array.get(a, 1)
+	le = ta.crossunder(ssl_up, ssl_down)
+	se = ta.crossover(ssl_up, ssl_down)
+	[le, se]
+
+export supertrend_exit(simple float factor, simple int atr_period) =>
+	[stv, dir] = ta.supertrend(factor, atr_period)
+	le = dir < 0 and dir[1] > 0
+	se = dir > 0 and dir[1] < 0
+	[le, se]
+
+export trend_direction_force_index_exit(simple int lookback, float fhigh, float flow) =>
+	a = trend_direction_force_index(lookback, fhigh, flow)
+	tdfi = array.get(a, 0)
+	fH   = array.get(a, 1)
+	fL   = array.get(a, 2)
+	le = ta.crossunder(tdfi, fL)
+	se = ta.crossover(tdfi, fH)
+	[le, se]
+
+export volatility_quality_exit(string ma_type, simple int smooth, float atr_pct) =>
+	a = volatility_quality(ma_type, smooth, atr_pct)
+	vq_long  = array.get(a, 2)
+	vq_short = array.get(a, 3)
+	le = vq_short == 1.0
+	se = vq_long == 1.0
+	[le, se]
+
+export vortex_exit(int period) =>
+	a = vortex(period)
+	vip = array.get(a, 0)
+	vim = array.get(a, 1)
+	le = vip < vim and vip[1] > vim[1]
+	se = vip > vim and vip[1] < vim[1]
+	[le, se]
+
+export waddah_attar_explosion_exit(int sensitivity, simple int fastEma, simple int slowEma, int bbLen, float bbStd) =>
+	a = waddah_attar_explosion(sensitivity, fastEma, slowEma, bbLen, bbStd)
+	e1    = array.get(a, 0)
+	wUp   = array.get(a, 1)
+	wDown = array.get(a, 2)
+	le = ta.crossover(wDown, e1)
+	se = ta.crossover(wUp, e1)
+	[le, se]
+
+
+// ============================================================================
+// V5 ADDITIONS — Five new C1/C2/Exit-eligible confirmation indicators
+// ============================================================================
+
+// ----- Fisher Transform (Ehlers, S&C Sept 2002) -----
+export fisher_transform(simple int length) =>
+	src = hl2
+	high_n = ta.highest(src, length)
+	low_n  = ta.lowest(src, length)
+	rng    = high_n - low_n
+	raw    = rng == 0 ? 0.0 : 0.66 * ((src - low_n) / rng - 0.5)
+	value = 0.0
+	value := 0.67 * raw + 0.33 * nz(value[1])
+	clamped = value > 0.999 ? 0.999 : value < -0.999 ? -0.999 : value
+	fisher = 0.0
+	fisher := 0.5 * math.log((1 + clamped) / (1 - clamped)) + 0.5 * nz(fisher[1])
+	trigger = nz(fisher[1])
+	[fisher, trigger]
+
+export fisher_transform_signals(simple int length) =>
+	[f, t] = fisher_transform(length)
+	lt = ta.crossover(f, t)
+	st = ta.crossunder(f, t)
+	lc = f > t
+	sc = f < t
+	[lt, st, lc, sc]
+
+export fisher_transform_exit(simple int length) =>
+	[f, t] = fisher_transform(length)
+	le = ta.crossunder(f, t)
+	se = ta.crossover(f, t)
+	[le, se]
+
+
+// ----- Aroon Up/Down (Tushar Chande, 1995) -----
+export aroon_updown(int length) =>
+	upper = 100 * (length - ta.highestbars(high, length + 1)) / length
+	lower = 100 * (length - ta.lowestbars(low, length + 1)) / length
+	[upper, lower]
+
+export aroon_signals(int length) =>
+	[up, dn] = aroon_updown(length)
+	lt = ta.crossover(up, dn)
+	st = ta.crossunder(up, dn)
+	lc = up > dn
+	sc = up < dn
+	[lt, st, lc, sc]
+
+export aroon_exit(int length) =>
+	[up, dn] = aroon_updown(length)
+	le = ta.crossunder(up, dn)
+	se = ta.crossover(up, dn)
+	[le, se]
+
+
+// ----- MAMA / FAMA (Ehlers, S&C V19:10, Oct 2001) -----
+export mama_fama(simple float fast_limit, simple float slow_limit) =>
+	src = hl2
+
+	smooth = 0.0
+	detrender = 0.0
+	period = 0.0
+	smoothperiod = 0.0
+	i1 = 0.0
+	q1 = 0.0
+	jI = 0.0
+	jQ = 0.0
+	i2 = 0.0
+	q2 = 0.0
+	re_v = 0.0
+	im_v = 0.0
+	phase = 0.0
+	deltaphase = 0.0
+	alpha = 0.0
+	mama = 0.0
+	fama = 0.0
+
+	if bar_index > 5
+		smooth := (4 * src + 3 * nz(src[1]) + 2 * nz(src[2]) + nz(src[3])) / 10
+		period_factor = 0.075 * nz(period[1]) + 0.54
+		detrender := (0.0962 * smooth + 0.5769 * nz(smooth[2]) - 0.5769 * nz(smooth[4]) - 0.0962 * nz(smooth[6])) * period_factor
+
+		q1 := (0.0962 * detrender + 0.5769 * nz(detrender[2]) - 0.5769 * nz(detrender[4]) - 0.0962 * nz(detrender[6])) * period_factor
+		i1 := nz(detrender[3])
+
+		jI := (0.0962 * i1 + 0.5769 * nz(i1[2]) - 0.5769 * nz(i1[4]) - 0.0962 * nz(i1[6])) * period_factor
+		jQ := (0.0962 * q1 + 0.5769 * nz(q1[2]) - 0.5769 * nz(q1[4]) - 0.0962 * nz(q1[6])) * period_factor
+
+		i2 := i1 - jQ
+		q2 := q1 + jI
+		i2 := 0.2 * i2 + 0.8 * nz(i2[1])
+		q2 := 0.2 * q2 + 0.8 * nz(q2[1])
+
+		re_v := i2 * nz(i2[1]) + q2 * nz(q2[1])
+		im_v := i2 * nz(q2[1]) - q2 * nz(i2[1])
+		re_v := 0.2 * re_v + 0.8 * nz(re_v[1])
+		im_v := 0.2 * im_v + 0.8 * nz(im_v[1])
+
+		if im_v != 0 and re_v != 0
+			period := 2 * math.pi / math.atan(im_v / re_v)
+		period := period > 1.5 * nz(period[1]) ? 1.5 * nz(period[1]) : period
+		period := period < 0.67 * nz(period[1]) ? 0.67 * nz(period[1]) : period
+		period := period < 6 ? 6 : period
+		period := period > 50 ? 50 : period
+		period := 0.2 * period + 0.8 * nz(period[1])
+		smoothperiod := 0.33 * period + 0.67 * nz(smoothperiod[1])
+
+		if i1 != 0
+			phase := math.atan(q1 / i1) * 180 / math.pi
+		deltaphase := nz(phase[1]) - phase
+		deltaphase := deltaphase < 1 ? 1 : deltaphase
+
+		alpha := fast_limit / deltaphase
+		alpha := alpha < slow_limit ? slow_limit : alpha
+		alpha := alpha > fast_limit ? fast_limit : alpha
+
+		mama := alpha * src + (1 - alpha) * nz(mama[1])
+		fama := 0.5 * alpha * mama + (1 - 0.5 * alpha) * nz(fama[1])
+
+	[mama, fama]
+
+export mama_fama_signals(simple float fast_limit, simple float slow_limit) =>
+	[m, f] = mama_fama(fast_limit, slow_limit)
+	lt = ta.crossover(m, f)
+	st = ta.crossunder(m, f)
+	lc = m > f
+	sc = m < f
+	[lt, st, lc, sc]
+
+export mama_fama_exit(simple float fast_limit, simple float slow_limit) =>
+	[m, f] = mama_fama(fast_limit, slow_limit)
+	le = ta.crossunder(m, f)
+	se = ta.crossover(m, f)
+	[le, se]
+
+
+// ----- Center of Gravity Oscillator (Ehlers, S&C May 2002) -----
+export center_of_gravity(int length, simple int signal_length) =>
+	src = hl2
+	num = 0.0
+	den = 0.0
+	for i = 0 to length - 1
+		num += (1 + i) * nz(src[i])
+		den += nz(src[i])
+	cog = den != 0 ? -num / den + (length + 1) / 2.0 : 0.0
+	signal = ta.sma(cog, signal_length)
+	[cog, signal]
+
+export center_of_gravity_signals(int length, simple int signal_length) =>
+	[c, s] = center_of_gravity(length, signal_length)
+	lt = ta.crossover(c, s)
+	st = ta.crossunder(c, s)
+	lc = c > s
+	sc = c < s
+	[lt, st, lc, sc]
+
+export center_of_gravity_exit(int length, simple int signal_length) =>
+	[c, s] = center_of_gravity(length, signal_length)
+	le = ta.crossunder(c, s)
+	se = ta.crossover(c, s)
+	[le, se]
+
+
+// ----- Kuskus Starlight (FX-native, ~2007) -----
+export kuskus_starlight(int range_periods, float price_smooth, float index_smooth) =>
+	high_n = ta.highest(high, range_periods)
+	low_n  = ta.lowest(low,  range_periods)
+	rng    = high_n - low_n
+
+	raw = rng == 0 ? 0.0 : (close - low_n) / rng - 0.5
+
+	smoothed = 0.0
+	smoothed := price_smooth * raw + (1 - price_smooth) * nz(smoothed[1], raw)
+
+	clamped = smoothed > 0.499 ? 0.499 : smoothed < -0.499 ? -0.499 : smoothed
+	fisher_raw = 0.5 * math.log((1 + 2 * clamped) / (1 - 2 * clamped))
+
+	starlight = 0.0
+	starlight := index_smooth * fisher_raw + (1 - index_smooth) * nz(starlight[1], fisher_raw)
+	starlight
+
+export kuskus_starlight_signals(int range_periods, float price_smooth, float index_smooth) =>
+	v = kuskus_starlight(range_periods, price_smooth, index_smooth)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export kuskus_starlight_exit(int range_periods, float price_smooth, float index_smooth) =>
+	v = kuskus_starlight(range_periods, price_smooth, index_smooth)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+
+// ============================================================================
+// V6 ADDITIONS — Five more C1/C2/Exit-eligible indicators (C2-leaning)
+// ============================================================================
+
+// ----- Bears Bulls Impulse (Elder Ray adaptation, Stonehill-tested 2024) -----
+export bears_bulls_impulse(int length) =>
+	bulls = high - ta.ema(close, length)
+	bears = low  - ta.ema(close, length)
+	[bulls, bears]
+
+export bears_bulls_impulse_signals(int length) =>
+	[bulls, bears] = bears_bulls_impulse(length)
+	lt = bears[1] < 0 and bears > 0
+	st = bulls[1] > 0 and bulls < 0
+	lc = bears > 0
+	sc = bulls < 0
+	[lt, st, lc, sc]
+
+export bears_bulls_impulse_exit(int length) =>
+	[bulls, bears] = bears_bulls_impulse(length)
+	le = bulls[1] > 0 and bulls < 0
+	se = bears[1] < 0 and bears > 0
+	[le, se]
+
+
+// ----- FX Sniper Ergodic CCI (FX-native, Mladen ~2007) -----
+export fx_sniper_ergodic_cci(int cci_length, simple int ema1_length, simple int ema2_length, int trigger_length) =>
+	cci_v = ta.cci(close, cci_length)
+	ema1  = ta.ema(cci_v, ema1_length)
+	ema2  = ta.ema(ema1, ema2_length)
+	trig  = ta.sma(ema2, trigger_length)
+	[ema2, trig]
+
+export fx_sniper_ergodic_cci_signals(int cci_length, simple int ema1_length, simple int ema2_length, int trigger_length) =>
+	[main, trig] = fx_sniper_ergodic_cci(cci_length, ema1_length, ema2_length, trigger_length)
+	lt = ta.crossover(main, trig)
+	st = ta.crossunder(main, trig)
+	lc = main > trig
+	sc = main < trig
+	[lt, st, lc, sc]
+
+export fx_sniper_ergodic_cci_exit(int cci_length, simple int ema1_length, simple int ema2_length, int trigger_length) =>
+	[main, trig] = fx_sniper_ergodic_cci(cci_length, ema1_length, ema2_length, trigger_length)
+	le = ta.crossunder(main, trig)
+	se = ta.crossover(main, trig)
+	[le, se]
+
+
+// ----- Lemantrend (MQL5 2009, Stonehill-tested) -----
+export lemantrend(int slow_period, int medium_period, int fast_period, simple int smooth) =>
+	src = close
+	slow_ma = ta.ema(src, slow_period)
+	med_ma  = ta.ema(src, medium_period)
+	fast_ma = ta.ema(src, fast_period)
+
+	bulls_raw = (fast_ma - med_ma) + (med_ma - slow_ma)
+	bears_raw = (slow_ma - med_ma) + (med_ma - fast_ma)
+
+	bulls = ta.ema(bulls_raw, smooth)
+	bears = ta.ema(bears_raw, smooth)
+	[bulls, bears]
+
+export lemantrend_signals(int slow_period, int medium_period, int fast_period, simple int smooth) =>
+	[bulls, bears] = lemantrend(slow_period, medium_period, fast_period, smooth)
+	lt = ta.crossover(bulls, bears)
+	st = ta.crossunder(bulls, bears)
+	lc = bulls > bears
+	sc = bulls < bears
+	[lt, st, lc, sc]
+
+export lemantrend_exit(int slow_period, int medium_period, int fast_period, simple int smooth) =>
+	[bulls, bears] = lemantrend(slow_period, medium_period, fast_period, smooth)
+	le = ta.crossunder(bulls, bears)
+	se = ta.crossover(bulls, bears)
+	[le, se]
+
+
+// ----- Glitch Index (Stonehill-tested 2024) -----
+export glitch_index(int length, float multiplier, simple int smooth) =>
+	src = close
+	ma_v   = ta.sma(src, length)
+	dev    = ta.stdev(src, length)
+	z      = dev != 0 ? (src - ma_v) / dev : 0.0
+	scaled = z * multiplier
+	smoothed = ta.ema(scaled, smooth)
+	smoothed
+
+export glitch_index_signals(int length, float multiplier, simple int smooth) =>
+	v = glitch_index(length, multiplier, smooth)
+	lt = v[1] < 0 and v > 0
+	st = v[1] > 0 and v < 0
+	lc = v > 0
+	sc = v < 0
+	[lt, st, lc, sc]
+
+export glitch_index_exit(int length, float multiplier, simple int smooth) =>
+	v = glitch_index(length, multiplier, smooth)
+	le = v[1] > 0 and v < 0
+	se = v[1] < 0 and v > 0
+	[le, se]
+
+
+// ----- Ehlers Reverse EMA (Ehlers, S&C April 2017) -----
+export ehlers_reverse_ema(simple int length, float alpha) =>
+	src = close
+	ema_v = ta.ema(src, length)
+	rema = 0.0
+	rema := alpha * src + (1 - alpha) * nz(rema[1])
+	[ema_v, rema]
+
+export ehlers_reverse_ema_signals(simple int length, float alpha) =>
+	[ema_v, rema] = ehlers_reverse_ema(length, alpha)
+	lt = ta.crossover(rema, ema_v)
+	st = ta.crossunder(rema, ema_v)
+	lc = rema > ema_v
+	sc = rema < ema_v
+	[lt, st, lc, sc]
+
+export ehlers_reverse_ema_exit(simple int length, float alpha) =>
+	[ema_v, rema] = ehlers_reverse_ema(length, alpha)
+	le = ta.crossunder(rema, ema_v)
+	se = ta.crossover(rema, ema_v)
+	[le, se]
+
+
+// ============================================================================
+// V7 ADDITIONS — Five new Volume/Volatility filters (non-directional pass-through)
+// ============================================================================
+
+// ----- Damiani Volatmeter -----
+export damiani_volatmeter(simple int viscosity, simple int sedimentation, float threshold, float lag, bool use_lag) =>
+	vol_atr_short = ta.atr(viscosity)
+	vol_atr_long  = ta.atr(sedimentation)
+	std_short     = ta.stdev(close, viscosity)
+	std_long      = ta.stdev(close, sedimentation)
+	vol_ratio = vol_atr_long != 0 ? vol_atr_short / vol_atr_long : 0.0
+	std_ratio = std_long != 0 ? std_short / std_long : 0.0
+	vmeter = use_lag ? vol_ratio - lag : vol_ratio
+	tradable = vmeter > threshold
+	[vmeter, threshold, tradable]
+
+export damiani_volatmeter_volume_signals(simple int viscosity, simple int sedimentation, float threshold, float lag, bool use_lag) =>
+	[vm, t, tradable] = damiani_volatmeter(viscosity, sedimentation, threshold, lag, use_lag)
+	[tradable, tradable]
+
+
+// ----- TTM Squeeze (John Carter) -----
+export ttm_squeeze(int bb_length, float bb_mult, int kc_length, float kc_mult) =>
+	src = close
+	bb_basis = ta.sma(src, bb_length)
+	bb_dev   = bb_mult * ta.stdev(src, bb_length)
+	bb_upper = bb_basis + bb_dev
+	bb_lower = bb_basis - bb_dev
+
+	kc_basis = ta.sma(src, kc_length)
+	tr_v     = ta.tr(true)
+	kc_range = ta.sma(tr_v, kc_length)
+	kc_upper = kc_basis + kc_mult * kc_range
+	kc_lower = kc_basis - kc_mult * kc_range
+
+	in_squeeze = bb_upper < kc_upper and bb_lower > kc_lower
+	out_squeeze = not in_squeeze
+	[in_squeeze, out_squeeze]
+
+export ttm_squeeze_volume_signals(int bb_length, float bb_mult, int kc_length, float kc_mult) =>
+	[in_sq, out_sq] = ttm_squeeze(bb_length, bb_mult, kc_length, kc_mult)
+	[out_sq, out_sq]
+
+
+// ----- Williams VIX Fix (Larry Williams, Active Trader Dec 2007) -----
+export williams_vix_fix(int lookback, int bb_length, float bb_mult) =>
+	wvf = ((ta.highest(close, lookback) - low) / ta.highest(close, lookback)) * 100
+	bb_basis = ta.sma(wvf, bb_length)
+	bb_dev   = bb_mult * ta.stdev(wvf, bb_length)
+	bb_upper = bb_basis + bb_dev
+	high_vol = wvf >= bb_upper
+	[wvf, bb_upper, high_vol]
+
+export williams_vix_fix_volume_signals(int lookback, int bb_length, float bb_mult) =>
+	[wvf, upper, high_vol] = williams_vix_fix(lookback, bb_length, bb_mult)
+	[high_vol, high_vol]
+
+
+// ----- Volatility Ratio (Schwager, Technical Analysis 1995) -----
+export volatility_ratio(int length) =>
+	tr_v = ta.tr(true)
+	tr_today = tr_v
+	tr_avg   = ta.sma(tr_v, length)
+	vr = tr_avg != 0 ? tr_today / tr_avg : 0.0
+	expanding = vr > 1.0
+	[vr, expanding]
+
+export volatility_ratio_volume_signals(int length) =>
+	[vr, expanding] = volatility_ratio(length)
+	[expanding, expanding]
+
+
+// ----- Mass Index (Donald Dorsey) -----
+export mass_index(int length, simple int ema_length) =>
+	rng = high - low
+	ema1 = ta.ema(rng, ema_length)
+	ema2 = ta.ema(ema1, ema_length)
+	ratio = ema2 != 0 ? ema1 / ema2 : 0.0
+	mi = math.sum(ratio, length)
+	reversal_setup = mi > 27.0
+	bulge_break    = mi > 26.5 and mi[1] >= 26.5 and ratio < 26.5
+	[mi, reversal_setup or bulge_break]
+
+export mass_index_volume_signals(int length, simple int ema_length) =>
+	[mi, signal] = mass_index(length, ema_length)
+	[signal, signal]
+
+
+// ============================================================================
+// V8 ADDITIONS — Five new Baseline moving averages (return single float)
+// ============================================================================
+
+// ----- KAMA — Kaufman Adaptive Moving Average (Perry Kaufman, 1998) -----
+export kama_baseline(int length, simple int fast_length, simple int slow_length) =>
+	src = close
+	change = math.abs(src - src[length])
+	volatility = math.sum(math.abs(src - src[1]), length)
+	er = volatility != 0 ? change / volatility : 0.0
+	fast_sc = 2.0 / (fast_length + 1)
+	slow_sc = 2.0 / (slow_length + 1)
+	sc = math.pow(er * (fast_sc - slow_sc) + slow_sc, 2)
+	kama = 0.0
+	kama := nz(kama[1], src) + sc * (src - nz(kama[1], src))
+	kama
+
+
+// ----- ALMA — Arnaud Legoux Moving Average (2009) -----
+export alma_baseline(int length, simple float offset, simple float sigma) =>
+	src = close
+	ta.alma(src, length, offset, sigma)
+
+
+// ----- T3 — Tillson Moving Average (S&C Jan 1998) -----
+export t3_baseline(simple int length, simple float volume_factor) =>
+	src = close
+	b = volume_factor
+	c1 = -b * b * b
+	c2 = 3 * b * b + 3 * b * b * b
+	c3 = -6 * b * b - 3 * b - 3 * b * b * b
+	c4 = 1 + 3 * b + b * b * b + 3 * b * b
+	e1 = ta.ema(src, length)
+	e2 = ta.ema(e1, length)
+	e3 = ta.ema(e2, length)
+	e4 = ta.ema(e3, length)
+	e5 = ta.ema(e4, length)
+	e6 = ta.ema(e5, length)
+	c1 * e6 + c2 * e5 + c3 * e4 + c4 * e3
+
+
+// ----- 2-Pole Super Smoother (Ehlers, Cybernetic Analysis 2004) -----
+export super_smoother_2pole_baseline(simple int cutoff_period) =>
+	src = close
+	a1 = math.exp(-1.414 * math.pi / cutoff_period)
+	b1 = 2 * a1 * math.cos(1.414 * math.pi / cutoff_period)
+	c2 = b1
+	c3 = -a1 * a1
+	c1 = 1 - c2 - c3
+	ss = 0.0
+	ss := c1 * (src + nz(src[1])) / 2 + c2 * nz(ss[1]) + c3 * nz(ss[2])
+	ss
+
+
+// ----- FRAMA — Fractal Adaptive Moving Average (Ehlers, S&C Oct 2005) -----
+export frama_baseline(simple int length) =>
+	src = close
+	half = length / 2
+
+	hh1 = ta.highest(high, half)
+	ll1 = ta.lowest(low,  half)
+	n1  = (hh1 - ll1) / half
+
+	hh2_raw = ta.highest(high, half)
+	ll2_raw = ta.lowest(low,  half)
+	hh2 = hh2_raw[half]
+	ll2 = ll2_raw[half]
+	n2  = (hh2 - ll2) / half
+
+	hh3 = ta.highest(high, length)
+	ll3 = ta.lowest(low,  length)
+	n3  = (hh3 - ll3) / length
+
+	d_raw = (math.log(n1 + n2) - math.log(n3)) / math.log(2)
+	d = n1 > 0 and n2 > 0 and n3 > 0 ? d_raw : nz(d_raw[1])
+
+	alpha_raw = math.exp(-4.6 * (d - 1))
+	alpha = alpha_raw > 1 ? 1 : alpha_raw < 0.01 ? 0.01 : alpha_raw
+
+	frama = 0.0
+	frama := alpha * src + (1 - alpha) * nz(frama[1], src)
+	frama

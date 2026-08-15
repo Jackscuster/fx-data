@@ -1,0 +1,637 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © jacktime
+
+//@version=6
+
+// ============================================================================
+// V9 — FIXES AND ADDITIONS
+// ============================================================================
+//
+// SECTION A — REPLACEMENTS. Each block below replaces an existing function of
+//   the same name in the library. Delete the old one, paste this in its place.
+//   Signatures are unchanged except where noted, so the strategy file keeps
+//   compiling without edits.
+//
+// SECTION B — ADDITIONS. Append these to the end of the library. They are new
+//   functions with new names; nothing existing is touched.
+//
+// ----------------------------------------------------------------------------
+// A1  chaikin_oscillator_volume_signals   was a no-op, now directional
+// A2  chaikin_volatility_volume_signals   was a no-op, now expansion filter
+// A3  elders_force_index_volume_signals   was a no-op, now directional
+// A4  getValue (J_TPO helper)             loop summed the same term N times
+// A5  schaff_trend_cycle_signals          lc and sc were both true mid-range
+// A6  ehlers_reverse_ema                  was a dual-EMA cross, now the real one
+// A7  glitch_index                        was a z-score, multiplier was dead
+// A8  qqe_mod                             ~50 lines of dead computation removed
+// A9  coral                               returned na on flat bars, now latches
+// A10 didi_index / vidya / kase_peak       dead assignments removed
+//
+// B1  adx_dmi                 C1/C2/EX  trend strength + direction
+// B2  parabolic_sar           C1/C2/EX  accelerating stop-and-reverse
+// B3  donchian_breakout       C1/C2/EX  price structure, not a smoother
+// B4  ichimoku                C1/C2/EX  displaced midpoint cloud
+// B5  linreg_slope            C1/C2/EX  regression slope + R-squared
+// B6  choppiness_index        VOLUME    trending vs ranging, direct measure
+// B7  efficiency_ratio        VOLUME    distance travelled / path taken
+// B8  vertical_horizontal_filter VOLUME same idea, different construction
+// B9  fractal_dimension       VOLUME    exposed from the FRAMA internals
+// B10 sma_baseline            BASELINE  the control every baseline must beat
+// B11 lsma_baseline           BASELINE  fits a line instead of averaging
+// ============================================================================
+
+
+// ############################################################################
+// SECTION A — REPLACEMENTS
+// ############################################################################
+
+
+// ----------------------------------------------------------------------------
+// A1 — Chaikin Oscillator as a volume filter
+// WAS: pass = not na(v)  ->  true on every bar. The filter did nothing.
+// NOW: directional. Positive oscillator = buying pressure = longs allowed.
+// ----------------------------------------------------------------------------
+export chaikin_oscillator_volume_signals(int fast_len, int slow_len) =>
+	v = chaikin_oscillator(fast_len, slow_len)
+	lc = v > 0
+	sc = v < 0
+	[lc, sc]
+
+
+// ----------------------------------------------------------------------------
+// A2 — Chaikin Volatility as a volume filter
+// WAS: pass = not na(v)  ->  true on every bar.
+// NOW: non-directional expansion filter. Chaikin Volatility is the rate of
+//      change of smoothed range, so positive means range is expanding. Trade
+//      only when the market is opening up.
+// ----------------------------------------------------------------------------
+export chaikin_volatility_volume_signals(int cvi_len, int roc_len) =>
+	v = chaikin_volatility(cvi_len, roc_len)
+	pass = v > 0
+	[pass, pass]
+
+
+// ----------------------------------------------------------------------------
+// A3 — Elders Force Index as a volume filter
+// WAS: pass = not na(v)  ->  true on every bar.
+// NOW: directional. Force Index sign is the whole point of the indicator.
+// ----------------------------------------------------------------------------
+export elders_force_index_volume_signals(int len) =>
+	v = elders_force_index(len)
+	lc = v > 0
+	sc = v < 0
+	[lc, sc]
+
+
+// ----------------------------------------------------------------------------
+// A4 — J_TPO helper getValue
+// WAS: the accumulation loop counted with `i` but indexed with `m`, so it added
+//      the same term jtpo_length times instead of summing across the series.
+//      Every J_TPO value in the project is wrong.
+// NOW: indexes with `i`.
+// This is a private helper, not exported. Replace it in place.
+// ----------------------------------------------------------------------------
+getValue(int jtpo_length) =>
+	var float Lenp1half = (jtpo_length + 1) * 0.5
+	JTsrc = close
+	float[] arr1 = array.new_float(jtpo_length + 2, 0)
+	float[] arr2 = array.new_float(jtpo_length + 2, 0)
+	float[] arr3 = array.new_float(jtpo_length + 2, 0)
+	float accum = 0.0
+	int m = 1
+
+	for int i = 1 to jtpo_length
+		array.set(arr2, i, i)
+		array.set(arr3, i, i)
+		array.set(arr1, i, JTsrc[jtpo_length - i])
+
+	for int i = 1 to jtpo_length - 1
+		float maxval = array.get(arr1, i)
+		int maxloc = i
+		for j = i + 1 to jtpo_length
+			if array.get(arr1, j) < maxval
+				maxval := array.get(arr1, j)
+				maxloc := j
+		float tmp1 = array.get(arr1, i)
+		array.set(arr1, i, array.get(arr1, maxloc))
+		array.set(arr1, maxloc, tmp1)
+		float tmp2 = array.get(arr2, i)
+		array.set(arr2, i, array.get(arr2, maxloc))
+		array.set(arr2, maxloc, tmp2)
+
+	while m < jtpo_length - 1
+		int j = m + 1
+		bool flag = true
+		accum := array.get(arr3, m)
+		while flag
+			if array.get(arr1, m) != array.get(arr1, j)
+				if j - m > 1
+					accum := accum / (j - m)
+					for int n = m to j - 1
+						array.set(arr3, n, accum)
+				flag := false
+			else
+				accum := accum + array.get(arr3, j)
+				j := j + 1
+				if j >= array.size(arr1) - 1
+					flag := false
+		m := j
+
+	accum := 0.0
+	// FIX: was array.get(arr3, m) and array.get(arr2, m) — m is fixed after the
+	// while loop above, so the same product was added on every iteration.
+	for int i = 1 to jtpo_length
+		accum := accum + (array.get(arr3, i) - Lenp1half) * (array.get(arr2, i) - Lenp1half)
+	accum
+
+
+// ----------------------------------------------------------------------------
+// A5 — Schaff Trend Cycle signals
+// WAS: lc = stc > lower (35), sc = stc < upper (65). Anywhere between 35 and 65
+//      BOTH were true, so as a confirmation slot it agreed with whatever C1
+//      said and filtered nothing across the middle of its range.
+// NOW: mutually exclusive around a midline. Entry triggers still use the band
+//      crosses, which is where STC actually carries information.
+// SIGNATURE CHANGED: added stc_midline. Pass 50 to keep the natural default.
+// ----------------------------------------------------------------------------
+export schaff_trend_cycle_signals(simple int macdFast, simple int macdSlow, int cycleLen, simple int d1, simple int d2, int upperBand, int lowerBand, float stc_midline) =>
+	a = schaff_trend_cycle(macdFast, macdSlow, cycleLen, d1, d2, upperBand, lowerBand)
+	stc_v = array.get(a, 0)
+	stc_b = array.get(a, 1)
+	stc_s = array.get(a, 2)
+	lt = stc_b == 1.0
+	st = stc_s == 1.0
+	lc = stc_v > stc_midline
+	sc = stc_v < stc_midline
+	[lt, st, lc, sc]
+
+
+// ----------------------------------------------------------------------------
+// A6 — Ehlers Reverse EMA
+// WAS: an EMA of length N crossed with an EMA of smoothing alpha. A plain
+//      dual-EMA crossover wearing Ehlers' name. The `length` parameter and the
+//      `alpha` parameter were just two different smoothing speeds.
+// NOW: the actual construction from Stocks & Commodities, April 2017 — a
+//      cascade of eight reverse-weighted stages producing a zero-mean wave.
+// SIGNATURE CHANGED: `length` dropped, it had no role in the real indicator.
+// ----------------------------------------------------------------------------
+export ehlers_reverse_ema(float alpha) =>
+	src = close
+	var float ema_v = 0.0
+	ema_v := alpha * src + (1 - alpha) * nz(ema_v[1], src)
+
+	om = 1 - alpha
+	var float re1 = 0.0
+	var float re2 = 0.0
+	var float re3 = 0.0
+	var float re4 = 0.0
+	var float re5 = 0.0
+	var float re6 = 0.0
+	var float re7 = 0.0
+	var float re8 = 0.0
+
+	re1 := om * ema_v + nz(ema_v[1])
+	re2 := math.pow(om, 2)   * re1 + nz(re1[1])
+	re3 := math.pow(om, 4)   * re2 + nz(re2[1])
+	re4 := math.pow(om, 8)   * re3 + nz(re3[1])
+	re5 := math.pow(om, 16)  * re4 + nz(re4[1])
+	re6 := math.pow(om, 32)  * re5 + nz(re5[1])
+	re7 := math.pow(om, 64)  * re6 + nz(re6[1])
+	re8 := math.pow(om, 128) * re7 + nz(re7[1])
+
+	wave = ema_v - alpha * re8
+	wave
+
+export ehlers_reverse_ema_signals(float alpha) =>
+	w = ehlers_reverse_ema(alpha)
+	lt = ta.crossover(w, 0)
+	st = ta.crossunder(w, 0)
+	lc = w > 0
+	sc = w < 0
+	[lt, st, lc, sc]
+
+export ehlers_reverse_ema_exit(float alpha) =>
+	w = ehlers_reverse_ema(alpha)
+	le = ta.crossunder(w, 0)
+	se = ta.crossover(w, 0)
+	[le, se]
+
+
+// ----------------------------------------------------------------------------
+// A7 — Glitch Index
+// WAS: a z-score multiplied by a constant, then sign-tested. Because every
+//      signal off it was sign-based, the multiplier could not change a single
+//      trade — a dead parameter sitting in the search space.
+// NOW: normalised displacement of price from its own average, measured in
+//      units of average range, with the multiplier acting as a real threshold.
+//      Signals fire on crossing the band, so the multiplier now matters.
+//      This also makes it ternary — it can decline to confirm either side,
+//      which is the behaviour a "glitch" detector should have.
+// ----------------------------------------------------------------------------
+export glitch_index(simple int length, float multiplier, simple int smooth) =>
+	src = hl2
+	ma_v = ta.sma(src, length)
+	rng  = ta.sma(high - low, length)
+	disp = rng != 0 ? (src - ma_v) / rng : 0.0
+	gli  = ta.ema(disp, smooth)
+	[gli, multiplier]
+
+export glitch_index_signals(simple int length, float multiplier, simple int smooth) =>
+	[g, lvl] = glitch_index(length, multiplier, smooth)
+	lt = ta.crossover(g, lvl)
+	st = ta.crossunder(g, -lvl)
+	lc = g > lvl
+	sc = g < -lvl
+	[lt, st, lc, sc]
+
+export glitch_index_exit(simple int length, float multiplier, simple int smooth) =>
+	[g, lvl] = glitch_index(length, multiplier, smooth)
+	le = ta.crossunder(g, lvl)
+	se = ta.crossover(g, -lvl)
+	[le, se]
+
+
+// ----------------------------------------------------------------------------
+// A8 — QQE Mod
+// WAS: computed an entire first QQE block — bands, trend state, a Bollinger
+//      envelope, Greenbar/Redbar flags — roughly 50 lines, and then returned a
+//      value derived only from the SECOND block. None of the first fed the
+//      output. Pure waste on every bar of every backtest.
+// NOW: only the parameterised block remains. Output is identical.
+// ----------------------------------------------------------------------------
+export qqe_mod(simple int qqe_rsi_period2, simple int qqe_rsi_smoothing2, float qqe_fast_factor2) =>
+	src2 = close
+	Wilders_Period2 = qqe_rsi_period2 * 2 - 1
+
+	Rsi2     = ta.rsi(src2, qqe_rsi_period2)
+	RsiMa2   = ta.ema(Rsi2, qqe_rsi_smoothing2)
+	AtrRsi2  = math.abs(RsiMa2[1] - RsiMa2)
+	MaAtrRsi2 = ta.ema(AtrRsi2, Wilders_Period2)
+	dar2     = ta.ema(MaAtrRsi2, Wilders_Period2) * qqe_fast_factor2
+
+	var float longband2  = 0.0
+	var float shortband2 = 0.0
+	var int   trend2     = 1
+
+	RSIndex2      = RsiMa2
+	newshortband2 = RSIndex2 + dar2
+	newlongband2  = RSIndex2 - dar2
+
+	longband2  := RSIndex2[1] > longband2[1] and RSIndex2 > longband2[1] ? math.max(longband2[1], newlongband2) : newlongband2
+	shortband2 := RSIndex2[1] < shortband2[1] and RSIndex2 < shortband2[1] ? math.min(shortband2[1], newshortband2) : newshortband2
+
+	cross_2 = ta.cross(longband2[1], RSIndex2)
+	trend2 := ta.cross(RSIndex2, shortband2[1]) ? 1 : cross_2 ? -1 : nz(trend2[1], 1)
+
+	FastAtrRsi2TL = trend2 == 1 ? longband2 : shortband2
+	QQE0_Cross = FastAtrRsi2TL - 50
+	QQE0_Cross
+
+
+// ----------------------------------------------------------------------------
+// A9 — Coral
+// WAS: returned na on any bar where bfr exactly equalled bfr[1], which breaks
+//      the 1/0 state the signal helpers depend on.
+// NOW: latches the previous state instead of going na.
+// ----------------------------------------------------------------------------
+export coral(int smoothing_period, float constant_d) =>
+	Csrc = close
+	di = (smoothing_period - 1.0) / 2.0 + 1.0
+	Cc1 = 2 / (di + 1.0)
+	Cc2 = 1 - Cc1
+	Cc3 = 3.0 * (constant_d * constant_d + constant_d * constant_d * constant_d)
+	Cc4 = -3.0 * (2.0 * constant_d * constant_d + constant_d + constant_d * constant_d * constant_d)
+	c5  = 3.0 * constant_d + 1.0 + constant_d * constant_d * constant_d + 3.0 * constant_d * constant_d
+
+	var float i1 = 0.0
+	var float i2 = 0.0
+	var float i3 = 0.0
+	var float i4 = 0.0
+	var float i5 = 0.0
+	var float i6 = 0.0
+
+	i1 := Cc1 * Csrc + Cc2 * nz(i1[1])
+	i2 := Cc1 * i1   + Cc2 * nz(i2[1])
+	i3 := Cc1 * i2   + Cc2 * nz(i3[1])
+	i4 := Cc1 * i3   + Cc2 * nz(i4[1])
+	i5 := Cc1 * i4   + Cc2 * nz(i5[1])
+	i6 := Cc1 * i5   + Cc2 * nz(i6[1])
+
+	bfr = -constant_d * constant_d * constant_d * i6 + Cc3 * i5 + Cc4 * i4 + c5 * i3
+
+	var float bfrC = 0.0
+	bfrC := bfr > nz(bfr[1]) ? 1.0 : bfr < nz(bfr[1]) ? 0.0 : nz(bfrC[1])
+	bfrC
+
+
+// ----------------------------------------------------------------------------
+// A10 — Dead assignment removals
+// ----------------------------------------------------------------------------
+
+// didi_index: avg_1 and avg_2 were identical to each other and unused.
+export didi_index(int didi_medium, int didi_long) =>
+	Gsrc = close
+	media = ta.sma(Gsrc, didi_medium)
+	longa = ta.sma(Gsrc, didi_long) / media
+	longa
+
+// vidya: col12 and col32 were computed and never read.
+export vidya(int vda_length, bool vda_fixed_cmo_length, bool vda_calculation_method) =>
+	Vsrc = close
+	pds = vda_length
+	alpha = 2 / (pds + 1)
+	momm = ta.change(Vsrc)
+	m1 = momm >= 0.0 ? momm : 0.0
+	m2 = momm >= 0.0 ? 0.0 : -momm
+	sm1_fixed = math.sum(m1, 9)
+	sm1_var   = math.sum(m1, pds)
+	sm2_fixed = math.sum(m2, 9)
+	sm2_var   = math.sum(m2, pds)
+	sm1 = vda_fixed_cmo_length ? sm1_fixed : sm1_var
+	sm2 = vda_fixed_cmo_length ? sm2_fixed : sm2_var
+	chandeMO = nz(100 * ((sm1 - sm2) / (sm1 + sm2)))
+	stdev_v = ta.stdev(Vsrc, pds)
+	Vk = vda_calculation_method ? math.abs(chandeMO) / 100 : stdev_v
+	var float VIDYA = 0.0
+	VIDYA := nz(alpha * Vk * Vsrc) + (1 - alpha * Vk) * nz(VIDYA[1])
+	VIDYA
+
+// kase_peak_oscillator: x1 and xs were read from the prior bar and then
+// immediately overwritten. Also guards the divide when avg is zero.
+export kase_peak_oscillator(int kpo_short_cycle, int kpo_long_cycle, float kpo_sensitivity) =>
+	ccLog = math.log(close / nz(close[1], close))
+	ccDev = ta.stdev(ccLog, 9)
+	avg   = ta.sma(ccDev, 30)
+
+	float max1 = 0.0
+	float maxs = 0.0
+	for k = kpo_short_cycle to kpo_long_cycle - 1
+		max1 := math.max(math.log(high / nz(low[k], low)) / math.sqrt(k), max1)
+		maxs := math.max(math.log(nz(high[k], high) / low) / math.sqrt(k), maxs)
+
+	x1 = avg != 0 ? max1 / avg : 0.0
+	xs = avg != 0 ? maxs / avg : 0.0
+
+	xp = kpo_sensitivity * (ta.sma(x1, 3) - ta.sma(xs, 3))
+	xp
+
+
+// ############################################################################
+// SECTION B — ADDITIONS
+// ############################################################################
+
+
+// ----------------------------------------------------------------------------
+// B1 — ADX / DMI (Wilder, 1978)
+// The standard trend-strength measure, and the single biggest thing the library
+// was missing. The maths already existed buried inside fantail_vma; this
+// exposes it as a slot indicator in its own right.
+// TERNARY: when ADX is below threshold it confirms NEITHER side, so it can
+// block all entries. That is the point of it.
+// ----------------------------------------------------------------------------
+export adx_dmi(simple int di_length, simple int adx_smoothing) =>
+	up   = ta.change(high)
+	down = -ta.change(low)
+	plusDM  = na(up)   ? na : (up > down and up > 0 ? up : 0.0)
+	minusDM = na(down) ? na : (down > up and down > 0 ? down : 0.0)
+	trur  = ta.rma(ta.tr, di_length)
+	plus  = fixnan(100 * ta.rma(plusDM,  di_length) / trur)
+	minus = fixnan(100 * ta.rma(minusDM, di_length) / trur)
+	dsum  = plus + minus
+	adx   = 100 * ta.rma(math.abs(plus - minus) / (dsum == 0 ? 1 : dsum), adx_smoothing)
+	[adx, plus, minus]
+
+export adx_dmi_signals(simple int di_length, simple int adx_smoothing, float adx_threshold) =>
+	[adx, plus, minus] = adx_dmi(di_length, adx_smoothing)
+	strong = adx > adx_threshold
+	lt = ta.crossover(plus, minus)  and strong
+	st = ta.crossunder(plus, minus) and strong
+	lc = plus > minus and strong
+	sc = minus > plus and strong
+	[lt, st, lc, sc]
+
+export adx_dmi_exit(simple int di_length, simple int adx_smoothing, float adx_threshold) =>
+	[adx, plus, minus] = adx_dmi(di_length, adx_smoothing)
+	le = ta.crossunder(plus, minus)
+	se = ta.crossover(plus, minus)
+	[le, se]
+
+
+// ----------------------------------------------------------------------------
+// B2 — Parabolic SAR (Wilder, 1978)
+// An accelerating trailing level. Structurally unlike anything else in the
+// library — every other trend indicator here is a smoother or an oscillator.
+// ----------------------------------------------------------------------------
+export parabolic_sar(simple float sar_start, simple float sar_increment, simple float sar_maximum) =>
+	ta.sar(sar_start, sar_increment, sar_maximum)
+
+export parabolic_sar_signals(simple float sar_start, simple float sar_increment, simple float sar_maximum) =>
+	s = ta.sar(sar_start, sar_increment, sar_maximum)
+	lc = close > s
+	sc = close < s
+	lt = lc and not nz(lc[1], false)
+	st = sc and not nz(sc[1], false)
+	[lt, st, lc, sc]
+
+export parabolic_sar_exit(simple float sar_start, simple float sar_increment, simple float sar_maximum) =>
+	s = ta.sar(sar_start, sar_increment, sar_maximum)
+	flipped_down = close < s and nz(close[1], close) > nz(s[1], s)
+	flipped_up   = close > s and nz(close[1], close) < nz(s[1], s)
+	[flipped_down, flipped_up]
+
+
+// ----------------------------------------------------------------------------
+// B3 — Donchian Breakout
+// Pure price structure. Uses actual highs and lows rather than a transform of
+// closes, which makes it the least correlated confirmation option available.
+// Channel is read from the PRIOR bar so today's own extreme cannot trigger it.
+// ----------------------------------------------------------------------------
+export donchian_breakout(simple int length) =>
+	upper = nz(ta.highest(high, length)[1], high)
+	lower = nz(ta.lowest(low,  length)[1], low)
+	mid   = (upper + lower) / 2
+	[upper, lower, mid]
+
+export donchian_breakout_signals(simple int length) =>
+	[upper, lower, mid] = donchian_breakout(length)
+	var int dir = 0
+	dir := close > upper ? 1 : close < lower ? -1 : nz(dir[1], 0)
+	lt = dir == 1  and nz(dir[1], 0) != 1
+	st = dir == -1 and nz(dir[1], 0) != -1
+	lc = dir == 1
+	sc = dir == -1
+	[lt, st, lc, sc]
+
+export donchian_breakout_exit(simple int length) =>
+	[upper, lower, mid] = donchian_breakout(length)
+	le = ta.crossunder(close, mid)
+	se = ta.crossover(close, mid)
+	[le, se]
+
+
+// ----------------------------------------------------------------------------
+// B4 — Ichimoku
+// Displaced midpoints of highs and lows. The cloud is read at its displacement
+// so there is no look-ahead: the value compared against today's price was
+// computed `displacement` bars ago.
+// TERNARY: inside the cloud it confirms neither side.
+// ----------------------------------------------------------------------------
+export ichimoku(simple int conversion_len, simple int base_len, simple int span_b_len, simple int displacement) =>
+	tenkan = math.avg(ta.highest(high, conversion_len), ta.lowest(low, conversion_len))
+	kijun  = math.avg(ta.highest(high, base_len),       ta.lowest(low, base_len))
+	spanA  = math.avg(tenkan, kijun)
+	spanB  = math.avg(ta.highest(high, span_b_len),     ta.lowest(low, span_b_len))
+	cloud_top = math.max(nz(spanA[displacement], spanA), nz(spanB[displacement], spanB))
+	cloud_bot = math.min(nz(spanA[displacement], spanA), nz(spanB[displacement], spanB))
+	[tenkan, kijun, cloud_top, cloud_bot]
+
+export ichimoku_signals(simple int conversion_len, simple int base_len, simple int span_b_len, simple int displacement) =>
+	[tenkan, kijun, cloud_top, cloud_bot] = ichimoku(conversion_len, base_len, span_b_len, displacement)
+	lc = close > cloud_top and tenkan > kijun
+	sc = close < cloud_bot and tenkan < kijun
+	lt = ta.crossover(tenkan, kijun)  and close > cloud_top
+	st = ta.crossunder(tenkan, kijun) and close < cloud_bot
+	[lt, st, lc, sc]
+
+export ichimoku_exit(simple int conversion_len, simple int base_len, simple int span_b_len, simple int displacement) =>
+	[tenkan, kijun, cloud_top, cloud_bot] = ichimoku(conversion_len, base_len, span_b_len, displacement)
+	le = ta.crossunder(tenkan, kijun)
+	se = ta.crossover(tenkan, kijun)
+	[le, se]
+
+
+// ----------------------------------------------------------------------------
+// B5 — Linear Regression Slope + R-squared
+// Fits a straight line to price and reports both which way it points and how
+// well the line actually fits. Of everything in technical analysis this is the
+// closest construction to what the regime estimator measures.
+// TERNARY: below the R-squared floor it confirms neither side.
+// ----------------------------------------------------------------------------
+export linreg_slope(simple int length, float r2_floor) =>
+	lr_now  = ta.linreg(close, length, 0)
+	lr_prev = ta.linreg(close, length, 1)
+	slope   = lr_now - lr_prev
+	r       = ta.correlation(close, bar_index, length)
+	r2      = nz(r * r, 0.0)
+	fits    = r2 > r2_floor
+	[slope, r2, fits]
+
+export linreg_slope_signals(simple int length, float r2_floor) =>
+	[slope, r2, fits] = linreg_slope(length, r2_floor)
+	lc = slope > 0 and fits
+	sc = slope < 0 and fits
+	lt = lc and not nz(lc[1], false)
+	st = sc and not nz(sc[1], false)
+	[lt, st, lc, sc]
+
+export linreg_slope_exit(simple int length, float r2_floor) =>
+	[slope, r2, fits] = linreg_slope(length, r2_floor)
+	le = ta.crossunder(slope, 0)
+	se = ta.crossover(slope, 0)
+	[le, se]
+
+
+// ----------------------------------------------------------------------------
+// B6 — Choppiness Index (E.W. Dreiss)
+// Measures directly whether price is trending or ranging. Low values mean
+// trending. Non-directional, so it goes in the volume/volatility slot.
+// ----------------------------------------------------------------------------
+export choppiness_index(simple int length) =>
+	atr_sum = math.sum(ta.tr(true), length)
+	rng     = ta.highest(high, length) - ta.lowest(low, length)
+	ci      = rng > 0 and length > 1 ? 100 * math.log10(atr_sum / rng) / math.log10(length) : 50.0
+	ci
+
+export choppiness_index_volume_signals(simple int length, float ci_threshold) =>
+	ci = choppiness_index(length)
+	trending = ci < ci_threshold
+	[trending, trending]
+
+
+// ----------------------------------------------------------------------------
+// B7 — Kaufman Efficiency Ratio
+// Straight-line distance divided by the total path walked. 1.0 is a perfect
+// straight line, 0 is pure wandering. This is almost literally the estimator's
+// target expressed as an indicator — if it works well here, that is a check on
+// the estimator from a completely different direction.
+// ----------------------------------------------------------------------------
+export efficiency_ratio(simple int length) =>
+	direction = math.abs(close - nz(close[length], close))
+	volatility = math.sum(math.abs(ta.change(close)), length)
+	er = volatility != 0 ? direction / volatility : 0.0
+	er
+
+export efficiency_ratio_volume_signals(simple int length, float er_threshold) =>
+	er = efficiency_ratio(length)
+	trending = er > er_threshold
+	[trending, trending]
+
+
+// ----------------------------------------------------------------------------
+// B8 — Vertical Horizontal Filter (Adam White)
+// Same question as the Efficiency Ratio, different construction — uses the
+// close range rather than the endpoint distance. Kept separate deliberately so
+// the two can be compared against each other.
+// ----------------------------------------------------------------------------
+export vertical_horizontal_filter(simple int length) =>
+	num = ta.highest(close, length) - ta.lowest(close, length)
+	den = math.sum(math.abs(ta.change(close)), length)
+	vhf = den != 0 ? num / den : 0.0
+	vhf
+
+export vertical_horizontal_filter_volume_signals(simple int length, float vhf_threshold) =>
+	vhf = vertical_horizontal_filter(length)
+	trending = vhf > vhf_threshold
+	[trending, trending]
+
+
+// ----------------------------------------------------------------------------
+// B9 — Fractal Dimension
+// This value is already computed inside frama_baseline every single bar and
+// then thrown away. It runs from roughly 1.0 (a straight line) to 2.0 (fills
+// the plane, no direction). Exposing it costs nothing and gives a third,
+// mathematically unrelated read on trending versus choppy.
+// ----------------------------------------------------------------------------
+export fractal_dimension(simple int length) =>
+	half = int(length / 2)
+
+	hh1 = ta.highest(high, half)
+	ll1 = ta.lowest(low,  half)
+	n1  = half > 0 ? (hh1 - ll1) / half : 0.0
+
+	hh2 = nz(ta.highest(high, half)[half], hh1)
+	ll2 = nz(ta.lowest(low,  half)[half], ll1)
+	n2  = half > 0 ? (hh2 - ll2) / half : 0.0
+
+	hh3 = ta.highest(high, length)
+	ll3 = ta.lowest(low,  length)
+	n3  = (hh3 - ll3) / length
+
+	var float d_state = 1.5
+	d_raw = (math.log(n1 + n2) - math.log(n3)) / math.log(2)
+	d_state := n1 > 0 and n2 > 0 and n3 > 0 ? d_raw : nz(d_state[1], 1.5)
+	d_state
+
+export fractal_dimension_volume_signals(simple int length, float fd_threshold) =>
+	d = fractal_dimension(length)
+	trending = d < fd_threshold
+	[trending, trending]
+
+
+// ----------------------------------------------------------------------------
+// B10 — SMA baseline
+// The control. Fourteen baselines in the library and not the one that every
+// other baseline should have to beat before it earns its place.
+// ----------------------------------------------------------------------------
+export sma_baseline(simple int length) =>
+	ta.sma(close, length)
+
+
+// ----------------------------------------------------------------------------
+// B11 — LSMA baseline
+// Fits a regression line rather than averaging. The code already existed inside
+// hieken_ashi_smoothed and rex_oscillator but was never offered as a baseline
+// in its own right. Different family from every other baseline you have.
+// ----------------------------------------------------------------------------
+export lsma_baseline(simple int length, simple int lsma_offset) =>
+	ta.linreg(close, length, lsma_offset)
