@@ -365,6 +365,7 @@ TERNARY = {'adx_dmi', 'ichimoku', 'linreg_slope', 'schaff_trend_cycle',
            'trend_direction_force_index', 'bears_bulls_impulse', 'glitch_index'}
 
 REGISTRY = {}
+UNAVAILABLE = set()      # needs a volume series; spot FX has none
 
 
 def _reg(pine_name, fn, slot, defaults, pine_line, confirmed, kind=None,
@@ -445,7 +446,8 @@ def registry_frame():
                               n_outputs=NOUT[v['slot']],
                               defaults='; '.join('%s=%s' % kv for kv in v['defaults'].items()),
                               defaults_confirmed=v['confirmed'],
-                              pine_line=v['pine_line'], source=v['source'])
+                              pine_line=v['pine_line'], source=v['source'],
+                              available=k not in UNAVAILABLE)
                          for k, v in REGISTRY.items()])
 
 
@@ -507,6 +509,243 @@ def main():
           np.abs(r[m] ** 2 - r2b[m]).max())
     print('\nwrote results/l2_indicator_registry.csv')
     return T
+
+
+
+
+# ==========================================================================
+# BASELINE SLOT -- all 14. The baseline is the direction gate on every entry
+# and the source of route 1's trigger, so a wrong one corrupts every
+# combination that selects it, not just its own row.
+#
+# VWMA needs a volume series and spot FX has none; it is registered so the
+# slot is complete and tagged UNAVAILABLE so the sweep can exclude it
+# explicitly rather than silently scoring NaN.
+# ==========================================================================
+
+
+def moving_average(o, h, l, c, ma_type='EMA', ma_length=20, volume=None):
+    """lib: the five ta.* wrappers behind one switch. Pine's default arm
+    returns 0.0 for an unknown type -- kept, because a silent zero baseline is
+    a thing a sweep could hit and it must look the same in both languages."""
+    if ma_type == 'HMA':
+        return P.hma(c, ma_length)
+    if ma_type == 'EMA':
+        return P.ema(c, ma_length)
+    if ma_type == 'RMA':
+        return P.rma(c, ma_length)
+    if ma_type == 'WMA':
+        return P.wma(c, ma_length)
+    if ma_type == 'VWMA':
+        if volume is None:
+            return np.full(np.asarray(c).shape, np.nan)
+        return P.vwma(c, volume, ma_length)
+    return np.zeros(np.asarray(c).shape)
+
+
+def ema_baseline(o, h, l, c, ma_length=20):
+    return moving_average(o, h, l, c, 'EMA', ma_length)
+
+
+def hma_baseline(o, h, l, c, ma_length=20):
+    return moving_average(o, h, l, c, 'HMA', ma_length)
+
+
+def rma_baseline(o, h, l, c, ma_length=20):
+    return moving_average(o, h, l, c, 'RMA', ma_length)
+
+
+def wma_baseline(o, h, l, c, ma_length=20):
+    return moving_average(o, h, l, c, 'WMA', ma_length)
+
+
+def vwma_baseline(o, h, l, c, ma_length=20):
+    """UNAVAILABLE on spot FX -- no volume series exists."""
+    return moving_average(o, h, l, c, 'VWMA', ma_length, volume=None)
+
+
+def kama_baseline(o, h, l, c, length=10, fast_length=2, slow_length=30):
+    """lib. Seeded with the source, NOT with an SMA -- `nz(kama[1], src)`."""
+    c = np.asarray(c, float)
+    chg = np.abs(c - P.shift(c, length))
+    vol = P.msum(np.abs(c - P.shift(c, 1)), length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        er = np.where(vol != 0, chg / vol, 0.0)
+    fsc, ssc = 2.0 / (fast_length + 1), 2.0 / (slow_length + 1)
+    sc = (er * (fsc - ssc) + ssc) ** 2
+    out = np.empty(c.shape); prev = np.nan
+    for i in range(c.size):
+        base = c[i] if not np.isfinite(prev) else prev
+        s = sc[i] if np.isfinite(sc[i]) else 0.0
+        prev = base + s * (c[i] - base)
+        out[i] = prev
+    return out
+
+
+def alma_baseline(o, h, l, c, length=9, offset=0.85, sigma=6):
+    return P.alma(c, length, offset, sigma)
+
+
+def t3_baseline(o, h, l, c, length=10, volume_factor=0.7):
+    b = volume_factor
+    c1 = -b ** 3
+    c2 = 3 * b * b + 3 * b ** 3
+    c3 = -6 * b * b - 3 * b - 3 * b ** 3
+    c4 = 1 + 3 * b + b ** 3 + 3 * b * b
+    e = c
+    es = []
+    for _ in range(6):
+        e = P.ema(e, length); es.append(e)
+    return c1 * es[5] + c2 * es[4] + c3 * es[3] + c4 * es[2]
+
+
+def super_smoother_2pole_baseline(o, h, l, c, cutoff_period=15):
+    """ss := c1*(src + src[1])/2 + c2*ss[1] + c3*ss[2], all nz-seeded at 0."""
+    c = np.asarray(c, float)
+    a1 = np.exp(-1.414 * np.pi / cutoff_period)
+    b1 = 2 * a1 * np.cos(1.414 * np.pi / cutoff_period)
+    c2, c3 = b1, -a1 * a1
+    c1 = 1 - c2 - c3
+    out = np.empty(c.shape); p1 = p2 = 0.0
+    for i in range(c.size):
+        prev_src = c[i - 1] if i >= 1 else 0.0
+        v = c1 * (c[i] + prev_src) / 2.0 + c2 * p1 + c3 * p2
+        out[i] = v; p2 = p1; p1 = v
+    return out
+
+
+def frama_baseline(o, h, l, c, length=10):
+    """lib. Note the latch is `nz(d_raw[1])` -- the PREVIOUS BAR'S RAW value,
+    not the previous smoothed d, and nz() sends it to 0 rather than holding.
+    That is what the source says; the patch's fractal_dimension does it
+    differently on purpose and the two are not interchangeable."""
+    c = np.asarray(c, float)
+    half = int(P.idiv(int(length), 2))
+    n1 = (P.highest(h, half) - P.lowest(l, half)) / half
+    n2 = (P.shift(P.highest(h, half), half) - P.shift(P.lowest(l, half), half)) / half
+    n3 = (P.highest(h, length) - P.lowest(l, length)) / int(length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        d_raw = (np.log(n1 + n2) - np.log(n3)) / np.log(2.0)
+    ok = (n1 > 0) & (n2 > 0) & (n3 > 0)
+    d = np.where(ok, d_raw, P.nz(P.shift(d_raw, 1), 0.0))
+    alpha = np.clip(np.exp(-4.6 * (d - 1.0)), 0.01, 1.0)
+    out = np.empty(c.shape); prev = np.nan
+    for i in range(c.size):
+        a = alpha[i] if np.isfinite(alpha[i]) else 1.0
+        base = c[i] if not np.isfinite(prev) else prev
+        prev = a * c[i] + (1 - a) * base
+        out[i] = prev
+    return out
+
+
+def mcginley_dynamic_index(o, h, l, c, mci_length=14):
+    """mg := na(mg[1]) ? ema : mg[1] + (src-mg[1]) / (len * (src/mg[1])^4)."""
+    c = np.asarray(c, float)
+    e = P.ema(c, mci_length)
+    out = np.full(c.shape, np.nan); prev = np.nan
+    for i in range(c.size):
+        if not np.isfinite(prev):
+            prev = e[i]
+        else:
+            r = c[i] / prev if prev != 0 else 1.0
+            den = mci_length * (r ** 4)
+            prev = prev + (c[i] - prev) / den if den != 0 else prev
+        out[i] = prev
+    return out
+
+
+def vidya(o, h, l, c, vda_length=2, vda_fixed_cmo_length=True,
+          vda_calculation_method=True):
+    """patch A10 -- the dead col12/col32 assignments removed, nothing else."""
+    c = np.asarray(c, float)
+    pds = int(vda_length)
+    alpha = 2.0 / (pds + 1)
+    momm = P.change(c)
+    m1 = np.where(momm >= 0, momm, 0.0)
+    m2 = np.where(momm >= 0, 0.0, -momm)
+    sm1 = P.msum(m1, 9 if vda_fixed_cmo_length else pds)
+    sm2 = P.msum(m2, 9 if vda_fixed_cmo_length else pds)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        cmo = P.nz(100.0 * ((sm1 - sm2) / (sm1 + sm2)), 0.0)
+    k = np.abs(cmo) / 100.0 if vda_calculation_method else P.stdev(c, pds)
+    out = np.empty(c.shape); prev = 0.0
+    for i in range(c.size):
+        v = k[i] if np.isfinite(k[i]) else 0.0
+        term = alpha * v * c[i]
+        prev = (0.0 if not np.isfinite(term) else term) + (1 - alpha * v) * prev
+        out[i] = prev
+    return out
+
+
+def fantail_vma(o, h, l, c, fma_adx_length=2, fma_weighting=10.0,
+                fma_ma_length=6):
+    """lib, including its two CW fixes. Every recursion is `var`-scoped and
+    seeded at 0 except VarMA, which seeds at close."""
+    h = np.asarray(h, float); l = np.asarray(l, float); c = np.asarray(c, float)
+    n = c.size
+    w = float(fma_weighting)
+    sPDI = sMDI = FSTR = ADX = 0.0
+    adx_hist = np.empty(n)
+    varma = np.empty(n)
+    vm = c[0]
+    for i in range(n):
+        hi1 = h[i - 1] if i else h[i]
+        lo1 = l[i - 1] if i else l[i]
+        cl1 = c[i - 1] if i else c[i]
+        fb1 = 0.5 * (abs(h[i] - hi1) + h[i] - hi1)
+        fbe1 = 0.5 * (abs(lo1 - l[i]) + lo1 - l[i])
+        fbears = 0.0 if fb1 >= fbe1 else fbe1
+        fbulls = 0.0 if fb1 <= fbe1 else fb1
+        tr_ = max(h[i] - l[i], h[i] - cl1)
+        if i > 0:
+            sPDI = (w * sPDI + fbulls) / (w + 1)
+            sMDI = (w * sMDI + fbears) / (w + 1)
+            FSTR = (w * FSTR + tr_) / (w + 1)
+        else:
+            FSTR = h[i] - l[i]
+        pdi = sPDI / FSTR if FSTR > 0 else 0.0
+        mdi = sMDI / FSTR if FSTR > 0 else 0.0
+        dx = abs(pdi - mdi) / (pdi + mdi) if (pdi + mdi) > 0 else 0.0
+        if i > 0:
+            ADX = (w * ADX + dx) / (w + 1)
+        adx_hist[i] = ADX
+        lo_i = max(0, i - int(fma_adx_length) + 1)
+        win = adx_hist[lo_i:i + 1]
+        amin = min(1000000.0, win.min()); amax = max(-1.0, win.max())
+        diff = amax - amin
+        const = (ADX - amin) / diff if diff > 0 else 0.0
+        if i > 0:
+            vm = ((2 - const) * vm + const * c[i]) / 2.0
+        varma[i] = vm
+    return P.sma(varma, fma_ma_length)
+
+
+# --- baselines. Defaults are the strategy file's input() lines, 1467-1510.
+for _n, _f, _d, _ln in [
+        ('ema_baseline', ema_baseline, dict(ma_length=20), 'strat 1469'),
+        ('hma_baseline', hma_baseline, dict(ma_length=20), 'strat 1467'),
+        ('rma_baseline', rma_baseline, dict(ma_length=20), 'strat 1471'),
+        ('wma_baseline', wma_baseline, dict(ma_length=20), 'strat 1473'),
+        ('vwma_baseline', vwma_baseline, dict(ma_length=20), 'strat 1475'),
+        ('fantail_vma', fantail_vma,
+         dict(fma_adx_length=2, fma_weighting=10.0, fma_ma_length=6), 'strat 1477-1480'),
+        ('mcginley_dynamic_index', mcginley_dynamic_index,
+         dict(mci_length=14), 'strat 1482'),
+        ('vidya', vidya, dict(vda_length=2, vda_fixed_cmo_length=True,
+                              vda_calculation_method=True), 'strat 1486-1489'),
+        ('kama_baseline', kama_baseline,
+         dict(length=10, fast_length=2, slow_length=30), 'strat 1491-1495'),
+        ('alma_baseline', alma_baseline,
+         dict(length=9, offset=0.85, sigma=6), 'strat 1497-1500'),
+        ('t3_baseline', t3_baseline, dict(length=10, volume_factor=0.7),
+         'strat 1502-1504'),
+        ('super_smoother_2pole_baseline', super_smoother_2pole_baseline,
+         dict(cutoff_period=15), 'strat 1506'),
+        ('frama_baseline', frama_baseline, dict(length=10), 'strat 1509')]:
+    _reg(_n, _f, 'baseline', _d, _ln, True)
+UNAVAILABLE.add('vwma_baseline')      # needs a volume series; spot FX has none
+
+KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
 
 
 if __name__ == '__main__':

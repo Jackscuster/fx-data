@@ -1,23 +1,36 @@
-name,slot,kind,n_outputs,defaults,defaults_confirmed,pine_line,source
-ssl_channel_signals,confirmation,BINARY,4,len=10,True,lib 118 / strat 364,library
-ssl_channel_exit,exit,BINARY,2,len=10,True,lib 128 / strat 828,library
-dspo_signals,confirmation,BINARY,4,len=14,True,lib 2098 / strat 426,library
-dspo_exit,exit,BINARY,2,len=14,True,lib 2380,library
-variance_volume_signals,volume,FILTER,2,mode=Price; hline=0.0; method=MA > Variance; lookback=20; filter_lookback=20; ema_len=10,True,lib / strat 626-631,library
-tma_baseline,baseline,BASELINE,1,length=20,True,lib / strat 1485,library
-adx_dmi_signals,confirmation,TERNARY,4,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library
-adx_dmi_exit,exit,BINARY,2,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library
-parabolic_sar_signals,confirmation,BINARY,4,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library
-parabolic_sar_exit,exit,BINARY,2,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library
-donchian_breakout_signals,confirmation,BINARY,4,length=20,False,patch B3,library
-donchian_breakout_exit,exit,BINARY,2,length=20,False,patch B3,library
-ichimoku_signals,confirmation,TERNARY,4,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library
-ichimoku_exit,exit,BINARY,2,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library
-linreg_slope_signals,confirmation,TERNARY,4,length=14; r2_floor=0.2,False,patch B5,library
-linreg_slope_exit,exit,BINARY,2,length=14; r2_floor=0.2,False,patch B5,library
-choppiness_index_volume_signals,volume,FILTER,2,length=14; ci_threshold=61.8,False,patch B6,library
-efficiency_ratio_volume_signals,volume,FILTER,2,length=10; er_threshold=0.3,False,patch B7,library
-vertical_horizontal_filter_volume_signals,volume,FILTER,2,length=28; vhf_threshold=0.35,False,patch B8,library
-fractal_dimension_volume_signals,volume,FILTER,2,length=30; fd_threshold=1.5,False,patch B9,library
-sma_baseline,baseline,BASELINE,1,length=20,False,patch B10,library
-lsma_baseline,baseline,BASELINE,1,length=20; lsma_offset=0,False,patch B11,library
+name,slot,kind,n_outputs,defaults,defaults_confirmed,pine_line,source,available
+ssl_channel_signals,confirmation,BINARY,4,len=10,True,lib 118 / strat 364,library,True
+ssl_channel_exit,exit,BINARY,2,len=10,True,lib 128 / strat 828,library,True
+dspo_signals,confirmation,BINARY,4,len=14,True,lib 2098 / strat 426,library,True
+dspo_exit,exit,BINARY,2,len=14,True,lib 2380,library,True
+variance_volume_signals,volume,FILTER,2,mode=Price; hline=0.0; method=MA > Variance; lookback=20; filter_lookback=20; ema_len=10,True,lib / strat 626-631,library,True
+tma_baseline,baseline,BASELINE,1,length=20,True,lib / strat 1485,library,True
+adx_dmi_signals,confirmation,TERNARY,4,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library,True
+adx_dmi_exit,exit,BINARY,2,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library,True
+parabolic_sar_signals,confirmation,BINARY,4,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library,True
+parabolic_sar_exit,exit,BINARY,2,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library,True
+donchian_breakout_signals,confirmation,BINARY,4,length=20,False,patch B3,library,True
+donchian_breakout_exit,exit,BINARY,2,length=20,False,patch B3,library,True
+ichimoku_signals,confirmation,TERNARY,4,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library,True
+ichimoku_exit,exit,BINARY,2,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library,True
+linreg_slope_signals,confirmation,TERNARY,4,length=14; r2_floor=0.2,False,patch B5,library,True
+linreg_slope_exit,exit,BINARY,2,length=14; r2_floor=0.2,False,patch B5,library,True
+choppiness_index_volume_signals,volume,FILTER,2,length=14; ci_threshold=61.8,False,patch B6,library,True
+efficiency_ratio_volume_signals,volume,FILTER,2,length=10; er_threshold=0.3,False,patch B7,library,True
+vertical_horizontal_filter_volume_signals,volume,FILTER,2,length=28; vhf_threshold=0.35,False,patch B8,library,True
+fractal_dimension_volume_signals,volume,FILTER,2,length=30; fd_threshold=1.5,False,patch B9,library,True
+sma_baseline,baseline,BASELINE,1,length=20,False,patch B10,library,True
+lsma_baseline,baseline,BASELINE,1,length=20; lsma_offset=0,False,patch B11,library,True
+ema_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1469,library,True
+hma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1467,library,True
+rma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1471,library,True
+wma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1473,library,True
+vwma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1475,library,False
+fantail_vma,baseline,BASELINE,1,fma_adx_length=2; fma_weighting=10.0; fma_ma_length=6,True,strat 1477-1480,library,True
+mcginley_dynamic_index,baseline,BASELINE,1,mci_length=14,True,strat 1482,library,True
+vidya,baseline,BASELINE,1,vda_length=2; vda_fixed_cmo_length=True; vda_calculation_method=True,True,strat 1486-1489,library,True
+kama_baseline,baseline,BASELINE,1,length=10; fast_length=2; slow_length=30,True,strat 1491-1495,library,True
+alma_baseline,baseline,BASELINE,1,length=9; offset=0.85; sigma=6,True,strat 1497-1500,library,True
+t3_baseline,baseline,BASELINE,1,length=10; volume_factor=0.7,True,strat 1502-1504,library,True
+super_smoother_2pole_baseline,baseline,BASELINE,1,cutoff_period=15,True,strat 1506,library,True
+frama_baseline,baseline,BASELINE,1,length=10,True,strat 1509,library,True
