@@ -64,18 +64,104 @@ changes any decision, the exam is void.
 
 ---
 
+## REGIME SLICING — how every combination is scored, at every gate
+
+**Every combination runs TWICE**: once with the two-leg trend plan, once with
+the one-leg quick-target plan. Every trade is tagged, at its ENTRY BAR, with
+Layer 1's regime label for that pair and date.
+
+```
+TREND score = the TWO-LEG run,  trades entered while the label is `trending`
+CHOP  score = the ONE-LEG run,  trades entered while the label is `ranging`
+```
+
+**Combinations pass gates PER REGIME.** A combination may graduate as a trend
+strategy, as a chop strategy, as both, or as neither, and those are four
+different outcomes. KPI floors are unchanged within each slice; **the trade
+minimums apply per slice**, not to the combined total.
+
+**No dynamic plan-switching in the sweep.** A run is one plan for its whole
+length. Choosing the plan bar-by-bar from the live label is Layer 3's job, and
+doing it here would score the router and the strategy in one number.
+
+**The label source is `results/layer1_states.csv`, column `shape2`.** It is
+already lagged one bar — the value dated D was computed from data through D−1 —
+so it is joined on the entry date with no further shift. Adding a lag would
+double-count it; removing one would read the future.
+
+`trend-in-range` and `neither` are **not scored slices** at gate 1. Layer 1's
+routing gives `trend-in-range` the one-trade plan and stands aside on `neither`;
+both are carried in the trade tags and reported, but a combination is not
+admitted or rejected on them.
+
+**Bars with no label are never backfilled.** 96.3% of OANDA bars carry one; the
+rest are calendar mismatches between the H.10 panel Layer 1 was built on and
+OANDA's, plus Layer 1 ending 2026-07-31. Trades entered on an unlabelled bar are
+counted and excluded from both slices.
+
+---
+
+## RISK — the structure is permanent, the numbers are tunable later
+
+**Fixed forever, never swept, at any gate:**
+- 2% account risk per trade
+- two legs in the trend plan (50/50), one leg in the quick plan
+- leg 2 moves to breakeven when leg 1 banks
+- stops only ever move in the trade's favour
+- entries fill at the close of the signal bar
+
+**Gate 1 defaults — the same in both plans:**
+- reward:risk **1 : 1.5** — stop 1.0 × ATR, take-profit 1.5 × ATR
+- trail **1.5 × ATR** behind the highest close
+- trail arming at **2.0 × ATR** in profit
+- ATR length: **set by the pre-test below**
+
+Those four numbers — RR, trail distance, arming multiple, ATR length — become
+**family-level tunables at gates 2 and 3**. They are not tunable at gate 1, and
+they are never tuned per-combination.
+
+---
+
+## ATR LENGTH PRE-TEST — run before gate 1, frozen after
+
+ATR sets the stop distance, the target, the trail and the position size. It is
+the one parameter that touches every trade in every combination, so it is chosen
+once, in advance, on the **picking window only**.
+
+- a spread sample of a few hundred combinations covering every slot type
+- RR 1:1.5, both plans, all 28 pairs
+- **every** ATR length from 2 to 50
+- picking window (W1) only — W2 and W3 are blind and stay blind
+- ranked on pooled expectancy in R, profit factor as tiebreak
+
+**The shape of the curve decides, not the winner.** A spike at one length is
+luck and is not used; a plateau is real. **If the best length sits on a spike,
+the centre of the best plateau is used instead.** Full table to `results/`, and
+the chosen value and the curve's shape recorded here.
+
+**RESULT:** *(filled in below once the pre-test has run — see
+`results/gate1_atr_pretest.csv`)*
+
+---
+
 ## GATE 1 — DISCOVER
 
-All ~17.6M slot combinations, **default parameters only**, through the machine.
-A deliberately low bar: this gate is a sieve, not a judge.
+All slot combinations, **default parameters only**, through the machine, in both
+plans. A deliberately low bar: this gate is a sieve, not a judge.
+
+**The count is 10,677,420** — 39 C1 × 39 C2 × 12 volume × 15 baseline × 39 exit.
+The 17.6M figure counts all 41/41/16/16/41 registry entries, but 9 of those read
+a volume series spot FX does not have, so 6.96M combinations selecting one are
+guaranteed to produce zero trades. They are excluded and counted, not searched.
+Run in both plans, that is 21,354,840 evaluations.
 
 **KPI floors, on stitched blind performance:**
 - expectancy above the **luck floor** — the 95th percentile of scrambled controls
 - profit factor ≥ 1.05
 
-**Minimum trades:** ≥ 100 pooled in the picking window, ≥ 50 pooled per blind
-window. A combination that cannot produce that many is not evaluated, it is
-recorded as untested.
+**Minimum trades, PER REGIME SLICE:** ≥ 100 pooled in the picking window, ≥ 50
+pooled per blind window. A slice that cannot produce that many is not evaluated,
+it is recorded as untested — which is not the same as failing.
 
 **The output is FAMILIES, not combinations.** A family is a neighbourhood of
 similar combinations that survive together. A lone survivor whose neighbours all
