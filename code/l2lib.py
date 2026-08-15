@@ -448,6 +448,7 @@ def registry_frame():
                               defaults_confirmed=v['confirmed'],
                               pine_line=v['pine_line'], source=v['source'],
                               available=k not in UNAVAILABLE,
+                              inert_at_defaults=k in globals().get('INERT_AT_DEFAULTS', set()),
                               inverted_vs_tradingview=k in INVERTED,
                               lookahead_if_nondefault=k in LOOKAHEAD_OPTION)
                          for k, v in REGISTRY.items()])
@@ -479,7 +480,13 @@ def main():
         ok = len(out) == n and all(x.shape == c.shape and x.dtype == bool for x in out)
         if meta['slot'] == 'confirmation':
             lt, st, lc, sc = out
-            rows.append(dict(name=name, ok=ok and not (lc & sc).any(),
+            # `ok` is SHAPE AND TYPE only. Confirming both directions is a
+            # separate, known fault reported by both_directions_audit() -- it
+            # must not be folded in here, or one indicator's documented bug
+            # makes the structural check read False forever and stop meaning
+            # anything.
+            rows.append(dict(name=name, ok=ok,
+                             both_pct=round(100 * (lc & sc).mean(), 2),
                              warmup=int(np.argmax(lc | sc)),
                              long_pct=round(100 * lc.mean(), 1),
                              short_pct=round(100 * sc.mean(), 1),
@@ -490,9 +497,19 @@ def main():
                              long_pct=round(100 * a.mean(), 1),
                              short_pct=round(100 * b.mean(), 1), neutral_pct=np.nan))
     T = pd.DataFrame(rows)
-    print(T.to_string(index=False))
-    print('\n  every contract shaped, typed and mutually exclusive: %s'
-          % bool(T.ok.all()))
+    print(T.tail(24).to_string(index=False))
+    print('\n  %d indicators; every contract correctly shaped and typed: %s'
+          % (len(T), bool(T.ok.all())))
+    A = both_directions_audit(o, h, l, c)
+    A.to_csv(os.path.join(ROOTOUT, 'l2_both_directions_audit.csv'), index=False)
+    bad = A[A.both_pct > 0]
+    print('  confirmations audited for the A5 fault (confirms BOTH ways): %d'
+          % len(A))
+    if len(bad):
+        print('  STILL FAULTY -- ported as written, flagged, not fixed:')
+        print(bad.to_string(index=False))
+    else:
+        print('  none confirm both directions')
 
     # the two independent routes to the regression slope must agree
     sl_a = P.linreg(c, 14, 0) - P.linreg(c, 14, 1)
@@ -2196,6 +2213,382 @@ for _n, _f, _slot, _d, _ln in [
          dict(len=40, ema_len=200, ema_filter=False), 'strat 256-258 / patch A4')]:
     _reg(_n, _f, _slot, _d, _ln, True)
 KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
+
+
+
+# ==========================================================================
+# CONFIRMATION BATCH E -- Heiken Ashi Smoothed and Rex Oscillator.
+#
+# These two are 1,062 of the library's 3,019 lines between them, because Pine
+# computes ALL FOURTEEN moving-average types on ALL FOUR price series and then
+# throws away thirteen of them with a chain of ternaries. `_ha_ma` below is
+# that chain as a dispatcher: it computes only the arm that is selected. The
+# OUTPUT is identical -- Pine's discarded arms cannot affect the chosen one,
+# none of them carry state across the switch -- but this is 40 lines instead
+# of 700, and where it differs from the Pine it differs by being narrower,
+# never by being different.
+#
+# Four of the arms are not what their names say, and are ported as written:
+#   TEMA  is ema(ema(ema(x))) -- triple-SMOOTHED, not 3*e1 - 3*e2 + e3.
+#   TRIMA is sma(sma(x, L), L), not the ceil/floor construction that
+#         triangular_moving_average (the baseline) uses under the same name.
+#   AMA   seeds with `src*w*w + 1 - w*w`, which the missing parentheses make
+#         `(src*w*w + 1) - w*w`, not the smoothing it looks like.
+#   FAMA  takes its fractal dimension from HIGH and LOW whichever series is
+#         being smoothed, so the dimension is shared and only the final
+#         recursion differs per series.
+# ==========================================================================
+
+
+def _ha_ma(kind, src, hi, lo, length, vfac=0.82, alma_offset=0.85,
+           alma_sigma=6, lsma_offset=0, ama_weight=0.181, frama_a=1,
+           frama_b=168):
+    """One arm of the fourteen-way switch. src is the series being smoothed;
+    hi/lo are only used by FAMA, which reads them whatever src is."""
+    src = np.asarray(src, float)
+    n = int(length)
+    if kind == 'SMA':
+        return P.sma(src, n)
+    if kind == 'EMA':
+        return P.ema(src, n)
+    if kind == 'WMA':
+        return P.wma(src, n)
+    if kind == 'ALMA':
+        return P.alma(src, n, alma_offset, alma_sigma)
+    if kind == 'LSMA':
+        return P.linreg(src, n, lsma_offset)
+    if kind == 'TRIMA':
+        return P.sma(P.sma(src, n), n)
+    if kind == 'HMA':
+        return P.wma(2.0 * P.wma(src, P.idiv(n, 2)) - P.wma(src, n),
+                     int(round(np.sqrt(n))))
+    if kind == 'TEMA':
+        return P.ema(P.ema(P.ema(src, n), n), n)
+    if kind == 'DEMA':
+        e1 = P.ema(src, n)
+        return 2.0 * e1 - P.ema(e1, n)
+    if kind == 'T3':
+        b = vfac
+        c1 = -b ** 3
+        c2 = 3 * b * b + 3 * b ** 3
+        c3 = -6 * b * b - 3 * b - 3 * b ** 3
+        c4 = 1 + 3 * b + b ** 3 + 3 * b * b
+        e = src; es = []
+        for _ in range(6):
+            e = P.ema(e, n); es.append(e)
+        return c1 * es[5] + c2 * es[4] + c3 * es[3] + c4 * es[2]
+    if kind == 'SMMA':
+        seed = P.sma(src, n)
+        out = np.full(src.shape, np.nan); prev = np.nan
+        for i in range(src.size):
+            prev = seed[i] if not np.isfinite(prev) else (prev * (n - 1) + src[i]) / n
+            out[i] = prev
+        return out
+    if kind == 'VIDYA':
+        d = P.change(src)
+        up = P.msum(np.where(d >= 0, d, 0.0), n)
+        dn = P.msum(np.where(d >= 0, 0.0, -d), n)
+        with np.errstate(invalid='ignore', divide='ignore'):
+            cmo = np.where((up + dn) != 0, (up - dn) / (up + dn), 0.0)
+        f = 2.0 / (n + 1)
+        k = f * np.abs(cmo)
+        out = np.empty(src.shape); prev = 0.0
+        for i in range(src.size):
+            kk = k[i] if np.isfinite(k[i]) else 0.0
+            x = src[i] if np.isfinite(src[i]) else 0.0
+            prev = x * kk + prev * (1 - kk)
+            out[i] = prev
+        return out
+    if kind == 'AMA':
+        w = ama_weight
+        ww = w * w
+        out = np.empty(src.shape); prev = np.nan
+        for i in range(src.size):
+            if not np.isfinite(prev):
+                prev = src[i] * ww + 1 - ww           # the source's precedence
+            else:
+                prev = src[i] * ww + (1 - ww) * prev
+            out[i] = prev
+        return out
+    if kind == 'FAMA':
+        half = int(P.idiv(n, 2))
+        e = np.e
+        lnw = np.log(2.0 / (frama_b + 1)) / np.log(e)
+        n1 = (P.highest(hi, half) - P.lowest(lo, half)) / half
+        n2 = (P.shift(P.highest(hi, half), half)
+              - P.shift(P.lowest(lo, half), half)) / half
+        n3 = (P.highest(hi, n) - P.lowest(lo, n)) / n
+        with np.errstate(invalid='ignore', divide='ignore'):
+            d1 = (np.log(n1 + n2) - np.log(n3)) / np.log(2.0)
+        d2 = np.where((n1 > 0) & (n2 > 0) & (n3 > 0), d1,
+                      P.nz(P.shift(d1, 1), 0.0))
+        a_old = np.clip(np.exp(lnw * (d2 - 1.0)), 0.01, 1.0)
+        np_old = (2 - a_old) / a_old
+        np_ = (frama_b - frama_a) * (np_old - 1) / (frama_b - 1) + frama_a
+        a2 = 2.0 / (np_ + 1)
+        floor_ = 2.0 / (frama_b + 1)
+        alpha = np.where(a2 < floor_, floor_, np.where(a2 > 1, 1.0, a2))
+        out = np.empty(src.shape); prev = 0.0
+        for i in range(src.size):
+            a = alpha[i] if np.isfinite(alpha[i]) else 1.0
+            x = src[i] if np.isfinite(src[i]) else prev
+            prev = (1 - a) * prev + a * x
+            out[i] = prev
+        return out
+    return src                                        # 'DEFAULT'
+
+
+def hieken_ashi_smoothed(o, h, l, c, ha_ma1='T3', ha_ma1_length=8, ha_ma2='T3',
+                         ha_ma2_length=8, ha_signal_smoothed=False,
+                         ha_vfac_type_1=0.82, ha_offset_ALMA=0.85,
+                         ha_sigma_ALMA=6, ha_LSMAO=0, ha_AMA_weight_v1=0.181,
+                         ha_FAMA_i2=1, ha_FAMA_i3=168, ha_vfac_type_2=0.82,
+                         ha_offset_ALMA2=0.85, ha_sigma_ALMA2=6, ha_LSMAO2=0,
+                         ha_AMA_weight_v2=0.181, ha_FAMA_i4=1, ha_FAMA_i5=168):
+    o = np.asarray(o, float); h = np.asarray(h, float)
+    l = np.asarray(l, float); c = np.asarray(c, float)
+    k1 = dict(length=ha_ma1_length, vfac=ha_vfac_type_1,
+              alma_offset=ha_offset_ALMA, alma_sigma=ha_sigma_ALMA,
+              lsma_offset=ha_LSMAO, ama_weight=ha_AMA_weight_v1,
+              frama_a=ha_FAMA_i2, frama_b=ha_FAMA_i3)
+    o1 = _ha_ma(ha_ma1, o, h, l, **k1)
+    h1 = _ha_ma(ha_ma1, h, h, l, **k1)
+    l1 = _ha_ma(ha_ma1, l, h, l, **k1)
+    c1_ = _ha_ma(ha_ma1, c, h, l, **k1)
+    # the Heiken Ashi transform
+    c2 = (o1 + h1 + l1 + c1_) / 4.0
+    o2 = (P.shift(o1, 1) + P.shift(c1_, 1)) / 2.0
+    h2 = np.maximum(h1, np.maximum(o1, c1_))
+    l2 = np.minimum(l1, np.minimum(o1, c1_))
+    if ha_signal_smoothed:
+        O, H, L, C = o2, h2, l2, c2
+    else:
+        k2 = dict(length=ha_ma2_length, vfac=ha_vfac_type_2,
+                  alma_offset=ha_offset_ALMA2, alma_sigma=ha_sigma_ALMA2,
+                  lsma_offset=ha_LSMAO2, ama_weight=ha_AMA_weight_v2,
+                  frama_a=ha_FAMA_i4, frama_b=ha_FAMA_i5)
+        O = _ha_ma(ha_ma2, o2, h2, l2, **k2)
+        H = _ha_ma(ha_ma2, h2, h2, l2, **k2)
+        L = _ha_ma(ha_ma2, l2, h2, l2, **k2)
+        C = _ha_ma(ha_ma2, c2, h2, l2, **k2)
+    pO, pC = P.shift(O, 1), P.shift(C, 1)
+    return (P.F((pO > pC) & (O < C)), P.F((pO < pC) & (O > C)),
+            P.F(O < C), P.F(O > C))
+
+
+def hieken_ashi_smoothed_signals(o, h, l, c, ma_type1='T3', ma_len1=8,
+                                 ma_type2='T3', ma_len2=8, single_smooth=False,
+                                 vol_factor1=0.82, alma_offset1=0.85,
+                                 alma_sigma1=6, lsma_offset1=0,
+                                 ama_smooth1=0.181, frama_t1_a=1,
+                                 frama_t1_b=168, vol_factor2=0.82,
+                                 alma_offset2=0.85, alma_sigma2=6,
+                                 lsma_offset2=0, ama_smooth2=0.181,
+                                 frama_t2_a=1, frama_t2_b=168):
+    return hieken_ashi_smoothed(o, h, l, c, ma_type1, ma_len1, ma_type2,
+                                ma_len2, single_smooth, vol_factor1,
+                                alma_offset1, alma_sigma1, lsma_offset1,
+                                ama_smooth1, frama_t1_a, frama_t1_b,
+                                vol_factor2, alma_offset2, alma_sigma2,
+                                lsma_offset2, ama_smooth2, frama_t2_a,
+                                frama_t2_b)
+
+
+def hieken_ashi_smoothed_exit(o, h, l, c, **kw):
+    lt, st, lc, sc = hieken_ashi_smoothed_signals(o, h, l, c, **kw)
+    return st, lt
+
+
+def _rex_ma(kind, tvb, h, l, smooth, alma_offset=0.85, alma_sigma=6,
+            frama_fast=34, frama_slow=89, jma_phase=1, jma_power=1,
+            ls_offset=0, mf_beta=0.8, mf_feedback=False, mf_weight=0.5,
+            vol_lookback=10):
+    """Rex's seventeen-way switch, one arm at a time. Three of its types have
+    no analogue in the Heiken Ashi list:
+
+      RDMA  a flat mean of six SMAs at 200/100/50/24/9/5 -- FIXED lengths, so
+            rex_smooth does not touch it and every RDMA row in a parameter
+            sweep is the same series.
+      UMA   the same idea over eight Fibonacci lengths, also fixed.
+      MF    Modular Filter -- a two-sided ratchet with an optional feedback
+            term that mixes the previous output back into the input.
+    """
+    tvb = np.asarray(tvb, float)
+    n = int(smooth)
+    half = int(P.idiv(n, 2))
+    if kind == 'SMA':
+        return P.sma(tvb, n)
+    if kind == 'EMA':
+        return P.ema(tvb, n)
+    if kind == 'RMA':
+        return P.rma(tvb, n)
+    if kind == 'WMA':
+        return P.wma(tvb, n)
+    if kind == 'ALMA':
+        return P.alma(tvb, n, alma_offset, alma_sigma)
+    if kind == 'LSMA':
+        return P.linreg(tvb, n, ls_offset)
+    if kind == 'HMA':
+        return P.wma(2 * P.wma(tvb, half) - P.wma(tvb, n),
+                     int(round(np.sqrt(n))))
+    if kind == 'DEMA':
+        e1 = P.ema(tvb, n)
+        return 2 * e1 - P.ema(e1, n)
+    if kind == 'TEMA':
+        e1 = P.ema(tvb, n); e2 = P.ema(e1, n); e3 = P.ema(e2, n)
+        return 3 * (e1 - e2) + e3          # the real TEMA, unlike the HA one
+    if kind == 'T3':
+        return _ha_ma('T3', tvb, h, l, length=n)
+    if kind == 'TMA':
+        return P.sma(P.sma(tvb, int(np.ceil(P.idiv(n, 2)))),
+                     int(np.floor(P.idiv(n, 2))) + 1)
+    if kind == 'FRAMA':
+        return _ha_ma('FAMA', tvb, h, l, length=n, frama_a=frama_fast,
+                      frama_b=frama_slow)
+    if kind == 'RDMA':
+        return sum(P.sma(tvb, k) for k in (200, 100, 50, 24, 9, 5)) / 6.0
+    if kind == 'UMA':
+        return sum(P.sma(tvb, k) for k in (144, 89, 55, 34, 21, 13, 8, 5)) / 8.0
+    if kind == 'VAMA':
+        mid = P.ema(tvb, n)
+        dev = tvb - mid
+        return mid + (P.highest(dev, vol_lookback)
+                      + P.lowest(dev, vol_lookback)) / 2.0
+    if kind == 'JMA':
+        pr = 0.5 if jma_phase < -100 else (2.5 if jma_phase > 100
+                                           else jma_phase / 100.0 + 1.5)
+        beta = 0.45 * (n - 1) / (0.45 * (n - 1) + 2)
+        alpha = beta ** jma_power
+        out = np.empty(tvb.size); e0 = e1 = e2 = st = 0.0
+        for i in range(tvb.size):
+            x = tvb[i] if np.isfinite(tvb[i]) else 0.0
+            e0 = (1 - alpha) * x + alpha * e0
+            e1 = (x - e0) * (1 - beta) + beta * e1
+            e2 = (e0 + pr * e1 - st) * (1 - alpha) ** 2 + alpha ** 2 * e2
+            st = e2 + st
+            out[i] = st
+        return out
+    if kind == 'MF':
+        a = 2.0 / (n + 1)
+        out = np.empty(tvb.size)
+        ts = np.nan; b = np.nan; cc = np.nan; os_ = 0.0
+        for i in range(tvb.size):
+            x = tvb[i] if np.isfinite(tvb[i]) else 0.0
+            ain = (mf_weight * x + (1 - mf_weight) * (ts if np.isfinite(ts) else x)
+                   ) if mf_feedback else x
+            pb = b if np.isfinite(b) else ain
+            pc = cc if np.isfinite(cc) else ain
+            cand_b = a * ain + (1 - a) * pb
+            cand_c = a * ain + (1 - a) * pc
+            b = ain if ain > cand_b else cand_b
+            cc = ain if ain < cand_c else cand_c
+            os_ = 1.0 if ain == b else (0.0 if ain == cc else os_)
+            upper = mf_beta * b + (1 - mf_beta) * cc
+            lower = mf_beta * cc + (1 - mf_beta) * b
+            ts = os_ * upper + (1 - os_) * lower
+            out[i] = ts
+        return out
+    return np.zeros(tvb.shape)
+
+
+def rex_oscillator(o, h, l, c, rex_ma_type1='SMA', rex_smooth_length=13,
+                   rex_alma_offset=0.85, rex_alma_sigma=6, rex_frama_fast=34,
+                   rex_frama_slow=89, rex_jma_phase=1, rex_jma_power=1,
+                   rex_least_squares_offset=0, rex_modular_filter_beta=0.8,
+                   rex_modular_filter_feedback=False,
+                   rex_modular_feedback_weight=0.5,
+                   rex_volatility_lookback=10, rex_signal_ma_type='SMA',
+                   rex_signal_smoothing=13, rex_signal_ma_alma_offset=0.85,
+                   rex_signal_ma_alma_sigma=6, rex_signal_ma_frama_fast=34,
+                   rex_signal_ma_frama_slow=89, rex_signal_ma_jma_phase=1,
+                   rex_signal_ma_jma_power=1,
+                   rex_signal_ma_least_squares_offset=0,
+                   rex_signal_ma_modular_filter_beta=0.8,
+                   rex_signal_ma_modular_filter_feedback=False,
+                   rex_signal_ma_modular_feedback_weight=0.5,
+                   rex_signal_ma_volatility_lookback=10):
+    """tvb = close - low + close - open - (high - close), smoothed twice: once
+    as the oscillator, once as its own signal line, each with an independently
+    chosen moving average out of seventeen."""
+    o = np.asarray(o, float); h = np.asarray(h, float)
+    l = np.asarray(l, float); c = np.asarray(c, float)
+    tvb = c - l + c - o - (h - c)
+    rex = _rex_ma(rex_ma_type1, tvb, h, l, rex_smooth_length, rex_alma_offset,
+                  rex_alma_sigma, rex_frama_fast, rex_frama_slow,
+                  rex_jma_phase, rex_jma_power, rex_least_squares_offset,
+                  rex_modular_filter_beta, rex_modular_filter_feedback,
+                  rex_modular_feedback_weight, rex_volatility_lookback)
+    # the SIGNAL line smooths tvb again -- it is not a smoothing of `rex`
+    sig = _rex_ma(rex_signal_ma_type, tvb, h, l, rex_signal_smoothing,
+                  rex_signal_ma_alma_offset, rex_signal_ma_alma_sigma,
+                  rex_signal_ma_frama_fast, rex_signal_ma_frama_slow,
+                  rex_signal_ma_jma_phase, rex_signal_ma_jma_power,
+                  rex_signal_ma_least_squares_offset,
+                  rex_signal_ma_modular_filter_beta,
+                  rex_signal_ma_modular_filter_feedback,
+                  rex_signal_ma_modular_feedback_weight,
+                  rex_signal_ma_volatility_lookback)
+    return rex, sig
+
+
+def rex_oscillator_signals(o, h, l, c, maType='SMA', smooth=13,
+                           almaOffset=0.85, almaSigma=6, framaFast=34,
+                           framaSlow=89, jurikPhase=1, jurikPower=1, lsOffset=0,
+                           modFilter=0.8, modFB=False, modFBW=0.5, volAdj=10,
+                           sigMaType='SMA', sigSmooth=13, sigAlmaOff=0.85,
+                           sigAlmaSig=6, sigFramaFast=34, sigFramaSlow=89,
+                           sigJurikPhase=1, sigJurikPower=1, sigLsOff=0,
+                           sigModFilter=0.8, sigModFB=False, sigModFBW=0.5,
+                           sigVolAdj=10):
+    rex, sig = rex_oscillator(o, h, l, c, maType, smooth, almaOffset, almaSigma,
+                              framaFast, framaSlow, jurikPhase, jurikPower,
+                              lsOffset, modFilter, modFB, modFBW, volAdj,
+                              sigMaType, sigSmooth, sigAlmaOff, sigAlmaSig,
+                              sigFramaFast, sigFramaSlow, sigJurikPhase,
+                              sigJurikPower, sigLsOff, sigModFilter, sigModFB,
+                              sigModFBW, sigVolAdj)
+    return (P.crossover(rex, sig), P.crossunder(rex, sig),
+            P.F(rex > sig), P.F(rex < sig))
+
+
+def rex_oscillator_exit(o, h, l, c, **kw):
+    lt, st, lc, sc = rex_oscillator_signals(o, h, l, c, **kw)
+    return st, lt
+
+
+# --- confirmation batch E, the two composites.
+for _n, _f, _slot, _d, _ln in [
+        ('hieken_ashi_smoothed_signals', hieken_ashi_smoothed_signals,
+         'confirmation',
+         dict(ma_type1='T3', ma_len1=8, ma_type2='T3', ma_len2=8,
+              single_smooth=False, vol_factor1=0.82, alma_offset1=0.85,
+              alma_sigma1=6, lsma_offset1=0, ama_smooth1=0.181, frama_t1_a=1,
+              frama_t1_b=168, vol_factor2=0.82, alma_offset2=0.85,
+              alma_sigma2=6, lsma_offset2=0, ama_smooth2=0.181, frama_t2_a=1,
+              frama_t2_b=168), 'strat 258-276'),
+        ('hieken_ashi_smoothed_exit', hieken_ashi_smoothed_exit, 'exit',
+         dict(), 'strat 258-276'),
+        ('rex_oscillator_signals', rex_oscillator_signals, 'confirmation',
+         dict(maType='SMA', smooth=13, almaOffset=0.85, almaSigma=6,
+              framaFast=34, framaSlow=89, jurikPhase=1, jurikPower=1,
+              lsOffset=0, modFilter=0.8, modFB=False, modFBW=0.5, volAdj=10,
+              sigMaType='SMA', sigSmooth=13, sigAlmaOff=0.85, sigAlmaSig=6,
+              sigFramaFast=34, sigFramaSlow=89, sigJurikPhase=1,
+              sigJurikPower=1, sigLsOff=0, sigModFilter=0.8, sigModFB=False,
+              sigModFBW=0.5, sigVolAdj=10), 'strat 327-352'),
+        ('rex_oscillator_exit', rex_oscillator_exit, 'exit', dict(),
+         'strat 327-352')]:
+    _reg(_n, _f, _slot, _d, _ln, True)
+KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
+
+# Inert at the shipped defaults -- they run, they just never say anything.
+# Each is verified in the commit message; a sweep that selects one gets zero
+# trades, which reads as "no edge" rather than "misconfigured".
+INERT_AT_DEFAULTS = {
+    'damiani_volatmeter_volume_signals',   # passes 0.044% of bars
+    'volatility_quality_signals',          # dead band 859x too wide; 0 triggers
+    'rex_oscillator_signals',              # osc and its signal are one series
+}
 
 
 if __name__ == '__main__':
