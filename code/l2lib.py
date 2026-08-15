@@ -748,5 +748,237 @@ UNAVAILABLE.add('vwma_baseline')      # needs a volume series; spot FX has none
 KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
 
 
+
+
+# ==========================================================================
+# VOLUME SLOT -- all 12. Despite the slot's name only FOUR of them actually
+# read a volume series, and spot FX has none, so those four are UNAVAILABLE.
+# The rest are volatility or range measures and work perfectly well here.
+#
+# The four that cannot run: Chaikin Oscillator (ta.accdist), Elders Force
+# Index (change * volume), Normalized Volume, Volume Zone Oscillator. Pine
+# itself calls runtime.error("No volume is provided by the data vendor.") in
+# two of them, so this is the library's own verdict, not an outside opinion.
+# ==========================================================================
+
+
+def _novol(c):
+    return np.full(np.asarray(c).shape, np.nan)
+
+
+def chaikin_oscillator(o, h, l, c, fastlength=3, slowlength=10, volume=None):
+    """UNAVAILABLE -- ta.accdist is a volume accumulation."""
+    return _novol(c)
+
+
+def chaikin_oscillator_volume_signals(o, h, l, c, fast_len=3, slow_len=10):
+    """patch A1: was `not na(v)` on every bar. Now directional on the sign."""
+    v = chaikin_oscillator(o, h, l, c, fast_len, slow_len)
+    return P.F(v > 0), P.F(v < 0)
+
+
+def chaikin_volatility(o, h, l, c, cv_length=10, roc_length=12):
+    """Rate of change of the smoothed high-low range. NO VOLUME -- despite the
+    name this one is a pure range measure and runs fine on FX."""
+    rng = np.asarray(h, float) - np.asarray(l, float)
+    e = P.ema(rng, cv_length)
+    prev = P.shift(e, roc_length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(prev != 0, 100.0 * (e - prev) / prev, np.nan)
+
+
+def chaikin_volatility_volume_signals(o, h, l, c, cvi_len=10, roc_len=12):
+    """patch A2: non-directional expansion filter -- trade only when the range
+    is opening up."""
+    t = P.F(chaikin_volatility(o, h, l, c, cvi_len, roc_len) > 0)
+    return t, t
+
+
+def elders_force_index(o, h, l, c, efi_length=10, volume=None):
+    """UNAVAILABLE -- ta.change(close) * volume."""
+    return _novol(c)
+
+
+def elders_force_index_volume_signals(o, h, l, c, len=10):
+    """patch A3: directional on the sign, was a no-op."""
+    v = elders_force_index(o, h, l, c, len)
+    return P.F(v > 0), P.F(v < 0)
+
+
+def normalized_volume(o, h, l, c, nv_volume_period=10, volume=None):
+    """UNAVAILABLE."""
+    return _novol(c)
+
+
+def normalized_volume_volume_signals(o, h, l, c, vol_period=10):
+    t = P.F(normalized_volume(o, h, l, c, vol_period) > 0)
+    return t, t
+
+
+def volume_zone_oscillator(o, h, l, c, vzo_length=20, vzo_smooth_enabled_=True,
+                           vzo_smooth_=20, vzo_nuetral_zone=10, volume=None):
+    """UNAVAILABLE -- signed volume over total volume."""
+    n = _novol(c)
+    return n, n, n
+
+
+def volume_zone_oscillator_volume_signals(o, h, l, c, len=20, smooth=True,
+                                          smooth_len=20, neutral_zone=10):
+    _, lc, sc = volume_zone_oscillator(o, h, l, c, len, smooth, smooth_len,
+                                       neutral_zone)
+    return P.F(lc == 1.0), P.F(sc == 1.0)
+
+
+def waddah_attar_explosion(o, h, l, c, wea_sensetivity=150,
+                           wea_fast_ema_length=20, wea_slow_length=40,
+                           wea_bb_channel_length=20, wea_stdev_multiplier=2.0):
+    """lib. NOTE Pine computes ta.ema(close[1], L) -- an EMA OF THE SHIFTED
+    SERIES, not the shifted EMA. On a recursive average those are the same
+    series offset by one bar only after warm-up; during warm-up they differ
+    because each re-seeds at a different bar. Ported as ema(shift(close,k)),
+    which is what is written."""
+    c = np.asarray(c, float)
+    f, s = wea_fast_ema_length, wea_slow_length
+    d0 = P.ema(c, f) - P.ema(c, s)
+    d1 = P.ema(P.shift(c, 1), f) - P.ema(P.shift(c, 1), s)
+    d2 = P.ema(P.shift(c, 2), f) - P.ema(P.shift(c, 2), s)
+    d3 = P.ema(P.shift(c, 3), f) - P.ema(P.shift(c, 3), s)
+    t1 = d0 - d1 * wea_sensetivity
+    dev = wea_stdev_multiplier * P.stdev(c, wea_bb_channel_length)
+    e1 = 2.0 * dev                       # (basis+dev) - (basis-dev)
+    up = np.where(t1 >= 0, t1, 0.0)
+    dn = np.where(t1 < 0, -t1, 0.0)
+    return e1, up, dn
+
+
+def waddah_attar_explosion_volume_signals(o, h, l, c, sensitivity=150,
+                                          fastEma=20, slowEma=40, bbLen=20,
+                                          bbStd=2.0):
+    e1, up, dn = waddah_attar_explosion(o, h, l, c, sensitivity, fastEma,
+                                        slowEma, bbLen, bbStd)
+    return P.F(up > e1), P.F(dn > e1)
+
+
+def damiani_volatmeter(o, h, l, c, viscosity=7, sedimentation=50,
+                       threshold=1.4, lag=1.4, use_lag=True):
+    short = P.atr(h, l, c, viscosity)
+    long_ = P.atr(h, l, c, sedimentation)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        ratio = np.where(long_ != 0, short / long_, 0.0)
+    vmeter = ratio - lag if use_lag else ratio
+    return vmeter, threshold, P.F(vmeter > threshold)
+
+
+def damiani_volatmeter_volume_signals(o, h, l, c, viscosity=7,
+                                      sedimentation=50, threshold=1.4,
+                                      lag=1.4, use_lag=True):
+    _, _, t = damiani_volatmeter(o, h, l, c, viscosity, sedimentation,
+                                 threshold, lag, use_lag)
+    return t, t
+
+
+def ttm_squeeze(o, h, l, c, bb_length=20, bb_mult=2.0, kc_length=20,
+                kc_mult=1.5):
+    basis = P.sma(c, bb_length)
+    dev = bb_mult * P.stdev(c, bb_length)
+    kc_basis = P.sma(c, kc_length)
+    kc_range = P.sma(P.tr(h, l, c), kc_length)
+    in_sq = P.F((basis + dev < kc_basis + kc_mult * kc_range) &
+                (basis - dev > kc_basis - kc_mult * kc_range))
+    return in_sq, ~in_sq
+
+
+def ttm_squeeze_volume_signals(o, h, l, c, bb_length=20, bb_mult=2.0,
+                               kc_length=20, kc_mult=1.5):
+    """Passes when the squeeze is OFF -- the market has broken out of it."""
+    _, out_sq = ttm_squeeze(o, h, l, c, bb_length, bb_mult, kc_length, kc_mult)
+    return out_sq, out_sq
+
+
+def williams_vix_fix(o, h, l, c, lookback=22, bb_length=20, bb_mult=2.0):
+    hi = P.highest(c, lookback)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        wvf = ((hi - np.asarray(l, float)) / hi) * 100.0
+    upper = P.sma(wvf, bb_length) + bb_mult * P.stdev(wvf, bb_length)
+    return wvf, upper, P.F(wvf >= upper)
+
+
+def williams_vix_fix_volume_signals(o, h, l, c, lookback=22, bb_length=20,
+                                    bb_mult=2.0):
+    _, _, hv = williams_vix_fix(o, h, l, c, lookback, bb_length, bb_mult)
+    return hv, hv
+
+
+def volatility_ratio(o, h, l, c, length=14):
+    t = P.tr(h, l, c)
+    avg = P.sma(t, length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        vr = np.where(avg != 0, t / avg, 0.0)
+    return vr, P.F(vr > 1.0)
+
+
+def volatility_ratio_volume_signals(o, h, l, c, length=14):
+    _, e = volatility_ratio(o, h, l, c, length)
+    return e, e
+
+
+def mass_index(o, h, l, c, length=25, ema_length=9):
+    """lib. `bulge_break` compares RATIO against 26.5, not the mass index --
+    ratio is an EMA quotient hovering near 1.0, so that term can never be true.
+    Preserved: it is in the source, the patch does not touch it, and silently
+    'fixing' it would change a shipped indicator's behaviour."""
+    rng = np.asarray(h, float) - np.asarray(l, float)
+    e1 = P.ema(rng, ema_length)
+    e2 = P.ema(e1, ema_length)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        ratio = np.where(e2 != 0, e1 / e2, 0.0)
+    mi = P.msum(ratio, length)
+    reversal = P.F(mi > 27.0)
+    bulge = P.F((mi > 26.5) & (P.shift(mi, 1) >= 26.5) & (ratio < 26.5))
+    return mi, reversal | bulge
+
+
+def mass_index_volume_signals(o, h, l, c, length=25, ema_length=9):
+    _, sig = mass_index(o, h, l, c, length, ema_length)
+    return sig, sig
+
+
+# --- volume slot. Defaults from the strategy input() lines 595-640.
+for _n, _f, _d, _ln, _av in [
+        ('chaikin_oscillator_volume_signals', chaikin_oscillator_volume_signals,
+         dict(fast_len=3, slow_len=10), 'strat 595-596 / patch A1', False),
+        ('chaikin_volatility_volume_signals', chaikin_volatility_volume_signals,
+         dict(cvi_len=10, roc_len=12), 'strat 599-600 / patch A2', True),
+        ('elders_force_index_volume_signals', elders_force_index_volume_signals,
+         dict(len=10), 'strat 606 / patch A3', False),
+        ('normalized_volume_volume_signals', normalized_volume_volume_signals,
+         dict(vol_period=10), 'strat 609', False),
+        ('volume_zone_oscillator_volume_signals',
+         volume_zone_oscillator_volume_signals,
+         dict(len=20, smooth=True, smooth_len=20, neutral_zone=10),
+         'strat 631-634', False),
+        ('waddah_attar_explosion_volume_signals',
+         waddah_attar_explosion_volume_signals,
+         dict(sensitivity=150, fastEma=20, slowEma=40, bbLen=20, bbStd=2.0),
+         'strat 636-640', True),
+        ('damiani_volatmeter_volume_signals', damiani_volatmeter_volume_signals,
+         dict(viscosity=7, sedimentation=50, threshold=1.4, lag=1.4, use_lag=True),
+         'strat 601-605', True),
+        ('ttm_squeeze_volume_signals', ttm_squeeze_volume_signals,
+         dict(bb_length=20, bb_mult=2.0, kc_length=20, kc_mult=1.5),
+         'strat 617-620', True),
+        ('williams_vix_fix_volume_signals', williams_vix_fix_volume_signals,
+         dict(lookback=22, bb_length=20, bb_mult=2.0), 'strat 641-643', True),
+        ('volatility_ratio_volume_signals', volatility_ratio_volume_signals,
+         dict(length=14), 'strat 630', True),
+        ('mass_index_volume_signals', mass_index_volume_signals,
+         dict(length=25, ema_length=9), 'strat 607-608', True)]:
+    _reg(_n, _f, 'volume', _d, _ln, True)
+    if not _av:
+        UNAVAILABLE.add(_n)
+
+KIND.update({k: v['kind'] for k, v in REGISTRY.items()})
+
+
 if __name__ == '__main__':
     main()

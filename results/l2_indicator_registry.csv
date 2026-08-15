@@ -34,3 +34,14 @@ alma_baseline,baseline,BASELINE,1,length=9; offset=0.85; sigma=6,True,strat 1497
 t3_baseline,baseline,BASELINE,1,length=10; volume_factor=0.7,True,strat 1502-1504,library,True
 super_smoother_2pole_baseline,baseline,BASELINE,1,cutoff_period=15,True,strat 1506,library,True
 frama_baseline,baseline,BASELINE,1,length=10,True,strat 1509,library,True
+chaikin_oscillator_volume_signals,volume,FILTER,2,fast_len=3; slow_len=10,True,strat 595-596 / patch A1,library,False
+chaikin_volatility_volume_signals,volume,FILTER,2,cvi_len=10; roc_len=12,True,strat 599-600 / patch A2,library,True
+elders_force_index_volume_signals,volume,FILTER,2,len=10,True,strat 606 / patch A3,library,False
+normalized_volume_volume_signals,volume,FILTER,2,vol_period=10,True,strat 609,library,False
+volume_zone_oscillator_volume_signals,volume,FILTER,2,len=20; smooth=True; smooth_len=20; neutral_zone=10,True,strat 631-634,library,False
+waddah_attar_explosion_volume_signals,volume,FILTER,2,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 636-640,library,True
+damiani_volatmeter_volume_signals,volume,FILTER,2,viscosity=7; sedimentation=50; threshold=1.4; lag=1.4; use_lag=True,True,strat 601-605,library,True
+ttm_squeeze_volume_signals,volume,FILTER,2,bb_length=20; bb_mult=2.0; kc_length=20; kc_mult=1.5,True,strat 617-620,library,True
+williams_vix_fix_volume_signals,volume,FILTER,2,lookback=22; bb_length=20; bb_mult=2.0,True,strat 641-643,library,True
+volatility_ratio_volume_signals,volume,FILTER,2,length=14,True,strat 630,library,True
+mass_index_volume_signals,volume,FILTER,2,length=25; ema_length=9,True,strat 607-608,library,True
