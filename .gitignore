@@ -23,3 +23,7 @@ results/_infl_*
 # rates.py raw downloads. The BoE yield-curve zip alone is 39 MB and closed
 # Treasury years never change, so they are cached rather than refetched.
 data/_ratecache/
+
+# OANDA practice API token. Local only -- a credential never enters the repo.
+# code/l2oanda.py reads it from here (or from the OANDA_TOKEN env var).
+.oanda_token

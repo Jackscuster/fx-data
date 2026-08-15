@@ -1,0 +1,190 @@
+pair,entry_date,direction,status,ours_px,tv_px,rel_px,offset_bars,cause,route,reason
+EURUSD,2005-04-28,short,matched,1.2893,1.2893,0.0,0.0,,c1 flip,target
+EURUSD,2006-03-09,short,matched,1.1912,1.19121,8.394825429660186e-06,0.0,,baseline cross,baseline cross
+EURUSD,2006-06-02,long,matched,1.29177,1.29177,0.0,0.0,,baseline cross,stop
+EURUSD,2006-09-04,long,matched,1.2873,1.2873,0.0,0.0,,c1 flip,stop
+EURUSD,2007-06-08,short,matched,1.33734,1.33734,0.0,0.0,,c1 flip,target
+EURUSD,2008-06-10,short,matched,1.54672,1.54672,0.0,0.0,,baseline cross,stop
+EURUSD,2008-12-01,short,matched,1.26102,1.26101,7.93015122803587e-06,0.0,,baseline cross,baseline cross
+EURUSD,2009-06-23,long,matched,1.40774,1.40773,7.103634930040216e-06,0.0,,baseline cross,baseline cross
+EURUSD,2009-06-26,long,matched,1.40555,1.40555,0.0,0.0,,baseline cross,exit indicator
+EURUSD,2009-07-15,long,matched,1.41065,1.41065,0.0,0.0,,baseline cross,exit indicator
+EURUSD,2009-07-31,long,matched,1.42571,1.42571,0.0,0.0,,baseline cross,exit indicator
+EURUSD,2010-01-19,short,matched,1.42873,1.42873,0.0,0.0,,c1 flip,target
+EURUSD,2010-03-18,short,matched,1.36079,1.36079,0.0,0.0,,baseline cross,target
+EURUSD,2010-04-07,short,matched,1.33442,1.33442,0.0,0.0,,c1 flip,stop
+EURUSD,2010-11-02,long,matched,1.40335,1.40335,0.0,0.0,,baseline cross,target
+EURUSD,2011-01-05,short,matched,1.31498,1.31498,0.0,0.0,,baseline cross,target
+EURUSD,2011-04-20,long,matched,1.4523,1.45231,6.885582279310555e-06,0.0,,c1 flip,target
+EURUSD,2012-06-25,short,matched,1.25042,1.25042,0.0,0.0,,baseline cross,stop
+EURUSD,2012-07-05,short,matched,1.23912,1.23911,8.070308527947892e-06,0.0,,c1 flip,target
+EURUSD,2012-10-16,long,matched,1.30536,1.30536,0.0,0.0,,c1 flip,stop
+EURUSD,2014-04-30,long,matched,1.38676,1.38676,0.0,0.0,,baseline cross,target
+EURUSD,2014-07-04,short,matched,1.35951,1.35943,5.884819372831261e-05,0.0,,baseline cross,stop
+EURUSD,2014-10-29,short,matched,1.26308,1.26317,7.124931719398297e-05,0.0,,baseline cross,target
+EURUSD,2014-12-18,short,matched,1.22866,1.22866,0.0,0.0,,c1 flip,target
+EURUSD,2015-02-26,short,matched,1.11977,1.11987,8.929607900916087e-05,0.0,,c1 flip,target
+EURUSD,2015-10-06,long,matched,1.12717,1.12712,4.436084888929796e-05,0.0,,baseline cross,target
+EURUSD,2016-01-15,long,matched,1.09153,1.09153,0.0,0.0,,baseline cross,stop
+EURUSD,2016-04-28,long,matched,1.13518,1.13518,0.0,0.0,,baseline cross,target
+EURUSD,2016-06-23,long,matched,1.13848,1.13848,0.0,0.0,,c1 flip,stop
+EURUSD,2016-06-24,short,matched,1.11082,1.11086,3.600813783918766e-05,0.0,,baseline cross,exit indicator
+EURUSD,2016-09-26,long,matched,1.12538,1.12542,3.5542286435321926e-05,0.0,,c1 flip,stop
+EURUSD,2016-10-06,short,matched,1.11509,1.11508,8.96796642379333e-06,0.0,,c1 flip,target
+EURUSD,2018-03-06,long,matched,1.2405,1.24047,2.4184381726260604e-05,0.0,,baseline cross,stop
+EURUSD,2018-03-26,long,matched,1.24451,1.24492,0.00032933843138516645,0.0,,c1 flip,stop
+EURUSD,2018-06-27,short,matched,1.15542,1.15554,0.00010384755179407031,0.0,,c1 flip,stop
+EURUSD,2018-07-24,short,matched,1.16831,1.16831,0.0,0.0,,baseline cross,exit indicator
+EURUSD,2018-08-02,short,matched,1.15844,1.15844,0.0,0.0,,c1 flip,target
+EURUSD,2018-11-27,short,matched,1.12933,1.12934,8.854729310982974e-06,0.0,,c1 flip,stop
+EURUSD,2018-11-30,short,matched,1.13159,1.13181,0.00019437891518884527,0.0,,baseline cross,stop
+EURUSD,2018-12-27,long,matched,1.14306,1.14309,2.6244652651999835e-05,0.0,,baseline cross,stop
+EURUSD,2019-01-07,long,matched,1.14748,1.14745,2.614493006228985e-05,0.0,,c1 flip,stop
+EURUSD,2019-03-26,short,matched,1.12656,1.12658,1.7752844893313375e-05,0.0,,baseline cross,exit indicator
+EURUSD,2020-04-22,short,matched,1.08236,1.08236,0.0,0.0,,c1 flip,stop
+EURUSD,2020-05-06,short,matched,1.07956,1.07956,0.0,0.0,,c1 flip,stop
+EURUSD,2020-07-06,long,matched,1.13094,1.13097,2.6525902543811498e-05,0.0,,baseline cross,target
+EURUSD,2020-08-28,long,matched,1.19046,1.19046,0.0,0.0,,baseline cross,stop
+EURUSD,2021-02-17,short,matched,1.20412,1.20412,0.0,0.0,,baseline cross,baseline cross
+EURUSD,2021-08-06,short,matched,1.17616,1.17616,0.0,0.0,,baseline cross,target
+EURUSD,2021-10-29,short,matched,1.15619,1.15619,0.0,0.0,,baseline cross,baseline cross
+EURUSD,2021-11-02,short,matched,1.15799,1.15799,0.0,0.0,,baseline cross,target
+EURUSD,2022-01-04,short,matched,1.12864,1.12864,0.0,0.0,,c1 flip,baseline cross
+EURUSD,2022-01-06,short,matched,1.12984,1.12984,0.0,0.0,,baseline cross,exit indicator
+EURUSD,2022-08-15,short,matched,1.01596,1.01596,0.0,0.0,,baseline cross,target
+EURUSD,2022-11-07,long,matched,1.0021,1.0021,0.0,0.0,,c1 flip,target
+EURUSD,2023-01-09,long,matched,1.07338,1.07338,0.0,0.0,,c1 flip,target
+EURUSD,2023-03-15,short,matched,1.05756,1.05756,0.0,0.0,,baseline cross,stop
+EURUSD,2023-09-01,short,matched,1.07752,1.07752,0.0,0.0,,c1 flip,target
+EURUSD,2025-02-03,short,matched,1.03428,1.03428,0.0,0.0,,baseline cross,stop
+EURUSD,2025-05-20,long,matched,1.12836,1.12837,8.862341253370359e-06,0.0,,baseline cross,target
+EURUSD,2025-09-03,long,matched,1.16612,1.16612,0.0,0.0,,baseline cross,baseline cross
+EURUSD,2025-09-05,long,matched,1.1718,1.1718,0.0,0.0,,baseline cross,target
+GBPUSD,2005-06-28,short,matched,1.8146,1.8146,0.0,0.0,,baseline cross,target
+GBPUSD,2005-11-04,short,matched,1.7498,1.7498,0.0,0.0,,baseline cross,target
+GBPUSD,2006-03-23,short,matched,1.7349,1.7349,0.0,0.0,,baseline cross,stop
+GBPUSD,2006-03-28,short,matched,1.7429,1.7429,0.0,0.0,,baseline cross,baseline cross
+GBPUSD,2006-03-31,short,matched,1.7374,1.7374,0.0,0.0,,baseline cross,stop
+GBPUSD,2006-07-17,short,matched,1.81845,1.81845,0.0,0.0,,baseline cross,stop
+GBPUSD,2006-09-20,long,matched,1.88833,1.88833,0.0,0.0,,baseline cross,target
+GBPUSD,2007-01-12,long,matched,1.95911,1.95911,0.0,0.0,,baseline cross,target
+GBPUSD,2007-03-02,short,matched,1.94361,1.94361,0.0,0.0,,baseline cross,target
+GBPUSD,2007-09-27,long,matched,2.02745,2.02745,0.0,0.0,,baseline cross,baseline cross
+GBPUSD,2008-02-05,short,matched,1.96487,1.96487,0.0,0.0,,baseline cross,target
+GBPUSD,2008-02-19,short,matched,1.9484,1.9484,0.0,0.0,,continuation,stop
+GBPUSD,2008-04-29,short,matched,1.96979,1.96979,0.0,0.0,,baseline cross,stop
+GBPUSD,2008-05-01,short,matched,1.97483,1.97483,0.0,0.0,,baseline cross,target
+GBPUSD,2008-09-30,short,matched,1.7805,1.7805,0.0,0.0,,baseline cross,target
+GBPUSD,2008-12-22,short,matched,1.48211,1.48211,0.0,0.0,,c1 flip,exit indicator
+GBPUSD,2009-07-15,long,matched,1.6424,1.6424,0.0,0.0,,baseline cross,baseline cross
+GBPUSD,2009-07-20,long,matched,1.65477,1.65477,0.0,0.0,,baseline cross,stop
+GBPUSD,2010-10-28,long,matched,1.59458,1.59461,1.881337756565837e-05,0.0,,baseline cross,target
+GBPUSD,2011-03-09,long,matched,1.62028,1.62028,0.0,0.0,,baseline cross,stop
+GBPUSD,2011-03-18,long,matched,1.62334,1.62334,0.0,0.0,,baseline cross,baseline cross
+GBPUSD,2011-12-28,short,matched,1.54582,1.54583,6.4690166448222065e-06,0.0,,baseline cross,stop
+GBPUSD,2012-01-05,short,matched,1.5495,1.5495,0.0,0.0,,baseline cross,target
+GBPUSD,2012-06-28,short,matched,1.55182,1.55184,1.2887926590454572e-05,0.0,,c1 flip,stop
+GBPUSD,2012-07-23,short,matched,1.55076,1.55076,0.0,0.0,,baseline cross,stop
+GBPUSD,2012-10-17,long,matched,1.61494,1.61494,0.0,0.0,,baseline cross,stop
+GBPUSD,2013-04-25,long,matched,1.54342,1.54343,6.479075824666821e-06,0.0,,baseline cross,target
+GBPUSD,2013-08-01,short,matched,1.51198,1.51198,0.0,0.0,,baseline cross,stop
+GBPUSD,2014-05-21,long,matched,1.68988,1.68988,0.0,0.0,,baseline cross,stop
+GBPUSD,2014-12-17,short,matched,1.55758,1.55759,6.420174757198949e-06,0.0,,baseline cross,target
+GBPUSD,2015-08-11,short,matched,1.5573,1.55723,4.495161279965997e-05,0.0,,baseline cross,baseline cross
+GBPUSD,2015-08-14,long,matched,1.56447,1.56428,0.00012146163091015324,0.0,,c1 flip,target
+GBPUSD,2015-11-23,short,matched,1.51235,1.51234,6.612269727750051e-06,0.0,,c1 flip,target
+GBPUSD,2015-12-16,short,matched,1.50039,1.5003,5.998800239946909e-05,0.0,,c1 flip,target
+GBPUSD,2016-02-16,short,matched,1.43049,1.43054,3.4951836369401393e-05,0.0,,baseline cross,target
+GBPUSD,2016-04-13,short,matched,1.42046,1.42047,7.03992340552315e-06,0.0,,baseline cross,exit indicator
+GBPUSD,2016-08-04,short,matched,1.31076,1.31078,1.5258090602641956e-05,0.0,,baseline cross,exit indicator
+GBPUSD,2016-11-18,short,matched,1.23462,1.23452,8.100314292193645e-05,0.0,,baseline cross,stop
+GBPUSD,2017-06-07,long,matched,1.29606,1.29607,7.715632643349134e-06,0.0,,baseline cross,stop
+GBPUSD,2017-11-02,short,matched,1.306,1.30583,0.00013018539932457018,0.0,,baseline cross,stop
+GBPUSD,2017-11-13,short,matched,1.3115,1.3116,7.624275693808248e-05,0.0,,baseline cross,baseline cross
+GBPUSD,2019-07-02,short,matched,1.25938,1.25939,7.940352075263034e-06,0.0,,c1 flip,target
+GBPUSD,2019-12-02,long,matched,1.29417,1.29421,3.090688528139946e-05,0.0,,c1 flip,target
+GBPUSD,2020-02-19,short,matched,1.29221,1.29221,0.0,0.0,,c1 flip,stop
+GBPUSD,2020-02-26,short,matched,1.28994,1.29007,0.00010076972567377233,0.0,,baseline cross,target
+GBPUSD,2020-03-11,short,matched,1.28181,1.28181,0.0,0.0,,c1 flip,target
+GBPUSD,2020-11-05,long,matched,1.31491,1.31491,0.0,0.0,,baseline cross,target
+GBPUSD,2020-12-23,long,matched,1.34946,1.34946,0.0,0.0,,baseline cross,baseline cross
+GBPUSD,2021-02-04,long,matched,1.36724,1.36724,0.0,0.0,,baseline cross,target
+GBPUSD,2021-04-07,short,matched,1.3737,1.3737,0.0,0.0,,baseline cross,stop
+GBPUSD,2021-08-12,short,matched,1.3808,1.3808,0.0,0.0,,baseline cross,baseline cross
+GBPUSD,2022-02-02,long,matched,1.35738,1.35738,0.0,0.0,,baseline cross,baseline cross
+GBPUSD,2022-02-07,long,matched,1.35354,1.35358,2.955126405534952e-05,0.0,,baseline cross,baseline cross
+GBPUSD,2022-06-08,short,matched,1.25362,1.25362,0.0,0.0,,baseline cross,target
+GBPUSD,2022-08-09,short,matched,1.20743,1.20742,8.282122211049604e-06,0.0,,baseline cross,stop
+GBPUSD,2022-08-10,long,matched,1.22179,1.22179,0.0,0.0,,baseline cross,stop
+GBPUSD,2023-01-09,long,matched,1.21852,1.21852,0.0,0.0,,baseline cross,target
+GBPUSD,2023-08-31,short,matched,1.2672,1.26721,7.891351867364894e-06,0.0,,baseline cross,target
+GBPUSD,2023-10-25,short,matched,1.21115,1.21115,0.0,0.0,,c1 flip,stop
+GBPUSD,2024-02-01,long,matched,1.27428,1.27428,0.0,0.0,,baseline cross,stop
+GBPUSD,2024-11-08,short,matched,1.29195,1.29195,0.0,0.0,,baseline cross,target
+GBPUSD,2024-12-18,short,matched,1.25724,1.25724,0.0,0.0,,baseline cross,stop
+GBPUSD,2025-04-11,long,matched,1.30887,1.30887,0.0,0.0,,c1 flip,target
+GBPUSD,2025-09-08,long,matched,1.35454,1.35454,0.0,0.0,,c1 flip,target
+GBPUSD,2026-01-22,long,matched,1.35028,1.35027,7.405926222047048e-06,0.0,,baseline cross,target
+GBPUSD,2026-06-17,short,matched,1.32942,1.32942,0.0,0.0,,baseline cross,target
+GBPUSD,2005-02-07,short,tv only,,1.8575,,,LOGIC: no entry of ours within 2 bars,,
+GBPUSD,2016-04-05,short,tv only,,1.41605,,,LOGIC: no entry of ours within 2 bars,,
+USDJPY,2005-03-21,long,matched,105.202,105.203,9.505432354636035e-06,0.0,,c1 flip,target
+USDJPY,2006-09-11,long,matched,117.677,117.677,0.0,0.0,,c1 flip,stop
+USDJPY,2006-09-28,long,matched,117.817,117.817,0.0,0.0,,c1 flip,target
+USDJPY,2007-02-22,long,matched,121.579,121.579,0.0,0.0,,c1 flip,stop
+USDJPY,2008-02-27,short,matched,106.487,106.487,0.0,0.0,,c1 flip,target
+USDJPY,2008-05-28,long,matched,104.695,104.695,0.0,0.0,,c1 flip,target
+USDJPY,2009-01-09,short,matched,90.388,90.388,0.0,0.0,,baseline cross,target
+USDJPY,2009-01-29,short,matched,90.036,90.036,0.0,0.0,,baseline cross,baseline cross
+USDJPY,2009-03-31,long,matched,98.956,98.956,0.0,0.0,,baseline cross,exit indicator
+USDJPY,2009-05-01,long,matched,99.114,99.114,0.0,0.0,,baseline cross,stop
+USDJPY,2010-02-25,short,matched,89.078,89.078,0.0,0.0,,baseline cross,stop
+USDJPY,2010-07-30,short,matched,86.467,86.467,0.0,0.0,,c1 flip,target
+USDJPY,2010-09-24,short,matched,84.21,84.213,3.5623953546365925e-05,0.0,,baseline cross,target
+USDJPY,2011-05-27,short,matched,80.796,80.796,0.0,0.0,,baseline cross,stop
+USDJPY,2011-06-01,short,matched,80.95,80.95,0.0,0.0,,baseline cross,target
+USDJPY,2011-07-11,short,matched,80.262,80.263,1.2459040903090773e-05,0.0,,c1 flip,target
+USDJPY,2011-09-14,short,matched,76.624,76.624,0.0,0.0,,baseline cross,stop
+USDJPY,2011-10-21,short,matched,76.244,76.244,0.0,0.0,,c1 flip,stop
+USDJPY,2011-12-28,long,matched,77.94,77.94,0.0,0.0,,baseline cross,exit indicator
+USDJPY,2012-05-17,short,matched,79.275,79.275,0.0,0.0,,baseline cross,stop
+USDJPY,2012-06-15,short,matched,78.722,78.722,0.0,0.0,,baseline cross,baseline cross
+USDJPY,2012-07-11,long,matched,79.763,79.763,0.0,0.0,,baseline cross,stop
+USDJPY,2012-08-28,short,matched,78.508,78.508,0.0,0.0,,baseline cross,stop
+USDJPY,2012-09-07,short,matched,78.234,78.234,0.0,0.0,,baseline cross,target
+USDJPY,2014-10-23,long,matched,108.268,108.271,2.7708250593419418e-05,0.0,,baseline cross,target
+USDJPY,2014-12-22,long,matched,120.038,120.037,8.330764680811449e-06,0.0,,c1 flip,stop
+USDJPY,2015-04-23,short,matched,119.584,119.586,1.6724365728390773e-05,0.0,,baseline cross,exit indicator
+USDJPY,2015-05-19,long,matched,120.687,120.685,1.6572067779718595e-05,0.0,,c1 flip,target
+USDJPY,2015-10-07,short,matched,120.012,120.013,8.332430653385673e-06,0.0,,baseline cross,baseline cross
+USDJPY,2015-10-12,short,matched,120.04,120.035,4.165451743249605e-05,0.0,,baseline cross,target
+USDJPY,2016-03-16,short,matched,112.568,112.564,3.553533989556953e-05,0.0,,c1 flip,exit indicator
+USDJPY,2016-04-01,short,matched,111.727,111.727,0.0,0.0,,c1 flip,target
+USDJPY,2016-09-12,short,matched,101.842,101.845,2.945652707545892e-05,0.0,,baseline cross,baseline cross
+USDJPY,2016-11-08,long,matched,105.176,105.177,9.507782119710343e-06,0.0,,c1 flip,stop
+USDJPY,2018-03-21,short,matched,106.051,106.049,1.885920659313467e-05,0.0,,baseline cross,target
+USDJPY,2018-06-06,long,matched,110.184,110.184,0.0,0.0,,baseline cross,stop
+USDJPY,2018-06-11,long,matched,110.034,110.036,1.817586971532352e-05,0.0,,baseline cross,exit indicator
+USDJPY,2018-09-11,long,matched,111.602,111.602,0.0,0.0,,c1 flip,target
+USDJPY,2018-12-13,long,matched,113.606,113.608,1.7604394056840624e-05,0.0,,c1 flip,stop
+USDJPY,2019-07-12,short,matched,107.906,107.906,0.0,0.0,,baseline cross,baseline cross
+USDJPY,2019-07-17,short,matched,107.95,107.954,3.7052818793103337e-05,0.0,,baseline cross,baseline cross
+USDJPY,2019-11-25,long,matched,108.924,108.924,0.0,0.0,,baseline cross,target
+USDJPY,2019-12-12,long,matched,109.307,109.306,9.14862862061346e-06,0.0,,baseline cross,stop
+USDJPY,2020-09-08,short,matched,106.032,106.032,0.0,0.0,,baseline cross,baseline cross
+USDJPY,2020-12-30,short,matched,103.164,103.164,0.0,0.0,,c1 flip,stop
+USDJPY,2021-05-19,long,matched,109.219,109.219,0.0,0.0,,baseline cross,baseline cross
+USDJPY,2021-06-14,long,matched,110.074,110.074,0.0,0.0,,c1 flip,target
+USDJPY,2021-07-23,long,matched,110.55,110.55,0.0,0.0,,baseline cross,stop
+USDJPY,2021-09-20,short,matched,109.393,109.393,0.0,0.0,,baseline cross,stop
+USDJPY,2022-03-07,long,matched,115.311,115.312,8.672124323492472e-06,0.0,,baseline cross,target
+USDJPY,2022-05-31,long,matched,128.704,128.704,0.0,0.0,,baseline cross,target
+USDJPY,2023-11-08,long,matched,150.976,150.976,0.0,0.0,,c1 flip,stop
+USDJPY,2024-06-11,long,matched,157.14,157.14,0.0,0.0,,c1 flip,stop
+USDJPY,2024-09-04,short,matched,143.735,143.733,1.3914689041553086e-05,0.0,,c1 flip,target
+USDJPY,2025-07-07,long,matched,146.07,146.07,0.0,0.0,,baseline cross,target
+USDJPY,2025-09-12,long,matched,147.673,147.672,6.771764450977672e-06,0.0,,baseline cross,baseline cross
+USDJPY,2026-04-22,long,matched,159.477,159.476,6.270536005447684e-06,0.0,,c1 flip,stop
+USDJPY,2026-07-08,long,matched,162.64,162.64,0.0,0.0,,c1 flip,stop
+USDJPY,2013-03-06,long,ours only,94.068,,,,LOGIC: no TV entry within 2 bars,c1 flip,target
+USDJPY,2005-01-12,short,tv only,,102.441,,,LOGIC: no entry of ours within 2 bars,,
