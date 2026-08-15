@@ -406,3 +406,13 @@ def rsi(src, length):
     with np.errstate(invalid='ignore', divide='ignore'):
         return np.where(dn == 0, 100.0, np.where(up == 0, 0.0,
                                                  100.0 - 100.0 / (1.0 + up / dn)))
+
+
+def cci(src, length):
+    """ta.cci -- deviation from the SMA over 0.015 x the MEAN ABSOLUTE
+    deviation (not the standard deviation)."""
+    ma = sma(src, length)
+    W = _roll(src, int(length))
+    mad = np.abs(W - ma[:, None]).mean(axis=1)
+    with np.errstate(invalid='ignore', divide='ignore'):
+        return np.where(mad != 0, (_a(src) - ma) / (0.015 * mad), np.nan)
