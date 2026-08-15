@@ -1,12 +1,23 @@
-name,slot,kind,n_outputs,defaults,defaults_confirmed,source
-adx_dmi,confirmation,TERNARY,4,length=14; threshold=25.0,False,"addition (work order), not ported from Pine"
-parabolic_sar,confirmation,BINARY,4,start=0.02; inc=0.02; maxaf=0.2,False,"addition (work order), not ported from Pine"
-donchian_breakout,confirmation,BINARY,4,length=20,False,"addition (work order), not ported from Pine"
-ichimoku,confirmation,TERNARY,4,tenkan=9; kijun=26; senkou=52,False,"addition (work order), not ported from Pine"
-linreg_slope,confirmation,TERNARY,4,length=14; min_r2=0.2,False,"addition (work order), not ported from Pine"
-choppiness_index,volume,FILTER,2,length=14; threshold=61.8,False,"addition (work order), not ported from Pine"
-efficiency_ratio,volume,FILTER,2,length=10; threshold=0.3,False,"addition (work order), not ported from Pine"
-vertical_horizontal_filter,volume,FILTER,2,length=28; threshold=0.35,False,"addition (work order), not ported from Pine"
-fractal_dimension,volume,FILTER,2,length=30; threshold=1.5,False,"addition (work order), not ported from Pine"
-baseline_sma,baseline,BASELINE,1,length=20,False,"addition (work order), not ported from Pine"
-baseline_lsma,baseline,BASELINE,1,length=20; offset=0,False,"addition (work order), not ported from Pine"
+name,slot,kind,n_outputs,defaults,defaults_confirmed,pine_line,source
+ssl_channel_signals,confirmation,BINARY,4,len=10,True,lib 118 / strat 364,library
+ssl_channel_exit,exit,BINARY,2,len=10,True,lib 128 / strat 828,library
+dspo_signals,confirmation,BINARY,4,len=14,True,lib 2098 / strat 426,library
+dspo_exit,exit,BINARY,2,len=14,True,lib 2380,library
+variance_volume_signals,volume,FILTER,2,mode=Price; hline=0.0; method=MA > Variance; lookback=20; filter_lookback=20; ema_len=10,True,lib / strat 626-631,library
+tma_baseline,baseline,BASELINE,1,length=20,True,lib / strat 1485,library
+adx_dmi_signals,confirmation,TERNARY,4,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library
+adx_dmi_exit,exit,BINARY,2,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library
+parabolic_sar_signals,confirmation,BINARY,4,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library
+parabolic_sar_exit,exit,BINARY,2,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library
+donchian_breakout_signals,confirmation,BINARY,4,length=20,False,patch B3,library
+donchian_breakout_exit,exit,BINARY,2,length=20,False,patch B3,library
+ichimoku_signals,confirmation,TERNARY,4,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library
+ichimoku_exit,exit,BINARY,2,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library
+linreg_slope_signals,confirmation,TERNARY,4,length=14; r2_floor=0.2,False,patch B5,library
+linreg_slope_exit,exit,BINARY,2,length=14; r2_floor=0.2,False,patch B5,library
+choppiness_index_volume_signals,volume,FILTER,2,length=14; ci_threshold=61.8,False,patch B6,library
+efficiency_ratio_volume_signals,volume,FILTER,2,length=10; er_threshold=0.3,False,patch B7,library
+vertical_horizontal_filter_volume_signals,volume,FILTER,2,length=28; vhf_threshold=0.35,False,patch B8,library
+fractal_dimension_volume_signals,volume,FILTER,2,length=30; fd_threshold=1.5,False,patch B9,library
+sma_baseline,baseline,BASELINE,1,length=20,False,patch B10,library
+lsma_baseline,baseline,BASELINE,1,length=20; lsma_offset=0,False,patch B11,library

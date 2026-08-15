@@ -109,6 +109,25 @@ never traded would otherwise fill every stop in the book. Real events -- the CHF
 unpeg, Brexit -- are not flagged and are traded normally. Pass
 block_suspect=False to disable.
 
+------------------------------------------------------------------------
+WHERE THIS DELIBERATELY DIFFERS FROM THE SHIPPED PINE
+------------------------------------------------------------------------
+Both are on the work order's instruction, and both will show up in a Phase 3
+trade-by-trade comparison, so they are listed rather than discovered:
+
+  BRIDGE TOO FAR ON CONTINUATIONS. Pine's longcondition3 / shortcondition3
+  carry Ind_CON_Trig but NOT Ind_BTF_Conf, so continuation entries skip the
+  bridge. That is the known bug; here the bridge applies to all three routes.
+  Expect the engine to take FEWER continuation entries than TradingView.
+
+  LEG PHASE ON REVERSAL. Pine resets nnfx_phase_* on entry_long / entry_short,
+  which does cover reversals -- but its trail tracker is a `var` that is only
+  reset to na, and long and short phases are tracked in separate variables that
+  are cleared only when flat. This engine rebuilds every field on every entry.
+
+Everything else follows the source, including the details the work order's
+prose got wrong -- see the phase block and the continuation route.
+
 Writes nothing on import. See l2verify.py for the debug-mode trade list.
 """
 import numpy as np
@@ -260,24 +279,31 @@ def run_bars(o, h, l, c, atr,
                 last_exit_dir = 0
                 crossed_since_exit = False
 
-        # ---- leg 2 trailing, on the CLOSE of a bar it survived -----------
+        # ---- leg 2 phase progression, matching the Pine block exactly ----
+        # Pine gates the trail on the bar's HIGH/LOW, not its close; seeds the
+        # trail tracker with the close AT ACTIVATION rather than the best close
+        # since entry; and measures the trail distance in CURRENT ATR while the
+        # stop and target use the ATR AT ENTRY. All three were wrong in the
+        # first version of this loop, which was written from prose.
         if pos != 0 and l2_open and not bad:
             if pos == 1:
-                if cl > best_close:
-                    best_close = cl
-                if l2_phase < 2 and cl >= entry_px + trail_start_mult * entry_atr:
+                if l2_phase == 1 and h[i] >= entry_px + trail_start_mult * entry_atr:
                     l2_phase = 2
+                    best_close = cl                 # seeded at activation
                 if l2_phase == 2:
-                    trail = best_close - trail_mult * entry_atr
+                    if cl > best_close:
+                        best_close = cl
+                    trail = best_close - trail_mult * a      # CURRENT atr
                     if trail > l2_stop:
                         l2_stop = trail
             else:
-                if cl < best_close:
-                    best_close = cl
-                if l2_phase < 2 and cl <= entry_px - trail_start_mult * entry_atr:
+                if l2_phase == 1 and l[i] <= entry_px - trail_start_mult * entry_atr:
                     l2_phase = 2
+                    best_close = cl
                 if l2_phase == 2:
-                    trail = best_close + trail_mult * entry_atr
+                    if cl < best_close:
+                        best_close = cl
+                    trail = best_close + trail_mult * a
                     if trail < l2_stop:
                         l2_stop = trail
 
@@ -342,11 +368,13 @@ def run_bars(o, h, l, c, atr,
             elif c1_st[i] and agree_short:
                 want = -1; rt = 2
         if want == 0 and use_continuation and not crossed_since_exit:
-            # re-entry in the direction the baseline still favours, with no
-            # re-cross since the exit. Bridge Too Far applies here too.
-            if side == 1 and agree_long and last_cross_dir == 1:
+            # Pine's longcondition3 requires the C1 TRIGGER, not merely C1
+            # confirming -- Ind_1_L_Trigger, not Ind_1_L_Conf. Without that the
+            # continuation route re-enters on any bar the state happens to be
+            # onside, which is far more often than the strategy ever does.
+            if c1_lt[i] and agree_long:
                 want = 1; rt = 3
-            elif side == -1 and agree_short and last_cross_dir == -1:
+            elif c1_st[i] and agree_short:
                 want = -1; rt = 3
 
         # ---- the one candle rule ----------------------------------------
@@ -374,7 +402,12 @@ def run_bars(o, h, l, c, atr,
             continue
 
         # ---- the two blocks, applied to EVERY route ---------------------
-        if abs(cl - b) > max_atr_dist * a:
+        # Pine's rule is ONE-SIDED: close < baseline + 1.5*atr for a long,
+        # close > baseline - 1.5*atr for a short. With the baseline direction
+        # gate already requiring price on the correct side the two readings
+        # coincide, but the one-sided form is what the source says.
+        if (want == 1 and cl > b + max_atr_dist * a) or \
+           (want == -1 and cl < b - max_atr_dist * a):
             blocked_late += 1
             continue
         if i - last_cross_bar > bridge_bars:
@@ -457,12 +490,12 @@ def run_bars(o, h, l, c, atr,
 # ==========================================================================
 # the Python side: build the arrays, call the loop, summarise
 # ==========================================================================
-import l2ind
+import l2lib as L
 
 
 def _conf(name, o, h, l, c, params=None):
-    lt, st, lc, sc = l2ind.compute(name, o, h, l, c, **(params or {}))
-    return lt, st, lc, sc, l2ind.KIND[name] == 'TERNARY'
+    lt, st, lc, sc = L.compute(name, o, h, l, c, **(params or {}))
+    return lt, st, lc, sc, L.KIND[name] == 'TERNARY'
 
 
 def load_pair(pair, clean=True):
@@ -480,17 +513,18 @@ def prepare(d, c1, c2, vol, base, exit_ind, params=None):
     o, h, l, c = (d[k].values.astype(float) for k in ('open', 'high', 'low', 'close'))
     A = {}
     A['o'], A['h'], A['l'], A['c'] = o, h, l, c
-    A['atr'] = l2ind.atr(h, l, c, params.get('atr_len', 14))
-    A['bl'] = l2ind.compute(base, o, h, l, c, **params.get(base, {}))
+    A['atr'] = L.P.atr(h, l, c, params.get('atr_len', 14))
+    A['bl'] = L.compute(base, o, h, l, c, **params.get(base, {}))
     c1_lt, c1_st, c1_lc, c1_sc, c1_t = _conf(c1, o, h, l, c, params.get(c1))
     c2_lt, c2_st, c2_lc, c2_sc, c2_t = _conf(c2, o, h, l, c, params.get(c2))
     A.update(c1_lt=c1_lt, c1_st=c1_st, c1_lc=c1_lc, c1_sc=c1_sc,
              c2_lc=c2_lc, c2_sc=c2_sc, c1_ternary=c1_t, c2_ternary=c2_t)
-    A['v_ok_l'], A['v_ok_s'] = l2ind.compute(vol, o, h, l, c, **params.get(vol, {}))
-    # the exit slot is a confirmation indicator read backwards: it closes a long
-    # when it starts confirming SHORT
-    e_lt, e_st, e_lc, e_sc, _ = _conf(exit_ind, o, h, l, c, params.get(exit_ind))
-    A['x_el'], A['x_es'] = e_st, e_lt
+    A['v_ok_l'], A['v_ok_s'] = L.compute(vol, o, h, l, c, **params.get(vol, {}))
+    # the exit slot has its OWN Pine helper (*_exit) returning [le, se]; it is
+    # not the confirmation read backwards. ssl_channel_exit and
+    # ssl_channel_signals happen to coincide, but donchian_breakout_exit is a
+    # midline cross while its signals are channel breaks -- different bars.
+    A['x_el'], A['x_es'] = L.compute(exit_ind, o, h, l, c, **params.get(exit_ind, {}))
     A['suspect'] = (d['suspect'].values.astype(bool) if 'suspect' in d.columns
                     else np.zeros(len(d), bool))
     return A
@@ -499,7 +533,7 @@ def prepare(d, c1, c2, vol, base, exit_ind, params=None):
 def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         trail_mult=1.5, trail_start_mult=2.0, max_atr_dist=1.5, bridge_bars=7,
         use_base_cross=True, use_c1_flip=True, use_continuation=True,
-        exit_on_c1_flip=False, one_candle_rule=True, block_suspect=True):
+        exit_on_c1_flip=False, one_candle_rule=False, block_suspect=True):
     n = A['c'].size
     cap = 4 * n + 8                      # a hard ceiling on trade records
     t = {k: np.zeros(cap, dt) for k, dt in
@@ -583,9 +617,12 @@ def trade_frame(res, d):
     return T
 
 
-DEFAULT_SLOTS = dict(c1='parabolic_sar', c2='donchian_breakout',
-                     vol='efficiency_ratio', base='baseline_sma',
-                     exit_ind='parabolic_sar')
+# The strategy file's own defaults: IND_1 SSL Channel, IND_2 DSPO, IND_3
+# Variance, baseline Triangular Moving Average, IND_5 SSL Channel. This is the
+# combination Phase 3 compares against TradingView.
+DEFAULT_SLOTS = dict(c1='ssl_channel_signals', c2='dspo_signals',
+                     vol='variance_volume_signals', base='tma_baseline',
+                     exit_ind='ssl_channel_exit')
 
 
 def run_all_pairs(slots=None, pairs=None, ckpt=None, params=None, **kw):
@@ -601,10 +638,21 @@ def run_all_pairs(slots=None, pairs=None, ckpt=None, params=None, **kw):
     slots = dict(DEFAULT_SLOTS, **(slots or {}))
     pairs = pairs or sorted(x[:-4] for x in os.listdir(os.path.join(ROOTDATA, 'ohlc_clean'))
                             if x.endswith('.csv'))
+    # THE CHECKPOINT IS KEYED ON THE COMBINATION, NOT JUST THE PAIR. Keying it
+    # on the pair alone means resuming a DIFFERENT combination silently returns
+    # the previous one's numbers -- which is what happened the first time this
+    # ran, reporting an SSL/DSPO/Variance/TMA result that was actually PSAR's,
+    # in 0.01s, with no error. At sweep scale that is a wrong answer that looks
+    # like a fast one.
+    sig = '|'.join('%s=%s' % (k, slots[k]) for k in sorted(slots))
+    sig += '||' + '|'.join('%s=%s' % kv for kv in sorted(kw.items()))
     done, rows = set(), []
     if ckpt and os.path.exists(ckpt):
         old = pd.read_csv(ckpt)
-        rows = old.to_dict('records'); done = set(old.label)
+        if 'combo' in old.columns and set(old.combo.unique()) == {sig}:
+            rows = old.to_dict('records'); done = set(old.label)
+        else:
+            print('  checkpoint is for a different combination -- recomputing')
     for p in pairs:
         if p in done:
             continue
@@ -613,6 +661,7 @@ def run_all_pairs(slots=None, pairs=None, ckpt=None, params=None, **kw):
                     slots['exit_ind'], params)
         s = summary(run(A, **kw), label=p)
         s['bars'] = len(d); s['first'] = str(d.index.min().date())
+        s['combo'] = sig
         rows.append(s)
         if ckpt:
             pd.DataFrame(rows).to_csv(ckpt, index=False)

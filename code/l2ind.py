@@ -2,7 +2,16 @@ import os,sys
 _R=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOTLIB=os.path.join(_R,'code'); ROOTDATA=os.path.join(_R,'data'); ROOTOUT=os.path.join(_R,'results')
 os.makedirs(ROOTOUT,exist_ok=True); sys.path.insert(0,ROOTLIB)
-"""THE INDICATOR LIBRARY. Vectorised over OHLC arrays, one call per pair, feeding
+"""SUPERSEDED by l2lib.py. Kept, not deleted, because its numbers are quoted
+in commit 8d01e52 and in results/l2_indicator_registry.csv as it stood then.
+
+This file was written from the WORK ORDER'S PROSE, before the Pine sources were
+in the repo. When they arrived the patch disagreed with it in five places --
+adx_dmi collapsed two lengths into one, its triggers came from the state rather
+than the DI cross, ichimoku ignored the tenkan/kijun condition, fractal_dimension
+rejected odd lengths the source truncates, and nothing latched. Use l2lib.py.
+
+THE INDICATOR LIBRARY. Vectorised over OHLC arrays, one call per pair, feeding
 boolean and float arrays to the Numba bar loop in l2engine.py.
 
 SCOPE, AND WHAT IS MISSING. This file holds THE ELEVEN ADDITIONS ONLY -- the
