@@ -42,8 +42,15 @@ import numpy as np, pandas as pd
 HOST = 'https://api-fxpractice.oanda.com'
 OUT = os.path.join(ROOTDATA, 'oanda_ohlc')
 COV = os.path.join(ROOTOUT, 'l2_oanda_coverage.csv')
-PAIRS = {'EURUSD': 'EUR_USD', 'GBPUSD': 'GBP_USD', 'USDJPY': 'USD_JPY'}
-PRICES = {'mid': 'M', 'bid': 'B'}
+def _pairs():
+    """All 28, in px28's own column order, mapped to OANDA instrument names."""
+    cols = list(pd.read_csv(os.path.join(ROOTDATA, 'px28.csv'), index_col=0,
+                            nrows=1).columns)
+    return {c: c[:3] + '_' + c[3:] for c in cols}
+
+
+PAIRS = _pairs()
+PRICES = {'mid': 'M'}   # settled in Phase 3: TradingView plots OANDA MID
 START = '2002-06-01'
 MAXCOUNT = 5000
 
