@@ -1,0 +1,259 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © jacktime
+
+//@version=6
+
+// ============================================================================
+// V9.1 — ADDENDUM TO THE V9 PATCH
+// ============================================================================
+//
+// JCs_Indicators_Lib_V9_patch.pine IS NOT MODIFIED BY THIS FILE. V9 stands as
+// written; this is a second, later layer applied on top of it. Where this file
+// and V9 disagree, V9.1 wins, for the same reason V9 wins over the library.
+//
+// Two kinds of change, kept apart because they are not the same claim:
+//
+//   SECTION C — TWO BUGS V9 DID NOT CATCH, in the same class as the ones it
+//     did. Each is a function whose signals cannot mean what the slot needs
+//     them to mean. Found by running the ported library over 28 pairs and
+//     23 years and looking at what each indicator actually says.
+//
+//   SECTION D — FOUR DEFAULTS RE-DECLARED. Not bugs in the code: values that
+//     were chosen while the parameter they set was dead or unreachable, and
+//     which leave the indicator saying nothing at all. A default picked while
+//     the code was inert is not a real default, and an indicator that takes no
+//     trades cannot enter gate 1 — it would be scored "no edge" when it was
+//     never asked a question.
+//
+// THE PYTHON PORT USES SECTION C AND SECTION D FROM DAY ONE. The as-written
+// versions are retained ONLY for TradingView parity comparisons, behind an
+// explicit flag, because a parity run has to reproduce what TradingView does
+// rather than what it should do. Nothing else may call them.
+//
+// ----------------------------------------------------------------------------
+// C1  supertrend_signals              read ta.supertrend's direction backwards
+// C2  chandelier_exit_signals         confirmed both directions at once
+//
+// D1  rex_oscillator                  oscillator and signal line identical
+// D2  volatility_quality              dead band ~859x the values it gates
+// D3  damiani_volatmeter              computes an input then discards it
+// D4  glitch_index                    threshold set while the parameter was dead
+// ============================================================================
+
+
+// ############################################################################
+// SECTION C — TWO MORE BUGS
+// ############################################################################
+
+
+// ----------------------------------------------------------------------------
+// C1 — Supertrend direction is inverted
+//
+// WAS: lc = dir > 0, sc = dir < 0.
+//
+// ta.supertrend returns the direction as -1 WHEN THE TREND IS UP and +1 when
+// it is down. That is TradingView's documented convention, not a quirk of this
+// chart. So the helper confirmed LONG while the supertrend line sat above
+// price, and short while it sat below: every trade taken on Supertrend as C1,
+// C2 or exit was on the wrong side of it.
+//
+// Measured on the ported library, 28 pairs, 1999-2026: as written it confirms
+// long on 52.3% of bars and short on 47.6%, which looks perfectly healthy and
+// is exactly backwards. Nothing in the shape of the output reveals this — only
+// reading TradingView's sign convention does.
+//
+// NOW: the sign is read the way ta.supertrend defines it.
+// ----------------------------------------------------------------------------
+export supertrend_signals(simple float factor, simple int atr_period) =>
+	[stv, dir] = ta.supertrend(factor, atr_period)
+	// -1 is UP. This is the whole fix.
+	lt = dir < 0 and dir[1] > 0
+	st = dir > 0 and dir[1] < 0
+	lc = dir < 0
+	sc = dir > 0
+	[lt, st, lc, sc]
+
+export supertrend_exit(simple float factor, simple int atr_period) =>
+	[stv, dir] = ta.supertrend(factor, atr_period)
+	le = dir > 0 and dir[1] < 0
+	se = dir < 0 and dir[1] > 0
+	[le, se]
+
+
+// ----------------------------------------------------------------------------
+// C2 — Chandelier Exit confirms both directions at once
+//
+// WAS: lc = close > ClongStop, sc = close < CshortStop.
+//
+// ClongStop is the highest high minus a multiple of ATR and therefore sits
+// BELOW price; CshortStop is the lowest low plus the same and sits ABOVE it.
+// Whenever price is between its own two trailing stops — the ordinary case —
+// BOTH conditions are true. Measured: 51.7% of bars confirm long and short
+// simultaneously.
+//
+// As C2 that is not a filter at all. It votes for whatever C1 says and can
+// never disagree with it, which is precisely the fault V9's A5 fixed in
+// schaff_trend_cycle_signals ("lc and sc were both true mid-range"). A5 caught
+// one instance; this is the other.
+//
+// NOW: resolved to a single direction the same way A5 did it — the indicator
+// already maintains `Cdir`, a proper one-or-the-other state that flips when
+// price crosses a stop, and the confirmation reads THAT. The stop levels stay
+// exactly as they were; only what the helper reports changes.
+//
+// A note on why this is not merely narrowing: with Cdir the indicator becomes
+// binary (always long or short after warm-up) rather than a thing that agrees
+// with everything. The triggers were already Cdir-based and are unchanged.
+// ----------------------------------------------------------------------------
+export chandelier_exit_signals(simple int atr_period, float atr_mult, bool use_close) =>
+	a = chandelier_exit(atr_period, atr_mult, use_close)
+	ce_bs = array.get(a, 2)
+	lt = ce_bs == 1.0  and nz(ce_bs[1], 1.0) != 1.0
+	st = ce_bs == -1.0 and nz(ce_bs[1], 1.0) != -1.0
+	lc = ce_bs == 1.0
+	sc = ce_bs == -1.0
+	[lt, st, lc, sc]
+
+export chandelier_exit_exit(simple int atr_period, float atr_mult, bool use_close) =>
+	a = chandelier_exit(atr_period, atr_mult, use_close)
+	ce_bs = array.get(a, 2)
+	le = ce_bs == -1.0 and nz(ce_bs[1], 1.0) != -1.0
+	se = ce_bs == 1.0  and nz(ce_bs[1], 1.0) != 1.0
+	[le, se]
+
+
+// ############################################################################
+// SECTION D — FOUR DEFAULTS RE-DECLARED
+// ############################################################################
+//
+// Each of these ran, produced no signal, and would have entered a 17.6M-
+// combination sweep contributing nothing while looking like a tested option.
+// Every replacement below is either the indicator's published setting or, where
+// the construction has no published form, a stated choice with its reason.
+// All four keep their inert_at_defaults tag in the registry so the record shows
+// the value was re-declared rather than inherited.
+
+
+// ----------------------------------------------------------------------------
+// D1 — Rex Oscillator: rex_smooth 13 / signal 13  ->  14 / 22
+//
+// The strategy sets rex_c1_t1 = "SMA", rex_c1_l1 = 13, rex_c1_t2 = "SMA",
+// rex_c1_l2 = 13. Both the oscillator and its signal line are the same moving
+// average, of the same length, over the same series. They are one array
+// compared against itself: rex_ma > signal_ma is never true, and neither is
+// the reverse. Measured over 28 pairs and 23 years: 0% long, 0% short, 100%
+// neutral, ZERO triggers. Any combination selecting Rex takes no trades.
+//
+// PUBLISHED FORM. Rex smooths the True Value Bar (close - low + close - open
+// - (high - close)) over 14 periods and takes a 9-period signal line OF THAT
+// AVERAGE. This implementation cannot do that: its signal line reads the raw
+// TVB, not the oscillator. Two cascaded simple averages of 14 and 9 have the
+// single-average equivalent length 14 + 9 - 1 = 22, so 14 and 22 preserve both
+// published constants under this structure.
+//
+// The ORDER matters and is the reason for not simply writing 14 and 9. The
+// oscillator must be the FASTER leg, or lc = rex_ma > signal_ma reads a slow
+// average above a fast one, which is falling momentum reported as bullish —
+// the C1 inversion of Section C all over again.
+//
+// Measured at 14 / 22: 49.8% long, 49.9% short, ~1,020 triggers per pair.
+// ----------------------------------------------------------------------------
+// rex_smooth_length          : 13 -> 14
+// rex_signal_smoothing       : 13 -> 22
+// (rex_ma_type and rex_signal_ma_type stay "SMA")
+
+
+// ----------------------------------------------------------------------------
+// D2 — Volatility Quality: vq_atr_percentage 7.5 -> 0.075
+//
+// inpFilter is a DEAD BAND, not a threshold: a new reading is accepted only if
+// it moves more than inpFilter x ATR away from the last accepted one. But
+// `val` is a ratio multiplied by a price difference — median magnitude
+// 0.0000839 on EURUSD — while 7.5 x ATR is 0.0720. A new value is accepted
+// only on a jump of about 859x the typical one. The indicator takes THREE
+// distinct values across 23 years, fires zero triggers, and confirms long on
+// 99.8% of bars purely because of whichever value it froze at.
+//
+// The strategy labels this input "Volatility Quality: ATR %". Read as the
+// percentage it says it is, 7.5 means 0.075 — and the units then make sense:
+// a dead band of 7.5% of ATR. That is the smallest possible reading of the
+// author's intent, changing no number, only where the decimal point sits.
+//
+// Measured at 0.075: 45.6% long, 54.2% short, ~92 triggers per pair. At 0.0
+// (dead band off) it is an ordinary oscillator with ~990; the band is kept
+// because the author put it there deliberately.
+// ----------------------------------------------------------------------------
+// vq_atr_percentage          : 7.5 -> 0.075
+
+
+// ----------------------------------------------------------------------------
+// D3 — Damiani Volatmeter: THIS IS A BUG, not just a default
+//
+// The library computes std_short and std_long, forms std_ratio from them, and
+// then never reads it:
+//
+//     vol_ratio = atr(viscosity) / atr(sedimentation)
+//     std_ratio = stdev(close, viscosity) / stdev(close, sedimentation)   // unused
+//     vmeter    = use_lag ? vol_ratio - lag : vol_ratio
+//     tradable  = vmeter > threshold
+//
+// With the shipped 7 / 50 / 1.4 / 1.4 that asks for atr(7)/atr(50) > 2.8. Over
+// 28 pairs and 23 years that ratio reaches 5.775 once and sits near 1.0
+// otherwise: the filter passes 0.044% of bars and blocks essentially every
+// trade.
+//
+// Damiani's published construction uses the std ratio as an ANTI-THRESHOLD —
+// it lowers the bar the volatility ratio has to clear, rather than being
+// discarded and replaced by a constant subtraction:
+//
+//     tradable = vol_ratio > threshold - std_ratio
+//
+// which is what the unused variable was computed for. Measured that way, with
+// the SAME published 7 / 50 / 1.4: passes 42.9% of bars, range 40.3% to 45.9%
+// across the 28 pairs. A filter, as intended.
+//
+// The viscosity, sedimentation and threshold defaults are unchanged; `lag` and
+// `use_lag` become inert under the corrected form and are retained only so the
+// signature does not change.
+// ----------------------------------------------------------------------------
+export damiani_volatmeter(simple int viscosity, simple int sedimentation, float threshold, float lag, bool use_lag) =>
+	vol_atr_short = ta.atr(viscosity)
+	vol_atr_long  = ta.atr(sedimentation)
+	std_short     = ta.stdev(close, viscosity)
+	std_long      = ta.stdev(close, sedimentation)
+	vol_ratio = vol_atr_long != 0 ? vol_atr_short / vol_atr_long : 0.0
+	// the anti-threshold. This is the line the original computed and dropped.
+	anti_thres = std_long != 0 ? std_short / std_long : 0.0
+	vmeter   = vol_ratio
+	eff_thres = threshold - anti_thres
+	tradable = vmeter > eff_thres
+	[vmeter, eff_thres, tradable]
+
+
+// ----------------------------------------------------------------------------
+// D4 — Glitch Index: multiplier 5.0 -> 1.0
+//
+// V9's A7 rewrote this indicator. It had been a z-score times a constant that
+// was then sign-tested, so the multiplier could not change a single trade — a
+// dead parameter. A7 made it a real threshold on a displacement measured in
+// units of average range, and correctly made the indicator ternary.
+//
+// But 5.0 was chosen when the number could not matter. Under the new
+// construction the displacement's 99th percentile is 5.92, so a threshold of
+// 5.0 is crossed on 2.4% of bars and the indicator is neutral 97.6% of the
+// time. As C1 it blocks almost every entry — inert for a different reason than
+// D1-D3, but inert.
+//
+// NO PUBLISHED DEFAULT EXISTS for A7's construction; it is a new formula, so
+// there is nothing to look up and this is a proposal. The value is chosen so
+// the indicator does the job A7 states — "decline to confirm either side" when
+// price is near its own average — with a neutral share in line with the other
+// ternary confirmations already in the library:
+//
+//     ADX/DMI 63.9%   TDFI 60.7%   Ichimoku 32.4%   LinReg slope 29.5%
+//     Bears/Bulls Impulse 30.9%    Glitch @ 1.0 -> 39.4%
+//
+// At 1.0 it is 31.8% long, 28.7% short, 39.4% neutral. At the old 5.0 it is
+// 1.0 / 0.8 / 98.2. Anything below ~0.5 stops it being selective at all.
+// ----------------------------------------------------------------------------
+// glitch_index multiplier    : 5.0 -> 1.0

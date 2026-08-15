@@ -500,8 +500,9 @@ def run_bars(o, h, l, c, atr,
 import l2lib as L
 
 
-def _conf(name, o, h, l, c, params=None):
-    lt, st, lc, sc = L.compute(name, o, h, l, c, **(params or {}))
+def _conf(name, o, h, l, c, params=None, as_written_mode=False):
+    lt, st, lc, sc = L.compute(name, o, h, l, c, as_written_mode=as_written_mode,
+                               **(params or {}))
     return lt, st, lc, sc, L.KIND[name] == 'TERNARY'
 
 
@@ -512,26 +513,28 @@ def load_pair(pair, clean=True):
     return d
 
 
-def prepare(d, c1, c2, vol, base, exit_ind, params=None):
+def prepare(d, c1, c2, vol, base, exit_ind, params=None, as_written_mode=False):
     """Everything the loop needs, computed ONCE per pair per slot. A sweep
     caches this per (pair, indicator) and reuses it across every combination
     that mentions it -- which is the whole reason the loop takes arrays."""
     params = params or {}
+    # as_written_mode reaches the pre-V9.1 functions. l2parity.py only.
+    aw = dict(as_written_mode=as_written_mode)
     o, h, l, c = (d[k].values.astype(float) for k in ('open', 'high', 'low', 'close'))
     A = {}
     A['o'], A['h'], A['l'], A['c'] = o, h, l, c
     A['atr'] = L.P.atr(h, l, c, params.get('atr_len', 14))
-    A['bl'] = L.compute(base, o, h, l, c, **params.get(base, {}))
-    c1_lt, c1_st, c1_lc, c1_sc, c1_t = _conf(c1, o, h, l, c, params.get(c1))
-    c2_lt, c2_st, c2_lc, c2_sc, c2_t = _conf(c2, o, h, l, c, params.get(c2))
+    A['bl'] = L.compute(base, o, h, l, c, **aw, **params.get(base, {}))
+    c1_lt, c1_st, c1_lc, c1_sc, c1_t = _conf(c1, o, h, l, c, params.get(c1), as_written_mode)
+    c2_lt, c2_st, c2_lc, c2_sc, c2_t = _conf(c2, o, h, l, c, params.get(c2), as_written_mode)
     A.update(c1_lt=c1_lt, c1_st=c1_st, c1_lc=c1_lc, c1_sc=c1_sc,
              c2_lc=c2_lc, c2_sc=c2_sc, c1_ternary=c1_t, c2_ternary=c2_t)
-    A['v_ok_l'], A['v_ok_s'] = L.compute(vol, o, h, l, c, **params.get(vol, {}))
+    A['v_ok_l'], A['v_ok_s'] = L.compute(vol, o, h, l, c, **aw, **params.get(vol, {}))
     # the exit slot has its OWN Pine helper (*_exit) returning [le, se]; it is
     # not the confirmation read backwards. ssl_channel_exit and
     # ssl_channel_signals happen to coincide, but donchian_breakout_exit is a
     # midline cross while its signals are channel breaks -- different bars.
-    A['x_el'], A['x_es'] = L.compute(exit_ind, o, h, l, c, **params.get(exit_ind, {}))
+    A['x_el'], A['x_es'] = L.compute(exit_ind, o, h, l, c, **aw, **params.get(exit_ind, {}))
     A['suspect'] = (d['suspect'].values.astype(bool) if 'suspect' in d.columns
                     else np.zeros(len(d), bool))
     return A

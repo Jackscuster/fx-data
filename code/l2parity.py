@@ -50,6 +50,14 @@ afterwards:
 
   LEG PHASE ACROSS A REVERSAL. The engine rebuilds all phase state on entry.
 
+PARITY RUNS USE AS-WRITTEN SEMANTICS. Everything here calls the engine with
+as_written_mode=True and bridge_all_routes=False, so it reproduces the Pine as
+shipped -- Supertrend on the wrong side of its own line, Chandelier agreeing
+with everything, the four inert defaults, and continuations skipping the
+bridge. That is the point: a comparison against TradingView must reproduce what
+TradingView does, or every deliberate fix is scored as a disagreement. THE
+SWEEP USES THE FIXED SEMANTICS AND NOTHING HERE TOUCHES IT.
+
 Anything else that differs is a defect in the port and is reported as one.
 
 --------------------------------------------------------------------------
@@ -93,12 +101,12 @@ def ours(pairs=PAIRS):
     frames = []
     for p in pairs:
         d = E.load_pair(p)
-        A = E.prepare(d, **{k: v for k, v in
+        A = E.prepare(d, as_written_mode=True, **{k: v for k, v in
                             zip(('c1', 'c2', 'vol', 'base', 'exit_ind'),
                                 (E.DEFAULT_SLOTS['c1'], E.DEFAULT_SLOTS['c2'],
                                  E.DEFAULT_SLOTS['vol'], E.DEFAULT_SLOTS['base'],
                                  E.DEFAULT_SLOTS['exit_ind']))})
-        r = E.run(A, plan=2)
+        r = E.run(A, plan=2, bridge_all_routes=False)
         T = E.trade_frame(r, d)
         T.insert(0, 'pair', p)
         frames.append(T)
@@ -344,7 +352,8 @@ def condition_audit(pairs=PAIRS):
     import collections
     cnt = collections.Counter(); per = []
     for p in pairs:
-        d = E.load_pair(p); A = E.prepare(d, **E.DEFAULT_SLOTS)
+        d = E.load_pair(p)
+        A = E.prepare(d, as_written_mode=True, **E.DEFAULT_SLOTS)
         Lg, Sh, side, cross, age, late = would_fire(A)
         idx = d.index.normalize()
         tv = read_tv(os.path.join(TVDIR, '%s.csv' % p))

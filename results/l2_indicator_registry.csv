@@ -1,115 +1,115 @@
-name,slot,kind,n_outputs,defaults,defaults_confirmed,pine_line,source,available,inert_at_defaults,inverted_vs_tradingview,lookahead_if_nondefault
-ssl_channel_signals,confirmation,BINARY,4,len=10,True,lib 118 / strat 364,library,True,False,False,False
-ssl_channel_exit,exit,BINARY,2,len=10,True,lib 128 / strat 828,library,True,False,False,False
-dspo_signals,confirmation,BINARY,4,len=14,True,lib 2098 / strat 426,library,True,False,False,False
-dspo_exit,exit,BINARY,2,len=14,True,lib 2380,library,True,False,False,False
-variance_volume_signals,volume,FILTER,2,mode=Price; hline=0.0; method=MA > Variance; lookback=20; filter_lookback=20; ema_len=10,True,lib / strat 626-631,library,True,False,False,False
-tma_baseline,baseline,BASELINE,1,length=20,True,lib / strat 1485,library,True,False,False,False
-adx_dmi_signals,confirmation,TERNARY,4,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library,True,False,False,False
-adx_dmi_exit,exit,BINARY,2,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library,True,False,False,False
-parabolic_sar_signals,confirmation,BINARY,4,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library,True,False,False,False
-parabolic_sar_exit,exit,BINARY,2,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library,True,False,False,False
-donchian_breakout_signals,confirmation,BINARY,4,length=20,False,patch B3,library,True,False,False,False
-donchian_breakout_exit,exit,BINARY,2,length=20,False,patch B3,library,True,False,False,False
-ichimoku_signals,confirmation,TERNARY,4,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library,True,False,False,False
-ichimoku_exit,exit,BINARY,2,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library,True,False,False,False
-linreg_slope_signals,confirmation,TERNARY,4,length=14; r2_floor=0.2,False,patch B5,library,True,False,False,False
-linreg_slope_exit,exit,BINARY,2,length=14; r2_floor=0.2,False,patch B5,library,True,False,False,False
-choppiness_index_volume_signals,volume,FILTER,2,length=14; ci_threshold=61.8,False,patch B6,library,True,False,False,False
-efficiency_ratio_volume_signals,volume,FILTER,2,length=10; er_threshold=0.3,False,patch B7,library,True,False,False,False
-vertical_horizontal_filter_volume_signals,volume,FILTER,2,length=28; vhf_threshold=0.35,False,patch B8,library,True,False,False,False
-fractal_dimension_volume_signals,volume,FILTER,2,length=30; fd_threshold=1.5,False,patch B9,library,True,False,False,False
-sma_baseline,baseline,BASELINE,1,length=20,False,patch B10,library,True,False,False,False
-lsma_baseline,baseline,BASELINE,1,length=20; lsma_offset=0,False,patch B11,library,True,False,False,False
-ema_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1469,library,True,False,False,False
-hma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1467,library,True,False,False,False
-rma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1471,library,True,False,False,False
-wma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1473,library,True,False,False,False
-vwma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1475,library,False,False,False,False
-fantail_vma,baseline,BASELINE,1,fma_adx_length=2; fma_weighting=10.0; fma_ma_length=6,True,strat 1477-1480,library,True,False,False,False
-mcginley_dynamic_index,baseline,BASELINE,1,mci_length=14,True,strat 1482,library,True,False,False,False
-vidya,baseline,BASELINE,1,vda_length=2; vda_fixed_cmo_length=True; vda_calculation_method=True,True,strat 1486-1489,library,True,False,False,False
-kama_baseline,baseline,BASELINE,1,length=10; fast_length=2; slow_length=30,True,strat 1491-1495,library,True,False,False,False
-alma_baseline,baseline,BASELINE,1,length=9; offset=0.85; sigma=6,True,strat 1497-1500,library,True,False,False,False
-t3_baseline,baseline,BASELINE,1,length=10; volume_factor=0.7,True,strat 1502-1504,library,True,False,False,False
-super_smoother_2pole_baseline,baseline,BASELINE,1,cutoff_period=15,True,strat 1506,library,True,False,False,False
-frama_baseline,baseline,BASELINE,1,length=10,True,strat 1509,library,True,False,False,False
-chaikin_oscillator_volume_signals,volume,FILTER,2,fast_len=3; slow_len=10,True,strat 595-596 / patch A1,library,False,False,False,False
-chaikin_volatility_volume_signals,volume,FILTER,2,cvi_len=10; roc_len=12,True,strat 599-600 / patch A2,library,True,False,False,False
-elders_force_index_volume_signals,volume,FILTER,2,len=10,True,strat 606 / patch A3,library,False,False,False,False
-normalized_volume_volume_signals,volume,FILTER,2,vol_period=10,True,strat 609,library,False,False,False,False
-volume_zone_oscillator_volume_signals,volume,FILTER,2,len=20; smooth=True; smooth_len=20; neutral_zone=10,True,strat 631-634,library,False,False,False,False
-waddah_attar_explosion_volume_signals,volume,FILTER,2,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 636-640,library,True,False,False,False
-damiani_volatmeter_volume_signals,volume,FILTER,2,viscosity=7; sedimentation=50; threshold=1.4; lag=1.4; use_lag=True,True,strat 601-605,library,True,True,False,False
-ttm_squeeze_volume_signals,volume,FILTER,2,bb_length=20; bb_mult=2.0; kc_length=20; kc_mult=1.5,True,strat 617-620,library,True,False,False,False
-williams_vix_fix_volume_signals,volume,FILTER,2,lookback=22; bb_length=20; bb_mult=2.0,True,strat 641-643,library,True,False,False,False
-volatility_ratio_volume_signals,volume,FILTER,2,length=14,True,strat 630,library,True,False,False,False
-mass_index_volume_signals,volume,FILTER,2,length=25; ema_length=9,True,strat 607-608,library,True,False,False,False
-chaikin_money_flow_signals,confirmation,BINARY,4,lookback=50,True,strat 181,library,False,False,False,False
-chaikin_money_flow_exit,exit,BINARY,2,lookback=50,True,strat 181,library,False,False,False,False
-coppock_curve_signals,confirmation,BINARY,4,smooth_len=10; long_roc=14; short_roc=11,True,strat 185-187,library,True,False,False,False
-coppock_curve_exit,exit,BINARY,2,smooth_len=10; long_roc=14; short_roc=11,True,strat 185-187,library,True,False,False,False
-dpo_signals,confirmation,BINARY,4,len=50; centered=False,True,strat 190-191,library,True,False,False,True
-dpo_exit,exit,BINARY,2,len=50; centered=False,True,strat 190-191,library,True,False,False,True
-ease_of_movement_signals,confirmation,BINARY,4,len=14; divisor=10000,True,strat 195-196,library,False,False,False,False
-ease_of_movement_exit,exit,BINARY,2,len=14; divisor=10000,True,strat 195-196,library,False,False,False,False
-kalman_filter_signals,confirmation,BINARY,4,sharpness=1.0; k=1.0,True,strat 258-259,library,True,False,False,False
-kalman_filter_exit,exit,BINARY,2,sharpness=1.0; k=1.0,True,strat 258-259,library,True,False,False,False
-laguerre_filter_signals,confirmation,BINARY,4,alpha=0.2,True,strat 266,library,True,False,False,False
-laguerre_filter_exit,exit,BINARY,2,alpha=0.2,True,strat 266,library,True,False,False,False
-price_momentum_oscillator_signals,confirmation,BINARY,4,s1=35; s2=20; sig=10,True,strat 274-276,library,True,False,False,False
-price_momentum_oscillator_exit,exit,BINARY,2,s1=35; s2=20; sig=10,True,strat 274-276,library,True,False,False,False
-relative_vigor_index_signals,confirmation,BINARY,4,len=10,True,strat 280,library,True,False,False,False
-relative_vigor_index_exit,exit,BINARY,2,len=10,True,strat 280,library,True,False,False,False
-supertrend_signals,confirmation,BINARY,4,factor=3.0; atr_period=10,True,strat 283-284,library,True,False,True,False
-supertrend_exit,exit,BINARY,2,factor=3.0; atr_period=10,True,strat 283-284,library,True,False,True,False
-fisher_transform_signals,confirmation,BINARY,4,length=10,True,strat 200,library,True,False,False,False
-fisher_transform_exit,exit,BINARY,2,length=10,True,strat 200,library,True,False,False,False
-aroon_signals,confirmation,BINARY,4,length=25,True,strat 177,library,True,False,False,False
-aroon_exit,exit,BINARY,2,length=25,True,strat 177,library,True,False,False,False
-center_of_gravity_signals,confirmation,BINARY,4,length=10; signal_length=3,True,strat 179-180,library,True,False,False,False
-center_of_gravity_exit,exit,BINARY,2,length=10; signal_length=3,True,strat 179-180,library,True,False,False,False
-vortex_signals,confirmation,BINARY,4,period=14,True,strat 295,library,True,False,False,False
-vortex_exit,exit,BINARY,2,period=14,True,strat 295,library,True,False,False,False
-trend_direction_force_index_signals,confirmation,TERNARY,4,lookback=13; fhigh=0.05; flow=-0.05,True,strat 288-290,library,True,False,False,False
-trend_direction_force_index_exit,exit,BINARY,2,lookback=13; fhigh=0.05; flow=-0.05,True,strat 288-290,library,True,False,False,False
-halftrend_signals,confirmation,BINARY,4,amplitude=50,True,strat 254,library,True,False,False,False
-halftrend_exit,exit,BINARY,2,amplitude=50,True,strat 254,library,True,False,False,False
-coral_signals,confirmation,BINARY,4,smooth_period=10; const_d=14,True,strat 188-189 / patch A9,library,True,False,False,False
-coral_exit,exit,BINARY,2,smooth_period=10; const_d=14,True,strat 188-189 / patch A9,library,True,False,False,False
-didi_index_signals,confirmation,BINARY,4,medium=8; long_p=20,True,strat 192-193 / patch A10,library,True,False,False,False
-didi_index_exit,exit,BINARY,2,medium=8; long_p=20,True,strat 192-193 / patch A10,library,True,False,False,False
-kase_peak_oscillator_signals,confirmation,BINARY,4,short_cycle=8; long_cycle=65; sharpness=40.0,True,strat 260-262 / patch A10,library,True,False,False,False
-kase_peak_oscillator_exit,exit,BINARY,2,short_cycle=8; long_cycle=65; sharpness=40.0,True,strat 260-262 / patch A10,library,True,False,False,False
-qqe_mod_signals,confirmation,BINARY,4,rsi_period=6; rsi_len=5; fast_factor=1.61,True,strat 277-279 / patch A8,library,True,False,False,False
-qqe_mod_exit,exit,BINARY,2,rsi_period=6; rsi_len=5; fast_factor=1.61,True,strat 277-279 / patch A8,library,True,False,False,False
-schaff_trend_cycle_signals,confirmation,TERNARY,4,macdFast=23; macdSlow=50; cycleLen=10; d1=3; d2=3; upperBand=75; lowerBand=25; stc_midline=50.0,True,patch A5,library,True,False,False,False
-schaff_trend_cycle_exit,exit,BINARY,2,macdFast=23; macdSlow=50; cycleLen=10; d1=3; d2=3; upperBand=75; lowerBand=25; stc_midline=50.0,True,patch A5,library,True,False,False,False
-glitch_index_signals,confirmation,TERNARY,4,length=30; multiplier=5.0; smooth=3,True,strat 249-251 / patch A7,library,True,False,False,False
-glitch_index_exit,exit,BINARY,2,length=30; multiplier=5.0; smooth=3,True,strat 249-251 / patch A7,library,True,False,False,False
-ehlers_reverse_ema_signals,confirmation,BINARY,4,alpha=0.1,True,strat 198 / patch A6,library,True,False,False,False
-ehlers_reverse_ema_exit,exit,BINARY,2,alpha=0.1,True,strat 198 / patch A6,library,True,False,False,False
-chandelier_exit_signals,confirmation,BINARY,4,atr_period=22; atr_mult=3.0; use_close=True,True,strat 182-184,library,True,False,False,False
-chandelier_exit_exit,exit,BINARY,2,atr_period=22; atr_mult=3.0; use_close=True,True,strat 182-184,library,True,False,False,False
-polychromatic_momentum_signals,confirmation,BINARY,4,len=14,True,strat 273,library,True,False,False,False
-polychromatic_momentum_exit,exit,BINARY,2,len=14,True,strat 273,library,True,False,False,False
-mama_fama_signals,confirmation,BINARY,4,fast_limit=0.5; slow_limit=0.05,True,strat 271-272,library,True,False,False,False
-mama_fama_exit,exit,BINARY,2,fast_limit=0.5; slow_limit=0.05,True,strat 271-272,library,True,False,False,False
-kuskus_starlight_signals,confirmation,BINARY,4,range_periods=30; price_smooth=0.7; index_smooth=0.7,True,strat 263-265,library,True,False,False,False
-kuskus_starlight_exit,exit,BINARY,2,range_periods=30; price_smooth=0.7; index_smooth=0.7,True,strat 263-265,library,True,False,False,False
-bears_bulls_impulse_signals,confirmation,TERNARY,4,length=13,True,strat 178,library,True,False,False,False
-bears_bulls_impulse_exit,exit,BINARY,2,length=13,True,strat 178,library,True,False,False,False
-fx_sniper_ergodic_cci_signals,confirmation,BINARY,4,cci_length=14; ema1_length=5; ema2_length=3; trigger_length=5,True,strat 202-205,library,True,False,False,False
-fx_sniper_ergodic_cci_exit,exit,BINARY,2,cci_length=14; ema1_length=5; ema2_length=3; trigger_length=5,True,strat 202-205,library,True,False,False,False
-lemantrend_signals,confirmation,BINARY,4,slow_period=13; medium_period=21; fast_period=34; smooth=3,True,strat 267-270,library,True,False,False,False
-lemantrend_exit,exit,BINARY,2,slow_period=13; medium_period=21; fast_period=34; smooth=3,True,strat 267-270,library,True,False,False,False
-waddah_attar_explosion_signals,confirmation,BINARY,4,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 296-300,library,True,False,False,False
-waddah_attar_explosion_exit,exit,BINARY,2,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 296-300,library,True,False,False,False
-volatility_quality_signals,confirmation,BINARY,4,ma_type=WMA; smooth=10; atr_pct=7.5,True,strat 376-378,library,True,True,False,False
-volatility_quality_exit,exit,BINARY,2,ma_type=WMA; smooth=10; atr_pct=7.5,True,strat 376-378,library,True,False,False,False
-j_tpo_signals,confirmation,BINARY,4,len=40; ema_len=200; ema_filter=False,True,strat 256-258 / patch A4,library,True,False,False,False
-j_tpo_exit,exit,BINARY,2,len=40; ema_len=200; ema_filter=False,True,strat 256-258 / patch A4,library,True,False,False,False
-hieken_ashi_smoothed_signals,confirmation,BINARY,4,ma_type1=T3; ma_len1=8; ma_type2=T3; ma_len2=8; single_smooth=False; vol_factor1=0.82; alma_offset1=0.85; alma_sigma1=6; lsma_offset1=0; ama_smooth1=0.181; frama_t1_a=1; frama_t1_b=168; vol_factor2=0.82; alma_offset2=0.85; alma_sigma2=6; lsma_offset2=0; ama_smooth2=0.181; frama_t2_a=1; frama_t2_b=168,True,strat 258-276,library,True,False,False,False
-hieken_ashi_smoothed_exit,exit,BINARY,2,,True,strat 258-276,library,True,False,False,False
-rex_oscillator_signals,confirmation,BINARY,4,maType=SMA; smooth=13; almaOffset=0.85; almaSigma=6; framaFast=34; framaSlow=89; jurikPhase=1; jurikPower=1; lsOffset=0; modFilter=0.8; modFB=False; modFBW=0.5; volAdj=10; sigMaType=SMA; sigSmooth=13; sigAlmaOff=0.85; sigAlmaSig=6; sigFramaFast=34; sigFramaSlow=89; sigJurikPhase=1; sigJurikPower=1; sigLsOff=0; sigModFilter=0.8; sigModFB=False; sigModFBW=0.5; sigVolAdj=10,True,strat 327-352,library,True,True,False,False
-rex_oscillator_exit,exit,BINARY,2,,True,strat 327-352,library,True,False,False,False
+name,slot,kind,n_outputs,defaults,defaults_confirmed,pine_line,source,available,inert_at_defaults,redeclared_v91,bugfix_v91,inverted_vs_tradingview,lookahead_if_nondefault
+ssl_channel_signals,confirmation,BINARY,4,len=10,True,lib 118 / strat 364,library,True,False,False,False,False,False
+ssl_channel_exit,exit,BINARY,2,len=10,True,lib 128 / strat 828,library,True,False,False,False,False,False
+dspo_signals,confirmation,BINARY,4,len=14,True,lib 2098 / strat 426,library,True,False,False,False,False,False
+dspo_exit,exit,BINARY,2,len=14,True,lib 2380,library,True,False,False,False,False,False
+variance_volume_signals,volume,FILTER,2,mode=Price; hline=0.0; method=MA > Variance; lookback=20; filter_lookback=20; ema_len=10,True,lib / strat 626-631,library,True,False,False,False,False,False
+tma_baseline,baseline,BASELINE,1,length=20,True,lib / strat 1485,library,True,False,False,False,False,False
+adx_dmi_signals,confirmation,TERNARY,4,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library,True,False,False,False,False,False
+adx_dmi_exit,exit,BINARY,2,di_length=14; adx_smoothing=14; adx_threshold=25.0,False,patch B1,library,True,False,False,False,False,False
+parabolic_sar_signals,confirmation,BINARY,4,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library,True,False,False,False,False,False
+parabolic_sar_exit,exit,BINARY,2,sar_start=0.02; sar_increment=0.02; sar_maximum=0.2,False,patch B2,library,True,False,False,False,False,False
+donchian_breakout_signals,confirmation,BINARY,4,length=20,False,patch B3,library,True,False,False,False,False,False
+donchian_breakout_exit,exit,BINARY,2,length=20,False,patch B3,library,True,False,False,False,False,False
+ichimoku_signals,confirmation,TERNARY,4,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library,True,False,False,False,False,False
+ichimoku_exit,exit,BINARY,2,conversion_len=9; base_len=26; span_b_len=52; displacement=26,False,patch B4,library,True,False,False,False,False,False
+linreg_slope_signals,confirmation,TERNARY,4,length=14; r2_floor=0.2,False,patch B5,library,True,False,False,False,False,False
+linreg_slope_exit,exit,BINARY,2,length=14; r2_floor=0.2,False,patch B5,library,True,False,False,False,False,False
+choppiness_index_volume_signals,volume,FILTER,2,length=14; ci_threshold=61.8,False,patch B6,library,True,False,False,False,False,False
+efficiency_ratio_volume_signals,volume,FILTER,2,length=10; er_threshold=0.3,False,patch B7,library,True,False,False,False,False,False
+vertical_horizontal_filter_volume_signals,volume,FILTER,2,length=28; vhf_threshold=0.35,False,patch B8,library,True,False,False,False,False,False
+fractal_dimension_volume_signals,volume,FILTER,2,length=30; fd_threshold=1.5,False,patch B9,library,True,False,False,False,False,False
+sma_baseline,baseline,BASELINE,1,length=20,False,patch B10,library,True,False,False,False,False,False
+lsma_baseline,baseline,BASELINE,1,length=20; lsma_offset=0,False,patch B11,library,True,False,False,False,False,False
+ema_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1469,library,True,False,False,False,False,False
+hma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1467,library,True,False,False,False,False,False
+rma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1471,library,True,False,False,False,False,False
+wma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1473,library,True,False,False,False,False,False
+vwma_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1475,library,False,False,False,False,False,False
+fantail_vma,baseline,BASELINE,1,fma_adx_length=2; fma_weighting=10.0; fma_ma_length=6,True,strat 1477-1480,library,True,False,False,False,False,False
+mcginley_dynamic_index,baseline,BASELINE,1,mci_length=14,True,strat 1482,library,True,False,False,False,False,False
+vidya,baseline,BASELINE,1,vda_length=2; vda_fixed_cmo_length=True; vda_calculation_method=True,True,strat 1486-1489,library,True,False,False,False,False,False
+kama_baseline,baseline,BASELINE,1,length=10; fast_length=2; slow_length=30,True,strat 1491-1495,library,True,False,False,False,False,False
+alma_baseline,baseline,BASELINE,1,length=9; offset=0.85; sigma=6,True,strat 1497-1500,library,True,False,False,False,False,False
+t3_baseline,baseline,BASELINE,1,length=10; volume_factor=0.7,True,strat 1502-1504,library,True,False,False,False,False,False
+super_smoother_2pole_baseline,baseline,BASELINE,1,cutoff_period=15,True,strat 1506,library,True,False,False,False,False,False
+frama_baseline,baseline,BASELINE,1,length=10,True,strat 1509,library,True,False,False,False,False,False
+chaikin_oscillator_volume_signals,volume,FILTER,2,fast_len=3; slow_len=10,True,strat 595-596 / patch A1,library,False,False,False,False,False,False
+chaikin_volatility_volume_signals,volume,FILTER,2,cvi_len=10; roc_len=12,True,strat 599-600 / patch A2,library,True,False,False,False,False,False
+elders_force_index_volume_signals,volume,FILTER,2,len=10,True,strat 606 / patch A3,library,False,False,False,False,False,False
+normalized_volume_volume_signals,volume,FILTER,2,vol_period=10,True,strat 609,library,False,False,False,False,False,False
+volume_zone_oscillator_volume_signals,volume,FILTER,2,len=20; smooth=True; smooth_len=20; neutral_zone=10,True,strat 631-634,library,False,False,False,False,False,False
+waddah_attar_explosion_volume_signals,volume,FILTER,2,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 636-640,library,True,False,False,False,False,False
+damiani_volatmeter_volume_signals,volume,FILTER,2,viscosity=7; sedimentation=50; threshold=1.4; lag=1.4; use_lag=True,True,strat 601-605 / V9.1,library,True,True,True,True,False,False
+ttm_squeeze_volume_signals,volume,FILTER,2,bb_length=20; bb_mult=2.0; kc_length=20; kc_mult=1.5,True,strat 617-620,library,True,False,False,False,False,False
+williams_vix_fix_volume_signals,volume,FILTER,2,lookback=22; bb_length=20; bb_mult=2.0,True,strat 641-643,library,True,False,False,False,False,False
+volatility_ratio_volume_signals,volume,FILTER,2,length=14,True,strat 630,library,True,False,False,False,False,False
+mass_index_volume_signals,volume,FILTER,2,length=25; ema_length=9,True,strat 607-608,library,True,False,False,False,False,False
+chaikin_money_flow_signals,confirmation,BINARY,4,lookback=50,True,strat 181,library,False,False,False,False,False,False
+chaikin_money_flow_exit,exit,BINARY,2,lookback=50,True,strat 181,library,False,False,False,False,False,False
+coppock_curve_signals,confirmation,BINARY,4,smooth_len=10; long_roc=14; short_roc=11,True,strat 185-187,library,True,False,False,False,False,False
+coppock_curve_exit,exit,BINARY,2,smooth_len=10; long_roc=14; short_roc=11,True,strat 185-187,library,True,False,False,False,False,False
+dpo_signals,confirmation,BINARY,4,len=50; centered=False,True,strat 190-191,library,True,False,False,False,False,True
+dpo_exit,exit,BINARY,2,len=50; centered=False,True,strat 190-191,library,True,False,False,False,False,True
+ease_of_movement_signals,confirmation,BINARY,4,len=14; divisor=10000,True,strat 195-196,library,False,False,False,False,False,False
+ease_of_movement_exit,exit,BINARY,2,len=14; divisor=10000,True,strat 195-196,library,False,False,False,False,False,False
+kalman_filter_signals,confirmation,BINARY,4,sharpness=1.0; k=1.0,True,strat 258-259,library,True,False,False,False,False,False
+kalman_filter_exit,exit,BINARY,2,sharpness=1.0; k=1.0,True,strat 258-259,library,True,False,False,False,False,False
+laguerre_filter_signals,confirmation,BINARY,4,alpha=0.2,True,strat 266,library,True,False,False,False,False,False
+laguerre_filter_exit,exit,BINARY,2,alpha=0.2,True,strat 266,library,True,False,False,False,False,False
+price_momentum_oscillator_signals,confirmation,BINARY,4,s1=35; s2=20; sig=10,True,strat 274-276,library,True,False,False,False,False,False
+price_momentum_oscillator_exit,exit,BINARY,2,s1=35; s2=20; sig=10,True,strat 274-276,library,True,False,False,False,False,False
+relative_vigor_index_signals,confirmation,BINARY,4,len=10,True,strat 280,library,True,False,False,False,False,False
+relative_vigor_index_exit,exit,BINARY,2,len=10,True,strat 280,library,True,False,False,False,False,False
+supertrend_signals,confirmation,BINARY,4,factor=3.0; atr_period=10,True,strat 283-284 / V9.1,library,True,False,False,True,True,False
+supertrend_exit,exit,BINARY,2,factor=3.0; atr_period=10,True,strat 283-284 / V9.1,library,True,False,False,True,True,False
+fisher_transform_signals,confirmation,BINARY,4,length=10,True,strat 200,library,True,False,False,False,False,False
+fisher_transform_exit,exit,BINARY,2,length=10,True,strat 200,library,True,False,False,False,False,False
+aroon_signals,confirmation,BINARY,4,length=25,True,strat 177,library,True,False,False,False,False,False
+aroon_exit,exit,BINARY,2,length=25,True,strat 177,library,True,False,False,False,False,False
+center_of_gravity_signals,confirmation,BINARY,4,length=10; signal_length=3,True,strat 179-180,library,True,False,False,False,False,False
+center_of_gravity_exit,exit,BINARY,2,length=10; signal_length=3,True,strat 179-180,library,True,False,False,False,False,False
+vortex_signals,confirmation,BINARY,4,period=14,True,strat 295,library,True,False,False,False,False,False
+vortex_exit,exit,BINARY,2,period=14,True,strat 295,library,True,False,False,False,False,False
+trend_direction_force_index_signals,confirmation,TERNARY,4,lookback=13; fhigh=0.05; flow=-0.05,True,strat 288-290,library,True,False,False,False,False,False
+trend_direction_force_index_exit,exit,BINARY,2,lookback=13; fhigh=0.05; flow=-0.05,True,strat 288-290,library,True,False,False,False,False,False
+halftrend_signals,confirmation,BINARY,4,amplitude=50,True,strat 254,library,True,False,False,False,False,False
+halftrend_exit,exit,BINARY,2,amplitude=50,True,strat 254,library,True,False,False,False,False,False
+coral_signals,confirmation,BINARY,4,smooth_period=10; const_d=14,True,strat 188-189 / patch A9,library,True,False,False,False,False,False
+coral_exit,exit,BINARY,2,smooth_period=10; const_d=14,True,strat 188-189 / patch A9,library,True,False,False,False,False,False
+didi_index_signals,confirmation,BINARY,4,medium=8; long_p=20,True,strat 192-193 / patch A10,library,True,False,False,False,False,False
+didi_index_exit,exit,BINARY,2,medium=8; long_p=20,True,strat 192-193 / patch A10,library,True,False,False,False,False,False
+kase_peak_oscillator_signals,confirmation,BINARY,4,short_cycle=8; long_cycle=65; sharpness=40.0,True,strat 260-262 / patch A10,library,True,False,False,False,False,False
+kase_peak_oscillator_exit,exit,BINARY,2,short_cycle=8; long_cycle=65; sharpness=40.0,True,strat 260-262 / patch A10,library,True,False,False,False,False,False
+qqe_mod_signals,confirmation,BINARY,4,rsi_period=6; rsi_len=5; fast_factor=1.61,True,strat 277-279 / patch A8,library,True,False,False,False,False,False
+qqe_mod_exit,exit,BINARY,2,rsi_period=6; rsi_len=5; fast_factor=1.61,True,strat 277-279 / patch A8,library,True,False,False,False,False,False
+schaff_trend_cycle_signals,confirmation,TERNARY,4,macdFast=23; macdSlow=50; cycleLen=10; d1=3; d2=3; upperBand=75; lowerBand=25; stc_midline=50.0,True,patch A5,library,True,False,False,False,False,False
+schaff_trend_cycle_exit,exit,BINARY,2,macdFast=23; macdSlow=50; cycleLen=10; d1=3; d2=3; upperBand=75; lowerBand=25,True,patch A5,library,True,False,False,False,False,False
+glitch_index_signals,confirmation,TERNARY,4,length=30; multiplier=1.0; smooth=3,True,strat 249-251 / patch A7 / V9.1,library,True,False,True,False,False,False
+glitch_index_exit,exit,BINARY,2,length=30; multiplier=1.0; smooth=3,True,strat 249-251 / patch A7 / V9.1,library,True,False,True,False,False,False
+ehlers_reverse_ema_signals,confirmation,BINARY,4,alpha=0.1,True,strat 198 / patch A6,library,True,False,False,False,False,False
+ehlers_reverse_ema_exit,exit,BINARY,2,alpha=0.1,True,strat 198 / patch A6,library,True,False,False,False,False,False
+chandelier_exit_signals,confirmation,BINARY,4,atr_period=22; atr_mult=3.0; use_close=True,True,strat 182-184 / V9.1,library,True,False,False,True,False,False
+chandelier_exit_exit,exit,BINARY,2,atr_period=22; atr_mult=3.0; use_close=True,True,strat 182-184 / V9.1,library,True,False,False,True,False,False
+polychromatic_momentum_signals,confirmation,BINARY,4,len=14,True,strat 273,library,True,False,False,False,False,False
+polychromatic_momentum_exit,exit,BINARY,2,len=14,True,strat 273,library,True,False,False,False,False,False
+mama_fama_signals,confirmation,BINARY,4,fast_limit=0.5; slow_limit=0.05,True,strat 271-272,library,True,False,False,False,False,False
+mama_fama_exit,exit,BINARY,2,fast_limit=0.5; slow_limit=0.05,True,strat 271-272,library,True,False,False,False,False,False
+kuskus_starlight_signals,confirmation,BINARY,4,range_periods=30; price_smooth=0.7; index_smooth=0.7,True,strat 263-265,library,True,False,False,False,False,False
+kuskus_starlight_exit,exit,BINARY,2,range_periods=30; price_smooth=0.7; index_smooth=0.7,True,strat 263-265,library,True,False,False,False,False,False
+bears_bulls_impulse_signals,confirmation,TERNARY,4,length=13,True,strat 178,library,True,False,False,False,False,False
+bears_bulls_impulse_exit,exit,BINARY,2,length=13,True,strat 178,library,True,False,False,False,False,False
+fx_sniper_ergodic_cci_signals,confirmation,BINARY,4,cci_length=14; ema1_length=5; ema2_length=3; trigger_length=5,True,strat 202-205,library,True,False,False,False,False,False
+fx_sniper_ergodic_cci_exit,exit,BINARY,2,cci_length=14; ema1_length=5; ema2_length=3; trigger_length=5,True,strat 202-205,library,True,False,False,False,False,False
+lemantrend_signals,confirmation,BINARY,4,slow_period=13; medium_period=21; fast_period=34; smooth=3,True,strat 267-270,library,True,False,False,False,False,False
+lemantrend_exit,exit,BINARY,2,slow_period=13; medium_period=21; fast_period=34; smooth=3,True,strat 267-270,library,True,False,False,False,False,False
+waddah_attar_explosion_signals,confirmation,BINARY,4,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 296-300,library,True,False,False,False,False,False
+waddah_attar_explosion_exit,exit,BINARY,2,sensitivity=150; fastEma=20; slowEma=40; bbLen=20; bbStd=2.0,True,strat 296-300,library,True,False,False,False,False,False
+volatility_quality_signals,confirmation,BINARY,4,ma_type=WMA; smooth=10; atr_pct=0.075,True,strat 376-378 / V9.1,library,True,True,True,False,False,False
+volatility_quality_exit,exit,BINARY,2,ma_type=WMA; smooth=10; atr_pct=0.075,True,strat 376-378 / V9.1,library,True,False,True,False,False,False
+j_tpo_signals,confirmation,BINARY,4,len=40; ema_len=200; ema_filter=False,True,strat 256-258 / patch A4,library,True,False,False,False,False,False
+j_tpo_exit,exit,BINARY,2,len=40; ema_len=200; ema_filter=False,True,strat 256-258 / patch A4,library,True,False,False,False,False,False
+hieken_ashi_smoothed_signals,confirmation,BINARY,4,ma_type1=T3; ma_len1=8; ma_type2=T3; ma_len2=8; single_smooth=False; vol_factor1=0.82; alma_offset1=0.85; alma_sigma1=6; lsma_offset1=0; ama_smooth1=0.181; frama_t1_a=1; frama_t1_b=168; vol_factor2=0.82; alma_offset2=0.85; alma_sigma2=6; lsma_offset2=0; ama_smooth2=0.181; frama_t2_a=1; frama_t2_b=168,True,strat 258-276,library,True,False,False,False,False,False
+hieken_ashi_smoothed_exit,exit,BINARY,2,ma_type1=T3; ma_len1=8; ma_type2=T3; ma_len2=8; single_smooth=False,True,strat 258-276,library,True,False,False,False,False,False
+rex_oscillator_signals,confirmation,BINARY,4,maType=SMA; smooth=14; almaOffset=0.85; almaSigma=6; framaFast=34; framaSlow=89; jurikPhase=1; jurikPower=1; lsOffset=0; modFilter=0.8; modFB=False; modFBW=0.5; volAdj=10; sigMaType=SMA; sigSmooth=22; sigAlmaOff=0.85; sigAlmaSig=6; sigFramaFast=34; sigFramaSlow=89; sigJurikPhase=1; sigJurikPower=1; sigLsOff=0; sigModFilter=0.8; sigModFB=False; sigModFBW=0.5; sigVolAdj=10,True,strat 327-352 / V9.1,library,True,True,True,False,False,False
+rex_oscillator_exit,exit,BINARY,2,maType=SMA; smooth=14; sigMaType=SMA; sigSmooth=22,True,strat 327-352 / V9.1,library,True,False,True,False,False,False
