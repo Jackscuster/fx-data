@@ -355,27 +355,42 @@ def run_bars(o, h, l, c, atr,
             agree_long = False; agree_short = False
 
         # ---- which route, if any, fires ---------------------------------
+        # PINE EVALUATES THE THREE CONDITIONS INDEPENDENTLY AND ORS THEM:
+        #     entry_long = longcondition1 or longcondition2 or longcondition3
+        # and they do not carry the same blocks -- longcondition3 has no
+        # Ind_BTF_Conf. So a bar can fail route 2 on Bridge Too Far and still be
+        # taken by route 3.
+        #
+        # An earlier version of this loop picked ONE route by precedence and
+        # then applied the blocks to it. On a bar qualifying for both the C1
+        # flip and the continuation it chose the flip, the bridge refused it,
+        # and the trade was lost -- GBPUSD 2008-02-19, found by running against
+        # TradingView on identical bars. Each route is now tested with its OWN
+        # blocks and the entry fires if ANY of them survives.
+        stale = i - last_cross_bar > bridge_bars
+        r1l = use_base_cross and last_cross_bar == i and side == 1 and agree_long
+        r1s = use_base_cross and last_cross_bar == i and side == -1 and agree_short
+        r2l = use_c1_flip and c1_lt[i] and agree_long
+        r2s = use_c1_flip and c1_st[i] and agree_short
+        cont = use_continuation and not crossed_since_exit
+        r3l = cont and c1_lt[i] and agree_long
+        r3s = cont and c1_st[i] and agree_short
+        # the bridge gates routes 1 and 2 always, and route 3 only when the
+        # fix is enabled (bridge_all_routes); the 1.5xATR block gates all three
+        if stale:
+            r1l = r1s = r2l = r2s = False
+            if bridge_all_routes:
+                r3l = r3s = False
         want = 0
         rt = 0
-        if use_base_cross and last_cross_bar == i:
-            if side == 1 and agree_long:
-                want = 1; rt = 1
-            elif side == -1 and agree_short:
-                want = -1; rt = 1
-        if want == 0 and use_c1_flip:
-            if c1_lt[i] and agree_long:
-                want = 1; rt = 2
-            elif c1_st[i] and agree_short:
-                want = -1; rt = 2
-        if want == 0 and use_continuation and not crossed_since_exit:
-            # Pine's longcondition3 requires the C1 TRIGGER, not merely C1
-            # confirming -- Ind_1_L_Trigger, not Ind_1_L_Conf. Without that the
-            # continuation route re-enters on any bar the state happens to be
-            # onside, which is far more often than the strategy ever does.
-            if c1_lt[i] and agree_long:
-                want = 1; rt = 3
-            elif c1_st[i] and agree_short:
-                want = -1; rt = 3
+        if r1l or r2l or r3l:
+            want = 1
+            rt = 1 if r1l else (2 if r2l else 3)
+        elif r1s or r2s or r3s:
+            want = -1
+            rt = 1 if r1s else (2 if r2s else 3)
+        if want == 0 and (stale and (agree_long or agree_short)):
+            blocked_stale += 1
 
         # ---- the one candle rule ----------------------------------------
         if one_candle_rule:
@@ -409,16 +424,6 @@ def run_bars(o, h, l, c, atr,
         if (want == 1 and cl > b + max_atr_dist * a) or \
            (want == -1 and cl < b - max_atr_dist * a):
             blocked_late += 1
-            continue
-        # PARITY SWITCH. Pine's longcondition3/shortcondition3 carry
-        # Ind_CON_Trig but not Ind_BTF_Conf, so continuation entries skip the
-        # bridge -- the known bug. bridge_all_routes=True (the default, and
-        # what the sweep uses) applies it everywhere. Setting it False
-        # reproduces the Pine behaviour EXACTLY, which is what a TradingView
-        # comparison has to run against; otherwise the fix is scored as a
-        # disagreement.
-        if (bridge_all_routes or rt != 3) and i - last_cross_bar > bridge_bars:
-            blocked_stale += 1
             continue
         if want == pos:
             continue                      # already in it
