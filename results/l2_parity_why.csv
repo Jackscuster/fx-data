@@ -1,0 +1,26 @@
+,n
+fires on the bar,75
+no trigger,30
+baseline side,13
+volume,12
+baseline side + C1 + no trigger,11
+C1,9
+no trigger + too late,7
+baseline side + C1,7
+baseline side + no trigger,5
+no trigger + bridge,4
+baseline side + C1 + volume + no trigger,4
+baseline side + C1 + no trigger + bridge,4
+volume + no trigger,4
+C1 + volume,3
+baseline side + volume,2
+C1 + volume + no trigger,2
+baseline side + bridge,2
+C1 + no trigger,2
+C2 + volume,1
+too late,1
+baseline side + C1 + volume + no trigger + bridge,1
+C2,1
+baseline side + volume + no trigger,1
+baseline side + C1 + C2 + no trigger,1
+C1 + no trigger + bridge,1
