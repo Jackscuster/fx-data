@@ -27,3 +27,15 @@ data/_ratecache/
 # OANDA practice API token. Local only -- a credential never enters the repo.
 # code/l2oanda.py reads it from here (or from the OANDA_TOKEN env var).
 .oanda_token
+
+# Gate 1 output: the 128 shard checkpoints (217 MB) and the pooled survivors
+# file (224 MB), both against GitHub's 100 MB wall. Regenerable -- the shards
+# ARE the resume state, and gate1_survivors.csv is only their concatenation.
+# What the repo carries instead is results/gate1_summary.csv (per-slice counts
+# against the measured null) and results/gate1_null_joint.csv. A 559 KB
+# gate1_survivors.csv was committed at dcbeccc under the pre-slicing scheme;
+# it is untracked here rather than left in place as a stale result.
+results/gate1/
+results/gate1_survivors.csv
+results/gate1_run.log
+results/gate1_nulljoint.log

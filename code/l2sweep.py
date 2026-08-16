@@ -431,6 +431,9 @@ def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
                pick.choice(opts['vol']), pick.choice(opts['base']),
                pick.choice(opts['exit_ind'])) for _ in range(n_combo)]
     vals = {s: [] for s, _, _ in SLICES}
+    raw = []          # every eligible control score, both metrics. ADDITIVE:
+                      # `vals` is built exactly as before, so the percentiles
+                      # this returns are unchanged to the last bit.
     for k in range(n_surrogate):
         PD, BUF = {}, {}
         for p in pairs:
@@ -446,6 +449,10 @@ def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
             for sname in vals:
                 if eligible(sc[sname]):
                     vals[sname].append(sc[sname]['expectancy_R'])
+                    raw.append(dict(surrogate=k, slice=sname,
+                                    expectancy_R=sc[sname]['expectancy_R'],
+                                    profit_factor=sc[sname]['profit_factor'],
+                                    n_blind=sc[sname]['n_blind']))
                     got[sname] += 1
         if verbose:
             print('  surrogate %2d/%d: eligible %s'
@@ -459,7 +466,39 @@ def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
                           p95=float(np.percentile(a, 95)) if len(a) else np.nan,
                           p99=float(np.percentile(a, 99)) if len(a) else np.nan,
                           max=float(a.max()) if len(a) else np.nan)
+    pd.DataFrame(raw).to_csv(
+        os.path.join(ROOTOUT, 'gate1_null_raw.csv'), index=False)
     return out
+
+
+def null_joint_rate():
+    """What fraction of PURE-NOISE slices clears the gate 1 test AS APPLIED?
+
+    The floor is a p95, so 5% of controls clear the expectancy bar by
+    construction. But gate 1 ANDs that with PF >= 1.05, and nothing measured
+    the joint rate -- which is the only number the survivor counts can honestly
+    be compared against. Without it, "7.18% of eligible combinations survived"
+    has no reference: 5% is the wrong one, because it is the rate for half the
+    test.
+
+    Reads the raw control scores dumped by luck_floor and applies the REAL
+    gate, the same expression the sweep worker uses.
+    """
+    R = pd.read_csv(os.path.join(ROOTOUT, 'gate1_null_raw.csv'))
+    F = pd.read_csv(os.path.join(ROOTOUT, 'gate1_luck_floor.csv')).set_index('slice')
+    rows = []
+    for sname, _, _ in SLICES:
+        g = R[R['slice'] == sname]
+        floor = float(F.loc[sname, 'p95'])
+        exp_only = g['expectancy_R'] > floor
+        pf_only = g['profit_factor'] >= PF_FLOOR
+        joint = exp_only & pf_only
+        rows.append(dict(slice=sname, n_controls=len(g), floor_expectancy_R=floor,
+                         pf_floor=PF_FLOOR,
+                         null_exp_only_pct=100.0 * exp_only.mean(),
+                         null_pf_only_pct=100.0 * pf_only.mean(),
+                         null_joint_pct=100.0 * joint.mean()))
+    return pd.DataFrame(rows)
 
 
 def _precompute_frame(d, opts, atr_len=None):
@@ -599,6 +638,31 @@ def main():
 
     def opt(name, cast, default=None):
         return cast(a[a.index(name) + 1]) if name in a else default
+    if '--nulljoint' in a:
+        # Re-runs the SAME controls (seed, surrogate count and combo sample are
+        # all defaults) purely to dump the metrics the first run did not keep.
+        # The floor is then checked against the one on disk before anything is
+        # overwritten -- if it moved, the population did not reproduce and the
+        # joint rate would describe a different control set than gate 1 used.
+        ffp = os.path.join(ROOTOUT, 'gate1_luck_floor.csv')
+        old = pd.read_csv(ffp).set_index('slice') if os.path.exists(ffp) else None
+        f = luck_floor(slot_options(), all_pairs())
+        D = pd.DataFrame(f.values())
+        if old is not None:
+            for r in D.itertuples():
+                was, now = float(old.loc[r.slice, 'p95']), float(r.p95)
+                if abs(was - now) > 1e-12:
+                    raise SystemExit(
+                        'REFUSING TO WRITE: %s floor moved %.12f -> %.12f. The '
+                        'controls did not reproduce; gate 1 was gated on the '
+                        'old number and the joint rate would not describe it.'
+                        % (r.slice, was, now))
+            print('\ncontrols reproduced: p95 identical for every slice')
+        J = null_joint_rate()
+        J.to_csv(os.path.join(ROOTOUT, 'gate1_null_joint.csv'), index=False)
+        print('\nNULL PASS RATES, per slice (what pure noise achieves)')
+        print(J.to_string(index=False))
+        return J
     if '--luckfloor' in a:
         f = luck_floor(slot_options(), all_pairs(),
                        n_surrogate=opt('--surrogates', int, 12),
