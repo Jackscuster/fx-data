@@ -267,16 +267,37 @@ primary gate 1 output as though they came from one pass.
 supplementary pass, at one length chosen by the pre-test before any gate 1
 result existed. If it also comes back empty, that is the answer.
 
-**The output is FAMILIES, not combinations.** A family is a neighbourhood of
-similar combinations that survive together. A lone survivor whose neighbours all
-died is luck and is killed.
+### AMENDED — NO FAMILY-BASED CUTS, AT ANY GATE
 
-> **The neighbour definition is set ONCE, after survivor counts exist, and then
-> frozen.** It is deliberately not fixed here: choosing it before knowing whether
-> 200 or 200,000 combinations survive would either dissolve every family or merge
-> them all into one. Fixing it afterwards is the one thing in this document
-> allowed to be decided late — and it is decided once, recorded, and never
-> revisited.
+**~~The output is FAMILIES, not combinations. A family is a neighbourhood of
+similar combinations that survive together. A lone survivor whose neighbours all
+died is luck and is killed.~~** — **STRUCK.**
+
+**Every gate 1 survivor advances.** Each is judged by the same walk-forward
+gates as everything else, on its own blind performance. No combination is
+removed for the company it keeps.
+
+**Families are an organizing tool only.** They carry exactly two jobs and no
+others:
+
+1. **Gate 2 tunes shared settings per family** — one setting applied across the
+   family, never per-combination. That restriction survives the amendment
+   intact, because it is about *how many free parameters tuning may spend*, not
+   about which combinations are allowed to live.
+2. **The enrichment map sets tuning priority** — which families get worked
+   first. Priority, not permission.
+
+**Why the lone-winner rule is struck.** It killed on a property of a
+combination's *neighbours* rather than of the combination. Two things are wrong
+with that. It is not a walk-forward test, so it imports a judgement the blind
+windows never made; and the neighbourhood is an artefact of a neighbour
+definition that the original text openly admitted could not be fixed in advance.
+A rule whose verdict depends on a parameter chosen after seeing the survivor
+count is a rule that can be tuned to its answer. Isolation is a reason to rank a
+combination lower for tuning effort. It is not evidence that it does not work.
+
+The neighbour definition is therefore no longer a gate parameter. It is set once
+for the enrichment map, recorded, and nothing dies by it.
 
 ---
 
@@ -288,6 +309,46 @@ Per-combination tuning is how a family of 200 becomes 200 separate overfits.
 
 **NOTHING IS THROWN OUT AT GATE 2.** Its KPI floors are a **sorting label**, not
 a kill switch.
+
+### DECLARED — the chop slice gains an INVERSION arm
+
+**Written after the gate 1 headline counts and BEFORE any look at which chop
+combinations survived, or at anything inside them.** What is known at the time
+of writing is three numbers: chop returned 168,819 survivors of 7,211,988
+eligible, a 2.34% pass rate, against a null of roughly 5%.
+
+**The observation.** Chop came back *below* its own scrambled controls. The
+control keeps the real Layer 1 labels and scrambles only the price path, so the
+comparison is like for like: real ranging price action is worse for the one-leg
+plan than a random walk through the same bars. A signal that is merely useless
+lands *at* chance. Landing reliably below it is a signal carrying information
+with the sign reversed.
+
+**The arm.** Gate 2's chop tuning includes **fading the signals** as a
+family-level variant: short where the combination says long, long where it says
+short, exits mirrored, the same one-leg plan, the same ATR-derived stop, target
+and trail. Everything else identical.
+
+**The honesty rules do not relax for it:**
+- same walk-forward machine — tune on W1, trade W2 blind; re-tune on W1+W2,
+  trade W3 blind; scored on stitched blind performance only
+- family-level settings, never per-combination
+- **its combinations count toward the true search total** for the deflated
+  Sharpe. An inverted arm is a second look at the same data and is search like
+  any other. Understating the count is the commonest way a deflated Sharpe is
+  made to lie, and this is the second time that sentence has had to be written
+  in this document.
+- W4 stays untouched
+
+**The kill condition, declared now.** If fading also fails, **chop dies at gate
+2 on evidence** and the regime router **stands aside in ranges** — no chop
+sleeve, no capital allocated to the ranging state, rather than a sleeve kept
+alive because the regime exists in the taxonomy. A regime the estimator can
+name is not thereby a regime that can be traded.
+
+**Both directions cannot be right.** Long and fade cannot both beat the floor on
+the same combinations in the same windows; if both appear to, that is a bug in
+the mirroring and is treated as one, not as two edges.
 
 **Gate 2 label, on stitched blind performance:**
 - expectancy ≥ +0.08R
