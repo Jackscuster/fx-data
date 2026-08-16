@@ -501,6 +501,95 @@ def null_joint_rate():
     return pd.DataFrame(rows)
 
 
+# ==========================================================================
+# THE HONEST NULL -- fresh controls against the frozen floor
+# ==========================================================================
+#
+# WHY null_joint_rate() ABOVE IS NOT THE ANSWER, despite measuring the right
+# expression. It scores the floor-setting controls against their own p95, and
+# the fraction of a sample above its own 95th percentile is 5% BY DEFINITION.
+# It came back 5.0037% and 5.0136% because it could not have come back anything
+# else. What it does establish is real and worth keeping -- that PF >= 1.05 is
+# non-binding, since no control clearing the expectancy floor failed it -- but
+# the 5% is arithmetic, not evidence.
+#
+# The floor is an ESTIMATE of the true 95th percentile from 4,097 / 3,311
+# draws, so the rate at which FRESH controls clear that fixed number is a free
+# parameter of the estimate, not 5%. Getting it wrong in either direction moves
+# the reference that 7.18% and 2.34% are judged against, which is the whole
+# question. So: new seed, new combination sample, more of them, scored against
+# the FROZEN floor read from disk.
+NULL_SEED = 20260816
+
+
+def _null_worker(args):
+    k, seed, combos, floors = args
+    opts = slot_options()
+    rng = np.random.default_rng([seed, k])       # independent per surrogate
+    PD, BUF = {}, {}
+    for p in all_pairs():
+        real = load_pair(p)
+        P = _precompute_frame(surrogate(real, rng), opts)
+        P['regime'] = regime_codes(p, real.index)    # real labels, as always
+        P['_wb'] = window_bounds(P)
+        PD[p] = P; BUF[p] = make_buffers(len(P['c']))
+    acc = {s: dict(elig=0, exp=0, pf=0, joint=0) for s, _, _ in SLICES}
+    for cb in combos:
+        sc = score_combo(PD, cb, BUF)
+        for sname in acc:
+            s = sc[sname]
+            if not eligible(s):
+                continue
+            a = acc[sname]
+            a['elig'] += 1
+            e = s['expectancy_R'] > floors[sname]
+            f = s['profit_factor'] >= PF_FLOOR
+            a['exp'] += bool(e); a['pf'] += bool(f); a['joint'] += bool(e and f)
+    return acc
+
+
+def null_fresh(n_surrogate=32, n_combo=1200, jobs=None, seed=NULL_SEED):
+    """The rate at which PURE NOISE clears the gate 1 test as applied.
+
+    Fresh surrogates, a fresh combination sample, scored against the frozen
+    floor. This is the number 7.18% and 2.34% must be compared against.
+    """
+    import multiprocessing as mp, random as _rnd
+    opts = slot_options()
+    F = pd.read_csv(os.path.join(ROOTOUT, 'gate1_luck_floor.csv')).set_index('slice')
+    floors = {s: float(F.loc[s, 'p95']) for s, _, _ in SLICES}
+    pick = _rnd.Random(seed)
+    combos = [(pick.choice(opts['c1']), pick.choice(opts['c2']),
+               pick.choice(opts['vol']), pick.choice(opts['base']),
+               pick.choice(opts['exit_ind'])) for _ in range(n_combo)]
+    jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
+    print('null: %d surrogates x %d combos, %d workers, floors %s'
+          % (n_surrogate, n_combo, jobs, floors), flush=True)
+    tot = {s: dict(elig=0, exp=0, pf=0, joint=0) for s, _, _ in SLICES}
+    with mp.Pool(jobs) as pool:
+        for i, acc in enumerate(pool.imap_unordered(
+                _null_worker,
+                [(k, seed, combos, floors) for k in range(n_surrogate)])):
+            for s in tot:
+                for key in tot[s]:
+                    tot[s][key] += acc[s][key]
+            print('  surrogate %2d/%d done' % (i + 1, n_surrogate), flush=True)
+    rows = []
+    for sname, _, _ in SLICES:
+        a = tot[sname]
+        n = a['elig']
+        p = a['joint'] / n if n else np.nan
+        se = float(np.sqrt(p * (1 - p) / n)) if n else np.nan
+        rows.append(dict(slice=sname, n_controls=n, floor_expectancy_R=floors[sname],
+                         null_exp_only_pct=100.0 * a['exp'] / n if n else np.nan,
+                         null_pf_only_pct=100.0 * a['pf'] / n if n else np.nan,
+                         null_joint_pct=100.0 * p,
+                         se_pct=100.0 * se,
+                         ci95_lo_pct=100.0 * (p - 1.96 * se),
+                         ci95_hi_pct=100.0 * (p + 1.96 * se)))
+    return pd.DataFrame(rows)
+
+
 def _precompute_frame(d, opts, atr_len=None):
     atr_len = ATR_LEN if atr_len is None else atr_len
     o, h, l, c = (d[k].values.astype(float) for k in ('open', 'high', 'low', 'close'))
@@ -638,6 +727,14 @@ def main():
 
     def opt(name, cast, default=None):
         return cast(a[a.index(name) + 1]) if name in a else default
+    if '--nullfresh' in a:
+        J = null_fresh(n_surrogate=opt('--surrogates', int, 32),
+                       n_combo=opt('--combos', int, 1200),
+                       jobs=opt('--jobs', int))
+        J.to_csv(os.path.join(ROOTOUT, 'gate1_null_fresh.csv'), index=False)
+        print('\nTRUE NULL PASS RATE, fresh controls vs the frozen floor')
+        print(J.to_string(index=False))
+        return J
     if '--nulljoint' in a:
         # Re-runs the SAME controls (seed, surrogate count and combo sample are
         # all defaults) purely to dump the metrics the first run did not keep.

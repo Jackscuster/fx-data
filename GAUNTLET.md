@@ -317,6 +317,14 @@ combinations survived, or at anything inside them.** What is known at the time
 of writing is three numbers: chop returned 168,819 survivors of 7,211,988
 eligible, a 2.34% pass rate, against a null of roughly 5%.
 
+> **Correction, added when the null was measured properly and not applied
+> retroactively to anything above.** The "roughly 5%" was the circular figure —
+> the floor-setting controls scored against their own p95, which is 5% by
+> definition. Measured on 26,088 fresh controls against the frozen floor, the
+> chop null is **6.11%** (95% CI 5.82–6.40). The declaration's premise is
+> therefore stronger than it was written: chop is at **0.38×** chance, not
+> 0.47×. Nothing in the arm changes; only the number it argues from.
+
 **The observation.** Chop came back *below* its own scrambled controls. The
 control keeps the real Layer 1 labels and scrambles only the price path, so the
 comparison is like for like: real ranging price action is worse for the one-leg

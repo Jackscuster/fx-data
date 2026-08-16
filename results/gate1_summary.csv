@@ -1,3 +1,3 @@
-slice,combos_scored,eligible,survivors,pass_rate_pct,null_pass_rate_pct,floor_expectancy_R,pf_floor,exp_mean,exp_p50,exp_p99,exp_max,pf_mean,pf_max,sharpe_p99,n_blind_min,expected_under_null,excess_over_null,ratio_to_null,pct_of_survivors_explained_by_chance
-trend,10677420,8692079,623729,7.1758,5.0037,0.0789746052852731,1.05,0.1338,0.1147,0.361,0.6377,1.6016,4.6373,4.3851,100,434926,188803,1.434,69.7
-chop,10677420,7211988,168819,2.3408,5.0136,0.0948921307658818,1.05,0.1203,0.113,0.2042,0.2878,1.2851,1.9754,3.3311,123,361580,-192761,0.467,214.2
+slice,combos_scored,eligible,survivors,pass_rate_pct,null_pass_rate_pct,floor_expectancy_R,pf_floor,exp_mean,exp_p50,exp_p99,exp_max,pf_mean,pf_max,sharpe_p99,n_blind_min,expected_under_null,excess_over_null,ratio_to_null,pct_of_survivors_explained_by_chance,null_ci95_lo_pct,null_ci95_hi_pct,null_n_controls
+trend,10677420,8692079,623729,7.1758,6.4735,0.0789746052852731,1.05,0.1338,0.1147,0.361,0.6377,1.6016,4.6373,4.3851,100,562682,61047,1.108,90.2,6.2032,6.7439,31822
+chop,10677420,7211988,168819,2.3408,6.1063,0.0948921307658818,1.05,0.1203,0.113,0.2042,0.2878,1.2851,1.9754,3.3311,123,440386,-271567,0.383,260.9,5.8157,6.3968,26088
