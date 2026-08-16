@@ -86,6 +86,12 @@ REGIME_NAME = {v: k for k, v in REGIME_CODE.items()}
 # The two scored slices. plan 2 = two legs, plan 1 = one leg + quick target.
 SLICES = (('trend', 2, REGIME_CODE['trending']),
           ('chop', 1, REGIME_CODE['ranging']))
+
+# Exit reason codes run 1..9 (l2engine.REASON); 0 means "never written", which
+# cannot happen for a closed trade and is carried only so a stray zero shows up
+# as itself rather than being folded into 'stop'.
+N_REASON = 10
+SLOTS = ('c1', 'c2', 'vol', 'base', 'exit_ind')
 LABELS = os.path.join(ROOTOUT, 'layer1_states.csv')
 
 
@@ -290,7 +296,8 @@ def _agg(r):
                 max_dd_R=mdd, calmar=(tot / mdd) if mdd > 0 else np.inf)
 
 
-def score_combo(pairs_data, combo, buf_by_pair, atr_by_pair=None, **kw):
+def score_combo(pairs_data, combo, buf_by_pair, atr_by_pair=None,
+                want_reasons=False, **kw):
     """One combination, BOTH PLANS, sliced by the Layer 1 regime at entry.
 
     GAUNTLET.md: the trend score is the TWO-LEG run restricted to trades entered
@@ -305,6 +312,7 @@ def score_combo(pairs_data, combo, buf_by_pair, atr_by_pair=None, **kw):
     out = {}
     for sname, plan, code in SLICES:
         rr, n_pick, n_w2, n_w3, n_unlab = [], 0, 0, 0, 0
+        rc = np.zeros(N_REASON, np.int64) if want_reasons else None
         for pair, P in pairs_data.items():
             buf = buf_by_pair[pair]
             atr = None if atr_by_pair is None else atr_by_pair[pair]
@@ -327,6 +335,12 @@ def score_combo(pairs_data, combo, buf_by_pair, atr_by_pair=None, **kw):
                 c = int(mm.sum())
                 if c:
                     rr.append(r[mm])
+                    if rc is not None:
+                        # the SAME trades whose R feeds the KPIs -- blind
+                        # windows, this slice. Tallying a wider population
+                        # would describe closes the score never saw.
+                        rc += np.bincount(buf['reason'][:nt][mm],
+                                          minlength=N_REASON)[:N_REASON]
                     if acc == 2:
                         n_w2 += c
                     else:
@@ -339,6 +353,8 @@ def score_combo(pairs_data, combo, buf_by_pair, atr_by_pair=None, **kw):
         s.update(c1=c1, c2=c2, vol=vol, base=base, exit_ind=ex, slice=sname,
                  plan=plan, n_pick=n_pick, n_w2=n_w2, n_w3=n_w3,
                  n_unlabelled=n_unlab)
+        if rc is not None:
+            s['_rc'] = rc
         out[sname] = s
     return out
 
@@ -638,6 +654,28 @@ def _worker(args):
     for p in pairs:
         P = precompute(p, opts); P['_wb'] = window_bounds(P)
         PD[p] = P; BUF[p] = make_buffers(len(P['c']))
+
+    # ---- the instrumentation ------------------------------------------
+    # PER-OPTION ELIGIBILITY is the point of this pass. The first sweep tallied
+    # eligibility per SLICE only, so the enrichment map had to use "all
+    # combinations" as its denominator and could not tell an option that FIRES
+    # MORE from one that WINS MORE. These counters give the eligible
+    # denominator, and enrichment computed on it is a statement about edge
+    # rather than about trade frequency.
+    ix = {slot: {name: j for j, name in enumerate(opts[slot])} for slot in SLOTS}
+    n_elig_opt = {s: {slot: np.zeros(len(opts[slot]), np.int64) for slot in SLOTS}
+                  for s, _, _ in SLICES}
+    n_surv_opt = {s: {slot: np.zeros(len(opts[slot]), np.int64) for slot in SLOTS}
+                  for s, _, _ in SLICES}
+    n_comb_opt = {s: {slot: np.zeros(len(opts[slot]), np.int64) for slot in SLOTS}
+                  for s, _, _ in SLICES}
+    # HOW TRADES CLOSE, over eligible combinations, and split by exit_ind so the
+    # question "is the exit slot weak or merely never reached?" is answerable.
+    rc_elig = {s: np.zeros(N_REASON, np.int64) for s, _, _ in SLICES}
+    rc_surv = {s: np.zeros(N_REASON, np.int64) for s, _, _ in SLICES}
+    rc_by_exit = {s: np.zeros((len(opts['exit_ind']), N_REASON), np.int64)
+                  for s, _, _ in SLICES}
+
     out = []
     n_seen = 0
     n_elig = {s: 0 for s, _, _ in SLICES}
@@ -647,6 +685,7 @@ def _worker(args):
         if i % nshard != shard:
             continue
         n_seen += 1
+        cbi = [ix[slot][v] for slot, v in zip(SLOTS, cb)]
         # heartbeat. A shard is tens of thousands of combinations and takes
         # tens of minutes; without this the only signal that anything is
         # happening is the shard file appearing at the very end, which is
@@ -657,18 +696,39 @@ def _worker(args):
                   % (shard, n_seen, 1000 * el / n_seen,
                      (el / n_seen) * (nshard and (n_combos(opts) // nshard)
                                       - n_seen) / 60), flush=True)
-        sc = score_combo(PD, cb, BUF)
+        sc = score_combo(PD, cb, BUF, want_reasons=True)
         for sname, _, _ in SLICES:
             s = sc[sname]
+            rc = s.pop('_rc')          # never reaches the survivors CSV
+            for slot, j in zip(SLOTS, cbi):
+                n_comb_opt[sname][slot][j] += 1
             if not eligible(s):
                 continue
             n_elig[sname] += 1
+            for slot, j in zip(SLOTS, cbi):
+                n_elig_opt[sname][slot][j] += 1
+            rc_elig[sname] += rc
+            rc_by_exit[sname][cbi[4]] += rc
             if keep_all or (s['expectancy_R'] > floors[sname]
                             and s['profit_factor'] >= PF_FLOOR):
                 n_surv[sname] += 1
+                for slot, j in zip(SLOTS, cbi):
+                    n_surv_opt[sname][slot][j] += 1
+                rc_surv[sname] += rc
                 out.append(s)
     pd.DataFrame(out).to_csv(
         os.path.join(CKDIR, 'shard_%04d.csv' % shard), index=False)
+    # tallies alongside the survivors, one npz per shard, same resume rule
+    tal = {}
+    for sname, _, _ in SLICES:
+        for slot in SLOTS:
+            tal['comb_%s_%s' % (sname, slot)] = n_comb_opt[sname][slot]
+            tal['elig_%s_%s' % (sname, slot)] = n_elig_opt[sname][slot]
+            tal['surv_%s_%s' % (sname, slot)] = n_surv_opt[sname][slot]
+        tal['rc_elig_%s' % sname] = rc_elig[sname]
+        tal['rc_surv_%s' % sname] = rc_surv[sname]
+        tal['rc_by_exit_%s' % sname] = rc_by_exit[sname]
+    np.savez_compressed(os.path.join(CKDIR, 'tally_%04d.npz' % shard), **tal)
     return dict(shard=shard, seen=n_seen,
                 elig_trend=n_elig['trend'], elig_chop=n_elig['chop'],
                 surv_trend=n_surv['trend'], surv_chop=n_surv['chop'])
@@ -687,8 +747,13 @@ def run_gate1(floors, nshard=None, jobs=None, keep_all=False, limit=None):
     # score anything -- ~30 seconds -- so a shard must be big enough for that
     # to disappear into it.
     nshard = nshard or jobs * 4
+    # A shard counts as done only if BOTH its survivors and its tally exist.
+    # The first sweep wrote no tallies, so its checkpoints are correctly seen
+    # as incomplete and every shard re-runs -- which is the intent, not an
+    # accident: the per-option eligible denominator cannot be back-filled.
     todo = [s for s in range(nshard)
-            if not os.path.exists(os.path.join(CKDIR, 'shard_%04d.csv' % s))]
+            if not (os.path.exists(os.path.join(CKDIR, 'shard_%04d.csv' % s))
+                    and os.path.exists(os.path.join(CKDIR, 'tally_%04d.npz' % s)))]
     done = nshard - len(todo)
     if limit:
         todo = todo[:limit]

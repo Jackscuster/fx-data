@@ -39,3 +39,9 @@ results/gate1/
 results/gate1_survivors.csv
 results/gate1_run.log
 results/gate1_nulljoint.log
+
+# gate 1 v1 survivors, kept locally for the byte-comparison that proved the
+# instrumented worker changes no trade. 216 MB, regenerable, not a feed.
+results/gate1_survivors_v1.csv
+results/gate1_verify.log
+results/gate1_run2.log
