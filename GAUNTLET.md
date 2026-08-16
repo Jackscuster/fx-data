@@ -186,9 +186,28 @@ a volume series spot FX does not have, so 6.96M combinations selecting one are
 guaranteed to produce zero trades. They are excluded and counted, not searched.
 Run in both plans, that is 21,354,840 evaluations.
 
-**KPI floors, on stitched blind performance:**
+**KPI floors, on stitched blind performance, PER SLICE:**
 - expectancy above the **luck floor** — the 95th percentile of scrambled controls
 - profit factor ≥ 1.05
+
+**The luck floors, measured under the exact gate 1 configuration** (OANDA mid,
+regime slicing, ATR 31), 12 sign-randomised surrogates × 400 combinations —
+`results/gate1_luck_floor.csv`:
+
+| slice | controls | mean | p50 | **p95 = the floor** |
+|---|---|---|---|---|
+| trend | 4,097 | −0.0036 | −0.0104 | **+0.078975 R** |
+| chop | 3,311 | **+0.0217** | +0.0222 | **+0.094892 R** |
+
+Two things to notice. These are **far above** the 0.042854 measured before
+slicing existed — a slice has fewer trades than the pooled set, so its sampling
+noise is wider and luck reaches higher. A floor is a property of the exact setup
+it gates and does not survive a change to the trade definition.
+
+And the **chop control has a positive mean**: the one-leg plan makes +0.0217R
+per trade on directionally-scrambled data. That is structural, not an edge — it
+is what a 1:1.5 barrier pair with indicator exits does to a random walk. It is
+precisely why the bar is a measured control rather than "expectancy > 0".
 
 **Minimum trades, PER REGIME SLICE:** ≥ 100 pooled in the picking window, ≥ 50
 pooled per blind window. A slice that cannot produce that many is not evaluated,

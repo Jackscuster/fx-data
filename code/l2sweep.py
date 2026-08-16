@@ -406,45 +406,64 @@ def surrogate(d, rng):
 
 
 def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
-    """The 95th percentile of scrambled-control expectancy. GATE 1'S BAR.
+    """The 95th percentile of scrambled-control expectancy, PER SLICE.
 
-    A sample of combinations is scored against each surrogate exactly as it
-    would be against the real thing, and the floor is the 95th percentile of the
-    resulting expectancies. It is a property of the SEARCH, not of any one
-    combination: with 10.7M draws, the best few thousand will look good on noise
-    alone, and this is how far up "good on noise alone" reaches.
+    GATING IS PER REGIME, SO THE FLOOR MUST BE TOO. A trend slice and a chop
+    slice have different trade counts, different holding periods and different
+    R distributions; one pooled floor would be too easy for the slice with more
+    trades and too hard for the other.
+
+    A FLOOR IS A PROPERTY OF THE EXACT SETUP IT GATES. This one is measured on
+    OANDA mid, with regime slicing, at the frozen ATR length -- the same
+    configuration gate 1 runs. The earlier figure of 0.042854 was measured
+    before slicing existed and does not transfer.
+
+    The surrogate keeps the REAL Layer 1 labels while the prices are
+    sign-scrambled. That is deliberate: the label then partitions the bars in a
+    way unrelated to the scrambled path, so the control asks exactly the right
+    question -- can this combination beat luck inside an arbitrary partition of
+    bars? Scrambling the labels as well would test a different, easier thing.
     """
-    rng = np.random.default_rng(seed)
-    crng = np.random.Random(seed) if hasattr(np.random, 'Random') else None
     import random as _rnd
+    rng = np.random.default_rng(seed)
     pick = _rnd.Random(seed)
     combos = [(pick.choice(opts['c1']), pick.choice(opts['c2']),
                pick.choice(opts['vol']), pick.choice(opts['base']),
                pick.choice(opts['exit_ind'])) for _ in range(n_combo)]
-    vals = []
-    for s in range(n_surrogate):
+    vals = {s: [] for s, _, _ in SLICES}
+    for k in range(n_surrogate):
         PD, BUF = {}, {}
         for p in pairs:
-            d = surrogate(load_pair(p), rng)
+            real = load_pair(p)
+            d = surrogate(real, rng)
             P = _precompute_frame(d, opts)
+            P['regime'] = regime_codes(p, real.index)   # real labels, kept
             P['_wb'] = window_bounds(P)
             PD[p] = P; BUF[p] = make_buffers(len(P['c']))
-        got = 0
+        got = {s: 0 for s in vals}
         for cb in combos:
             sc = score_combo(PD, cb, BUF)
-            if eligible(sc):
-                vals.append(sc['expectancy_R']); got += 1
+            for sname in vals:
+                if eligible(sc[sname]):
+                    vals[sname].append(sc[sname]['expectancy_R'])
+                    got[sname] += 1
         if verbose:
-            print('  surrogate %2d/%d: %d eligible' % (s + 1, n_surrogate, got),
-                  flush=True)
-    v = np.array(vals)
-    return dict(n=len(v), mean=float(v.mean()), p50=float(np.percentile(v, 50)),
-                p95=float(np.percentile(v, 95)), p99=float(np.percentile(v, 99)),
-                max=float(v.max()))
+            print('  surrogate %2d/%d: eligible %s'
+                  % (k + 1, n_surrogate, got), flush=True)
+    out = {}
+    for sname, v in vals.items():
+        a = np.array(v)
+        out[sname] = dict(slice=sname, n=len(a),
+                          mean=float(a.mean()) if len(a) else np.nan,
+                          p50=float(np.percentile(a, 50)) if len(a) else np.nan,
+                          p95=float(np.percentile(a, 95)) if len(a) else np.nan,
+                          p99=float(np.percentile(a, 99)) if len(a) else np.nan,
+                          max=float(a.max()) if len(a) else np.nan)
+    return out
 
 
-def _precompute_frame(d, opts, atr_len=14):
-    """precompute() on an already-loaded frame -- used by the surrogates."""
+def _precompute_frame(d, opts, atr_len=None):
+    atr_len = ATR_LEN if atr_len is None else atr_len
     o, h, l, c = (d[k].values.astype(float) for k in ('open', 'high', 'low', 'close'))
     P = {'dates': d.index, 'o': o, 'h': h, 'l': l, 'c': c,
          'atr': L.P.atr(h, l, c, atr_len), 'suspect': np.zeros(len(d), bool)}
@@ -484,39 +503,50 @@ def n_combos(opts):
 
 
 def _worker(args):
-    shard, nshard, floor, keep_all = args
+    shard, nshard, floors, keep_all = args
     opts = slot_options()
     pairs = all_pairs()
     PD, BUF = {}, {}
     for p in pairs:
         P = precompute(p, opts); P['_wb'] = window_bounds(P)
         PD[p] = P; BUF[p] = make_buffers(len(P['c']))
-    out, n_seen, n_elig = [], 0, 0
+    out = []
+    n_seen = 0
+    n_elig = {s: 0 for s, _, _ in SLICES}
+    n_surv = {s: 0 for s, _, _ in SLICES}
     for i, cb in enumerate(combo_iter(opts)):
         if i % nshard != shard:
             continue
         n_seen += 1
-        s = score_combo(PD, cb, BUF)
-        if not eligible(s):
-            continue
-        n_elig += 1
-        if keep_all or (s['expectancy_R'] > floor and s['profit_factor'] >= PF_FLOOR):
-            out.append(s)
-    f = os.path.join(CKDIR, 'shard_%04d.csv' % shard)
-    pd.DataFrame(out).to_csv(f, index=False)
-    return dict(shard=shard, seen=n_seen, eligible=n_elig, survivors=len(out))
+        sc = score_combo(PD, cb, BUF)
+        for sname, _, _ in SLICES:
+            s = sc[sname]
+            if not eligible(s):
+                continue
+            n_elig[sname] += 1
+            if keep_all or (s['expectancy_R'] > floors[sname]
+                            and s['profit_factor'] >= PF_FLOOR):
+                n_surv[sname] += 1
+                out.append(s)
+    pd.DataFrame(out).to_csv(
+        os.path.join(CKDIR, 'shard_%04d.csv' % shard), index=False)
+    return dict(shard=shard, seen=n_seen,
+                elig_trend=n_elig['trend'], elig_chop=n_elig['chop'],
+                surv_trend=n_surv['trend'], surv_chop=n_surv['chop'])
 
 
-def run_gate1(floor, nshard=None, jobs=None, keep_all=False, limit=None):
-    """Gate 1 across all combinations. Resumable: a shard whose checkpoint
-    already exists is skipped, so a killed run costs one shard."""
+def run_gate1(floors, nshard=None, jobs=None, keep_all=False, limit=None):
+    """Gate 1 across all combinations, BOTH PLANS, sliced. Resumable by shard.
+
+    `floors` is a dict {slice: expectancy floor} -- gating is per regime, so
+    the luck floor is too.
+    """
     import multiprocessing as mp
     os.makedirs(CKDIR, exist_ok=True)
     jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
     # FEW, LARGE SHARDS. Each worker precomputes all 28 pairs before it can
-    # score anything -- 30 seconds -- so a shard must be big enough for that to
-    # disappear into it. At 2,000 shards the precompute was a third of the
-    # total runtime; at jobs*4 it is under 2%.
+    # score anything -- ~30 seconds -- so a shard must be big enough for that
+    # to disappear into it.
     nshard = nshard or jobs * 4
     todo = [s for s in range(nshard)
             if not os.path.exists(os.path.join(CKDIR, 'shard_%04d.csv' % s))]
@@ -525,14 +555,16 @@ def run_gate1(floor, nshard=None, jobs=None, keep_all=False, limit=None):
         todo = todo[:limit]
     print('gate 1: %d shards total, %d already checkpointed, %d queued now, '
           '%d workers' % (nshard, done, len(todo), jobs), flush=True)
+    print('  floors: %s   PF >= %.2f' % (floors, PF_FLOOR), flush=True)
     if not todo:
         return collect()
     with mp.Pool(jobs) as pool:
         for r in pool.imap_unordered(
-                _worker, [(s, nshard, floor, keep_all) for s in todo]):
-            print('  shard %4d: %7d seen, %6d eligible, %5d survivors'
-                  % (r['shard'], r['seen'], r['eligible'], r['survivors']),
-                  flush=True)
+                _worker, [(s, nshard, floors, keep_all) for s in todo]):
+            print('  shard %4d: %8d seen | eligible %6d/%6d | survivors '
+                  '%5d/%5d  (trend/chop)'
+                  % (r['shard'], r['seen'], r['elig_trend'], r['elig_chop'],
+                     r['surv_trend'], r['surv_chop']), flush=True)
     return collect()
 
 
@@ -560,19 +592,26 @@ def main():
         f = luck_floor(slot_options(), all_pairs(),
                        n_surrogate=opt('--surrogates', int, 12),
                        n_combo=opt('--combos', int, 400))
-        pd.DataFrame([f]).to_csv(os.path.join(ROOTOUT, 'gate1_luck_floor.csv'),
-                                 index=False)
-        print('LUCK FLOOR: %s' % f)
-        print('gate 1 expectancy bar = p95 = %.6f R' % f['p95'])
+        D = pd.DataFrame(f.values())
+        D.to_csv(os.path.join(ROOTOUT, 'gate1_luck_floor.csv'), index=False)
+        print('\nLUCK FLOOR, per slice (OANDA mid, slicing, ATR %d)' % ATR_LEN)
+        print(D.to_string(index=False))
+        for r in D.itertuples():
+            print('  gate 1 expectancy bar, %-5s = %.6f R' % (r.slice, r.p95))
         return f
-    floor = opt('--floor', float)
-    if floor is None:
-        raise SystemExit('--floor is required (run --luckfloor first)')
+    ff = os.path.join(ROOTOUT, 'gate1_luck_floor.csv')
+    if not os.path.exists(ff):
+        raise SystemExit('run --luckfloor first: %s is missing' % ff)
+    F = pd.read_csv(ff).set_index('slice')
+    floors = {s: float(F.loc[s, 'p95']) for s, _, _ in SLICES}
     t = time.time()
-    D = run_gate1(floor, nshard=opt('--shards', int, 2000),
+    D = run_gate1(floors, nshard=opt('--shards', int, None),
                   jobs=opt('--jobs', int), keep_all='--keep-all' in a,
                   limit=opt('--limit', int))
-    print('\n%d survivors in %.0fs' % (len(D), time.time() - t))
+    el = time.time() - t
+    print('\n%d surviving slices in %.0fs (%.1f h)' % (len(D), el, el / 3600))
+    if len(D):
+        print(D.groupby('slice').size().to_string())
     return D
 
 
