@@ -63,10 +63,30 @@ CKDIR = os.path.join(ROOTOUT, 'gate1')
 WINDOWS = {'W1': ('2005-01-03', '2010-12-31'),
            'W2': ('2011-01-01', '2015-12-31'),
            'W3': ('2016-01-01', '2020-12-31')}
-MIN_TRADES_PICK = 100
-MIN_TRADES_BLIND = 50
+MIN_TRADES_PICK = 100      # per REGIME SLICE, not per combination
+MIN_TRADES_BLIND = 50      # per slice, per blind window
 PF_FLOOR = 1.05
 RISK = 100.0
+
+# GAUNTLET.md "RISK". Structure is permanent; these four numbers are gate 1
+# defaults and become family-level tunables at gates 2-3.
+ATR_LEN = 31               # FROZEN by the pre-test; see GAUNTLET.md
+ATR_MULT = 1.0             # stop = 1.0 x ATR
+TP_MULT = 1.5              # RR 1:1.5
+TRAIL_MULT = 1.5
+TRAIL_ARM = 2.0
+
+# Layer 1's shape2, as int codes. ONE definition, used by both the tagger and
+# the slicer -- they were briefly separate and the slicer compared an int8 array
+# against a python string, which is silently False everywhere and presents as
+# "this combination never traded in that regime".
+REGIME_CODE = {'trending': 0, 'ranging': 1, 'trend-in-range': 2, 'neither': 3}
+REGIME_NAME = {v: k for k, v in REGIME_CODE.items()}
+
+# The two scored slices. plan 2 = two legs, plan 1 = one leg + quick target.
+SLICES = (('trend', 2, REGIME_CODE['trending']),
+          ('chop', 1, REGIME_CODE['ranging']))
+LABELS = os.path.join(ROOTOUT, 'layer1_states.csv')
 
 
 def slot_options():
@@ -98,8 +118,37 @@ def load_pair(pair):
     return d
 
 
-def precompute(pair, opts, atr_len=14):
+_LAB = None
+
+
+def regime_codes(pair, index):
+    """Layer 1's shape2 for this pair, aligned to the bar index, as int codes.
+
+    THE LABEL IS ALREADY LAGGED ONE BAR -- the value dated D was computed from
+    data through D-1 -- so it is joined on the entry date with NO further shift.
+    Shifting again would double-count the lag; not shifting at all would be
+    reading the same bar the label describes.
+
+    Unlabelled bars get -1 and are excluded from both slices. They are never
+    forward-filled: 96.3% of OANDA bars carry a label and the rest are calendar
+    mismatches between the H.10 panel Layer 1 was built on and OANDA's. Inventing
+    a label for the other 3.7% would put trades in a regime nobody measured.
+    """
+    global _LAB
+    if _LAB is None:
+        L_ = pd.read_csv(LABELS, parse_dates=['date'], usecols=['date', 'pair', 'shape2'])
+        _LAB = {p: g.set_index('date').shape2 for p, g in L_.groupby('pair')}
+    m = REGIME_CODE
+    s = _LAB.get(pair)
+    if s is None:
+        return np.full(len(index), -1, np.int8)
+    v = s.reindex(index)
+    return v.map(m).fillna(-1).astype(np.int8).values
+
+
+def precompute(pair, opts, atr_len=None):
     """Every indicator once. -> dict of matrices indexed [option, bar]."""
+    atr_len = ATR_LEN if atr_len is None else atr_len
     d = load_pair(pair)
     o, h, l, c = (d[k].values.astype(float) for k in ('open', 'high', 'low', 'close'))
     n = len(d)
@@ -114,6 +163,7 @@ def precompute(pair, opts, atr_len=14):
     P['vol'] = {name: L.compute(name, o, h, l, c) for name in opts['vol']}
     P['base'] = {name: L.compute(name, o, h, l, c) for name in opts['base']}
     P['exit'] = {name: L.compute(name, o, h, l, c) for name in opts['exit_ind']}
+    P['regime'] = regime_codes(pair, d.index)
     return P
 
 
@@ -176,20 +226,24 @@ def _equity_stats(r, n, order):
     return eq, mdd
 
 
-def run_combo(P, c1, c2, vol, base, ex, buf, **kw):
-    """One combination on one pair. Returns the raw trade arrays."""
+def run_combo(P, c1, c2, vol, base, ex, buf, plan=2, atr=None, **kw):
+    """One combination, one plan, one pair. Returns the trade count; the trade
+    arrays are left in `buf`."""
     lt, st, lc, sc, c1t = P['conf'][c1]
     _, _, c2lc, c2sc, c2t = P['conf'][c2]
     vl, vs = P['vol'][vol]
     el, es = P['exit'][ex]
     nt, both, late, stale = E.run_bars(
-        P['o'], P['h'], P['l'], P['c'], P['atr'], P['base'][base],
+        P['o'], P['h'], P['l'], P['c'], P['atr'] if atr is None else atr,
+        P['base'][base],
         lt, st, lc, sc, c2lc, c2sc, vl, vs, el, es, P['suspect'],
         c1t, c2t,
         kw.get('use_base_cross', True), kw.get('use_c1_flip', True),
         kw.get('use_continuation', True), kw.get('exit_on_c1_flip', False),
-        kw.get('one_candle_rule', False), int(kw.get('plan', 2)), RISK,
-        1.0, 1.5, 1.5, 2.0, 1.5, 7, True, True,
+        kw.get('one_candle_rule', False), int(plan), RISK,
+        kw.get('atr_mult', ATR_MULT), kw.get('tp_mult', TP_MULT),
+        kw.get('trail_mult', TRAIL_MULT), kw.get('trail_arm', TRAIL_ARM),
+        1.5, 7, True, True,
         buf['entry_bar'], buf['exit_bar'], buf['dir'], buf['leg'],
         buf['entry_px'], buf['exit_px'], buf['units'], buf['r'],
         buf['reason'], buf['route'])
@@ -215,51 +269,78 @@ def window_bounds(P):
     return b
 
 
-def score_combo(pairs_data, combo, buf_by_pair):
-    """One combination across all pairs, scored the way GAUNTLET.md demands:
-    stitched BLIND performance only (W2 + W3), with W1 used solely to check the
-    picking-window trade minimum."""
-    c1, c2, vol, base, ex = combo
-    allr, allw = [], []
-    n_pick = 0
-    for pair, P in pairs_data.items():
-        buf = buf_by_pair[pair]
-        nt = run_combo(P, c1, c2, vol, base, ex, buf)
-        if nt == 0:
-            continue
-        r = buf['r'][:nt]
-        eb = buf['entry_bar'][:nt]
-        wb = P['_wb']
-        a1, z1 = wb['W1']
-        n_pick += int(((eb >= a1) & (eb < z1)).sum())
-        for k in ('W2', 'W3'):
-            a, z = wb[k]
-            m = (eb >= a) & (eb < z)
-            if m.any():
-                allr.append(r[m])
-                allw.append(np.full(int(m.sum()), 2 if k == 'W2' else 3))
-    if not allr:
-        return None
-    r = np.concatenate(allr)
-    w = np.concatenate(allw)
-    n2, n3 = int((w == 2).sum()), int((w == 3).sum())
+def _agg(r):
+    """The KPI block, on one slice's stitched blind trades."""
     n = len(r)
-    order = np.arange(n)
-    tot, mdd = _equity_stats(r, n, order)
+    if n == 0:
+        return None
     win = r > 0
-    gain = r[win].sum(); loss = -r[~win].sum()
-    sd = r.std(ddof=1) if n > 1 else 0.0
+    gain = float(r[win].sum()); loss = float(-r[~win].sum())
+    eq = np.cumsum(r)
+    mdd = float((np.maximum.accumulate(eq) - eq).max())
+    sd = float(r.std(ddof=1)) if n > 1 else 0.0
     dnv = r[r < 0]
-    dsd = dnv.std(ddof=1) if dnv.size > 1 else 0.0
-    return dict(c1=c1, c2=c2, vol=vol, base=base, exit_ind=ex,
-                n_pick=n_pick, n_w2=n2, n_w3=n3, n_blind=n,
-                expectancy_R=float(r.mean()), total_R=float(tot),
-                profit_factor=float(gain / loss) if loss > 0 else np.inf,
+    dsd = float(dnv.std(ddof=1)) if dnv.size > 1 else 0.0
+    tot = float(eq[-1])
+    return dict(n_blind=n, expectancy_R=float(r.mean()), total_R=tot,
+                profit_factor=(gain / loss) if loss > 0 else np.inf,
                 win_rate=float(win.mean()),
-                sharpe=float(r.mean() / sd * np.sqrt(n)) if sd > 0 else 0.0,
-                sortino=float(r.mean() / dsd * np.sqrt(n)) if dsd > 0 else 0.0,
-                max_dd_R=float(mdd),
-                calmar=float(tot / mdd) if mdd > 0 else np.inf)
+                sharpe=(r.mean() / sd * np.sqrt(n)) if sd > 0 else 0.0,
+                sortino=(r.mean() / dsd * np.sqrt(n)) if dsd > 0 else 0.0,
+                max_dd_R=mdd, calmar=(tot / mdd) if mdd > 0 else np.inf)
+
+
+def score_combo(pairs_data, combo, buf_by_pair, atr_by_pair=None, **kw):
+    """One combination, BOTH PLANS, sliced by the Layer 1 regime at entry.
+
+    GAUNTLET.md: the trend score is the TWO-LEG run restricted to trades entered
+    while the label says `trending`; the chop score is the ONE-LEG run restricted
+    to `ranging`. They are separate candidates and are gated separately.
+
+    Trades are attributed to a window by ENTRY BAR. A trade opened in the picking
+    window and closed in a blind one belongs to the picking window -- scoring it
+    as blind would let W1 leak into the score it is supposed to be independent of.
+    """
+    c1, c2, vol, base, ex = combo
+    out = {}
+    for sname, plan, code in SLICES:
+        rr, n_pick, n_w2, n_w3, n_unlab = [], 0, 0, 0, 0
+        for pair, P in pairs_data.items():
+            buf = buf_by_pair[pair]
+            atr = None if atr_by_pair is None else atr_by_pair[pair]
+            nt = run_combo(P, c1, c2, vol, base, ex, buf, plan=plan, atr=atr, **kw)
+            if nt == 0:
+                continue
+            r = buf['r'][:nt]
+            eb = buf['entry_bar'][:nt]
+            reg = P['regime'][eb]
+            n_unlab += int((reg < 0).sum())
+            m = reg == code
+            if not m.any():
+                continue
+            wb = P['_wb']
+            a1, z1 = wb['W1']
+            n_pick += int((m & (eb >= a1) & (eb < z1)).sum())
+            for k, acc in (('W2', 2), ('W3', 3)):
+                a, z = wb[k]
+                mm = m & (eb >= a) & (eb < z)
+                c = int(mm.sum())
+                if c:
+                    rr.append(r[mm])
+                    if acc == 2:
+                        n_w2 += c
+                    else:
+                        n_w3 += c
+        s = _agg(np.concatenate(rr)) if rr else None
+        if s is None:
+            s = dict(n_blind=0, expectancy_R=0.0, total_R=0.0, profit_factor=0.0,
+                     win_rate=0.0, sharpe=0.0, sortino=0.0, max_dd_R=0.0,
+                     calmar=0.0)
+        s.update(c1=c1, c2=c2, vol=vol, base=base, exit_ind=ex, slice=sname,
+                 plan=plan, n_pick=n_pick, n_w2=n_w2, n_w3=n_w3,
+                 n_unlabelled=n_unlab)
+        out[sname] = s
+    return out
 
 
 def eligible(s):
@@ -497,3 +578,125 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# ==========================================================================
+# ATR LENGTH PRE-TEST -- run once, before gate 1, then frozen
+# ==========================================================================
+ATR_RANGE = range(2, 51)
+
+
+def spread_sample(opts, n=300, seed=101):
+    """A sample that COVERS the slots rather than merely being random.
+
+    Each slot's options are cycled with a different stride, so every option in
+    every slot appears a similar number of times. A plain random draw of 300
+    from 10.7M would leave whole indicators unrepresented, and the ATR length
+    would then be chosen on whichever ones happened to be picked.
+    """
+    keys = ('c1', 'c2', 'vol', 'base', 'exit_ind')
+    lists = {k: sorted(opts[k]) for k in keys}
+    rng = np.random.default_rng(seed)
+    order = {k: rng.permutation(len(lists[k])) for k in keys}
+    combos = []
+    for i in range(n):
+        combos.append(tuple(lists[k][int(order[k][i % len(lists[k])])] for k in keys))
+    return combos
+
+
+def score_w1(pairs_data, combo, buf_by_pair, atr_by_pair):
+    """PICKING WINDOW ONLY, sliced. The pre-test may not look at W2 or W3 --
+    they are blind and stay blind, and a parameter chosen on them would make
+    every later blind score a re-read of its own tuning set."""
+    c1, c2, vol, base, ex = combo
+    out = {}
+    for sname, plan, code in SLICES:
+        rr = []
+        for pair, P in pairs_data.items():
+            buf = buf_by_pair[pair]
+            nt = run_combo(P, c1, c2, vol, base, ex, buf, plan=plan,
+                           atr=atr_by_pair[pair])
+            if nt == 0:
+                continue
+            eb = buf['entry_bar'][:nt]
+            a1, z1 = P['_wb']['W1']
+            m = (P['regime'][eb] == code) & (eb >= a1) & (eb < z1)
+            if m.any():
+                rr.append(buf['r'][:nt][m])
+        out[sname] = np.concatenate(rr) if rr else np.zeros(0)
+    return out
+
+
+def atr_pretest(n_combo=300, verbose=True):
+    """Every ATR length 2-50 on a spread sample, picking window only, both
+    plans, all 28 pairs. Ranked on pooled expectancy in R, PF as tiebreak."""
+    opts = slot_options()
+    pairs = all_pairs()
+    combos = spread_sample(opts, n_combo)
+    PD, BUF = {}, {}
+    for p in pairs:
+        P = precompute(p, opts); P['_wb'] = window_bounds(P)
+        PD[p] = P; BUF[p] = make_buffers(len(P['c']))
+    rows = []
+    for n in ATR_RANGE:
+        atr = {p: L.P.atr(PD[p]['h'], PD[p]['l'], PD[p]['c'], n) for p in pairs}
+        acc = {s: [] for s, _, _ in SLICES}
+        for cb in combos:
+            r = score_w1(PD, cb, BUF, atr)
+            for s in acc:
+                if r[s].size:
+                    acc[s].append(r[s])
+        row = dict(atr_len=n)
+        allr = []
+        for s in acc:
+            v = np.concatenate(acc[s]) if acc[s] else np.zeros(0)
+            allr.append(v)
+            row['%s_n' % s] = len(v)
+            row['%s_exp' % s] = float(v.mean()) if len(v) else np.nan
+        v = np.concatenate(allr) if allr else np.zeros(0)
+        win = v > 0
+        gain = float(v[win].sum()); loss = float(-v[~win].sum())
+        row.update(n=len(v), expectancy_R=float(v.mean()) if len(v) else np.nan,
+                   profit_factor=(gain / loss) if loss > 0 else np.inf)
+        rows.append(row)
+        if verbose:
+            print('  ATR %2d: n=%6d  expectancy %+.5f  PF %.4f  '
+                  '(trend %+.5f / chop %+.5f)'
+                  % (n, row['n'], row['expectancy_R'], row['profit_factor'],
+                     row['trend_exp'], row['chop_exp']), flush=True)
+    return pd.DataFrame(rows)
+
+
+def choose_atr(D, plateau=5):
+    """THE RULE, exactly as specified: rank on pooled expectancy in R with
+    profit factor as the tiebreak, and take the winner -- UNLESS the winner is a
+    SPIKE, in which case take the centre of the best plateau instead.
+
+    A spike means one ATR value standing above its neighbours: one number where
+    stops happened to land where a handful of trades survived. A plateau means
+    the result does not depend on the exact value, which is what a real effect
+    looks like. The test for "spike" is whether the raw winner falls inside the
+    best rolling window of `plateau` consecutive lengths. If it does, the curve
+    around it is broad and the winner is kept. If it does not, the winner is an
+    isolated peak and the plateau centre is used.
+    """
+    d = D.sort_values(['expectancy_R', 'profit_factor'], ascending=False)
+    raw = int(d.atr_len.iloc[0])
+    e = D.expectancy_R.values
+    k = plateau
+    roll = np.convolve(e, np.ones(k) / k, mode='valid')
+    j = int(np.argmax(roll))
+    lo, hi = int(D.atr_len.values[j]), int(D.atr_len.values[j + k - 1])
+    centre = int(D.atr_len.values[j + k // 2])
+    spike = not (lo <= raw <= hi)
+    return dict(chosen=centre if spike else raw, raw_best=raw,
+                plateau_from=lo, plateau_to=hi, plateau_mean=float(roll[j]),
+                spike=spike, rule='plateau centre (winner spiked)' if spike
+                else 'raw winner (it sits inside the best plateau)',
+                curve_min=float(e.min()), curve_max=float(e.max()),
+                curve_range_in_SE=float((e.max() - e.min())
+                                        / (0.6 / np.sqrt(D.n.mean()))),
+                trend_best=int(D.atr_len.values[int(np.argmax(D.trend_exp.values))]),
+                chop_best=int(D.atr_len.values[int(np.argmax(D.chop_exp.values))]),
+                trend_corr=float(np.corrcoef(D.atr_len, D.trend_exp)[0, 1]),
+                chop_corr=float(np.corrcoef(D.atr_len, D.chop_exp)[0, 1]))

@@ -1,0 +1,2 @@
+chosen,raw_best,plateau_from,plateau_to,plateau_mean,spike,rule,curve_min,curve_max,curve_range_in_SE,trend_best,chop_best,trend_corr,chop_corr
+31,31,27,31,0.01339810469666004,False,raw winner (it sits inside the best plateau),0.0110669501850251,0.0137685675610234,2.2125448703105866,3,30,-0.7810139536249604,0.7345730677377378
