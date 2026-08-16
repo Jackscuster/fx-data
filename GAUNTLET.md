@@ -104,7 +104,7 @@ counted and excluded from both slices.
 ## RISK — the structure is permanent, the numbers are tunable later
 
 **Fixed forever, never swept, at any gate:**
-- 2% account risk per trade
+- 2% account risk per trade, **sized off fixed equity — no compounding**
 - two legs in the trend plan (50/50), one leg in the quick plan
 - leg 2 moves to breakeven when leg 1 banks
 - stops only ever move in the trade's favour
@@ -119,6 +119,24 @@ counted and excluded from both slices.
 Those four numbers — RR, trail distance, arming multiple, ATR length — become
 **family-level tunables at gates 2 and 3**. They are not tunable at gate 1, and
 they are never tuned per-combination.
+
+**Why sizing is off fixed equity, and why that is not a simplification.** The
+2% is taken against a constant account, so every trade risks the same cash and
+one R means the same thing in 2006 as in 2019. That is the whole point: the
+gauntlet ranks thousands of combinations against each other and against a
+scrambled-control floor, and both comparisons are only valid if R is a fixed
+unit. Under compounding it is not — R grows with the equity curve, so late
+trades in a winning combination carry more weight than early ones, and a
+combination that happened to win early outranks an identical one that won late
+purely through the ordering of its returns. The measured quantity would stop
+being edge and start being edge times path.
+
+In the code this is `RISK = 100.0` in `l2sweep.py` — a fixed 100 units of cash
+per trade, which is the 2% of a constant account expressed directly. Expectancy,
+profit factor and the luck floor are all denominated in that unit.
+
+Compounding re-enters at **Layer 4 / live sizing**, where path dependence is the
+actual question being asked. It does not belong anywhere in the gauntlet.
 
 ---
 
