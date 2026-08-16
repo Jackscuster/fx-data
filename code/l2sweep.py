@@ -514,10 +514,21 @@ def _worker(args):
     n_seen = 0
     n_elig = {s: 0 for s, _, _ in SLICES}
     n_surv = {s: 0 for s, _, _ in SLICES}
+    t0 = time.time()
     for i, cb in enumerate(combo_iter(opts)):
         if i % nshard != shard:
             continue
         n_seen += 1
+        # heartbeat. A shard is tens of thousands of combinations and takes
+        # tens of minutes; without this the only signal that anything is
+        # happening is the shard file appearing at the very end, which is
+        # useless for spotting a machine that has started thrashing.
+        if n_seen % 5000 == 0:
+            el = time.time() - t0
+            print('    shard %4d: %6d done, %.2f ms/combo, %.0f min left'
+                  % (shard, n_seen, 1000 * el / n_seen,
+                     (el / n_seen) * (nshard and (n_combos(opts) // nshard)
+                                      - n_seen) / 60), flush=True)
         sc = score_combo(PD, cb, BUF)
         for sname, _, _ in SLICES:
             s = sc[sname]
