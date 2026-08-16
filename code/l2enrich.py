@@ -11,38 +11,32 @@ and is judged by the same walk-forward gates as everything else. This map sets
 an ordering, never a permission. Nothing here removes anything.
 
 ------------------------------------------------------------------------
-THE DENOMINATOR, AND WHY IT IS THE ONE IT IS
+TWO MAPS. `main_v2` IS THE CURRENT ONE.
 ------------------------------------------------------------------------
-Survival rate per option is computed out of ALL COMBINATIONS containing that
-option, not out of the eligible ones. The enumeration is a full factorial, so
-every option of a slot appears in exactly the same number of combinations --
-n_combos / len(slot) -- which makes the denominator exact and free.
+    FIRES MORE   eligibility_rate = eligible / combinations
+    WINS MORE    survival_rate    = survivors / ELIGIBLE     <-- the real one
+    enrichment   survival_rate / the slice's base survival rate
 
-The eligible denominator is NOT available and cannot be reconstructed from the
-survivors file: gate 1 tallied eligibility per slice, not per slot option, and
-recovering it means re-running the 2.9-hour sweep. So the rate reported here
-folds together two different ways of not surviving -- "never traded enough to be
-scored" (below 100 picking / 50 per blind window) and "traded and failed".
+Enrichment 1.0 is "behaves exactly like the slice average". The ordering is what
+gate 2 uses, not the magnitude -- most of the survivor population is chance.
 
-That is stated rather than hidden, and for THIS purpose it is arguably the
-right measure anyway: an option that cannot generate enough trades to be scored
-is genuinely a lower tuning priority than one that scores and fails. But it is
-not a claim about edge, and an option can look poor here purely for being quiet.
+`main_v2` divides by the ELIGIBLE count, which the sweep now tallies per slot
+option, so it is a statement about edge. `main` (--v1) is the original and
+divides by ALL combinations, which folds "never traded enough to be scored"
+together with "traded and failed"; an option that merely fires often looks
+enriched on it. v1 is kept reachable only because the first priority ordering
+was read from it, and a claim about how far the correction moved things has to
+be checkable against what it moved from.
 
-------------------------------------------------------------------------
-ENRICHMENT
-------------------------------------------------------------------------
-    rate(option)      = survivors containing it / combinations containing it
-    base rate (slice) = survivors / combinations
-    enrichment        = rate / base rate
+PER MODE, NEVER POOLED. Each signal-exit mode (GAUNTLET.md: A C1-flip, B
+baseline-cross, C exit-indicator) is a different definition of when a trade
+ends, so its survivors, its floor and its null are all its own. Modes A and B do
+not use the exit slot at all and report it as unused rather than as flat.
 
-Enrichment 1.0 is "behaves exactly like the slice average". Above 1 means the
-option is over-represented among survivors. Because the whole survivor
-population is roughly 70% (trend) chance-level noise, a mild enrichment is
-weak evidence; the ordering is what gate 2 uses, not the magnitude.
-
-Writes results/gate1_enrichment_slots.csv and results/gate1_enrichment_cores.csv.
+Writes gate1_enrichment_slots_v2.csv, gate1_close_reasons.csv and
+gate1_exit_reach.csv, each carrying a `mode` column.
 """
+import glob
 import numpy as np, pandas as pd
 import l2sweep as S
 
@@ -130,13 +124,14 @@ REASON_NAMES = {0: '(unset)', 1: 'stop', 2: 'target', 3: 'exit indicator',
                 7: 'end of data', 8: 'breakeven stop', 9: 'trail stop'}
 
 
-def load_tallies():
+def load_tallies(mode):
     import glob
-    fs = sorted(glob.glob(os.path.join(S.CKDIR, 'tally_*.npz')))
+    d = S.mode_dir(mode)
+    fs = sorted(glob.glob(os.path.join(d, 'tally_*.npz')))
     if not fs:
-        raise SystemExit('no tally_*.npz in %s -- re-run the sweep with the '
-                         'instrumented worker:\n'
-                         '  python code/l2sweep.py --shards 128 --jobs 8' % S.CKDIR)
+        raise SystemExit('no tally_*.npz in %s -- run the sweep for mode %s:\n'
+                         '  python code/l2sweep.py --mode %s --jobs 8'
+                         % (d, mode, mode))
     tot = None
     for f in fs:
         z = np.load(f)
@@ -148,7 +143,7 @@ def load_tallies():
     return tot, len(fs)
 
 
-def slot_enrichment_v2(T, opts):
+def slot_enrichment_v2(T, opts, mode):
     rows = []
     for sname, _, _ in S.SLICES:
         tot_elig = int(T['elig_%s_%s' % (sname, 'c1')].sum())
@@ -161,7 +156,7 @@ def slot_enrichment_v2(T, opts):
             for j, name in enumerate(opts[slot]):
                 cond = surv[j] / elig[j] if elig[j] else np.nan
                 rows.append(dict(
-                    slice=sname, slot=slot, option=name,
+                    mode=mode, slice=sname, slot=slot, option=name,
                     combos=int(comb[j]), eligible=int(elig[j]),
                     survivors=int(surv[j]),
                     eligibility_rate_pct=100.0 * elig[j] / comb[j] if comb[j] else np.nan,
@@ -175,7 +170,7 @@ def slot_enrichment_v2(T, opts):
                          ascending=[True, True, False]).reset_index(drop=True)
 
 
-def close_reasons(T, opts):
+def close_reasons(T, opts, mode):
     rows = []
     for sname, _, _ in S.SLICES:
         for pop in ('elig', 'surv'):
@@ -184,14 +179,14 @@ def close_reasons(T, opts):
             for code in range(len(v)):
                 if v[code] == 0 and code == 0:
                     continue
-                rows.append(dict(slice=sname, population=pop,
+                rows.append(dict(mode=mode, slice=sname, population=pop,
                                  reason=REASON_NAMES.get(code, str(code)),
                                  closes=int(v[code]),
                                  share_pct=100.0 * v[code] / n if n else np.nan))
     return pd.DataFrame(rows)
 
 
-def exit_reach(T, opts):
+def exit_reach(T, opts, mode):
     """Per exit_ind option: what share of closes it actually causes. If this is
     small everywhere, the exit slot's flat enrichment is STRUCTURAL -- the other
     exits fire first and leave it nothing to do -- rather than evidence that the
@@ -202,49 +197,63 @@ def exit_reach(T, opts):
         M = T['rc_by_exit_%s' % sname]
         for j, name in enumerate(opts['exit_ind']):
             n = int(M[j].sum())
-            rows.append(dict(slice=sname, exit_ind=name, closes=n,
+            rows.append(dict(mode=mode, slice=sname, exit_ind=name, closes=n,
                              exit_ind_closes=int(M[j][EXIT_IND]),
                              exit_ind_share_pct=100.0 * M[j][EXIT_IND] / n if n else np.nan))
     return pd.DataFrame(rows).sort_values(
         ['slice', 'exit_ind_share_pct'], ascending=[True, False]).reset_index(drop=True)
 
 
-def main_v2():
-    opts = S.slot_options()
-    T, nshard = load_tallies()
-    print('tallies from %d shards' % nshard)
+def main_v2(modes=None):
+    """The corrected map, per exit mode. Each mode is a different trade
+    definition, so nothing is pooled across them."""
+    full = S.slot_options()
+    modes = modes or [m for m in S.MODE_ORDER
+                      if glob.glob(os.path.join(S.mode_dir(m), 'tally_*.npz'))]
+    if not modes:
+        raise SystemExit('no tallies for any mode yet')
+    AE, AR, AX = [], [], []
+    for mode in modes:
+        opts = S.mode_opts(full, mode)
+        T, nshard = load_tallies(mode)
+        E = slot_enrichment_v2(T, opts, mode)
+        R = close_reasons(T, opts, mode)
+        X = exit_reach(T, opts, mode)
+        AE.append(E); AR.append(R); AX.append(X)
 
-    E = slot_enrichment_v2(T, opts)
+        print('\n' + '#' * 78)
+        print('# MODE %s -- %s   (%d shards, %s combinations)'
+              % (mode, S.MODES[mode]['label'], nshard,
+                 format(S.n_combos(opts), ',')))
+        print('#' * 78)
+        for sname, _, _ in S.SLICES:
+            g = E[E['slice'] == sname]
+            print('\n%s  --  base survival rate (of ELIGIBLE) %.4f%%'
+                  % (sname.upper(), g.base_rate_pct.iloc[0]))
+            for slot in S.SLOTS:
+                sl = g[g['slot'] == slot]
+                if len(sl) < 2:
+                    print('  %-9s (unused in this mode)' % slot)
+                    continue
+                print('  %-9s spread %.2fx - %.2fx   (fires-more spread %.2fx - %.2fx)'
+                      % (slot, sl.enrichment.min(), sl.enrichment.max(),
+                         sl.enrichment_uncond.min(), sl.enrichment_uncond.max()))
+                for r in pd.concat([sl.head(3), sl.tail(3)]).itertuples():
+                    print('      %-40s elig %6.2f%%  win %6.3f%%  %5.2fx  (old %5.2fx)'
+                          % (r.option, r.eligibility_rate_pct,
+                             r.survival_rate_pct, r.enrichment,
+                             r.enrichment_uncond))
+            print('  HOW TRADES CLOSE (eligible combinations)')
+            for r in R[(R['slice'] == sname) & (R.population == 'elig')] \
+                    .sort_values('share_pct', ascending=False).itertuples():
+                print('      %-18s %14s  %6.2f%%'
+                      % (r.reason, format(r.closes, ','), r.share_pct))
+    E = pd.concat(AE, ignore_index=True)
+    R = pd.concat(AR, ignore_index=True)
+    X = pd.concat(AX, ignore_index=True)
     E.to_csv(os.path.join(ROOTOUT, 'gate1_enrichment_slots_v2.csv'), index=False)
-    R = close_reasons(T, opts)
     R.to_csv(os.path.join(ROOTOUT, 'gate1_close_reasons.csv'), index=False)
-    X = exit_reach(T, opts)
     X.to_csv(os.path.join(ROOTOUT, 'gate1_exit_reach.csv'), index=False)
-
-    for sname, _, _ in S.SLICES:
-        g = E[E['slice'] == sname]
-        print('\n' + '=' * 78)
-        print('%s  --  base survival rate (of ELIGIBLE) %.4f%%'
-              % (sname.upper(), g.base_rate_pct.iloc[0]))
-        print('=' * 78)
-        for slot in S.SLOTS:
-            s = g[g['slot'] == slot]
-            print('\n  %-9s spread %.2fx - %.2fx   (old map: %.2fx - %.2fx)'
-                  % (slot, s.enrichment.min(), s.enrichment.max(),
-                     s.enrichment_uncond.min(), s.enrichment_uncond.max()))
-            print('      %-40s %8s %8s %7s %7s'
-                  % ('option', 'elig%', 'win%', 'enr', 'old'))
-            for r in pd.concat([s.head(3), s.tail(3)]).itertuples():
-                print('      %-40s %7.2f%% %7.3f%% %6.2fx %6.2fx'
-                      % (r.option, r.eligibility_rate_pct, r.survival_rate_pct,
-                         r.enrichment, r.enrichment_uncond))
-        print('\n  HOW TRADES CLOSE (eligible combinations)')
-        for r in R[(R['slice'] == sname) & (R.population == 'elig')] \
-                .sort_values('share_pct', ascending=False).itertuples():
-            print('      %-18s %14s  %6.2f%%' % (r.reason, format(r.closes, ','), r.share_pct))
-        x = X[X['slice'] == sname]
-        print('  exit-indicator share of closes, by exit option: '
-              '%.2f%% - %.2f%%' % (x.exit_ind_share_pct.min(), x.exit_ind_share_pct.max()))
     return E, R, X
 
 

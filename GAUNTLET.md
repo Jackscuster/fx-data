@@ -198,6 +198,50 @@ ATR compromise rather than by its own merit.**
 All slot combinations, **default parameters only**, through the machine, in both
 plans. A deliberately low bar: this gate is a sieve, not a judge.
 
+### AMENDED — THREE SIGNAL-EXIT MODES, EXACTLY ONE ACTIVE PER TEST
+
+**This supersedes the configuration the first two gate 1 runs used.** Those runs
+stay on disk, labelled superseded, and their combinations count toward the true
+search total.
+
+| mode | signal exit | C1 exits | baseline exits | exit slot | enumeration |
+|---|---|---|---|---|---|
+| **A** | C1 flip | yes | no | **unused** | 39×39×12×15 = **273,780** |
+| **B** | baseline cross | no | yes | **unused** | 39×39×12×15 = **273,780** |
+| **C** | exit indicator | no | no | used | 39×39×12×15×39 = **10,677,420** |
+
+**Total: 11,224,980 combinations**, both plans, both slices — 22,449,960
+evaluations.
+
+**They are never combined.** The risk plan — stop, take-profit, trail, breakeven
+— stays active in all three modes; it is not a signal exit. Reversal entries are
+still allowed per the entry routes, and in mode A a C1 flip that reverses is both
+the exit and the new entry.
+
+**Why this had to change.** The original configuration ran the exit indicator
+*and* the baseline cross simultaneously and unconditionally, with the C1-flip
+exit off. Every combination was therefore testing "whichever of two exits fires
+first". Measured on the instrumented run, in the trend slice:
+
+| close reason | share |
+|---|---|
+| baseline cross | 44.0% |
+| stop | 27.7% |
+| target | 13.3% |
+| **exit indicator** | **7.5%** |
+| trail / breakeven stop | 5.1% / 2.3% |
+| **C1 flip** | **0%** (switch was off) |
+
+The exit slot was being judged on what the baseline left it, which is why its
+enrichment was the flattest of any slot at 0.18×–1.19×. That was a fact about
+the configuration, not about the indicators. Isolating each exit is the only way
+the question "which exit rule works" is being asked at all.
+
+**Six luck floors, one per slice per mode** — `results/gate1_luck_floor_mode{A,B,C}.csv`.
+Floors never transfer across modes: the exit rule decides when every trade ends,
+so it decides the R distribution a scrambled control draws from, exactly as the
+stop and the ATR length do.
+
 **The count is 10,677,420** — 39 C1 × 39 C2 × 12 volume × 15 baseline × 39 exit.
 The 17.6M figure counts all 41/41/16/16/41 registry entries, but 9 of those read
 a volume series spot FX does not have, so 6.96M combinations selecting one are

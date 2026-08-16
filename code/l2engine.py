@@ -159,7 +159,8 @@ def run_bars(o, h, l, c, atr,
              suspect,
              c1_ternary, c2_ternary,
              use_base_cross, use_c1_flip, use_continuation,
-             exit_on_c1_flip, one_candle_rule,
+             exit_on_c1_flip, exit_on_base_cross, exit_on_exit_ind,
+             one_candle_rule,
              plan, risk_dollars,
              atr_mult, tp_mult, trail_mult, trail_start_mult,
              max_atr_dist, bridge_bars,
@@ -330,19 +331,26 @@ def run_bars(o, h, l, c, atr,
             continue
 
         # ---- full exits --------------------------------------------------
+        # EXACTLY ONE signal-exit mode is active per test; they are never
+        # combined. The exit indicator and the baseline cross used to be
+        # unconditional, which meant every test ran all three at once and the
+        # first to fire won -- measured, the baseline cross took 44% of trend
+        # closes and the exit indicator only 7%, so the exit slot was being
+        # judged on the leftovers. The risk plan (stop, target, breakeven,
+        # trail) is NOT a signal exit and stays active in every mode.
         if pos != 0:
             reason = 0
             if pos == 1:
-                if x_el[i]:
+                if exit_on_exit_ind and x_el[i]:
                     reason = EXIT_IND
-                elif side == -1 and last_cross_bar == i:
+                elif exit_on_base_cross and side == -1 and last_cross_bar == i:
                     reason = BASE_CROSS
                 elif exit_on_c1_flip and c1_st[i]:
                     reason = C1_FLIP
             else:
-                if x_es[i]:
+                if exit_on_exit_ind and x_es[i]:
                     reason = EXIT_IND
-                elif side == 1 and last_cross_bar == i:
+                elif exit_on_base_cross and side == 1 and last_cross_bar == i:
                     reason = BASE_CROSS
                 elif exit_on_c1_flip and c1_lt[i]:
                     reason = C1_FLIP
@@ -601,7 +609,8 @@ def prepare(d, c1, c2, vol, base, exit_ind, params=None, as_written_mode=False):
 def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         trail_mult=1.5, trail_start_mult=2.0, max_atr_dist=1.5, bridge_bars=7,
         use_base_cross=True, use_c1_flip=True, use_continuation=True,
-        exit_on_c1_flip=False, one_candle_rule=False, block_suspect=True,
+        exit_on_c1_flip=False, exit_on_base_cross=True, exit_on_exit_ind=True,
+        one_candle_rule=False, block_suspect=True,
         bridge_all_routes=True):
     n = A['c'].size
     cap = 4 * n + 8                      # a hard ceiling on trade records
@@ -617,7 +626,8 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         A['x_el'], A['x_es'], A['suspect'],
         A['c1_ternary'], A['c2_ternary'],
         use_base_cross, use_c1_flip, use_continuation,
-        exit_on_c1_flip, one_candle_rule,
+        exit_on_c1_flip, exit_on_base_cross, exit_on_exit_ind,
+        one_candle_rule,
         int(plan), float(risk_dollars),
         float(atr_mult), float(tp_mult), float(trail_mult), float(trail_start_mult),
         float(max_atr_dist), int(bridge_bars), bool(block_suspect),

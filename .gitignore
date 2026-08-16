@@ -45,3 +45,8 @@ results/gate1_nulljoint.log
 results/gate1_survivors_v1.csv
 results/gate1_verify.log
 results/gate1_run2.log
+
+results/superseded/
+results/gate1_floor_mode*.log
+results/gate1_nullfresh_modes.log
+results/gate1_run3.log

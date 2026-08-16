@@ -92,6 +92,69 @@ SLICES = (('trend', 2, REGIME_CODE['trending']),
 # as itself rather than being folded into 'stop'.
 N_REASON = 10
 SLOTS = ('c1', 'c2', 'vol', 'base', 'exit_ind')
+
+# ==========================================================================
+# THE THREE SIGNAL-EXIT MODES
+# ==========================================================================
+#
+# EXACTLY ONE IS ACTIVE PER TEST. They are never combined. The first sweep ran
+# the exit indicator and the baseline cross simultaneously and unconditionally,
+# with the C1-flip exit off, so every combination was really testing "whichever
+# of two exits fires first" -- and the tally showed the baseline cross taking
+# 44% of trend closes against the exit indicator's 7%. The exit slot was being
+# scored on what the baseline left behind, which is why its enrichment was flat:
+# 0.18x-1.19x, the narrowest spread of any slot. That is a property of the
+# configuration, not of the indicators.
+#
+# THE RISK PLAN IS NOT A SIGNAL EXIT. Stop, target, breakeven and trail stay
+# active in all three modes, exactly as before.
+#
+# THE EXIT SLOT IS UNUSED IN MODES A AND B, so their enumeration collapses by a
+# factor of 39. The dummy value passed is arbitrary and provably irrelevant:
+# with exit_on_exit_ind False the x_el/x_es arrays are never read.
+MODES = {
+    'A': dict(label='C1-flip exit',
+              kw=dict(exit_on_c1_flip=True, exit_on_base_cross=False,
+                      exit_on_exit_ind=False),
+              uses_exit_slot=False),
+    'B': dict(label='baseline-cross exit',
+              kw=dict(exit_on_c1_flip=False, exit_on_base_cross=True,
+                      exit_on_exit_ind=False),
+              uses_exit_slot=False),
+    'C': dict(label='exit-indicator exit',
+              kw=dict(exit_on_c1_flip=False, exit_on_base_cross=False,
+                      exit_on_exit_ind=True),
+              uses_exit_slot=True),
+}
+MODE_ORDER = ('A', 'B', 'C')
+
+
+def mode_kw(mode):
+    return dict(MODES[mode]['kw'])
+
+
+def mode_dir(mode):
+    return os.path.join(CKDIR, 'mode%s' % mode)
+
+
+def mode_opts(opts, mode):
+    """The slot menus AS ENUMERATED for a mode. Modes A and B collapse the exit
+    slot to a single placeholder because nothing reads it."""
+    o = dict(opts)
+    if not MODES[mode]['uses_exit_slot']:
+        o['exit_ind'] = [opts['exit_ind'][0]]
+    return o
+
+
+def floor_path(mode):
+    """SIX FLOORS, not two. A floor is a property of the exact setup it gates,
+    and the exit rule decides when every trade ends -- so it decides the R
+    distribution a scrambled control draws from just as surely as the stop or
+    the ATR length does. Reusing mode C's floor for mode A would be gating one
+    trade definition on a bar measured from a different one. This is the fourth
+    time in this project a floor has had to be re-measured after the setup
+    moved; it is written down here so it is the last time it comes as news."""
+    return os.path.join(ROOTOUT, 'gate1_luck_floor_mode%s.csv' % mode)
 LABELS = os.path.join(ROOTOUT, 'layer1_states.csv')
 
 
@@ -246,6 +309,10 @@ def run_combo(P, c1, c2, vol, base, ex, buf, plan=2, atr=None, **kw):
         c1t, c2t,
         kw.get('use_base_cross', True), kw.get('use_c1_flip', True),
         kw.get('use_continuation', True), kw.get('exit_on_c1_flip', False),
+        # defaults reproduce the ORIGINAL both-exits-on behaviour, so anything
+        # that calls this without a mode (parity checks, the old pre-tests)
+        # still gets what it got before. The sweep always passes a mode.
+        kw.get('exit_on_base_cross', True), kw.get('exit_on_exit_ind', True),
         kw.get('one_candle_rule', False), int(plan), RISK,
         kw.get('atr_mult', ATR_MULT), kw.get('tp_mult', TP_MULT),
         kw.get('trail_mult', TRAIL_MULT), kw.get('trail_arm', TRAIL_ARM),
@@ -421,7 +488,8 @@ def surrogate(d, rng):
     return out
 
 
-def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
+def luck_floor(opts, pairs, mode='C', n_surrogate=12, n_combo=400, seed=17,
+               verbose=True):
     """The 95th percentile of scrambled-control expectancy, PER SLICE.
 
     GATING IS PER REGIME, SO THE FLOOR MUST BE TOO. A trend slice and a chop
@@ -441,6 +509,8 @@ def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
     bars? Scrambling the labels as well would test a different, easier thing.
     """
     import random as _rnd
+    kwm = mode_kw(mode)
+    opts = mode_opts(opts, mode)
     rng = np.random.default_rng(seed)
     pick = _rnd.Random(seed)
     combos = [(pick.choice(opts['c1']), pick.choice(opts['c2']),
@@ -461,7 +531,7 @@ def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
             PD[p] = P; BUF[p] = make_buffers(len(P['c']))
         got = {s: 0 for s in vals}
         for cb in combos:
-            sc = score_combo(PD, cb, BUF)
+            sc = score_combo(PD, cb, BUF, **kwm)
             for sname in vals:
                 if eligible(sc[sname]):
                     vals[sname].append(sc[sname]['expectancy_R'])
@@ -483,7 +553,7 @@ def luck_floor(opts, pairs, n_surrogate=12, n_combo=400, seed=17, verbose=True):
                           p99=float(np.percentile(a, 99)) if len(a) else np.nan,
                           max=float(a.max()) if len(a) else np.nan)
     pd.DataFrame(raw).to_csv(
-        os.path.join(ROOTOUT, 'gate1_null_raw.csv'), index=False)
+        os.path.join(ROOTOUT, 'gate1_null_raw_mode%s.csv' % mode), index=False)
     return out
 
 
@@ -539,8 +609,9 @@ NULL_SEED = 20260816
 
 
 def _null_worker(args):
-    k, seed, combos, floors = args
-    opts = slot_options()
+    k, seed, combos, floors, mode = args
+    kwm = mode_kw(mode)
+    opts = mode_opts(slot_options(), mode)
     rng = np.random.default_rng([seed, k])       # independent per surrogate
     PD, BUF = {}, {}
     for p in all_pairs():
@@ -551,7 +622,7 @@ def _null_worker(args):
         PD[p] = P; BUF[p] = make_buffers(len(P['c']))
     acc = {s: dict(elig=0, exp=0, pf=0, joint=0) for s, _, _ in SLICES}
     for cb in combos:
-        sc = score_combo(PD, cb, BUF)
+        sc = score_combo(PD, cb, BUF, **kwm)
         for sname in acc:
             s = sc[sname]
             if not eligible(s):
@@ -564,17 +635,17 @@ def _null_worker(args):
     return acc
 
 
-def null_fresh(n_surrogate=32, n_combo=1200, jobs=None, seed=NULL_SEED):
+def null_fresh(mode, n_surrogate=32, n_combo=1200, jobs=None, seed=NULL_SEED):
     """The rate at which PURE NOISE clears the gate 1 test as applied.
 
     Fresh surrogates, a fresh combination sample, scored against the frozen
     floor. This is the number 7.18% and 2.34% must be compared against.
     """
     import multiprocessing as mp, random as _rnd
-    opts = slot_options()
-    F = pd.read_csv(os.path.join(ROOTOUT, 'gate1_luck_floor.csv')).set_index('slice')
+    opts = mode_opts(slot_options(), mode)
+    F = pd.read_csv(floor_path(mode)).set_index('slice')
     floors = {s: float(F.loc[s, 'p95']) for s, _, _ in SLICES}
-    pick = _rnd.Random(seed)
+    pick = _rnd.Random(seed + ord(mode))     # a fresh sample per mode
     combos = [(pick.choice(opts['c1']), pick.choice(opts['c2']),
                pick.choice(opts['vol']), pick.choice(opts['base']),
                pick.choice(opts['exit_ind'])) for _ in range(n_combo)]
@@ -585,7 +656,8 @@ def null_fresh(n_surrogate=32, n_combo=1200, jobs=None, seed=NULL_SEED):
     with mp.Pool(jobs) as pool:
         for i, acc in enumerate(pool.imap_unordered(
                 _null_worker,
-                [(k, seed, combos, floors) for k in range(n_surrogate)])):
+                [(k, seed + ord(mode), combos, floors, mode)
+                 for k in range(n_surrogate)])):
             for s in tot:
                 for key in tot[s]:
                     tot[s][key] += acc[s][key]
@@ -596,7 +668,8 @@ def null_fresh(n_surrogate=32, n_combo=1200, jobs=None, seed=NULL_SEED):
         n = a['elig']
         p = a['joint'] / n if n else np.nan
         se = float(np.sqrt(p * (1 - p) / n)) if n else np.nan
-        rows.append(dict(slice=sname, n_controls=n, floor_expectancy_R=floors[sname],
+        rows.append(dict(mode=mode, slice=sname, n_controls=n,
+                         floor_expectancy_R=floors[sname],
                          null_exp_only_pct=100.0 * a['exp'] / n if n else np.nan,
                          null_pf_only_pct=100.0 * a['pf'] / n if n else np.nan,
                          null_joint_pct=100.0 * p,
@@ -647,8 +720,9 @@ def n_combos(opts):
 
 
 def _worker(args):
-    shard, nshard, floors, keep_all = args
-    opts = slot_options()
+    shard, nshard, floors, keep_all, mode = args
+    kwm = mode_kw(mode)
+    opts = mode_opts(slot_options(), mode)
     pairs = all_pairs()
     PD, BUF = {}, {}
     for p in pairs:
@@ -696,7 +770,7 @@ def _worker(args):
                   % (shard, n_seen, 1000 * el / n_seen,
                      (el / n_seen) * (nshard and (n_combos(opts) // nshard)
                                       - n_seen) / 60), flush=True)
-        sc = score_combo(PD, cb, BUF, want_reasons=True)
+        sc = score_combo(PD, cb, BUF, want_reasons=True, **kwm)
         for sname, _, _ in SLICES:
             s = sc[sname]
             rc = s.pop('_rc')          # never reaches the survivors CSV
@@ -717,7 +791,7 @@ def _worker(args):
                 rc_surv[sname] += rc
                 out.append(s)
     pd.DataFrame(out).to_csv(
-        os.path.join(CKDIR, 'shard_%04d.csv' % shard), index=False)
+        os.path.join(mode_dir(mode), 'shard_%04d.csv' % shard), index=False)
     # tallies alongside the survivors, one npz per shard, same resume rule
     tal = {}
     for sname, _, _ in SLICES:
@@ -728,56 +802,63 @@ def _worker(args):
         tal['rc_elig_%s' % sname] = rc_elig[sname]
         tal['rc_surv_%s' % sname] = rc_surv[sname]
         tal['rc_by_exit_%s' % sname] = rc_by_exit[sname]
-    np.savez_compressed(os.path.join(CKDIR, 'tally_%04d.npz' % shard), **tal)
+    np.savez_compressed(
+        os.path.join(mode_dir(mode), 'tally_%04d.npz' % shard), **tal)
     return dict(shard=shard, seen=n_seen,
                 elig_trend=n_elig['trend'], elig_chop=n_elig['chop'],
                 surv_trend=n_surv['trend'], surv_chop=n_surv['chop'])
 
 
-def run_gate1(floors, nshard=None, jobs=None, keep_all=False, limit=None):
-    """Gate 1 across all combinations, BOTH PLANS, sliced. Resumable by shard.
+def run_gate1(floors, mode, nshard=None, jobs=None, keep_all=False, limit=None):
+    """Gate 1 across one mode's combinations, BOTH PLANS, sliced. Resumable.
 
-    `floors` is a dict {slice: expectancy floor} -- gating is per regime, so
-    the luck floor is too.
+    `floors` is {slice: expectancy floor} FOR THIS MODE. Floors never transfer
+    across modes -- the exit rule changes what a trade is, so it changes the
+    distribution a control draws from.
     """
     import multiprocessing as mp
-    os.makedirs(CKDIR, exist_ok=True)
+    os.makedirs(mode_dir(mode), exist_ok=True)
+    opts = mode_opts(slot_options(), mode)
+    total = n_combos(opts)
     jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
     # FEW, LARGE SHARDS. Each worker precomputes all 28 pairs before it can
     # score anything -- ~30 seconds -- so a shard must be big enough for that
-    # to disappear into it.
-    nshard = nshard or jobs * 4
-    # A shard counts as done only if BOTH its survivors and its tally exist.
-    # The first sweep wrote no tallies, so its checkpoints are correctly seen
-    # as incomplete and every shard re-runs -- which is the intent, not an
-    # accident: the per-option eligible denominator cannot be back-filled.
+    # to disappear into it. Modes A and B are 39x smaller, so they get
+    # proportionally fewer shards or the precompute dominates the run.
+    if nshard is None:
+        nshard = jobs * 4 if total < 1_000_000 else jobs * 16
     todo = [s for s in range(nshard)
-            if not (os.path.exists(os.path.join(CKDIR, 'shard_%04d.csv' % s))
-                    and os.path.exists(os.path.join(CKDIR, 'tally_%04d.npz' % s)))]
+            if not (os.path.exists(os.path.join(mode_dir(mode), 'shard_%04d.csv' % s))
+                    and os.path.exists(os.path.join(mode_dir(mode), 'tally_%04d.npz' % s)))]
     done = nshard - len(todo)
     if limit:
         todo = todo[:limit]
-    print('gate 1: %d shards total, %d already checkpointed, %d queued now, '
-          '%d workers' % (nshard, done, len(todo), jobs), flush=True)
+    print('gate 1 MODE %s (%s): %s combinations, %d shards, %d done, '
+          '%d queued, %d workers'
+          % (mode, MODES[mode]['label'], format(total, ','), nshard, done,
+             len(todo), jobs), flush=True)
     print('  floors: %s   PF >= %.2f' % (floors, PF_FLOOR), flush=True)
     if not todo:
-        return collect()
+        return collect(mode)
     with mp.Pool(jobs) as pool:
         for r in pool.imap_unordered(
-                _worker, [(s, nshard, floors, keep_all) for s in todo]):
+                _worker, [(s, nshard, floors, keep_all, mode) for s in todo]):
             print('  shard %4d: %8d seen | eligible %6d/%6d | survivors '
                   '%5d/%5d  (trend/chop)'
                   % (r['shard'], r['seen'], r['elig_trend'], r['elig_chop'],
                      r['surv_trend'], r['surv_chop']), flush=True)
-    return collect()
+    return collect(mode)
 
 
-def collect():
-    fs = sorted(glob.glob(os.path.join(CKDIR, 'shard_*.csv')))
+def collect(mode):
+    fs = sorted(glob.glob(os.path.join(mode_dir(mode), 'shard_*.csv')))
     if not fs:
         return pd.DataFrame()
     D = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
-    D.to_csv(os.path.join(ROOTOUT, 'gate1_survivors.csv'), index=False)
+    if not MODES[mode]['uses_exit_slot']:
+        D['exit_ind'] = 'unused'
+    D['mode'] = mode
+    D.to_csv(os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode), index=False)
     return D
 
 
@@ -785,71 +866,89 @@ def main():
     """CLI. MUST be run as a script, not from stdin -- macOS spawns workers by
     re-importing __main__, and a parent read from stdin has no file to import.
 
-      python code/l2sweep.py --floor 0.0401 --shards 2000 --jobs 6 [--limit N]
-      python code/l2sweep.py --luckfloor            # measure the floor first
+      python code/l2sweep.py --luckfloor --mode A     # six floors, one per
+      python code/l2sweep.py --luckfloor --mode all   # slice per mode
+      python code/l2sweep.py --sweep --mode all --jobs 8
+      python code/l2sweep.py --nullfresh --mode all --jobs 8
+
+    --mode all runs A, B, C in order. Modes A and B are ~2.6% of C's size, so
+    running them first gets two complete answers on disk long before C lands.
     """
     a = sys.argv[1:]
 
     def opt(name, cast, default=None):
         return cast(a[a.index(name) + 1]) if name in a else default
-    if '--nullfresh' in a:
-        J = null_fresh(n_surrogate=opt('--surrogates', int, 32),
-                       n_combo=opt('--combos', int, 1200),
-                       jobs=opt('--jobs', int))
-        J.to_csv(os.path.join(ROOTOUT, 'gate1_null_fresh.csv'), index=False)
-        print('\nTRUE NULL PASS RATE, fresh controls vs the frozen floor')
-        print(J.to_string(index=False))
-        return J
-    if '--nulljoint' in a:
-        # Re-runs the SAME controls (seed, surrogate count and combo sample are
-        # all defaults) purely to dump the metrics the first run did not keep.
-        # The floor is then checked against the one on disk before anything is
-        # overwritten -- if it moved, the population did not reproduce and the
-        # joint rate would describe a different control set than gate 1 used.
-        ffp = os.path.join(ROOTOUT, 'gate1_luck_floor.csv')
-        old = pd.read_csv(ffp).set_index('slice') if os.path.exists(ffp) else None
-        f = luck_floor(slot_options(), all_pairs())
-        D = pd.DataFrame(f.values())
-        if old is not None:
-            for r in D.itertuples():
-                was, now = float(old.loc[r.slice, 'p95']), float(r.p95)
-                if abs(was - now) > 1e-12:
-                    raise SystemExit(
-                        'REFUSING TO WRITE: %s floor moved %.12f -> %.12f. The '
-                        'controls did not reproduce; gate 1 was gated on the '
-                        'old number and the joint rate would not describe it.'
-                        % (r.slice, was, now))
-            print('\ncontrols reproduced: p95 identical for every slice')
-        J = null_joint_rate()
-        J.to_csv(os.path.join(ROOTOUT, 'gate1_null_joint.csv'), index=False)
-        print('\nNULL PASS RATES, per slice (what pure noise achieves)')
-        print(J.to_string(index=False))
-        return J
+
+    m = opt('--mode', str, 'all')
+    modes = list(MODE_ORDER) if m == 'all' else [x.strip().upper()
+                                                 for x in m.split(',')]
+    for x in modes:
+        if x not in MODES:
+            raise SystemExit('unknown mode %r; known: %s' % (x, MODE_ORDER))
+
     if '--luckfloor' in a:
-        f = luck_floor(slot_options(), all_pairs(),
-                       n_surrogate=opt('--surrogates', int, 12),
-                       n_combo=opt('--combos', int, 400))
-        D = pd.DataFrame(f.values())
-        D.to_csv(os.path.join(ROOTOUT, 'gate1_luck_floor.csv'), index=False)
-        print('\nLUCK FLOOR, per slice (OANDA mid, slicing, ATR %d)' % ATR_LEN)
-        print(D.to_string(index=False))
-        for r in D.itertuples():
-            print('  gate 1 expectancy bar, %-5s = %.6f R' % (r.slice, r.p95))
-        return f
-    ff = os.path.join(ROOTOUT, 'gate1_luck_floor.csv')
-    if not os.path.exists(ff):
-        raise SystemExit('run --luckfloor first: %s is missing' % ff)
-    F = pd.read_csv(ff).set_index('slice')
-    floors = {s: float(F.loc[s, 'p95']) for s, _, _ in SLICES}
-    t = time.time()
-    D = run_gate1(floors, nshard=opt('--shards', int, None),
-                  jobs=opt('--jobs', int), keep_all='--keep-all' in a,
-                  limit=opt('--limit', int))
-    el = time.time() - t
-    print('\n%d surviving slices in %.0fs (%.1f h)' % (len(D), el, el / 3600))
-    if len(D):
-        print(D.groupby('slice').size().to_string())
-    return D
+        out = []
+        for mode in modes:
+            print('\n=== LUCK FLOOR, mode %s (%s) ==='
+                  % (mode, MODES[mode]['label']), flush=True)
+            f = luck_floor(slot_options(), all_pairs(), mode=mode,
+                           n_surrogate=opt('--surrogates', int, 12),
+                           n_combo=opt('--combos', int, 400))
+            D = pd.DataFrame(f.values())
+            D.insert(0, 'mode', mode)
+            D.to_csv(floor_path(mode), index=False)
+            print(D.to_string(index=False))
+            for r in D.itertuples():
+                print('  expectancy bar, mode %s %-5s = %.6f R'
+                      % (mode, r.slice, r.p95))
+            out.append(D)
+        A = pd.concat(out, ignore_index=True)
+        A.to_csv(os.path.join(ROOTOUT, 'gate1_luck_floors_all.csv'), index=False)
+        print('\nALL SIX FLOORS')
+        print(A[['mode', 'slice', 'n', 'p95']].to_string(index=False))
+        return A
+
+    if '--nullfresh' in a:
+        out = []
+        for mode in modes:
+            if not os.path.exists(floor_path(mode)):
+                raise SystemExit('mode %s floor missing: %s' % (mode, floor_path(mode)))
+            print('\n=== FRESH NULL, mode %s ===' % mode, flush=True)
+            J = null_fresh(mode, n_surrogate=opt('--surrogates', int, 32),
+                           n_combo=opt('--combos', int, 1200),
+                           jobs=opt('--jobs', int))
+            print(J.to_string(index=False))
+            out.append(J)
+        A = pd.concat(out, ignore_index=True)
+        A.to_csv(os.path.join(ROOTOUT, 'gate1_null_fresh_all.csv'), index=False)
+        print('\nTRUE NULL PASS RATES, fresh controls vs each mode\'s frozen floor')
+        print(A.to_string(index=False))
+        return A
+
+    # ---- the sweep itself ------------------------------------------------
+    for mode in modes:
+        if not os.path.exists(floor_path(mode)):
+            raise SystemExit(
+                'mode %s has no floor. Floors do not transfer across modes; run\n'
+                '  python code/l2sweep.py --luckfloor --mode %s' % (mode, mode))
+    summary = []
+    for mode in modes:
+        F = pd.read_csv(floor_path(mode)).set_index('slice')
+        floors = {s: float(F.loc[s, 'p95']) for s, _, _ in SLICES}
+        t = time.time()
+        D = run_gate1(floors, mode, nshard=opt('--shards', int, None),
+                      jobs=opt('--jobs', int), keep_all='--keep-all' in a,
+                      limit=opt('--limit', int))
+        el = time.time() - t
+        print('\nMODE %s: %d surviving slices in %.0fs (%.2f h)'
+              % (mode, len(D), el, el / 3600), flush=True)
+        if len(D):
+            print(D.groupby('slice').size().to_string(), flush=True)
+        summary.append(dict(mode=mode, label=MODES[mode]['label'],
+                            survivors=len(D), seconds=round(el, 1)))
+    pd.DataFrame(summary).to_csv(
+        os.path.join(ROOTOUT, 'gate1_mode_runs.csv'), index=False)
+    return summary
 
 
 if __name__ == '__main__':
