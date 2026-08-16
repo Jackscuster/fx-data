@@ -35,3 +35,41 @@ w = pd.read_csv('results/states_g4_twoscore4.csv',
 ```
 
 Every value is already lagged one bar. Do not shift it again.
+
+---
+
+# LAYER 2 — GATE 1
+
+## The number of record
+
+**Gate 1's survivor rate against chance is `ratio_to_null` in
+`results/gate1_summary.csv`. Nothing else is canonical.**
+
+| slice | pass rate | null | **ratio (canonical)** |
+|---|---|---|---|
+| trend | 7.1758% | 6.4735% | **1.108×** |
+| chop | 2.3408% | 6.1063% | **0.383×** |
+
+**A ratio of 1.43× (trend) or 0.47× (chop) appears in commit `f9e2b6f` and in
+chat before it. Those are superseded and must not be quoted.** They divided by
+a null of 5.00%, which was measured by scoring the floor-setting controls
+against their own 95th percentile — 5% by construction, not by evidence. The
+canonical null is measured on fresh controls against the frozen floor.
+
+## The two null files, and why both are kept
+
+| file | what it ACTUALLY contains | status |
+|---|---|---|
+| `gate1_null_fresh.csv` | The null pass rate on 31,822 trend / 26,088 chop **fresh** controls — new seed, new combination sample — scored against the frozen floor. Carries `se_pct` and a 95% CI. | **CANONICAL.** This is the null. |
+| `gate1_null_joint.csv` | The same test run on the controls that SET the floor. Its `null_joint_pct` of 5.0037 / 5.0136 is circular and is not a null estimate. | Superseded as a null. Kept because its other finding stands: `null_joint_pct` equals `null_exp_only_pct` exactly, i.e. **`PF >= 1.05` is non-binding** — no control clearing the expectancy floor fails it. `gate1_null_fresh.csv` reconfirms that on independent data. |
+| `gate1_null_raw.csv` | Per-control expectancy and profit factor for the floor-setting set. The evidence behind the PF finding. | Current. |
+
+## Gate 1 outputs
+
+| file | what it contains |
+|---|---|
+| `gate1_summary.csv` | Per-slice counts, pass rate, canonical null, expected-from-noise, excess, ratio. **The headline record.** |
+| `gate1_luck_floor.csv` | The frozen expectancy floors gate 1 gated on. Never regenerate: gate 1 has run against these exact numbers. |
+| `gate1_atr_pretest.csv`, `gate1_atr_choice.csv` | The ATR length pre-test and the frozen choice of 31. |
+| `gate1_enrichment_slots.csv`, `gate1_enrichment_cores.csv` | Survivor structure — per-option and per-C1×baseline enrichment. **Tuning priority only, never a cut** (GAUNTLET.md is amended: no family-based cuts at any gate). Denominator is ALL combinations, so these fold trade frequency together with edge. |
+| `gate1_survivors.csv`, `gate1/` | **Not in the repo** — 224 MB and 217 MB, gitignored. Regenerate with `python code/l2sweep.py --shards 128 --jobs 8`, which reuses any shard checkpoints present. |

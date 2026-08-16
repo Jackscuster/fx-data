@@ -135,9 +135,17 @@ from numba import njit
 
 # exit reason codes, kept as ints so they cross into the loop
 STOP, TARGET, EXIT_IND, BASE_CROSS, C1_FLIP, REVERSAL, END = 1, 2, 3, 4, 5, 6, 7
+# Leg 2's stop is one variable that means three different things depending on
+# how far the trade has progressed, and collapsing them under STOP hides the
+# distinction that matters: an initial stop is a loss, a breakeven stop is a
+# scratch, a trail stop is a banked win. DIAGNOSTIC ONLY -- no price, size or
+# fill logic reads these, so splitting them cannot move a single trade or R.
+STOP_BE, STOP_TRAIL = 8, 9
 REASON = {STOP: 'stop', TARGET: 'target', EXIT_IND: 'exit indicator',
           BASE_CROSS: 'baseline cross', C1_FLIP: 'c1 flip', REVERSAL: 'reversal',
-          END: 'end of data'}
+          END: 'end of data', STOP_BE: 'breakeven stop', STOP_TRAIL: 'trail stop'}
+# leg 1 never moves its stop (set at entry, never reassigned) and plan 1 has no
+# leg 2 at all, so a plan-1 trade can only ever close on stop / target / signal.
 LEG1, LEG2, SINGLE = 1, 2, 0
 
 
@@ -246,7 +254,12 @@ def run_bars(o, h, l, c, atr,
                 if l2_open and not l2_moved and lo <= l2_stop:
                     t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = l2_stop
                     t_r[l2_idx] = ((l2_stop - entry_px) * units_leg) / risk_dollars
-                    t_reason[l2_idx] = STOP
+                    if l2_phase == 0:
+                        t_reason[l2_idx] = STOP
+                    elif l2_phase == 1:
+                        t_reason[l2_idx] = STOP_BE
+                    else:
+                        t_reason[l2_idx] = STOP_TRAIL
                     l2_open = False
             else:
                 hi = h[i]; lo = l[i]
@@ -271,7 +284,12 @@ def run_bars(o, h, l, c, atr,
                 if l2_open and not l2_moved and hi >= l2_stop:
                     t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = l2_stop
                     t_r[l2_idx] = ((entry_px - l2_stop) * units_leg) / risk_dollars
-                    t_reason[l2_idx] = STOP
+                    if l2_phase == 0:
+                        t_reason[l2_idx] = STOP
+                    elif l2_phase == 1:
+                        t_reason[l2_idx] = STOP_BE
+                    else:
+                        t_reason[l2_idx] = STOP_TRAIL
                     l2_open = False
 
             if not l1_open and not l2_open:
