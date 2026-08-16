@@ -139,8 +139,39 @@ luck and is not used; a plateau is real. **If the best length sits on a spike,
 the centre of the best plateau is used instead.** Full table to `results/`, and
 the chosen value and the curve's shape recorded here.
 
-**RESULT:** *(filled in below once the pre-test has run — see
-`results/gate1_atr_pretest.csv`)*
+**RESULT — ATR length 31, frozen.** 300 spread combinations (every option in
+every slot appearing 7–25 times), lengths 2–50, W1 only, both plans, all 28
+pairs, ~240,000 trades per length. `results/gate1_atr_pretest.csv`,
+`results/gate1_atr_choice.csv`.
+
+The raw winner on pooled expectancy is 31 (+0.01377R, PF 1.0490) and it sits
+**inside** the best 5-length plateau (27–31, mean +0.01340), so it is not a
+spike and the winner stands.
+
+**But the honest reading is that the pooled curve is flat.** Across all 49
+lengths expectancy runs +0.01107 to +0.01377 — a total spread of **2.2 standard
+errors**. There is no pooled optimum worth the name; 31 is the top of a very
+gentle rise, not a peak.
+
+**And the two slices want opposite things.** This is the finding, not the
+number:
+
+| slice | best ATR | worst ATR | correlation with ATR length |
+|---|---|---|---|
+| trend (two-leg) | **3** (+0.01397) | 47 (+0.00820) | **−0.78** |
+| chop (one-leg) | **30** (+0.02059) | 6 (+0.01070) | **+0.73** |
+
+Short ATR suits the trend slice and long ATR suits the chop slice, and they
+cancel into a flat pooled curve. A single global value is therefore a compromise
+that is near-optimal for chop and clearly sub-optimal for trend — at 31 the
+trend slice scores +0.01079 against +0.01397 at length 3, a 23% reduction.
+
+**Gate 1 runs the global 31 anyway, as specified.** Two reasons it is safe to
+do so: gate 1 is a deliberately low sieve, not a judge; and ATR length is a
+family-level tunable at gates 2–3, where families are already regime-specific
+because gating is per regime — so the slices can separate there. **The risk is
+recorded here: any trend family killed at gate 1 may have been killed by the
+ATR compromise rather than by its own merit.**
 
 ---
 
