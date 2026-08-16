@@ -213,6 +213,42 @@ precisely why the bar is a measured control rather than "expectancy > 0".
 pooled per blind window. A slice that cannot produce that many is not evaluated,
 it is recorded as untested — which is not the same as failing.
 
+### DECLARED CONTINGENCY — a trend-slice pass at ATR 3
+
+**Declared before any gate 1 result was seen.** At the moment this was written
+the run had completed zero shards; nothing had been looked at.
+
+The pre-test showed the trend slice wants a SHORT ATR (best at 3, correlation
+−0.78 with length) while the chop slice wants a long one (best at 30,
+correlation +0.73). Gate 1 runs the pooled compromise of 31, which is
+near-optimal for chop and costs the trend slice about 23% of its picking-window
+expectancy. So a depressed trend result at gate 1 is ambiguous between "no trend
+edge exists" and "the ATR compromise suppressed it", and that ambiguity is
+resolved by a test, not by argument.
+
+**Trigger:** the trend slice returns few survivors, or clearly depressed ones,
+relative to chop.
+
+**The pass:** ONE supplementary gate 1 run, **trend slice only, at ATR 3**.
+Everything else identical — same windows, same walk-forward machine, same KPI
+floors, same trade minimums, same combinations, blind-only scoring.
+
+**The trend luck floor is re-measured at ATR 3 first.** Floors do not transfer
+across a change to the trade definition, and ATR sets the stop distance, the
+target, the trail and the position size. Reusing 0.078975 would be reusing a
+bar measured on a different set of trades.
+
+**Its combinations are counted in the TRUE SEARCH COUNT** for the final deflated
+Sharpe, alongside every gate 1 combination and every tuned variant from gates
+2–3. A contingency branch is still search.
+
+**Results are labelled as the declared contingency**, never merged into the
+primary gate 1 output as though they came from one pass.
+
+**This is a pre-declared branch, not a second pick after peeking.** One
+supplementary pass, at one length chosen by the pre-test before any gate 1
+result existed. If it also comes back empty, that is the answer.
+
 **The output is FAMILIES, not combinations.** A family is a neighbourhood of
 similar combinations that survive together. A lone survivor whose neighbours all
 died is luck and is killed.
