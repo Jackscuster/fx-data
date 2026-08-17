@@ -389,7 +389,8 @@ def _flat(d, pre):
 
 
 def run_chunk(args):
-    mode, sname, lo, hi, cid = args
+    mode, sname, lo, hi, cid = args[:5]
+    srt = args[5] if len(args) > 5 else False
     code = dict((s, c) for s, _, c in S.SLICES)[sname]
     plan = dict((s, p) for s, p, _ in S.SLICES)[sname]
     D = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode),
@@ -397,6 +398,15 @@ def run_chunk(args):
     D = D[D['slice'] == sname].reset_index(drop=True)
     if not S.MODES[mode]['uses_exit_slot']:
         D['exit_ind'] = S.slot_options()['exit_ind'][0]
+    if srt:
+        # THE SORT. Gate 1 wrote survivors in shard-interleaved order, so a
+        # 100-combination chunk touched 62 distinct indicators; sorted it
+        # touches 30. Every avoided one is a 3-329 ms recompute across 28
+        # pairs, and recompute -- not scoring -- is where the time goes.
+        # Mode B ran unsorted and is NOT re-sorted: renumbering its chunks
+        # would discard banked work to no purpose.
+        D = D.sort_values(['c1', 'c2', 'vol', 'base', 'exit_ind'],
+                          kind='mergesort').reset_index(drop=True)
     sub = D.iloc[lo:hi]
     sc = Scorer()
     t0 = time.time(); rows = []
@@ -431,14 +441,14 @@ def run_chunk(args):
 CHUNK = 100          # combinations per chunk: ~1-2 h, so a lost chunk is cheap
 
 
-def plan_chunks(mode, sname):
+def plan_chunks(mode, sname, srt=False):
     f = os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode)
     n = len(pd.read_csv(f, usecols=['slice']).query('slice == @sname'))
     d = os.path.join(CK, 'mode%s_%s' % (mode, sname))
     todo = []
     for cid, lo in enumerate(range(0, n, CHUNK)):
         if not os.path.exists(os.path.join(d, 'chunk_%05d.csv' % cid)):
-            todo.append((mode, sname, lo, min(lo + CHUNK, n), cid))
+            todo.append((mode, sname, lo, min(lo + CHUNK, n), cid, srt))
     return n, todo
 
 
@@ -459,12 +469,12 @@ def progress_row(mode, r, done, total, t0, spent):
     return row
 
 
-def run_mode(mode, jobs=None, slices=('trend', 'chop')):
+def run_mode(mode, jobs=None, slices=('trend', 'chop'), srt=False):
     import multiprocessing as mp
     jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
     t0 = time.time()
     for sname in slices:
-        total, todo = plan_chunks(mode, sname)
+        total, todo = plan_chunks(mode, sname, srt=srt)
         done = total - sum(t[3] - t[2] for t in todo)
         spent = 0.0
         print('GATE 2 mode %s %s: %s combinations, %d chunks queued, %d workers'
@@ -508,7 +518,8 @@ def main():
     mode = opt('--mode', str, 'B')
     sl = opt('--slice', str, None)
     slices = (sl,) if sl else ('trend', 'chop')
-    D = run_mode(mode, jobs=opt('--jobs', int), slices=slices)
+    D = run_mode(mode, jobs=opt('--jobs', int), slices=slices,
+                 srt='--sorted' in a)
     print('\nMODE %s TUNED: %d rows, %d crossing the gate 2 label'
           % (mode, len(D), int(D.get('crosses_label',
                                      pd.Series(dtype=bool)).sum())), flush=True)
