@@ -50,3 +50,5 @@ results/superseded/
 results/gate1_floor_mode*.log
 results/gate1_nullfresh_modes.log
 results/gate1_run3.log
+
+results/gate1_survivors_modeC.csv

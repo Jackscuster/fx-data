@@ -71,3 +71,39 @@ B,chop,surv,reversal,0,0.0
 B,chop,surv,end of data,0,0.0
 B,chop,surv,breakeven stop,0,0.0
 B,chop,surv,trail stop,0,0.0
+C,trend,elig,stop,3682084422,54.07784092083713
+C,trend,elig,target,1200566489,17.632415818365494
+C,trend,elig,exit indicator,822519280,12.080132251286415
+C,trend,elig,baseline cross,0,0.0
+C,trend,elig,c1 flip,0,0.0
+C,trend,elig,reversal,64705225,0.950309244239532
+C,trend,elig,end of data,0,0.0
+C,trend,elig,breakeven stop,276779684,4.06499308707908
+C,trend,elig,trail stop,762204794,11.194308678192343
+C,trend,surv,stop,143764634,51.250147808205284
+C,trend,surv,target,56391980,20.102978248442913
+C,trend,surv,exit indicator,26812236,9.558199536531932
+C,trend,surv,baseline cross,0,0.0
+C,trend,surv,c1 flip,0,0.0
+C,trend,surv,reversal,1954313,0.6966861551881883
+C,trend,surv,end of data,0,0.0
+C,trend,surv,breakeven stop,13418652,4.783567969761391
+C,trend,surv,trail stop,38173735,13.608420281870291
+C,chop,elig,stop,2240120319,52.094307899184045
+C,chop,elig,target,1583324991,36.82044169058171
+C,chop,elig,exit indicator,443704734,10.318414967835286
+C,chop,elig,baseline cross,0,0.0
+C,chop,elig,c1 flip,0,0.0
+C,chop,elig,reversal,32974882,0.7668354423989588
+C,chop,elig,end of data,0,0.0
+C,chop,elig,breakeven stop,0,0.0
+C,chop,elig,trail stop,0,0.0
+C,chop,surv,stop,34284247,50.1344014596019
+C,chop,surv,target,29604647,43.291347707528736
+C,chop,surv,exit indicator,4300159,6.288191123057778
+C,chop,surv,baseline cross,0,0.0
+C,chop,surv,c1 flip,0,0.0
+C,chop,surv,reversal,195621,0.2860597098115873
+C,chop,surv,end of data,0,0.0
+C,chop,surv,breakeven stop,0,0.0
+C,chop,surv,trail stop,0,0.0
