@@ -85,6 +85,34 @@ RISK_KNOBS_CHOP  = (('atr_len', GRID_ATR), ('atr_mult', GRID_STOP),
 SLOT_ORDER = ('vol', 'base', 'c1', 'c2', 'exit_ind')     # spec priority
 N_IND_PTS = 12
 
+# GAUNTLET.md mode C shape, declared before any C tuning existed.
+CAP_N = 6                 # tune only each indicator's 6 highest-impact params
+CHEAP_RISK = ('atr_len', 'atr_mult', 'tp_mult')
+DEEPEN_THRESHOLD_R = 0.02  # cheap-pass improvement that buys the deep pass
+
+_RANK = None
+def ranking():
+    """{indicator: [params, most impactful first]}, MEASURED by l2impact and
+    frozen before mode C ran. Asserting an impact order from documentation
+    would make the cap a guess dressed as a measurement."""
+    global _RANK
+    if _RANK is None:
+        import l2impact
+        _RANK = l2impact.load_ranking()
+    return _RANK
+
+
+def tuned_params(name, cap=None, top1=False):
+    """Which parameters of `name` this pass is allowed to move."""
+    allp = sorted(registry()[name])
+    if not allp:
+        return []
+    order = [x for x in ranking().get(name, allp) if x in allp]
+    order += [x for x in allp if x not in order]
+    if top1:
+        return order[:1]
+    return order[:cap] if cap else order
+
 # gate 2 label -- a SORTING LABEL, never a kill switch
 LABEL = dict(expectancy_R=0.08, profit_factor=1.25, sharpe=0.5,
              sortino=0.7, calmar=0.6, max_dd_pct=20.0)
@@ -289,13 +317,23 @@ def better(cand, base_, min_trades):
 
 
 def tune_one(sc, combo, mode, sname, code, plan, tune_windows, defaults_ip,
-             defaults_risk, passes=2):
-    """Coordinate descent over one combination on one tuning window set."""
-    ip = {k: dict(v) for k, v in defaults_ip.items()}
-    risk = dict(defaults_risk)
+             defaults_risk, passes=2, cap=None, cheap=False, skip=None):
+    """Coordinate descent over one combination on one tuning window set.
+
+    cap    -- move only each indicator's top-`cap` measured parameters
+    cheap  -- the staged pass: ATR/stop/target plus the single most impactful
+              parameter of each indicator, full grids
+    skip   -- (ip, risk) already-banked starting point, so a deep pass RESUMES
+              from a cheap pass rather than redoing it
+    """
+    ip = {k: dict(v) for k, v in (skip[0] if skip else defaults_ip).items()}
+    risk = dict(skip[1] if skip else defaults_risk)
     slots = [s for s in SLOT_ORDER
              if (s != 'exit_ind' or S.MODES[mode]['uses_exit_slot'])]
     riskknobs = RISK_KNOBS_TREND if sname == 'trend' else RISK_KNOBS_CHOP
+    if cheap:
+        riskknobs = tuple(k for k in riskknobs if k[0] in CHEAP_RISK)
+        passes = 1
 
     def ev():
         r = sc.score(combo, ip, risk, mode, sname, code, plan, tune_windows)
@@ -312,7 +350,9 @@ def tune_one(sc, combo, mode, sname, code, plan, tune_windows, defaults_ip,
         for slot in slots:
             name = combo[SLOT_ORDER.index(slot)] if slot in SLOT_ORDER else None
             name = dict(zip(('c1', 'c2', 'vol', 'base', 'exit_ind'), combo))[slot]
-            for pname, pdef in sorted(registry()[name].items()):
+            allowed = tuned_params(name, cap=cap, top1=cheap)
+            for pname in allowed:
+                pdef = registry()[name][pname]
                 best, bestv = cur, ip[slot].get(pname, pdef)
                 for v in ind_param_grid(pdef):
                     if v == ip[slot].get(pname, pdef):
@@ -343,17 +383,70 @@ def tune_one(sc, combo, mode, sname, code, plan, tune_windows, defaults_ip,
 # ==========================================================================
 # the walk-forward driver
 # ==========================================================================
-def full_walk(sc, combo, mode, sname, code, plan):
-    """tune W1 -> blind W2 -> re-tune W1+W2 -> blind W3. Stitched blind score."""
+def default_baseline(sc, combo, mode, sname, code, plan, windows):
     dip = {k: dict(registry()[n]) for k, n in
            zip(('c1', 'c2', 'vol', 'base', 'exit_ind'), combo)}
     drisk = dict(atr_len=S.ATR_LEN, atr_mult=S.ATR_MULT, tp_mult=S.TP_MULT,
                  trail_mult=S.TRAIL_MULT, trail_arm=S.TRAIL_ARM,
                  be_pct=S.BE_PCT)
-    ip1, rk1, _ = tune_one(sc, combo, mode, sname, code, plan, ('W1',), dip, drisk)
+    r = sc.score(combo, dip, drisk, mode, sname, code, plan, windows)
+    parts = [r[w] for w in windows if r[w] is not None]
+    if not parts:
+        return dip, drisk, None
+    n = sum(p['n'] for p in parts)
+    e = sum(p['expectancy_R'] * p['n'] for p in parts) / n
+    return dip, drisk, dict(n=n, expectancy_R=e,
+                            profit_factor=float(np.mean([p['profit_factor'] for p in parts])))
+
+
+def _stage(sc, combo, mode, sname, code, plan, windows, cap, staged, resume=None):
+    """One tuning step. Returns (ip, risk, info). With `staged`, runs the cheap
+    pass first and only continues to the deep pass if the cheap pass improved on
+    the DEFAULT by at least DEEPEN_THRESHOLD_R -- the threshold declared in
+    GAUNTLET.md before any mode C tuning existed."""
+    dip, drisk, base = default_baseline(sc, combo, mode, sname, code, plan, windows)
+    if resume is not None:
+        ip, risk, cur = tune_one(sc, combo, mode, sname, code, plan, windows,
+                                 dip, drisk, cap=cap, skip=resume)
+        return ip, risk, dict(stage='deep', resumed=True,
+                              base_R=(base or {}).get('expectancy_R'),
+                              final_R=(cur or {}).get('expectancy_R'))
+    if not staged:
+        ip, risk, cur = tune_one(sc, combo, mode, sname, code, plan, windows,
+                                 dip, drisk, cap=cap)
+        return ip, risk, dict(stage='full', resumed=False,
+                              base_R=(base or {}).get('expectancy_R'),
+                              final_R=(cur or {}).get('expectancy_R'))
+    ip, risk, cheap = tune_one(sc, combo, mode, sname, code, plan, windows,
+                               dip, drisk, cap=cap, cheap=True)
+    gain = None
+    if cheap is not None and base is not None:
+        gain = cheap['expectancy_R'] - base['expectancy_R']
+    if gain is not None and gain >= DEEPEN_THRESHOLD_R:
+        ip2, risk2, deep = tune_one(sc, combo, mode, sname, code, plan, windows,
+                                    dip, drisk, cap=cap, skip=(ip, risk))
+        return ip2, risk2, dict(stage='deep', resumed=False,
+                                base_R=base['expectancy_R'],
+                                cheap_R=cheap['expectancy_R'], cheap_gain=gain,
+                                final_R=(deep or {}).get('expectancy_R'),
+                                cheap_ip=json.dumps(ip, sort_keys=True),
+                                cheap_risk=json.dumps(risk, sort_keys=True))
+    return ip, risk, dict(stage='cheap', resumed=False,
+                          base_R=(base or {}).get('expectancy_R'),
+                          cheap_R=(cheap or {}).get('expectancy_R'),
+                          cheap_gain=gain, final_R=(cheap or {}).get('expectancy_R'),
+                          cheap_ip=json.dumps(ip, sort_keys=True),
+                          cheap_risk=json.dumps(risk, sort_keys=True))
+
+
+def full_walk(sc, combo, mode, sname, code, plan, cap=None, staged=False,
+              resume1=None, resume2=None):
+    """tune W1 -> blind W2 -> re-tune W1+W2 -> blind W3. Stitched blind score."""
+    ip1, rk1, i1 = _stage(sc, combo, mode, sname, code, plan, ('W1',),
+                          cap, staged, resume=resume1)
     w2 = sc.score(combo, ip1, rk1, mode, sname, code, plan, ('W2',))['W2']
-    ip2, rk2, _ = tune_one(sc, combo, mode, sname, code, plan, ('W1', 'W2'),
-                           dip, drisk)
+    ip2, rk2, i2 = _stage(sc, combo, mode, sname, code, plan, ('W1', 'W2'),
+                          cap, staged, resume=resume2)
     w3 = sc.score(combo, ip2, rk2, mode, sname, code, plan, ('W3',))['W3']
     parts = [x for x in (w2, w3) if x is not None]
     if not parts:
@@ -368,7 +461,8 @@ def full_walk(sc, combo, mode, sname, code, plan):
                      sortino=float(np.mean([p['sortino'] for p in parts])),
                      max_dd_R=dd, calmar=(tot / dd) if dd > 0 else 0.0,
                      n_w2=(w2['n'] if w2 else 0), n_w3=(w3['n'] if w3 else 0))
-    return dict(blind=blind, ip1=ip1, rk1=rk1, ip2=ip2, rk2=rk2)
+    return dict(blind=blind, ip1=ip1, rk1=rk1, ip2=ip2, rk2=rk2,
+                stage1=i1, stage2=i2)
 
 
 def crosses_label(b):
@@ -391,6 +485,9 @@ def _flat(d, pre):
 def run_chunk(args):
     mode, sname, lo, hi, cid = args[:5]
     srt = args[5] if len(args) > 5 else False
+    cap = args[6] if len(args) > 6 else None
+    staged = args[7] if len(args) > 7 else False
+    deepen = args[8] if len(args) > 8 else False
     code = dict((s, c) for s, _, c in S.SLICES)[sname]
     plan = dict((s, p) for s, p, _ in S.SLICES)[sname]
     D = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode),
@@ -413,7 +510,18 @@ def run_chunk(args):
     for r in sub.itertuples():
         cb = (r.c1, r.c2, r.vol, r.base, r.exit_ind)
         try:
-            res = full_walk(sc, cb, mode, sname, code, plan)
+            r1 = r2 = None
+            if deepen and not BANK:
+                BANK.update(load_bank(mode, sname))
+            if deepen:
+                # ROUND 2. Resume from the banked cheap-pass parameter sets
+                # rather than redoing them -- that is the whole point of
+                # checkpointing them in round 1.
+                b = BANK.get((r.c1, r.c2, r.vol, r.base, r.exit_ind))
+                if b:
+                    r1, r2 = b
+            res = full_walk(sc, cb, mode, sname, code, plan, cap=cap,
+                            staged=staged, resume1=r1, resume2=r2)
         except Exception as e:
             rows.append(dict(c1=r.c1, c2=r.c2, vol=r.vol, base=r.base,
                              exit_ind=r.exit_ind, slice=sname, mode=mode,
@@ -425,11 +533,21 @@ def run_chunk(args):
                    crosses_label=crosses_label(res['blind']))
         row.update(b)
         row.update(_flat(res['rk2'], 'risk'))
-        row.update({'ip2': json.dumps(res['ip2'], sort_keys=True)})
+        row.update({'ip2': json.dumps(res['ip2'], sort_keys=True),
+                    'ip1': json.dumps(res['ip1'], sort_keys=True),
+                    'risk1': json.dumps(res['rk1'], sort_keys=True),
+                    'stage': res['stage2'].get('stage'),
+                    'stage_w1': res['stage1'].get('stage'),
+                    'cheap_gain_R': res['stage2'].get('cheap_gain'),
+                    'base_R_w1w2': res['stage2'].get('base_R'),
+                    'final_R_w1w2': res['stage2'].get('final_R'),
+                    'cheap_ip': res['stage2'].get('cheap_ip'),
+                    'cheap_risk': res['stage2'].get('cheap_risk'),
+                    'resumed': res['stage2'].get('resumed')})
         rows.append(row)
     el = time.time() - t0
     out = pd.DataFrame(rows)
-    d = os.path.join(CK, 'mode%s_%s' % (mode, sname))
+    d = os.path.join(CK, 'mode%s_%s%s' % (mode, sname, '_deep' if deepen else ''))
     os.makedirs(d, exist_ok=True)
     out.to_csv(os.path.join(d, 'chunk_%05d.csv' % cid), index=False)
     return dict(mode=mode, slice=sname, chunk=cid, n=len(sub), seconds=el,
@@ -441,14 +559,38 @@ def run_chunk(args):
 CHUNK = 100          # combinations per chunk: ~1-2 h, so a lost chunk is cheap
 
 
-def plan_chunks(mode, sname, srt=False):
+BANK = {}
+
+
+def load_bank(mode, sname):
+    """Banked cheap-pass parameter sets from round 1, so round 2 resumes
+    instead of repeating. NOTHING IS EVER LOST is a spec requirement, not a
+    convenience: the deep pass must be re-runnable for any subset later."""
+    fs = sorted(glob.glob(os.path.join(CK, 'mode%s_%s' % (mode, sname),
+                                       'chunk_*.csv')))
+    bank = {}
+    for f in fs:
+        d = pd.read_csv(f)
+        if 'cheap_ip' not in d.columns:
+            continue
+        for r in d.itertuples():
+            if not isinstance(getattr(r, 'cheap_ip', None), str):
+                continue
+            k = (r.c1, r.c2, r.vol, r.base, r.exit_ind)
+            ip = json.loads(r.cheap_ip); rk = json.loads(r.cheap_risk)
+            bank[k] = ((ip, rk), (ip, rk))
+    return bank
+
+
+def plan_chunks(mode, sname, srt=False, cap=None, staged=False, deepen=False):
     f = os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode)
     n = len(pd.read_csv(f, usecols=['slice']).query('slice == @sname'))
-    d = os.path.join(CK, 'mode%s_%s' % (mode, sname))
+    d = os.path.join(CK, 'mode%s_%s%s' % (mode, sname, '_deep' if deepen else ''))
     todo = []
     for cid, lo in enumerate(range(0, n, CHUNK)):
         if not os.path.exists(os.path.join(d, 'chunk_%05d.csv' % cid)):
-            todo.append((mode, sname, lo, min(lo + CHUNK, n), cid, srt))
+            todo.append((mode, sname, lo, min(lo + CHUNK, n), cid, srt,
+                         cap, staged, deepen))
     return n, todo
 
 
@@ -469,12 +611,14 @@ def progress_row(mode, r, done, total, t0, spent):
     return row
 
 
-def run_mode(mode, jobs=None, slices=('trend', 'chop'), srt=False):
+def run_mode(mode, jobs=None, slices=('trend', 'chop'), srt=False,
+             cap=None, staged=False, deepen=False):
     import multiprocessing as mp
     jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
     t0 = time.time()
     for sname in slices:
-        total, todo = plan_chunks(mode, sname, srt=srt)
+        total, todo = plan_chunks(mode, sname, srt=srt, cap=cap,
+                                  staged=staged, deepen=deepen)
         done = total - sum(t[3] - t[2] for t in todo)
         spent = 0.0
         print('GATE 2 mode %s %s: %s combinations, %d chunks queued, %d workers'
@@ -519,7 +663,8 @@ def main():
     sl = opt('--slice', str, None)
     slices = (sl,) if sl else ('trend', 'chop')
     D = run_mode(mode, jobs=opt('--jobs', int), slices=slices,
-                 srt='--sorted' in a)
+                 srt='--sorted' in a, cap=opt('--cap', int),
+                 staged='--staged' in a, deepen='--deepen' in a)
     print('\nMODE %s TUNED: %d rows, %d crossing the gate 2 label'
           % (mode, len(D), int(D.get('crosses_label',
                                      pd.Series(dtype=bool)).sum())), flush=True)

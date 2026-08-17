@@ -433,6 +433,63 @@ cannot fill on that bar.
 
 **The chop plan is unchanged**: one leg, stop and target only.
 
+### MODE C'S SHAPE — DECLARED BEFORE ANY C TUNING EXISTS
+
+**Written with mode B 900/14,815 tuned and mode C not started. No C result of
+any kind existed when this was committed.** The prices it argues from are
+measured, not guessed: 157 s per combination observed over 900 real
+combinations, and per-indicator recompute costs measured across 28 pairs.
+
+**1. THE CAP.** Tuning is capped at each indicator's **6 highest-impact
+parameters**; the rest are frozen at their defaults. Impact is **measured**, not
+asserted — see the response measurement below — and the ranking is frozen before
+C runs.
+
+Only four indicators are affected: `rex_oscillator_signals` (22 parameters),
+`hieken_ashi_smoothed_signals` (16), `schaff_trend_cycle_signals` (8),
+`schaff_trend_cycle_exit` (7). They are a small minority of the registry and a
+third of mode C's cost, because they are named often *and* are among the most
+expensive to recompute.
+
+| mode C | full | capped |
+|---|---|---|
+| trend | 166.3 days | **113.0 days** |
+| chop | 58.6 days | **37.5 days** |
+| total | 225.0 days | **150.4 days** |
+
+**2. THE STAGED PASS.** Every C combination first gets a **cheap pass**: ATR
+length, stop, target, and **the single most impactful parameter of each of its
+four indicators**, all on full grids.
+
+> **A combination whose cheap pass improves on its default by at least
+> +0.02R expectancy on the tuning window gets the FULL deep treatment
+> immediately. The rest keep their cheap-pass result and still advance.**
+
+**The 0.02R threshold is declared here, before any C tuning exists.** Gate 2
+kills nothing: a combination that fails the threshold is not dropped, it is
+carried forward with a cheaper parameter set and a flag saying so.
+
+Every configuration evaluated in either pass counts toward the deflation total.
+
+**3. NOTHING IS EVER LOST.** Every cheap-pass result, every tuned parameter set
+and every response measurement is checkpointed to disk, summarised into
+committed `results/` files, and given a `results/MANIFEST.md` entry. Large
+regenerable artefacts are gitignored but **retained locally and never deleted**.
+
+**The deep pass must be re-runnable LATER for any subset — including all of C —
+from the banked cheap-pass state, without redoing it.** This is round 2 by
+design: the fast shape carries the project through every gate first, and
+anything can be deepened afterwards.
+
+**4. W4 DISCIPLINE, RESTATED.** The final exam runs **only after Jack declares
+all tuning finished, including any round-2 deepening**. If deepening is planned,
+W4 is not touched after the fast cycle. A window spent early cannot be
+un-spent.
+
+**5.** Mode C runs **sorted** — `--sorted`, the wired fix. Gate 1 wrote survivors
+in shard-interleaved order, so a 100-combination chunk touched 62 distinct
+indicators against 30 sorted, and recompute is where the time goes.
+
 ### THE INVERSION ARM, TRIGGERED
 
 After normal tuning, chop combinations **still failing any of the six gate-2
