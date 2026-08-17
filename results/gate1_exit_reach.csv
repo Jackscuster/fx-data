@@ -1,0 +1,5 @@
+mode,slice,exit_ind,closes,exit_ind_closes,exit_ind_share_pct
+A,chop,adx_dmi_exit,110349506,0,0.0
+A,trend,adx_dmi_exit,174827052,0,0.0
+B,chop,adx_dmi_exit,122041887,0,0.0
+B,trend,adx_dmi_exit,201310140,0,0.0
