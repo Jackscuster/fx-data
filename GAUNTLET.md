@@ -347,9 +347,113 @@ for the enrichment map, recorded, and nothing dies by it.
 
 ## GATE 2 — TUNE / EXPLORE
 
-Surviving families get parameter tuning, through the same machine. Tuning is at
-**family level — shared settings across the family, never per-combination**.
-Per-combination tuning is how a family of 200 becomes 200 separate overfits.
+Surviving combinations get parameter tuning, through the same machine.
+
+> **~~Tuning is at family level — shared settings across the family, never
+> per-combination. Per-combination tuning is how a family of 200 becomes 200
+> separate overfits.~~** — **STRUCK.**
+>
+> **A family is each distinct combination. Tuning is per-combination.** Jack's
+> call, recorded with its consequence stated rather than hidden: this is 754,670
+> independently tuned configurations, each with roughly twelve free parameters,
+> and the overfitting risk the struck text describes is real and is accepted.
+> What controls it is not the tuning rule but the two things downstream — blind
+> windows the tuner never sees, and a deflation total that counts **every**
+> configuration evaluated. Both are enforced below.
+
+### THE TUNING METHOD
+
+**Coordinate descent.** One knob at a time in priority order, all others held,
+then **one full second pass** to settle interactions.
+
+**A tuned value is adopted ONLY if it beats the default** on the tuning window —
+expectancy in R, profit factor as tiebreak, minimum-trade rules enforced. A knob
+that finds nothing better keeps its default.
+
+    tune on W1  ->  trade W2 blind  ->  re-tune on W1+W2  ->  trade W3 blind
+
+The re-tune is free to pick different values. **Score = stitched blind
+performance (W2 + W3).** W4 is never touched.
+
+**Knob priority within a combination:** vol filter params → baseline params →
+C1 params → C2 params → exit params (mode C only) → then risk: ATR length →
+stop → target → breakeven X → arming M → trail D.
+
+**Engine flags stay active in their current working state and are never tuned,
+at any gate:** continuation, One Candle Rule, 1.5× ATR max distance, Bridge Too
+Far 7, and the entry routes.
+
+### RISK GRIDS
+
+| knob | grid | points | applies to |
+|---|---|---|---|
+| stop | 1.00–1.25 @0.05, then 1.26–1.50 @0.01 | 31 | both plans |
+| target / RR | 1.00–3.00 @0.05 | 41 | trend leg 1 and the chop trade. **Leg 2 never has a target** |
+| breakeven X | 0.01%–0.20% @0.01%, of PRICE | 20 | trend only |
+| arming M | 1.00–2.00 @0.05 | 21 | trend only |
+| trail D | 0.50–2.00 @0.05 | 31 | trend only |
+| ATR length | every integer 2–50 | 49 | both plans |
+
+**Indicator grids:** every parameter of the combination's indicators, spanning
+1/10× to 10× its default, ~12 log-spaced points, integer periods rounded and
+floored at 2.
+
+### LEG-2 MECHANICS — the trend plan, FINAL
+
+**This supersedes the old fixed breakeven/arming rules and deliberately diverges
+from both the previous engine and the shipped Pine. It is the specification, not
+a port.**
+
+1. **When TP1 hits**, record the most recent **completed** daily close and the
+   **ATR as of that same close**. Both are **frozen** from that moment. The trail
+   never uses current ATR.
+2. **Breakeven**: leg 2's stop moves to entry when price is **X% of price**
+   beyond TP1.
+3. **Arming**: after breakeven, the trail arms when price reaches
+   **M × frozen-ATR** beyond the recorded close.
+4. **Trail**: **D × frozen-ATR** behind the **highest close since arming**.
+5. **Stop precedence**: once breakeven is set the effective stop is
+   **max(breakeven, trail)** for a long, mirrored for a short. The trail never
+   places the stop below breakeven and takes over only once its level passes it.
+   **Stops move one way only, always.**
+
+Triggers read the bar's high/low; the trail tracker reads closes. Phases may
+cascade within one bar — price can clear TP1, the breakeven gate and the arming
+level on the same bar, and that is correct.
+
+**Why frozen rather than current.** A volatility expansion arriving *after* TP1
+would widen a current-ATR trail and give back profit already made. Freezing the
+base stops volatility that arrives after the decision from rewriting it.
+
+**Verified before tuning started** — `code/l2legcheck.py`, six hand-computed
+cases, all passing: the frozen base is the previous bar's, an ATR jump after TP1
+changes nothing, TP1 tagged but not exceeded by X does not scratch the runner,
+breakeven floors a low trail, stops never retreat, and a stop moved on a bar
+cannot fill on that bar.
+
+**The chop plan is unchanged**: one leg, stop and target only.
+
+### THE INVERSION ARM, TRIGGERED
+
+After normal tuning, chop combinations **still failing any of the six gate-2
+label criteria** get the inversion test: full mirror, same signal events,
+opposite positions, exits mirrored, one-leg plan. **Chop combinations that came
+alive through tuning skip inversion** — no extra work where the normal direction
+already works.
+
+### FLOORS AND COUNTING AT GATE 2
+
+**No floors are measured at gate 2, and gate 2 kills nothing.** The existing
+mode-level floors are carried only as labels and are marked
+**"gate 1 defaults floor — not valid for tuned configurations"**: they were
+measured at ATR 31 with fixed 1.0/1.5 risk, and a tuned combination may sit at
+ATR 7 with a 2.6 target, so they are not approximations of its null but
+measurements of a different setup. **Fresh floors are measured at gate 3, once
+per surviving configuration.**
+
+**Every configuration evaluated is logged.** The deflation total at the final
+exam includes all of it — 1,033,571,395 configurations at gate 2, on top of gate
+1's 11,224,980 and both superseded runs.
 
 **NOTHING IS THROWN OUT AT GATE 2.** Its KPI floors are a **sorting label**, not
 a kill switch.

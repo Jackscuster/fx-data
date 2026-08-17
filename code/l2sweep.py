@@ -74,7 +74,8 @@ ATR_LEN = 31               # FROZEN by the pre-test; see GAUNTLET.md
 ATR_MULT = 1.0             # stop = 1.0 x ATR
 TP_MULT = 1.5              # RR 1:1.5
 TRAIL_MULT = 1.5
-TRAIL_ARM = 2.0
+TRAIL_ARM = 2.0            # M, arming multiple of the FROZEN atr
+BE_PCT = 0.05              # X, % of price beyond TP1 before breakeven is set
 
 # Layer 1's shape2, as int codes. ONE definition, used by both the tagger and
 # the slicer -- they were briefly separate and the slicer compared an int8 array
@@ -316,6 +317,7 @@ def run_combo(P, c1, c2, vol, base, ex, buf, plan=2, atr=None, **kw):
         kw.get('one_candle_rule', False), int(plan), RISK,
         kw.get('atr_mult', ATR_MULT), kw.get('tp_mult', TP_MULT),
         kw.get('trail_mult', TRAIL_MULT), kw.get('trail_arm', TRAIL_ARM),
+        kw.get('be_pct', BE_PCT),
         1.5, 7, True, True,
         buf['entry_bar'], buf['exit_bar'], buf['dir'], buf['leg'],
         buf['entry_px'], buf['exit_px'], buf['units'], buf['r'],
