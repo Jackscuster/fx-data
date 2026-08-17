@@ -354,6 +354,56 @@ Per-combination tuning is how a family of 200 becomes 200 separate overfits.
 **NOTHING IS THROWN OUT AT GATE 2.** Its KPI floors are a **sorting label**, not
 a kill switch.
 
+### THE GATE 1 VERDICT, AND WHAT IT DOES NOT DO
+
+Gate 1 measured, against six fresh nulls:
+
+| mode | slice | rate | null (95% CI) | ratio | clears |
+|---|---|---|---|---|---|
+| A C1-flip | trend | 5.543% | 5.593 (5.34–5.85) | 0.991× | no |
+| A | chop | 3.094% | 6.999 (6.69–7.31) | 0.442× | no |
+| **B baseline-cross** | **trend** | **6.648%** | 5.578 (5.32–5.83) | **1.192×** | **YES** |
+| B | chop | 2.721% | 7.019 (6.71–7.33) | 0.388× | no |
+| C exit-indicator | trend | 6.426% | 6.322 (6.05–6.59) | 1.016× | no |
+| C | chop | 2.278% | 6.157 (5.86–6.45) | 0.370× | no |
+
+**ALL THREE MODES ADVANCE. Nothing is dropped.** Gate 2's rule is that nothing
+is thrown out here, and that rule is not suspended because a gate 1 number was
+disappointing.
+
+**"At chance" for modes A and C is an AT-DEFAULTS LABEL, not a kill.** Gate 1
+ran default parameters only. A configuration that is indistinguishable from
+noise at defaults has been shown one thing — that its defaults are not special —
+and that is not the same as having no reachable settings that work. Parameter
+tuning may move it. It may also not, and then it dies on evidence rather than on
+a first impression.
+
+**Mode B (baseline-cross exit, trend, 1.192×) is the only configuration proven
+at defaults, and is therefore TUNING PRIORITY 1.** Modes A and C tune after it,
+at lower budget, and **must clear their own post-tuning nulls to stay alive**.
+Clearing mode B's null does not qualify them; each is judged against the null
+measured for its own configuration.
+
+**Deflation counting is unchanged and strict**: all three modes, both superseded
+runs, and every tuned variant to come. Mode B's 1.192× must survive deflation
+against the whole search, not against its own branch.
+
+**Gate 2 population:** every survivor from all three modes, organized by family.
+
+**Slot priority within tuning, from the corrected wins-more map:**
+**vol filter → baseline → C1 → C2 → exit.**
+
+### THE CHOP INVERSION ARM RUNS UNDER ALL THREE MODES
+
+Chop failed in every configuration tested — 0.442×, 0.388×, 0.370×, and 0.383×
+under the superseded run. The inversion arm therefore runs **under all three
+modes' configurations wherever survivors exist, mode B first**: entries faded,
+exits mirrored, one-leg plan, **fresh luck floors measured per inverted setup**,
+each judged against its own null.
+
+**If inversion fails across the board post-tuning, chop closes on evidence** and
+the router stands aside in ranges.
+
 ### DECLARED — the chop slice gains an INVERSION arm
 
 **Written after the gate 1 headline counts and BEFORE any look at which chop
