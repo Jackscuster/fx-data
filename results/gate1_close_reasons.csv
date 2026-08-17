@@ -1,0 +1,73 @@
+mode,slice,population,reason,closes,share_pct
+A,trend,elig,stop,93556968,53.51401109251673
+A,trend,elig,target,30149581,17.245375160818934
+A,trend,elig,exit indicator,0,0.0
+A,trend,elig,baseline cross,0,0.0
+A,trend,elig,c1 flip,25145457,14.383046966896176
+A,trend,elig,reversal,8839,0.0050558537130741075
+A,trend,elig,end of data,0,0.0
+A,trend,elig,breakeven stop,6974158,3.9891755424669633
+A,trend,elig,trail stop,18992049,10.863335383588119
+A,trend,surv,stop,3133602,51.972588689699826
+A,trend,surv,target,1214808,20.148288302393496
+A,trend,surv,exit indicator,0,0.0
+A,trend,surv,baseline cross,0,0.0
+A,trend,surv,c1 flip,550784,9.135068936280877
+A,trend,surv,reversal,645,0.010697695401284651
+A,trend,surv,end of data,0,0.0
+A,trend,surv,breakeven stop,301289,4.997051084895584
+A,trend,surv,trail stop,828208,13.736305291328929
+A,chop,elig,stop,56881440,51.546619519982265
+A,chop,elig,target,39941532,36.195478754567326
+A,chop,elig,exit indicator,0,0.0
+A,chop,elig,baseline cross,0,0.0
+A,chop,elig,c1 flip,13522601,12.254337595312842
+A,chop,elig,reversal,3933,0.0035641301375649113
+A,chop,elig,end of data,0,0.0
+A,chop,elig,breakeven stop,0,0.0
+A,chop,elig,trail stop,0,0.0
+A,chop,surv,stop,1316118,51.14381275581757
+A,chop,surv,target,1113169,43.25729676334545
+A,chop,surv,exit indicator,0,0.0
+A,chop,surv,baseline cross,0,0.0
+A,chop,surv,c1 flip,144048,5.597646973789591
+A,chop,surv,reversal,32,0.0012435070473818931
+A,chop,surv,end of data,0,0.0
+A,chop,surv,breakeven stop,0,0.0
+A,chop,surv,trail stop,0,0.0
+B,trend,elig,stop,57756836,28.69047530342982
+B,trend,elig,target,28229449,14.02286491877657
+B,trend,elig,exit indicator,0,0.0
+B,trend,elig,baseline cross,98096243,48.72891300954835
+B,trend,elig,c1 flip,0,0.0
+B,trend,elig,reversal,0,0.0
+B,trend,elig,end of data,0,0.0
+B,trend,elig,breakeven stop,5072606,2.5197965686179544
+B,trend,elig,trail stop,12155006,6.037950199627302
+B,trend,surv,stop,2485186,31.576691056193663
+B,trend,surv,target,1390897,17.672691243225497
+B,trend,surv,exit indicator,0,0.0
+B,trend,surv,baseline cross,2828833,35.943058463457255
+B,trend,surv,c1 flip,0,0.0
+B,trend,surv,reversal,0,0.0
+B,trend,surv,end of data,0,0.0
+B,trend,surv,breakeven stop,299762,3.808766049859739
+B,trend,surv,trail stop,865640,10.998793187263844
+B,chop,elig,stop,33769244,27.670208016367365
+B,chop,elig,target,35011130,28.68779798529336
+B,chop,elig,exit indicator,0,0.0
+B,chop,elig,baseline cross,53261513,43.641993998339274
+B,chop,elig,c1 flip,0,0.0
+B,chop,elig,reversal,0,0.0
+B,chop,elig,end of data,0,0.0
+B,chop,elig,breakeven stop,0,0.0
+B,chop,elig,trail stop,0,0.0
+B,chop,surv,stop,574641,30.547503400865114
+B,chop,surv,target,693307,36.855702848114895
+B,chop,surv,exit indicator,0,0.0
+B,chop,surv,baseline cross,613191,32.596793751019995
+B,chop,surv,c1 flip,0,0.0
+B,chop,surv,reversal,0,0.0
+B,chop,surv,end of data,0,0.0
+B,chop,surv,breakeven stop,0,0.0
+B,chop,surv,trail stop,0,0.0
