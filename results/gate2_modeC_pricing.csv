@@ -1,0 +1,5 @@
+mode,slice,shape,sec_per_combo,engine_hours,days_8w
+C,trend,full,207,31938,166.3
+C,trend,cap6,141,21689,113.0
+C,chop,full,249,11255,58.6
+C,chop,cap6,159,7196,37.5

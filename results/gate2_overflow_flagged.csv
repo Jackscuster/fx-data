@@ -1,0 +1,5 @@
+c1,c2,vol,base,slot,indicator,fast_limit,slow_limit,crosses_label,expectancy_R,n_blind
+mama_fama_signals,bears_bulls_impulse_signals,chaikin_volatility_volume_signals,tma_baseline,c1,mama_fama_signals,3.289666,0.328967,False,-0.0686720776642867,148
+mama_fama_signals,bears_bulls_impulse_signals,volatility_ratio_volume_signals,kama_baseline,c1,mama_fama_signals,2.164381,0.093691,False,-0.13803894565496,286
+mama_fama_signals,halftrend_signals,fractal_dimension_volume_signals,tma_baseline,c1,mama_fama_signals,2.164381,0.093691,False,0.0703262325103825,518
+relative_vigor_index_signals,mama_fama_signals,chaikin_volatility_volume_signals,kama_baseline,c2,mama_fama_signals,5.0,0.05,False,0.0233006058825968,520
