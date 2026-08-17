@@ -52,3 +52,6 @@ results/gate1_nullfresh_modes.log
 results/gate1_run3.log
 
 results/gate1_survivors_modeC.csv
+
+results/gate2/
+results/gate2_run_*.log

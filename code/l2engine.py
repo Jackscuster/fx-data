@@ -162,7 +162,7 @@ def run_bars(o, h, l, c, atr,
              exit_on_c1_flip, exit_on_base_cross, exit_on_exit_ind,
              one_candle_rule,
              plan, risk_dollars,
-             atr_mult, tp_mult, trail_mult, trail_start_mult,
+             atr_mult, tp_mult, trail_mult, trail_start_mult, be_pct,
              max_atr_dist, bridge_bars,
              block_suspect, bridge_all_routes,
              t_entry_bar, t_exit_bar, t_dir, t_leg, t_entry_px, t_exit_px,
@@ -185,9 +185,17 @@ def run_bars(o, h, l, c, atr,
     l1_stop = 0.0
     l1_tp = 0.0
     l2_stop = 0.0
-    l2_phase = 0            # 0 fixed, 1 breakeven, 2 trailing
+    # GATE 2 LEG-2 MECHANICS. Phases:
+    #   0  initial stop, TP1 not yet hit
+    #   1  TP1 hit; frozen_close / frozen_atr recorded; waiting for the
+    #      breakeven trigger. The stop has NOT moved yet.
+    #   2  breakeven set (stop = entry); waiting for the trail to arm
+    #   3  armed; trailing D x FROZEN atr behind the highest close since arming
+    l2_phase = 0
+    frozen_close = 0.0      # last COMPLETED close at the moment TP1 hit
+    frozen_atr = 0.0        # ATR as of that same close -- never re-read
     units_leg = 0.0
-    best_close = 0.0        # highest close (long) / lowest close (short) held
+    best_close = 0.0        # highest/lowest close SINCE ARMING, not since entry
     l1_idx = -1             # row in t_* for the open leg-1 record
     l2_idx = -1
 
@@ -249,15 +257,23 @@ def run_bars(o, h, l, c, atr,
                     t_reason[l1_idx] = TARGET
                     l1_open = False
                     if l2_open and l2_phase == 0:
+                        # TP1 hit intrabar. The most recent COMPLETED close is
+                        # the PREVIOUS bar's -- this bar has not closed yet.
+                        # Both it and its ATR are frozen here and never re-read;
+                        # the trail deliberately does not follow current ATR.
                         l2_phase = 1
-                        l2_stop = entry_px          # breakeven
-                        l2_moved = True
+                        if i > 0:
+                            frozen_close = c[i - 1]
+                            frozen_atr = atr[i - 1]
+                        else:
+                            frozen_close = cl
+                            frozen_atr = a
                 if l2_open and not l2_moved and lo <= l2_stop:
                     t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = l2_stop
                     t_r[l2_idx] = ((l2_stop - entry_px) * units_leg) / risk_dollars
-                    if l2_phase == 0:
-                        t_reason[l2_idx] = STOP
-                    elif l2_phase == 1:
+                    if l2_phase <= 1:
+                        t_reason[l2_idx] = STOP          # still the initial stop
+                    elif l2_phase == 2:
                         t_reason[l2_idx] = STOP_BE
                     else:
                         t_reason[l2_idx] = STOP_TRAIL
@@ -280,14 +296,18 @@ def run_bars(o, h, l, c, atr,
                     l1_open = False
                     if l2_open and l2_phase == 0:
                         l2_phase = 1
-                        l2_stop = entry_px
-                        l2_moved = True
+                        if i > 0:
+                            frozen_close = c[i - 1]
+                            frozen_atr = atr[i - 1]
+                        else:
+                            frozen_close = cl
+                            frozen_atr = a
                 if l2_open and not l2_moved and hi >= l2_stop:
                     t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = l2_stop
                     t_r[l2_idx] = ((entry_px - l2_stop) * units_leg) / risk_dollars
-                    if l2_phase == 0:
-                        t_reason[l2_idx] = STOP
-                    elif l2_phase == 1:
+                    if l2_phase <= 1:
+                        t_reason[l2_idx] = STOP          # still the initial stop
+                    elif l2_phase == 2:
                         t_reason[l2_idx] = STOP_BE
                     else:
                         t_reason[l2_idx] = STOP_TRAIL
@@ -298,31 +318,64 @@ def run_bars(o, h, l, c, atr,
                 last_exit_dir = 0
                 crossed_since_exit = False
 
-        # ---- leg 2 phase progression, matching the Pine block exactly ----
-        # Pine gates the trail on the bar's HIGH/LOW, not its close; seeds the
-        # trail tracker with the close AT ACTIVATION rather than the best close
-        # since entry; and measures the trail distance in CURRENT ATR while the
-        # stop and target use the ATR AT ENTRY. All three were wrong in the
-        # first version of this loop, which was written from prose.
+        # ---- leg 2 phase progression, GATE 2 SPEC ------------------------
+        # THIS DELIBERATELY DIVERGES FROM PINE AND FROM THE PREVIOUS ENGINE. It
+        # is the new specification, not a port, and the differences are the
+        # point rather than an accident:
+        #
+        #   frozen base   arming and trail measure from the last COMPLETED close
+        #                 at the moment TP1 hit, and from the ATR as of that same
+        #                 close. Neither is ever re-read. The old loop trailed on
+        #                 CURRENT ATR, so a volatility expansion after TP1 widened
+        #                 the trail and gave back profit that had already been
+        #                 made; freezing the base stops volatility that arrives
+        #                 after the decision from rewriting it.
+        #   breakeven     no longer automatic when TP1 banks. Price must travel
+        #                 X% of PRICE beyond TP1 first, so a target that is
+        #                 tagged and immediately rejected does not scratch the
+        #                 runner.
+        #   best_close    highest close SINCE ARMING, not since entry and not
+        #                 seeded at TP1.
+        #   precedence    once breakeven is set the effective stop is
+        #                 max(breakeven, trail) for a long. The trail takes over
+        #                 only when it passes breakeven, and never drags the stop
+        #                 back down. Stops move one way only, always.
+        #
+        # Triggers read the bar's HIGH/LOW ("price reaches"), the trail tracker
+        # reads CLOSES. Phases can cascade within one bar. Anything set here
+        # goes live on the NEXT bar -- the intrabar block above has already run,
+        # which is what keeps a stop from being moved and filled by the same bar.
         if pos != 0 and l2_open and not bad:
             if pos == 1:
-                if l2_phase == 1 and h[i] >= entry_px + trail_start_mult * entry_atr:
+                if l2_phase == 1 and h[i] >= l1_tp * (1.0 + be_pct / 100.0):
                     l2_phase = 2
-                    best_close = cl                 # seeded at activation
-                if l2_phase == 2:
+                    if entry_px > l2_stop:
+                        l2_stop = entry_px
+                if l2_phase == 2 and h[i] >= frozen_close + trail_start_mult * frozen_atr:
+                    l2_phase = 3
+                    best_close = cl                 # seeded AT ARMING
+                if l2_phase == 3:
                     if cl > best_close:
                         best_close = cl
-                    trail = best_close - trail_mult * a      # CURRENT atr
+                    trail = best_close - trail_mult * frozen_atr
+                    if entry_px > trail:            # breakeven is the floor
+                        trail = entry_px
                     if trail > l2_stop:
                         l2_stop = trail
             else:
-                if l2_phase == 1 and l[i] <= entry_px - trail_start_mult * entry_atr:
+                if l2_phase == 1 and l[i] <= l1_tp * (1.0 - be_pct / 100.0):
                     l2_phase = 2
+                    if entry_px < l2_stop:
+                        l2_stop = entry_px
+                if l2_phase == 2 and l[i] <= frozen_close - trail_start_mult * frozen_atr:
+                    l2_phase = 3
                     best_close = cl
-                if l2_phase == 2:
+                if l2_phase == 3:
                     if cl < best_close:
                         best_close = cl
-                    trail = best_close + trail_mult * a
+                    trail = best_close + trail_mult * frozen_atr
+                    if entry_px < trail:            # breakeven is the ceiling
+                        trail = entry_px
                     if trail < l2_stop:
                         l2_stop = trail
 
@@ -481,6 +534,8 @@ def run_bars(o, h, l, c, atr,
         route = rt
         best_close = cl
         l2_phase = 0
+        frozen_close = 0.0
+        frozen_atr = 0.0
         if plan == 2:
             units_leg = (0.5 * risk_dollars) / stop_dist
             l1_stop = entry_px - want * stop_dist
@@ -607,7 +662,8 @@ def prepare(d, c1, c2, vol, base, exit_ind, params=None, as_written_mode=False):
 
 
 def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
-        trail_mult=1.5, trail_start_mult=2.0, max_atr_dist=1.5, bridge_bars=7,
+        trail_mult=1.5, trail_start_mult=2.0, be_pct=0.05,
+        max_atr_dist=1.5, bridge_bars=7,
         use_base_cross=True, use_c1_flip=True, use_continuation=True,
         exit_on_c1_flip=False, exit_on_base_cross=True, exit_on_exit_ind=True,
         one_candle_rule=False, block_suspect=True,
@@ -629,7 +685,8 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         exit_on_c1_flip, exit_on_base_cross, exit_on_exit_ind,
         one_candle_rule,
         int(plan), float(risk_dollars),
-        float(atr_mult), float(tp_mult), float(trail_mult), float(trail_start_mult),
+        float(atr_mult), float(tp_mult), float(trail_mult),
+        float(trail_start_mult), float(be_pct),
         float(max_atr_dist), int(bridge_bars), bool(block_suspect),
         bool(bridge_all_routes),
         t['entry_bar'], t['exit_bar'], t['dir'], t['leg'], t['entry_px'],
