@@ -379,6 +379,37 @@ performance (W2 + W3).** W4 is never touched.
 C1 params → C2 params → exit params (mode C only) → then risk: ATR length →
 stop → target → breakeven X → arming M → trail D.
 
+**PARAMETER ORDER WITHIN A SLOT IS MEASURED IMPACT ORDER**, highest response
+first, from `results/gate2_param_impact.csv`. This is now specified rather than
+left open, because it is not cosmetic: **coordinate descent is order-dependent**,
+so the order silently determines which values get adopted. It floated once and
+must not again.
+
+> **MODE B IS THE EXCEPTION, and it is a permanent one.** Mode B was launched
+> seven seconds after commit **`a86edb0`**, before the impact measurement
+> existed, and therefore tuned parameters **alphabetically** within each slot.
+> **Reproducing any mode B result means running commit `a86edb0`** — current
+> code will return a different answer, and not by rounding: re-running three
+> banked B combinations gave +0.0740 → −0.0640, −0.0400 → +0.0652, and
+> +0.2913 → −0.1103. **45 of 105 indicators** have an impact order differing
+> from alphabetical, so this reaches most of the population.
+>
+> Mode B is internally consistent — every chunk ran in one process on one code
+> version — and both orders satisfy this document, which fixed the SLOT order
+> and was silent on parameter order until now.
+>
+> **B-vs-A and B-vs-C comparisons therefore carry an ordering difference on top
+> of the exit-mode difference.** This is tolerable for one specific reason:
+> **no gate compares modes head-to-head.** Every mode is judged against the null
+> measured for its own configuration — six separate floors, six separate nulls —
+> and never against another mode's result. The ordering difference would matter
+> if a mode's survival depended on beating another mode; it does not.
+>
+> **Round-2 deepening may re-tune mode B survivors under impact order**, before
+> any W4 touch, which unifies everything that reaches the final exam. Whether it
+> does is Jack's call at round 2; the option is preserved by the checkpointing
+> rule above.
+
 **Engine flags stay active in their current working state and are never tuned,
 at any gate:** continuation, One Candle Rule, 1.5× ATR max distance, Bridge Too
 Far 7, and the entry routes.

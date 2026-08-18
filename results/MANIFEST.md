@@ -73,3 +73,35 @@ canonical null is measured on fresh controls against the frozen floor.
 | `gate1_atr_pretest.csv`, `gate1_atr_choice.csv` | The ATR length pre-test and the frozen choice of 31. |
 | `gate1_enrichment_slots.csv`, `gate1_enrichment_cores.csv` | Survivor structure — per-option and per-C1×baseline enrichment. **Tuning priority only, never a cut** (GAUNTLET.md is amended: no family-based cuts at any gate). Denominator is ALL combinations, so these fold trade frequency together with edge. |
 | `gate1_survivors.csv`, `gate1/` | **Not in the repo** — 224 MB and 217 MB, gitignored. Regenerate with `python code/l2sweep.py --shards 128 --jobs 8`, which reuses any shard checkpoints present. |
+
+
+---
+
+# LAYER 2 — GATE 2
+
+## Mode B was tuned under a different parameter order, permanently
+
+**`results/gate2_tuned_modeB.csv` and everything under `results/gate2/modeB_*`
+were produced at commit `a86edb0`, which tuned parameters ALPHABETICALLY within
+each slot.** Modes A and C use MEASURED IMPACT ORDER, from
+`gate2_param_impact.csv`.
+
+**To reproduce any mode B row, check out `a86edb0`.** Current code returns a
+different answer — coordinate descent is order-dependent, and 45 of 105
+indicators have an impact order differing from alphabetical. Measured on three
+banked combinations: +0.0740 → −0.0640, −0.0400 → +0.0652, +0.2913 → −0.1103.
+This is not drift or rounding; it is a different search path reaching a
+different local optimum.
+
+This is safe to carry because **no gate compares modes head-to-head** — each is
+judged against the null measured for its own configuration. Round-2 deepening
+may re-tune B under impact order before W4.
+
+| file | what it is | reproduce with |
+|---|---|---|
+| `gate2_tuned_modeB.csv` | mode B tuned results, alphabetical parameter order | commit `a86edb0` |
+| `gate2_tuned_modeA.csv`, `gate2_tuned_modeC.csv` | impact order, capped at 6 parameters | current code |
+| `gate2_param_impact.csv` | measured parameter response, the ranking A and C tune by. Frozen before A and C ran | current code |
+| `gate2_progress_mode*.csv` | per-chunk progress: combos, engine-hours, projection, label crossings | — |
+| `gate2/` | per-chunk checkpoints. **Not in the repo** — regenerable, retained locally, never deleted | — |
+| `gate2_cache/` | disk-backed indicator cache, 20 GB LRU. **Not in the repo**, pure speed device, verified byte-identical to fresh computation | — |
