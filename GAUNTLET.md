@@ -506,6 +506,61 @@ un-spent.
 in shard-interleaved order, so a 100-combination chunk touched 62 distinct
 indicators against 30 sorted, and recompute is where the time goes.
 
+### DECLARED — CROSS-MODE REUSE FROM MODE B, before A starts
+
+Jack's premise is correct and worth stating: **indicator series are
+exit-independent.** `L.compute(name, o,h,l,c, **params)` never sees the exit
+mode, so every series computed during B's tuning is valid, unchanged, for A and
+C. What follows is what that is worth, measured rather than assumed.
+
+**1. PERSISTENT CACHE — adopted in a bounded form, not wholesale.**
+
+The full reachable space is **12.9M distinct (indicator, param-tuple) sets**
+— 12 grid points per parameter, capped at 6 parameters, so 12^6 for the widest
+indicators — which at 28 pairs and ~20 KB an entry is **6.7 TB**. That is not a
+storage problem to solve, it is a reason not to store it.
+
+What IS shareable is the shallow layer, and it is small:
+
+| layer | tuples | on disk, 28 pairs |
+|---|---|---|
+| defaults (already pinned in memory) | 105 | 0.06 GB |
+| one parameter off default | 2,856 | **1.47 GB** |
+
+Coordinate descent sweeps each indicator's first parameter **from that
+indicator's defaults for every combination**, so those tuples are shared by
+every combination naming it. Deeper tuples depend on what earlier knobs adopted
+and diverge per combination — that is where the 6.7 TB lives and where reuse
+does not.
+
+**The cache is therefore a disk-backed LRU under a fixed size budget**, not a
+complete store: shallow, hot entries survive and deep one-off entries are
+evicted. A 20 GB budget holds ~1M entries against the current in-memory 600.
+
+**2. SEEDING B'S ADOPTED VALUES — implemented only where it is not already a
+no-op, and the reason is recorded.**
+
+**B's adopted values are grid points by construction.** They were chosen from
+the same grids A and C will search, so offering them as "additional candidates"
+adds candidates that are already there, and the exhaustive per-knob search
+already evaluates every one of them. As specified, seeding changes no outcome.
+
+**The exception is real and is what gets implemented.** B ran UNCAPPED; A and C
+are capped at each indicator's 6 highest-impact parameters. For the four
+indicators above the cap — `rex_oscillator_signals` (22),
+`hieken_ashi_smoothed_signals` (16), `schaff_trend_cycle_signals` (8),
+`schaff_trend_cycle_exit` (7) — B may have adopted a value for a parameter that
+A and C will never tune. **Those values, and only those, are genuinely new
+information**, and are offered as candidates for otherwise-frozen parameters.
+**14.5% of B's combinations name a capped indicator.**
+
+Adoption is unchanged: a seeded value is taken only if it beats the default and
+every grid alternative on the tuning window. No grid is narrowed and nothing is
+inherited untested.
+
+Overlap available to seed from: **74.5% of A's trend combinations and 42.0% of
+A's chop combinations also appear in B.**
+
 ### THE INVERSION ARM, TRIGGERED
 
 After normal tuning, chop combinations **still failing any of the six gate-2
