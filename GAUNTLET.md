@@ -451,6 +451,22 @@ Only four indicators are affected: `rex_oscillator_signals` (22 parameters),
 third of mode C's cost, because they are named often *and* are among the most
 expensive to recompute.
 
+> **Six was reaffirmed after the response measurement existed, not before.**
+> Measured over 267 parameters, the cap captures this share of total response:
+>
+> | cap | params tuned | response captured |
+> |---|---|---|
+> | 1 | 105 (39%) | 57.7% |
+> | 2 | 173 (65%) | 84.9% |
+> | 3 | 211 (79%) | 94.8% |
+> | 4 | 227 (85%) | 98.0% |
+> | **6** | **238 (89%)** | **99.6%** |
+>
+> The knee of the curve is at 3, and a cap of 3 would cut deeper for 4.8% of
+> measured response. Jack chose 6 with that in front of him. Recorded because a
+> threshold that was examined and kept is a different thing from one that was
+> never questioned, and only the record can tell them apart later.
+
 | mode C | full | capped |
 |---|---|---|
 | trend | 166.3 days | **113.0 days** |
