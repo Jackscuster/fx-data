@@ -143,6 +143,19 @@ def measure(jobs=None, n_sample=N_SAMPLE):
                 print('  %d/%d indicators done' % (i + 1, len(tasks)), flush=True)
     R = pd.DataFrame(out)
     if len(R):
+        # A confirmation indicator is measured TWICE -- once as a C1 and once as
+        # a C2 -- because it appears in both menus. Those are two samples of the
+        # same parameter's response, not two parameters, and leaving them
+        # separate duplicated every confirmation parameter in the ranking and
+        # made the cap keep six SLOTS where it should keep six PARAMETERS.
+        R = (R.groupby(['indicator', 'parameter'], as_index=False)
+               .agg(default=('default', 'first'),
+                    grid_points=('grid_points', 'max'),
+                    response_R=('response_R', 'mean'),
+                    response_max_R=('response_max_R', 'max'),
+                    n_combos=('n_combos', 'sum'),
+                    note=('note', 'first'),
+                    n_measurements=('response_R', 'size')))
         R['rank_in_indicator'] = (R.groupby('indicator')['response_R']
                                   .rank(ascending=False, method='first').astype(int))
         R['in_cap6'] = R.rank_in_indicator <= 6
