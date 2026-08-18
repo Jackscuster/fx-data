@@ -59,6 +59,7 @@ import numpy as np, pandas as pd
 import l2lib as L
 import l2engine as E
 import l2sweep as S
+import l2cache as DC
 
 CK = os.path.join(ROOTOUT, 'gate2')
 
@@ -169,11 +170,12 @@ class SeriesCache:
     defaults and returns to them for every knob it declines to move, so they
     are hit constantly and must never be evicted by a burst of exploration.
     """
-    def __init__(self, cap=600):
+    def __init__(self, cap=600, disk=False):
         self.pin = {}
         self.lru = collections.OrderedDict()
         self.cap = cap
-        self.hits = self.misses = 0
+        self.disk = disk
+        self.hits = self.misses = self.disk_hits = 0
 
     def get(self, name, params, pair, arrays):
         key = (name, tuple(sorted(params.items())), pair)
@@ -187,7 +189,17 @@ class SeriesCache:
             return d[key]
         self.misses += 1
         o, h, l, c = arrays
-        val = L.compute(name, o, h, l, c, **params)
+        val = None
+        if self.disk:
+            # A disk hit is ~0.1 ms against an ~11.6 ms recompute, so it is
+            # worth a stat() even when it misses.
+            val = DC.get(name, params, pair)
+            if val is not None:
+                self.disk_hits += 1
+        if val is None:
+            val = L.compute(name, o, h, l, c, **params)
+            if self.disk:
+                DC.put(name, params, pair, val)
         if pinned:
             self.pin[key] = val
         else:
@@ -221,7 +233,7 @@ class Scorer:
     """Holds the per-pair raw series and the cache, and scores one full
     configuration across all 28 pairs, split by window."""
 
-    def __init__(self, cache=None):
+    def __init__(self, cache=None, disk=False):
         self.pairs = S.all_pairs()
         self.raw, self.arr, self.reg, self.wb, self.buf = {}, {}, {}, {}, {}
         for p in self.pairs:
@@ -238,7 +250,7 @@ class Scorer:
                 b[k] = (int(w[0]), int(w[-1]) + 1) if len(w) else (0, 0)
             self.wb[p] = b
             self.buf[p] = S.make_buffers(len(d))
-        self.cache = cache or SeriesCache()
+        self.cache = cache or SeriesCache(disk=disk)
         self.n_eval = 0
         # ATR depends only on (atr_len, pair) and atr_len is ONE knob out of
         # ~320, so recomputing it on every score was pure waste -- measured at
@@ -317,7 +329,8 @@ def better(cand, base_, min_trades):
 
 
 def tune_one(sc, combo, mode, sname, code, plan, tune_windows, defaults_ip,
-             defaults_risk, passes=2, cap=None, cheap=False, skip=None):
+             defaults_risk, passes=2, cap=None, cheap=False, skip=None,
+             seeds=None):
     """Coordinate descent over one combination on one tuning window set.
 
     cap    -- move only each indicator's top-`cap` measured parameters
@@ -351,6 +364,24 @@ def tune_one(sc, combo, mode, sname, code, plan, tune_windows, defaults_ip,
             name = combo[SLOT_ORDER.index(slot)] if slot in SLOT_ORDER else None
             name = dict(zip(('c1', 'c2', 'vol', 'base', 'exit_ind'), combo))[slot]
             allowed = tuned_params(name, cap=cap, top1=cheap)
+            # SEEDED CANDIDATES for parameters this pass would otherwise freeze.
+            # Only reachable when a cap is in force and only for values another
+            # mode actually adopted; never narrows a grid, never inherits
+            # untested.
+            if seeds:
+                frozen = [x for x in sorted(registry()[name])
+                          if x not in allowed and x in seeds.get(slot, {})]
+                for pname in frozen:
+                    v = seeds[slot][pname]
+                    if v == ip[slot].get(pname):
+                        continue
+                    old = ip[slot].get(pname)
+                    ip[slot][pname] = v
+                    cand = ev()
+                    if better(cand, cur, S.MIN_TRADES_PICK):
+                        cur = cand
+                    else:
+                        ip[slot][pname] = old
             for pname in allowed:
                 pdef = registry()[name][pname]
                 best, bestv = cur, ip[slot].get(pname, pdef)
@@ -399,7 +430,8 @@ def default_baseline(sc, combo, mode, sname, code, plan, windows):
                             profit_factor=float(np.mean([p['profit_factor'] for p in parts])))
 
 
-def _stage(sc, combo, mode, sname, code, plan, windows, cap, staged, resume=None):
+def _stage(sc, combo, mode, sname, code, plan, windows, cap, staged,
+           resume=None, seeds=None):
     """One tuning step. Returns (ip, risk, info). With `staged`, runs the cheap
     pass first and only continues to the deep pass if the cheap pass improved on
     the DEFAULT by at least DEEPEN_THRESHOLD_R -- the threshold declared in
@@ -407,24 +439,24 @@ def _stage(sc, combo, mode, sname, code, plan, windows, cap, staged, resume=None
     dip, drisk, base = default_baseline(sc, combo, mode, sname, code, plan, windows)
     if resume is not None:
         ip, risk, cur = tune_one(sc, combo, mode, sname, code, plan, windows,
-                                 dip, drisk, cap=cap, skip=resume)
+                                 dip, drisk, cap=cap, skip=resume, seeds=seeds)
         return ip, risk, dict(stage='deep', resumed=True,
                               base_R=(base or {}).get('expectancy_R'),
                               final_R=(cur or {}).get('expectancy_R'))
     if not staged:
         ip, risk, cur = tune_one(sc, combo, mode, sname, code, plan, windows,
-                                 dip, drisk, cap=cap)
+                                 dip, drisk, cap=cap, seeds=seeds)
         return ip, risk, dict(stage='full', resumed=False,
                               base_R=(base or {}).get('expectancy_R'),
                               final_R=(cur or {}).get('expectancy_R'))
     ip, risk, cheap = tune_one(sc, combo, mode, sname, code, plan, windows,
-                               dip, drisk, cap=cap, cheap=True)
+                               dip, drisk, cap=cap, cheap=True, seeds=seeds)
     gain = None
     if cheap is not None and base is not None:
         gain = cheap['expectancy_R'] - base['expectancy_R']
     if gain is not None and gain >= DEEPEN_THRESHOLD_R:
         ip2, risk2, deep = tune_one(sc, combo, mode, sname, code, plan, windows,
-                                    dip, drisk, cap=cap, skip=(ip, risk))
+                                    dip, drisk, cap=cap, skip=(ip, risk), seeds=seeds)
         return ip2, risk2, dict(stage='deep', resumed=False,
                                 base_R=base['expectancy_R'],
                                 cheap_R=cheap['expectancy_R'], cheap_gain=gain,
@@ -440,13 +472,13 @@ def _stage(sc, combo, mode, sname, code, plan, windows, cap, staged, resume=None
 
 
 def full_walk(sc, combo, mode, sname, code, plan, cap=None, staged=False,
-              resume1=None, resume2=None):
+              resume1=None, resume2=None, seeds=None):
     """tune W1 -> blind W2 -> re-tune W1+W2 -> blind W3. Stitched blind score."""
     ip1, rk1, i1 = _stage(sc, combo, mode, sname, code, plan, ('W1',),
-                          cap, staged, resume=resume1)
+                          cap, staged, resume=resume1, seeds=seeds)
     w2 = sc.score(combo, ip1, rk1, mode, sname, code, plan, ('W2',))['W2']
     ip2, rk2, i2 = _stage(sc, combo, mode, sname, code, plan, ('W1', 'W2'),
-                          cap, staged, resume=resume2)
+                          cap, staged, resume=resume2, seeds=seeds)
     w3 = sc.score(combo, ip2, rk2, mode, sname, code, plan, ('W3',))['W3']
     parts = [x for x in (w2, w3) if x is not None]
     if not parts:
@@ -488,6 +520,8 @@ def run_chunk(args):
     cap = args[6] if len(args) > 6 else None
     staged = args[7] if len(args) > 7 else False
     deepen = args[8] if len(args) > 8 else False
+    disk = args[9] if len(args) > 9 else False
+    seed_from = args[10] if len(args) > 10 else None
     code = dict((s, c) for s, _, c in S.SLICES)[sname]
     plan = dict((s, p) for s, p, _ in S.SLICES)[sname]
     D = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode),
@@ -505,7 +539,9 @@ def run_chunk(args):
         D = D.sort_values(['c1', 'c2', 'vol', 'base', 'exit_ind'],
                           kind='mergesort').reset_index(drop=True)
     sub = D.iloc[lo:hi]
-    sc = Scorer()
+    sc = Scorer(disk=disk)
+    if seed_from and not SEEDS:
+        SEEDS.update(load_seeds(seed_from))
     t0 = time.time(); rows = []
     for r in sub.itertuples():
         cb = (r.c1, r.c2, r.vol, r.base, r.exit_ind)
@@ -521,7 +557,8 @@ def run_chunk(args):
                 if b:
                     r1, r2 = b
             res = full_walk(sc, cb, mode, sname, code, plan, cap=cap,
-                            staged=staged, resume1=r1, resume2=r2)
+                            staged=staged, resume1=r1, resume2=r2,
+                            seeds=SEEDS.get((r.c1, r.c2, r.vol, r.base)))
         except Exception as e:
             rows.append(dict(c1=r.c1, c2=r.c2, vol=r.vol, base=r.base,
                              exit_ind=r.exit_ind, slice=sname, mode=mode,
@@ -553,6 +590,7 @@ def run_chunk(args):
     return dict(mode=mode, slice=sname, chunk=cid, n=len(sub), seconds=el,
                 evals=sc.n_eval, cache_hits=sc.cache.hits,
                 cache_misses=sc.cache.misses,
+                disk_hits=getattr(sc.cache, 'disk_hits', 0),
                 crossed=int(out.get('crosses_label', pd.Series(dtype=bool)).sum()))
 
 
@@ -560,6 +598,42 @@ CHUNK = 100          # combinations per chunk: ~1-2 h, so a lost chunk is cheap
 
 
 BANK = {}
+SEEDS = {}
+
+
+def load_seeds(from_mode='B'):
+    """B's ADOPTED indicator parameters, keyed on the 4-tuple that A and C share
+    with it (the exit slot is excluded: B never used one, and a B combination
+    corresponds to every C combination with the same first four slots).
+
+    WHY THIS IS ALMOST ALWAYS A NO-OP, stated so nobody later mistakes it for a
+    bigger lever than it is: B's adopted values are GRID POINTS BY
+    CONSTRUCTION -- chosen from the same grids A and C search -- so offering
+    them as extra candidates offers candidates the exhaustive per-knob search
+    already evaluates.
+
+    THE ONE CASE THAT IS REAL: B ran uncapped, A and C are capped at each
+    indicator's six highest-impact parameters. For the four indicators above the
+    cap, B may have adopted a value for a parameter A and C will never tune. THAT
+    value is new information, and it is offered as a candidate for an otherwise
+    frozen parameter -- adopted only if it beats the default, same rule as
+    everything else."""
+    out = {}
+    f = os.path.join(ROOTOUT, 'gate2_tuned_mode%s.csv' % from_mode)
+    fs = ([f] if os.path.exists(f) else
+          sorted(glob.glob(os.path.join(CK, 'mode%s_*' % from_mode, 'chunk_*.csv'))))
+    for x in fs:
+        try:
+            d = pd.read_csv(x)
+        except Exception:
+            continue
+        if 'ip2' not in d.columns:
+            continue
+        for r in d.itertuples():
+            if not isinstance(getattr(r, 'ip2', None), str):
+                continue
+            out[(r.c1, r.c2, r.vol, r.base)] = json.loads(r.ip2)
+    return out
 
 
 def load_bank(mode, sname):
@@ -582,7 +656,8 @@ def load_bank(mode, sname):
     return bank
 
 
-def plan_chunks(mode, sname, srt=False, cap=None, staged=False, deepen=False):
+def plan_chunks(mode, sname, srt=False, cap=None, staged=False,
+                deepen=False, disk=False, seed_from=None):
     f = os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode)
     n = len(pd.read_csv(f, usecols=['slice']).query('slice == @sname'))
     d = os.path.join(CK, 'mode%s_%s%s' % (mode, sname, '_deep' if deepen else ''))
@@ -590,7 +665,7 @@ def plan_chunks(mode, sname, srt=False, cap=None, staged=False, deepen=False):
     for cid, lo in enumerate(range(0, n, CHUNK)):
         if not os.path.exists(os.path.join(d, 'chunk_%05d.csv' % cid)):
             todo.append((mode, sname, lo, min(lo + CHUNK, n), cid, srt,
-                         cap, staged, deepen))
+                         cap, staged, deepen, disk, seed_from))
     return n, todo
 
 
@@ -612,13 +687,14 @@ def progress_row(mode, r, done, total, t0, spent):
 
 
 def run_mode(mode, jobs=None, slices=('trend', 'chop'), srt=False,
-             cap=None, staged=False, deepen=False):
+             cap=None, staged=False, deepen=False, disk=False, seed_from=None):
     import multiprocessing as mp
     jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
     t0 = time.time()
     for sname in slices:
         total, todo = plan_chunks(mode, sname, srt=srt, cap=cap,
-                                  staged=staged, deepen=deepen)
+                                  staged=staged, deepen=deepen, disk=disk,
+                                  seed_from=seed_from)
         done = total - sum(t[3] - t[2] for t in todo)
         spent = 0.0
         print('GATE 2 mode %s %s: %s combinations, %d chunks queued, %d workers'
@@ -664,7 +740,8 @@ def main():
     slices = (sl,) if sl else ('trend', 'chop')
     D = run_mode(mode, jobs=opt('--jobs', int), slices=slices,
                  srt='--sorted' in a, cap=opt('--cap', int),
-                 staged='--staged' in a, deepen='--deepen' in a)
+                 staged='--staged' in a, deepen='--deepen' in a,
+                 disk='--disk' in a, seed_from=opt('--seed-from', str))
     print('\nMODE %s TUNED: %d rows, %d crossing the gate 2 label'
           % (mode, len(D), int(D.get('crosses_label',
                                      pd.Series(dtype=bool)).sum())), flush=True)
