@@ -126,3 +126,25 @@ re-running.
 
 Round-2 deepening re-runs B under current code and would resolve both this and
 the parameter-order split in one pass.
+
+## `gate2_rescoreW3_modeB.csv` — a PARTIAL DIAGNOSTIC, not mode B's score
+
+**Never report this as mode B's stitched blind score.** B's official stitched
+number comes from round-2 deepening.
+
+B's two blind windows were traded with **different** parameter sets — W2 with
+the W1-tuned set, W3 with the W1+W2-tuned set — and B banked only the second.
+So W3 reproduces exactly from disk and **W2 cannot be reproduced at all**.
+
+Scoring W2 with the banked second-stage set would make the file look complete
+and would be **leakage**: those parameters were tuned on W1+W2, so trading W2
+with them scores a window the tuner had already seen, inflating every figure in
+the favourable direction. It was not done. A missing number beats a wrong one.
+
+What the file gives: one correctly-computed blind window per combination with
+the full KPI stack including `w3_ulcer_R`, which the original run never stored
+per window. Comparable with A and C, which compute their windows the same way.
+Columns are prefixed `w3_`; the originals are preserved unchanged alongside.
+
+**The label-crossing question — how many of B's crossings change under correct
+stitching — waits for round 2.** It cannot be answered from one window.
