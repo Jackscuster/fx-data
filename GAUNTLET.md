@@ -456,6 +456,27 @@ level on the same bar, and that is correct.
 would widen a current-ATR trail and give back profit already made. Freezing the
 base stops volatility that arrives after the decision from rewriting it.
 
+> ### THE STITCHING DEFECT — mode B averaged where the spec says stitch
+>
+> `GAUNTLET.md` scores a candidate on **stitched** blind performance: ONE equity
+> curve over W2 then W3. **Mode B computed it by averaging the two windows'
+> aggregates** — Sharpe, Sortino and profit factor averaged, max drawdown taken
+> as the larger of the two. That understates a drawdown running across the seam,
+> and an average of two Sharpes is not the Sharpe of anything.
+>
+> **Modes A and C concatenate the blind returns and score one curve**, which is
+> what this document asks for.
+>
+> **`max_dd_R`, `calmar`, `sharpe`, `sortino` and `profit_factor` are therefore
+> NOT comparable between B and A/C.** `total_R`, `expectancy_R`, `n_blind` and
+> the trade counts ARE — they sum and average identically either way. Any
+> cross-mode ratio must be taken from the comparable set or from re-scored B
+> numbers, never from B's originals.
+>
+> Handled exactly like the parameter-order split: B is reproducible at commit
+> `a86edb0`, the defect is recorded rather than retro-fixed, and round-2
+> deepening re-runs B under current code and resolves both at once.
+
 **Verified before tuning started** — `code/l2legcheck.py`, six hand-computed
 cases, all passing: the frozen base is the previous bar's, an ATR jump after TP1
 changes nothing, TP1 tagged but not exceeded by X does not scratch the runner,
@@ -648,11 +669,30 @@ No floor is set on Ulcer.
 > walked toward. The parameter sets themselves were chosen for a different
 > objective.
 >
-> **Left as-is pending Jack's decision.** The options are to change the
-> adoption rule to total R for A and C (which splits them from B on objective as
-> well as ordering), to change it at round-2 deepening for everything at once,
-> or to accept that the ranking selects the best available rather than the best
-> reachable. Recorded here so the choice is made deliberately.
+> ### RESOLVED — the adoption rule changes at ROUND-2 DEEPENING, all modes at once
+>
+> **Declared before any round-2 work exists.** Round 1 keeps its current
+> adoption rule and stays internally consistent across A, B and C; round 2
+> changes it for everything in one pass, so no mode is ever half-converted.
+>
+> **The round-2 adoption rule is Jack's co-equal rule applied to TUNING**, not
+> total R alone:
+>
+>     among candidate settings on the TUNING window:
+>       rank by total R
+>       rank by Sortino
+>       adopt the best AVERAGE rank, Calmar breaking ties,
+>       if and only if it beats the DEFAULT under the same comparison
+>
+> This is the same rule that ranks the graduates, moved inside the search. **The
+> tuner's compass and the final ranking then point at the same thing**, which is
+> the whole point: round 1's tuner walked toward per-trade expectancy and was
+> then judged on total R, and no re-ranking can recover configurations it never
+> walked toward.
+>
+> Minimum-trade rules and the adopt-only-if-better-than-default discipline are
+> unchanged. Round 2's combinations count toward the deflation total like
+> everything else.
 
 ### THE INVERSION ARM, TRIGGERED
 
