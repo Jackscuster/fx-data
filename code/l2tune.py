@@ -587,6 +587,12 @@ def run_chunk(args):
                     'final_R_w1w2': res['stage2'].get('final_R'),
                     'cheap_ip': res['stage2'].get('cheap_ip'),
                     'cheap_risk': res['stage2'].get('cheap_risk'),
+                    # stage 1's cheap set was the one stage still unbanked.
+                    # "Every tuning stage's adopted sets" means every one, and
+                    # mode B is the standing proof of what a missing stage costs.
+                    'cheap_ip_w1': res['stage1'].get('cheap_ip'),
+                    'cheap_risk_w1': res['stage1'].get('cheap_risk'),
+                    'cheap_gain_R_w1': res['stage1'].get('cheap_gain'),
                     'resumed': res['stage2'].get('resumed')})
         rows.append(row)
     el = time.time() - t0
