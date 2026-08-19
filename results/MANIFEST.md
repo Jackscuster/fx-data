@@ -105,3 +105,24 @@ may re-tune B under impact order before W4.
 | `gate2_progress_mode*.csv` | per-chunk progress: combos, engine-hours, projection, label crossings | — |
 | `gate2/` | per-chunk checkpoints. **Not in the repo** — regenerable, retained locally, never deleted | — |
 | `gate2_cache/` | disk-backed indicator cache, 20 GB LRU. **Not in the repo**, pure speed device, verified byte-identical to fresh computation | — |
+
+## Blind scoring changed between mode B and modes A/C
+
+`GAUNTLET.md` says the score is **stitched** blind performance — one equity
+curve over W2 then W3. Mode B computed it by **averaging the two windows'
+aggregates**: Sharpe, Sortino and profit factor averaged, and max drawdown taken
+as the larger of the two. That understates a drawdown running across the seam,
+and an average of two Sharpes is not the Sharpe of anything.
+
+Modes A and C concatenate the blind trade returns and score the stitched curve
+once, which is what the spec asks for. **`max_dd_R`, `calmar`, `sharpe`,
+`sortino` and `profit_factor` are therefore not directly comparable between B
+and A/C.** `total_R`, `expectancy_R`, `n_blind` and the trade counts are — they
+sum and average identically either way.
+
+`ulcer_R` (root-mean-square drawdown) exists for A and C only; mode B predates
+it and per-trade returns are not banked, so it cannot be back-filled without
+re-running.
+
+Round-2 deepening re-runs B under current code and would resolve both this and
+the parameter-order split in one pass.

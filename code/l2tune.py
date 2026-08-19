@@ -221,12 +221,17 @@ def _agg(r):
     pf = gp / gl if gl > 0 else (np.inf if gp > 0 else 0.0)
     sd = float(r.std(ddof=1)) if n > 1 else 0.0
     dn = float(r[r < 0].std(ddof=1)) if (r < 0).sum() > 1 else 0.0
-    eq = np.cumsum(r); dd = float((np.maximum.accumulate(eq) - eq).max())
+    eq = np.cumsum(r); ddv = np.maximum.accumulate(eq) - eq
+    dd = float(ddv.max())
+    # Ulcer index in R: the root-mean-square drawdown, which unlike max DD is
+    # not decided by one bad day. Diagnostic; no floor is set on it.
+    ulcer = float(np.sqrt(np.mean(ddv ** 2)))
     return dict(n=n, expectancy_R=mean, total_R=tot, profit_factor=pf,
                 win_rate=float((r > 0).mean()),
                 sharpe=(mean / sd * np.sqrt(252)) if sd > 0 else 0.0,
                 sortino=(mean / dn * np.sqrt(252)) if dn > 0 else 0.0,
-                max_dd_R=dd, calmar=(tot / dd) if dd > 0 else 0.0)
+                max_dd_R=dd, ulcer_R=ulcer,
+                calmar=(tot / dd) if dd > 0 else 0.0, _r=r)
 
 
 class Scorer:
@@ -484,15 +489,17 @@ def full_walk(sc, combo, mode, sname, code, plan, cap=None, staged=False,
     if not parts:
         blind = None
     else:
-        n = sum(p['n'] for p in parts)
-        tot = sum(p['total_R'] for p in parts)
-        dd = max(p['max_dd_R'] for p in parts)
-        blind = dict(n_blind=n, expectancy_R=tot / n, total_R=tot,
-                     profit_factor=float(np.mean([p['profit_factor'] for p in parts])),
-                     sharpe=float(np.mean([p['sharpe'] for p in parts])),
-                     sortino=float(np.mean([p['sortino'] for p in parts])),
-                     max_dd_R=dd, calmar=(tot / dd) if dd > 0 else 0.0,
-                     n_w2=(w2['n'] if w2 else 0), n_w3=(w3['n'] if w3 else 0))
+        # GAUNTLET.md: "score = stitched blind performance". Stitched means ONE
+        # equity curve over W2 then W3, not two curves averaged. The difference
+        # is not cosmetic for drawdown: averaging per-window max DD understates
+        # a drawdown that runs across the seam, and averaging per-window Sharpe
+        # and PF is not a Sharpe or a PF of anything. Mode B used the averaged
+        # form; A and C use the stitched one, and MANIFEST.md records it.
+        st = _agg(np.concatenate([p['_r'] for p in parts]))
+        blind = {k: v for k, v in st.items() if k != '_r'}
+        blind['n_blind'] = blind.pop('n')
+        blind['n_w2'] = (w2['n'] if w2 else 0)
+        blind['n_w3'] = (w3['n'] if w3 else 0)
     return dict(blind=blind, ip1=ip1, rk1=rk1, ip2=ip2, rk2=rk2,
                 stage1=i1, stage2=i2)
 
@@ -750,3 +757,26 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# ==========================================================================
+# THE FINAL RANKING — production and risk-aversion, co-equal
+# ==========================================================================
+def rank_graduates(D):
+    """GAUNTLET.md: rank on total blind R, rank on Sortino, final position is
+    the AVERAGE of the two ranks. Calmar breaks ties.
+
+    Co-equal by construction: neither metric can dominate, because each
+    contributes exactly one rank. Averaging RANKS rather than the metrics
+    themselves is deliberate -- total R is unbounded and Sortino is not, so
+    averaging the raw numbers would let one scale swamp the other.
+
+    Governs ordering, round-2 deepening priority, and presentation.
+    """
+    D = D.copy()
+    D['rank_total_R'] = D['total_R'].rank(ascending=False, method='min')
+    D['rank_sortino'] = D['sortino'].rank(ascending=False, method='min')
+    D['rank_score'] = (D['rank_total_R'] + D['rank_sortino']) / 2.0
+    D = D.sort_values(['rank_score', 'calmar'], ascending=[True, False])
+    D['final_rank'] = range(1, len(D) + 1)
+    return D

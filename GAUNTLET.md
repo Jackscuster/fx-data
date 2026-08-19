@@ -592,6 +592,68 @@ inherited untested.
 Overlap available to seed from: **74.5% of A's trend combinations and 42.0% of
 A's chop combinations also appear in B.**
 
+### RANKING AND INTENT — what the search is actually for
+
+**1. GATES ARE FLOORS, NEVER TARGETS.** Passing a gate is the sub-goal. The goal
+is the highest-performing strategies. **The tuner maximises; it never
+satisfices.** Nothing selects on "cleared the label" — `crosses_label` is
+computed for reporting and is read by no tuning decision.
+
+**2. FINAL RANKING OF ALL GRADUATES — production and risk-aversion co-equal.**
+
+    rank on total R over the blind windows
+    rank on Sortino
+    final position = the AVERAGE of the two ranks
+    Calmar breaks ties
+
+Ranks are averaged rather than the metrics themselves, because total R is
+unbounded and Sortino is not — averaging the raw numbers would let one scale
+swamp the other. This governs ordering, **round-2 deepening priority**, and
+presentation. `l2tune.rank_graduates()`.
+
+**3. THE FULL KPI STACK IS TRACKED AND REPORTED PER COMBINATION**: expectancy,
+profit factor, Sharpe, Sortino, Calmar, max drawdown, **Ulcer index**, win rate,
+and trade counts per window. Floors stay floors; diagnostics stay diagnostics.
+No floor is set on Ulcer.
+
+**4. TOTAL BLIND R IS CAPTURED PER COMBINATION** — confirmed present as
+`total_R`, not derived from expectancy after the fact.
+
+> ### THE OBJECTIVE MISMATCH — flagged, not fixed, because fixing it is Jack's call
+>
+> Item 1 asked whether anything optimises to a threshold. Nothing does. But
+> there is a worse problem in the same family, and it is measured rather than
+> suspected:
+>
+> **The tuner maximises EXPECTANCY (per-trade R). The ranking rewards TOTAL R
+> (per-window).** Those are not the same objective, and they diverge exactly
+> where it matters.
+>
+> Measured on 3,164 banked mode B trend combinations with valid blind windows:
+> the overall rank correlation is high, 0.976 — but **only 12 of the top 50 by
+> expectancy are also in the top 50 by total R.**
+>
+> | | expectancy | total R | trades |
+> |---|---|---|---|
+> | best by expectancy | 0.882 | 116.4 | 132 |
+> | best by total R | 0.541 | **161.1** | 298 |
+>
+> Maximising expectancy systematically selects **fewer, higher-quality trades**.
+> The top-by-expectancy set runs 130–170 blind trades; the top-by-total-R set
+> runs 230–694. The tuner is actively trading total R away for per-trade
+> quality, and then the ranking asks for total R back.
+>
+> **This cannot be fully repaired by a results-reading rule.** Re-ranking finds
+> the best of what was explored; it cannot find configurations the tuner never
+> walked toward. The parameter sets themselves were chosen for a different
+> objective.
+>
+> **Left as-is pending Jack's decision.** The options are to change the
+> adoption rule to total R for A and C (which splits them from B on objective as
+> well as ordering), to change it at round-2 deepening for everything at once,
+> or to accept that the ranking selects the best available rather than the best
+> reachable. Recorded here so the choice is made deliberately.
+
 ### THE INVERSION ARM, TRIGGERED
 
 After normal tuning, chop combinations **still failing any of the six gate-2
