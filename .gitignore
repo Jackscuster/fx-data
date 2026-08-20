@@ -55,3 +55,8 @@ results/gate1_survivors_modeC.csv
 
 results/gate2/
 results/gate2_run_*.log
+
+results/gate2_progress_mode*.csv
+results/gate2_rescoreW3.log
+results/gate2_impact.log
+results/gate1_nullfresh.log
