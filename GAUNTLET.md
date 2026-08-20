@@ -719,7 +719,7 @@ No floor is set on Ulcer.
 > | mean expectancy | **+0.0827** | **−0.0075** |
 > | mean total R | +13.05 | −0.40 |
 > | share positive | 55.5% | 45.4% |
-> | Spearman W2 vs W3 expectancy | \multicolumn — **−0.006** | |
+> | Spearman corr, W2 vs W3 expectancy | **−0.006** — essentially zero | |
 >
 > The second re-tune, given MORE data, produced settings that performed worse in
 > their blind window than the first tune did in its. That is the shape of
