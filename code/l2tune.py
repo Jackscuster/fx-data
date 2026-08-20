@@ -220,7 +220,18 @@ def _agg(r):
     gp = float(r[r > 0].sum()); gl = float(-r[r < 0].sum())
     pf = gp / gl if gl > 0 else (np.inf if gp > 0 else 0.0)
     sd = float(r.std(ddof=1)) if n > 1 else 0.0
-    dn = float(r[r < 0].std(ddof=1)) if (r < 0).sum() > 1 else 0.0
+    # SORTINO IS UNDEFINED WHEN DOWNSIDE DEVIATION IS ZERO, and here that is a
+    # STRUCTURAL case rather than a rare one: every full-stop loss is exactly
+    # the same R by construction, so a combination whose losses are all full
+    # stops has identically-valued negative returns and zero downside spread.
+    # Dividing by it produced Sortinos of 1e15 -- and Sortino is half the final
+    # ranking rule, so an undefined value would rank first by definition.
+    # Reported as NaN and ranked last, never as a number.
+    neg = r[r < 0]
+    dn = float(neg.std(ddof=1)) if len(neg) > 1 else 0.0
+    scale = float(np.abs(r).mean()) or 1.0
+    if dn <= 1e-9 * scale:
+        dn = 0.0
     eq = np.cumsum(r); ddv = np.maximum.accumulate(eq) - eq
     dd = float(ddv.max())
     # Ulcer index in R: the root-mean-square drawdown, which unlike max DD is
@@ -229,7 +240,7 @@ def _agg(r):
     return dict(n=n, expectancy_R=mean, total_R=tot, profit_factor=pf,
                 win_rate=float((r > 0).mean()),
                 sharpe=(mean / sd * np.sqrt(252)) if sd > 0 else 0.0,
-                sortino=(mean / dn * np.sqrt(252)) if dn > 0 else 0.0,
+                sortino=(mean / dn * np.sqrt(252)) if dn > 0 else np.nan,
                 max_dd_R=dd, ulcer_R=ulcer,
                 calmar=(tot / dd) if dd > 0 else 0.0, _r=r)
 
@@ -780,8 +791,15 @@ def rank_graduates(D):
     Governs ordering, round-2 deepening priority, and presentation.
     """
     D = D.copy()
+    n = len(D)
     D['rank_total_R'] = D['total_R'].rank(ascending=False, method='min')
-    D['rank_sortino'] = D['sortino'].rank(ascending=False, method='min')
+    # An undefined Sortino ranks LAST, never first. na_option='bottom' is the
+    # whole guard: with the default, NaN ranks NaN, rank_score becomes NaN, and
+    # a combination with no measurable downside would sort to the top of a
+    # descending sort in some code paths.
+    D['rank_sortino'] = D['sortino'].rank(ascending=False, method='min',
+                                          na_option='bottom')
+    D['sortino_undefined'] = D['sortino'].isna()
     D['rank_score'] = (D['rank_total_R'] + D['rank_sortino']) / 2.0
     D = D.sort_values(['rank_score', 'calmar'], ascending=[True, False])
     D['final_rank'] = range(1, len(D) + 1)
