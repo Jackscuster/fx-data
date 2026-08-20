@@ -693,6 +693,50 @@ No floor is set on Ulcer.
 > Minimum-trade rules and the adopt-only-if-better-than-default discipline are
 > unchanged. Round 2's combinations count toward the deflation total like
 > everything else.
+>
+> ### ROUND-2 RE-TUNE VALUE TEST — declared before round 2 exists
+>
+> **Round 2 also asks whether the second tuning step is worth running at all.**
+> For every combination, both variants are scored on **blind W3**:
+>
+>     (a) keep the W1-tuned settings unchanged
+>     (b) apply the W1+W2 re-tune          <- what the machine does today
+>
+> **If (a) systematically beats (b), the second tune step is destroying value
+> and the walk-forward machine drops it going forward: tune once, test blind
+> twice.** Decided by the data, and recorded either way — a null result is
+> reported as loudly as a positive one.
+>
+> **Both variants are clean blind tests.** W3 never entered either tuning step:
+> under (a) the settings saw only W1, under (b) they saw W1+W2. Neither reads
+> W3 before scoring it, so the comparison is fair and nothing leaks.
+>
+> **What motivated it**, from the W3 re-score of mode B (commit `a579ca6`,
+> 5,400 combinations, W2 recovered exactly by subtraction):
+>
+> | | W2 — blind test of the W1 tune | W3 — blind test of the W1+W2 re-tune |
+> |---|---|---|
+> | mean expectancy | **+0.0827** | **−0.0075** |
+> | mean total R | +13.05 | −0.40 |
+> | share positive | 55.5% | 45.4% |
+> | Spearman W2 vs W3 expectancy | \multicolumn — **−0.006** | |
+>
+> The second re-tune, given MORE data, produced settings that performed worse in
+> their blind window than the first tune did in its. That is the shape of
+> overfitting. It is not proof — the two windows were traded with different
+> parameter sets, so some decorrelation is expected — which is exactly why it is
+> being settled by a controlled test rather than by this table.
+>
+> **This is the one place the walk-forward machine itself may change.** Section
+> WINDOWS fixes it as tune-W1 → blind-W2 → retune-W1+W2 → blind-W3; if the test
+> says the second step subtracts value, the machine becomes tune-W1 →
+> blind-W2 → blind-W3 and this document is amended with the evidence beside it.
+> Dropping it would also halve gate-2 tuning cost, which is a consequence and
+> not a reason.
+>
+> **Implementation is nearly free where the sets are banked.** Variant (a)'s W3
+> score is one extra scoring call, because A and C bank `ip1`/`risk1`. Mode B
+> does not, which is why B is re-run wholesale at round 2 regardless.
 
 ### THE INVERSION ARM, TRIGGERED
 
