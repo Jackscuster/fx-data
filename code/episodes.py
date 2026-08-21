@@ -48,6 +48,7 @@ import numpy as np, pandas as pd
 PX = os.path.join(ROOTDATA, 'px28.csv')
 EV = os.path.join(ROOTOUT, 'entry_events.csv')
 L1 = os.path.join(ROOTOUT, 'layer1_states.csv')
+LEG = os.path.join(ROOTOUT, 'layer1_legacy.csv')   # generations 1-3
 SPLIT = pd.Timestamp('2016-01-01')
 NSHUF = int(os.environ.get('FX_NSHUF', 60))
 NBOOT = int(os.environ.get('FX_NBOOT', 2000))
@@ -219,13 +220,29 @@ def main():
 
 def excursion(px):
     """Every excursion contrast that ever carried a t, redone on blocks."""
-    if not (os.path.exists(EV) and os.path.exists(L1)):
-        print('\nentry_events.csv or layer1_states.csv missing; skipping')
+    # THESE ARE GENERATION-1 CONTRASTS and they read generation-1 columns, which
+    # live in layer1_legacy.csv. layer1_states.csv was narrowed to generation 4
+    # only (shape2 / combined2) on 2026-08-13 and this read was not moved with
+    # it, so the module has raised ValueError on every run since -- including
+    # every CI run. results/MANIFEST.md already said where these columns went;
+    # nothing here needed inventing, only following.
+    #
+    # Used below: state_28, tier (attribute access) and shape (bracket access,
+    # X['shape'] -- which is why a grep for `.shape` missed it and my first
+    # patch dropped a column that was live). `combined` and `activity` are
+    # genuinely unreferenced and are not sourced.
+    if not (os.path.exists(EV) and os.path.exists(LEG)):
+        print('\nentry_events.csv or layer1_legacy.csv missing; skipping')
         return
     E = pd.read_csv(EV); E['date'] = pd.to_datetime(E.date)
-    S = pd.read_csv(L1, parse_dates=['date'],
-                    usecols=['date', 'pair', 'state_28', 'tier', 'shape',
-                             'combined', 'activity'])
+    have = set(pd.read_csv(LEG, nrows=0).columns)
+    need = ['date', 'pair', 'state_28', 'tier', 'shape']
+    missing = [c for c in need if c not in have]
+    if missing:
+        print('\nlayer1_legacy.csv lacks %s; skipping the excursion contrasts'
+              % missing)
+        return
+    S = pd.read_csv(LEG, parse_dates=['date'], usecols=need)
     X = E.merge(S, on=['date', 'pair'], how='left')
     X = X[X.oos].copy()
     print('\n' + '=' * 74)
