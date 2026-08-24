@@ -1,0 +1,497 @@
+
+=== build.py ===
+px28 (6926, 28) 2026-08-14
+sanity checks passed
+
+=== sc2.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc2.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc2.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc2.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc2.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc3.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc3.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc4.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc4.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc4.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc4.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc4.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc4.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== sc5.py ===
+done 28/28, todo 0
+ALL DONE
+
+=== rank2.py ===
+pairs 28  signals 1080
+
+tested 1066  |  expected |t|>2 by chance: 53  |  observed: 648
+survive BH-FDR 5%: 608
+of FDR survivors, sign HELD out-of-sample: 364 (60%)
+of ALL signals, sign held OOS: 54% (coin flip = 50%)
+
+=== TOP 25 — significant IS, confirmed OOS, sorted by strength ===
+        sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
+     bbw_60    -0.0321 -21.0150    0.9286  -9.8888     0.8571  True
+     bbw_40    -0.0297 -19.6195    0.8214 -13.0649     0.7857  True
+     bbw_90    -0.0283 -18.3517    0.8571 -10.6031     0.7143  True
+   maxdd_40     0.0266  17.6497    0.8929   7.6997     0.7500  True
+     bbw_20    -0.0248 -16.4923    0.9286  -9.5964     0.6071  True
+    bbw_120    -0.0252 -16.2632    0.8571 -10.5832     0.7500  True
+   maxdd_60     0.0244  16.0004    1.0000   6.9881     0.6786  True
+  maxdd_250     0.0246  15.5252    0.8571   5.4536     0.5714  True
+ rngcomp_90     0.0241  15.4455    0.7500   5.8373     0.7500  True
+   maxdd_10     0.0225  15.1679    0.8571   7.8007     0.6786  True
+  maxdd_120     0.0225  14.3884    0.8214   5.4676     0.6071  True
+   z_bbw_90    -0.0229 -13.8096    0.8214  -9.7239     0.8214  True
+  z_bbw_120    -0.0228 -13.7427    0.7500 -11.4098     0.8571  True
+     bbw_10    -0.0202 -13.4279    0.7857  -7.4959     0.7143  True
+   hurst_90    -0.0201 -13.1818    0.8571  -8.9955     0.8571  True
+   maxdd_20     0.0195  13.1639    0.7857  10.6638     0.7143  True
+ z_maxdd_40     0.0200  12.3655    0.8214   8.9276     0.6786  True
+   dens_120     0.0189  12.3492    0.7857   9.2388     0.8214  True
+  absmom_60    -0.0184 -12.2022    0.8571  -1.1314     0.5714  True
+    maxdd_5     0.0179  12.1264    0.8571   6.3303     0.7857  True
+  ddhigh_60     0.0177  11.9310    0.7500   5.6530     0.6429  True
+      ef_60    -0.0179 -11.8569    0.8571  -1.1775     0.5357  True
+ampratio_60     0.0179  11.8472    0.8571   1.1574     0.5357  True
+  rngvol_90    -0.0178 -11.7482    0.7500  -6.2240     0.6786  True
+    bbw_250    -0.0181 -11.7373    0.8571  -5.6412     0.6786  True
+
+=== TOP 15 TREND (confirmed) ===
+        sig  spread_is    t_is  agree_is   t_oos  agree_oos  held
+   maxdd_40     0.0266 17.6497    0.8929  7.6997     0.7500  True
+   maxdd_60     0.0244 16.0004    1.0000  6.9881     0.6786  True
+  maxdd_250     0.0246 15.5252    0.8571  5.4536     0.5714  True
+ rngcomp_90     0.0241 15.4455    0.7500  5.8373     0.7500  True
+   maxdd_10     0.0225 15.1679    0.8571  7.8007     0.6786  True
+  maxdd_120     0.0225 14.3884    0.8214  5.4676     0.6071  True
+   maxdd_20     0.0195 13.1639    0.7857 10.6638     0.7143  True
+ z_maxdd_40     0.0200 12.3655    0.8214  8.9276     0.6786  True
+   dens_120     0.0189 12.3492    0.7857  9.2388     0.8214  True
+    maxdd_5     0.0179 12.1264    0.8571  6.3303     0.7857  True
+  ddhigh_60     0.0177 11.9310    0.7500  5.6530     0.6429  True
+ampratio_60     0.0179 11.8472    0.8571  1.1574     0.5357  True
+    dens_60     0.0177 11.5845    0.8214  8.3197     0.7143  True
+ z_maxdd_60     0.0191 11.5529    0.7857  4.5449     0.7143  True
+      zc_40     0.0169 11.2073    0.8214  3.6119     0.5714  True
+
+=== TOP 15 CHOP (confirmed) ===
+       sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
+    bbw_60    -0.0321 -21.0150    0.9286  -9.8888     0.8571  True
+    bbw_40    -0.0297 -19.6195    0.8214 -13.0649     0.7857  True
+    bbw_90    -0.0283 -18.3517    0.8571 -10.6031     0.7143  True
+    bbw_20    -0.0248 -16.4923    0.9286  -9.5964     0.6071  True
+   bbw_120    -0.0252 -16.2632    0.8571 -10.5832     0.7500  True
+  z_bbw_90    -0.0229 -13.8096    0.8214  -9.7239     0.8214  True
+ z_bbw_120    -0.0228 -13.7427    0.7500 -11.4098     0.8571  True
+    bbw_10    -0.0202 -13.4279    0.7857  -7.4959     0.7143  True
+  hurst_90    -0.0201 -13.1818    0.8571  -8.9955     0.8571  True
+ absmom_60    -0.0184 -12.2022    0.8571  -1.1314     0.5714  True
+     ef_60    -0.0179 -11.8569    0.8571  -1.1775     0.5357  True
+ rngvol_90    -0.0178 -11.7482    0.7500  -6.2240     0.6786  True
+   bbw_250    -0.0181 -11.7373    0.8571  -5.6412     0.6786  True
+rngvol_120    -0.0179 -11.6932    0.7857  -8.2992     0.7143  True
+  z_bbw_60    -0.0188 -11.5546    0.8214 -10.2714     0.7500  True
+
+=== BY VARIANT ===
+          n  fdr      held       best
+var                                  
+delta   358  187  0.418994  10.079216
+level   349  229  0.650430  21.014977
+zscore  359  192  0.557103  13.809558
+
+=== rank3.py ===
+pairs 28  signals 982
+
+tested 980  |  expected |t|>2 by chance: 49  |  observed: 647
+survive BH-FDR 5%: 634
+of FDR survivors, sign HELD out-of-sample: 473 (75%)
+of ALL signals, sign held OOS: 68% (coin flip = 50%)
+
+=== TOP 25 — significant IS, confirmed OOS, sorted by strength ===
+           sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
+   panelvol_40    -0.0360 -23.8425    0.9643 -17.5982     0.8571  True
+  panelvol_180    -0.0339 -22.4661    0.9643 -10.6006     0.6429  True
+  panelvol_120    -0.0333 -22.1056    0.9286  -9.4463     0.7857  True
+      maxdu_90    -0.0326 -21.5040    0.9286 -10.7398     0.7500  True
+  paneldisp_40    -0.0311 -20.5464    0.8929 -19.6841     0.9286  True
+  paneldisp_10    -0.0311 -20.5384    0.9286 -17.0558     0.8929  True
+   panelvol_30    -0.0307 -20.3742    0.9643 -19.0383     0.8929  True
+      maxdu_20    -0.0305 -20.3183    0.8929 -10.5892     0.6786  True
+      maxdu_40    -0.0299 -19.9140    0.9643 -14.7107     0.7857  True
+ paneldisp_180    -0.0307 -19.8877    0.9286  -8.6615     0.7143  True
+  paneldisp_60    -0.0301 -19.8172    0.8214 -16.7182     0.8571  True
+      maxdu_60    -0.0295 -19.6458    0.9643 -14.1697     0.7143  True
+  paneldisp_90    -0.0298 -19.6389    0.8929 -10.6249     0.7857  True
+  paneldisp_30    -0.0296 -19.5166    0.9286 -19.5974     0.8929  True
+      maxdu_30    -0.0289 -19.3306    0.8929 -12.5451     0.7500  True
+   panelvol_10    -0.0287 -19.0117    0.9286 -14.3548     0.8929  True
+z_paneldisp_60    -0.0300 -18.5168    0.9286 -23.3272     0.9286  True
+ paneldisp_120    -0.0277 -18.3851    0.8571  -9.2627     0.7143  True
+   panelvol_15    -0.0275 -18.1270    0.9286 -15.1225     0.8571  True
+  paneldisp_15    -0.0271 -18.0256    0.9286 -18.7948     0.8929  True
+  paneldisp_20    -0.0269 -17.8712    0.9286 -20.4941     0.8929  True
+      maxdd_40     0.0266  17.6497    0.8929   7.6997     0.7500  True
+   panelvol_60    -0.0270 -17.5800    0.8214 -13.5154     0.7500  True
+  panelvol_250    -0.0275 -17.4890    0.9286  -4.1557     0.6786  True
+      maxdd_30     0.0260  17.3518    0.8929   9.5524     0.7143  True
+
+=== TOP 15 TREND (confirmed) ===
+        sig  spread_is    t_is  agree_is   t_oos  agree_oos  held
+   maxdd_40     0.0266 17.6497    0.8929  7.6997     0.7500  True
+   maxdd_30     0.0260 17.3518    0.8929  9.5524     0.7143  True
+   maxdd_60     0.0244 16.0004    1.0000  6.9881     0.6786  True
+  maxdd_250     0.0246 15.5252    0.8571  5.4536     0.5714  True
+  maxdd_180     0.0242 15.4137    0.7857  4.6019     0.6429  True
+   maxdd_10     0.0225 15.1679    0.8571  7.8007     0.6786  True
+   maxdd_15     0.0225 15.0041    0.8571  6.1936     0.6786  True
+  maxdd_120     0.0225 14.3884    0.8214  5.4676     0.6071  True
+legcorr_250     0.0216 13.8355    0.9286 10.3941     0.7143  True
+  ddarea_10     0.0200 13.5090    0.8214  5.6297     0.6786  True
+legcorr_180     0.0207 13.4674    0.9286 10.4055     0.8571  True
+   maxdd_20     0.0195 13.1639    0.7857 10.6638     0.7143  True
+ z_maxdd_40     0.0200 12.3655    0.8214  8.9276     0.6786  True
+    maxdd_5     0.0179 12.1264    0.8571  6.3303     0.7857  True
+  ddarea_40     0.0181 12.0466    0.8214  4.9953     0.6429  True
+
+=== TOP 15 CHOP (confirmed) ===
+          sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
+  panelvol_40    -0.0360 -23.8425    0.9643 -17.5982     0.8571  True
+ panelvol_180    -0.0339 -22.4661    0.9643 -10.6006     0.6429  True
+ panelvol_120    -0.0333 -22.1056    0.9286  -9.4463     0.7857  True
+     maxdu_90    -0.0326 -21.5040    0.9286 -10.7398     0.7500  True
+ paneldisp_40    -0.0311 -20.5464    0.8929 -19.6841     0.9286  True
+ paneldisp_10    -0.0311 -20.5384    0.9286 -17.0558     0.8929  True
+  panelvol_30    -0.0307 -20.3742    0.9643 -19.0383     0.8929  True
+     maxdu_20    -0.0305 -20.3183    0.8929 -10.5892     0.6786  True
+     maxdu_40    -0.0299 -19.9140    0.9643 -14.7107     0.7857  True
+paneldisp_180    -0.0307 -19.8877    0.9286  -8.6615     0.7143  True
+ paneldisp_60    -0.0301 -19.8172    0.8214 -16.7182     0.8571  True
+     maxdu_60    -0.0295 -19.6458    0.9643 -14.1697     0.7143  True
+ paneldisp_90    -0.0298 -19.6389    0.8929 -10.6249     0.7857  True
+ paneldisp_30    -0.0296 -19.5166    0.9286 -19.5974     0.8929  True
+     maxdu_30    -0.0289 -19.3306    0.8929 -12.5451     0.7500  True
+
+=== BY VARIANT ===
+          n  fdr      held       best
+var                                  
+level   586  395  0.633106  23.842502
+zscore  394  239  0.741117  18.516842
+
+=== prep.py ===
+/home/runner/work/fx-data/fx-data/code/prep.py:89: RuntimeWarning: Mean of empty slice
+  bs[tag] = np.nanmean(np.stack([z[k] for z in Z]), axis=0)
+v7 stats: 48080 rows from signals7_stats.csv
+16 duplicate names across batches (identical scores, collapsed): maxdd_10, maxdd_120, maxdd_20, maxdd_250, maxdd_40, maxdd_5 ...
+gate 7 backfilled from stability.csv for 13 signals
+signals 175634
+  own-price          1080
+  cross-sectional     966
+  multi-timeframe   10403
+  regime-v5          8065
+  trend-duration   107040
+json 87449 KB
+records 175634 | scorable 167316 | unscorable 8318 (kept, marked ok=False)
+
+GAUNTLET (on the 167316 scorable records)
+gate                    passing   killed
+sign holds OOS           101370    65946
+|t| OOS >= 8              21761    79609
+effect >= 0.0221           1058    20703
+agree >= 0.893              208      850
+monotonic >= 0.95            30      178
+decay >= 0.60                29        1
+stable >= 4 of 6             29        0   (29 of 29 scorable)
+
+survivors: 29  (29 with block stability measured)
+                s                 b     ti     to       si    ao     mo   dec  tsb stronger_target
+    z_panelvol_40   cross-sectional -15.71 -25.59 -0.02566 0.964 -0.969 1.629  6.0             NaN
+  zz_panelvol_D40   multi-timeframe -15.64 -25.58 -0.02555 0.964 -0.969 1.636  6.0             NaN
+   z_paneldisp_40   cross-sectional -14.29 -24.94 -0.02332 0.893 -0.960 1.745  6.0             NaN
+ zz_paneldisp_D40   multi-timeframe -14.34 -24.91 -0.02341 0.893 -0.959 1.737  6.0             NaN
+    z_panelvol_60   cross-sectional -17.28 -21.87 -0.02811 0.929 -0.952 1.266  6.0             NaN
+  zz_panelvol_D60   multi-timeframe -17.22 -21.86 -0.02802 0.929 -0.951 1.269  6.0             NaN
+         cx4_m375    trend-duration -15.01 -21.75 -0.02353 0.929 -0.958 1.449  6.0           trend
+       rc_cx3_s30    trend-duration -15.29 -19.49 -0.02326 0.893 -0.989 1.275  6.0           trend
+ rb_dts_60_750_ch    trend-duration -12.23 -17.87 -0.02210 0.929 -0.953 1.461  5.0           trend
+     rb_pdm_50_ch    trend-duration  15.95  16.14  0.02592 0.893  0.980 1.012  6.0           trend
+     ts_dd0.02_ol    trend-duration -15.00 -16.14 -0.02371 0.893 -0.950 1.076  6.0           trend
+      zd_cx3_x375    trend-duration -11.01 -15.95 -0.02835 0.893 -0.984 1.449  5.0           trend
+    cx1.5_x150_ch    trend-duration -14.26 -15.43 -0.02234 0.893 -0.975 1.082  5.0           trend
+ rd_xsctop_r15_pd trend-nonmomentum -14.98 -15.06 -0.02367 0.893 -0.985 1.005  6.0            chop
+   za_cx4_m750_ch    trend-duration -12.50 -14.80 -0.02263 0.893 -0.973 1.184  5.0           trend
+    ra_cx2.5_m120    trend-duration -14.66 -14.39 -0.02404 0.964 -0.960 0.982  6.0            chop
+ ra_oc750_fl_8_pl    trend-duration  12.64  14.22  0.02267 0.893  0.978 1.125  5.0           trend
+    zz_coex3_D120         regime-v5 -13.59 -14.11 -0.02234 0.893 -0.964 1.038  6.0           trend
+      zb_cx3_m120    trend-duration -13.59 -14.11 -0.02234 0.893 -0.964 1.038  6.0           trend
+    ra_cx2_x25_ch    trend-duration -14.03 -13.86 -0.02383 0.893 -0.972 0.988  5.0           trend
+   zc_cx2_s150_ch    trend-duration -12.56 -13.85 -0.02218 0.893 -0.980 1.103  5.0           trend
+ za_xsctop_r20_pv trend-nonmomentum -14.43 -13.75 -0.02384 0.893 -0.968 0.953  5.0            chop
+ ra_ep750_fl_8_pl    trend-duration  12.59  13.56  0.02253 0.929  0.990 1.077  5.0           trend
+    zb_cx2_s90_ch    trend-duration -14.41 -13.25 -0.02436 0.893 -0.968 0.920  6.0           trend
+rc_ats_120_750_ch    trend-duration -12.82 -12.79 -0.02284 0.929 -0.958 0.998  5.0           trend
+
+survivors by batch:
+b
+cross-sectional       3
+multi-timeframe       3
+regime-v5             1
+trend-duration       20
+trend-nonmomentum     2
+
+survivors by family:
+b                  f              
+trend-duration     cx_m               4
+                   cx_s               3
+trend-nonmomentum  cross-sectional    2
+trend-duration     ats                2
+cross-sectional    z_panelvol         2
+trend-duration     cx1._x             2
+                   cx2._m             2
+                   cx_x               2
+multi-timeframe    zz_panelvol        2
+cross-sectional    z_paneldisp        1
+regime-v5          zz_coex3           1
+multi-timeframe    zz_paneldisp       1
+trend-duration     dts                1
+                   ep_fl              1
+                   oc_fl              1
+                   pdm                1
+                   ts_dd              1
+
+survivors by DIRECTION (sign of efficiency spread -- the real split):
+     3  trend
+    26  chop
+
+survivors by stronger target (diagnostic, NOT the split):
+stronger_target
+trend            20
+single-target     6
+chop              3
+
+OOS SIGN RETENTION BY FAMILY (n>=30). 50%% is a coin flip.
+top 15
+             b            f    n  retention  best_to  med_to
+     regime-v5    dispvsown   34      0.912   15.920   6.360
+     regime-v5  pr_tsexceed   34      0.882   11.370   3.600
+     regime-v5    pr_q10q90   34      0.853   10.910   3.095
+     regime-v5     volaccel   34      0.853   16.440   4.240
+     regime-v5     volofvol   34      0.853   13.350   4.735
+     regime-v5  zz_tsexceed   34      0.853   12.970   4.050
+trend-duration        ep_mu  360      0.847   18.560   5.585
+trend-duration        oc_mu  360      0.847   18.560   5.585
+     regime-v5   ps_volkurt   32      0.844    9.070   2.990
+     regime-v5    pr_minvol   34      0.824   16.280   5.240
+     regime-v5  zz_volaccel   34      0.824   16.750   4.295
+     regime-v5   pr_exceed2   34      0.824   13.950   4.620
+     regime-v5     volsplit   34      0.824   12.590   3.170
+     regime-v5 zs_dispvsown   34      0.824   15.180   5.245
+trend-duration          dts 1053      0.821   27.940   7.650
+bottom 15 — these are the ones to stop building
+             b            f   n  retention  best_to  med_to
+     regime-v5      ps_gini  34      0.324   10.520   2.485
+     regime-v5  pr_volrange  34      0.324    6.290   2.365
+     regime-v5    downshare  34      0.294    6.080   1.875
+     regime-v5        rmean  34      0.294    6.140   1.890
+     regime-v5    pr_medabs  34      0.294    7.810   3.695
+     regime-v5         posq  34      0.294    9.060   1.390
+     regime-v5    pr_convex  34      0.294    8.160   1.950
+     regime-v5 zs_halfsplit  34      0.294    6.780   1.785
+     regime-v5  zs_rankmove  34      0.294    4.240   1.745
+     regime-v5        upcap  34      0.294    6.140   1.890
+     regime-v5      rankret  31      0.290    7.090   1.480
+trend-duration          ptf 741      0.281   19.380   6.000
+trend-duration          sth 240      0.279    3.890   1.020
+     regime-v5    zs_medabs  34      0.235    7.980   3.275
+     regime-v5 zz_jumpratio  34      0.235    6.650   3.065
+
+==============================================================================
+HORIZON TEST — does trend live at 60-120 days rather than 20?
+==============================================================================
+horizon     n  med_abs_t  med_abs_effect  p90_abs_effect  share_effect_ge_020  med_agree  share_trend_signed
+    20d 43815     2.4400          0.0046          0.0125               0.0188     0.5710              0.4435
+    60d 43815     3.4100          0.0037          0.0098               0.0030     0.5710              0.4649
+   120d 43815     4.5200          0.0033          0.0096               0.0036     0.5710              0.5266
+
+by mechanism, median |effect| at each horizon:
+                   20d    60d   120d
+f                                   
+acceleration    0.0049 0.0036 0.0031
+conditional     0.0050 0.0045 0.0043
+cross-sectional 0.0040 0.0032 0.0028
+duration        0.0057 0.0038 0.0046
+structure       0.0052 0.0040 0.0033
+
+==============================================================================
+MOMENTUM COLLINEARITY — px28 is triangulated, so leg_base - leg_quote
+IS the pair return. Features built on it are momentum, which is on the
+do-not-build list. Split by |corr| with the own N-day return:
+==============================================================================
+                                          n  retention  best_to  med_effect
+f               kind                                                       
+acceleration    disguised momentum      220      0.464   13.330       0.004
+                genuinely panel-wide   4543      0.538   18.430       0.005
+conditional     disguised momentum     1690      0.476   10.470       0.004
+                genuinely panel-wide   5548      0.576   14.360       0.006
+cross-sectional disguised momentum     3360      0.503   12.060       0.003
+                genuinely panel-wide  15554      0.543   23.600       0.004
+duration        disguised momentum      250      0.416    7.320       0.002
+                genuinely panel-wide   5211      0.603   22.760       0.006
+structure       disguised momentum      540      0.539    9.720       0.003
+                genuinely panel-wide   6899      0.594   14.560       0.005
+
+batch-level retention:
+                     size  mean
+b                              
+cross-sectional       964 0.669
+multi-timeframe     10383 0.525
+own-price            1066 0.540
+regime-v5            7862 0.604
+trend-duration     103226 0.636
+trend-nonmomentum   43815 0.555
+
+=== dedup.py ===
+survivors after gates 1-7: 29
+b
+trend-duration       20
+cross-sectional       3
+multi-timeframe       3
+trend-nonmomentum     2
+regime-v5             1
+
+rebuilding survivor series on 6 pairs...
+  sig3  EURGBP  1s
+  sig3  EURAUD  1s
+  sig3  EURNZD  1s
+  sig3  EURUSD  1s
+  sig3  EURCAD  1s
+  sig3  EURCHF  1s
+  sig4  EURGBP  3s
+  sig4  EURAUD  3s
+  sig4  EURNZD  3s
+  sig4  EURUSD  3s
+  sig4  EURCAD  3s
+  sig4  EURCHF  3s
+  sig5  EURGBP  40s
+  sig5  EURAUD  40s
+  sig5  EURNZD  40s
+  sig5  EURUSD  40s
+  sig5  EURCAD  40s
+  sig5  EURCHF  40s
+  sig6  EURGBP  2s
+  sig6  EURAUD  1s
+  sig6  EURNZD  1s
+  sig6  EURUSD  1s
+  sig6  EURCAD  1s
+  sig6  EURCHF  1s
+Traceback (most recent call last):
+  File "/home/runner/work/fx-data/fx-data/code/dedup.py", line 199, in <module>
+    main()
+  File "/home/runner/work/fx-data/fx-data/code/dedup.py", line 139, in main
+    ser = series_for(surv, px, pairs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/fx-data/fx-data/code/dedup.py", line 80, in series_for
+    ctx = m.context(px) if hasattr(m, 'context') else None
+          ^^^^^^^^^^^^^
+  File "/home/runner/work/fx-data/fx-data/code/sig7.py", line 149, in context
+    lead = R.idxmin(axis=1)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/frame.py", line 15775, in idxmin
+    res = data._reduce(
+          ^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/frame.py", line 13635, in _reduce
+    res = df._mgr.reduce(blk_func)
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 1694, in reduce
+    res_blocks = [blk.reduce(func) for blk in self.blocks]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 1694, in <listcomp>
+    res_blocks = [blk.reduce(func) for blk in self.blocks]
+                  ^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 358, in reduce
+    result = func(self.values)
+             ^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/frame.py", line 13565, in blk_func
+    return op(values, axis=axis, skipna=skipna, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/nanops.py", line 1216, in nanargmin
+    result = _maybe_arg_null_out(result, axis, mask, skipna)  # type: ignore[arg-type]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/nanops.py", line 1489, in _maybe_arg_null_out
+    raise ValueError("Encountered all NA values")
+ValueError: Encountered all NA values
+Traceback (most recent call last):
+  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 28, in <module>
+    run('rank2.py'); run('rank3.py'); run('prep.py'); run('dedup.py')
+                                                      ^^^^^^^^^^^^^^^
+  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 7, in run
+    subprocess.run([sys.executable,os.path.join(C,m)],check=True)
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', '/home/runner/work/fx-data/fx-data/code/dedup.py']' returned non-zero exit status 1.
