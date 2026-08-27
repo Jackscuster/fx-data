@@ -438,18 +438,18 @@ rebuilding survivor series on 6 pairs...
   sig4  EURUSD  3s
   sig4  EURCAD  3s
   sig4  EURCHF  3s
-  sig5  EURGBP  49s
+  sig5  EURGBP  50s
   sig5  EURAUD  49s
   sig5  EURNZD  50s
-  sig5  EURUSD  50s
+  sig5  EURUSD  49s
   sig5  EURCAD  50s
   sig5  EURCHF  49s
   sig6  EURGBP  2s
-  sig6  EURAUD  2s
-  sig6  EURNZD  2s
+  sig6  EURAUD  1s
+  sig6  EURNZD  1s
   sig6  EURUSD  1s
   sig6  EURCAD  1s
-  sig6  EURCHF  2s
+  sig6  EURCHF  1s
 Traceback (most recent call last):
   File "/home/runner/work/fx-data/fx-data/code/dedup.py", line 199, in <module>
     main()
