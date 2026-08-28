@@ -738,6 +738,34 @@ No floor is set on Ulcer.
 > score is one extra scoring call, because A and C bank `ip1`/`risk1`. Mode B
 > does not, which is why B is re-run wholesale at round 2 regardless.
 
+### STANDING RULE — WHAT A RESULTS DELIVERABLE MUST CARRY
+
+**Any table, top-N list or summary reported anywhere — chat, committed file or
+app — carries the FULL metric set for every entry. No exceptions, no
+abbreviation for readability.**
+
+Per entry, all of:
+
+| group | fields |
+|---|---|
+| identity | slice (trend/chop), **all four slots**: C1, C2, volume filter, baseline |
+| tuned parameters | ATR length, stop, TP, and **BE / arming / trail wherever the plan has them** |
+| performance | blind trades, total R, expectancy (R), Sortino, Sharpe, profit factor, Calmar, max drawdown (R), **Ulcer**, win rate |
+
+**A metric that is unavailable or provisional is PRINTED WITH A DASH OR A
+LABEL — never omitted.** Dropping a column hides which numbers exist and which
+do not, and a reader cannot tell an absent field from an unmeasured one. A
+chop entry has no breakeven, arming or trail: those print as `—`, because the
+plan has no such parameter, and that is information rather than a gap.
+
+**Anything less is an incomplete deliverable and is to be re-issued in full.**
+
+The reason is specific to this project: the numbers here are provisional in
+several different ways at once — W3-only versus stitched, mode B's averaged
+metrics versus A and C's one-curve metrics, pre- versus post-round-2 — and a
+trimmed table is exactly how one of those qualifications gets lost between the
+file and the reader.
+
 ### THE INVERSION ARM, TRIGGERED
 
 After normal tuning, chop combinations **still failing any of the six gate-2
