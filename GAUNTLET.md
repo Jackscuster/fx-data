@@ -917,6 +917,49 @@ gate 4 assembles from **gate-2-labelled graduates instead**. That is information
 about how hard the problem is — it is not a failure, and it is not a reason to
 lower gate 3.
 
+### AMENDED — TRADE COUNT IS NOT A KILL CRITERION
+
+**Declared before gate 3 exists.**
+
+**The kill criterion is failing the fresh per-configuration luck floor, and
+nothing else.** The floor already handles sample size correctly and without
+needing a separate rule: it is the 95th percentile of scrambled controls run on
+that same configuration, so **fewer trades means luck reaches higher, which
+means the bar rises**. A thin sample is not waved through — it is held to a
+harder standard, automatically and by construction.
+
+**Combinations below 50 blind trades that CLEAR their floor advance, labelled
+`SELECTIVE`.** They are eligible for gate 4 portfolio assembly, where the
+drop-one test judges their value to the team rather than in isolation.
+
+**Combinations that fail their floor are PARKED, not deleted.**
+
+**KPI floors are otherwise unchanged.**
+
+**Rationale, on record:** the portfolio combines many selective strategies, so
+selectivity alone is not a defect. A strategy that trades rarely and well is a
+different thing from a strategy that trades rarely and luckily, and the floor —
+not a trade count — is what separates them.
+
+> **A note on how far this reaches, measured rather than assumed.** The
+> upstream minimums are unchanged: gate 1's eligibility rule and gate 2's label
+> both require **≥100 trades in the picking window and ≥50 per blind window**,
+> so a combination that was always thin was never admitted and cannot appear at
+> gate 3 to be labelled `SELECTIVE`.
+>
+> The population this creates is therefore combinations that MET the minimums at
+> default parameters and fell below them once tuning changed their trade counts.
+> In mode B that is **5,160 of 19,845 (26.0%)** with a blind window under 50
+> after tuning — but **zero of them cross the gate 2 label**, because the label
+> enforces the same 50-per-window rule.
+>
+> So as the gates currently stand, `SELECTIVE` is a category with **no members
+> arriving from gate 2's labelled set**. It will only populate if a later
+> amendment relaxes the gate 1/gate 2 minimums, or if round-2 tuning moves
+> counts across the boundary. The amendment is sound and worth having on
+> record; it simply has no effect until an upstream rule changes. That is a
+> statement about the current gates, not an argument against the rule.
+
 ---
 
 ## GATE 4 — COMBINE
