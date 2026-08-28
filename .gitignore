@@ -60,3 +60,8 @@ results/gate2_progress_mode*.csv
 results/gate2_rescoreW3.log
 results/gate2_impact.log
 results/gate1_nullfresh.log
+
+results/gate2_cache/
+results/gate2_rescoreW3_full.log
+results/ci_pinned_validation.log
+results/superseded/

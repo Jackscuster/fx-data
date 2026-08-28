@@ -146,8 +146,20 @@ def context(px):
             RZ[k] = (S.sub(S.median(axis=1), axis=0)).div(S.std(axis=1).replace(0, np.nan), axis=0)
             DISPW[k] = S.std(axis=1)
             TOPSPR[k] = S.max(axis=1) - S.min(axis=1)
-            lead = R.idxmin(axis=1)
-            lag = R.idxmax(axis=1)
+            # Early rows are all-NA across the panel -- every rolling window is
+            # still warming up, so R has no rank to take. pandas 2 returned NaN
+            # for those rows with a FutureWarning; PANDAS 3 RAISES
+            # ValueError("Encountered all NA values"). That is the fault that
+            # broke CI on 2026-08-05, the day this module was added: CI installs
+            # pandas unpinned and got 3.x, the dev machine had 2.x and never saw
+            # it. Reduce only the rows that have a value, and leave the rest NaN
+            # -- which is what pandas 2 did, so the numbers do not move.
+            ok = R.notna().any(axis=1)
+            lead = pd.Series(np.nan, index=R.index, dtype=object)
+            lag = pd.Series(np.nan, index=R.index, dtype=object)
+            if ok.any():
+                lead.loc[ok] = R.loc[ok].idxmin(axis=1)
+                lag.loc[ok] = R.loc[ok].idxmax(axis=1)
             TSLEAD[k] = pd.Series(_tsince((lead != lead.shift()).values), index=R.index)
             TSLAG[k] = pd.Series(_tsince((lag != lag.shift()).values), index=R.index)
 

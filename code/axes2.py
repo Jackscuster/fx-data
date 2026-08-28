@@ -136,9 +136,26 @@ def main():
   axis supplies essentially all of the combined state's magnitude reading, and
   the shape layer supplies almost none of it.""")
 
-    # how the three columns in layer1_states.csv relate
-    if os.path.exists(L1):
-        S = pd.read_csv(L1, usecols=['shape', 'activity', 'combined', 'sample'])
+    # How the generation-1/2 columns relate. `shape` and `combined` moved to
+    # layer1_legacy.csv when layer1_states.csv was narrowed to generation 4 on
+    # 2026-08-13; `activity` stayed in the current file. So this needs BOTH,
+    # joined on date+pair. Same fault as episodes.py had -- results/MANIFEST.md
+    # records where the columns went, and following it is the whole fix.
+    LEG_ = os.path.join(ROOTOUT, 'layer1_legacy.csv')
+    if os.path.exists(L1) and os.path.exists(LEG_):
+        have = set(pd.read_csv(LEG_, nrows=0).columns)
+        need = {'date', 'pair', 'shape', 'combined', 'sample'}
+        if not need <= have:
+            print('  layer1_legacy.csv lacks %s; skipping the column relation'
+                  % sorted(need - have))
+            S = None
+        else:
+            S = pd.read_csv(LEG_, usecols=sorted(need)).merge(
+                pd.read_csv(L1, usecols=['date', 'pair', 'activity']),
+                on=['date', 'pair'], how='left')
+    else:
+        S = None
+    if S is not None:
         S = S[S['sample'] == 'oos'].dropna(subset=['combined'])
         naive = S.activity + ' ' + S['shape']   # S.shape is the frame's shape
         print('  layer1_states.csv: combined == activity + " " + shape on %.2f%% '
