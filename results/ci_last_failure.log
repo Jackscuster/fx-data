@@ -1,497 +1,1156 @@
+ of 28
+  IS/OOS rank correlation of the slope: +0.535
+  IS shapes: {'sustains': 28}
+  pair  slope_is  slope_oos shape_is shape_oos  stable
+EURUSD +0.009108  +0.001787 sustains  sustains    True
+USDCHF +0.008997  +0.006398 sustains  sustains    True
+NZDCHF +0.008831  +0.013601 sustains  sustains    True
+EURAUD +0.007762  +0.004774 sustains  sustains    True
+CADJPY +0.007603  +0.005231 sustains  sustains    True
+EURNZD +0.007575  +0.011309 sustains  sustains    True
+GBPUSD +0.007404  +0.005528 sustains  sustains    True
+GBPCAD +0.006560  +0.004592 sustains  sustains    True
 
-=== build.py ===
-px28 (6931, 28) 2026-08-21
-sanity checks passed
+wrote termstruct_signals.csv, termstruct_null.csv, termstruct_pairs.csv
 
-=== sc2.py ===
-done 28/28, todo 0
-ALL DONE
+=== scale.py ===
+IS mean of each measure (pooled): straight 0.225  range_vol 1.298  path_vol 3.453
 
-=== sc2.py ===
-done 28/28, todo 0
-ALL DONE
+CORRELATION WITH STRAIGHTNESS (pooled, in sample)
+  range_vol  pearson +0.649   spearman +0.576
+  path_vol   pearson +0.041   spearman +0.036
+  -> path_vol carries the 2x2 (the more independent axis)
 
-=== sc2.py ===
-done 28/28, todo 0
-ALL DONE
+UP/DOWN ASYMMETRY  straightness on down-moves 0.2199 vs up-moves 0.2251 -- down straighter on 12 of 28 pairs
 
-=== sc2.py ===
-done 28/28, todo 0
-ALL DONE
+TIME IN EACH STATE
+                                is   oos
+trending (straight+large)    0.255 0.243
+drifting (straight+small)    0.245 0.243
+volatile chop (choppy+large) 0.245 0.248
+dead (choppy+small)          0.255 0.266
 
-=== sc2.py ===
-done 28/28, todo 0
-ALL DONE
+per-pair spread of occupancy (min..max across the 28):
+  trending (straight+large)      0.222 .. 0.267
+  drifting (straight+small)      0.221 .. 0.264
+  volatile chop (choppy+large)   0.229 .. 0.261
+  dead (choppy+small)            0.245 .. 0.273
 
-=== sc3.py ===
-done 28/28, todo 0
-ALL DONE
+STABILITY  transition-matrix diagonal 0.769 (share of bars that stay put)
+                               runs  median_len  mean_len  under5
+state                                                            
+trending (straight+large)     10418        2.00      4.62    0.70
+drifting (straight+small)     11635        2.00      4.04    0.73
+volatile chop (choppy+large)  10646        3.00      4.44    0.66
+dead (choppy+small)           11811        3.00      4.22    0.68
 
-=== sc3.py ===
-done 28/28, todo 0
-ALL DONE
+TASK 3 EXCURSION ACROSS THE FOUR STATES (out of sample)
+                                 n    mfe     mae  ratio    bars   gb_pct    eff  fav20
+state                                                                                  
+trending (straight+large)     2946 0.0146 -0.0159 0.9190 10.0601 108.5603 0.2104 0.4715
+drifting (straight+small)     2946 0.0129 -0.0153 0.8398  9.9369 116.5736 0.2167 0.4596
+volatile chop (choppy+large)  2370 0.0153 -0.0150 1.0179 10.1599  99.5264 0.2229 0.5013
+dead (choppy+small)           2961 0.0137 -0.0148 0.9254 10.0865 109.6929 0.2212 0.4843
 
-=== sc4.py ===
-done 28/28, todo 0
-ALL DONE
+  marginals -- straightness axis alone, then scale axis alone:
+   straight_hi
+                n    mfe    bars    eff
+straight_hi                            
+False        5331 0.0144 10.1191 0.2219
+True         5892 0.0137  9.9985 0.2135
+   large
+          n    mfe    bars    eff
+large                            
+False  5907 0.0133 10.0119 0.2189
+True   5316 0.0149 10.1046 0.2160
 
-=== sc4.py ===
-done 28/28, todo 0
-ALL DONE
+wrote scale_states.csv, scale_occupancy.csv, scale_excursion.csv
 
-=== sc4.py ===
-done 28/28, todo 0
-ALL DONE
+=== duration.py ===
+BAND SWEEP -- what hysteresis buys
+  band median run     mean run   %<5 bars   diagonal
+  0.00        2.0         4.30      0.694      0.768
+  0.05        3.0         5.12      0.620      0.805
+  0.10        4.0         5.98      0.547      0.833
+  0.15        5.0         6.80      0.483      0.853
+  0.20        5.0         7.61      0.426      0.869
+  0.25        6.0         8.44      0.376      0.882
 
-=== sc4.py ===
-done 28/28, todo 0
-ALL DONE
+band carried forward: 0.25 (median run 6.0 bars)
 
-=== sc4.py ===
-done 28/28, todo 0
-ALL DONE
+========================================================================
+DURATION ON THE RAW STATES
+                               runs  median  mean  under5
+state                                                    
+trending (straight+large)     10558    2.00  4.64    0.70
+drifting (straight+small)     11689    2.00  4.04    0.73
+volatile chop (choppy+large)  10699    3.00  4.41    0.66
+dead (choppy+small)           11769    3.00  4.16    0.68
 
-=== sc4.py ===
-done 28/28, todo 0
-ALL DONE
+changes in the last 60 bars: mean 13.9, median 14
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+HAZARD -- P(state ends next bar | it has lasted this long), OOS
+            n  hazard
+bucket               
+1-2     29109   0.316
+3-5     20562   0.201
+6-10    15103   0.178
+11-20    8408   0.170
+21-40    1231   0.193
+40+        11   0.455
+  a flat hazard means age carries no information; falling means old states persist, rising means they break
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+TASK 3 EXCURSION BY STATE AND AGE (out of sample)
+                                                    n    mfe  ratio    bars    eff  fav20
+trending (straight+large)    young (<= typical)  1025 0.0149 0.9665 10.2400 0.2158 0.4898
+                             old (> typical)     1945 0.0144 0.9002  9.9476 0.2074 0.4627
+drifting (straight+small)    young (<= typical)  1211 0.0132 0.8763  9.5822 0.2158 0.4467
+                             old (> typical)     1762 0.0126 0.8083 10.1890 0.2186 0.4659
+volatile chop (choppy+large) young (<= typical)  1020 0.0152 0.9690 10.1265 0.2219 0.4892
+                             old (> typical)     1340 0.0152 1.0461 10.2269 0.2229 0.5082
+dead (choppy+small)          young (<= typical)  1339 0.0138 0.9185 10.1770 0.2237 0.4839
+                             old (> typical)     1581 0.0139 0.9462  9.9905 0.2187 0.4889
+  trending (straight+large)       bars -0.2924 (t -1.1)  path -0.0085 (t -1.4)  mfe -0.0005 (t -0.7)
+  drifting (straight+small)       bars +0.6068 (t +2.4)  path +0.0028 (t +0.5)  mfe -0.0006 (t -1.0)
+  volatile chop (choppy+large)    bars +0.1004 (t +0.4)  path +0.0010 (t +0.1)  mfe -0.0000 (t -0.0)
+  dead (choppy+small)             bars -0.1865 (t -0.7)  path -0.0050 (t -0.8)  mfe +0.0001 (t +0.2)
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+========================================================================
+DURATION ON THE HYSTERESIS STATES
+                              runs  median  mean  under5
+state                                                   
+trending (straight+large)     5285    6.00  8.89    0.39
+drifting (straight+small)     5988    5.00  7.67    0.42
+volatile chop (choppy+large)  5420    7.00  8.88    0.33
+dead (choppy+small)           6085    6.00  8.44    0.36
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+changes in the last 60 bars: mean 7.1, median 7
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+HAZARD -- P(state ends next bar | it has lasted this long), OOS
+            n  hazard
+bucket               
+1-2     17256   0.105
+3-5     19208   0.122
+6-10    19196   0.122
+11-20   14914   0.136
+21-40    3659   0.144
+40+       191   0.147
+  a flat hazard means age carries no information; falling means old states persist, rising means they break
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+TASK 3 EXCURSION BY STATE AND AGE (out of sample)
+                                                    n    mfe  ratio    bars    eff  fav20
+trending (straight+large)    young (<= typical)  1697 0.0143 0.9080 10.0265 0.2162 0.4744
+                             old (> typical)     1115 0.0145 0.8588  9.8179 0.2015 0.4583
+drifting (straight+small)    young (<= typical)  1614 0.0133 0.8828 10.0297 0.2144 0.4659
+                             old (> typical)     1198 0.0127 0.8284 10.1861 0.2173 0.4599
+volatile chop (choppy+large) young (<= typical)  1474 0.0151 0.9840 10.3114 0.2247 0.5027
+                             old (> typical)     1036 0.0152 1.0519 10.1969 0.2231 0.5048
+dead (choppy+small)          young (<= typical)  1729 0.0141 0.9668 10.1735 0.2218 0.4939
+                             old (> typical)     1360 0.0134 0.8963  9.6691 0.2189 0.4618
+  trending (straight+large)       bars -0.2086 (t -0.8)  path -0.0147 (t -2.5)  mfe +0.0002 (t +0.3)
+  drifting (straight+small)       bars +0.1564 (t +0.6)  path +0.0029 (t +0.5)  mfe -0.0006 (t -1.0)
+  volatile chop (choppy+large)    bars -0.1145 (t -0.4)  path -0.0015 (t -0.2)  mfe +0.0000 (t +0.1)
+  dead (choppy+small)             bars -0.5044 (t -2.1)  path -0.0029 (t -0.5)  mfe -0.0007 (t -1.3)
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+=== classifier.py ===
+WEIGHTS {'scale': 0.18, 'persist': 0.028, 'straight': 0.01} -> variance shares {'scale': 0.973, 'persist': 0.024, 'straight': 0.003}
 
-=== sc5.py ===
-done 28/28, todo 0
-ALL DONE
+1. COVERAGE
+low    0.327
+mid    0.373
+high   0.300
 
-=== rank2.py ===
-pairs 28  signals 1080
+2. PERSISTENCE
+  median run 11.0 bars, mean 15.41, 18.9% under 5 bars, diagonal 0.935
 
-tested 1066  |  expected |t|>2 by chance: 53  |  observed: 648
-survive BH-FDR 5%: 608
-of FDR survivors, sign HELD out-of-sample: 364 (60%)
-of ALL signals, sign held OOS: 54% (coin flip = 50%)
+3. SEPARATION -- do the states differ on realised properties?
+         prop     low     mid    high    gap  gap_over_sd  monotone
+ realised_vol  0.0051  0.0058  0.0071 0.0020       0.6640      True
+ avg_abs_move  0.0039  0.0045  0.0057 0.0017       0.7644      True
+     autocorr -0.0492 -0.0530 -0.0518 0.0038       0.0176     False
+range_to_path  0.3667  0.3698  0.3830 0.0163       0.1409      True
 
-=== TOP 25 — significant IS, confirmed OOS, sorted by strength ===
-        sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
-     bbw_60    -0.0321 -21.0150    0.9286  -9.8888     0.8571  True
-     bbw_40    -0.0297 -19.6195    0.8214 -13.0649     0.7857  True
-     bbw_90    -0.0283 -18.3517    0.8571 -10.6031     0.7143  True
-   maxdd_40     0.0266  17.6497    0.8929   7.6997     0.7500  True
-     bbw_20    -0.0248 -16.4923    0.9286  -9.5964     0.6071  True
-    bbw_120    -0.0252 -16.2632    0.8571 -10.5832     0.7500  True
-   maxdd_60     0.0244  16.0004    1.0000   6.9881     0.6786  True
-  maxdd_250     0.0246  15.5252    0.8571   5.4536     0.5714  True
- rngcomp_90     0.0241  15.4455    0.7500   5.8373     0.7500  True
-   maxdd_10     0.0225  15.1679    0.8571   7.8007     0.6786  True
-  maxdd_120     0.0225  14.3884    0.8214   5.4676     0.6071  True
-   z_bbw_90    -0.0229 -13.8096    0.8214  -9.7239     0.8214  True
-  z_bbw_120    -0.0228 -13.7427    0.7500 -11.4098     0.8571  True
-     bbw_10    -0.0202 -13.4279    0.7857  -7.4959     0.7143  True
-   hurst_90    -0.0201 -13.1818    0.8571  -8.9955     0.8571  True
-   maxdd_20     0.0195  13.1639    0.7857  10.6638     0.7143  True
- z_maxdd_40     0.0200  12.3655    0.8214   8.9276     0.6786  True
-   dens_120     0.0189  12.3492    0.7857   9.2388     0.8214  True
-  absmom_60    -0.0184 -12.2022    0.8571  -1.1314     0.5714  True
-    maxdd_5     0.0179  12.1264    0.8571   6.3303     0.7857  True
-  ddhigh_60     0.0177  11.9310    0.7500   5.6530     0.6429  True
-      ef_60    -0.0179 -11.8569    0.8571  -1.1775     0.5357  True
-ampratio_60     0.0179  11.8472    0.8571   1.1574     0.5357  True
-  rngvol_90    -0.0178 -11.7482    0.7500  -6.2240     0.6786  True
-    bbw_250    -0.0181 -11.7373    0.8571  -5.6412     0.6786  True
+4. STABILITY -- refit through 2015, then through 2020, compare labels
+  labels on pre-2016 history identical after refitting through 2020: 98.3% of 117936 pair-days
 
-=== TOP 15 TREND (confirmed) ===
-        sig  spread_is    t_is  agree_is   t_oos  agree_oos  held
-   maxdd_40     0.0266 17.6497    0.8929  7.6997     0.7500  True
-   maxdd_60     0.0244 16.0004    1.0000  6.9881     0.6786  True
-  maxdd_250     0.0246 15.5252    0.8571  5.4536     0.5714  True
- rngcomp_90     0.0241 15.4455    0.7500  5.8373     0.7500  True
-   maxdd_10     0.0225 15.1679    0.8571  7.8007     0.6786  True
-  maxdd_120     0.0225 14.3884    0.8214  5.4676     0.6071  True
-   maxdd_20     0.0195 13.1639    0.7857 10.6638     0.7143  True
- z_maxdd_40     0.0200 12.3655    0.8214  8.9276     0.6786  True
-   dens_120     0.0189 12.3492    0.7857  9.2388     0.8214  True
-    maxdd_5     0.0179 12.1264    0.8571  6.3303     0.7857  True
-  ddhigh_60     0.0177 11.9310    0.7500  5.6530     0.6429  True
-ampratio_60     0.0179 11.8472    0.8571  1.1574     0.5357  True
-    dens_60     0.0177 11.5845    0.8214  8.3197     0.7143  True
- z_maxdd_60     0.0191 11.5529    0.7857  4.5449     0.7143  True
-      zc_40     0.0169 11.2073    0.8214  3.6119     0.5714  True
+5. NULL -- two surrogates, because one cannot touch a scale axis
+  200 draws per surrogate
+  A sign-randomised (vol clustering kept)       
+     median run  surrogate 11.00 +/- 0.00  real 11.00  p=1.000
+     separation  surrogate 0.3850 +/- 0.0031  real 0.3967  p=0.005
+  B IID permutation (vol clustering destroyed)  
+     median run  surrogate 10.03 +/- 0.17  real 11.00  p=0.035
+     separation  surrogate 0.0218 +/- 0.0069  real 0.3967  p=0.005
 
-=== TOP 15 CHOP (confirmed) ===
-       sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
-    bbw_60    -0.0321 -21.0150    0.9286  -9.8888     0.8571  True
-    bbw_40    -0.0297 -19.6195    0.8214 -13.0649     0.7857  True
-    bbw_90    -0.0283 -18.3517    0.8571 -10.6031     0.7143  True
-    bbw_20    -0.0248 -16.4923    0.9286  -9.5964     0.6071  True
-   bbw_120    -0.0252 -16.2632    0.8571 -10.5832     0.7500  True
-  z_bbw_90    -0.0229 -13.8096    0.8214  -9.7239     0.8214  True
- z_bbw_120    -0.0228 -13.7427    0.7500 -11.4098     0.8571  True
-    bbw_10    -0.0202 -13.4279    0.7857  -7.4959     0.7143  True
-  hurst_90    -0.0201 -13.1818    0.8571  -8.9955     0.8571  True
- absmom_60    -0.0184 -12.2022    0.8571  -1.1314     0.5714  True
-     ef_60    -0.0179 -11.8569    0.8571  -1.1775     0.5357  True
- rngvol_90    -0.0178 -11.7482    0.7500  -6.2240     0.6786  True
-   bbw_250    -0.0181 -11.7373    0.8571  -5.6412     0.6786  True
-rngvol_120    -0.0179 -11.6932    0.7857  -8.2992     0.7143  True
-  z_bbw_60    -0.0188 -11.5546    0.8214 -10.2714     0.7500  True
+6. AGAINST THE FORWARD COMPOSITE, read at entry
+  BACKWARD classifier:
+          n    mfe  ratio    bars    eff  fav20
+state                                          
+low    3858 0.0132 0.8799  9.9640 0.2165 0.4655
+mid    4186 0.0142 0.9333 10.1113 0.2240 0.4814
+high   3179 0.0150 0.9506 10.0941 0.2103 0.4888
+  FORWARD composite (task 3, for comparison):
+         n    mfe  ratio    bars    eff  fav20
+band                                          
+0     3385 0.0151 0.9101  9.9025 0.1995 0.4691
+1     3524 0.0140 0.9087 10.1532 0.2230 0.4889
+2     4314 0.0133 0.9402 10.0964 0.2272 0.4761
+  spread in path efficiency: backward 0.0137, forward 0.0277
+  spread in bars to peak:    backward 0.15, forward 0.25
 
-=== BY VARIANT ===
-          n  fdr      held       best
-var                                  
-delta   358  187  0.418994  10.079216
-level   349  229  0.650430  21.014977
-zscore  359  192  0.557103  13.809558
+wrote classifier_states.csv, classifier_validation.csv
 
-=== rank3.py ===
-pairs 28  signals 982
+=== ribbon.py ===
+WINDOW SWEEP (lag measured against a centred 21-bar reference)
+  fast    L= 7  lag   2.0  churn  144.9/1000
+  fast    L= 8  lag   2.0  churn  131.7/1000
+  fast    L= 9  lag   2.0  churn  119.1/1000
+  fast    L=10  lag   2.0  churn  110.1/1000
+  fast    L=11  lag   3.0  churn  102.7/1000
+  fast    L=12  lag   3.0  churn   95.7/1000
+  fast    L=13  lag   4.0  churn   89.8/1000
+  fast    L=14  lag   4.0  churn   84.3/1000
+  medium  L=20  lag   7.0  churn   64.9/1000
+  medium  L=21  lag   7.0  churn   63.4/1000
+  medium  L=22  lag   7.0  churn   62.6/1000
+  medium  L=23  lag   7.0  churn   61.0/1000
+  medium  L=24  lag   7.0  churn   59.2/1000
+  medium  L=25  lag   7.0  churn   58.3/1000
+  medium  L=26  lag   7.0  churn   57.6/1000
+  medium  L=27  lag   8.0  churn   57.2/1000
+  medium  L=28  lag   8.0  churn   56.6/1000
+  medium  L=29  lag   8.0  churn   56.4/1000
+  medium  L=30  lag   8.0  churn   56.2/1000
+  medium  L=31  lag   8.0  churn   55.5/1000
+  slow    L=62  lag   7.0  churn   69.7/1000
+  slow    L=65  lag   6.0  churn   70.1/1000
+  slow    L=68  lag   6.0  churn   63.5/1000
+  slow    L=71  lag   7.0  churn   56.6/1000
+  slow    L=74  lag   8.0  churn   51.2/1000
+  slow    L=77  lag   9.0  churn   47.1/1000
+  slow    L=80  lag  10.0  churn   42.6/1000
+  slow    L=83  lag  11.0  churn   39.1/1000
+  slow    L=86  lag  11.0  churn   37.3/1000
+  slow    L=89  lag  12.0  churn   35.4/1000
 
-tested 980  |  expected |t|>2 by chance: 49  |  observed: 647
-survive BH-FDR 5%: 634
-of FDR survivors, sign HELD out-of-sample: 473 (75%)
-of ALL signals, sign held OOS: 68% (coin flip = 50%)
+chosen: {'fast': 10, 'medium': 26, 'slow': 71}
 
-=== TOP 25 — significant IS, confirmed OOS, sorted by strength ===
-           sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
-   panelvol_40    -0.0360 -23.8425    0.9643 -17.5982     0.8571  True
-  panelvol_180    -0.0339 -22.4661    0.9643 -10.6006     0.6429  True
-  panelvol_120    -0.0333 -22.1056    0.9286  -9.4463     0.7857  True
-      maxdu_90    -0.0326 -21.5040    0.9286 -10.7398     0.7500  True
-  paneldisp_40    -0.0311 -20.5464    0.8929 -19.6841     0.9286  True
-  paneldisp_10    -0.0311 -20.5384    0.9286 -17.0558     0.8929  True
-   panelvol_30    -0.0307 -20.3742    0.9643 -19.0383     0.8929  True
-      maxdu_20    -0.0305 -20.3183    0.8929 -10.5892     0.6786  True
-      maxdu_40    -0.0299 -19.9140    0.9643 -14.7107     0.7857  True
- paneldisp_180    -0.0307 -19.8877    0.9286  -8.6615     0.7143  True
-  paneldisp_60    -0.0301 -19.8172    0.8214 -16.7182     0.8571  True
-      maxdu_60    -0.0295 -19.6458    0.9643 -14.1697     0.7143  True
-  paneldisp_90    -0.0298 -19.6389    0.8929 -10.6249     0.7857  True
-  paneldisp_30    -0.0296 -19.5166    0.9286 -19.5974     0.8929  True
-      maxdu_30    -0.0289 -19.3306    0.8929 -12.5451     0.7500  True
-   panelvol_10    -0.0287 -19.0117    0.9286 -14.3548     0.8929  True
-z_paneldisp_60    -0.0300 -18.5168    0.9286 -23.3272     0.9286  True
- paneldisp_120    -0.0277 -18.3851    0.8571  -9.2627     0.7143  True
-   panelvol_15    -0.0275 -18.1270    0.9286 -15.1225     0.8571  True
-  paneldisp_15    -0.0271 -18.0256    0.9286 -18.7948     0.8929  True
-  paneldisp_20    -0.0269 -17.8712    0.9286 -20.4941     0.8929  True
-      maxdd_40     0.0266  17.6497    0.8929   7.6997     0.7500  True
-   panelvol_60    -0.0270 -17.5800    0.8214 -13.5154     0.7500  True
-  panelvol_250    -0.0275 -17.4890    0.9286  -4.1557     0.6786  True
-      maxdd_30     0.0260  17.3518    0.8929   9.5524     0.7143  True
+TIME IN EACH CONFIGURATION
+  is   established 0.209 transition  0.164 transition  0.332 unresolved 0.296
+  oos  established 0.212 transition  0.171 transition  0.311 unresolved 0.306
 
-=== TOP 15 TREND (confirmed) ===
-        sig  spread_is    t_is  agree_is   t_oos  agree_oos  held
-   maxdd_40     0.0266 17.6497    0.8929  7.6997     0.7500  True
-   maxdd_30     0.0260 17.3518    0.8929  9.5524     0.7143  True
-   maxdd_60     0.0244 16.0004    1.0000  6.9881     0.6786  True
-  maxdd_250     0.0246 15.5252    0.8571  5.4536     0.5714  True
-  maxdd_180     0.0242 15.4137    0.7857  4.6019     0.6429  True
-   maxdd_10     0.0225 15.1679    0.8571  7.8007     0.6786  True
-   maxdd_15     0.0225 15.0041    0.8571  6.1936     0.6786  True
-  maxdd_120     0.0225 14.3884    0.8214  5.4676     0.6071  True
-legcorr_250     0.0216 13.8355    0.9286 10.3941     0.7143  True
-  ddarea_10     0.0200 13.5090    0.8214  5.6297     0.6786  True
-legcorr_180     0.0207 13.4674    0.9286 10.4055     0.8571  True
-   maxdd_20     0.0195 13.1639    0.7857 10.6638     0.7143  True
- z_maxdd_40     0.0200 12.3655    0.8214  8.9276     0.6786  True
-    maxdd_5     0.0179 12.1264    0.8571  6.3303     0.7857  True
-  ddarea_40     0.0181 12.0466    0.8214  4.9953     0.6429  True
+STABILITY OF THE CONFIGURATIONS
+                       runs  median  mean  under5
+state                                            
+established            6313    4.00  6.38    0.51
+transition starting    6525    4.00  4.89    0.56
+transition confirming  9431    5.00  6.60    0.48
+unresolved             9857    5.00  5.84    0.49
 
-=== TOP 15 CHOP (confirmed) ===
-          sig  spread_is     t_is  agree_is    t_oos  agree_oos  held
-  panelvol_40    -0.0360 -23.8425    0.9643 -17.5982     0.8571  True
- panelvol_180    -0.0339 -22.4661    0.9643 -10.6006     0.6429  True
- panelvol_120    -0.0333 -22.1056    0.9286  -9.4463     0.7857  True
-     maxdu_90    -0.0326 -21.5040    0.9286 -10.7398     0.7500  True
- paneldisp_40    -0.0311 -20.5464    0.8929 -19.6841     0.9286  True
- paneldisp_10    -0.0311 -20.5384    0.9286 -17.0558     0.8929  True
-  panelvol_30    -0.0307 -20.3742    0.9643 -19.0383     0.8929  True
-     maxdu_20    -0.0305 -20.3183    0.8929 -10.5892     0.6786  True
-     maxdu_40    -0.0299 -19.9140    0.9643 -14.7107     0.7857  True
-paneldisp_180    -0.0307 -19.8877    0.9286  -8.6615     0.7143  True
- paneldisp_60    -0.0301 -19.8172    0.8214 -16.7182     0.8571  True
-     maxdu_60    -0.0295 -19.6458    0.9643 -14.1697     0.7143  True
- paneldisp_90    -0.0298 -19.6389    0.8929 -10.6249     0.7857  True
- paneldisp_30    -0.0296 -19.5166    0.9286 -19.5974     0.8929  True
-     maxdu_30    -0.0289 -19.3306    0.8929 -12.5451     0.7500  True
+TASK 3 EXCURSION BY CONFIGURATION (out of sample)
+                          n    mfe  ratio    bars    eff  fav20
+cfg                                                            
+established            2313 0.0136 0.8952  9.7704 0.2193 0.4704
+transition starting    1885 0.0147 0.9583 10.5008 0.2183 0.4828
+transition confirming  3545 0.0144 0.9606 10.0629 0.2193 0.4906
+unresolved             3480 0.0137 0.8771  9.9971 0.2142 0.4678
+  transition starting     bars +0.7304 (t +3.4)  path -0.0010 (t -0.2)  mfe +0.0011 (t +2.1)
+  transition confirming   bars +0.2925 (t +1.6)  path -0.0000 (t -0.0)  mfe +0.0008 (t +1.9)
+  unresolved              bars +0.2267 (t +1.2)  path -0.0051 (t -1.2)  mfe +0.0001 (t +0.2)
 
-=== BY VARIANT ===
-          n  fdr      held       best
-var                                  
-level   586  395  0.633106  23.842502
-zscore  394  239  0.741117  18.516842
+NULL -- does a surrogate produce the same configuration mix?
+  A sign-randomised    established 0.200(real 0.210) transition  0.166(real 0.166) transition  0.329(real 0.324) unresolved 0.304(real 0.300)
+  B IID permutation    established 0.242(real 0.210) transition  0.200(real 0.166) transition  0.266(real 0.324) unresolved 0.292(real 0.300)
 
-=== prep.py ===
-/home/runner/work/fx-data/fx-data/code/prep.py:89: RuntimeWarning: Mean of empty slice
-  bs[tag] = np.nanmean(np.stack([z[k] for z in Z]), axis=0)
-v7 stats: 48080 rows from signals7_stats.csv
-16 duplicate names across batches (identical scores, collapsed): maxdd_10, maxdd_120, maxdd_20, maxdd_250, maxdd_40, maxdd_5 ...
-gate 7 backfilled from stability.csv for 13 signals
-signals 175634
-  own-price          1080
-  cross-sectional     966
-  multi-timeframe   10403
-  regime-v5          8065
-  trend-duration   107040
-json 87449 KB
-records 175634 | scorable 167316 | unscorable 8318 (kept, marked ok=False)
+wrote ribbon_sweep.csv, ribbon_config.csv, ribbon_excursion.csv
 
-GAUNTLET (on the 167316 scorable records)
-gate                    passing   killed
-sign holds OOS           101370    65946
-|t| OOS >= 8              21761    79609
-effect >= 0.0221           1058    20703
-agree >= 0.893              208      850
-monotonic >= 0.95            30      178
-decay >= 0.60                29        1
-stable >= 4 of 6             29        0   (29 of 29 scorable)
+=== ninestate.py ===
+/home/runner/work/fx-data/fx-data/code/ninestate.py:136: Pandas4Warning: Starting with pandas version 4.0 all arguments of sum will be keyword-only.
+  return M.div(M.sum(1).replace(0, np.nan), axis=0)
+excursion spread in path efficiency across the nine: 0.0143
 
-survivors: 29  (29 with block stability measured)
-                s                 b     ti     to       si    ao     mo   dec  tsb stronger_target
-    z_panelvol_40   cross-sectional -15.71 -25.59 -0.02566 0.964 -0.969 1.629  6.0             NaN
-  zz_panelvol_D40   multi-timeframe -15.64 -25.58 -0.02555 0.964 -0.969 1.636  6.0             NaN
-   z_paneldisp_40   cross-sectional -14.29 -24.94 -0.02332 0.893 -0.960 1.745  6.0             NaN
- zz_paneldisp_D40   multi-timeframe -14.34 -24.91 -0.02341 0.893 -0.959 1.737  6.0             NaN
-    z_panelvol_60   cross-sectional -17.28 -21.87 -0.02811 0.929 -0.952 1.266  6.0             NaN
-  zz_panelvol_D60   multi-timeframe -17.22 -21.86 -0.02802 0.929 -0.951 1.269  6.0             NaN
-         cx4_m375    trend-duration -15.01 -21.75 -0.02353 0.929 -0.958 1.449  6.0           trend
-       rc_cx3_s30    trend-duration -15.29 -19.49 -0.02326 0.893 -0.989 1.275  6.0           trend
- rb_dts_60_750_ch    trend-duration -12.23 -17.87 -0.02210 0.929 -0.953 1.461  5.0           trend
-     rb_pdm_50_ch    trend-duration  15.95  16.14  0.02592 0.893  0.980 1.012  6.0           trend
-     ts_dd0.02_ol    trend-duration -15.00 -16.14 -0.02371 0.893 -0.950 1.076  6.0           trend
-      zd_cx3_x375    trend-duration -11.01 -15.95 -0.02835 0.893 -0.984 1.449  5.0           trend
-    cx1.5_x150_ch    trend-duration -14.26 -15.43 -0.02234 0.893 -0.975 1.082  5.0           trend
- rd_xsctop_r15_pd trend-nonmomentum -14.98 -15.06 -0.02367 0.893 -0.985 1.005  6.0            chop
-   za_cx4_m750_ch    trend-duration -12.50 -14.80 -0.02263 0.893 -0.973 1.184  5.0           trend
-    ra_cx2.5_m120    trend-duration -14.66 -14.39 -0.02404 0.964 -0.960 0.982  6.0            chop
- ra_oc750_fl_8_pl    trend-duration  12.64  14.22  0.02267 0.893  0.978 1.125  5.0           trend
-    zz_coex3_D120         regime-v5 -13.59 -14.11 -0.02234 0.893 -0.964 1.038  6.0           trend
-      zb_cx3_m120    trend-duration -13.59 -14.11 -0.02234 0.893 -0.964 1.038  6.0           trend
-    ra_cx2_x25_ch    trend-duration -14.03 -13.86 -0.02383 0.893 -0.972 0.988  5.0           trend
-   zc_cx2_s150_ch    trend-duration -12.56 -13.85 -0.02218 0.893 -0.980 1.103  5.0           trend
- za_xsctop_r20_pv trend-nonmomentum -14.43 -13.75 -0.02384 0.893 -0.968 0.953  5.0            chop
- ra_ep750_fl_8_pl    trend-duration  12.59  13.56  0.02253 0.929  0.990 1.077  5.0           trend
-    zb_cx2_s90_ch    trend-duration -14.41 -13.25 -0.02436 0.893 -0.968 0.920  6.0           trend
-rc_ats_120_750_ch    trend-duration -12.82 -12.79 -0.02284 0.929 -0.958 0.998  5.0           trend
+STATE OCCUPANCY AND DURATION
+                     share  median_len  runs
+strong trend         0.102       7.000  1945
+medium trend         0.107       5.000  2883
+weak trend           0.090       6.000  2162
+strong transitional  0.106       4.000  3993
+medium transitional  0.135       3.000  5761
+weak transitional    0.116       3.000  4865
+strong chop          0.098       5.000  2842
+medium chop          0.133       4.000  4424
+weak chop            0.114       5.000  3559
 
-survivors by batch:
-b
-cross-sectional       3
-multi-timeframe       3
-regime-v5             1
-trend-duration       20
-trend-nonmomentum     2
+transition diagonal (stay probability): min 0.778 max 0.901
 
-survivors by family:
-b                  f              
-trend-duration     cx_m               4
-                   cx_s               3
-trend-nonmomentum  cross-sectional    2
-trend-duration     ats                2
-cross-sectional    z_panelvol         2
-trend-duration     cx1._x             2
-                   cx2._m             2
-                   cx_x               2
-multi-timeframe    zz_panelvol        2
-cross-sectional    z_paneldisp        1
-regime-v5          zz_coex3           1
-multi-timeframe    zz_paneldisp       1
-trend-duration     dts                1
-                   ep_fl              1
-                   oc_fl              1
-                   pdm                1
-                   ts_dd              1
+VALIDATION OF THE GRID
+  persistence  median run 4.0, mean 5.93, 52% under 5, diagonal 0.831
+  separation (gap in sd units of each property)
+         prop    gap  gap_over_sd
+ realised_vol 0.0019       0.6165
+ avg_abs_move 0.0017       0.7476
+     autocorr 0.0209       0.0979
+range_to_path 0.1219       1.0517
+  refit stability  96.9% of 117936 pre-2016 pair-days keep their label
+  null, 200 draws per surrogate
+     A sign-randomised  median run 4.19 +/- 0.39 (real 4.00)  separation 0.3598 +/- 0.0113 (real 0.6284)  p=0.005
+     B IID permutation  median run 5.00 +/- 0.04 (real 4.00)  separation 0.0575 +/- 0.0096 (real 0.6284)  p=0.005
 
-survivors by DIRECTION (sign of efficiency spread -- the real split):
-     3  trend
-    26  chop
+STRONG TREND vs STRONG CHOP -- same size, opposite cleanliness
+  strong trend  n=1051  mfe 0.0141  mae -0.0181  ratio 0.782  bars 9.36  eff 0.2092
+  strong chop   n=1054  mfe 0.0144  mae -0.0145  ratio 0.992  bars 10.80  eff 0.2235
+    path_eff      chop minus trend +0.0143  t +2.11
+    bars_to_peak  chop minus trend +1.4421  t +4.81
+    mfe           chop minus trend +0.0003  t +0.42
+    mae           chop minus trend +0.0035  t +4.72
+  control at WEAK size: path eff chop minus trend +0.0081  t +1.21
+ribbon shipped   (7, 28, 128)  all-three-agree 0.173
+ribbon sweep-selected (19, 105, 188)  all-three-agree 0.223
 
-survivors by stronger target (diagnostic, NOT the split):
-stronger_target
-trend            20
-single-target     6
-chop              3
+AGREEMENT TIERS at (7, 28, 128) (family level)
+  is   all agree 0.137  fast apart 0.235  medium apar 0.200  slow apart 0.233  all differ 0.196
+  oos  all agree 0.136  fast apart 0.229  medium apar 0.202  slow apart 0.237  all differ 0.196
+                 n    mfe  ratio    bars    eff
+tier                                           
+all agree     1532 0.0137 0.8401  9.9132 0.2248
+fast apart    2529 0.0137 0.8910 10.1285 0.2194
+medium apart  2182 0.0146 0.9592 10.0720 0.2172
+slow apart    2722 0.0145 0.9759 10.0397 0.2138
+all differ    2258 0.0136 0.9089 10.0748 0.2153
+  ratio order: all agree < fast apart < all differ < medium apart < slow apart
+  this order does NOT replicate between the halves -- see 16.2b in HANDOFF_3.md. Window agreement carries no reliable excursion signal.
 
-OOS SIGN RETENTION BY FAMILY (n>=30). 50%% is a coin flip.
-top 15
-             b            f    n  retention  best_to  med_to
-     regime-v5    dispvsown   34      0.912   15.920   6.360
-     regime-v5  pr_tsexceed   34      0.882   11.370   3.600
-     regime-v5  zz_tsexceed   34      0.853   12.970   4.050
-     regime-v5    pr_q10q90   34      0.853   10.910   3.095
-     regime-v5     volofvol   34      0.853   13.350   4.735
-     regime-v5     volaccel   34      0.853   16.440   4.240
-trend-duration        ep_mu  360      0.847   18.560   5.585
-trend-duration        oc_mu  360      0.847   18.560   5.585
-     regime-v5   ps_volkurt   32      0.844    9.070   2.990
-     regime-v5    pr_minvol   34      0.824   16.280   5.240
-     regime-v5  zz_volaccel   34      0.824   16.750   4.295
-     regime-v5 zs_dispvsown   34      0.824   15.180   5.245
-     regime-v5     volsplit   34      0.824   12.590   3.170
-     regime-v5   pr_exceed2   34      0.824   13.950   4.620
-trend-duration          dts 1053      0.821   27.940   7.650
-bottom 15 — these are the ones to stop building
-             b            f   n  retention  best_to  med_to
-     regime-v5  ps_rankmove  34      0.324    7.630   1.170
-     regime-v5  pr_volrange  34      0.324    6.290   2.365
-     regime-v5    downshare  34      0.294    6.080   1.875
-     regime-v5        upcap  34      0.294    6.140   1.890
-     regime-v5        rmean  34      0.294    6.140   1.890
-     regime-v5         posq  34      0.294    9.060   1.390
-     regime-v5  zs_rankmove  34      0.294    4.240   1.745
-     regime-v5    pr_convex  34      0.294    8.160   1.950
-     regime-v5    pr_medabs  34      0.294    7.810   3.695
-     regime-v5 zs_halfsplit  34      0.294    6.780   1.785
-     regime-v5      rankret  31      0.290    7.090   1.480
-trend-duration          ptf 741      0.281   19.380   6.000
-trend-duration          sth 240      0.279    3.890   1.020
-     regime-v5    zs_medabs  34      0.235    7.980   3.275
-     regime-v5 zz_jumpratio  34      0.235    6.650   3.065
+wrote app_explorer.json  9.7 MB
 
-==============================================================================
-HORIZON TEST — does trend live at 60-120 days rather than 20?
-==============================================================================
-horizon     n  med_abs_t  med_abs_effect  p90_abs_effect  share_effect_ge_020  med_agree  share_trend_signed
-    20d 43815     2.4400          0.0046          0.0125               0.0188     0.5710              0.4435
-    60d 43815     3.4100          0.0037          0.0098               0.0030     0.5710              0.4649
-   120d 43815     4.5200          0.0033          0.0096               0.0036     0.5710              0.5266
+=== windowsweep.py ===
+  L=  4 churn  470.4 dur   2.0 lag21   5.0 lag63   7.0 sep 0.0235
+  L=  8 churn  339.4 dur   2.0 lag21   5.0 lag63   9.0 sep 0.0280
+  L= 21 churn  196.9 dur   4.0 lag21   3.0 lag63  12.0 sep 0.0274
+  L= 25 churn  178.7 dur   4.0 lag21   7.0 lag63  12.0 sep 0.0201
+  L= 50 churn  143.4 dur   5.0 lag21  19.0 lag63  13.0 sep 0.0260
+  L= 60 churn   92.7 dur   8.0 lag21  44.0 lag63  27.0 sep 0.0190
+  L= 75 churn  102.2 dur   7.0 lag21  49.0 lag63  29.0 sep 0.0265
+  L= 90 churn   82.2 dur   9.0 lag21  63.0 lag63  48.0 sep 0.0304
+  L=100 churn   72.2 dur  10.0 lag21  71.0 lag63  58.0 sep 0.0323
+  L=120 churn   61.0 dur  12.0 lag21  86.0 lag63  76.0 sep 0.0244
+  L=125 churn   58.9 dur  12.0 lag21  89.0 lag63  80.0 sep 0.0260
+  L=150 churn   49.6 dur  14.0 lag21  90.0 lag63  90.0 sep 0.0339
+  L=175 churn   44.3 dur  16.0 lag21  90.0 lag63  90.0 sep 0.0363
+  L=200 churn   39.8 dur  18.0 lag21  90.0 lag63  90.0 sep 0.0316
 
-by mechanism, median |effect| at each horizon:
-                   20d    60d   120d
-f                                   
-acceleration    0.0049 0.0036 0.0031
-conditional     0.0050 0.0045 0.0043
-cross-sectional 0.0040 0.0032 0.0028
-duration        0.0057 0.0038 0.0046
-structure       0.0052 0.0040 0.0033
+FULL CURVES (every 8th window shown; the CSV has all 197)
+   L    churn     dur   lag21   lag63        sep
+   8    339.4     2.0     5.0     9.0     0.0280
+  16    230.8     3.0     5.0    11.0     0.0244
+  24    183.6     4.0     6.0    12.0     0.0245
+  32    156.2     5.0    12.0    12.0     0.0193
+  40    143.9     5.0    16.0    13.0     0.0193
+  48    143.0     5.0    19.0    13.0     0.0150
+  56    143.7     5.0    24.0    12.0     0.0155
+  64    130.0     5.0    37.0    13.0     0.0163
+  72    109.0     7.0    45.0    24.0     0.0233
+  80     93.6     8.0    55.0    36.0     0.0328
+  88     83.7     9.0    62.0    46.0     0.0331
+  96     75.7     9.0    68.0    55.0     0.0334
+ 104     69.8    10.0    74.0    63.0     0.0357
+ 112     65.2    11.0    80.0    69.0     0.0345
+ 120     61.0    12.0    86.0    76.0     0.0244
+ 128     57.9    12.0    90.0    81.0     0.0261
+ 136     54.2    13.0    90.0    89.0     0.0346
+ 144     52.3    13.0    90.0    90.0     0.0308
+ 152     49.6    14.0    90.0    90.0     0.0332
+ 160     47.1    15.0    90.0    90.0     0.0336
+ 168     45.8    15.0    90.0    90.0     0.0336
+ 176     44.1    16.0    90.0    90.0     0.0363
+ 184     42.8    16.0    90.0    90.0     0.0308
+ 192     41.2    17.0    90.0    90.0     0.0325
+ 200     39.8    18.0    90.0    90.0     0.0316
 
-==============================================================================
-MOMENTUM COLLINEARITY — px28 is triangulated, so leg_base - leg_quote
-IS the pair return. Features built on it are momentum, which is on the
-do-not-build list. Split by |corr| with the own N-day return:
-==============================================================================
-                                          n  retention  best_to  med_effect
-f               kind                                                       
-acceleration    disguised momentum      220      0.464   13.330       0.004
-                genuinely panel-wide   4543      0.538   18.430       0.005
-conditional     disguised momentum     1690      0.476   10.470       0.004
-                genuinely panel-wide   5548      0.576   14.360       0.006
-cross-sectional disguised momentum     3360      0.503   12.060       0.003
-                genuinely panel-wide  15554      0.543   23.600       0.004
-duration        disguised momentum      250      0.416    7.320       0.002
-                genuinely panel-wide   5211      0.603   22.760       0.006
-structure       disguised momentum      540      0.539    9.720       0.003
-                genuinely panel-wide   6899      0.594   14.560       0.005
+CHURN CURVE -- fractional fall per extra bar of window
+  L   4- 12  churn  470.4 ->  271.0   mean fall 0.0665/bar
+  L  12- 25  churn  271.0 ->  178.7   mean fall 0.0315/bar
+  L  25- 45  churn  178.7 ->  143.0   mean fall 0.0111/bar
+  L  45- 70  churn  143.0 ->  114.0   mean fall 0.0056/bar
+  L  70-100  churn  114.0 ->   72.2   mean fall 0.0151/bar
+  L 100-140  churn   72.2 ->   53.2   mean fall 0.0076/bar
+  L 140-200  churn   53.2 ->   39.8   mean fall 0.0048/bar
 
-batch-level retention:
-                     size  mean
-b                              
-cross-sectional       964 0.669
-multi-timeframe     10383 0.525
-own-price            1066 0.540
-regime-v5            7862 0.604
-trend-duration     103226 0.636
-trend-nonmomentum   43815 0.555
+SEPARATION by window band (mean spread in forward path efficiency)
+  L   4- 12  0.0261   best L=10 at 0.0309
+  L  12- 25  0.0261   best L=19 at 0.0318
+  L  25- 45  0.0211   best L=44 at 0.0312
+  L  45- 70  0.0193   best L=67 at 0.0262
+  L  70-100  0.0298   best L=97 at 0.0370
+  L 100-140  0.0320   best L=105 at 0.0406
+  L 140-200  0.0333   best L=188 at 0.0384
 
-=== dedup.py ===
-survivors after gates 1-7: 29
-b
-trend-duration       20
-cross-sectional       3
-multi-timeframe       3
-trend-nonmomentum     2
-regime-v5             1
+HOW DUPLICATED ARE TWO WINDOWS? share of bars with the same label
+            6      8     12     16     21     30     45     60     90    120    160    200
+     6      .   0.45   0.27   0.22   0.19   0.16   0.14   0.13   0.13   0.12   0.12   0.12
+     8      .      .   0.37   0.27   0.22   0.18   0.15   0.14   0.13   0.12   0.12   0.12
+    12      .      .      .   0.44   0.30   0.22   0.17   0.14   0.13   0.13   0.13   0.13
+    16      .      .      .      .   0.44   0.27   0.19   0.15   0.13   0.13   0.13   0.12
+    21      .      .      .      .      .   0.37   0.22   0.16   0.13   0.13   0.13   0.13
+    30      .      .      .      .      .      .   0.31   0.19   0.14   0.13   0.13   0.13
+    45      .      .      .      .      .      .      .   0.28   0.17   0.15   0.14   0.14
+    60      .      .      .      .      .      .      .      .   0.27   0.21   0.18   0.17
+    90      .      .      .      .      .      .      .      .      .   0.39   0.28   0.24
+   120      .      .      .      .      .      .      .      .      .      .   0.43   0.33
+   160      .      .      .      .      .      .      .      .      .      .      .   0.50
+   200      .      .      .      .      .      .      .      .      .      .      .      .
 
-rebuilding survivor series on 6 pairs...
-  sig3  EURGBP  1s
-  sig3  EURAUD  1s
-  sig3  EURNZD  1s
-  sig3  EURUSD  2s
-  sig3  EURCAD  1s
-  sig3  EURCHF  1s
-  sig4  EURGBP  3s
-  sig4  EURAUD  3s
-  sig4  EURNZD  3s
-  sig4  EURUSD  3s
-  sig4  EURCAD  3s
-  sig4  EURCHF  3s
-  sig5  EURGBP  50s
-  sig5  EURAUD  49s
-  sig5  EURNZD  50s
-  sig5  EURUSD  49s
-  sig5  EURCAD  50s
-  sig5  EURCHF  49s
-  sig6  EURGBP  2s
-  sig6  EURAUD  1s
-  sig6  EURNZD  1s
-  sig6  EURUSD  1s
-  sig6  EURCAD  1s
-  sig6  EURCHF  1s
+=== axischeck.py ===
+WHAT THE AXES MEASURE  (iid-Gaussian prediction for scale: 3.656)
+                         measure  mean    sd    cv   p10   p90
+        scale = path/(sd*sqrt L) 3.528 0.649 0.184 2.713 4.349
+displacement = |net|/(sd*sqrt L) 0.770 0.598 0.776 0.119 1.600
+       straightness = |net|/path 0.217 0.158 0.730 0.035 0.443
+
+spearman correlations
+          straight  scale   disp
+straight     1.000  0.038  0.973
+scale        0.038  1.000  0.237
+disp         0.973  0.237  1.000
+
+disp = straight * scale exactly. straight carries the variance:
+  disp vs straight 0.973 -- adopting displacement as the size axis would collapse the grid toward one dimension
+
+SEPARATION ACROSS THE NINE STATES, in sd units of each property
+  variance ratio k=10 [structural]             gap 0.088   trend->chop +0.072 sd
+  return autocorr     [structural]             gap 0.101   trend->chop +0.037 sd
+  turn frequency      [structural]             gap 0.309   trend->chop +0.217 sd
+  realised vol        [restates scale]         gap 0.611   trend->chop -0.003 sd
+  range/path          [restates straightness]  gap 1.116   trend->chop -1.062 sd
+
+wrote axis_check.csv
+
+=== structure.py ===
+  swept N=2 B=1
+  swept N=2 B=2
+  swept N=2 B=3
+  swept N=3 B=1
+  swept N=3 B=2
+  swept N=3 B=3
+  swept N=5 B=1
+  swept N=5 B=2
+  swept N=5 B=3
+  swept N=8 B=1
+  swept N=8 B=2
+  swept N=8 B=3
+
+PARAMETER SURFACE: 144 cells, all measured on IS only
+  cells where IS-A and IS-B agree on the sign of the bars contrast: 104 of 144
+
+MARGINALS -- mean IS-A bars contrast by each parameter
+  N
+    bars      t  agree  share
+N                            
+2 -0.126 -0.478  0.889  0.123
+3 -0.252 -1.046  1.000  0.138
+5 -0.817 -3.425  1.000  0.137
+8 -0.785 -3.226  0.000  0.131
+  B
+    bars      t  agree  share
+B                            
+1 -0.485 -2.077  0.750  0.148
+2 -0.514 -2.133  0.750  0.135
+3 -0.485 -1.920  0.667  0.114
+  D
+       bars      t  agree  share
+D                               
+0.25 -0.480 -2.057  0.750  0.146
+0.50 -0.472 -1.973  0.667  0.135
+1.00 -0.533 -2.101  0.750  0.116
+  R
+       bars      t  agree  share
+R                               
+0.50 -0.502 -2.070  0.722  0.132
+0.62 -0.495 -2.044  0.722  0.132
+0.75 -0.494 -2.043  0.722  0.133
+1.00 -0.488 -2.018  0.722  0.133
+
+WHICH BREAK QUALIFIER MATTERS MORE?
+  bars-outside B spans 0.029 (-0.514 to -0.485)
+  distance      D spans 0.061 (-0.533 to -0.472)
+  -> distance is the stronger lever
+
+IS THERE A PLATEAU? top 12 cells by IS-A |t|, with their IS-B result
+ N  B     D     R  A_bars    A_t  B_bars    B_t  A_share  agree
+ 5  2 0.250 0.500  -0.912 -3.955  -0.115 -0.557    0.151   True
+ 5  1 0.250 0.500  -0.880 -3.944  -0.089 -0.443    0.163   True
+ 5  2 0.250 0.750  -0.904 -3.926  -0.124 -0.600    0.151   True
+ 5  2 0.250 0.620  -0.904 -3.926  -0.124 -0.600    0.151   True
+ 5  2 0.250 1.000  -0.902 -3.920  -0.117 -0.567    0.152   True
+ 5  1 0.250 0.620  -0.873 -3.916  -0.097 -0.485    0.163   True
+ 5  1 0.250 0.750  -0.873 -3.916  -0.097 -0.485    0.163   True
+ 5  1 0.250 1.000  -0.872 -3.911  -0.091 -0.453    0.164   True
+ 8  1 1.000 0.500  -0.885 -3.610   0.182  0.832    0.128  False
+ 5  2 0.500 0.750  -0.851 -3.600  -0.143 -0.670    0.141   True
+ 5  2 0.500 0.620  -0.851 -3.600  -0.143 -0.670    0.141   True
+ 5  2 0.500 1.000  -0.849 -3.594  -0.135 -0.637    0.141   True
+
+=== structval.py ===
+SEPARATION IN SD UNITS OF EACH PROPERTY, holdout, common window W=28
+                structural  grid  weighted       kind
+prop                                                 
+autocorr             0.268 0.091     0.076      SHAPE
+range_to_path        1.579 1.666     0.353      SHAPE
+dir_changes          0.235 0.294     0.110      SHAPE
+mean_crossings       0.553 1.134     0.144      SHAPE
+run_length           0.206 0.314     0.125      SHAPE
+var_ratio_5          0.336 0.054     0.088      SHAPE
+var_ratio_10         0.295 0.267     0.124      SHAPE
+realised_vol         0.079 0.883     0.632  magnitude
+avg_abs_move         0.049 0.977     0.726  magnitude
+
+mean over SHAPE properties only:
+  structural  0.496
+  grid        0.546
+  weighted    0.146
+mean over the two magnitude properties:
+  structural  0.064
+  grid        0.930
+  weighted    0.679
+
+note: range_to_path and the variance ratios are kin to |net|/path, so
+the grid and weighted classifiers part-restate them. autocorr,
+dir_changes, mean_crossings and run_length are built into none of the three.
+mean over the four NEUTRAL shape properties:
+  structural  0.316
+  grid        0.458
+  weighted    0.114
+
+PERSISTENCE, COVERAGE
+  structural  median run    3  diagonal 0.810   4 states  min share 0.067
+  grid        median run    4  diagonal 0.832   9 states  min share 0.087
+  weighted    median run   11  diagonal 0.935   3 states  min share 0.290
+
+REFIT STABILITY (pre-2016 labels after refitting through 2020)
+  grid        100.00% of 117936 pair-days identical
+  structural  100.00% of 119616 pair-days identical
+  structural has no fitted parameter at all -- swings, breaks and
+  retracements come from price, so refitting cannot relabel history.
+
+NULLS on the structural classifier, 200 draws each
+  sign  surrogate 0.341 +/- 0.022   real 0.316   p=0.871
+  iid   surrogate 0.327 +/- 0.023   real 0.316   p=0.672
+
+wrote structval.csv
+
+=== structsel.py ===
+IS-ONLY SELECTION over 144 cells at dwell M=5, 40 surrogate draws
+  10/40 draws
+  20/40 draws
+  30/40 draws
+  40/40 draws
+
+THE SURFACE, IS only. corrected = real minus own surrogate.
+  cells with POSITIVE corrected separation on IS-A: 79 of 144
+  cells with POSITIVE corrected separation on IS-B: 76 of 144
+  cells positive on BOTH blocks:                    31 of 144
+  cells where the two blocks agree in sign:         51 of 144
+
+MARGINALS -- mean IS-A corrected separation by each parameter
+   A_corr  B_corr  A_real  A_surr
+N                                
+2 -0.0537 +0.0415 +0.4252 +0.4789
+3 +0.0066 +0.0006 +0.4694 +0.4628
+5 -0.0077 -0.0052 +0.4511 +0.4588
+8 +0.2041 -0.0324 +0.6392 +0.4351
+   A_corr  B_corr  A_real  A_surr
+B                                
+1 +0.0449 +0.0214 +0.4259 +0.3810
+2 +0.0322 -0.0018 +0.5187 +0.4865
+3 +0.0349 -0.0163 +0.5441 +0.5092
+      A_corr  B_corr  A_real  A_surr
+D                                   
+0.25 +0.0276 +0.0099 +0.4368 +0.4093
+0.50 +0.0230 +0.0015 +0.4761 +0.4531
+1.00 +0.0615 -0.0080 +0.5757 +0.5142
+      A_corr  B_corr  A_real  A_surr
+R                                   
+0.50 +0.0368 +0.0002 +0.4967 +0.4598
+0.62 +0.0376 +0.0015 +0.4965 +0.4588
+0.75 +0.0373 +0.0014 +0.4958 +0.4585
+1.00 +0.0376 +0.0013 +0.4960 +0.4584
+
+TOP 10 CELLS BY IS-A CORRECTED SEPARATION, with their IS-B result
+ N  B       D       R  A_real  A_surr  A_corr     A_z  B_corr     B_z  agree
+ 8  2 +1.0000 +1.0000 +0.8223 +0.5334 +0.2889 +5.7316 -0.0431 -0.9275  False
+ 8  2 +1.0000 +0.7500 +0.8223 +0.5334 +0.2888 +5.7381 -0.0423 -0.9103  False
+ 8  2 +1.0000 +0.6200 +0.8224 +0.5336 +0.2888 +5.7394 -0.0433 -0.9330  False
+ 8  2 +1.0000 +0.5000 +0.8227 +0.5339 +0.2888 +5.7426 -0.0460 -0.9934  False
+ 8  3 +1.0000 +1.0000 +0.7424 +0.4959 +0.2465 +5.9377 -0.0293 -0.8683  False
+ 8  3 +1.0000 +0.7500 +0.7424 +0.4960 +0.2465 +5.9455 -0.0284 -0.8428  False
+ 8  3 +1.0000 +0.6200 +0.7426 +0.4961 +0.2465 +5.9528 -0.0284 -0.8472  False
+ 8  3 +1.0000 +0.5000 +0.7429 +0.4966 +0.2463 +5.9287 -0.0313 -0.9344  False
+ 8  3 +0.2500 +0.5000 +0.6681 +0.4229 +0.2452 +6.0116 -0.0350 -1.4663  False
+ 8  3 +0.2500 +1.0000 +0.6668 +0.4220 +0.2448 +5.9826 -0.0348 -1.4371  False
+
+CHOSEN CELL: N=2 B=3 D=1.00 R=0.62   (criterion)
+  IS-A corrected +0.0739 (z +1.64)   IS-B corrected +0.0381 (z +0.78)
+
+====================================================================
+HOLDOUT, READ ONCE. 120 surrogate draws of each kind.
+  sign  surrogate 0.562 +/- 0.036   real 0.494   p=0.959  corrected -0.069
+  iid   surrogate 0.547 +/- 0.037   real 0.494   p=0.909  corrected -0.053
+
+wrote structsel_surface.csv and structsel_result.csv
+
+=== shape3.py ===
+/home/runner/work/fx-data/fx-data/code/shape3.py:208: RuntimeWarning: All-NaN slice encountered
+  a = np.nanmax(np.vstack([idx - hp, idx - lpz]), axis=0)
+structural cell from structsel.py: N=2 B=3 D=1.00 R=0.62
+
+COVERAGE SURFACE, IS only (1999-2015). balance = entropy / log2(3)
+  mode       N      trending     range   drifting   balance
+  strict     2        0.058     0.495      0.447     0.795
+  strict     3        0.077     0.501      0.422     0.827
+  strict     5        0.092     0.518      0.390     0.845
+  strict     8        0.102     0.541      0.357     0.850
+  strict     13       0.111     0.556      0.333     0.852
+  relaxed    2        0.113     0.495      0.393     0.875
+  relaxed    3        0.151     0.501      0.348     0.910
+  relaxed    5        0.185     0.518      0.297     0.923
+  relaxed    8        0.201     0.541      0.258     0.914
+  relaxed    13       0.223     0.556      0.221     0.905
+  breakonly  2        0.144     0.495      0.362     0.905
+  breakonly  3        0.197     0.501      0.302     0.936
+  breakonly  5        0.245     0.518      0.237     0.935
+  breakonly  8        0.272     0.541      0.187     0.910
+  breakonly  13       0.294     0.556      0.150     0.884
+
+  most balanced overall (REJECTED): mode=breakonly N=3, balance 0.936
+  breakonly drops the swing sequence, so "trending" would mean only
+  "a break happened and price has not retraced". structure.py exists
+  because higher highs alone is not a trend. Not traded away for
+  0.013 of entropy.
+
+  CHOSEN: mode=relaxed N=5, balance 0.923 (sequence retained)
+
+HOLDOUT COVERAGE at that setting, against the old four-state read
+  new three-state:  trending 0.168  range 0.532  drifting 0.300
+  old four-state:   trending 0.053  broken 0.439  range 0.267  drifting 0.240
+  trending goes from 5.3% to 16.8%, and "broken" -- 43.9% of bars
+  and never part of the spec -- is gone.
+
+WHAT LOOKBACK DOES SHAPE USE? bars back to the anchoring swing
+  the state needs TWO confirmed swings each side, so its memory runs
+  to the second-most-recent one. This is a distribution, not a window.
+  N         p10   median     mean      p90      p99
+  2          10       14     15.2       22       30
+  3          14       21     22.5       32       44
+  5          23       35     36.7       52       71
+  8          37       55     57.7       82      109
+  13         60       88     91.3      127      170
+
+  SO: shape has NO fixed window and cannot be given one without changing what it
+  is. N is the horizon knob -- the direct analogue of the ribbon's 7/28/128 --
+  and the table above is what each N actually reaches back to. For a daily entry
+  held for weeks, N=5 (median ~35 bars, p90 ~52) is the closest match to the
+  28-day ribbon window; N=2 is the fast leg and N=8-13 the slow one. Running
+  three N values side by side would reproduce the ribbon on the shape axis, and
+  that is a build decision, not a finding.
+
+wrote shape3_coverage.csv, shape3_lookback.csv, shape3_states.csv
+
+=== shapewin.py ===
+THREE SHAPES. Swing width N = 2..40, every value.
+lookback is the MEASURED median distance back to the anchoring swing;
+it is quantised because N is an integer.
+
+IN-SAMPLE, 1999-2015
+    N  days | trending  range drifting  resid |    sep   run  diag | runRng runTrn
+    2    12 |    0.115  0.637    0.247  0.000 |  0.523    17 0.961 |     26     12
+    3    18 |    0.158  0.611    0.232  0.000 |  0.540    14 0.948 |     20     10
+    4    24 |    0.181  0.599    0.219  0.000 |  0.550    13 0.945 |     20     11
+    5    29 |    0.197  0.598    0.205  0.000 |  0.558    14 0.947 |     21     12
+    6    35 |    0.208  0.604    0.188  0.000 |  0.560    15 0.951 |     22     13
+    7    41 |    0.212  0.608    0.179  0.000 |  0.548    16 0.954 |     24     14
+    8    46 |    0.210  0.611    0.178  0.000 |  0.533    17 0.957 |     25     15
+    9    52 |    0.219  0.607    0.174  0.000 |  0.522    18 0.959 |     26     16
+   10    57 |    0.221  0.605    0.174  0.000 |  0.511    18 0.961 |     27     17
+   11    63 |    0.228  0.606    0.166  0.000 |  0.495    19 0.963 |     29     19
+   12    68 |    0.231  0.606    0.163  0.000 |  0.473    20 0.965 |     31     20
+   13    74 |    0.234  0.606    0.160  0.000 |  0.465    21 0.966 |     32     21
+   14    79 |    0.238  0.603    0.159  0.000 |  0.454    22 0.968 |     34     22
+   15    84 |    0.239  0.605    0.155  0.000 |  0.446    23 0.969 |     35     23
+   16    90 |    0.244  0.604    0.152  0.000 |  0.435    24 0.970 |     37     24
+   17    95 |    0.244  0.604    0.152  0.000 |  0.421    25 0.971 |     38     25
+   18   101 |    0.246  0.604    0.151  0.000 |  0.404    25 0.972 |     39     26
+   19   106 |    0.247  0.602    0.151  0.000 |  0.380    26 0.973 |     41     26
+   20   111 |    0.250  0.602    0.148  0.000 |  0.368    27 0.974 |     43     27
+   21   116 |    0.251  0.599    0.149  0.000 |  0.347    27 0.975 |     44     28
+   22   121 |    0.252  0.598    0.150  0.000 |  0.332    28 0.975 |     46     29
+   23   127 |    0.253  0.595    0.152  0.000 |  0.320    28 0.976 |     46     30
+   24   132 |    0.251  0.597    0.152  0.000 |  0.316    29 0.977 |     48     31
+   25   138 |    0.252  0.599    0.150  0.000 |  0.308    30 0.977 |     49     31
+   26   144 |    0.254  0.596    0.150  0.000 |  0.297    30 0.978 |     49     32
+   27   150 |    0.254  0.601    0.145  0.000 |  0.286    31 0.978 |     51     33
+   28   155 |    0.253  0.602    0.146  0.000 |  0.273    31 0.979 |     53     34
+   29   161 |    0.253  0.604    0.144  0.000 |  0.261    31 0.979 |     54     34
+   30   167 |    0.254  0.603    0.144  0.000 |  0.244    31 0.980 |     56     35
+   31   172 |    0.254  0.599    0.146  0.000 |  0.237    31 0.980 |     57     37
+   32   178 |    0.256  0.597    0.147  0.000 |  0.233    31 0.980 |     57     37
+   33   184 |    0.256  0.594    0.149  0.000 |  0.228    31 0.980 |     58     37
+   34   190 |    0.255  0.595    0.149  0.000 |  0.216    32 0.981 |     57     39
+   35   196 |    0.255  0.596    0.149  0.000 |  0.212    32 0.981 |     58     39
+   36   201 |    0.257  0.597    0.146  0.000 |  0.206    32 0.982 |     60     41
+   37   208 |    0.257  0.603    0.140  0.000 |  0.203    31 0.982 |     61     40
+   38   214 |    0.257  0.606    0.137  0.000 |  0.202    31 0.982 |     61     39
+   39   220 |    0.257  0.604    0.138  0.000 |  0.194    31 0.982 |     63     38
+   40   227 |    0.256  0.608    0.135  0.000 |  0.200    31 0.983 |     64     38
+
+NULLS on IS, 20 draws, every window against its own surrogate
+  5/20
+  10/20
+  15/20
+  20/20
+
+    N  days |     sep    surr corrected | trending  range drifting
+    2    12 |   0.523   0.514   +0.009 |    0.115  0.637    0.247
+    3    18 |   0.540   0.539   +0.001 |    0.158  0.611    0.232
+    4    24 |   0.550   0.545   +0.005 |    0.181  0.599    0.219
+    5    29 |   0.558   0.546   +0.012 |    0.197  0.598    0.205
+    6    35 |   0.560   0.542   +0.018 |    0.208  0.604    0.188
+    7    41 |   0.548   0.536   +0.011 |    0.212  0.608    0.179
+    8    46 |   0.533   0.529   +0.005 |    0.210  0.611    0.178
+    9    52 |   0.522   0.515   +0.008 |    0.219  0.607    0.174
+   10    57 |   0.511   0.505   +0.006 |    0.221  0.605    0.174
+   11    63 |   0.495   0.492   +0.003 |    0.228  0.606    0.166
+   12    68 |   0.473   0.477   -0.004 |    0.231  0.606    0.163
+   13    74 |   0.465   0.460   +0.005 |    0.234  0.606    0.160
+   14    79 |   0.454   0.443   +0.011 |    0.238  0.603    0.159
+   15    84 |   0.446   0.428   +0.018 |    0.239  0.605    0.155
+   16    90 |   0.435   0.413   +0.022 |    0.244  0.604    0.152
+   17    95 |   0.421   0.397   +0.024 |    0.244  0.604    0.152
+   18   101 |   0.404   0.381   +0.023 |    0.246  0.604    0.151
+   19   106 |   0.380   0.366   +0.014 |    0.247  0.602    0.151
+   20   111 |   0.368   0.352   +0.016 |    0.250  0.602    0.148
+   21   116 |   0.347   0.339   +0.008 |    0.251  0.599    0.149
+   22   121 |   0.332   0.327   +0.005 |    0.252  0.598    0.150
+   23   127 |   0.320   0.316   +0.004 |    0.253  0.595    0.152
+   24   132 |   0.316   0.306   +0.010 |    0.251  0.597    0.152
+   25   138 |   0.308   0.294   +0.014 |    0.252  0.599    0.150
+   26   144 |   0.297   0.286   +0.012 |    0.254  0.596    0.150
+   27   150 |   0.286   0.276   +0.010 |    0.254  0.601    0.145
+   28   155 |   0.273   0.265   +0.008 |    0.253  0.602    0.146
+   29   161 |   0.261   0.256   +0.004 |    0.253  0.604    0.144
+   30   167 |   0.244   0.248   -0.003 |    0.254  0.603    0.144
+   31   172 |   0.237   0.240   -0.002 |    0.254  0.599    0.146
+   32   178 |   0.233   0.232   +0.001 |    0.256  0.597    0.147
+   33   184 |   0.228   0.225   +0.003 |    0.256  0.594    0.149
+   34   190 |   0.216   0.219   -0.003 |    0.255  0.595    0.149
+   35   196 |   0.212   0.213   -0.001 |    0.255  0.596    0.149
+   36   201 |   0.206   0.208   -0.002 |    0.257  0.597    0.146
+   37   208 |   0.203   0.203   +0.000 |    0.257  0.603    0.140
+   38   214 |   0.202   0.199   +0.003 |    0.257  0.606    0.137
+   39   220 |   0.194   0.195   -0.001 |    0.257  0.604    0.138
+   40   227 |   0.200   0.193   +0.007 |    0.256  0.608    0.135
+
+DOES CHOP IMPROVE, SHRINK OR HOLD WHILE TREND GROWS?
+  N=2 (12 days) -> N=40 (227 days)
+    trending  0.115 -> 0.256  (+0.141)
+    range     0.637 -> 0.608  (-0.029)
+    drifting  0.247 -> 0.135  (-0.112)
+    range median run 26 -> 64 bars
+    residual 0.000 -> 0.000
+  ->
+     trending  GROWS (+0.141 share)
+     range     HOLDS STEADY (-0.029 share)
+     drifting  SHRINKS (-0.112 share)
+     but range EPISODES lengthen 2.5x, 26 -> 64 bars, while its
+     share barely moves. That is the answer to "a three-month range is
+     a stronger chop reading": the long window does not find MORE chop,
+     it finds the SAME chop in longer, readable episodes. Trending
+     grows and drifting is what it takes from.
+
+SELECTION on IS. Pre-specified: residual <= 2%, every shape >= 10%,
+then the highest null-corrected separation.
+  windows meeting the coverage bar: 39 of 39 (N=2..40)
+  CHOSEN: N=17, lookback 95 bars, IS corrected +0.024
+  its neighbourhood (N=15..19): corrected +0.018 +0.022 +0.024 +0.023 +0.014
+  plateau: 32 of the 39 windows meeting coverage have corrected > 0
+
+HOLDOUT, READ ONCE. N=17, 120 surrogate draws.
+  coverage: trending 0.218  range 0.630  drifting 0.152  residual 0.000
+  median run 24, diagonal 0.971, range runs 40 bars
+  separation 0.377  surrogate 0.396 +/- 0.020  corrected -0.018  p=0.826
+
+wrote shapewin.csv and shapewin_confirm.csv
+
+=== shapescore.py ===
+CONTINUOUS TREND-vs-RANGE SCORE, terciles, N = 2..40 every value.
+components: seq (cancelling), bound, hold, pull. Equal weights,
+standardised on IS. Cut = the nine-box tercile with hysteresis.
+
+IN-SAMPLE. coverage is fixed by construction, so it is a check only.
+    N  days | trending drifting  range  resid |    sep   run  diag | runRng runTrn
+    2    12 |    0.308    0.327  0.365  0.000 |  0.683    16 0.950 |     17     18
+    3    18 |    0.304    0.350  0.346  0.000 |  0.717    15 0.946 |     15     19
+    4    24 |    0.298    0.359  0.343  0.000 |  0.687    14 0.945 |     15     19
+    5    29 |    0.294    0.368  0.338  0.000 |  0.666    14 0.945 |     14     19
+    6    35 |    0.289    0.379  0.331  0.000 |  0.635    14 0.946 |     14     19
+    7    41 |    0.288    0.380  0.331  0.000 |  0.603    14 0.947 |     14     19
+    8    46 |    0.287    0.382  0.330  0.000 |  0.574    14 0.948 |     14     20
+    9    52 |    0.285    0.386  0.329  0.000 |  0.543    15 0.950 |     15     20
+   10    57 |    0.284    0.388  0.327  0.000 |  0.515    15 0.950 |     15     19
+   11    63 |    0.284    0.388  0.328  0.000 |  0.487    15 0.951 |     15     20
+   12    68 |    0.284    0.389  0.327  0.000 |  0.466    15 0.952 |     15     21
+   13    74 |    0.284    0.388  0.328  0.000 |  0.433    15 0.953 |     15     21
+   14    79 |    0.282    0.389  0.328  0.000 |  0.427    16 0.954 |     16     23
+   15    84 |    0.284    0.385  0.331  0.000 |  0.407    16 0.956 |     16     23
+   16    90 |    0.283    0.385  0.332  0.000 |  0.394    16 0.957 |     16     24
+   17    95 |    0.283    0.384  0.333  0.000 |  0.380    17 0.957 |     17     26
+   18   101 |    0.283    0.386  0.331  0.000 |  0.370    17 0.958 |     17     27
+   19   106 |    0.284    0.385  0.332  0.000 |  0.351    17 0.959 |     17     27
+   20   111 |    0.286    0.383  0.331  0.000 |  0.332    17 0.960 |     17     27
+   21   116 |    0.284    0.385  0.331  0.000 |  0.328    17 0.960 |     17     27
+   22   121 |    0.286    0.384  0.330  0.000 |  0.318    18 0.961 |     17     29
+   23   127 |    0.286    0.383  0.331  0.000 |  0.310    18 0.962 |     17     28
+   24   132 |    0.286    0.386  0.329  0.000 |  0.296    18 0.962 |     18     28
+   25   138 |    0.285    0.385  0.330  0.000 |  0.290    18 0.962 |     18     29
+   26   144 |    0.285    0.384  0.331  0.000 |  0.282    18 0.962 |     18     27
+   27   150 |    0.284    0.387  0.329  0.000 |  0.269    18 0.963 |     18     28
+   28   155 |    0.283    0.389  0.328  0.000 |  0.262    18 0.964 |     18     29
+   29   161 |    0.282    0.391  0.326  0.000 |  0.256    18 0.964 |     18     28
+   30   167 |    0.282    0.388  0.330  0.000 |  0.240    19 0.965 |     18     30
+   31   172 |    0.283    0.387  0.329  0.000 |  0.236    19 0.965 |     18     30
+   32   178 |    0.283    0.388  0.330  0.000 |  0.228    19 0.966 |     19     30
+   33   184 |    0.282    0.390  0.328  0.000 |  0.218    19 0.966 |     18     30
+   34   190 |    0.283    0.391  0.327  0.000 |  0.210    19 0.966 |     18     30
+   35   196 |    0.281    0.393  0.326  0.000 |  0.202    20 0.967 |     18     30
+   36   201 |    0.281    0.393  0.327  0.000 |  0.206    20 0.968 |     18     32
+   37   208 |    0.280    0.394  0.325  0.000 |  0.203    20 0.968 |     20     32
+   38   214 |    0.280    0.395  0.325  0.000 |  0.202    20 0.968 |     20     32
+   39   220 |    0.279    0.395  0.326  0.000 |  0.194    21 0.969 |     20     32
+   40   227 |    0.284    0.390  0.326  0.000 |  0.192    21 0.969 |     20     32
+
+NULLS on IS, 20 draws, every window against its own surrogate
+  5/20
+  10/20
+  15/20
+  20/20
+
+    N  days |     sep    surr corrected |    run  diag |  pairs +  pair med
+    2    12 |   0.683   0.709    -0.026 |     16 0.950 |     8/28    -0.033
+    3    18 |   0.717   0.752    -0.035 |     15 0.946 |    11/28    -0.022
+    4    24 |   0.687   0.746    -0.059 |     14 0.945 |     8/28    -0.043
+    5    29 |   0.666   0.711    -0.045 |     14 0.945 |     9/28    -0.047
+    6    35 |   0.635   0.674    -0.039 |     14 0.946 |     6/28    -0.042
+    7    41 |   0.603   0.635    -0.033 |     14 0.947 |     9/28    -0.049
+    8    46 |   0.574   0.595    -0.022 |     14 0.948 |     9/28    -0.021
+    9    52 |   0.543   0.562    -0.019 |     15 0.950 |    12/28    -0.007
+   10    57 |   0.515   0.532    -0.017 |     15 0.950 |    11/28    -0.013
+   11    63 |   0.487   0.507    -0.020 |     15 0.951 |    12/28    -0.023
+   12    68 |   0.466   0.482    -0.016 |     15 0.952 |    13/28    -0.005
+   13    74 |   0.433   0.459    -0.026 |     15 0.953 |     8/28    -0.029
+   14    79 |   0.427   0.438    -0.011 |     16 0.954 |    11/28    -0.019
+   15    84 |   0.407   0.420    -0.013 |     16 0.956 |    11/28    -0.018
+   16    90 |   0.394   0.402    -0.007 |     16 0.957 |    12/28    -0.012
+   17    95 |   0.380   0.386    -0.007 |     17 0.957 |    13/28    -0.012
+   18   101 |   0.370   0.372    -0.002 |     17 0.958 |    12/28    -0.008
+   19   106 |   0.351   0.359    -0.008 |     17 0.959 |    16/28    +0.013
+   20   111 |   0.332   0.344    -0.013 |     17 0.960 |    14/28    -0.006
+   21   116 |   0.328   0.331    -0.003 |     17 0.960 |    15/28    +0.023
+   22   121 |   0.318   0.318    -0.000 |     18 0.961 |    16/28    +0.010
+   23   127 |   0.310   0.307    +0.002 |     18 0.962 |    16/28    +0.009
+   24   132 |   0.296   0.294    +0.003 |     18 0.962 |    13/28    -0.008
+   25   138 |   0.290   0.285    +0.005 |     18 0.962 |    15/28    +0.009
+   26   144 |   0.282   0.274    +0.008 |     18 0.962 |    13/28    -0.003
+   27   150 |   0.269   0.265    +0.004 |     18 0.963 |    13/28    -0.005
+   28   155 |   0.262   0.253    +0.009 |     18 0.964 |    13/28    -0.001
+   29   161 |   0.256   0.245    +0.011 |     18 0.964 |    14/28    +0.001
+   30   167 |   0.240   0.238    +0.001 |     19 0.965 |    15/28    +0.005
+   31   172 |   0.236   0.229    +0.007 |     19 0.965 |    14/28    +0.001
+   32   178 |   0.228   0.223    +0.005 |     19 0.966 |    17/28    +0.009
+   33   184 |   0.218   0.218    +0.000 |     19 0.966 |    14/28    +0.001
+   34   190 |   0.210   0.209    +0.001 |     19 0.966 |    13/28    -0.006
+   35   196 |   0.202   0.205    -0.003 |     20 0.967 |    12/28    -0.026
+   36   201 |   0.206   0.199    +0.007 |     20 0.968 |     9/28    -0.013
+   37   208 |   0.203   0.193    +0.009 |     20 0.968 |    10/28    -0.024
+   38   214 |   0.202   0.190    +0.012 |     20 0.968 |    10/28    -0.018
+   39   220 |   0.194   0.186    +0.008 |     21 0.969 |     9/28    -0.018
+   40   227 |   0.192   0.181    +0.011 |     21 0.969 |    11/28    -0.011
+
+SELECTION on IS: highest null-corrected separation.
+  CHOSEN N=38, lookback 214 bars, corrected +0.012
+  neighbourhood N=36..40: +0.007 +0.009 +0.012 +0.008 +0.011
+  windows with corrected > 0: 17 of 39
+
+HOLDOUT, READ ONCE. N=38, 120 draws.
+  coverage trending 0.228 drifting 0.412 range 0.360 residual 0.000
+  median run 21  diagonal 0.967  range runs 21  trend runs 28
+  separation 0.236  surrogate 0.189 +/- 0.025  corrected +0.047  p=0.050
+
+WHICH WINDOW FOR DAILY ENTRY, HELD FOR WEEKS?
+  the state has to outlast the hold or it is not describing it.
+    N  days | trend runs range runs corrected
+    4    24 |       19         15    -0.059
+    6    35 |       19         14    -0.039
+    8    46 |       20         14    -0.022
+   13    74 |       21         15    -0.026
+   18   101 |       27         17    -0.002
+   24   132 |       28         18    +0.003
+   30   167 |       30         18    +0.001
+
+wrote shapescore.csv, shapescore_pairs.csv, shapescore_confirm.csv
+
+=== shapesplit.py ===
+SEPARATION SPLIT BY STATE. N = 2..70, lookback to ~393 bars.
+one-vs-rest, signed. IS.
+
+NULLS, 15 draws, per state per window
+  5/15
+  10/15
+  15/15
+
+PER STATE, IS. sep is mean |one-vs-rest| over the four properties.
+
+  TRENDING
+      N  days |    sep   surr corrected |  share   run   diag
+      2    12 |  0.581  0.598   -0.017 |  0.308    18  0.955
+      6    35 |  0.509  0.531   -0.022 |  0.289    19  0.960
+     13    74 |  0.340  0.369   -0.029 |  0.284    21  0.967
+     18   101 |  0.277  0.283   -0.006 |  0.283    27  0.973
+     26   144 |  0.204  0.202   +0.002 |  0.285    27  0.976
+     34   190 |  0.150  0.154   -0.004 |  0.283    30  0.979
+     44   247 |  0.153  0.119   +0.034 |  0.285    33  0.981
+     55   309 |  0.148  0.094   +0.054 |  0.286    34  0.984
+     70   393 |  0.110  0.075   +0.036 |  0.290    36  0.986
+
+  DRIFTING
+      N  days |    sep   surr corrected |  share   run   diag
+      2    12 |  0.097  0.085   +0.013 |  0.327    13  0.941
+      6    35 |  0.065  0.056   +0.009 |  0.379    12  0.936
+     13    74 |  0.038  0.045   -0.007 |  0.388    14  0.943
+     18   101 |  0.063  0.052   +0.011 |  0.386    15  0.949
+     26   144 |  0.041  0.039   +0.002 |  0.384    16  0.953
+     34   190 |  0.024  0.032   -0.008 |  0.391    18  0.958
+     44   247 |  0.040  0.035   +0.005 |  0.388    19  0.962
+     55   309 |  0.049  0.033   +0.016 |  0.386    21  0.966
+     70   393 |  0.049  0.030   +0.020 |  0.380    24  0.970
+
+  RANGE
+      N  days |    sep   surr corrected |  share   run   diag
+      2    12 |  0.442  0.475   -0.033 |  0.365    17  0.952
+      6    35 |  0.403  0.444   -0.041 |  0.331    14  0.946
+     13    74 |  0.282  0.298   -0.016 |  0.328    15  0.952
+     18   101 |  0.250  0.240   +0.010 |  0.331    17  0.957
+     26   144 |  0.190  0.185   +0.005 |  0.331    18  0.961
+     34   190 |  0.148  0.151   -0.003 |  0.327    18  0.965
+     44   247 |  0.109  0.118   -0.009 |  0.326    20  0.969
+     55   309 |  0.086  0.093   -0.007 |  0.328    25  0.973
+     70   393 |  0.057  0.076   -0.019 |  0.330    28  0.977
+
+WHICH PROPERTY CARRIES EACH STATE, at N=26 (144 bars). signed.
+    state              autocorr    range_to_path      dir_changes   mean_crossings
+    trending             +0.007           +0.327           -0.097           -0.385
+    drifting             -0.037           +0.055           +0.058           +0.014
+    range                +0.033           -0.360           +0.028           +0.340
+
+THE TRADEOFF: corrected separation against how often the state turns
+over. A state that lasts a year is not a read for an entry held weeks.
+    N  days | trend corr / run / diag  | drift corr / run / diag  | range corr / run / diag 
+    2    12 |  -0.017    18  0.955   |  +0.013    13  0.941   |  -0.033    17  0.952  
+    6    35 |  -0.022    19  0.960   |  +0.009    12  0.936   |  -0.041    14  0.946  
+   13    74 |  -0.029    21  0.967   |  -0.007    14  0.943   |  -0.016    15  0.952  
+   18   101 |  -0.006    27  0.973   |  +0.011    15  0.949   |  +0.010    17  0.957  
+   22   121 |  -0.002    29  0.976   |  +0.003    16  0.952   |  +0.005    17  0.960  
+   26   144 |  +0.002    27  0.976   |  +0.002    16  0.953   |  +0.005    18  0.961  
+   30   167 |  -0.004    30  0.979   |  -0.008    17  0.956   |  +0.001    18  0.963  
+   36   201 |  +0.006    32  0.981   |  -0.004    19  0.960   |  -0.005    18  0.966  
+   44   247 |  +0.034    33  0.981   |  +0.005    19  0.962   |  -0.009    20  0.969  
+   52   293 |  +0.051    35  0.983   |  +0.014    20  0.965   |  -0.007    23  0.971  
+   60   337 |  +0.050    37  0.985   |  +0.022    22  0.967   |  -0.012    24  0.974  
+   70   393 |  +0.036    36  0.986   |  +0.020    24  0.970   |  -0.019    28  0.977  
+
+PER PAIR, corrected, at three windows
+  N=13  trending   9 of 28 pairs positive, median -0.041, best +0.151 worst -0.176
+  N=13  drifting  12 of 28 pairs positive, median -0.015, best +0.195 worst -0.092
+  N=13  range     11 of 28 pairs positive, median -0.021, best +0.137 worst -0.128
+  N=26  trending  14 of 28 pairs positive, median +0.000, best +0.162 worst -0.220
+  N=26  drifting  11 of 28 pairs positive, median -0.006, best +0.089 worst -0.060
+  N=26  range     16 of 28 pairs positive, median +0.012, best +0.241 worst -0.099
+  N=44  trending  12 of 28 pairs positive, median -0.021, best +0.216 worst -0.107
+  N=44  drifting  10 of 28 pairs positive, median -0.020, best +0.093 worst -0.097
+  N=44  range     14 of 28 pairs positive, median +0.006, best +0.122 worst -0.124
+
+wrote shapesplit.csv and shapesplit_pairs.csv
+
+=== scoredist.py ===
+SHAPE SCORE DISTRIBUTION at N=19, measured lookback 106 bars
+
+IS THE SCORE THREE CLUSTERS OR ONE SPREAD?
+  real       n=189761  sd=2.499  skew=+0.929  excess kurtosis=+1.440
+    KDE peaks by bandwidth: 0.15->1  0.20->1  0.25->1  0.30->1  0.40->1
+    BIC k=1 886111   k=2 862292   k=3 861318   -> best k=3
+  surrogate  n=189668  sd=2.637  skew=+1.253  excess kurtosis=+3.101
+    KDE peaks by bandwidth: 0.15->1  0.20->1  0.25->1  0.30->1  0.40->1
+    BIC k=1 906072   k=2 871519   k=3 870792   -> best k=3
+
+  quantiles of the real score
+    1%:-4.52  5%:-3.62  10%:-3.01  25%:-1.82  33%:-1.32  50%:-0.46  67%:+0.49  75%:+1.12  90%:+3.17  95%:+4.63  99%:+7.53
+    the tercile cuts sit at -1.315 and +0.486, 0.72 sd apart
+
+  READ THIS TOGETHER. Three well-separated clusters would show three KDE peaks at
+  most bandwidths, a BIC minimum at k=3, and NEGATIVE excess kurtosis. One
+  continuous spread shows a single peak, k=1 or k=2 on BIC, and kurtosis at or
+  above zero.
+
+WHAT THE QUOTA COSTS. Shares per year, holdout.
+  QUOTA: the tercile cut refits nothing but ranks within the fitted
+  CDF, so shares still drift; FIXED: the same IS thresholds applied
+  as raw score levels, letting the market say what it is.
+    year |  q_trend  q_drift  q_range |  f_trend  f_drift  f_range
+    2016 |    0.221    0.419    0.360 |    0.287    0.331    0.382
+    2017 |    0.202    0.441    0.357 |    0.264    0.350    0.385
+    2018 |    0.188    0.397    0.415 |    0.240    0.326    0.434
+    2019 |    0.168    0.418    0.415 |    0.223    0.330    0.448
+    2020 |    0.240    0.390    0.370 |    0.302    0.303    0.396
+    2021 |    0.319    0.359    0.322 |    0.365    0.270    0.365
+    2022 |    0.262    0.414    0.324 |    0.322    0.324    0.354
+    2023 |    0.216    0.446    0.338 |    0.294    0.343    0.363
+    2024 |    0.147    0.410    0.443 |    0.197    0.332    0.471
+    2025 |    0.216    0.453    0.331 |    0.304    0.313    0.383
+    2026 |    0.292    0.337    0.370 |    0.360    0.244    0.397
+
+  yearly spread (max - min share across holdout years)
+    trending  quota 0.173   fixed 0.169
+    drifting  quota 0.116   fixed 0.107
+    range     quota 0.121   fixed 0.117
+
+wrote scoredist.csv and scoredist_years.csv
+
+=== twoscores.py ===
+TWO SCORES at the locked window (N=19, ~106 bars)
+
+THE FIRST QUESTION: ARE THEY ONE AXIS?
+  pooled correlation of trend and chop scores: -0.350
+  per pair: median -0.355, range -0.466 to -0.202
+  |r| < 0.70 is the project's own decorrelation bar (gate 8).
+  -> THEY ARE NOT ONE AXIS
+
+OCCUPANCY OF THE 2x2, holdout
+    trending         0.248
+    ranging          0.372
+    trend-in-range   0.181
+    neither          0.198
+  the honest "neither" bucket is 19.8% of bars.
+  (the single-axis version left 41.0% in its middle tercile)
+
+PER CELL, holdout: separation one-vs-rest, run length, diagonal
+  cell                  sep   share    run   diag |       autocorr  range_to_path    dir_changes mean_crossings
+  trending            0.103   0.248     21  0.971 |         +0.051         +0.131         -0.004         -0.227
+  ranging             0.098   0.372     24  0.978 |         -0.046         -0.138         +0.013         +0.193
+  trend-in-range      0.052   0.181     18  0.959 |         -0.005         -0.052         -0.035         +0.117
+  neither             0.064   0.198     18  0.959 |         +0.013         +0.098         +0.017         -0.127
+
+EACH AXIS ON ITS OWN -- high vs low, the undiluted test
+  trend  score: |sep| high vs low 0.052, run 27, diag 0.980  | autocorr +0.033 range_to_ +0.063 dir_chang -0.015 mean_cros -0.099
+  chop   score: |sep| high vs low 0.122, run 28, diag 0.984  | autocorr -0.046 range_to_ -0.173 dir_chang -0.005 mean_cros +0.263
+
+NULLS, 20 draws
+  5/20
+  10/20
+  15/20
+  20/20
+
+  cell                 real surrogate corrected
+  trending            0.103     0.151    -0.048
+  ranging             0.098     0.151    -0.053
+  trend-in-range      0.052     0.056    -0.003
+  neither             0.064     0.064    -0.001
+
+  MARGINAL, each axis on its own
+  trend high          0.052     0.107    -0.055
+  chop high           0.122     0.167    -0.045
+
+EPISODE BASIS -- a 20-bar state is one observation
+  74424 holdout bars -> 2320 episodes (32.1x)
+
+JOINT vs SEPARATE CUTS with activity
+  separate cuts  12 cells, mean |sep| 0.062, min share 0.056
+  joint cut      12 cells, mean |sep| 0.061, min share 0.040
+
+wrote twoscores.csv and twoscores_cells.csv
+
+=== measures.py ===
+FOUR MEASUREMENTS at the locked window (N=19, ~106 bars)
+coverage of each, holdout:
+  retr_last    1.000 of bars
+  retr_slope   0.999 of bars
+  retr_rel     1.000 of bars
+  space_last   1.000 of bars
+  space_slope  1.000 of bars
+  space_rel    1.000 of bars
+  fail_count   1.000 of bars
+  panel_r2     1.000 of bars
+
+1. FAILED SWINGS -- the full X x Y surface, IS separation
+   (rolling count of within-window rejections, not an event flag)
+      X |   Y=0.5  Y=0.75   Y=1.0   Y=1.5   Y=2.0   Y=3.0   Y=4.0
+   0.70 |   0.771   0.772   0.743   0.733   0.715   0.595   0.355
+   0.75 |   0.697   0.706   0.679   0.669   0.656   0.539   0.322
+   0.80 |   0.559   0.572   0.554   0.550   0.536   0.443   0.265
+   0.85 |   0.434   0.449   0.430   0.433   0.421   0.370   0.238
+   0.90 |   0.330   0.340   0.318   0.302   0.280   0.235   0.157
+   0.93 |   0.261   0.262   0.236   0.229   0.218   0.187   0.144
+   0.95 |   0.208   0.205   0.187   0.181   0.185   0.157   0.114
+   0.97 |   0.175   0.165   0.151   0.141   0.138   0.119   0.096
+   0.98 |   0.129   0.125   0.116   0.127   0.126   0.112   0.101
+   0.99 |   0.084   0.078   0.076   0.069   0.074   0.056   0.040
+  cells above 0.5: 17 of 70. best 0.772 at X=0.70 Y=0.75
+
+4. CROSS-PAIR. First the trap, measured rather than assumed.
+  leg proxy built from every OTHER pair, lag 0 correlation: +1.0000
+  that is an identity, not a finding: 28 pairs from 8 currencies is a
+  rank-7 panel, so EURGBP minus USDGBP IS EURUSD. No exclusion rule
+  fixes it, and a contemporaneous cross-pair reading is vacuous here.
+  the same proxy at non-zero lags: -5:-0.029  -4:-0.000  -3:-0.014  -2:-0.004  -1:-0.004  +1:-0.004  +2:-0.004  +3:-0.014  +4:-0.000  +5:-0.029
+
+  DISJOINT proxy -- the 15 pairs sharing NEITHER currency:
+    -5:-0.020  -4:-0.014  -3:-0.026  -2:-0.024  -1:-0.016  +0:-0.039  +1:-0.001  +2:-0.000  +3:+0.003  +4:-0.011  +5:+0.000
+  peak |r| at lag +0 (-0.039), lag 0 is -0.039
+  negative lag = the rest of the panel leads this pair.
+
+TEST ONE (describes the present) and TEST TWO (leads a change)
+  measurement    sep IS    sep OOS   increm.     surr | lead lift
+  ... 5/15 surrogates
+  ... 10/15 surrogates
+  ... 15/15 surrogates
+  retr_last       0.037      0.109     0.093    0.069 |  0.129 (surr 0.367, -0.238)
+  retr_slope      0.028      0.108     0.089    0.071 |  0.000 (surr 0.402, -0.402)
+  retr_rel        0.070      0.103     0.068    0.074 |  0.000 (surr 0.383, -0.383)
+  space_last      0.425      0.399     0.094    0.461 |  0.282 (surr 0.328, -0.045)
+  space_slope     0.319      0.321     0.117    0.286 |  0.144 (surr 0.310, -0.167)
+  space_rel       0.168      0.055     0.074    0.151 |  0.356 (surr 0.981, -0.626)
+  fail_count      0.187      0.258     0.064    0.195 |  0.749 (surr 0.980, -0.231)
+  panel_r2        0.248      0.078     0.082    0.086 |  1.436 (surr 0.918, +0.519)
+
+REBUILT SCORES using the measurements
+  score correlation  before -0.350  after -0.018
+  before: trend 0.248  rangi 0.372  trend 0.181  neith 0.198
+    sep trend 0.103  rangi 0.098  trend 0.052  neith 0.064
+    run trend 21  rangi 24  trend 18  neith 18
+  after: trend 0.241  rangi 0.375  trend 0.176  neith 0.208
+    sep trend 0.094  rangi 0.068  trend 0.093  neith 0.094
+    run trend 24  rangi 26  trend 19  neith 21
+
+ACTIVITY: joint or separate cut?
 Traceback (most recent call last):
-  File "/home/runner/work/fx-data/fx-data/code/dedup.py", line 199, in <module>
+  File "/home/runner/work/fx-data/fx-data/code/measures.py", line 399, in <module>
     main()
-  File "/home/runner/work/fx-data/fx-data/code/dedup.py", line 139, in main
-    ser = series_for(surv, px, pairs)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/fx-data/fx-data/code/dedup.py", line 80, in series_for
-    ctx = m.context(px) if hasattr(m, 'context') else None
-          ^^^^^^^^^^^^^
-  File "/home/runner/work/fx-data/fx-data/code/sig7.py", line 149, in context
-    lead = R.idxmin(axis=1)
-           ^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/frame.py", line 15775, in idxmin
-    res = data._reduce(
-          ^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/frame.py", line 13635, in _reduce
-    res = df._mgr.reduce(blk_func)
-          ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 1694, in reduce
-    res_blocks = [blk.reduce(func) for blk in self.blocks]
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/internals/managers.py", line 1694, in <listcomp>
-    res_blocks = [blk.reduce(func) for blk in self.blocks]
-                  ^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/internals/blocks.py", line 358, in reduce
-    result = func(self.values)
-             ^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/frame.py", line 13565, in blk_func
-    return op(values, axis=axis, skipna=skipna, **kwds)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/nanops.py", line 1216, in nanargmin
-    result = _maybe_arg_null_out(result, axis, mask, skipna)  # type: ignore[arg-type]
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/pandas/core/nanops.py", line 1489, in _maybe_arg_null_out
-    raise ValueError("Encountered all NA values")
-ValueError: Encountered all NA values
+  File "/home/runner/work/fx-data/fx-data/code/measures.py", line 389, in main
+    sts = sorted(L[oos].stack().unique())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: '<' not supported between instances of 'float' and 'str'
 Traceback (most recent call last):
-  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 28, in <module>
-    run('rank2.py'); run('rank3.py'); run('prep.py'); run('dedup.py')
-                                                      ^^^^^^^^^^^^^^^
+  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 60, in <module>
+    run('measures.py')       # the four measurements, both tests each
+    ^^^^^^^^^^^^^^^^^^
   File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 7, in run
     subprocess.run([sys.executable,os.path.join(C,m)],check=True)
   File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/subprocess.py", line 571, in run
     raise CalledProcessError(retcode, process.args,
-subprocess.CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', '/home/runner/work/fx-data/fx-data/code/dedup.py']' returned non-zero exit status 1.
+subprocess.CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.11.16/x64/bin/python', '/home/runner/work/fx-data/fx-data/code/measures.py']' returned non-zero exit status 1.
