@@ -738,33 +738,72 @@ No floor is set on Ulcer.
 > score is one extra scoring call, because A and C bank `ip1`/`risk1`. Mode B
 > does not, which is why B is re-run wholesale at round 2 regardless.
 
-### STANDING RULE — WHAT A RESULTS DELIVERABLE MUST CARRY
+### NET-OF-STRUCTURE — required on ALL chop reporting
 
-**Any table, top-N list or summary reported anywhere — chat, committed file or
-app — carries the FULL metric set for every entry. No exceptions, no
-abbreviation for readability.**
+**Every chop table, summary and committed file carries a
+`net_of_structure_R` column:**
 
-Per entry, all of:
+    net_of_structure_R  =  expectancy_R  -  (that configuration's null mean expectancy)
 
-| group | fields |
-|---|---|
-| identity | slice (trend/chop), **all four slots**: C1, C2, volume filter, baseline |
-| tuned parameters | ATR length, stop, TP, and **BE / arming / trail wherever the plan has them** |
-| performance | blind trades, total R, expectancy (R), Sortino, Sharpe, profit factor, Calmar, max drawdown (R), **Ulcer**, win rate |
+The null mean, not the p95 floor. The floor answers "did this beat luck"; the
+**mean** answers a different and equally necessary question — **how much of the
+expectancy is the signal, and how much is what the money-management plan earns
+on any entries at all?**
 
-**A metric that is unavailable or provisional is PRINTED WITH A DASH OR A
-LABEL — never omitted.** Dropping a column hides which numbers exist and which
-do not, and a reader cannot tell an absent field from an unmeasured one. A
-chop entry has no breakeven, arming or trail: those print as `—`, because the
-plan has no such parameter, and that is information rather than a gap.
+This matters most exactly where chop lives. A one-leg plan with a 1.0×ATR stop
+and a tuned 2.45–3.00 target has a mechanical expectancy on ANY entry sequence,
+signal or noise; the scrambled control measures precisely that. Reporting raw
+expectancy for a chop configuration therefore credits the signal with the
+plan's earnings. `net_of_structure_R` separates them, and a chop result whose
+net-of-structure is near zero is a money-management result wearing a signal's
+name.
 
-**Anything less is an incomplete deliverable and is to be re-issued in full.**
+Where the null mean for a configuration has not been measured, the column is
+printed as `—` under the standing rule above, never omitted.
 
-The reason is specific to this project: the numbers here are provisional in
-several different ways at once — W3-only versus stitched, mode B's averaged
-metrics versus A and C's one-curve metrics, pre- versus post-round-2 — and a
-trimmed table is exactly how one of those qualifications gets lost between the
-file and the reader.
+### GATE 3 ROBUSTNESS — REPORT AND FLAG, NOT NEW KILL RULES
+
+**Declared before gate 3 exists. None of these three is a kill criterion.**
+They run from banked data, add no tuning, and every configuration they evaluate
+counts toward the deflation total.
+
+**(a) BOOTSTRAP.** Resample each survivor's blind trade sequence **10,000×** and
+report the **5th-percentile expectancy and 5th-percentile total R** beside the
+point estimates. The point estimate is one draw from a distribution; the 5th
+percentile says what a bad-but-not-absurd ordering of the same trades would have
+paid.
+
+**(b) LEAVE-PAIRS-OUT.** Re-score each survivor **excluding each currency block
+in turn**. Flag any whose edge collapses without one pair or one block. An edge
+carried by a single pair is a single-pair strategy that has been reported as a
+28-pair one.
+
+**(c) PLATEAU CHECK.** Re-score the tuned parameters at **±1 grid step on each
+knob**. Flag knife-edge optima. A configuration that only works at exactly its
+tuned value found a hole in the data, not a setting.
+
+**Flagged is not killed.** These label; the luck floor kills.
+
+### ROUND-2 GRID WIDENING — CONFIRMED
+
+The gate 2 grids bind at their edges and round 2 widens them **before** running,
+not after:
+
+| knob | gate 2 | round 2 |
+|---|---|---|
+| target / TP | 1.00–3.00 | **1.00–5.00** |
+| breakeven X | 0.01%–0.20% | **0.001%–0.20%** |
+
+Measured cause: in mode B's top 10, TP hit the 3.00 ceiling four times and
+breakeven collapsed to 0.01% — the minimum offered — in four of seven trend
+entries. A grid whose optimum sits on its own boundary has not been searched,
+it has been truncated.
+
+### STANDING, RECONFIRMED
+
+- **Deflation total is strict**: every configuration evaluated at every gate,
+  every mode, both superseded runs, round 2, and the robustness passes above.
+- **W4 stays locked** until Jack declares all tuning finished, round 2 included.
 
 ### THE INVERSION ARM, TRIGGERED
 
@@ -916,49 +955,6 @@ strategies exist at these levels or it is clear that none do.
 gate 4 assembles from **gate-2-labelled graduates instead**. That is information
 about how hard the problem is — it is not a failure, and it is not a reason to
 lower gate 3.
-
-### AMENDED — TRADE COUNT IS NOT A KILL CRITERION
-
-**Declared before gate 3 exists.**
-
-**The kill criterion is failing the fresh per-configuration luck floor, and
-nothing else.** The floor already handles sample size correctly and without
-needing a separate rule: it is the 95th percentile of scrambled controls run on
-that same configuration, so **fewer trades means luck reaches higher, which
-means the bar rises**. A thin sample is not waved through — it is held to a
-harder standard, automatically and by construction.
-
-**Combinations below 50 blind trades that CLEAR their floor advance, labelled
-`SELECTIVE`.** They are eligible for gate 4 portfolio assembly, where the
-drop-one test judges their value to the team rather than in isolation.
-
-**Combinations that fail their floor are PARKED, not deleted.**
-
-**KPI floors are otherwise unchanged.**
-
-**Rationale, on record:** the portfolio combines many selective strategies, so
-selectivity alone is not a defect. A strategy that trades rarely and well is a
-different thing from a strategy that trades rarely and luckily, and the floor —
-not a trade count — is what separates them.
-
-> **A note on how far this reaches, measured rather than assumed.** The
-> upstream minimums are unchanged: gate 1's eligibility rule and gate 2's label
-> both require **≥100 trades in the picking window and ≥50 per blind window**,
-> so a combination that was always thin was never admitted and cannot appear at
-> gate 3 to be labelled `SELECTIVE`.
->
-> The population this creates is therefore combinations that MET the minimums at
-> default parameters and fell below them once tuning changed their trade counts.
-> In mode B that is **5,160 of 19,845 (26.0%)** with a blind window under 50
-> after tuning — but **zero of them cross the gate 2 label**, because the label
-> enforces the same 50-per-window rule.
->
-> So as the gates currently stand, `SELECTIVE` is a category with **no members
-> arriving from gate 2's labelled set**. It will only populate if a later
-> amendment relaxes the gate 1/gate 2 minimums, or if round-2 tuning moves
-> counts across the boundary. The amendment is sound and worth having on
-> record; it simply has no effect until an upstream rule changes. That is a
-> statement about the current gates, not an argument against the rule.
 
 ---
 
