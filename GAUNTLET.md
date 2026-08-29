@@ -812,6 +812,42 @@ tuned value found a hole in the data, not a setting.
 
 **Flagged is not killed.** These label; the luck floor kills.
 
+### ROUND-2: GAP-AWARE STOP FILLS — DECLARED
+
+**The engine fills stops at the stop price, never at the open.** The condition
+is "did the bar's range touch the stop"; the fill is then booked at the stop
+regardless of where the bar opened. There is no gap handling in `run_bars`, at
+any of the four fill sites, for either leg or for targets.
+
+**A gap can only ever make a stop fill worse, never better**, so the bias is
+systematic and always favourable. Round 2 takes **the worse of the stop price
+and the next open**, at every fill site, for every mode.
+
+**Measured before deciding, on the top-5 configurations across all 28 pairs —
+9,520 trades:**
+
+| | |
+|---|---|
+| stop exits | 4,500 |
+| gapped through the stop | **58** — 1.29% of stop exits, 0.61% of all trades |
+| book at stop-price fills | +711.22 R |
+| book at gap-aware fills | +696.48 R |
+| **overstatement** | **14.74 R — 2.07%** |
+| per gapped trade | mean 0.254 R, worst 0.966 R |
+
+**Why it is NOT retro-fitted now.** The fix changes every trade, so nothing
+scored before it is comparable with anything scored after — mode B's 19,845
+tuned configurations and mode A in flight would both need re-running for
+mode-consistency, roughly ten days. Round 2 re-runs every mode anyway under the
+new adoption rule, so the fix rides along at **zero extra cost** and
+mode-consistency comes free. Spending ten days now to correct a 2% bias that
+changes no ordering is the wrong trade, and the number is on record so the
+choice can be audited rather than assumed.
+
+**What it does NOT excuse.** 2% is the AVERAGE. The bias concentrates precisely
+where it matters least for averages and most for tails — crisis bars, which is
+where gaps live. A crisis-day loss is exactly the trade this understates.
+
 ### ROUND-2 GRID WIDENING — CONFIRMED
 
 The gate 2 grids bind at their edges and round 2 widens them **before** running,
