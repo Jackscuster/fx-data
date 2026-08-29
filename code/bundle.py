@@ -264,6 +264,12 @@ out = dict(
                                                  'app_explorer.json'),
               regime_url=signals_url().replace('app_signals.json',
                                                'app_regime.json'),
+              # The Trades tab reads per-trade bundles from results/. The shell
+              # is a LOCAL file, so a relative path resolves against the shell
+              # rather than the repo -- every feed url here is absolute for that
+              # reason and this one is no different.
+              trades_url=signals_url().replace(
+                  'app_signals.json', 'results/trades_index.json'),
               # two different numbers, never to be conflated: everything built,
               # and the subset that could actually produce quintile statistics
               n_built=n_built, n_scorable=n_scorable))
