@@ -4772,14 +4772,27 @@ function boot(BUNDLE,root){
   // the interface. Canvas cannot.
   // ============================================================
   let TVI=null, TVB={}, TVsel=0, TVtr=0, TVloading=false;
+  // THE SHELL IS A LOCAL FILE. A bare relative path resolves against the
+  // shell's own location, not the repo, so 'results/trades_index.json' asked
+  // the local filesystem and failed with "Failed to fetch". Every other feed
+  // uses an ABSOLUTE url from the bundle meta; this derives the same base from
+  // whichever meta url exists, and only falls back to relative for a local
+  // checkout where that is actually correct.
+  function tvBase(){
+   const m=(typeof BUN!=='undefined'&&BUN&&BUN.meta)||
+           (typeof BUNDLE!=='undefined'&&BUNDLE&&BUNDLE.meta)||{};
+   if(m.trades_url)return m.trades_url.replace(/results\/trades_index\.json$/,'');
+   const any=m.explorer_url||m.regime_url||m.signals_url;
+   return any?any.replace(/[^/]*$/,''):'';
+  }
   function tvFmt(n,d){return (n==null||isNaN(n))?'—':Number(n).toFixed(d==null?5:d);}
   function initTrades(){
    if(TVI||TVloading)return; TVloading=true;
    $('#tvwrap').innerHTML='<div class="note">Loading trade bundles…</div>';
-   fetch('results/trades_index.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+   fetch(tvBase()+'results/trades_index.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(j=>{TVI=j;TVloading=false;tvShell();tvLoad(0);})
     .catch(e=>{TVloading=false;$('#tvwrap').innerHTML='<div class="note" style="color:var(--kill)">'
-      +'Could not load results/trades_index.json ('+e.message+').</div>';});
+      +'Could not load '+tvBase()+'results/trades_index.json ('+e.message+').</div>';});
   }
   function tvShell(){
    $('#tvwrap').innerHTML=
@@ -4807,7 +4820,7 @@ function boot(BUNDLE,root){
    TVsel=i;TVtr=0;
    if(TVB[i]){tvDraw();return;}
    $('#tvmeta').textContent='Loading '+TVI[i].file+'…';
-   fetch('results/'+TVI[i].file).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+   fetch(tvBase()+'results/'+TVI[i].file).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(j=>{TVB[i]=j;tvDraw();})
     .catch(e=>{$('#tvmeta').innerHTML='<span style="color:var(--kill)">Could not load '
       +TVI[i].file+' ('+e.message+')</span>';});
