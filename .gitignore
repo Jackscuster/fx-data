@@ -65,3 +65,7 @@ results/gate2_cache/
 results/gate2_rescoreW3_full.log
 results/ci_pinned_validation.log
 results/superseded/
+
+results/crisis_all/
+results/crisis_all.log
+results/ci_validation_state.txt
