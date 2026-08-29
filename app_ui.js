@@ -8,6 +8,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="pairs2">Pairs</button>
 <button role="tab" aria-selected="false" data-t="how">How it works</button>
 <button role="tab" aria-selected="false" data-t="evid">Evidence</button>
+<button role="tab" aria-selected="false" data-t="tv">Trades</button>
 <button type="button" id="advbtn" class="advbtn" aria-pressed="false">Advanced &#9662;</button>
 <button role="tab" aria-selected="false" data-t="px">Explorer</button>
 <button role="tab" aria-selected="false" data-t="ns">States</button>
@@ -110,7 +111,8 @@ const PROD=PSTYLE
 +'<section id="chart" hidden><div class="prod" id="chartwrap"></div></section>'
 +'<section id="pairs2" hidden><div class="prod" id="pairswrap"></div></section>'
 +'<section id="how" hidden><div class="prod" id="howwrap"></div></section>'
-+'<section id="evid" hidden><div class="prod" id="evidwrap"></div></section>';
++'<section id="evid" hidden><div class="prod" id="evidwrap"></div></section>'
++'<section id="tv" hidden><div class="prod" id="tvwrap"></div></section>';
 
 const BODY=`<div class="grid">
 <div>
@@ -4762,7 +4764,141 @@ function boot(BUNDLE,root){
     <td>${e.ccy||'—'}</td><td>${e.severity}</td><td>${e.description}</td></tr>`).join('')
     ||'<tr><td colspan="5">none</td></tr>';})();
 
-  const TABS=['today','chart','pairs2','how','evid',
+
+  // ============================================================
+  // TRADES — per-trade candlestick viewer for the gate 2 top 5.
+  // Pure canvas: no CDN, no library. app_ui.js is fetched as text and eval'd,
+  // so an external <script> is one more thing that can fail silently and blank
+  // the interface. Canvas cannot.
+  // ============================================================
+  let TVI=null, TVB={}, TVsel=0, TVtr=0, TVloading=false;
+  function tvFmt(n,d){return (n==null||isNaN(n))?'—':Number(n).toFixed(d==null?5:d);}
+  function initTrades(){
+   if(TVI||TVloading)return; TVloading=true;
+   $('#tvwrap').innerHTML='<div class="note">Loading trade bundles…</div>';
+   fetch('results/trades_index.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(j=>{TVI=j;TVloading=false;tvShell();tvLoad(0);})
+    .catch(e=>{TVloading=false;$('#tvwrap').innerHTML='<div class="note" style="color:var(--kill)">'
+      +'Could not load results/trades_index.json ('+e.message+').</div>';});
+  }
+  function tvShell(){
+   $('#tvwrap').innerHTML=
+    '<div class="panel"><h3>Trades — gate 2, mode B top 5</h3>'
+    +'<div class="note">Every trade this configuration took on its best pair, over the'
+    +' <b>blind</b> windows W2+W3. Ranking is the co-equal rule on the W3 diagnostic and is'
+    +' <b>provisional</b> pending round 2. The trail path is reconstructed from the engine\'s'
+    +' own rules and verified against its exits.</div>'
+    +'<div style="margin:10px 0"><select id="tvsel" style="padding:6px;border-radius:6px"></select>'
+    +' <button class="chip" id="tvprev">&#9664; prev</button>'
+    +' <button class="chip" id="tvnext">next &#9654;</button>'
+    +' <span id="tvpos" style="margin-left:8px;opacity:.8"></span></div>'
+    +'<div id="tvmeta" class="note"></div>'
+    +'<canvas id="tvcan" style="width:100%;height:420px;display:block;margin-top:8px"></canvas>'
+    +'<div id="tvlab" class="note" style="margin-top:6px"></div></div>';
+   const sel=$('#tvsel');
+   sel.innerHTML=TVI.map((x,i)=>'<option value="'+i+'">'+x.label+'  ('+x.n_trades+' trades, '
+     +x.total_R.toFixed(1)+'R)</option>').join('');
+   sel.onchange=()=>tvLoad(+sel.value);
+   $('#tvprev').onclick=()=>{const b=TVB[TVsel];if(!b)return;TVtr=(TVtr-1+b.trades.length)%b.trades.length;tvDraw();};
+   $('#tvnext').onclick=()=>{const b=TVB[TVsel];if(!b)return;TVtr=(TVtr+1)%b.trades.length;tvDraw();};
+   window.addEventListener('resize',()=>{if(TVB[TVsel])tvDraw();});
+  }
+  function tvLoad(i){
+   TVsel=i;TVtr=0;
+   if(TVB[i]){tvDraw();return;}
+   $('#tvmeta').textContent='Loading '+TVI[i].file+'…';
+   fetch('results/'+TVI[i].file).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(j=>{TVB[i]=j;tvDraw();})
+    .catch(e=>{$('#tvmeta').innerHTML='<span style="color:var(--kill)">Could not load '
+      +TVI[i].file+' ('+e.message+')</span>';});
+  }
+  function tvDraw(){
+   const b=TVB[TVsel]; if(!b)return;
+   const t=b.trades[TVtr]; if(!t){$('#tvmeta').textContent='no trades';return;}
+   const S=b.slots;
+   $('#tvmeta').innerHTML='<b>'+b.pair+'</b> · '+b.slice
+     +' · C1 '+S.c1+' · C2 '+S.c2+' · filter '+S.vol+' · baseline '+S.base
+     +'<br>tuned: ATR '+b.risk.atr_len+' · stop '+b.risk.atr_mult.toFixed(2)
+     +' · TP '+b.risk.tp_mult.toFixed(2)
+     +(b.slice==='trend'?(' · BE '+b.risk.be_pct.toFixed(3)+'% · arm '+b.risk.trail_arm.toFixed(2)
+        +' · trail '+b.risk.trail_mult.toFixed(2)):' · BE — · arm — · trail —')
+     +(b.reconstruction_ok?'':' <span style="color:var(--kill)">reconstruction MISMATCH</span>');
+   $('#tvpos').textContent='trade '+(TVtr+1)+' of '+b.trades.length;
+   // window: 15 bars of context either side of the trade
+   const e=t.entry_bar-b.bar0, x=t.exit_bar-b.bar0;
+   const a=Math.max(0,e-15), z=Math.min(b.bars.length-1,x+15);
+   const bars=b.bars.slice(a,z+1);
+   const can=$('#tvcan'), dpr=window.devicePixelRatio||1;
+   const W=can.clientWidth, H=can.clientHeight;
+   can.width=W*dpr; can.height=H*dpr;
+   const g=can.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+   const L=54,Rp=10,Tp=10,Bp=22, pw=W-L-Rp, ph=H-Tp-Bp;
+   let lo=Infinity,hi=-Infinity;
+   bars.forEach(k=>{lo=Math.min(lo,k.l);hi=Math.max(hi,k.h);});
+   [t.initial_stop,t.tp1,t.entry_px,t.exit_px].forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v);});
+   t.stop_path.forEach(v=>{lo=Math.min(lo,v);hi=Math.max(hi,v);});
+   const pad=(hi-lo)*0.08||0.001; lo-=pad; hi+=pad;
+   const X=i=>L+(i+0.5)*(pw/bars.length), Y=v=>Tp+ph*(1-(v-lo)/(hi-lo));
+   const cw=Math.max(2,Math.min(14,pw/bars.length*0.68));
+   const css=getComputedStyle(document.body);
+   const fg=css.color||'#ccc';
+   // axes
+   g.strokeStyle='rgba(128,128,128,.28)';g.lineWidth=1;g.font='11px system-ui';
+   g.fillStyle=fg;
+   for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,y=Y(v);
+    g.beginPath();g.moveTo(L,y);g.lineTo(W-Rp,y);g.stroke();
+    g.globalAlpha=.75;g.fillText(tvFmt(v,5),4,y+3);g.globalAlpha=1;}
+   // win/loss shading between entry and exit
+   const ei=e-a, xi=x-a;
+   const win=t.R>0;
+   g.fillStyle=win?'rgba(60,180,110,.13)':'rgba(220,80,80,.13)';
+   g.fillRect(X(ei)-cw/2,Tp,Math.max(2,X(xi)-X(ei)+cw),ph);
+   // candles
+   bars.forEach((k,i)=>{
+    const up=k.c>=k.o; g.strokeStyle=up?'#3cb46e':'#dc5050'; g.fillStyle=g.strokeStyle;
+    g.beginPath();g.moveTo(X(i),Y(k.h));g.lineTo(X(i),Y(k.l));g.stroke();
+    const y0=Y(Math.max(k.o,k.c)),y1=Y(Math.min(k.o,k.c));
+    g.fillRect(X(i)-cw/2,y0,cw,Math.max(1,y1-y0));});
+   // levels from entry to resolution
+   const seg=(y,col,dash,lab)=>{g.save();g.strokeStyle=col;g.setLineDash(dash);g.lineWidth=1.4;
+    g.beginPath();g.moveTo(X(ei),y);g.lineTo(X(xi),y);g.stroke();g.restore();
+    g.fillStyle=col;g.font='10px system-ui';g.fillText(lab,X(xi)+3,y-2);};
+   seg(Y(t.initial_stop),'#dc5050',[4,3],'stop');
+   seg(Y(t.tp1),'#3cb46e',[4,3],'TP1');
+   // trail path, stepped, only where it differs from the initial stop
+   g.save();g.strokeStyle='#e0a030';g.lineWidth=1.6;g.beginPath();
+   let started=false;
+   t.stop_path.forEach((v,i)=>{const bi=ei+i; if(bi<0||bi>=bars.length)return;
+    const xx=X(bi),yy=Y(v);
+    if(!started){g.moveTo(xx,yy);started=true;}else{g.lineTo(xx,yy);}
+    g.lineTo(Math.min(X(bi+1),X(bars.length-1)),yy);});
+   g.stroke();g.restore();
+   // events
+   (t.events||[]).forEach(ev=>{const bi=ev.bar-b.bar0-a; if(bi<0||bi>=bars.length)return;
+    g.fillStyle='#e0a030';g.beginPath();g.arc(X(bi),Y(ev.level),3,0,7);g.fill();
+    g.font='9px system-ui';g.fillText(ev.kind,X(bi)+4,Y(ev.level)-4);});
+   // entry marker
+   g.fillStyle=fg;g.beginPath();
+   const ey=Y(t.entry_px);
+   if(t.dir>0){g.moveTo(X(ei)-6,ey+9);g.lineTo(X(ei)+6,ey+9);g.lineTo(X(ei),ey+1);}
+   else{g.moveTo(X(ei)-6,ey-9);g.lineTo(X(ei)+6,ey-9);g.lineTo(X(ei),ey-1);}
+   g.closePath();g.fill();
+   // exit marker
+   g.strokeStyle=fg;g.lineWidth=1.6;const xy=Y(t.exit_px);
+   g.beginPath();g.moveTo(X(xi)-5,xy-5);g.lineTo(X(xi)+5,xy+5);
+   g.moveTo(X(xi)+5,xy-5);g.lineTo(X(xi)-5,xy+5);g.stroke();
+   // dates
+   g.fillStyle=fg;g.globalAlpha=.7;g.font='10px system-ui';
+   g.fillText(bars[0].d,L,H-6); g.fillText(bars[bars.length-1].d,W-Rp-62,H-6);
+   g.globalAlpha=1;
+   $('#tvlab').innerHTML='leg '+t.leg+' · '+(t.dir>0?'LONG':'SHORT')
+    +' · entry '+t.entry_date+' @ '+tvFmt(t.entry_px)
+    +' · exit '+t.exit_date+' @ '+tvFmt(t.exit_px)
+    +' · <b>'+(t.R>=0?'+':'')+t.R.toFixed(3)+' R</b> · '+t.reason
+    +' · stop '+tvFmt(t.initial_stop)+' · TP1 '+tvFmt(t.tp1);
+  }
+
+  const TABS=['today','chart','pairs2','how','evid','tv',
               'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
               'ex','pt','hz','rd','xd','pc','gl','ar','vd'];
   // The default view is the product: four tabs. Everything else -- the
@@ -4770,7 +4906,7 @@ function boot(BUNDLE,root){
   // validation tables and the whole archive of superseded generations -- is
   // HIDDEN, not removed. Every feed still loads and every panel still builds;
   // the Advanced button only toggles which nav buttons are reachable.
-  const DEFAULT_TABS=['today','chart','pairs2','how','evid'];
+  const DEFAULT_TABS=['today','chart','pairs2','how','evid','tv'];
   let ADV=false;                       // deliberately NOT persisted
   const show=t=>{
    document.querySelectorAll('nav button[data-t]').forEach(
@@ -4778,7 +4914,8 @@ function boot(BUNDLE,root){
    TABS.forEach(id=>{const e=$('#'+id);if(e)e.hidden=(id!==t);});
    // the regime feed is ~9 MB, so it is fetched only when that tab is first opened
    if(t==='rd'&&!$('#rdpair'))initRegime();
-   if(t==='chart')chartOpen();};
+   if(t==='chart')chartOpen();
+   if(t==='tv')initTrades();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
     b.style.display=(ADV||DEFAULT_TABS.indexOf(b.dataset.t)>=0)?'':'none';});
