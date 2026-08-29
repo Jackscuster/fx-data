@@ -19,8 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.11'}
-      - run: pip install -r requirements.txt
+        with: {python-version: '3.9'}
+      # INSTALL FROM THE LOCKFILE, NOT THE LOOSE FILE. requirements.txt pins
+      # only lower bounds, so CI resolved to whatever was newest on the day and
+      # the dev machine never reproduced it. That is how pandas 3 arrived
+      # unannounced on 2026-08-05 and broke every run for three weeks while the
+      # dashboard quietly went stale. The lock is the environment that was
+      # PROVEN to pass -- python 3.9.6, pandas 2.3.3, numpy 2.0.2, scipy
+      # 1.13.1, numba 0.60.0 -- and upgrades are now a deliberate re-compile
+      # with a diff, not a silent Tuesday.
+      - run: pip install -r requirements.lock
       - name: run pipeline
         id: pipe
         continue-on-error: true
