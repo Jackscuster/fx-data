@@ -143,7 +143,7 @@ if os.environ.get('FX_FULL_VALIDATION'):
 else:
     subprocess.run([sys.executable, os.path.join(C, 'validate.py'),
                     '--no-synth', '--no-refit'], check=True)
-run('bundle.py')
+run('bundle.py'); run('appstamp.py')  # keep app_ui.js's build id and app_version.json in step
 for _f in ('app_data.json','app_signals.json','app_explorer.json','app_regime.json'):
     shutil.copy(os.path.join(R,'results',_f),os.path.join(R,_f))
 print('\napp_data.json refreshed at repo root')
