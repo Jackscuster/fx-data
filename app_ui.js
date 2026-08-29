@@ -2,6 +2,49 @@
    Add a tab HERE and every device picks it up on next open. The shell never changes. */
 (function(){'use strict';
 const $=s=>document.querySelector(s);
+
+/* ------------------------------------------------------------------
+   CACHE BUSTING. The shell fetches app_ui.js and app_data.json and the
+   shell is never redownloaded, so this file cannot change how IT is
+   fetched -- a normal reload can and did serve a cached app_ui.js while
+   incognito served the current one. Two things are done about that.
+
+   1. Every fetch THIS file makes carries a version token, so data feeds
+      are never stale. The token is the bundle's own build stamp, not a
+      timestamp: a timestamp would defeat caching entirely on a 9 MB
+      feed, while the build stamp changes exactly when the data does.
+   2. This file knows its own build (UI_BUILD) and compares it against
+      app_version.json, fetched with a real cache-buster because it is
+      tiny. If they differ the running code is stale, and it says so on
+      screen with a button that re-fetches this file bypassing cache.
+      A silent stale UI is the failure that cost an afternoon.
+   ------------------------------------------------------------------ */
+const UI_BUILD='d0b01671bbac';
+const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
+function versionCheck(){
+ fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
+  .then(r=>r.ok?r.json():null)
+  .then(j=>{
+    if(!j||!j.ui_build||j.ui_build===UI_BUILD)return;
+    const d=document.createElement('div');
+    d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;padding:10px 14px;'
+     +'font:13px system-ui;background:#b45309;color:#fff;display:flex;gap:10px;align-items:center';
+    d.innerHTML='<span>This interface is out of date (running <code>'+UI_BUILD
+      +'</code>, current <code>'+j.ui_build+'</code>). A plain reload may serve a cached copy.</span>';
+    const b=document.createElement('button');
+    b.textContent='Load the current version';
+    b.style.cssText='margin-left:auto;padding:5px 12px;border-radius:6px;border:0;cursor:pointer';
+    b.onclick=()=>{
+      b.textContent='Loading…';
+      fetch('app_ui.js?v='+encodeURIComponent(j.ui_build),{cache:'reload'})
+       .then(r=>r.text())
+       .then(src=>{(0,eval)(src);location.reload();})
+       .catch(e=>{b.textContent='Failed: '+e.message;});
+    };
+    d.appendChild(b);document.body.appendChild(d);
+  }).catch(()=>{});
+}
+
 const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="true" data-t="today">Today</button>
 <button role="tab" aria-selected="false" data-t="chart">Chart</button>
@@ -612,7 +655,8 @@ mapping deliberately inverted. If switching works for a real reason, backwards s
 // this module fetches the second itself and merges before rendering.
 window.renderApp=function(BUNDLE,root){
   if(BUNDLE&&BUNDLE.signals){return boot(BUNDLE,root);}          // pre-split feed
-  const url=(BUNDLE&&BUNDLE.meta&&BUNDLE.meta.signals_url)||'app_signals.json';
+  const url=bust((BUNDLE&&BUNDLE.meta&&BUNDLE.meta.signals_url)||'app_signals.json',
+                 (BUNDLE&&BUNDLE.meta&&BUNDLE.meta.built)||UI_BUILD);
   root.innerHTML='<div style="padding:32px;font:14px/1.6 system-ui;color:#8a8f98">'
    +'Loading signals\u2026<br><span style="font-size:12px;opacity:.7">'
    +'app_signals.json is ~47 MB and gzips to about 6 MB.</span></div>';
@@ -915,7 +959,8 @@ function boot(BUNDLE,root){
   let REG=null;
   function loadRegime(){
    if(REG)return Promise.resolve(REG);
-   const url=(BUN.meta&&BUN.meta.regime_url)||'app_regime.json';
+   const url=bust((BUN.meta&&BUN.meta.regime_url)||'app_regime.json',
+                  BUN.meta&&BUN.meta.built);
    $('#rdwrap').innerHTML='<div class="note">Loading the regime feed (~9 MB)…</div>';
    return fetch(url).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(j=>{REG=j;return j;});
@@ -1024,7 +1069,8 @@ function boot(BUNDLE,root){
    if(REG){drawChartUI();return;}
    w.innerHTML='<h2>Chart</h2><p class="sub">Loading the price and regime feed '
     +'(about 10 MB, fetched once)&hellip;</p>';
-   const url=(BUN.meta&&BUN.meta.regime_url)||'app_regime.json';
+   const url=bust((BUN.meta&&BUN.meta.regime_url)||'app_regime.json',
+                  BUN.meta&&BUN.meta.built);
    fetch(url).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(j=>{REG=j;drawChartUI();})
     .catch(e=>{w.innerHTML='<h2>Chart</h2><div class="box warn">Could not load '
@@ -4371,7 +4417,8 @@ function boot(BUNDLE,root){
 
    function load(){
     if(EXP||loading)return;loading=true;
-    const url=(BUN.meta&&BUN.meta.explorer_url)||'app_explorer.json';
+    const url=bust((BUN.meta&&BUN.meta.explorer_url)||'app_explorer.json',
+                   BUN.meta&&BUN.meta.built);
     $('#pxchart').innerHTML='<div class="note">Loading the per-pair feed'
      +' (about 7 MB)…</div>';
     fetch(url).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
@@ -4789,7 +4836,7 @@ function boot(BUNDLE,root){
   function initTrades(){
    if(TVI||TVloading)return; TVloading=true;
    $('#tvwrap').innerHTML='<div class="note">Loading trade bundles…</div>';
-   fetch(tvBase()+'results/trades_index.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+   fetch(bust(tvBase()+'results/trades_index.json',(BUN.meta&&BUN.meta.built))).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(j=>{TVI=j;TVloading=false;tvShell();tvLoad(0);})
     .catch(e=>{TVloading=false;$('#tvwrap').innerHTML='<div class="note" style="color:var(--kill)">'
       +'Could not load '+tvBase()+'results/trades_index.json ('+e.message+').</div>';});
@@ -4820,7 +4867,7 @@ function boot(BUNDLE,root){
    TVsel=i;TVtr=0;
    if(TVB[i]){tvDraw();return;}
    $('#tvmeta').textContent='Loading '+TVI[i].file+'…';
-   fetch(tvBase()+'results/'+TVI[i].file).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+   fetch(bust(tvBase()+'results/'+TVI[i].file,(BUN.meta&&BUN.meta.built))).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(j=>{TVB[i]=j;tvDraw();})
     .catch(e=>{$('#tvmeta').innerHTML='<span style="color:var(--kill)">Could not load '
       +TVI[i].file+' ('+e.message+')</span>';});
@@ -4943,6 +4990,7 @@ function boot(BUNDLE,root){
   if(_ab)_ab.onclick=()=>{ADV=!ADV;applyAdv();};
   applyAdv();
   show('today');
+  versionCheck();
   drawG();drawA();buildScatter();buildFam();buildNew();
   // ---- the four new screens ----
   $('#glwrap').innerHTML=glossHTML();
