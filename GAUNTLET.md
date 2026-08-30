@@ -899,6 +899,54 @@ carry 46–57% peg exposure, which is what the column exists to make visible.
 
 **No configuration is killed by either flag.** They are columns.
 
+### PORTFOLIO PREVIEW — the top 10 as one book
+
+**PREVIEW ONLY. Gate 4 does this properly**, with real weighting and the
+drop-one test. This exists so the SHAPE of a combined book is visible before
+gate 4 rather than after.
+
+**The normalisation decides every number.** Each strategy risks 1 R per trade
+alone; ten at equal weight each risk 1/10 R, so **the combined book risks the
+same 1 R per trade as any single strategy**. Combined total R is therefore
+directly comparable to a single strategy's — it is one book of the same size,
+not ten stacked.
+
+**R is booked on the EXIT date** (when money is realised); **overlap uses the
+entry-to-exit span** (when capital is committed). Different questions, different
+dates — conflating them would understate overlap.
+
+| metric | crisis-excluded (primary) | all-in |
+|---|---|---|
+| total R | **79.53** | 87.94 |
+| avg annual R | **7.84** | 8.67 |
+| max drawdown | **1.47 R** | 1.47 R |
+| Sortino | 4.83 | 4.78 |
+| Sharpe | 2.67 | 2.80 |
+| Calmar | 54.23 | 59.97 |
+| worst month | −1.20 R (2014-11) | −1.09 R (2019-11) |
+| trades | 1,778 | 1,908 |
+| days with any position | 3,491 | 3,607 |
+| days holding 2+ | 3,112 — **89.1%** | 90.9% |
+| max simultaneous | **9 of 10** | 10 of 10 |
+| mean simultaneous when live | 3.65 | 3.81 |
+| mean pairwise correlation | **0.0515** | 0.0479 |
+| max pairwise correlation | **0.6302** | 0.5671 |
+
+**What the numbers say.** Diversification is real: mean pairwise correlation of
+daily R is **0.05**, and only **1 of 45 pairs** exceeds 0.30. Max drawdown falls
+to **1.47 R** against 4.00–13.92 R for the individual strategies, while average
+annual R is 7.84 against 7.3–11.2 individually — the combined book gives up
+little return and removes most of the drawdown, which is the entire argument for
+a portfolio.
+
+**The one concentration to watch: ranks 5 and 10 correlate at 0.63**, far above
+every other pair. They are near-duplicates and gate 4's drop-one test should be
+expected to remove one of them.
+
+**Capital is committed almost constantly** — 89.1% of live days hold two or more
+strategies, up to 9 at once. Equal risk weight per trade does not mean equal
+capital at risk over time, and gate 4's weighting has to confront that.
+
 ### ROUND-2 GRID WIDENING — CONFIRMED
 
 The gate 2 grids bind at their edges and round 2 widens them **before** running,

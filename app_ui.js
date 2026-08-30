@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='d59168e9160b';
+const UI_BUILD='29bd35c2150f';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -4861,6 +4861,10 @@ function boot(BUNDLE,root){
     +'<canvas id="tveq" style="width:100%;height:260px;display:block;margin-top:8px"></canvas>'
     +'<div class="note" style="margin-top:4px">Orange dots are crisis-window trades — '
     +'money the ranking quarantines.</div></div>'
+    +'<div class="panel" style="margin-top:14px"><h3>Portfolio PREVIEW — all 10 combined</h3>'
+    +'<div id="tvpf" class="note"></div>'
+    +'<canvas id="tvpfc" style="width:100%;height:240px;display:block;margin-top:8px"></canvas>'
+    +'</div>'
     +'<div class="panel" style="margin-top:14px"><h3>R by calendar year</h3>'
     +'<canvas id="tvyr" style="width:100%;height:200px;display:block"></canvas>'
     +'<div id="tvyrtab" class="note" style="margin-top:6px"></div></div>';
@@ -4882,6 +4886,46 @@ function boot(BUNDLE,root){
     .then(j=>{TVB[i]=j;tvDraw();})
     .catch(e=>{$('#tvmeta').innerHTML='<span style="color:var(--kill)">Could not load '
       +TVI[i].file+' ('+e.message+')</span>';});
+  }
+
+
+  let TVPF=null;
+  function tvPortfolio(){
+   if(TVPF===false)return;
+   if(TVPF){tvDrawPF();return;}
+   TVPF=false;
+   fetch(bust(tvBase()+'results/portfolio_preview.json',(BUN.meta&&BUN.meta.built)))
+    .then(r=>r.ok?r.json():null).then(j=>{if(j){TVPF=j;tvDrawPF();}}).catch(()=>{});
+  }
+  function tvDrawPF(){
+   const j=TVPF,can=$('#tvpfc'); if(!j||!can)return;
+   const m=j.metrics||{};
+   $('#tvpf').innerHTML='<b style="color:#b45309">PREVIEW</b> — equal risk weight, '
+    +'1/N each, so the combined book risks the same <b>1 R per trade</b> as any single '
+    +'strategy. Gate 4 does this properly with real weighting and the drop-one test.'
+    +'<br><b>'+(m.total_R||0).toFixed(1)+' R</b> over '+(m.years||0).toFixed(1)+' years '
+    +'· avg <b>'+(m.avg_annual_R||0).toFixed(1)+' R/yr</b> · maxDD <b>'+(m.max_dd_R||0).toFixed(2)
+    +' R</b> · Sortino '+(m.sortino||0)+' · Calmar '+(m.calmar||0)
+    +'<br>worst month '+(m.worst_month||'—')+' at '+(m.worst_month_R||0).toFixed(2)+' R'
+    +' · '+(m.pct_days_2plus||0)+'% of live days hold 2+ strategies (max '
+    +(m.max_simultaneous||0)+') · mean pairwise corr '+(m.mean_pairwise_corr||0);
+   const dpr=window.devicePixelRatio||1,W=can.clientWidth,H=can.clientHeight;
+   can.width=W*dpr;can.height=H*dpr;const g=can.getContext('2d');
+   g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+   const L=52,Rp=10,Tp=10,Bp=20,pw=W-L-Rp,ph=H-Tp-Bp,E=j.curve;
+   if(!E||!E.length)return;
+   const lo=Math.min(0,...E.map(p=>p.r)),hi=Math.max(0,...E.map(p=>p.r));
+   const pad=(hi-lo)*0.08||1,LO=lo-pad,HI=hi+pad;
+   const X=i=>L+(i/(E.length-1||1))*pw,Y=v=>Tp+ph*(1-(v-LO)/(HI-LO));
+   const fg=getComputedStyle(document.body).color||'#ccc';
+   g.strokeStyle='rgba(128,128,128,.28)';g.fillStyle=fg;g.font='11px system-ui';
+   for(let k=0;k<=4;k++){const v=LO+(HI-LO)*k/4,y=Y(v);
+    g.beginPath();g.moveTo(L,y);g.lineTo(W-Rp,y);g.stroke();
+    g.globalAlpha=.75;g.fillText(v.toFixed(0)+'R',4,y+3);g.globalAlpha=1;}
+   g.strokeStyle='#b45309';g.lineWidth=2;g.beginPath();
+   E.forEach((p,i)=>{i?g.lineTo(X(i),Y(p.r)):g.moveTo(X(i),Y(p.r));});g.stroke();
+   g.fillStyle=fg;g.globalAlpha=.7;g.font='10px system-ui';
+   g.fillText(E[0].d,L,H-5);g.fillText(E[E.length-1].d,W-Rp-58,H-5);g.globalAlpha=1;
   }
 
   function tvEquity(b){
@@ -5031,7 +5075,7 @@ function boot(BUNDLE,root){
      +(b.pair_totals?'<br><span style="opacity:.8">per pair: '
        +b.pair_totals.slice(0,8).map(x=>x.pair+' '+x.R.toFixed(1)+'R('+x.n+')').join(' · ')
        +(b.pair_totals.length>8?' …':'')+'</span>':'');
-   tvEquity(b); tvYears(b);
+   tvEquity(b); tvYears(b); tvPortfolio();
    $('#tvlab').innerHTML='leg '+t.leg+' · '+(t.dir>0?'LONG':'SHORT')
     +' · entry '+t.entry_date+' @ '+tvFmt(t.entry_px)
     +' · exit '+t.exit_date+' @ '+tvFmt(t.exit_px)
