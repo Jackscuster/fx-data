@@ -947,6 +947,64 @@ expected to remove one of them.
 strategies, up to 9 at once. Equal risk weight per trade does not mean equal
 capital at risk over time, and gate 4's weighting has to confront that.
 
+### PORTFOLIO PREVIEW — TOP 20
+
+**PREVIEW.** Same method exactly as the top-10 section above: pure overlay on
+one calendar, no trades removed or netted, equal risk weight 1/N, budget
+normalised so the combined book risks **1 R per trade** like a single strategy.
+Both previews are kept; neither replaces the other.
+
+| metric | top 10 excl | **top 20 excl** | top 10 all-in | top 20 all-in |
+|---|---|---|---|---|
+| total R | 79.53 | **77.35** | 87.94 | 93.30 |
+| avg annual R | 7.84 | **7.62** | 8.67 | 9.19 |
+| max drawdown R | 1.47 | **1.79** | 1.47 | 1.26 |
+| Sortino | 4.83 | **6.91** | 4.78 | 8.07 |
+| Sharpe | 2.67 | **3.04** | 2.80 | 2.28 |
+| Calmar | 54.23 | **43.16** | 59.97 | 73.78 |
+| worst month R | −1.20 | **−1.25** | −1.09 | −1.07 |
+| worst month | 2014-11 | 2014-11 | 2019-11 | 2014-11 |
+| trades | 1,778 | **3,965** | 1,908 | 4,193 |
+| days with any position | 3,491 | **3,645** | 3,607 | 3,705 |
+| days holding 2+ | 3,112 | **3,610** | 3,277 | 3,692 |
+| % live days 2+ | 89.1% | **99.0%** | 90.9% | 99.6% |
+| max simultaneous | 9 | **18** | 10 | 18 |
+| mean simultaneous when live | 3.65 | **7.15** | 3.81 | 7.50 |
+| mean pairwise corr | 0.0515 | **0.0525** | 0.0479 | 0.0462 |
+| max pairwise corr | 0.6302 | **0.6334** | 0.5671 | 0.9630 |
+
+**DOUBLING THE BOOK DID NOT INCREASE RETURN.** Crisis-excluded total R falls
+from 79.53 to 77.35 and average annual R from 7.84 to 7.62, while drawdown rises
+from 1.47 to 1.79 R. Under 1/N normalisation each added strategy dilutes the
+others, so ranks 11–20 earn slightly less per unit of risk than the ten they
+join — which is exactly what a ranking that works should produce.
+
+**RISK-ADJUSTED QUALITY IMPROVED.** Sortino rises 4.83 → 6.91 and Sharpe
+2.67 → 3.04: more trades, smoother path, marginally lower total. Calmar falls
+because drawdown grew faster than return.
+
+**CAPITAL IS COMMITTED ESSENTIALLY ALWAYS: 99.0% of live days hold two or more
+strategies, up to 18 at once.** At top 10 it was 89.1% and 9. Equal risk per
+TRADE is now clearly not equal capital at risk over TIME, and gate 4's weighting
+must confront it.
+
+**CORRELATION, 190 pairs: mean 0.0525, median 0.0266, max 0.6334, min −0.0407.
+Three pairs exceed 0.30:**
+
+| pair | r |
+|---|---|
+| rank 5 & rank 10 | **0.633** |
+| rank 2 & rank 12 | 0.387 |
+| rank 11 & rank 15 | 0.382 |
+
+Two new near-twins surface among ranks 11–20, exactly as 5 & 10 did. Gate 4's
+drop-one test should be expected to thin all three pairs.
+
+**One number to be wary of: the ALL-IN top-20 max pairwise correlation is
+0.963.** Crisis-excluded it is 0.633. Two strategies are almost perfectly
+correlated *in crisis windows only* — they are the same crisis bet wearing two
+names, and that is invisible in the crisis-excluded view that ranks them.
+
 ### ROUND-2 GRID WIDENING — CONFIRMED
 
 The gate 2 grids bind at their edges and round 2 widens them **before** running,

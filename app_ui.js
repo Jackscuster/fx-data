@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='29bd35c2150f';
+const UI_BUILD='24549b0c57eb';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -4861,7 +4861,7 @@ function boot(BUNDLE,root){
     +'<canvas id="tveq" style="width:100%;height:260px;display:block;margin-top:8px"></canvas>'
     +'<div class="note" style="margin-top:4px">Orange dots are crisis-window trades — '
     +'money the ranking quarantines.</div></div>'
-    +'<div class="panel" style="margin-top:14px"><h3>Portfolio PREVIEW — all 10 combined</h3>'
+    +'<div class="panel" style="margin-top:14px"><h3>Portfolio PREVIEW — top 10 and top 20 combined</h3>'
     +'<div id="tvpf" class="note"></div>'
     +'<canvas id="tvpfc" style="width:100%;height:240px;display:block;margin-top:8px"></canvas>'
     +'</div>'
@@ -4889,43 +4889,61 @@ function boot(BUNDLE,root){
   }
 
 
-  let TVPF=null;
+  let TVPF=null,TVPF20=null,TVPFtried=false;
   function tvPortfolio(){
-   if(TVPF===false)return;
-   if(TVPF){tvDrawPF();return;}
-   TVPF=false;
-   fetch(bust(tvBase()+'results/portfolio_preview.json',(BUN.meta&&BUN.meta.built)))
-    .then(r=>r.ok?r.json():null).then(j=>{if(j){TVPF=j;tvDrawPF();}}).catch(()=>{});
+   if(TVPF||TVPF20){tvDrawPF();return;}
+   if(TVPFtried)return; TVPFtried=true;
+   const B=(BUN.meta&&BUN.meta.built);
+   // BOTH curves are kept and drawn together -- the top-20 does not replace the
+   // top-10, because the comparison between them is the point.
+   Promise.all([
+     fetch(bust(tvBase()+'results/portfolio_preview.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
+     fetch(bust(tvBase()+'results/portfolio_preview_top20.json',B)).then(r=>r.ok?r.json():null).catch(()=>null)
+   ]).then(([a,b])=>{TVPF=a;TVPF20=b;tvDrawPF();});
   }
   function tvDrawPF(){
-   const j=TVPF,can=$('#tvpfc'); if(!j||!can)return;
-   const m=j.metrics||{};
+   const can=$('#tvpfc'); if(!can||(!TVPF&&!TVPF20))return;
+   const row=(lab,j,col)=>{if(!j)return '';const m=j.metrics||{};
+    return '<div style="margin-top:4px"><b style="color:'+col+'">'+lab+'</b> '
+     +(m.total_R||0).toFixed(1)+' R over '+(m.years||0).toFixed(1)+' yr · avg '
+     +(m.avg_annual_R||0).toFixed(1)+' R/yr · maxDD '+(m.max_dd_R||0).toFixed(2)
+     +' R · Sortino '+(m.sortino||0)+' · Sharpe '+(m.sharpe||0)+' · Calmar '+(m.calmar||0)
+     +' · worst month '+(m.worst_month||'—')+' '+(m.worst_month_R||0).toFixed(2)+' R'
+     +' · '+(m.n_trades||0)+' trades · '+(m.pct_days_2plus||0)+'% of live days 2+ (max '
+     +(m.max_simultaneous||0)+', mean '+(m.mean_simultaneous_when_live||0)+')'
+     +' · corr mean '+(m.mean_pairwise_corr||0)+' max '+(m.max_pairwise_corr||0)+'</div>';};
    $('#tvpf').innerHTML='<b style="color:#b45309">PREVIEW</b> — equal risk weight, '
-    +'1/N each, so the combined book risks the same <b>1 R per trade</b> as any single '
-    +'strategy. Gate 4 does this properly with real weighting and the drop-one test.'
-    +'<br><b>'+(m.total_R||0).toFixed(1)+' R</b> over '+(m.years||0).toFixed(1)+' years '
-    +'· avg <b>'+(m.avg_annual_R||0).toFixed(1)+' R/yr</b> · maxDD <b>'+(m.max_dd_R||0).toFixed(2)
-    +' R</b> · Sortino '+(m.sortino||0)+' · Calmar '+(m.calmar||0)
-    +'<br>worst month '+(m.worst_month||'—')+' at '+(m.worst_month_R||0).toFixed(2)+' R'
-    +' · '+(m.pct_days_2plus||0)+'% of live days hold 2+ strategies (max '
-    +(m.max_simultaneous||0)+') · mean pairwise corr '+(m.mean_pairwise_corr||0);
+    +'1/N each, so each combined book risks the same <b>1 R per trade</b> as any single '
+    +'strategy. Pure overlay: no trades removed or netted. Gate 4 does this properly '
+    +'with real weighting and the drop-one test.'
+    +row('TOP 10:',TVPF,'#b45309')+row('TOP 20:',TVPF20,'#3178c6');
    const dpr=window.devicePixelRatio||1,W=can.clientWidth,H=can.clientHeight;
    can.width=W*dpr;can.height=H*dpr;const g=can.getContext('2d');
    g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
-   const L=52,Rp=10,Tp=10,Bp=20,pw=W-L-Rp,ph=H-Tp-Bp,E=j.curve;
-   if(!E||!E.length)return;
-   const lo=Math.min(0,...E.map(p=>p.r)),hi=Math.max(0,...E.map(p=>p.r));
+   const L=52,Rp=10,Tp=10,Bp=20,pw=W-L-Rp,ph=H-Tp-Bp;
+   const curves=[[TVPF&&TVPF.curve,'#b45309','top 10'],[TVPF20&&TVPF20.curve,'#3178c6','top 20']]
+     .filter(c=>c[0]&&c[0].length);
+   if(!curves.length)return;
+   // ONE shared scale: two curves on different axes would invite exactly the
+   // wrong comparison.
+   let lo=0,hi=0,tmin=null,tmax=null;
+   curves.forEach(([E])=>E.forEach(p=>{lo=Math.min(lo,p.r);hi=Math.max(hi,p.r);
+     if(tmin===null||p.d<tmin)tmin=p.d; if(tmax===null||p.d>tmax)tmax=p.d;}));
    const pad=(hi-lo)*0.08||1,LO=lo-pad,HI=hi+pad;
-   const X=i=>L+(i/(E.length-1||1))*pw,Y=v=>Tp+ph*(1-(v-LO)/(HI-LO));
+   const Y=v=>Tp+ph*(1-(v-LO)/(HI-LO));
    const fg=getComputedStyle(document.body).color||'#ccc';
    g.strokeStyle='rgba(128,128,128,.28)';g.fillStyle=fg;g.font='11px system-ui';
    for(let k=0;k<=4;k++){const v=LO+(HI-LO)*k/4,y=Y(v);
     g.beginPath();g.moveTo(L,y);g.lineTo(W-Rp,y);g.stroke();
     g.globalAlpha=.75;g.fillText(v.toFixed(0)+'R',4,y+3);g.globalAlpha=1;}
-   g.strokeStyle='#b45309';g.lineWidth=2;g.beginPath();
-   E.forEach((p,i)=>{i?g.lineTo(X(i),Y(p.r)):g.moveTo(X(i),Y(p.r));});g.stroke();
+   curves.forEach(([E,col],ci)=>{
+    g.strokeStyle=col;g.lineWidth=2;g.beginPath();
+    E.forEach((p,i)=>{const x=L+(i/(E.length-1||1))*pw;i?g.lineTo(x,Y(p.r)):g.moveTo(x,Y(p.r));});
+    g.stroke();
+    g.fillStyle=col;g.fillRect(L+8+ci*90,Tp+4,10,3);
+    g.fillText(curves[ci][2],L+22+ci*90,Tp+9);});
    g.fillStyle=fg;g.globalAlpha=.7;g.font='10px system-ui';
-   g.fillText(E[0].d,L,H-5);g.fillText(E[E.length-1].d,W-Rp-58,H-5);g.globalAlpha=1;
+   g.fillText(tmin,L,H-5);g.fillText(tmax,W-Rp-58,H-5);g.globalAlpha=1;
   }
 
   function tvEquity(b){
