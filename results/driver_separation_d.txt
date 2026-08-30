@@ -1,7 +1,7 @@
 Driver D yield curve -- separation (this test decides keep or kill)
 ===================================================================
 
-Verdict: DEAD -- sign flips.
+Verdict: KEEPER.
 
 A driver dies only when its read on the PRESENT is
 unreliable -- a sign flip between data halves or between

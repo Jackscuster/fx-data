@@ -6,7 +6,7 @@ there is MONTHLY (IRLTLT01xxM156N, median gap 31 days), which
 is useless against a daily FX panel. Checked before building,
 because the 2-year file turned out to be missing NZD entirely.
 
-A curve slope needs BOTH tenors. Available for USD, EUR, GBP, CHF, JPY.
+A curve slope needs BOTH tenors. Available for USD, EUR.
 AUD and CAD have a 2-year but no daily 10-year; NZD has
-neither. The driver therefore runs on 10 of 28 pairs:
-EURGBP, EURUSD, EURCHF, EURJPY, GBPUSD, GBPCHF, GBPJPY, USDCHF, USDJPY, CHFJPY
+neither. The driver therefore runs on 1 of 28 pairs:
+EURUSD

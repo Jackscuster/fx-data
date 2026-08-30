@@ -11,7 +11,7 @@ shape separation,structural raw,"real 0.213 vs surrogate 0.217, corrected -0.004
 shape separation,structural M=5,"real 0.205 vs surrogate 0.202, corrected +0.003",iid,FAILS (p=0.433),16.4c
 shape separation,product M=5,"real 0.297 vs surrogate 0.288, corrected +0.009",iid,FAILS (p=0.358),16.4c
 shape separation,grid,"real 0.458 vs surrogate 0.493, corrected -0.035",iid,FAILS (p=0.891),16.4c
-"shape separation, EPISODE basis",structural M=5,"real 0.232 vs surrogate 0.230, corrected +0.003",sign,FAILS (p=0.492),16.4e
+"shape separation, EPISODE basis",structural M=5,"real 0.232 vs surrogate 0.229, corrected +0.003",sign,FAILS (p=0.492),16.4e
 "shape separation, EPISODE basis",product M=5,"real 0.303 vs surrogate 0.297, corrected +0.006",sign,FAILS (p=0.410),16.4e
 "shape separation, EPISODE basis",grid,"real 0.350 vs surrogate 0.414, corrected -0.064",sign,FAILS (p=1.000),16.4e
 "shape separation, EPISODE basis",structural M=5,"real 0.232 vs surrogate 0.222, corrected +0.011",iid,FAILS (p=0.377),16.4e
