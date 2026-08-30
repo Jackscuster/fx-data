@@ -54,3 +54,18 @@ R is booked on the EXIT date; holding overlap uses the entry-to-exit span. The
 two are deliberately different and should not be reconciled.
 
 Regenerate with `python code/l2portfolio.py`.
+
+
+## Portfolio preview, top 20 — `portfolio_preview_top20.*`
+
+Same method as the top-10 preview: pure overlay, equal risk weight 1/N,
+normalised to 1 R per trade. **Both previews are kept.** `portfolio_preview.json`
+is the top 10; `portfolio_preview_top20.json` is the top 20; the app draws both
+curves on one shared scale.
+
+`portfolio_corr_top20.csv` is the 20x20 daily-R correlation. Three pairs exceed
+0.30 crisis-excluded (5&10 at 0.633, 2&12 at 0.387, 11&15 at 0.382). The ALL-IN
+matrix reaches 0.963 — a pair that is near-identical in crisis windows only, and
+therefore invisible in the crisis-excluded view.
+
+Regenerate with `python code/l2portfolio.py 20`.

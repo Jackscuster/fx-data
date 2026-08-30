@@ -27,12 +27,13 @@ import numpy as np, pandas as pd
 import l2deliver as DL, l2crisis as C
 
 N_STRAT = 10
+SUF = ''      # output suffix, set by the CLI so a top-20 run never overwrites top-10
 
 
-def load():
+def load(n=N_STRAT):
     wins = C.windows()
     L = pd.read_csv(os.path.join(ROOTOUT, 'gate2_modeB_leaderboard.csv'),
-                    low_memory=False).sort_values('rank').head(N_STRAT)
+                    low_memory=False).sort_values('rank').head(n)
     books = {}
     for cfg in L.to_dict('records'):
         rk = int(cfg['rank'])
@@ -88,8 +89,8 @@ def build(books, exclude_crisis=True):
     return D, H
 
 
-def report():
-    books = load()
+def report(n=N_STRAT):
+    books = load(n)
     out = {}
     for tag, exc in (('crisis_excluded', True), ('all_in', False)):
         D, H = build(books, exclude_crisis=exc)
@@ -124,14 +125,19 @@ def report():
                 metrics=m,
                 corr=[dict(a=int(a), b=int(b), r=round(float(Cm.loc[a, b]), 4))
                       for a in Cm.index for b in Cm.columns if a < b]),
-                open(os.path.join(ROOTOUT, 'portfolio_preview.json'), 'w'))
-            Cm.round(4).to_csv(os.path.join(ROOTOUT, 'portfolio_corr.csv'))
-    pd.DataFrame(out).to_csv(os.path.join(ROOTOUT, 'portfolio_preview.csv'))
+                open(os.path.join(ROOTOUT, 'portfolio_preview%s.json' % SUF), 'w'))
+            Cm.round(4).to_csv(os.path.join(ROOTOUT, 'portfolio_corr%s.csv' % SUF))
+    pd.DataFrame(out).to_csv(os.path.join(ROOTOUT, 'portfolio_preview%s.csv' % SUF))
     return out, books
 
 
 if __name__ == '__main__':
-    out, books = report()
+    import sys as _s
+    n = int(_s.argv[1]) if len(_s.argv) > 1 else N_STRAT
+    SUF = '' if n == 10 else '_top%d' % n
+    globals()['SUF'] = SUF
+    print('portfolio preview over the top %d (files suffixed %r)' % (n, SUF), flush=True)
+    out, books = report(n)
     for tag, m in out.items():
         print('\n=== %s ===' % tag.upper())
         for k, v in m.items():
