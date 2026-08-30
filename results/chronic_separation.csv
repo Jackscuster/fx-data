@@ -1,29 +1,29 @@
 detector,group,sep
-drift,chronic,0.5097579025966832
-drift,trending (not chronic),0.3467217910946333
-drift,acute,-0.07204863602934278
-drift,other,-0.36226558008448184
+drift,chronic,0.5097579025966491
+drift,trending (not chronic),0.346721791094615
+drift,acute,-0.07204863602933265
+drift,other,-0.36226558008446264
 onesided,chronic,0.4917184791061421
 onesided,trending (not chronic),0.2863211166469764
 onesided,acute,0.09733528354340644
 onesided,other,-0.3767223549547316
-starve,chronic,0.015425081290226366
-starve,trending (not chronic),0.015126791220260873
-starve,acute,0.003361390411387787
-starve,other,-0.016482172620397632
-acute maxabsmove,chronic,0.03184728018019062
-acute maxabsmove,trending (not chronic),-0.03216141621154908
-acute maxabsmove,acute,0.4693481508968399
-acute maxabsmove,other,-0.15818966250205324
-drift,chronic IS,0.4457388860305807
-drift,chronic OOS,0.6258161579645549
+starve,chronic,0.015425081290225184
+starve,trending (not chronic),0.015126791220259199
+starve,acute,0.003361390411386517
+starve,other,-0.016482172620395617
+acute maxabsmove,chronic,0.03184728018019019
+acute maxabsmove,trending (not chronic),-0.03216141621154952
+acute maxabsmove,acute,0.46934815089684534
+acute maxabsmove,other,-0.15818966250205427
+drift,chronic IS,0.44573888603053613
+drift,chronic OOS,0.6258161579645555
 onesided,chronic IS,0.3819471231001384
 onesided,chronic OOS,0.9691350854133105
-starve,chronic IS,0.010714750076080881
-starve,chronic OOS,0.04586011768282242
-drift,BOUNDARY chronic vs trending,0.18920799833569096
+starve,chronic IS,0.010714750076078463
+starve,chronic OOS,0.04586011768282227
+drift,BOUNDARY chronic vs trending,0.1892079983356655
 onesided,BOUNDARY chronic vs trending,0.23743180832255936
-starve,BOUNDARY chronic vs trending,0.011518221202932569
+starve,BOUNDARY chronic vs trending,0.01151822120293247
 onesided,chronic NULL real,0.4917184791061421
 onesided,chronic NULL mean,0.05831715821822713
 onesided,chronic NULL p,0.13725490196078433
