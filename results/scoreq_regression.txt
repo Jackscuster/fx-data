@@ -7,8 +7,8 @@ refit control, agreement against shipped overall and per state, run
 lengths, flip rate, and a null test on separation.
 
 IT DID NOT PASS. On the holdout, measured on identical rows, the
-challenger is WORSE on both axes: trend 0.1324 against 0.1354 and chop
-0.1130 against 0.1368. The in-sample gain of +0.0085 reverses to -0.0224.
+challenger is WORSE on both axes: trend 0.1318 against 0.1340 and chop
+0.1119 against 0.1352. The in-sample gain of +0.0085 reverses to -0.0222.
 
 So 0.50 stays, and the outcome is recorded as TESTED, MEDIAN
 SURVIVED -- which is a stronger position than the one this started

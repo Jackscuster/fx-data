@@ -52,7 +52,7 @@ maxabsmove,2024-07-31,policy,JPY,3,"BOJ surprise hike, carry unwind begins",True
 maxabsmove,2024-08-05,credit,JPY,3,Global carry unwind peak,True,0.0
 maxabsmove,2024-11-05,vote,USD,2,US presidential election,True,1.0
 maxabsmove,2025-04-02,policy,USD,3,US reciprocal tariff announcement,True,1.0
-maxabsmove,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,False,
+maxabsmove,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,True,3.0
 breadth2sig,2000-09-22,intervention,EUR,2,G7 coordinated intervention to support the euro,True,0.0
 breadth2sig,2001-03-19,policy,JPY,2,BOJ adopts quantitative easing,False,
 breadth2sig,2001-09-11,geopolitical,,3,September 11 attacks,True,6.0
@@ -160,7 +160,7 @@ paneldisp,2024-07-31,policy,JPY,3,"BOJ surprise hike, carry unwind begins",True,
 paneldisp,2024-08-05,credit,JPY,3,Global carry unwind peak,True,0.0
 paneldisp,2024-11-05,vote,USD,2,US presidential election,True,1.0
 paneldisp,2025-04-02,policy,USD,3,US reciprocal tariff announcement,True,1.0
-paneldisp,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,False,
+paneldisp,2026-07-31,intervention,JPY,3,US-Japan coordinated intervention,True,3.0
 legdiv20,2000-09-22,intervention,EUR,2,G7 coordinated intervention to support the euro,False,
 legdiv20,2001-03-19,policy,JPY,2,BOJ adopts quantitative easing,False,
 legdiv20,2001-09-11,geopolitical,,3,September 11 attacks,True,8.0

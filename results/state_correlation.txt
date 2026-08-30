@@ -13,9 +13,9 @@ an IDENTITY and is not evidence the market moved together.
 kappa = (observed - expected) / (1 - expected), with expected the
 agreement forced by the two marginal state distributions alone. Raw
 observed agreement is in the file beside it so the correction can be
-checked. Complete-case days only (6694 of 6855), so both marginals and the
+checked. Complete-case days only (6709 of 6870), so both marginals and the
 observed rate use the same day set and kappa is exact.
 
   is   raw 0.297, chance 0.265, kappa 0.043 | share-leg 0.080 vs no-leg 0.014 | N_eff 12.9 (eigen 23.0)
-  oos  raw 0.302, chance 0.268, kappa 0.046 | share-leg 0.076 vs no-leg 0.022 | N_eff 12.5 (eigen 23.1)
+  oos  raw 0.303, chance 0.269, kappa 0.046 | share-leg 0.077 vs no-leg 0.022 | N_eff 12.4 (eigen 23.2)
 

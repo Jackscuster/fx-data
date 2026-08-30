@@ -6,10 +6,10 @@ EUR,ecb,local,DATA,4310,"daily AAA curve, starts 2004-09",
 JPY,mof,local,DATA,1174446,"daily from 1974, Shift-JIS, Japanese era dates",
 GBP,boe-glc,local,DATA,39035542,"daily from 1979, 39 MB of xlsx",
 CAD,boc-valet,local,DATA,545,daily,
-AUD,rba-f2,local,DATA,199425,has an explicit 2 year bond column,
+AUD,rba-f2,local,DATA,200040,has an explicit 2 year bond column,
 CHF,snb-daily,local,DATA,5461632,"daily from 1988, 2J maturity",
 NZD,rbnz-b2,local,HTTP 403,0,bot-walled from the sandbox,HTTP Error 403: Forbidden
 NZD,nz-dmo,local,HTTP 403,0,Cloudflare challenge from the sandbox,HTTP Error 403: Forbidden
-USD,yahoo-^TNX,local,DATA,1617,"US 10y, already in the feed",
+USD,yahoo-^TNX,local,DATA,1585,"US 10y, already in the feed",
 GBP,yahoo-GB2YR,local,HTTP 404,0,speculative ticker,HTTP Error 404: Not Found
-JPY,yahoo-2YY=F,local,DATA,1571,"CBOT 2y yield future, US not JP",
+JPY,yahoo-2YY=F,local,DATA,1551,"CBOT 2y yield future, US not JP",

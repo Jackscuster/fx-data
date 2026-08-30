@@ -69,3 +69,16 @@ matrix reaches 0.963 — a pair that is near-identical in crisis windows only, a
 therefore invisible in the crisis-excluded view.
 
 Regenerate with `python code/l2portfolio.py 20`.
+
+
+## Book size sweep — `portfolio_sweep_10_20.csv`
+
+Every N from 10 to 20 under the identical preview method, crisis-excluded and
+all-in (22 rows). Columns: total_R, avg_annual_R, max_dd_R, sortino, sharpe,
+calmar, worst_month_R, pct_2plus, max_sim, mean_corr, max_corr.
+
+`portfolio_preview_top13.*` is the ADOPTED preview book — the return peak and
+the balance point under the co-equal rule. All three previews are kept (10, 13,
+20) and the app draws all three curves on one shared scale.
+
+Regenerate: `python code/l2portfolio.py 13`

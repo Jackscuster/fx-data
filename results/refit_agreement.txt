@@ -17,5 +17,5 @@ Agreement is reported beside the agreement expected from the two
 marginal distributions alone, and kappa corrects for it. Four states
 unevenly distributed agree ~27% of the time by coincidence.
 
-Worst post-vintage agreement: 0.939 (vintage 2024).
+Worst post-vintage agreement: 0.938 (vintage 2024).
 

@@ -4,5 +4,5 @@ states_g4_twoscore12.csv
 Two-score crossed with activity, generation 4, CURRENT. Twelve cells, activity cut jointly with a 0.75 bump.
 
 Source column: combined2 in layer1_states.csv
-Shape: 6855 dates x 28 pairs. Every value is already lagged one bar.
+Shape: 6870 dates x 28 pairs. Every value is already lagged one bar.
 States: medium neither, medium ranging, medium trend-in-range, medium trending, strong neither, strong ranging, strong trend-in-range, strong trending, weak neither, weak ranging, weak trend-in-range, weak trending
