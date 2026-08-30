@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='4217feb20155';
+const UI_BUILD='d59168e9160b';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -4843,7 +4843,7 @@ function boot(BUNDLE,root){
   }
   function tvShell(){
    $('#tvwrap').innerHTML=
-    '<div class="panel"><h3>Trades — gate 2, mode B top 5</h3>'
+    '<div class="panel"><h3>Trades — gate 2, mode B top 10 (crisis-excluded)</h3>'
     +'<div class="note">Every trade this configuration took on its best pair, over the'
     +' <b>blind</b> windows W2+W3. Ranking is the co-equal rule on the W3 diagnostic and is'
     +' <b>provisional</b> pending round 2. The trail path is reconstructed from the engine\'s'
@@ -4853,6 +4853,7 @@ function boot(BUNDLE,root){
     +' <button class="chip" id="tvnext">next &#9654;</button>'
     +' <span id="tvpos" style="margin-left:8px;opacity:.8"></span></div>'
     +'<div id="tvmeta" class="note"></div>'
+    +'<div id="tvscope" class="note" style="margin-top:6px;padding:6px 8px;border-left:3px solid rgba(128,128,128,.5)"></div>'
     +'<canvas id="tvcan" style="width:100%;height:400px;display:block;margin-top:8px"></canvas>'
     +'<div id="tvlab" class="note" style="margin-top:6px"></div></div>'
     +'<div class="panel" style="margin-top:14px"><h3>Equity — all 28 pairs, blind windows</h3>'
@@ -4864,8 +4865,10 @@ function boot(BUNDLE,root){
     +'<canvas id="tvyr" style="width:100%;height:200px;display:block"></canvas>'
     +'<div id="tvyrtab" class="note" style="margin-top:6px"></div></div>';
    const sel=$('#tvsel');
-   sel.innerHTML=TVI.map((x,i)=>'<option value="'+i+'">'+x.label+'  ('+x.n_trades+' trades, '
-     +x.total_R.toFixed(1)+'R)</option>').join('');
+   // the label already carries strategy identity and the charted pair; appending
+   // an all-pairs R total beside a best-pair trade count mixed two scopes in one
+   // string and read as a pair selector
+   sel.innerHTML=TVI.map((x,i)=>'<option value="'+i+'">'+x.label+'</option>').join('');
    sel.onchange=()=>tvLoad(+sel.value);
    $('#tvprev').onclick=()=>{const b=TVB[TVsel];if(!b)return;TVtr=(TVtr-1+b.trades.length)%b.trades.length;tvDraw();};
    $('#tvnext').onclick=()=>{const b=TVB[TVsel];if(!b)return;TVtr=(TVtr+1)%b.trades.length;tvDraw();};
@@ -5019,6 +5022,15 @@ function boot(BUNDLE,root){
    g.fillStyle=fg;g.globalAlpha=.7;g.font='10px system-ui';
    g.fillText(bars[0].d,L,H-6); g.fillText(bars[bars.length-1].d,W-Rp-62,H-6);
    g.globalAlpha=1;
+   const M=b.metrics||{},ST=b.stats||{};
+   const scope=$('#tvscope');
+   if(scope)scope.innerHTML='<b>Chart scope:</b> this strategy\'s '+b.n_trades
+     +' blind trades on its best pair (<b>'+b.pair+'</b>). '
+     +'<b>Full book:</b> '+((M.ex_n||0)+(M.cr_n||0))+' trades, '
+     +(ST.total_R||0).toFixed(1)+'R across 28 pairs — see Equity below.'
+     +(b.pair_totals?'<br><span style="opacity:.8">per pair: '
+       +b.pair_totals.slice(0,8).map(x=>x.pair+' '+x.R.toFixed(1)+'R('+x.n+')').join(' · ')
+       +(b.pair_totals.length>8?' …':'')+'</span>':'');
    tvEquity(b); tvYears(b);
    $('#tvlab').innerHTML='leg '+t.leg+' · '+(t.dir>0?'LONG':'SHORT')
     +' · entry '+t.entry_date+' @ '+tvFmt(t.entry_px)

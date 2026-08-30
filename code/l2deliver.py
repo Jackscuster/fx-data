@@ -150,12 +150,20 @@ def bundle(cfg, rank, wins):
                      max_dd_R=cfg.get('ex_max_dd_R'), ulcer_R=cfg.get('ex_ulcer_R'),
                      win_rate=cfg.get('ex_win_rate'), conc=cfg.get('ex_max_trade_share')),
         stats=stats, equity=eq, years=years,
+        pair_totals=[dict(pair=k, R=round(float(v), 2),
+                          n=int((T.pair == k).sum()))
+                     for k, v in T.groupby('pair').R.sum()
+                     .sort_values(ascending=False).items()],
         n_trades=len(trades), reconstruction_ok=bool(okall),
         provisional='crisis-excluded ranking; stitched score pending round 2',
         bar0=int(lo_b),
         bars=[dict(d=str(d[i].date()), o=float(o[i]), h=float(h[i]),
                    l=float(l[i]), c=float(c[i])) for i in range(lo_b, hi_b + 1)],
         trades=trades)
+
+
+def sh(x):
+    return str(x).replace('_signals', '').replace('_volume', '').replace('_baseline', '')
 
 
 def main():
@@ -178,8 +186,14 @@ def main():
         idx.append(dict(rank=rk, pair=b['pair'], slice=b['slice'],
                         file=os.path.basename(f), n_trades=b['n_trades'],
                         total_R=b['stats']['total_R'],
-                        label='#%d %s %s (%.0fR)' % (rk, b['pair'], b['slice'],
-                                                     b['stats']['total_R'])))
+                        # LEAD WITH STRATEGY IDENTITY. The old label read like a
+                        # pair selector and mixed scopes -- an all-pairs R total
+                        # sat beside a best-pair trade count in one string.
+                        label='#%d · %s · %s × %s × %s × %s  (charts: %s)'
+                              % (rk, b['slice'],
+                                 sh(b['slots']['c1']), sh(b['slots']['c2']),
+                                 sh(b['slots']['vol']), sh(b['slots']['base']),
+                                 b['pair'])))
     json.dump(idx, open(os.path.join(ROOTOUT, 'trades_index.json'), 'w'))
     print('wrote trades_index.json', flush=True)
     print('DONE', flush=True)
