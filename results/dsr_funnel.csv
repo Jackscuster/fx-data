@@ -1,4 +1,4 @@
 stage,count,pct_of_total,emax
-variants tested,1680,1.0,1.077435796013649
-positive OOS Sharpe delta,441,0.2625,1.077435796013649
-survive DSR >= 0.95,0,0.0,1.077435796013649
+variants tested,1680,1.0,1.0710210959209645
+positive OOS Sharpe delta,434,0.25833333333333336,1.0710210959209645
+survive DSR >= 0.95,0,0.0,1.0710210959209645

@@ -1275,3 +1275,39 @@ walk-forward is not a triumph — it is a reason to check for a leak.
 - Searching manufactures effect size. 78% of Layer 1's best headline was
   selection artifact. The scrambled-control floor, the family requirement, the
   blind-only scoring and the single W4 pass all exist because of that one fact.
+
+## BOOK SIZE SWEEP — every N from 10 to 20 (PREVIEW)
+
+Declared after the top-20 preview showed total R FALLING against the top 10.
+That could only mean the optimum was interior, so every N from 10 to 20 was
+built by the identical method (pure overlay, equal risk weight 1/N, normalised
+to 1 R per trade, crisis-excluded primary and all-in beside it).
+
+Selection uses the DECLARED CO-EQUAL RULE, unchanged: rank on total blind R,
+rank on Sortino, average the two ranks, Calmar breaks ties.
+
+  N=14  avg rank 4.0   the rule's winner
+  N=13  avg rank 4.5   the return peak, and dominant on 4 of 6 metrics
+  N=10  avg rank 9.0   NINTH of eleven
+
+**N=13 is adopted as the preview book.** The rule separates 13 and 14 by half a
+rank; 13 beats 14 on total R, max drawdown, Calmar AND worst month, and loses
+only on Sortino and Sharpe. Where the rule is that close, dominance decides.
+
+TWO STRUCTURAL FACTS THE SWEEP EXPOSED, both invisible at N=10 and N=20 alone:
+
+1. THE DRAWDOWN STEP IS ONE STRATEGY, NOT A TREND. Max DD goes 1.47 -> 1.87 R
+   at N=11 and never returns; the trough MOVES from 2020-11-04 to 2014-12-08 and
+   stays there for every larger N. Rank 11 alone draws only 0.61 R, so this is a
+   TIMING COLLISION, not a bad strategy -- rank 11 loses at the moment the other
+   ten already sit at their worst. Gate 4's weighting must see this date.
+
+2. THE 0.963 ALL-IN PAIR IS 11&15. Crisis-excluded they correlate 0.382; all-in,
+   0.963. They are the same crisis bet under two names, and the crisis-excluded
+   view that RANKS them cannot see it. N=15 is where all-in Sharpe collapses
+   2.70 -> 1.99 for exactly this reason. Adopting 13 excludes rank 15 and so
+   never forms the pair -- by luck, not by design. Gate 4 must test the pair
+   explicitly, on the ALL-IN matrix, not rely on the cut falling here.
+
+Still a PREVIEW. Gate 4 replaces equal weight with real weighting and the
+drop-one test, and may choose a different N.

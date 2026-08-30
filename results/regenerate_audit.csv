@@ -1,15 +1,15 @@
 variant,archive,note,status,n_states,dates,pairs,states,checked,agreement
-g1_ninebox_7,,"Generation 1, fast ribbon leg. Nine-box at a 7-bar window.",rebuilt,9,6916,28,medium chop; medium transitional; medium trend; strong chop; strong transitional; strong trend; weak chop; weak transitional; weak trend,,
-g1_ninebox,states_g1_ninebox.csv,"Generation 1, base. Straightness x scale terciles at 28 bars.",rebuilt,9,6916,28,medium chop; medium transitional; medium trend; strong chop; strong transitional; strong trend; weak chop; weak transitional; weak trend,191940.0,1.0
-g1_ninebox_128,,"Generation 1, slow ribbon leg. Nine-box at a 128-bar window.",rebuilt,9,6916,28,medium chop; medium transitional; medium trend; strong chop; strong transitional; strong trend; weak chop; weak transitional; weak trend,,
-g2_structural4,,Generation 2 SHAPE ONLY: trending / broken / range / drifting. The four states before the activity cross. 'broken' was never in the spec.,rebuilt,4,6916,28,broken; drifting; range; trending,,
-g2_structural12,states_g2_structural12.csv,Generation 2 full: the four structural shapes crossed with activity.,rebuilt,12,6916,28,medium broken; medium drifting; medium range; medium trending; strong broken; strong drifting; strong range; strong trending; weak broken; weak drifting; weak range; weak trending,191618.0,1.0
-g3_gate3,,"Generation 3a, the GATED three-shape read at swing width 6. Superseded by the continuous score because it left a residual.",rebuilt,3,6916,28,drifting; range; trending,,
-g3_shapescore9,states_g3_shapescore9.csv,"Generation 3b, the continuous trend-vs-range score cut at terciles.",rebuilt,3,6916,28,drifting; range; trending,189205.0,1.0
-g3_score_N6,,Generation 3b at a 35-bar lookback -- the fast leg of the shape ribbon.,rebuilt,3,6916,28,drifting; range; trending,,
-g3_score_N44,,"Generation 3b at a 247-bar lookback -- the slow leg, and the only region where trend separation went positive.",rebuilt,3,6916,28,drifting; range; trending,,
-g4_twoscore4,states_g4_twoscore4.csv,"Generation 4, CURRENT. The 2x2 on independent trend and chop scores.",rebuilt,4,6916,28,neither; ranging; trend-in-range; trending,189211.0,1.0
-g4_twoscore12,states_g4_twoscore12.csv,"Generation 4 crossed with activity, CURRENT.",rebuilt,12,6916,28,medium neither; medium ranging; medium trend-in-range; medium trending; strong neither; strong ranging; strong trend-in-range; strong trending; weak neither; weak ranging; weak trend-in-range; weak trending,189056.0,1.0
-x_weighted3,,The original three-state weighted classifier (97.3% scale by variance). Predates the nine-box and is still on main.,rebuilt,3,6916,28,high; low; mid,,
-x_dwell1,,"Generation 3b with NO confirmation dwell -- the flickering version, 3-bar median runs with 62% under five bars.",rebuilt,3,6916,28,drifting; range; trending,,
-x_dwell13,,Generation 3b at a 13-bar dwell -- past the point where states collapse.,rebuilt,3,6916,28,drifting; range; trending,,
+g1_ninebox_7,,"Generation 1, fast ribbon leg. Nine-box at a 7-bar window.",rebuilt,9,6931,28,medium chop; medium transitional; medium trend; strong chop; strong transitional; strong trend; weak chop; weak transitional; weak trend,,
+g1_ninebox,states_g1_ninebox.csv,"Generation 1, base. Straightness x scale terciles at 28 bars.",rebuilt,9,6931,28,medium chop; medium transitional; medium trend; strong chop; strong transitional; strong trend; weak chop; weak transitional; weak trend,192360.0,1.0
+g1_ninebox_128,,"Generation 1, slow ribbon leg. Nine-box at a 128-bar window.",rebuilt,9,6931,28,medium chop; medium transitional; medium trend; strong chop; strong transitional; strong trend; weak chop; weak transitional; weak trend,,
+g2_structural4,,Generation 2 SHAPE ONLY: trending / broken / range / drifting. The four states before the activity cross. 'broken' was never in the spec.,rebuilt,4,6931,28,broken; drifting; range; trending,,
+g2_structural12,states_g2_structural12.csv,Generation 2 full: the four structural shapes crossed with activity.,rebuilt,12,6931,28,medium broken; medium drifting; medium range; medium trending; strong broken; strong drifting; strong range; strong trending; weak broken; weak drifting; weak range; weak trending,191618.0,1.0
+g3_gate3,,"Generation 3a, the GATED three-shape read at swing width 6. Superseded by the continuous score because it left a residual.",rebuilt,3,6931,28,drifting; range; trending,,
+g3_shapescore9,states_g3_shapescore9.csv,"Generation 3b, the continuous trend-vs-range score cut at terciles.",rebuilt,3,6931,28,drifting; range; trending,189625.0,1.0
+g3_score_N6,,Generation 3b at a 35-bar lookback -- the fast leg of the shape ribbon.,rebuilt,3,6931,28,drifting; range; trending,,
+g3_score_N44,,"Generation 3b at a 247-bar lookback -- the slow leg, and the only region where trend separation went positive.",rebuilt,3,6931,28,drifting; range; trending,,
+g4_twoscore4,states_g4_twoscore4.csv,"Generation 4, CURRENT. The 2x2 on independent trend and chop scores.",rebuilt,4,6931,28,neither; ranging; trend-in-range; trending,189631.0,1.0
+g4_twoscore12,states_g4_twoscore12.csv,"Generation 4 crossed with activity, CURRENT.",rebuilt,12,6931,28,medium neither; medium ranging; medium trend-in-range; medium trending; strong neither; strong ranging; strong trend-in-range; strong trending; weak neither; weak ranging; weak trend-in-range; weak trending,189476.0,1.0
+x_weighted3,,The original three-state weighted classifier (97.3% scale by variance). Predates the nine-box and is still on main.,rebuilt,3,6931,28,high; low; mid,,
+x_dwell1,,"Generation 3b with NO confirmation dwell -- the flickering version, 3-bar median runs with 62% under five bars.",rebuilt,3,6931,28,drifting; range; trending,,
+x_dwell13,,Generation 3b at a 13-bar dwell -- past the point where states collapse.,rebuilt,3,6931,28,drifting; range; trending,,

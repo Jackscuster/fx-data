@@ -5,12 +5,12 @@
 # Per-day labels for this generation: states_g1_ninebox.csv.
 # Renamed copy of nine_states.csv, whose name did not say which classifier it came from.
 ,share,median_len,runs
-strong trend,0.1018026466604147,7.0,1943
-medium trend,0.107085547566948,5.0,2879
-weak trend,0.0892831093049911,6.0,2151
-strong transitional,0.1063665728873606,4.0,3988
-medium transitional,0.1346775033864749,3.0,5749
-weak transitional,0.1158643326039387,3.0,4851
-strong chop,0.0979681150359487,5.0,2838
-medium chop,0.1332395540273002,4.0,4414
-weak chop,0.1137126185266229,5.0,3553
+strong trend,0.1016583489290912,7.0,1945
+medium trend,0.1070596797671033,5.0,2883
+weak trend,0.089504054897068,6.0,2162
+strong transitional,0.1062227074235807,4.0,3993
+medium transitional,0.1346589727594094,3.0,5761
+weak transitional,0.1160324391765439,3.0,4865
+strong chop,0.0978373882304013,5.0,2842
+medium chop,0.1334684965689332,4.0,4424
+weak chop,0.1135579122478685,5.0,3559

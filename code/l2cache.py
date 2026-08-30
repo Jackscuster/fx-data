@@ -38,9 +38,19 @@ import glob, hashlib, shutil, time
 import numpy as np
 
 DIR = os.path.join(ROOTOUT, 'gate2_cache')
-BUDGET_GB = 20.0
-EVICT_EVERY = 400          # writes per worker between size checks
-_writes = 0
+BUDGET_GB = 10.0
+# A SIZE CHECK IS NOT CHEAP. size_bytes() walks every file in the store, which
+# at ~300k entries measures 24 SECONDS. Calling it every 400 writes per worker
+# put seven workers into a state where they spent essentially all of their time
+# walking this directory instead of tuning -- 0% CPU, sleeping, no progress.
+# Found by launching mode A and watching it do nothing.
+#
+# So: accumulate the bytes THIS PROCESS has written, and only pay for a real
+# walk once that accumulation could plausibly matter. With a 10 GB budget and
+# 1 GB between walks, a worker walks at most a handful of times across a whole
+# run instead of thousands.
+WALK_EVERY_BYTES = 1 * 1024 ** 3
+_written_since_walk = 0
 
 
 def key(name, params, pair):
@@ -66,7 +76,7 @@ def get(name, params, pair):
 
 def put(name, params, pair, value):
     """Atomic: temp file then os.replace, so a reader never sees a partial."""
-    global _writes
+    global _written_since_walk
     arrs = value if isinstance(value, tuple) else (value,)
     k = key(name, params, pair)
     p = _path(k)
@@ -86,8 +96,13 @@ def put(name, params, pair, value):
         except Exception:
             pass
         return False
-    _writes += 1
-    if _writes % EVICT_EVERY == 0:
+    global _written_since_walk
+    try:
+        _written_since_walk += os.path.getsize(p)
+    except OSError:
+        pass
+    if _written_since_walk >= WALK_EVERY_BYTES:
+        _written_since_walk = 0
         evict()
     return True
 

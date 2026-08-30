@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='24549b0c57eb';
+const UI_BUILD='45fc9359c0fe';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -4889,17 +4889,18 @@ function boot(BUNDLE,root){
   }
 
 
-  let TVPF=null,TVPF20=null,TVPFtried=false;
+  let TVPF=null,TVPF13=null,TVPF20=null,TVPFtried=false;
   function tvPortfolio(){
-   if(TVPF||TVPF20){tvDrawPF();return;}
+   if(TVPF||TVPF13||TVPF20){tvDrawPF();return;}
    if(TVPFtried)return; TVPFtried=true;
    const B=(BUN.meta&&BUN.meta.built);
    // BOTH curves are kept and drawn together -- the top-20 does not replace the
    // top-10, because the comparison between them is the point.
    Promise.all([
      fetch(bust(tvBase()+'results/portfolio_preview.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
+     fetch(bust(tvBase()+'results/portfolio_preview_top13.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
      fetch(bust(tvBase()+'results/portfolio_preview_top20.json',B)).then(r=>r.ok?r.json():null).catch(()=>null)
-   ]).then(([a,b])=>{TVPF=a;TVPF20=b;tvDrawPF();});
+   ]).then(([a,c,b])=>{TVPF=a;TVPF13=c;TVPF20=b;tvDrawPF();});
   }
   function tvDrawPF(){
    const can=$('#tvpfc'); if(!can||(!TVPF&&!TVPF20))return;
@@ -4916,12 +4917,16 @@ function boot(BUNDLE,root){
     +'1/N each, so each combined book risks the same <b>1 R per trade</b> as any single '
     +'strategy. Pure overlay: no trades removed or netted. Gate 4 does this properly '
     +'with real weighting and the drop-one test.'
-    +row('TOP 10:',TVPF,'#b45309')+row('TOP 20:',TVPF20,'#3178c6');
+    +' The BOOK SIZE SWEEP ran every N from 10 to 20; <b>13</b> is the return peak and '
+    +'the balance point, 10 ranked 9th of the 11.'
+    +row('TOP 10:',TVPF,'#b45309')+row('TOP 13 (best balance):',TVPF13,'#15803d')
+    +row('TOP 20:',TVPF20,'#3178c6');
    const dpr=window.devicePixelRatio||1,W=can.clientWidth,H=can.clientHeight;
    can.width=W*dpr;can.height=H*dpr;const g=can.getContext('2d');
    g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
    const L=52,Rp=10,Tp=10,Bp=20,pw=W-L-Rp,ph=H-Tp-Bp;
-   const curves=[[TVPF&&TVPF.curve,'#b45309','top 10'],[TVPF20&&TVPF20.curve,'#3178c6','top 20']]
+   const curves=[[TVPF&&TVPF.curve,'#b45309','top 10'],[TVPF13&&TVPF13.curve,'#15803d','top 13'],
+     [TVPF20&&TVPF20.curve,'#3178c6','top 20']]
      .filter(c=>c[0]&&c[0].length);
    if(!curves.length)return;
    // ONE shared scale: two curves on different axes would invite exactly the

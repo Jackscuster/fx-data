@@ -31,7 +31,7 @@ IN-SAMPLE RESULT
 
 CHOSEN ON IN-SAMPLE: 0.40 -- challenger cleared eligibility and beat the default by >1 paired SE.
 
-HOLDOUT, read once, for that value only: trend 0.1324, chop 0.1130,
+HOLDOUT, read once, for that value only: trend 0.1318, chop 0.1119,
 median run 20 bars, flip rate 0.0354, smallest state share 0.109.
 
 THEN THE GUARDRAIL. it did not survive. On the holdout, on identical rows, 0.40 is worse than 0.50 on BOTH axes -- trend and chop -- so by the declared rule 0.50 stays and this is recorded as TESTED, MEDIAN SURVIVED. See scoreq_regression.csv.

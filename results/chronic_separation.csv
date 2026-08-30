@@ -1,31 +1,31 @@
 detector,group,sep
-drift,chronic,0.5098230862091927
-drift,trending (not chronic),0.34686699077463706
-drift,acute,-0.07218253651349488
-drift,other,-0.36393569596330916
-onesided,chronic,0.4920421837604749
-onesided,trending (not chronic),0.2869367668891283
-onesided,acute,0.09507769649381408
-onesided,other,-0.3768097776127735
-starve,chronic,0.015365781917650683
-starve,trending (not chronic),0.01506580563533689
-starve,acute,0.0038581469325460398
-starve,other,-0.01662803941632732
-acute maxabsmove,chronic,0.03166628860114018
-acute maxabsmove,trending (not chronic),-0.03246143274493627
-acute maxabsmove,acute,0.4814645461310401
-acute maxabsmove,other,-0.15936149105298958
+drift,chronic,0.5097579025966832
+drift,trending (not chronic),0.3467217910946333
+drift,acute,-0.07204863602934278
+drift,other,-0.36226558008448184
+onesided,chronic,0.4917184791061421
+onesided,trending (not chronic),0.2863211166469764
+onesided,acute,0.09733528354340644
+onesided,other,-0.3767223549547316
+starve,chronic,0.015425081290226366
+starve,trending (not chronic),0.015126791220260873
+starve,acute,0.003361390411387787
+starve,other,-0.016482172620397632
+acute maxabsmove,chronic,0.03184728018019062
+acute maxabsmove,trending (not chronic),-0.03216141621154908
+acute maxabsmove,acute,0.4693481508968399
+acute maxabsmove,other,-0.15818966250205324
 drift,chronic IS,0.4457388860305807
-drift,chronic OOS,0.6272483718687868
+drift,chronic OOS,0.6258161579645549
 onesided,chronic IS,0.3819471231001384
-onesided,chronic OOS,0.97372038981218
+onesided,chronic OOS,0.9691350854133105
 starve,chronic IS,0.010714750076080881
-starve,chronic OOS,0.04551635576057526
+starve,chronic OOS,0.04586011768282242
 drift,BOUNDARY chronic vs trending,0.18920799833569096
 onesided,BOUNDARY chronic vs trending,0.23743180832255936
 starve,BOUNDARY chronic vs trending,0.011518221202932569
-onesided,chronic NULL real,0.4920421837604749
-onesided,chronic NULL mean,0.061445720676276246
-onesided,chronic NULL p,0.1568627450980392
+onesided,chronic NULL real,0.4917184791061421
+onesided,chronic NULL mean,0.05831715821822713
+onesided,chronic NULL p,0.13725490196078433
 onesided,BOUNDARY NULL real,0.23743180832255936
-onesided,BOUNDARY NULL p,0.39215686274509803
+onesided,BOUNDARY NULL p,0.3333333333333333
