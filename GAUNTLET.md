@@ -848,6 +848,57 @@ choice can be audited rather than assumed.
 where it matters least for averages and most for tails — crisis bars, which is
 where gaps live. A crisis-day loss is exactly the trade this understates.
 
+### ROUND-2: LEVERAGE CAP AT 1:30 — DECLARED
+
+**Position notional never exceeds 30× equity.** When the cap binds the trade
+**risks less than 2% — it is made smaller, never blocked.** 1:30 is the
+conservative retail standard and is a placeholder: it is replaced by the real
+prop-account terms when Jack has them.
+
+**Why a cap is needed at all.** Size is `risk / (atr_mult × ATR)`, so when ATR
+is administratively held down the size explodes. Strategy #1 entered EURCHF on
+2012-09-04 at an ATR of **3.2 basis points** under the SNB floor, and one leg
+paid **11.7 R**. Arithmetically correct; not a position any account could hold.
+
+**VERIFIED BEFORE ADOPTING, and the result is unusually clean.** The cap binds
+when `atr_mult × ATR / price < 6.67 bp`. Measured over every pair-bar, five ATR
+lengths spanning the tuned range, at `atr_mult = 1.00` — the *most* binding case,
+since a wider stop means smaller size:
+
+| | |
+|---|---|
+| pair-bars below the threshold | **188 of 783,527 — 0.024%** |
+| pairs affected | **EURCHF only** (0.672% of its bars) |
+| every other pair | **zero** |
+| **inside the announced SNB floor** | **188 of 188 — 100%** |
+
+**Every bar where the cap would bind lies inside a documented administrative
+peg. Not one is in normal trading, on any pair, at any ATR length.** Across the
+top 60 books, 3 contain a capped trade at all, totalling 45.5 R.
+
+### ROUND-2: SUPPRESSED-VOLATILITY EXPOSURE — REPORTED, NEVER A KILL
+
+Two flags, different in kind and reported separately as well as combined:
+
+- **peg** — documented administrative regimes only, dated from public policy
+  announcements and never from price, the same discipline `events.py` follows.
+  The 2008–2015 zero-rate era is deliberately **excluded**: low policy rates are
+  not an administered exchange rate, and including them would flag a third of
+  the sample on a judgement call rather than a policy.
+- **lowvol** — entry ATR below that pair's **own 5th percentile**. Empirical and
+  relative; catches suppression the calendar does not know about.
+
+Measured across the top 60: **peg median 14.9% of book R (max 59.6%), low-vol
+median 7.6% (max 59.2%), combined median 20.0%.**
+
+A **third leaderboard view** excludes crisis *and* suppressed-vol R:
+`results/gate2_modeB_leaderboard_clean.csv`. **Seven of the previous top 10
+survive into it**, so the ranking is not an artefact of quiet regimes — but two
+configurations enter the top 10 from ranks 26 and 28, and two of the new top ten
+carry 46–57% peg exposure, which is what the column exists to make visible.
+
+**No configuration is killed by either flag.** They are columns.
+
 ### ROUND-2 GRID WIDENING — CONFIRMED
 
 The gate 2 grids bind at their edges and round 2 widens them **before** running,
