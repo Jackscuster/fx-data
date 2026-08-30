@@ -240,6 +240,16 @@ def main():
               "                index_col=0, parse_dates=True)   # dates x pairs",
               '```', '',
               'Every value is already lagged one bar. Do not shift it again.']
+    # HAND-WRITTEN SECTIONS SURVIVE THE REBUILD. This writer opens MANIFEST.md
+    # in 'w', so anything appended to the file by hand was silently deleted on
+    # the next pipeline run -- three sections were lost that way before it was
+    # noticed. Hand-written manifest text now lives in code/manifest_extra.md,
+    # which is SOURCE, not build output, and is concatenated here. Add to that
+    # file, never to results/MANIFEST.md.
+    extra = os.path.join(ROOTLIB, 'manifest_extra.md')
+    if os.path.exists(extra):
+        with open(extra) as f:
+            lines += ['', ''] + f.read().rstrip('\n').split('\n')
     with open(os.path.join(ROOTOUT, 'MANIFEST.md'), 'w') as f:
         f.write('\n'.join(lines) + '\n')
     print('\nwrote MANIFEST.md, run_lengths.csv and %d generation files'
