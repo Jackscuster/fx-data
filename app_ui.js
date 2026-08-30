@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='d0b01671bbac';
+const UI_BUILD='4217feb20155';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -4853,8 +4853,16 @@ function boot(BUNDLE,root){
     +' <button class="chip" id="tvnext">next &#9654;</button>'
     +' <span id="tvpos" style="margin-left:8px;opacity:.8"></span></div>'
     +'<div id="tvmeta" class="note"></div>'
-    +'<canvas id="tvcan" style="width:100%;height:420px;display:block;margin-top:8px"></canvas>'
-    +'<div id="tvlab" class="note" style="margin-top:6px"></div></div>';
+    +'<canvas id="tvcan" style="width:100%;height:400px;display:block;margin-top:8px"></canvas>'
+    +'<div id="tvlab" class="note" style="margin-top:6px"></div></div>'
+    +'<div class="panel" style="margin-top:14px"><h3>Equity — all 28 pairs, blind windows</h3>'
+    +'<div id="tvstats" class="note"></div>'
+    +'<canvas id="tveq" style="width:100%;height:260px;display:block;margin-top:8px"></canvas>'
+    +'<div class="note" style="margin-top:4px">Orange dots are crisis-window trades — '
+    +'money the ranking quarantines.</div></div>'
+    +'<div class="panel" style="margin-top:14px"><h3>R by calendar year</h3>'
+    +'<canvas id="tvyr" style="width:100%;height:200px;display:block"></canvas>'
+    +'<div id="tvyrtab" class="note" style="margin-top:6px"></div></div>';
    const sel=$('#tvsel');
    sel.innerHTML=TVI.map((x,i)=>'<option value="'+i+'">'+x.label+'  ('+x.n_trades+' trades, '
      +x.total_R.toFixed(1)+'R)</option>').join('');
@@ -4872,6 +4880,62 @@ function boot(BUNDLE,root){
     .catch(e=>{$('#tvmeta').innerHTML='<span style="color:var(--kill)">Could not load '
       +TVI[i].file+' ('+e.message+')</span>';});
   }
+
+  function tvEquity(b){
+   const can=$('#tveq'); if(!can||!b.equity||!b.equity.length)return;
+   const dpr=window.devicePixelRatio||1,W=can.clientWidth,H=can.clientHeight;
+   can.width=W*dpr;can.height=H*dpr;const g=can.getContext('2d');
+   g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+   const L=52,Rp=10,Tp=10,Bp=20,pw=W-L-Rp,ph=H-Tp-Bp;
+   const E=b.equity,lo=Math.min(0,...E.map(p=>p.r)),hi=Math.max(0,...E.map(p=>p.r));
+   const pad=(hi-lo)*0.08||1,LO=lo-pad,HI=hi+pad;
+   const X=i=>L+(i/(E.length-1||1))*pw, Y=v=>Tp+ph*(1-(v-LO)/(HI-LO));
+   const css=getComputedStyle(document.body),fg=css.color||'#ccc';
+   g.strokeStyle='rgba(128,128,128,.28)';g.fillStyle=fg;g.font='11px system-ui';
+   for(let k=0;k<=4;k++){const v=LO+(HI-LO)*k/4,y=Y(v);
+    g.beginPath();g.moveTo(L,y);g.lineTo(W-Rp,y);g.stroke();
+    g.globalAlpha=.75;g.fillText(v.toFixed(0)+'R',4,y+3);g.globalAlpha=1;}
+   if(LO<0&&HI>0){g.strokeStyle='rgba(128,128,128,.6)';g.beginPath();
+    g.moveTo(L,Y(0));g.lineTo(W-Rp,Y(0));g.stroke();}
+   g.strokeStyle='#3cb46e';g.lineWidth=1.6;g.beginPath();
+   E.forEach((p,i)=>{i?g.lineTo(X(i),Y(p.r)):g.moveTo(X(i),Y(p.r));});g.stroke();
+   g.fillStyle='#e0a030';
+   E.forEach((p,i)=>{if(p.c){g.beginPath();g.arc(X(i),Y(p.r),2.6,0,7);g.fill();}});
+   g.fillStyle=fg;g.globalAlpha=.7;g.font='10px system-ui';
+   g.fillText(E[0].d,L,H-5);g.fillText(E[E.length-1].d,W-Rp-58,H-5);g.globalAlpha=1;
+   const s=b.stats||{};
+   $('#tvstats').innerHTML='<b>'+(s.total_R||0).toFixed(1)+' R</b> over '
+    +(s.years||0).toFixed(1)+' years across all 28 pairs &nbsp;·&nbsp; '
+    +'<b>average annual R '+(s.avg_annual_R||0).toFixed(1)+'</b> — the native figure, '
+    +'the gauntlet is fixed-R and does not compound'
+    +'<br><b>CAGR '+(s.cagr_pct||0).toFixed(1)+'%</b> ('+(s.final_equity_x||0).toFixed(2)
+    +'× equity) — <i>simulated</i>: 2% of running equity per trade, same trade order. '
+    +'Path-dependent in a way the R figures are not.';
+  }
+  function tvYears(b){
+   const can=$('#tvyr'); if(!can||!b.years||!b.years.length)return;
+   const dpr=window.devicePixelRatio||1,W=can.clientWidth,H=can.clientHeight;
+   can.width=W*dpr;can.height=H*dpr;const g=can.getContext('2d');
+   g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+   const L=44,Rp=8,Tp=8,Bp=22,pw=W-L-Rp,ph=H-Tp-Bp;
+   const Y2=b.years,lo=Math.min(0,...Y2.map(y=>y.R)),hi=Math.max(0,...Y2.map(y=>y.R));
+   const pad=(hi-lo)*0.1||1,LO=lo-pad,HI=hi+pad;
+   const bw=pw/Y2.length*0.68, X=i=>L+(i+0.5)*(pw/Y2.length), Y=v=>Tp+ph*(1-(v-LO)/(HI-LO));
+   const css=getComputedStyle(document.body),fg=css.color||'#ccc';
+   g.strokeStyle='rgba(128,128,128,.5)';g.beginPath();g.moveTo(L,Y(0));g.lineTo(W-Rp,Y(0));g.stroke();
+   Y2.forEach((y,i)=>{g.fillStyle=y.R>=0?'#3cb46e':'#dc5050';
+    const y0=Y(Math.max(0,y.R)),y1=Y(Math.min(0,y.R));
+    g.fillRect(X(i)-bw/2,y0,bw,Math.max(1,y1-y0));
+    g.fillStyle=fg;g.globalAlpha=.8;g.font='10px system-ui';
+    g.fillText(String(y.y),X(i)-14,H-6);g.globalAlpha=1;});
+   const tot=Y2.reduce((a,y)=>a+y.R,0);
+   const top=Y2.reduce((a,y)=>Math.abs(y.R)>Math.abs(a.R)?y:a,Y2[0]);
+   const share=tot?Math.abs(top.R/tot):0;
+   $('#tvyrtab').innerHTML=Y2.map(y=>y.y+': <b>'+y.R.toFixed(1)+'R</b> ('+y.n+')').join(' &nbsp;·&nbsp; ')
+    +'<br>largest year '+top.y+' at '+top.R.toFixed(1)+'R = <b>'+(100*share).toFixed(0)
+    +'%</b> of total'+(share>0.5?' <span style="color:var(--kill)">— one year carries this strategy</span>':'');
+  }
+
   function tvDraw(){
    const b=TVB[TVsel]; if(!b)return;
    const t=b.trades[TVtr]; if(!t){$('#tvmeta').textContent='no trades';return;}
@@ -4937,12 +5001,16 @@ function boot(BUNDLE,root){
    (t.events||[]).forEach(ev=>{const bi=ev.bar-b.bar0-a; if(bi<0||bi>=bars.length)return;
     g.fillStyle='#e0a030';g.beginPath();g.arc(X(bi),Y(ev.level),3,0,7);g.fill();
     g.font='9px system-ui';g.fillText(ev.kind,X(bi)+4,Y(ev.level)-4);});
-   // entry marker
-   g.fillStyle=fg;g.beginPath();
+   // entry marker -- ORANGE and ringed when the trade sits in a crisis window,
+   // so quarantined money is visible on the chart rather than only in a column
+   g.fillStyle=t.crisis?'#e0a030':fg;g.beginPath();
    const ey=Y(t.entry_px);
    if(t.dir>0){g.moveTo(X(ei)-6,ey+9);g.lineTo(X(ei)+6,ey+9);g.lineTo(X(ei),ey+1);}
    else{g.moveTo(X(ei)-6,ey-9);g.lineTo(X(ei)+6,ey-9);g.lineTo(X(ei),ey-1);}
    g.closePath();g.fill();
+   if(t.crisis){g.strokeStyle='#e0a030';g.lineWidth=2;g.beginPath();
+    g.arc(X(ei),ey,11,0,7);g.stroke();
+    g.fillStyle='#e0a030';g.font='10px system-ui';g.fillText('CRISIS',X(ei)+13,ey-9);}
    // exit marker
    g.strokeStyle=fg;g.lineWidth=1.6;const xy=Y(t.exit_px);
    g.beginPath();g.moveTo(X(xi)-5,xy-5);g.lineTo(X(xi)+5,xy+5);
@@ -4951,6 +5019,7 @@ function boot(BUNDLE,root){
    g.fillStyle=fg;g.globalAlpha=.7;g.font='10px system-ui';
    g.fillText(bars[0].d,L,H-6); g.fillText(bars[bars.length-1].d,W-Rp-62,H-6);
    g.globalAlpha=1;
+   tvEquity(b); tvYears(b);
    $('#tvlab').innerHTML='leg '+t.leg+' · '+(t.dir>0?'LONG':'SHORT')
     +' · entry '+t.entry_date+' @ '+tvFmt(t.entry_px)
     +' · exit '+t.exit_date+' @ '+tvFmt(t.exit_px)
