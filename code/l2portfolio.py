@@ -30,10 +30,15 @@ N_STRAT = 10
 SUF = ''      # output suffix, set by the CLI so a top-20 run never overwrites top-10
 
 
-def load(n=N_STRAT):
+def load(n=N_STRAT, lb=None, sl=None):
+    """lb/sl let another mode's leaderboard be loaded by the same code path.
+    Defaults are mode B, unchanged."""
     wins = C.windows()
-    L = pd.read_csv(os.path.join(ROOTOUT, 'gate2_modeB_leaderboard.csv'),
-                    low_memory=False).sort_values('rank').head(n)
+    L = pd.read_csv(lb or os.path.join(ROOTOUT, 'gate2_modeB_leaderboard.csv'),
+                    low_memory=False)
+    if sl:
+        L = L[L.slice == sl]
+    L = L.sort_values('rank').head(n)
     books = {}
     for cfg in L.to_dict('records'):
         rk = int(cfg['rank'])
