@@ -110,3 +110,36 @@ python code/l2rank.py --mode A --slice trend --clean     # verifies against B fi
 python code/l2deliver.py --mode A --slice trend --top 10
 python code/l2modes.py
 ```
+
+
+## Book-size sweeps beyond mode B — `portfolio_sweep_*.csv`
+
+| file | pool swept |
+|---|---|
+| `portfolio_sweep_10_20.csv` | mode B, N 10..20 (the original) |
+| `portfolio_sweep_modeA_trend.csv` | mode A trend only, N 5..25 |
+| `portfolio_sweep_combined_AB.csv` | A-trend + B pooled and RE-RANKED, N 5..25 |
+
+`gate2_combined_AB_leaderboard.csv` is the pooled list after re-ranking, with
+`src_mode` / `src_label` / `src_rank` recording where each row came from and
+what it ranked in its own mode.
+
+`portfolio_preview_<tag>.json` holds the winning N's curve and metric block and
+is what the app draws; `mix` records the A/B split of that book.
+
+Mode A is TREND-ONLY until its chop slice finishes. `code/l2chopfinish.sh`
+waits for the 57th chop chunk and redoes the chop pipeline and both sweeps.
+
+Regenerate:
+```
+python code/l2sweepn.py --lb results/gate2_modeA_trend_leaderboard.csv \
+       --slice trend --tag modeA_trend --lo 5 --hi 25
+python code/l2sweepn.py --combine --lo 5 --hi 25
+```
+
+
+## The graft — `portfolio_preview_B13_plusA2.*`
+
+Mode B's N=13 sweet-spot book with mode A-trend's ranks 1 and 2 added: the
+EXACT 15, not a re-ranked pool. Same overlay math as every other preview.
+`mix` in the JSON records 13 B / 2 A. Regenerate: `python code/l2graft.py`.
