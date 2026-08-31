@@ -92,11 +92,31 @@ def sweep(lb, sl, tag, lo, hi):
           % (tag, best, E.iloc[0].total_R, E.iloc[0].sortino), flush=True)
     # the winning book's curve, for the app
     sub = {k: v for k, v in books.items() if k <= best}
-    D, _ = P.build(sub, exclude_crisis=True)
-    d = D.sum(axis=1).cumsum()
+    D, H = P.build(sub, exclude_crisis=True)
+    daily = D.sum(axis=1)
+    d = daily.cumsum()
     curve = [dict(d=str(i)[:10], r=round(float(v), 4)) for i, v in d.items()]
-    mm = P.metrics(D.sum(axis=1))
-    json.dump(dict(N=best, tag=tag, metrics=mm, curve=curve),
+    mm = dict(P.metrics(daily))
+    # the portfolio-level fields the app's metric line expects, under the same
+    # names l2portfolio uses -- otherwise the line silently prints zeros
+    act = H.sum(axis=1)
+    ad = D[(D != 0).any(axis=1)]
+    Cm = ad.corr().values
+    tri = Cm[np.triu_indices_from(Cm, 1)]
+    live = int((act > 0).sum())
+    mm.update(years=round((daily.index[-1] - daily.index[0]).days / 365.25, 2),
+              n_trades=int(sum(len(v) for v in sub.values())),
+              pct_days_2plus=round(100 * (act >= 2).sum() / max(1, live), 1),
+              max_simultaneous=int(act.max()),
+              mean_simultaneous_when_live=round(float(act[act > 0].mean()), 2),
+              mean_pairwise_corr=round(float(np.nanmean(tri)), 4),
+              max_pairwise_corr=round(float(np.nanmax(tri)), 4))
+    src = None
+    L = pd.read_csv(lb, low_memory=False)
+    if 'src_mode' in L.columns:
+        t = L.sort_values('rank').head(best)
+        src = {k: int(v) for k, v in t.src_mode.value_counts().items()}
+    json.dump(dict(N=best, tag=tag, metrics=mm, mix=src, curve=curve),
               open(os.path.join(ROOTOUT, 'portfolio_preview_%s.json' % tag), 'w'))
     return S, best, books
 
