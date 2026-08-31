@@ -97,3 +97,10 @@ python code/l2sweepn.py --lb results/gate2_modeA_trend_leaderboard.csv \
        --slice trend --tag modeA_trend --lo 5 --hi 25
 python code/l2sweepn.py --combine --lo 5 --hi 25
 ```
+
+
+## The graft — `portfolio_preview_B13_plusA2.*`
+
+Mode B's N=13 sweet-spot book with mode A-trend's ranks 1 and 2 added: the
+EXACT 15, not a re-ranked pool. Same overlay math as every other preview.
+`mix` in the JSON records 13 B / 2 A. Regenerate: `python code/l2graft.py`.
