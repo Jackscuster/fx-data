@@ -1403,3 +1403,38 @@ worse than B's own.
 
 Still a PREVIEW. Gate 4 replaces equal weight with real weighting and the
 drop-one test, and may choose different N in every one of these three books.
+
+## THE GRAFT — B's N=13 BOOK PLUS A-TREND #1 AND #2 (PREVIEW)
+
+NOT a re-ranked pool. The pooled sweep re-ranked A and B together and let the
+rule pick 18; this takes **mode B's own sweet-spot book exactly as it stands**
+and grafts on the two A strategies that earned their way into the pooled book.
+It isolates a question the pooled sweep cannot answer: does adding A's two best
+help, or did the pooled result depend on the reshuffling that came with it?
+
+Same overlay math as every preview — equal risk weight 1/15, nothing removed or
+netted, normalised to 1 R per trade, crisis-excluded primary.
+
+| | B N=13 | **graft N=15** | pooled N=18 |
+|---|---|---|---|
+| total R | **83.32** | 81.39 | 79.31 |
+| avg annual R | **8.21** | 8.02 | 7.81 |
+| max DD | 1.91 | **1.75** | 1.81 |
+| Sortino | 5.76 | 6.08 | **6.52** |
+| Sharpe | 2.84 | 2.91 | **2.96** |
+| Calmar | 43.59 | **46.57** | 43.76 |
+| worst month | -1.31 | -1.20 | **-1.17** |
+
+**THE RESHUFFLING WAS COSTING MORE THAN THE TWO A STRATEGIES WERE ADDING.** The
+graft beats the pooled book on total R (+2.08), average annual R, max drawdown
+and Calmar, and gives up only a little Sortino and Sharpe. Nearly all of the
+pooled book's 4.01 R shortfall against B alone came from the five extra B
+strategies the re-rank pulled in at ranks 14-18, not from mixing modes.
+
+Read as a sequence, the three books say: adding A's two best to B's 13 costs
+**1.93 R** and buys a lower drawdown, a better Sortino, a better Calmar and a
+milder worst month. That is a real trade, and unlike the pooled book it is not
+paying for dilution it did not ask for.
+
+Still a PREVIEW. Gate 4 replaces equal weight with real weighting and the
+drop-one test.

@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='22fba84c2242';
+const UI_BUILD='729dbe4d8b7b';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -5097,9 +5097,9 @@ function boot(BUNDLE,root){
   }
 
 
-  let TVPF=null,TVPF13=null,TVPF20=null,TVPFA=null,TVPFAB=null,TVPFtried=false;
+  let TVPF=null,TVPF13=null,TVPF20=null,TVPFA=null,TVPFAB=null,TVPFG=null,TVPFtried=false;
   function tvPortfolio(){
-   if(TVPF||TVPF13||TVPF20||TVPFA||TVPFAB){tvDrawPF();return;}
+   if(TVPF||TVPF13||TVPF20||TVPFA||TVPFAB||TVPFG){tvDrawPF();return;}
    if(TVPFtried)return; TVPFtried=true;
    const B=(BUN.meta&&BUN.meta.built);
    // BOTH curves are kept and drawn together -- the top-20 does not replace the
@@ -5109,8 +5109,9 @@ function boot(BUNDLE,root){
      fetch(bust(tvBase()+'results/portfolio_preview_top13.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
      fetch(bust(tvBase()+'results/portfolio_preview_top20.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
      fetch(bust(tvBase()+'results/portfolio_preview_modeA_trend.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
-     fetch(bust(tvBase()+'results/portfolio_preview_combined_AB.json',B)).then(r=>r.ok?r.json():null).catch(()=>null)
-   ]).then(([a,c,b,x,y])=>{TVPF=a;TVPF13=c;TVPF20=b;TVPFA=x;TVPFAB=y;tvDrawPF();});
+     fetch(bust(tvBase()+'results/portfolio_preview_combined_AB.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
+     fetch(bust(tvBase()+'results/portfolio_preview_B13_plusA2.json',B)).then(r=>r.ok?r.json():null).catch(()=>null)
+   ]).then(([a,c,b,x,y,g])=>{TVPF=a;TVPF13=c;TVPF20=b;TVPFA=x;TVPFAB=y;TVPFG=g;tvDrawPF();});
   }
   function tvDrawPF(){
    const can=$('#tvpfc'); if(!can||(!TVPF&&!TVPF20))return;
@@ -5136,14 +5137,16 @@ function boot(BUNDLE,root){
     +row('A-TREND N=7 (A sweet spot, trend only):',TVPFA,'#7c3aed')
     +row('A+B POOLED N=18 (combined sweet spot'
         +(TVPFAB&&TVPFAB.mix?(' \u2014 '+(TVPFAB.mix.B||0)+' B, '+(TVPFAB.mix.A||0)+' A'):'')
-        +'):',TVPFAB,'#0d9488');
+        +'):',TVPFAB,'#0d9488')
+    +row('B TOP 13 + A-TREND #1,#2 (graft, N=15):',TVPFG,'#be185d');
    const dpr=window.devicePixelRatio||1,W=can.clientWidth,H=can.clientHeight;
    can.width=W*dpr;can.height=H*dpr;const g=can.getContext('2d');
    g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
    const L=52,Rp=10,Tp=10,Bp=20,pw=W-L-Rp,ph=H-Tp-Bp;
    const curves=[[TVPF&&TVPF.curve,'#b45309','B top 10'],[TVPF13&&TVPF13.curve,'#15803d','B top 13'],
      [TVPF20&&TVPF20.curve,'#3178c6','B top 20'],[TVPFA&&TVPFA.curve,'#7c3aed','A-trend N=7'],
-     [TVPFAB&&TVPFAB.curve,'#0d9488','A+B N=18']]
+     [TVPFAB&&TVPFAB.curve,'#0d9488','A+B N=18'],
+     [TVPFG&&TVPFG.curve,'#be185d','B13+A2 N=15']]
      .filter(c=>c[0]&&c[0].length);
    if(!curves.length)return;
    // ONE shared scale: two curves on different axes would invite exactly the
