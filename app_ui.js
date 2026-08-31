@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='0a83bc4a4088';
+const UI_BUILD='22fba84c2242';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -5069,10 +5069,10 @@ function boot(BUNDLE,root){
     +'<canvas id="tveq" style="width:100%;height:260px;display:block;margin-top:8px"></canvas>'
     +'<div class="note" style="margin-top:4px">Orange dots are crisis-window trades — '
     +'money the ranking quarantines.</div></div>'
-    +((MD==='B')?('<div class="panel" style="margin-top:14px"><h3>Portfolio PREVIEW — '
-      +'top 10, 13 and 20 combined</h3><div id="tvpf" class="note"></div>'
+    +('<div class="panel" style="margin-top:14px"><h3>Portfolio PREVIEW \u2014 '
+      +'book-size sweeps, B and A and A+B pooled</h3><div id="tvpf" class="note"></div>'
       +'<canvas id="tvpfc" style="width:100%;height:240px;display:block;margin-top:8px">'
-      +'</canvas></div>'):'')
+      +'</canvas></div>')
     +'<div class="panel" style="margin-top:14px"><h3>R by calendar year</h3>'
     +'<canvas id="tvyr" style="width:100%;height:200px;display:block"></canvas>'
     +'<div id="tvyrtab" class="note" style="margin-top:6px"></div></div>';
@@ -5097,9 +5097,9 @@ function boot(BUNDLE,root){
   }
 
 
-  let TVPF=null,TVPF13=null,TVPF20=null,TVPFtried=false;
+  let TVPF=null,TVPF13=null,TVPF20=null,TVPFA=null,TVPFAB=null,TVPFtried=false;
   function tvPortfolio(){
-   if(TVPF||TVPF13||TVPF20){tvDrawPF();return;}
+   if(TVPF||TVPF13||TVPF20||TVPFA||TVPFAB){tvDrawPF();return;}
    if(TVPFtried)return; TVPFtried=true;
    const B=(BUN.meta&&BUN.meta.built);
    // BOTH curves are kept and drawn together -- the top-20 does not replace the
@@ -5107,8 +5107,10 @@ function boot(BUNDLE,root){
    Promise.all([
      fetch(bust(tvBase()+'results/portfolio_preview.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
      fetch(bust(tvBase()+'results/portfolio_preview_top13.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
-     fetch(bust(tvBase()+'results/portfolio_preview_top20.json',B)).then(r=>r.ok?r.json():null).catch(()=>null)
-   ]).then(([a,c,b])=>{TVPF=a;TVPF13=c;TVPF20=b;tvDrawPF();});
+     fetch(bust(tvBase()+'results/portfolio_preview_top20.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
+     fetch(bust(tvBase()+'results/portfolio_preview_modeA_trend.json',B)).then(r=>r.ok?r.json():null).catch(()=>null),
+     fetch(bust(tvBase()+'results/portfolio_preview_combined_AB.json',B)).then(r=>r.ok?r.json():null).catch(()=>null)
+   ]).then(([a,c,b,x,y])=>{TVPF=a;TVPF13=c;TVPF20=b;TVPFA=x;TVPFAB=y;tvDrawPF();});
   }
   function tvDrawPF(){
    const can=$('#tvpfc'); if(!can||(!TVPF&&!TVPF20))return;
@@ -5127,14 +5129,21 @@ function boot(BUNDLE,root){
     +'with real weighting and the drop-one test.'
     +' The BOOK SIZE SWEEP ran every N from 10 to 20; <b>13</b> is the return peak and '
     +'the balance point, 10 ranked 9th of the 11.'
-    +row('TOP 10:',TVPF,'#b45309')+row('TOP 13 (best balance):',TVPF13,'#15803d')
-    +row('TOP 20:',TVPF20,'#3178c6');
+    +' Book size was swept for each pool and the winning N chosen by the SAME '
+    +'co-equal rule that ranks strategies.'
+    +row('B TOP 10:',TVPF,'#b45309')+row('B TOP 13 (B sweet spot):',TVPF13,'#15803d')
+    +row('B TOP 20:',TVPF20,'#3178c6')
+    +row('A-TREND N=7 (A sweet spot, trend only):',TVPFA,'#7c3aed')
+    +row('A+B POOLED N=18 (combined sweet spot'
+        +(TVPFAB&&TVPFAB.mix?(' \u2014 '+(TVPFAB.mix.B||0)+' B, '+(TVPFAB.mix.A||0)+' A'):'')
+        +'):',TVPFAB,'#0d9488');
    const dpr=window.devicePixelRatio||1,W=can.clientWidth,H=can.clientHeight;
    can.width=W*dpr;can.height=H*dpr;const g=can.getContext('2d');
    g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
    const L=52,Rp=10,Tp=10,Bp=20,pw=W-L-Rp,ph=H-Tp-Bp;
-   const curves=[[TVPF&&TVPF.curve,'#b45309','top 10'],[TVPF13&&TVPF13.curve,'#15803d','top 13'],
-     [TVPF20&&TVPF20.curve,'#3178c6','top 20']]
+   const curves=[[TVPF&&TVPF.curve,'#b45309','B top 10'],[TVPF13&&TVPF13.curve,'#15803d','B top 13'],
+     [TVPF20&&TVPF20.curve,'#3178c6','B top 20'],[TVPFA&&TVPFA.curve,'#7c3aed','A-trend N=7'],
+     [TVPFAB&&TVPFAB.curve,'#0d9488','A+B N=18']]
      .filter(c=>c[0]&&c[0].length);
    if(!curves.length)return;
    // ONE shared scale: two curves on different axes would invite exactly the

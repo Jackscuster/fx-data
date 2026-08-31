@@ -1361,3 +1361,45 @@ confirmed against `gate1_null_raw_modeB.csv`: chop +0.020739, trend -0.001056.
 The clean view's `clean_R` excludes **all three** of peg, low-vol and crisis
 trades. Sortino is carried from the full crisis-excluded book and is NOT
 recomputed on the clean subset — as mode B's clean view did it.
+
+## PORTFOLIO SWEET SPOT — MODE A, AND A+B POOLED (PREVIEW)
+
+Same method as the mode B sweep, unchanged: pure overlay, equal risk weight
+1/N, normalised to 1 R per trade, nothing removed or netted, crisis-excluded
+primary with all-in beside it. **The winning N is chosen by the SAME co-equal
+rule that ranks strategies** — rank each N on total R, rank it on Sortino,
+average, Calmar breaks ties. Using a different selector for the recipe than for
+the ingredients would be two standards in one result. N swept 5..25.
+
+**MODE A IS TREND-ONLY.** Its chop slice was still tuning when this ran, so
+neither the A sweep nor the pooled sweep is a complete answer for mode A.
+`code/l2chopfinish.sh` waits for the 57th chop chunk and redoes both
+automatically.
+
+    A-trend alone     sweet spot N=7    62.51 R   maxDD 1.82   Sortino 2.36
+    A+B pooled        sweet spot N=18   79.31 R   maxDD 1.81   Sortino 6.52
+    B alone (prior)   sweet spot N=13   83.32 R   maxDD 1.91   Sortino 5.76
+
+### THREE THINGS THE SWEEP SAYS, AND ONE OF THEM IS UNCOMFORTABLE
+
+**1. Pooling did not raise return. It bought risk quality.** The pooled book at
+its own sweet spot earns 79.31 R against B-alone's 83.32 — **4.01 R LESS** — for
+a slightly smaller drawdown and a materially better Sortino (6.52 vs 5.76). If
+total R is the goal, B alone at 13 is still the best book on the table.
+
+**2. Mode A contributes two strategies out of eighteen.** The pooled top 18 is
+**16 B and 2 A**; A's entries are its own #1 and #2, landing at combined ranks
+5 and 8. Every other A strategy is beaten by a B strategy on the co-equal rule.
+Mode A's higher CROSSING rate (14.83% vs 11.14%) did not translate into a higher
+share of the best book — more survivors, not better ones.
+
+**3. A's strategies are correlated with EACH OTHER.** A-trend's own top-7 book
+has a mean pairwise correlation of **0.145** and a max of **0.769**, against
+B's 0.053 / 0.633 at its sweet spot. Six of A's top ten share the `vortex`
+family. That is why A alone tops out at N=7 while B keeps improving to 13: A
+runs out of distinct bets sooner. It is also why A's two entries in the pooled
+book add real breadth — the pooled correlation is 0.065 mean / 0.633 max, no
+worse than B's own.
+
+Still a PREVIEW. Gate 4 replaces equal weight with real weighting and the
+drop-one test, and may choose different N in every one of these three books.
