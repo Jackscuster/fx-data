@@ -1311,3 +1311,53 @@ TWO STRUCTURAL FACTS THE SWEEP EXPOSED, both invisible at N=10 and N=20 alone:
 
 Still a PREVIEW. Gate 4 replaces equal weight with real weighting and the
 drop-one test, and may choose a different N.
+
+## GATE 2 ORGANISED BY MODE AND SLICE
+
+Gate 2 results are now addressed as **mode × slice**: A/B/C at the top level,
+trend and chop inside each. Six slots, always all six present.
+
+**An empty slot shows what it is waiting on and is never omitted.** `running`
+and `queued` are distinct and both are displayed; a slot that disappears when
+it has no results reads as "there is nothing here", which is the one thing it
+does not mean. Status is read from `results/modes_status.json` and never
+inferred from a missing file, because absence cannot distinguish queued from
+running from lost.
+
+Nothing was replaced. Mode B's results, files and URLs are exactly where they
+were — `trades_index.json` keeps its unsuffixed name — and every other slot
+writes suffixed files beside them.
+
+### THE CO-EQUAL RANKING IS NOW A COMMITTED SCRIPT, AND IT VERIFIES ITSELF
+
+Mode B's leaderboard was built by hand in a session and never committed, so
+mode A could only have been ranked by re-deriving the rule from memory. That is
+exactly how two modes end up ranked differently and compared anyway.
+
+`code/l2rank.py` holds the rule. **It rebuilds mode B's committed leaderboard
+from mode B's own inputs and refuses to rank anything else unless every column
+and the row order match.** rank, rank_R, rank_S, score, net_of_structure_R and
+the ordering of all 2,653 rows reproduce exactly.
+
+    net_of_structure_R = ex_expectancy_R - (that slice's null MEAN expectancy)
+
+confirmed against `gate1_null_raw_modeB.csv`: chop +0.020739, trend -0.001056.
+
+**Two defects that reproduction exposed, both in my own earlier work:**
+
+1. **The rank method is `min`, not the pandas default `average`.** Tied values
+   share the better rank. Two rows differed; had I assumed the default, mode A
+   would have been ranked on a different rule from mode B while looking
+   identical.
+
+2. **Mode B's CLEAN VIEW had no tiebreak at all.** Rows tied on score kept
+   whatever order the parallel `l2suppvol` pool returned them in, so ties were
+   ordered by worker completion — that is, randomly, and differently on every
+   run. Every metric and both component ranks reproduce exactly; only the order
+   WITHIN a score tie differed, by at most two positions. Mode B's committed
+   file is left exactly as it is. **Calmar breaks ties from here**, the same
+   tiebreak the main rule uses.
+
+The clean view's `clean_R` excludes **all three** of peg, low-vol and crisis
+trades. Sortino is carried from the full crisis-excluded book and is NOT
+recomputed on the clean subset — as mode B's clean view did it.

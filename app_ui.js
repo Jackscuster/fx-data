@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='45fc9359c0fe';
+const UI_BUILD='f77d0a339cb5';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})

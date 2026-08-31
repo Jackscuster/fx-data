@@ -43,3 +43,31 @@ the balance point under the co-equal rule. All three previews are kept (10, 13,
 20) and the app draws all three curves on one shared scale.
 
 Regenerate: `python code/l2portfolio.py 13`
+
+
+## Gate 2 by mode and slice
+
+`modes_index.json` is what the app reads: mode -> slice -> {status, headline,
+top 20 cards}. `modes_status.json` is the hand-set status for each of the six
+slots and is the ONLY source of `running` / `queued` — status is never inferred
+from a missing file.
+
+| file | what it holds |
+|---|---|
+| `gate2_tuned_mode<M>[_<slice>].csv` | the tuner's own output, one row per combination |
+| `gate2_crisis_split_mode<M>[_<slice>]_all.csv` | crisis split over every crosser |
+| `gate2_mode<M>[_<slice>]_leaderboard.csv` | the co-equal ranking, crisis-excluded |
+| `gate2_mode<M>[_<slice>]_leaderboard_clean.csv` | top 60 re-ranked on clean_R |
+| `trades_index[_mode<M>_<slice>].json` | trade bundles for the charts |
+
+Mode B keeps its ORIGINAL unsuffixed names (`gate2_modeB_leaderboard.csv`,
+`trades_index.json`) so nothing pointing at them breaks. Every other mode/slice
+is suffixed and sits beside them.
+
+Regenerate, in order:
+```
+python code/l2crisis_all.py --mode A --slice trend --src results/gate2_tuned_modeA_trend.csv
+python code/l2rank.py --mode A --slice trend --clean     # verifies against B first
+python code/l2deliver.py --mode A --slice trend --top 10
+python code/l2modes.py
+```
