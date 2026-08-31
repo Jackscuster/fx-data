@@ -10,6 +10,6 @@ AUD,rba-f2,github-actions,DATA,200040,has an explicit 2 year bond column,
 CHF,snb-daily,github-actions,DATA,5461632,"daily from 1988, 2J maturity",
 NZD,rbnz-b2,github-actions,HTTP 403,0,bot-walled from the sandbox,HTTP Error 403: Forbidden
 NZD,nz-dmo,github-actions,HTTP 403,0,Cloudflare challenge from the sandbox,HTTP Error 403: Forbidden
-USD,yahoo-^TNX,github-actions,DATA,1652,"US 10y, already in the feed",
+USD,yahoo-^TNX,github-actions,DATA,1667,"US 10y, already in the feed",
 GBP,yahoo-GB2YR,github-actions,HTTP 404,0,speculative ticker,HTTP Error 404: Not Found
-JPY,yahoo-2YY=F,github-actions,DATA,1551,"CBOT 2y yield future, US not JP",
+JPY,yahoo-2YY=F,github-actions,DATA,1489,"CBOT 2y yield future, US not JP",
