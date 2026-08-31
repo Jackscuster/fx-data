@@ -9,6 +9,7 @@ name, and this file says what that name means.
 
 | file | source column | shape | what it is |
 |---|---|---|---|
+| `states_g2_structural12.csv` | `restored from git f597f23` | 6916 x 28 | Structural generation 2: four shapes INCLUDING `broken` crossed with activity = 12 cells. NOT reproducible from current code; restored verbatim from history. |
 | `states_g1_ninebox.csv` | `state_28` | 6870 x 28 | Nine-box, generation 1. Straightness x scale terciles at a 28-bar window. The 7 and 128 legs are in layer1_legacy.csv as state_7 and state_128. |
 | `states_g3_shapescore9.csv` | `shape` | 6870 x 28 | Shape score, generation 3. One continuous trend-versus-range score cut at in-sample terciles into three shapes. Separates better than g4 (0.261 vs 0.104 on trending) but leaves 41% of days in an ambiguous middle. |
 | `states_g4_twoscore4.csv` | `shape2` | 6870 x 28 | Two-score, generation 4, CURRENT. Trend and chop scored independently and classified on the pair: trending / ranging / trend-in-range / neither. The ambiguous share falls to 20%. |
@@ -81,3 +82,31 @@ the balance point under the co-equal rule. All three previews are kept (10, 13,
 20) and the app draws all three curves on one shared scale.
 
 Regenerate: `python code/l2portfolio.py 13`
+
+
+## Gate 2 by mode and slice
+
+`modes_index.json` is what the app reads: mode -> slice -> {status, headline,
+top 20 cards}. `modes_status.json` is the hand-set status for each of the six
+slots and is the ONLY source of `running` / `queued` — status is never inferred
+from a missing file.
+
+| file | what it holds |
+|---|---|
+| `gate2_tuned_mode<M>[_<slice>].csv` | the tuner's own output, one row per combination |
+| `gate2_crisis_split_mode<M>[_<slice>]_all.csv` | crisis split over every crosser |
+| `gate2_mode<M>[_<slice>]_leaderboard.csv` | the co-equal ranking, crisis-excluded |
+| `gate2_mode<M>[_<slice>]_leaderboard_clean.csv` | top 60 re-ranked on clean_R |
+| `trades_index[_mode<M>_<slice>].json` | trade bundles for the charts |
+
+Mode B keeps its ORIGINAL unsuffixed names (`gate2_modeB_leaderboard.csv`,
+`trades_index.json`) so nothing pointing at them breaks. Every other mode/slice
+is suffixed and sits beside them.
+
+Regenerate, in order:
+```
+python code/l2crisis_all.py --mode A --slice trend --src results/gate2_tuned_modeA_trend.csv
+python code/l2rank.py --mode A --slice trend --clean     # verifies against B first
+python code/l2deliver.py --mode A --slice trend --top 10
+python code/l2modes.py
+```
