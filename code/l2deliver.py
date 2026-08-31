@@ -167,14 +167,29 @@ def sh(x):
 
 
 def main():
+    # PARAMETERISED BY MODE AND SLICE. Bare `python code/l2deliver.py` still
+    # produces mode B's files at their original names, so nothing that already
+    # points at trades_index.json changes. Any other mode/slice writes its own
+    # suffixed index and bundles beside them -- never over them.
+    a = sys.argv[1:]
+    mode = a[a.index('--mode') + 1] if '--mode' in a else 'B'
+    sl = a[a.index('--slice') + 1] if '--slice' in a else None
+    ntop = int(a[a.index('--top') + 1]) if '--top' in a else 10
+    tag = '' if (mode, sl) == ('B', None) else '_mode%s%s' % (mode, '_' + sl if sl else '')
     wins = C.windows()
-    L = pd.read_csv(os.path.join(ROOTOUT, 'gate2_modeB_leaderboard.csv'),
-                    low_memory=False).sort_values('rank').head(10)
+    lb = os.path.join(ROOTOUT, 'gate2_mode%s%s_leaderboard.csv'
+                      % (mode, '_' + sl if sl else ''))
+    if not os.path.exists(lb):
+        lb = os.path.join(ROOTOUT, 'gate2_mode%s_leaderboard.csv' % mode)
+    L = pd.read_csv(lb, low_memory=False)
+    if sl:
+        L = L[L.slice == sl]
+    L = L.sort_values('rank').head(ntop)
     idx = []
     for cfg in L.to_dict('records'):
         rk = int(cfg['rank'])
         b = bundle(cfg, rk, wins)
-        f = os.path.join(ROOTOUT, 'trades_r%02d_%s.json' % (rk, b['pair']))
+        f = os.path.join(ROOTOUT, 'trades%s_r%02d_%s.json' % (tag, rk, b['pair']))
         json.dump(b, open(f, 'w'))
         print('  rank %2d %-7s %-6s best-pair %3d trades | all-pairs %d blind '
               '(%d crisis) | %.1f R | avg %.1f R/yr | CAGR %.1f%% | top year %.0f%%'
@@ -194,8 +209,9 @@ def main():
                                  sh(b['slots']['c1']), sh(b['slots']['c2']),
                                  sh(b['slots']['vol']), sh(b['slots']['base']),
                                  b['pair'])))
-    json.dump(idx, open(os.path.join(ROOTOUT, 'trades_index.json'), 'w'))
-    print('wrote trades_index.json', flush=True)
+    fout = 'trades_index%s.json' % tag
+    json.dump(idx, open(os.path.join(ROOTOUT, fout), 'w'))
+    print('wrote %s' % fout, flush=True)
     print('DONE', flush=True)
 
 

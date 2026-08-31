@@ -4833,17 +4833,159 @@ function boot(BUNDLE,root){
    return any?any.replace(/[^/]*$/,''):'';
   }
   function tvFmt(n,d){return (n==null||isNaN(n))?'—':Number(n).toFixed(d==null?5:d);}
+  // ============================================================
+  // GATE 2 ORGANISED BY MODE, THEN BY SLICE.
+  // Every mode x slice has a slot. A slot with no results shows what it is
+  // waiting on -- 'running' or 'queued' -- and is NEVER omitted: a slot that
+  // vanishes when empty reads as "there is nothing here", which is the one
+  // thing it does not mean. Status is read from results/modes_status.json via
+  // modes_index.json and never guessed from a missing file.
+  // ============================================================
+  let MIX=null, MD='B', MSL='trend', TVIall=null;
+  const MODE_ORDER=['A','B','C'], SLICE_ORDER=['trend','chop'];
+
+  function mSlot(){return (((MIX||{}).modes||{})[MD]||{}).slices||{};}
+  function mCur(){return mSlot()[MSL]||{status:'queued',top:[]};}
+
+  function tvIndexFile(){
+   // Mode B's bundles keep their original unsuffixed name so nothing that
+   // already points at trades_index.json breaks.
+   return (MD==='B')?'results/trades_index.json'
+                    :'results/trades_index_mode'+MD+'_'+MSL+'.json';
+  }
+
   function initTrades(){
-   if(TVI||TVloading)return; TVloading=true;
-   $('#tvwrap').innerHTML='<div class="note">Loading trade bundles…</div>';
-   fetch(bust(tvBase()+'results/trades_index.json',(BUN.meta&&BUN.meta.built))).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-    .then(j=>{TVI=j;TVloading=false;tvShell();tvLoad(0);})
+   if(MIX||TVloading)return; TVloading=true;
+   $('#tvwrap').innerHTML='<div class="note">Loading gate 2 modes…</div>';
+   fetch(bust(tvBase()+'results/modes_index.json',(BUN.meta&&BUN.meta.built)))
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(j=>{MIX=j;TVloading=false;
+      // land on the first slot that actually has results
+      outer: for(const m of MODE_ORDER)for(const sl of SLICE_ORDER){
+        const c=(((j.modes||{})[m]||{}).slices||{})[sl];
+        if(c&&c.n_ranked>0){MD=m;MSL=sl;break outer;}}
+      MD='B';MSL='trend';            // B/trend stays the landing view
+      tvRender();})
     .catch(e=>{TVloading=false;$('#tvwrap').innerHTML='<div class="note" style="color:var(--kill)">'
-      +'Could not load '+tvBase()+'results/trades_index.json ('+e.message+').</div>';});
+      +'Could not load '+tvBase()+'results/modes_index.json ('+e.message+').</div>';});
+  }
+
+  function tvBars(){
+   const md=(MIX.modes||{});
+   const bar=(items,cur,fn)=>items.map(x=>
+     '<button class="chip" data-v="'+x.v+'" aria-pressed="'+(x.v===cur)+'"'
+     +' style="margin-right:6px'+(x.v===cur?';outline:2px solid #b45309':'')
+     +(x.dim?';opacity:.55':'')+'">'+x.t+'</button>').join('');
+   const modes=MODE_ORDER.map(m=>{
+     const d=md[m]||{}, sl=d.slices||{};
+     const n=SLICE_ORDER.reduce((a,k)=>a+((sl[k]||{}).n_ranked||0),0);
+     return {v:m,t:(d.label||('Mode '+m)),dim:!n};});
+   const slices=SLICE_ORDER.map(sl=>{
+     const c=(md[MD]||{}).slices||{};
+     return {v:sl,t:sl.charAt(0).toUpperCase()+sl.slice(1)
+              +' <span style="opacity:.7">('+((c[sl]||{}).status||'queued')+')</span>',
+             dim:!((c[sl]||{}).n_ranked)};});
+   return '<div class="panel"><h3>Gate 2 — by mode</h3>'
+    +'<div style="margin-bottom:8px">'+bar(modes,MD)+'</div>'
+    +'<div id="tvslice">'+bar(slices,MSL)+'</div>'
+    +'<div class="note" style="margin-top:8px">'
+    +'<b>'+((md[MD]||{}).label||MD)+'</b> — '+((md[MD]||{}).exit||'')+'. '
+    +'Slice: '+mCur().note+'.</div></div>';
+  }
+
+  function tvHeadline(){
+   const c=mCur(), f=(v,d)=>(v==null||isNaN(v))?'—':Number(v).toFixed(d);
+   if(c.status!=='complete'||!c.n_ranked){
+    const msg=(c.status==='running')
+      ? 'This slice is <b>tuning now</b>. Its chunks are being written and nothing is ranked yet.'
+      : 'This slice is <b>queued</b>. It has not started.';
+    return '<div class="panel" style="margin-top:14px"><h3>'
+      +MD+' · '+MSL+' — '+c.status+'</h3><div class="note">'+msg
+      +' The slot is kept so the shape of the search stays visible.</div></div>';
+   }
+   return '<div class="panel" style="margin-top:14px"><h3>Gauntlet — '+MD+' · '+MSL+'</h3>'
+    +'<div class="note">Combinations tuned <b>'+(c.tuned==null?'—':c.tuned.toLocaleString())
+    +'</b> · crossing the gate 2 label <b>'+(c.crossers==null?'—':c.crossers.toLocaleString())
+    +'</b> · crossing rate <b>'+f(c.cross_pct,2)+'%</b>'
+    +' · ranked here <b>'+c.n_ranked+'</b> (crisis-excluded, co-equal rule).</div></div>';
+  }
+
+  function tvBoard(){
+   const c=mCur(); if(!c.n_ranked)return '';
+   const f=(v,d)=>(v==null||isNaN(v))?'—':Number(v).toFixed(d);
+   const sh=x=>String(x||'').replace(/_signals|_volume|_baseline/g,'');
+   const H=['#','C1','C2','Filter','Baseline','ATR','stop','TP','BE%','arm','trail',
+            'n','total R','exp','Sortino','Sharpe','PF','maxDD','Calmar','Ulcer','win%',
+            'crisis R','crisis %','peg %','lowvol %','net-of-struct'];
+   const rows=c.top.map(r=>{const m=r.metrics||{},k=r.risk||{};
+    return '<tr><td>'+r.rank+'</td><td>'+sh(r.c1)+'</td><td>'+sh(r.c2)+'</td><td>'
+     +sh(r.vol)+'</td><td>'+sh(r.base)+'</td><td>'+f(k.atr_len,0)+'</td><td>'
+     +f(k.atr_mult,2)+'</td><td>'+f(k.tp_mult,2)+'</td><td>'+f(k.be_pct,3)+'</td><td>'
+     +f(k.trail_arm,2)+'</td><td>'+f(k.trail_mult,2)+'</td><td>'+f(m.ex_n,0)+'</td><td><b>'
+     +f(m.ex_total_R,2)+'</b></td><td>'+f(m.ex_expectancy_R,3)+'</td><td>'
+     +f(m.ex_sortino,2)+'</td><td>'+f(m.ex_sharpe,2)+'</td><td>'+f(m.ex_profit_factor,2)
+     +'</td><td>'+f(m.ex_max_dd_R,2)+'</td><td>'+f(m.ex_calmar,2)+'</td><td>'
+     +f(m.ex_ulcer_R,3)+'</td><td>'+f(100*(m.ex_win_rate||0),1)+'</td><td>'
+     +f(m.cr_total_R,2)+'</td><td>'+f(100*(m.crisis_share_of_total_R||0),1)+'</td><td>'
+     +f(r.peg_pct,1)+'</td><td>'+f(r.lowvol_pct,1)+'</td><td>'
+     +f(m.net_of_structure_R,3)+'</td></tr>';}).join('');
+   return '<div class="panel" style="margin-top:14px"><h3>Leaderboard — top '+c.n_ranked
+    +'</h3><div class="note">Ranked crisis-excluded on the co-equal rule: rank on total '
+    +'blind R, rank on Sortino, average the ranks, Calmar breaks ties. Crisis R is carried '
+    +'beside the ranking and never enters it. A dash is a value that has not been measured, '
+    +'never an omitted column.</div>'
+    +'<div class="tw" style="overflow-x:auto"><table><thead><tr>'
+    +H.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows
+    +'</tbody></table></div></div>';
+  }
+
+  function tvCards(){
+   const c=mCur(); if(!c.n_ranked)return '';
+   const f=(v,d)=>(v==null||isNaN(v))?'—':Number(v).toFixed(d);
+   const sh=x=>String(x||'').replace(/_signals|_volume|_baseline/g,'');
+   const cards=c.top.slice(0,10).map(r=>{const m=r.metrics||{},k=r.risk||{};
+    return '<div style="border:1px solid rgba(128,128,128,.35);border-radius:8px;'
+     +'padding:10px;margin:6px 0"><b>#'+r.rank+'</b> · '+sh(r.c1)+' × '+sh(r.c2)+' × '
+     +sh(r.vol)+' × '+sh(r.base)+'<div class="note" style="margin-top:4px">'
+     +'ATR '+f(k.atr_len,0)+' · stop '+f(k.atr_mult,2)+'× · TP '+f(k.tp_mult,2)+'× · BE '
+     +f(k.be_pct,3)+'% · arm '+f(k.trail_arm,2)+'× · trail '+f(k.trail_mult,2)+'×</div>'
+     +'<div class="note">'+f(m.ex_n,0)+' blind trades · <b>'+f(m.ex_total_R,2)+' R</b> · exp '
+     +f(m.ex_expectancy_R,3)+' · Sortino '+f(m.ex_sortino,2)+' · Sharpe '+f(m.ex_sharpe,2)
+     +' · PF '+f(m.ex_profit_factor,2)+' · maxDD '+f(m.ex_max_dd_R,2)+' · Calmar '
+     +f(m.ex_calmar,2)+'</div><div class="note">crisis '+f(m.cr_total_R,2)+' R ('
+     +f(100*(m.crisis_share_of_total_R||0),1)+'% of all-in) · peg '+f(r.peg_pct,1)
+     +'% · lowvol '+f(r.lowvol_pct,1)+'% · net-of-structure '+f(m.net_of_structure_R,3)
+     +'</div></div>';}).join('');
+   return '<div class="panel" style="margin-top:14px"><h3>Survivor cards — top 10</h3>'
+    +cards+'</div>';
+  }
+
+  function tvRender(){
+   $('#tvwrap').innerHTML=tvBars()+tvHeadline()+tvBoard()+tvCards()
+    +'<div id="tvcharts"></div>';
+   $('#tvwrap').querySelectorAll('.panel:first-child .chip').forEach(b=>{
+    b.onclick=()=>{const v=b.dataset.v;
+      if(MODE_ORDER.indexOf(v)>=0){MD=v;
+        const sl=mSlot(); MSL=SLICE_ORDER.find(k=>(sl[k]||{}).n_ranked)||'trend';}
+      else MSL=v;
+      TVI=null;TVB={};TVsel=0;TVtr=0;TVIall=null;tvRender();};});
+   const c=mCur();
+   if(c.status!=='complete'||!c.n_ranked)return;
+   // charts come from the mode/slice's own trade bundles
+   fetch(bust(tvBase()+tvIndexFile(),(BUN.meta&&BUN.meta.built)))
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(j=>{TVIall=j;TVI=j.filter(x=>!x.slice||x.slice===MSL);
+      if(!TVI.length){$('#tvcharts').innerHTML='<div class="panel" style="margin-top:14px">'
+        +'<div class="note">No trade bundles for this slice yet.</div></div>';return;}
+      tvShell();tvLoad(0);})
+    .catch(e=>{$('#tvcharts').innerHTML='<div class="panel" style="margin-top:14px">'
+      +'<div class="note">Trade bundles not built for '+MD+' · '+MSL+' ('+e.message+').'
+      +' The leaderboard above is complete; only the charts are missing.</div></div>';});
   }
   function tvShell(){
-   $('#tvwrap').innerHTML=
-    '<div class="panel"><h3>Trades — gate 2, mode B top 10 (crisis-excluded)</h3>'
+   $('#tvcharts').innerHTML=
+    '<div class="panel"><h3>Trades — '+MD+' · '+MSL+' top '+TVI.length
+    +' (crisis-excluded)</h3>'
     +'<div class="note">Every trade this configuration took on its best pair, over the'
     +' <b>blind</b> windows W2+W3. Ranking is the co-equal rule on the W3 diagnostic and is'
     +' <b>provisional</b> pending round 2. The trail path is reconstructed from the engine\'s'
@@ -4861,10 +5003,10 @@ function boot(BUNDLE,root){
     +'<canvas id="tveq" style="width:100%;height:260px;display:block;margin-top:8px"></canvas>'
     +'<div class="note" style="margin-top:4px">Orange dots are crisis-window trades — '
     +'money the ranking quarantines.</div></div>'
-    +'<div class="panel" style="margin-top:14px"><h3>Portfolio PREVIEW — top 10 and top 20 combined</h3>'
-    +'<div id="tvpf" class="note"></div>'
-    +'<canvas id="tvpfc" style="width:100%;height:240px;display:block;margin-top:8px"></canvas>'
-    +'</div>'
+    +((MD==='B')?('<div class="panel" style="margin-top:14px"><h3>Portfolio PREVIEW — '
+      +'top 10, 13 and 20 combined</h3><div id="tvpf" class="note"></div>'
+      +'<canvas id="tvpfc" style="width:100%;height:240px;display:block;margin-top:8px">'
+      +'</canvas></div>'):'')
     +'<div class="panel" style="margin-top:14px"><h3>R by calendar year</h3>'
     +'<canvas id="tvyr" style="width:100%;height:200px;display:block"></canvas>'
     +'<div id="tvyrtab" class="note" style="margin-top:6px"></div></div>';

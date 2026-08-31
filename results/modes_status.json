@@ -1,0 +1,3 @@
+{"A": {"trend": "complete", "chop": "running"},
+ "B": {"trend": "complete", "chop": "complete"},
+ "C": {"trend": "queued",   "chop": "queued"}}
