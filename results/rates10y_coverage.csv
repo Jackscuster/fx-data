@@ -1,6 +1,6 @@
 currency,source,obs,first,last,available,pairs_constructible,pair_list
 USD,FRED DGS10,16149,1962-01-02,2026-08-27,True,1,EURUSD
-EUR,Bundesbank R10XX,7376,1997-08-07,2026-08-28,True,1,EURUSD
+EUR,Bundesbank R10XX,7377,1997-08-07,2026-08-31,True,1,EURUSD
 GBP,BoE GLC 10y,0,,,False,1,EURUSD
 CHF,SNB 10J0,0,,,False,1,EURUSD
 JPY,MoF JGB 10y,0,,,False,1,EURUSD
