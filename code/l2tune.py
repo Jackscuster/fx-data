@@ -711,7 +711,8 @@ def progress_row(mode, r, done, total, t0, spent):
 
 
 def run_mode(mode, jobs=None, slices=('trend', 'chop'), srt=False,
-             cap=None, staged=False, deepen=False, disk=False, seed_from=None):
+             cap=None, staged=False, deepen=False, disk=False, seed_from=None,
+             reverse=False):
     import multiprocessing as mp
     jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
     t0 = time.time()
@@ -719,6 +720,15 @@ def run_mode(mode, jobs=None, slices=('trend', 'chop'), srt=False,
         total, todo = plan_chunks(mode, sname, srt=srt, cap=cap,
                                   staged=staged, deepen=deepen, disk=disk,
                                   seed_from=seed_from)
+        # --reverse lets a SECOND pool add capacity to a run already in flight
+        # without restarting it. mp.Pool is fixed at construction, and a restart
+        # would discard every chunk currently in flight (written chunks are kept
+        # -- plan_chunks skips any that exist). A second pool consuming the same
+        # queue from the far end converges with the first instead of racing it
+        # for the same chunk, so the only duplicated work is whatever they
+        # overlap on at the meeting point.
+        if reverse:
+            todo = list(reversed(todo))
         done = total - sum(t[3] - t[2] for t in todo)
         spent = 0.0
         print('GATE 2 mode %s %s: %s combinations, %d chunks queued, %d workers'
@@ -765,7 +775,8 @@ def main():
     D = run_mode(mode, jobs=opt('--jobs', int), slices=slices,
                  srt='--sorted' in a, cap=opt('--cap', int),
                  staged='--staged' in a, deepen='--deepen' in a,
-                 disk='--disk' in a, seed_from=opt('--seed-from', str))
+                 disk='--disk' in a, seed_from=opt('--seed-from', str),
+                 reverse='--reverse' in a)
     print('\nMODE %s TUNED: %d rows, %d crossing the gate 2 label'
           % (mode, len(D), int(D.get('crosses_label',
                                      pd.Series(dtype=bool)).sum())), flush=True)
