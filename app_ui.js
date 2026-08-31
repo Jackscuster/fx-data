@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='f77d0a339cb5';
+const UI_BUILD='0a83bc4a4088';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -4841,7 +4841,7 @@ function boot(BUNDLE,root){
   // thing it does not mean. Status is read from results/modes_status.json via
   // modes_index.json and never guessed from a missing file.
   // ============================================================
-  let MIX=null, MD='B', MSL='trend', TVIall=null;
+  let MIX=null, MD='B', MSL='trend', TVIall=null, TVIXC={};
   const MODE_ORDER=['A','B','C'], SLICE_ORDER=['trend','chop'];
 
   function mSlot(){return (((MIX||{}).modes||{})[MD]||{}).slices||{};}
@@ -4910,59 +4910,121 @@ function boot(BUNDLE,root){
     +' · ranked here <b>'+c.n_ranked+'</b> (crisis-excluded, co-equal rule).</div></div>';
   }
 
+  // ---- COLOUR. Two rules, because one rule cannot serve both kinds of number.
+  // SIGNED performance numbers (R, expectancy, Sortino, Sharpe, Calmar,
+  // crisis R, net-of-structure) are coloured by SIGN: green above zero, red
+  // below, yellow at flat. PF is signed about 1.0, not 0.
+  // COST numbers (max drawdown, Ulcer) are always positive and always bad, so a
+  // sign rule would paint every one of them green and say nothing. Those are
+  // coloured RELATIVE to the other rows on screen -- best third green, middle
+  // yellow, worst third red -- which is the only honest way to read a drawdown:
+  // against its peers.
+  const CG='#15803d', CR='#b91c1c', CY='#a16207';
+  function cSign(v,mid){ if(v==null||isNaN(v))return '';
+   const m=(mid==null?0:mid), d=v-m;
+   return 'color:'+(Math.abs(d)<1e-9?CY:(d>0?CG:CR))+';font-weight:600';}
+  function cCost(v,all){ if(v==null||isNaN(v))return '';
+   const xs=all.filter(x=>x!=null&&!isNaN(x)).slice().sort((a,b)=>a-b);
+   if(xs.length<3)return '';
+   const lo=xs[Math.floor(xs.length/3)], hi=xs[Math.floor(2*xs.length/3)];
+   return 'color:'+(v<=lo?CG:(v>=hi?CR:CY))+';font-weight:600';}
+  function tdS(v,d,mid){return '<td style="'+cSign(v,mid)+'">'+tvNum(v,d)+'</td>';}
+  function tdC(v,d,all){return '<td style="'+cCost(v,all)+'">'+tvNum(v,d)+'</td>';}
+  function tvNum(v,d){return (v==null||isNaN(v))?'\u2014':Number(v).toFixed(d);}
+  function tvSh(x){return String(x||'').replace(/_signals|_volume|_baseline/g,'');}
+  function tvRecipe(r){return tvSh(r.c1)+' \u00d7 '+tvSh(r.c2)+' \u00d7 '+tvSh(r.vol)
+    +' \u00d7 '+tvSh(r.base);}
+
+  let TVVIEW='condensed';          // the default, per Jack
+
+  function tvToggle(){
+   return '<div style="margin:8px 0">'
+    +['condensed','advanced'].map(v=>'<button class="chip tvview" data-v="'+v+'"'
+      +' aria-pressed="'+(v===TVVIEW)+'" style="margin-right:6px'
+      +(v===TVVIEW?';outline:2px solid #b45309':'')+'">'
+      +v.charAt(0).toUpperCase()+v.slice(1)+'</button>').join('')
+    +'</div>';
+  }
+
   function tvBoard(){
    const c=mCur(); if(!c.n_ranked)return '';
-   const f=(v,d)=>(v==null||isNaN(v))?'—':Number(v).toFixed(d);
-   const sh=x=>String(x||'').replace(/_signals|_volume|_baseline/g,'');
+   const T=c.top, M=T.map(r=>r.metrics||{});
+   const dd=M.map(m=>m.ex_max_dd_R), ul=M.map(m=>m.ex_ulcer_R);
+   const note='<div class="note">Ranked crisis-excluded on the co-equal rule: rank on '
+    +'total blind R, rank on Sortino, average the ranks, Calmar breaks ties. Crisis R is '
+    +'carried beside the ranking and never enters it. A dash is a value that has not been '
+    +'measured, never an omitted column. <b>Green</b> is above zero (PF above 1), '
+    +'<b>red</b> below, <b>yellow</b> flat; drawdown and Ulcer are always positive and '
+    +'always a cost, so those are shaded against the other rows on screen.</div>';
+
+   if(TVVIEW==='condensed'){
+    const rows=T.map((r,i)=>{const m=M[i];
+     return '<tr><td>'+r.rank+'</td><td>'+tvRecipe(r)+'</td>'
+      +tdS(m.ex_total_R,2)+tdS(m.ex_expectancy_R,3)
+      +tdC(m.ex_max_dd_R,2,dd)+tdS(m.ex_sortino,2)+'</tr>';}).join('');
+    return '<div class="panel" style="margin-top:14px"><h3>Leaderboard \u2014 top '
+     +c.n_ranked+'</h3>'+note+tvToggle()
+     +'<div class="tw" style="overflow-x:auto"><table><thead><tr>'
+     +['#','Recipe (C1 \u00d7 C2 \u00d7 filter \u00d7 baseline)','Total R','Expectancy',
+       'Max DD','Sortino'].map(h=>'<th>'+h+'</th>').join('')
+     +'</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+   }
+
    const H=['#','C1','C2','Filter','Baseline','ATR','stop','TP','BE%','arm','trail',
             'n','total R','exp','Sortino','Sharpe','PF','maxDD','Calmar','Ulcer','win%',
             'crisis R','crisis %','peg %','lowvol %','net-of-struct'];
-   const rows=c.top.map(r=>{const m=r.metrics||{},k=r.risk||{};
-    return '<tr><td>'+r.rank+'</td><td>'+sh(r.c1)+'</td><td>'+sh(r.c2)+'</td><td>'
-     +sh(r.vol)+'</td><td>'+sh(r.base)+'</td><td>'+f(k.atr_len,0)+'</td><td>'
-     +f(k.atr_mult,2)+'</td><td>'+f(k.tp_mult,2)+'</td><td>'+f(k.be_pct,3)+'</td><td>'
-     +f(k.trail_arm,2)+'</td><td>'+f(k.trail_mult,2)+'</td><td>'+f(m.ex_n,0)+'</td><td><b>'
-     +f(m.ex_total_R,2)+'</b></td><td>'+f(m.ex_expectancy_R,3)+'</td><td>'
-     +f(m.ex_sortino,2)+'</td><td>'+f(m.ex_sharpe,2)+'</td><td>'+f(m.ex_profit_factor,2)
-     +'</td><td>'+f(m.ex_max_dd_R,2)+'</td><td>'+f(m.ex_calmar,2)+'</td><td>'
-     +f(m.ex_ulcer_R,3)+'</td><td>'+f(100*(m.ex_win_rate||0),1)+'</td><td>'
-     +f(m.cr_total_R,2)+'</td><td>'+f(100*(m.crisis_share_of_total_R||0),1)+'</td><td>'
-     +f(r.peg_pct,1)+'</td><td>'+f(r.lowvol_pct,1)+'</td><td>'
-     +f(m.net_of_structure_R,3)+'</td></tr>';}).join('');
-   return '<div class="panel" style="margin-top:14px"><h3>Leaderboard — top '+c.n_ranked
-    +'</h3><div class="note">Ranked crisis-excluded on the co-equal rule: rank on total '
-    +'blind R, rank on Sortino, average the ranks, Calmar breaks ties. Crisis R is carried '
-    +'beside the ranking and never enters it. A dash is a value that has not been measured, '
-    +'never an omitted column.</div>'
+   const rows=T.map((r,i)=>{const m=M[i],k=r.risk||{};
+    return '<tr><td>'+r.rank+'</td><td>'+tvSh(r.c1)+'</td><td>'+tvSh(r.c2)+'</td><td>'
+     +tvSh(r.vol)+'</td><td>'+tvSh(r.base)+'</td><td>'+tvNum(k.atr_len,0)+'</td><td>'
+     +tvNum(k.atr_mult,2)+'</td><td>'+tvNum(k.tp_mult,2)+'</td><td>'+tvNum(k.be_pct,3)
+     +'</td><td>'+tvNum(k.trail_arm,2)+'</td><td>'+tvNum(k.trail_mult,2)+'</td><td>'
+     +tvNum(m.ex_n,0)+'</td>'
+     +tdS(m.ex_total_R,2)+tdS(m.ex_expectancy_R,3)+tdS(m.ex_sortino,2)
+     +tdS(m.ex_sharpe,2)+tdS(m.ex_profit_factor,2,1)
+     +tdC(m.ex_max_dd_R,2,dd)+tdS(m.ex_calmar,2)+tdC(m.ex_ulcer_R,3,ul)
+     +'<td>'+tvNum(100*(m.ex_win_rate||0),1)+'</td>'
+     +tdS(m.cr_total_R,2)
+     +'<td>'+tvNum(100*(m.crisis_share_of_total_R||0),1)+'</td>'
+     +'<td>'+tvNum(r.peg_pct,1)+'</td><td>'+tvNum(r.lowvol_pct,1)+'</td>'
+     +tdS(m.net_of_structure_R,3)+'</tr>';}).join('');
+   return '<div class="panel" style="margin-top:14px"><h3>Leaderboard \u2014 top '
+    +c.n_ranked+'</h3>'+note+tvToggle()
     +'<div class="tw" style="overflow-x:auto"><table><thead><tr>'
     +H.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows
     +'</tbody></table></div></div>';
   }
 
   function tvCards(){
-   const c=mCur(); if(!c.n_ranked)return '';
-   const f=(v,d)=>(v==null||isNaN(v))?'—':Number(v).toFixed(d);
-   const sh=x=>String(x||'').replace(/_signals|_volume|_baseline/g,'');
+   // Condensed is ONE LINE PER STRATEGY. The cards are the verbose form of the
+   // same rows, so they belong to Advanced only.
+   const c=mCur(); if(!c.n_ranked||TVVIEW!=='advanced')return '';
+   const dd=c.top.map(r=>(r.metrics||{}).ex_max_dd_R);
+   const sp=(v,d,mid)=>'<span style="'+cSign(v,mid)+'">'+tvNum(v,d)+'</span>';
    const cards=c.top.slice(0,10).map(r=>{const m=r.metrics||{},k=r.risk||{};
     return '<div style="border:1px solid rgba(128,128,128,.35);border-radius:8px;'
-     +'padding:10px;margin:6px 0"><b>#'+r.rank+'</b> · '+sh(r.c1)+' × '+sh(r.c2)+' × '
-     +sh(r.vol)+' × '+sh(r.base)+'<div class="note" style="margin-top:4px">'
-     +'ATR '+f(k.atr_len,0)+' · stop '+f(k.atr_mult,2)+'× · TP '+f(k.tp_mult,2)+'× · BE '
-     +f(k.be_pct,3)+'% · arm '+f(k.trail_arm,2)+'× · trail '+f(k.trail_mult,2)+'×</div>'
-     +'<div class="note">'+f(m.ex_n,0)+' blind trades · <b>'+f(m.ex_total_R,2)+' R</b> · exp '
-     +f(m.ex_expectancy_R,3)+' · Sortino '+f(m.ex_sortino,2)+' · Sharpe '+f(m.ex_sharpe,2)
-     +' · PF '+f(m.ex_profit_factor,2)+' · maxDD '+f(m.ex_max_dd_R,2)+' · Calmar '
-     +f(m.ex_calmar,2)+'</div><div class="note">crisis '+f(m.cr_total_R,2)+' R ('
-     +f(100*(m.crisis_share_of_total_R||0),1)+'% of all-in) · peg '+f(r.peg_pct,1)
-     +'% · lowvol '+f(r.lowvol_pct,1)+'% · net-of-structure '+f(m.net_of_structure_R,3)
-     +'</div></div>';}).join('');
-   return '<div class="panel" style="margin-top:14px"><h3>Survivor cards — top 10</h3>'
+     +'padding:10px;margin:6px 0"><b>#'+r.rank+'</b> \u00b7 '+tvRecipe(r)
+     +'<div class="note" style="margin-top:4px">'
+     +'ATR '+tvNum(k.atr_len,0)+' \u00b7 stop '+tvNum(k.atr_mult,2)+'\u00d7 \u00b7 TP '
+     +tvNum(k.tp_mult,2)+'\u00d7 \u00b7 BE '+tvNum(k.be_pct,3)+'% \u00b7 arm '
+     +tvNum(k.trail_arm,2)+'\u00d7 \u00b7 trail '+tvNum(k.trail_mult,2)+'\u00d7</div>'
+     +'<div class="note">'+tvNum(m.ex_n,0)+' blind trades \u00b7 <b>'
+     +sp(m.ex_total_R,2)+' R</b> \u00b7 exp '+sp(m.ex_expectancy_R,3)+' \u00b7 Sortino '
+     +sp(m.ex_sortino,2)+' \u00b7 Sharpe '+sp(m.ex_sharpe,2)+' \u00b7 PF '
+     +sp(m.ex_profit_factor,2,1)+' \u00b7 maxDD <span style="'+cCost(m.ex_max_dd_R,dd)
+     +'">'+tvNum(m.ex_max_dd_R,2)+'</span> \u00b7 Calmar '+sp(m.ex_calmar,2)+'</div>'
+     +'<div class="note">crisis '+sp(m.cr_total_R,2)+' R ('
+     +tvNum(100*(m.crisis_share_of_total_R||0),1)+'% of all-in) \u00b7 peg '
+     +tvNum(r.peg_pct,1)+'% \u00b7 lowvol '+tvNum(r.lowvol_pct,1)
+     +'% \u00b7 net-of-structure '+sp(m.net_of_structure_R,3)+'</div></div>';}).join('');
+   return '<div class="panel" style="margin-top:14px"><h3>Survivor cards \u2014 top 10</h3>'
     +cards+'</div>';
   }
 
   function tvRender(){
    $('#tvwrap').innerHTML=tvBars()+tvHeadline()+tvBoard()+tvCards()
     +'<div id="tvcharts"></div>';
+   $('#tvwrap').querySelectorAll('.tvview').forEach(b=>{
+    b.onclick=()=>{TVVIEW=b.dataset.v;tvRender();};});
    $('#tvwrap').querySelectorAll('.panel:first-child .chip').forEach(b=>{
     b.onclick=()=>{const v=b.dataset.v;
       if(MODE_ORDER.indexOf(v)>=0){MD=v;
@@ -4971,10 +5033,14 @@ function boot(BUNDLE,root){
       TVI=null;TVB={};TVsel=0;TVtr=0;TVIall=null;tvRender();};});
    const c=mCur();
    if(c.status!=='complete'||!c.n_ranked)return;
-   // charts come from the mode/slice's own trade bundles
-   fetch(bust(tvBase()+tvIndexFile(),(BUN.meta&&BUN.meta.built)))
+   // charts come from the mode/slice's own trade bundles. Cached per slot so
+   // flipping condensed/advanced re-renders without re-fetching the index.
+   const ixf=tvIndexFile();
+   if(TVIXC[ixf]){TVIall=TVIXC[ixf];TVI=TVIall.filter(x=>!x.slice||x.slice===MSL);
+    if(TVI.length){tvShell();tvLoad(TVsel<TVI.length?TVsel:0);}return;}
+   fetch(bust(tvBase()+ixf,(BUN.meta&&BUN.meta.built)))
     .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-    .then(j=>{TVIall=j;TVI=j.filter(x=>!x.slice||x.slice===MSL);
+    .then(j=>{TVIXC[ixf]=j;TVIall=j;TVI=j.filter(x=>!x.slice||x.slice===MSL);
       if(!TVI.length){$('#tvcharts').innerHTML='<div class="panel" style="margin-top:14px">'
         +'<div class="note">No trade bundles for this slice yet.</div></div>';return;}
       tvShell();tvLoad(0);})
