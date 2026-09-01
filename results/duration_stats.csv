@@ -1,5 +1,5 @@
 detector,mean_duration_days,median_duration_days,min_duration_days,n_spells,flips_faster_than_weekly
-trend_sma200,25.970790851474234,4.0,1,7258,False
-vol_regime,39.31283138918346,7.0,1,4715,False
-markov_naive,2.07553968476584,1.0,1,92693,True
-hmm_2state,24.627172195892577,4.0,1,7596,False
+trend_sma200,25.979341688472662,4.0,1,7261,False
+vol_regime,39.30917567281204,7.0,1,4719,False
+markov_naive,2.0752589654317526,1.0,1,92773,True
+hmm_2state,24.645602948920484,4.0,1,7596,False
