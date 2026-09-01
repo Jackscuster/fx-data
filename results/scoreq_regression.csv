@@ -1,10 +1,10 @@
 check,value,verdict
 "control, q=0.50 reproduces shipped",1.0,PASS
-"holdout trend separation, q=0.50",0.13403033271700138,
-"holdout trend separation, q=0.40",0.1318440761789255,DEGRADED
-"holdout chop separation, q=0.50",0.13522672198494462,
-"holdout chop separation, q=0.40",0.1118682599672117,DEGRADED
-holdout paired difference (worst of two),-0.02216207274978968,paired SE 0.0128
+"holdout trend separation, q=0.50",0.13420997581912808,
+"holdout trend separation, q=0.40",0.13202401283833043,DEGRADED
+"holdout chop separation, q=0.50",0.13534071498977934,
+"holdout chop separation, q=0.40",0.1119302701907626,DEGRADED
+holdout paired difference (worst of two),-0.02227970562836548,paired SE 0.0126
 agreement with shipped,0.8012888799822805,
 "holdout median run, q=0.50",19.0,
 "holdout median run, q=0.40",20.0,ok

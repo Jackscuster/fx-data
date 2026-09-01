@@ -1,2 +1,2 @@
 date,pairs,dominant_state,dominant_count,dominant_share,n_changed_5d,n_pending,n_lower_confidence,move_level,move_word,move_pctile_is,acute_crisis_window,crisis_calendar_events,n_trending,n_ranging,n_trend_in_range,n_neither
-2026-08-21,28,ranging,16,0.5714285714285714,6,4,10,70.87999725341797,low,0.2677165354330709,True,54,2,16,5,5
+2026-08-28,28,ranging,19,0.6785714285714286,7,4,7,70.87999725341797,low,0.2677165354330709,False,54,2,19,4,3
