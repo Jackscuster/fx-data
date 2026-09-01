@@ -1438,3 +1438,85 @@ paying for dilution it did not ask for.
 
 Still a PREVIEW. Gate 4 replaces equal weight with real weighting and the
 drop-one test.
+
+## INVERSE CANDIDATE SCREEN — 670 CANDIDATES, AND ONE CRITERION THAT CANNOT WORK
+
+**A screen only. No inversions were run and none are proposed here.** Inverting
+a combination is a full tune-and-blind-test job and counts toward the deflation
+total like any other search.
+
+### THE STANDARD — GATE 1'S OWN, POINTED DOWN
+
+    loser: expectancy < p5 of that mode and slice's own controls
+           AND profit factor <= 1/1.05
+
+**p5 of the controls, not the negative of p95.** The null is not symmetric —
+chop's controls have a POSITIVE mean (+0.021 to +0.025 R) because the
+money-management plan earns on any entries at all — so mirroring the number
+instead of the distribution would set the bar in the wrong place on three of the
+four slices.
+
+### WHAT THE SCREEN COVERED, AND WHAT IT COULD NOT
+
+    population              32,008 tuned combinations
+    NOT SCREENABLE          14,815  all of mode B TREND
+    screenable              17,193  A-trend 12,163 + B-chop 5,030
+    exempt (chop crossers)       0  the rule is vacuous here
+    stage 1 (losing at all)  6,928  window-tested
+    CANDIDATES                 670  530 A-trend, 140 B-chop
+
+Mode B's trend slice never banked `ip1`/`risk1`, which this document already
+records as the reason B is re-run wholesale at round 2. Without the first tune's
+parameter set there is no reconstructable blind W2, so those 14,815 are reported
+as **not screenable — never as passing or failing**.
+
+### TWO DEFECTS FOUND IN THE SCREEN ITSELF, BOTH MINE
+
+**1. THE FIRST RUN SCORED EVERY WINDOW WITH `ip2` AND RETURNED A FALSE ZERO.**
+The machine is tune-W1 → blind-W2 → retune-W1+W2 → blind-W3, so `ip2` has SEEN
+W2. Scoring W2 with it produced an in-sample number wearing a blind label: on
+combinations selected for being bad, sampled W2 expectancy came back at **+1.20
+R median**. Corrected to W1 and W2 under `ip1`/`risk1`, W3 under `ip2`/`risk` —
+each window scored only with parameters that never saw it.
+
+**2. "RELIABLY BAD ON BOTH TUNING AND BLIND WINDOWS" IS UNSATISFIABLE AS
+STATED.** W1 is the window `ip1` was FITTED ON. Across all 6,928 tested,
+W1 median expectancy is **+0.3987 and exactly ZERO fall below the floor**.
+Tuning finds a positive configuration on the window it optimises for every
+combination it is handed, including hopeless ones — that is the overfitting
+signature, measured. A W1 condition therefore cannot discriminate; requiring it
+returns zero by construction, not by evidence.
+
+**The criterion that discriminates is the two genuinely blind windows.** A
+candidate must be below its floor in **W2 AND W3 separately**, each with gate 1's
+own trade minimums and each with PF <= 1/1.05. A stitched average can be dragged
+under by one bad window while the other is fine; that is a bad episode, not a
+bad rule, and inverting it would buy the noise.
+
+    below floor in W2 and W3    999
+    ... also PF <= 0.952, both   670   <- the candidates
+
+### THE TEN MOST RELIABLY BAD
+
+Ranked by WORST-window margin — a candidate is only as reliable as its least-bad
+episode. Floor is -0.0798 R (A trend); B chop's is -0.0550.
+
+| recipe | mode/slice | W2 exp (n) | W3 exp (n) | worst margin | blind n |
+|---|---|---|---|---|---|
+| kuskus_starlight × fisher_transform × damiani_volatmeter × fantail_vma | A/trend | -0.2924 (74) | -0.2718 (64) | **0.1920** | 138 |
+| coppock_curve × lemantrend × variance × kama | A/trend | -0.2546 (86) | -0.2525 (64) | 0.1727 | 150 |
+| qqe_mod × vortex × variance × rma | A/trend | -0.2442 (134) | -0.2618 (50) | 0.1644 | 184 |
+| bears_bulls_impulse × halftrend × chaikin_volatility × t3 | A/trend | -0.2942 (66) | -0.2399 (112) | 0.1601 | 178 |
+| ichimoku × fx_sniper_ergodic_cci × fractal_dimension × alma | A/trend | -0.2352 (64) | -0.2948 (56) | 0.1554 | 120 |
+| schaff_trend_cycle × dpo × efficiency_ratio × kama | A/trend | -0.2293 (94) | -0.3339 (56) | 0.1495 | 150 |
+| bears_bulls_impulse × price_momentum_oscillator × chaikin_volatility × ema | A/trend | -0.2271 (98) | -0.2635 (100) | 0.1473 | 198 |
+| vortex × didi_index × variance × rma | A/trend | -0.2267 (94) | -0.2357 (66) | 0.1469 | 160 |
+| halftrend × fx_sniper_ergodic_cci × fractal_dimension × wma | A/trend | -0.2546 (86) | -0.2246 (64) | 0.1449 | 150 |
+| halftrend × rex_oscillator × chaikin_volatility × rma | A/trend | -0.2302 (112) | -0.2224 (70) | 0.1426 | 182 |
+
+**A caution before anyone schedules the inversion job.** These were selected on
+blind windows, so the selection itself is a search — 6,928 tested, 670 kept —
+and inverting them is a NEW test that must carry its own deflation. Costs also
+do not mirror: an inverted rule pays the same spread, so a -0.23 R expectancy
+does not become +0.23 R. The screen says these are reliably bad; it does not say
+the reverse is reliably good.
