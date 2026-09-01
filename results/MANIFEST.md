@@ -143,3 +143,21 @@ python code/l2sweepn.py --combine --lo 5 --hi 25
 Mode B's N=13 sweet-spot book with mode A-trend's ranks 1 and 2 added: the
 EXACT 15, not a re-ranked pool. Same overlay math as every other preview.
 `mix` in the JSON records 13 B / 2 A. Regenerate: `python code/l2graft.py`.
+
+
+## Inverse candidate screen — `gate2_inverse_*.csv`
+
+| file | what it holds |
+|---|---|
+| `gate2_inverse_windows.csv` | EVERY window-tested combination, pass or fail, with W1/W2/W3 expectancy, trade count and PF |
+| `gate2_inverse_screen.csv` | the 670 candidates only, ranked by worst-window margin below the floor |
+
+The windows file is written pass or fail deliberately: a screen that reports
+only its survivors cannot be audited when it returns zero, which is exactly the
+hole the first run fell into.
+
+W1 and W2 are scored with `ip1`/`risk1`, W3 with `ip2`/`risk` — each window only
+with parameters that never saw it. Mode B trend never banked `ip1`/`risk1` and is
+reported as not-screenable.
+
+Regenerate: `python code/l2inverse.py --jobs 1` (~2.5 h on one core).
