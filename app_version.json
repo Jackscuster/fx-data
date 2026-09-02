@@ -1,5 +1,5 @@
 {
  "ui_build": "729dbe4d8b7b",
- "built": "2026-08-31T17:10:18Z",
+ "built": "2026-09-02T13:33:15Z",
  "note": "app_ui.js compares its embedded UI_BUILD against this. Fetched with a cache-buster so it is never stale."
 }

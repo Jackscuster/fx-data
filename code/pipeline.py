@@ -83,7 +83,6 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('today.py')          # THE PRODUCT VIEW's data: one row per pair, today
     run('mechanism.py')      # one composed why-sentence per pair
     run('knobs.py')          # KNOB SENSITIVITY: every hand-picked constant
-    run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('combined.py')       # confirmation dwell + shape x activity, same battery
     run('magnull.py')        # the magnitude axis against its OWN null
     run('episodes.py')       # episode-basis and block-bootstrap significance
@@ -93,6 +92,11 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('leadtime.py')       # can a fast signal bridge the confirmation delay
     run('masweep.py')        # ...and the same three, both windows swept 1-200
     run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
+    # appfeed READS layer1_states.csv, so it must run AFTER export.py writes it.
+    # It used to sit nine lines earlier and therefore published the PREVIOUS
+    # run's states every time -- which is why the board read 2026-08-21 while
+    # the price data was current to 2026-08-28 and CI was green throughout.
+    run('appfeed.py')        # app_regime.json -- the Regime Detector feed
     run('oldnew.py')         # old nine-box vs new nine-state, same battery
     run('changes.py')        # shape / activity / both, counted separately
     run('failswing.py')      # within-window rejections, X x Y swept, IS/OOS
@@ -146,4 +150,5 @@ else:
 run('bundle.py'); run('appstamp.py')  # keep app_ui.js's build id and app_version.json in step
 for _f in ('app_data.json','app_signals.json','app_explorer.json','app_regime.json'):
     shutil.copy(os.path.join(R,'results',_f),os.path.join(R,_f))
+run('freshness.py')          # FAIL LOUDLY if anything published is stale
 print('\napp_data.json refreshed at repo root')
