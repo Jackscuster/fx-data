@@ -34,6 +34,17 @@ while true; do
   sleep 120
 done
 
+# STOP MODE A'S POOLS BEFORE C STARTS. Their queues were planned once, so
+# whatever they still hold is work another pool has already written -- and the
+# fix for that (a dispatch-time re-check) is in the code but not in these
+# already-running processes. Leaving them alive would put ~15 workers on 10
+# cores the moment C launches, which is the oversubscription that drove load to
+# 63 and COST throughput earlier. Children first, then parent, so nothing is
+# orphaned.
+for P in $(pgrep -f "l2tune.py --mode A" ); do
+  say "stopping leftover mode A pool $P (its queue holds only already-written chunks)"
+  code/l2stoppool.sh "$P" >> "$LOG" 2>&1
+done
 say "recording mode A and projecting mode C"
 /usr/bin/python3 code/l2arecord.py >> "$LOG" 2>&1 || say "WARNING recorder failed; continuing"
 
