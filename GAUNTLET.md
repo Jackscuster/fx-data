@@ -1547,3 +1547,39 @@ A ran `--sorted --cap 6 --seed-from B`, no disk cache. Rates are MEASURED, total
 
 The declared staged cheap/deep pass (`--staged`, +0.02R threshold) is enabled and will cut this, but **by an unmeasured amount** -- neither A nor B ever ran staged, so there is no observed cheap-pass saving to quote. Any figure below the table would be invented. The first few hundred staged C combinations will measure it, and this section gets amended with the real number rather than a guess.
 
+
+## MODE A COMPLETE — AND THE POOL INDEPENDENTLY REDISCOVERS THE GRAFT
+
+A-chop finished 2026-09-02. **678 crossers of 5,659, 11.98%** — A's lowest slice,
+against A-trend's 14.83%, B-chop's 19.9% and B-trend's 11.14%.
+
+**Both sweeps were re-run with chop included, and the first attempt was wrong.**
+`l2sweepn --combine` listed only `gate2_modeA_trend_leaderboard.csv`, so when
+chop landed the "combined" pool still silently excluded it: the sweep re-ran,
+reported the same N=18, and nothing said chop was missing. The A-only sweep was
+pointed at `gate2_modeA_leaderboard.csv`, a file that does not exist — A's
+leaderboards are per slice — and failed behind a `|| true`. Both fixed; slices
+are now enumerated and any that is absent is PRINTED, never skipped quietly.
+
+Corrected, with A-chop in the pool:
+
+| book | N | total R | ann R | maxDD | Sortino | Sharpe | Calmar | worst month |
+|---|---|---|---|---|---|---|---|---|
+| B alone | 13 | **83.32** | 8.21 | 1.91 | 5.76 | 2.84 | 43.59 | -1.31 |
+| **A+B pooled** | **15** | 81.39 | 8.02 | **1.75** | 6.08 | 2.91 | **46.57** | -1.20 |
+| A alone (both slices) | 16 | 68.27 | 6.72 | 1.92 | 4.76 | 2.52 | 35.62 | -0.77 |
+| A-trend alone | 7 | 62.51 | 6.15 | 1.82 | 2.36 | 1.94 | 34.26 | -0.88 |
+
+**THE POOLED SWEET SPOT IS THE GRAFT, ARRIVED AT INDEPENDENTLY.** With A-chop in
+the pool and N swept 5..25, the co-equal rule selects **13 B and 2 A-trend** —
+the same fifteen strategies, to the same 81.39 R and 6.08 Sortino, as the hand-
+built graft. The pooled N=18 answer was an artefact of A-chop's absence.
+
+**NO A-CHOP STRATEGY ENTERS THE BEST BOOK.** Zero of 678. A's two entries are
+its trend #1 and #2, at combined ranks 6 and 8. Chop nonetheless improves A's
+OWN book substantially -- 62.51 R at N=7 becomes 68.27 R at N=16, and Sortino
+doubles from 2.36 to 4.76 -- so chop is not weak, it is simply beaten by B
+everywhere the two compete.
+
+A's own book still trails B's on every axis except worst month (-0.77 vs -1.31),
+where A is the calmer book by a wide margin.

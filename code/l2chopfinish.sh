@@ -33,8 +33,7 @@ json.dump(s, open(p, 'w'), indent=1)
 PY
 nice -n 19 /usr/bin/python3 code/l2modes.py
 # re-sweep BOTH pools with chop in them
-nice -n 19 /usr/bin/python3 code/l2sweepn.py --lb results/gate2_modeA_leaderboard.csv \
-     --tag modeA_all --lo 5 --hi 25 || true
+nice -n 19 /usr/bin/python3 code/l2sweepn.py --pool-a --lo 5 --hi 25 || true
 nice -n 19 /usr/bin/python3 code/l2sweepn.py --combine --lo 5 --hi 25
 /usr/bin/python3 code/appstamp.py
 git add -A
