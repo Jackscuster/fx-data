@@ -36,3 +36,4 @@ wrote results/modeC_projection.json and appended to GAUNTLET.md
 2026-09-02 12:35:09 launching mode C additive --reverse pool (3 workers)
 2026-09-02 12:35:29 reverse pool pid 68418
 2026-09-02 12:35:29 swap guard armed: main=68319 protected, additive=68418 sacrificed first
+2026-09-02 12:35:31 MODE C LAUNCHED

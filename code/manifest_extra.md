@@ -122,3 +122,12 @@ with parameters that never saw it. Mode B trend never banked `ip1`/`risk1` and i
 reported as not-screenable.
 
 Regenerate: `python code/l2inverse.py --jobs 1` (~2.5 h on one core).
+
+
+## Mode A complete — pooled books
+
+`gate2_modeA_all_leaderboard.csv` pools A-trend and A-chop and re-ranks;
+`portfolio_sweep_modeA_all.csv` sweeps it. `gate2_combined_AB_leaderboard.csv`
+now pools A-trend, A-chop AND B — the earlier version silently excluded A-chop.
+
+Regenerate: `python code/l2sweepn.py --pool-a` and `--combine`.

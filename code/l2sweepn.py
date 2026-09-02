@@ -126,15 +126,37 @@ def main():
     def opt(k, d=None):
         return a[a.index(k) + 1] if k in a else d
     lo, hi = int(opt('--lo', 5)), int(opt('--hi', 25))
+    # EVERY A SLICE, NAMED EXPLICITLY. The first version of this listed only
+    # gate2_modeA_trend_leaderboard.csv, so when A's chop slice finished the
+    # 'combined' pool still silently excluded it -- the sweep re-ran, reported
+    # the same N=18, and nothing said chop was missing. Slices are enumerated
+    # here and any that is absent is REPORTED, never skipped quietly.
+    A_SPECS = [('gate2_modeA_trend_leaderboard.csv', 'trend', 'A', 'A-trend'),
+               ('gate2_modeA_chop_leaderboard.csv', 'chop', 'A', 'A-chop')]
+    B_SPECS = [('gate2_modeB_leaderboard.csv', None, 'B', 'B')]
+
+    def _resolve(specs):
+        out = []
+        for f, sl, m, lab in specs:
+            p = os.path.join(ROOTOUT, f)
+            if os.path.exists(p):
+                out.append((p, sl, m, lab))
+            else:
+                print('  NOT INCLUDED (missing): %s' % f, flush=True)
+        return out
+
     if '--combine' in a:
-        specs = [(os.path.join(ROOTOUT, 'gate2_modeA_trend_leaderboard.csv'),
-                  'trend', 'A', 'A-trend'),
-                 (os.path.join(ROOTOUT, 'gate2_modeB_leaderboard.csv'),
-                  None, 'B', 'B')]
-        specs = [s for s in specs if os.path.exists(s[0])]
+        specs = _resolve(A_SPECS + B_SPECS)
+        print('pooling: %s' % ', '.join(x[3] for x in specs), flush=True)
         out = os.path.join(ROOTOUT, 'gate2_combined_AB_leaderboard.csv')
         pooled(specs, out)
         sweep(out, None, 'combined_AB', lo, hi)
+    elif '--pool-a' in a:
+        specs = _resolve(A_SPECS)
+        print('pooling: %s' % ', '.join(x[3] for x in specs), flush=True)
+        out = os.path.join(ROOTOUT, 'gate2_modeA_all_leaderboard.csv')
+        pooled(specs, out)
+        sweep(out, None, 'modeA_all', lo, hi)
     else:
         sweep(opt('--lb'), opt('--slice'), opt('--tag'), lo, hi)
 

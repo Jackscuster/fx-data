@@ -9,10 +9,11 @@ name, and this file says what that name means.
 
 | file | source column | shape | what it is |
 |---|---|---|---|
-| `states_g1_ninebox.csv` | `state_28` | 6870 x 28 | Nine-box, generation 1. Straightness x scale terciles at a 28-bar window. The 7 and 128 legs are in layer1_legacy.csv as state_7 and state_128. |
-| `states_g3_shapescore9.csv` | `shape` | 6870 x 28 | Shape score, generation 3. One continuous trend-versus-range score cut at in-sample terciles into three shapes. Separates better than g4 (0.261 vs 0.104 on trending) but leaves 41% of days in an ambiguous middle. |
-| `states_g4_twoscore4.csv` | `shape2` | 6870 x 28 | Two-score, generation 4, CURRENT. Trend and chop scored independently and classified on the pair: trending / ranging / trend-in-range / neither. The ambiguous share falls to 20%. |
-| `states_g4_twoscore12.csv` | `combined2` | 6870 x 28 | Two-score crossed with activity, generation 4, CURRENT. Twelve cells, activity cut jointly with a 0.75 bump. |
+| `states_g2_structural12.csv` | `restored from git f597f23` | 6916 x 28 | Structural generation 2: four shapes INCLUDING `broken` crossed with activity = 12 cells. NOT reproducible from current code; restored verbatim from history. |
+| `states_g1_ninebox.csv` | `state_28` | 6875 x 28 | Nine-box, generation 1. Straightness x scale terciles at a 28-bar window. The 7 and 128 legs are in layer1_legacy.csv as state_7 and state_128. |
+| `states_g3_shapescore9.csv` | `shape` | 6875 x 28 | Shape score, generation 3. One continuous trend-versus-range score cut at in-sample terciles into three shapes. Separates better than g4 (0.261 vs 0.104 on trending) but leaves 41% of days in an ambiguous middle. |
+| `states_g4_twoscore4.csv` | `shape2` | 6875 x 28 | Two-score, generation 4, CURRENT. Trend and chop scored independently and classified on the pair: trending / ranging / trend-in-range / neither. The ambiguous share falls to 20%. |
+| `states_g4_twoscore12.csv` | `combined2` | 6875 x 28 | Two-score crossed with activity, generation 4, CURRENT. Twelve cells, activity cut jointly with a 0.75 bump. |
 
 ## Older names that do not say what they hold
 
@@ -160,3 +161,12 @@ with parameters that never saw it. Mode B trend never banked `ip1`/`risk1` and i
 reported as not-screenable.
 
 Regenerate: `python code/l2inverse.py --jobs 1` (~2.5 h on one core).
+
+
+## Mode A complete — pooled books
+
+`gate2_modeA_all_leaderboard.csv` pools A-trend and A-chop and re-ranks;
+`portfolio_sweep_modeA_all.csv` sweeps it. `gate2_combined_AB_leaderboard.csv`
+now pools A-trend, A-chop AND B — the earlier version silently excluded A-chop.
+
+Regenerate: `python code/l2sweepn.py --pool-a` and `--combine`.
