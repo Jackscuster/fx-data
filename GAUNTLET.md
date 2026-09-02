@@ -1520,3 +1520,30 @@ and inverting them is a NEW test that must carry its own deflation. Costs also
 do not mirror: an inverted rule pays the same spread, so a -0.23 R expectancy
 does not become +0.23 R. The screen says these are reliably bad; it does not say
 the reverse is reliably good.
+
+## MODE A FINAL, AND MODE C PROJECTED FROM IT
+
+A ran `--sorted --cap 6 --seed-from B`, no disk cache. Rates are MEASURED, total seconds over total combinations.
+
+| slice | combinations | s/combination | engine-hours | crossing rate |
+|---|---|---|---|---|
+| trend | 12,263 | **161.4** | 550 | **14.79%** |
+| chop | 7,318 | **148.6** | 302 | **11.93%** |
+
+**A-chop leaderboard headline** — 678 crossers ranked, crisis-excluded co-equal rule. Rank 1: `dspo x dpo x variance x mcginley_dynamic_index`, 202 blind trades, **93.66 R**, expectancy 0.464, Sortino 22.67, Sharpe 4.23, maxDD 13.11, Calmar 7.14, net-of-structure 0.439.
+
+
+### MODE C PROJECTED — from A's measured rates, cumulative average
+
+**The estimator is total seconds over total combinations.** A recent-chunks average is biased FAST -- fast chunks finish first, so the completed set always over-represents them. That bias produced a run of optimistic ETAs earlier in this project and is not used here.
+
+| slice | combinations | s/combination (from A) | engine-hours | days at 9 workers |
+|---|---|---|---|---|
+| trend | 554,422 | 161.4 | 24,849 | **115.0** |
+| chop | 162,481 | 148.6 | 6,708 | **31.1** |
+| **total** | **716,903** | | **31,558** | **146.1** |
+
+**That is 146.1 days — roughly 4.8 months — at full power on this machine.** Mode C's population is 40x mode A's, and the per-combination cost is A's own, so the number is not a modelling artefact: it is what this hardware does.
+
+The declared staged cheap/deep pass (`--staged`, +0.02R threshold) is enabled and will cut this, but **by an unmeasured amount** -- neither A nor B ever ran staged, so there is no observed cheap-pass saving to quote. Any figure below the table would be invented. The first few hundred staged C combinations will measure it, and this section gets amended with the real number rather than a guess.
+
