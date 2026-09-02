@@ -626,6 +626,20 @@ SEEDS = {}
 
 
 def load_seeds(from_mode='B'):
+    """Accepts a comma-separated list -- 'A,B' seeds mode C from both. Later
+    modes in the list win a key collision, because the LATER mode is the one
+    whose exit rule C is closer to; a collision only happens where both adopted
+    a value for the same frozen parameter, and neither is more authoritative
+    than the other, so the tie is broken by declaration rather than by chance."""
+    if ',' in str(from_mode):
+        out = {}
+        for m in str(from_mode).split(','):
+            out.update(load_seeds(m.strip()))
+        return out
+    return _load_seeds_one(from_mode)
+
+
+def _load_seeds_one(from_mode='B'):
     """B's ADOPTED indicator parameters, keyed on the 4-tuple that A and C share
     with it (the exit slot is excluded: B never used one, and a B combination
     corresponds to every C combination with the same first four slots).
