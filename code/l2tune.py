@@ -540,6 +540,20 @@ def run_chunk(args):
     deepen = args[8] if len(args) > 8 else False
     disk = args[9] if len(args) > 9 else False
     seed_from = args[10] if len(args) > 10 else None
+    # RE-CHECK AT DISPATCH, not only at planning. plan_chunks skips chunks that
+    # exist when the POOL STARTS, which is correct for one pool and wrong for
+    # two: an additive --reverse pool plans its queue once and then grinds
+    # through chunks the main pool has written in the meantime. Observed on mode
+    # A chop -- the reverse pool spent hours recomputing 39-46 after all of them
+    # were already on disk, while one real chunk was outstanding. Skipping here
+    # costs one stat() per chunk and makes the two-pool pattern converge instead
+    # of overlapping.
+    _d = os.path.join(CK, 'mode%s_%s%s' % (mode, sname, '_deep' if deepen else ''))
+    _f = os.path.join(_d, 'chunk_%05d.csv' % cid)
+    if os.path.exists(_f):
+        return dict(mode=mode, slice=sname, chunk=cid, n=0, seconds=0.0,
+                    evals=0, cache_hits=0, cache_misses=0, crossed=0,
+                    skipped=True)
     code = dict((s, c) for s, _, c in S.SLICES)[sname]
     plan = dict((s, p) for s, p, _ in S.SLICES)[sname]
     D = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode),
@@ -751,6 +765,10 @@ def run_mode(mode, jobs=None, slices=('trend', 'chop'), srt=False,
             continue
         with mp.Pool(jobs) as pool:
             for r in pool.imap_unordered(run_chunk, todo):
+                if r.get('skipped'):
+                    print('  [%s %s] chunk %5d already written by the other pool '
+                          '-- skipped' % (mode, sname, r['chunk']), flush=True)
+                    continue
                 done += r['n']; spent += r['seconds']
                 row = progress_row(mode, r, done, total, t0, spent)
                 print('  [%s %s] chunk %5d  %4d combos  %6.1f s  hit %4.1f%%  '
