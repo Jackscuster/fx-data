@@ -634,6 +634,34 @@ def run_chunk(args):
 
 CHUNK = 100          # combinations per chunk: ~1-2 h, so a lost chunk is cheap
 
+# PER-MODE CHUNK SIZE, because the barrier tax scales with the LONGEST chunk.
+#
+# When a pool drains, every worker but one sits idle waiting for the last chunk.
+# Measured on mode A: trend's final chunk ran 35.1 engine-hours with six workers
+# idle beside it, and chop ended the same way -- one worker on chunk 28 at 100%
+# while five sat at 0.0%. That is the whole barrier, paid once per slice.
+#
+# Mode C runs for months, so it pays that tax at a scale A never did. At 25
+# combinations a chunk holds ~1.1 engine-hours of EXPECTED work at A's measured
+# trend rate (161.4 s/combination), against ~4.5 h at 100, and the tail shortens
+# by the same factor.
+#
+# THE COST IS THE PER-CHUNK RE-READ of the survivors file, measured rather than
+# assumed: 0.86 s for mode C's 196 MB file, so 28,677 chunks spend 6.8 engine-
+# hours re-reading against a ~30,800 engine-hour run. Two hundredths of one
+# percent, to cut every barrier by 4x.
+#
+# NOT DONE, deliberately: spreading expensive combinations across chunks. Gate 1
+# survivors are consumed in --sorted order precisely so a chunk touches few
+# distinct indicators -- that is worth a 92% indicator-cache hit rate. Shuffling
+# for balance would trade a measured 92% cache rate against an unmeasured
+# barrier saving, which is the wrong direction.
+CHUNK_BY_MODE = {'C': 25}
+
+
+def chunk_size(mode):
+    return CHUNK_BY_MODE.get(str(mode).upper(), CHUNK)
+
 
 BANK = {}
 SEEDS = {}
@@ -714,9 +742,10 @@ def plan_chunks(mode, sname, srt=False, cap=None, staged=False,
     n = len(pd.read_csv(f, usecols=['slice']).query('slice == @sname'))
     d = os.path.join(CK, 'mode%s_%s%s' % (mode, sname, '_deep' if deepen else ''))
     todo = []
-    for cid, lo in enumerate(range(0, n, CHUNK)):
+    ch = chunk_size(mode)
+    for cid, lo in enumerate(range(0, n, ch)):
         if not os.path.exists(os.path.join(d, 'chunk_%05d.csv' % cid)):
-            todo.append((mode, sname, lo, min(lo + CHUNK, n), cid, srt,
+            todo.append((mode, sname, lo, min(lo + ch, n), cid, srt,
                          cap, staged, deepen, disk, seed_from))
     return n, todo
 
