@@ -1,0 +1,25 @@
+{
+ "rates": {
+  "chop": {
+   "combos": 7318,
+   "sec_per_combo": 148.6452309374146,
+   "engine_h": 302.1627222222222,
+   "crossed": 873,
+   "cross_pct": 11.929488931402023
+  },
+  "trend": {
+   "combos": 12263,
+   "sec_per_combo": 161.3521487401125,
+   "engine_h": 549.6281666666666,
+   "crossed": 1814,
+   "cross_pct": 14.792465139036125
+  }
+ },
+ "pop": {
+  "chop": 162481,
+  "trend": 554422
+ },
+ "engine_hours": 31558.112993536866,
+ "days_at_workers": 146.1023749700781,
+ "workers": 9
+}
