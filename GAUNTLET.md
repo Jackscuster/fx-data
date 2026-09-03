@@ -1635,4 +1635,34 @@ children, then a sweep for whatever it managed to respawn.
 | C measured cost | **247.4 s/combination** (cumulative average) |
 | progress | 2,222 of 716,903 combinations (0.31%) |
 | projected finish | **2027-04-09** (218 days left at 9 workers) |
-| graft challenge | **THE BOOK MOVED** — was N=15 {'B': 13, 'A': 2} at 81.39 R, now N=18 {'B': 15, 'A': 3} at 79.55 R |
+| graft challenge | **No C crosser earns a place** (best C row is rank 101 of 5,381). The top-18 membership is IDENTICAL to the top-15 book's plus three incumbents; N moved 15 -> 18 only because the co-equal rule scores on ranks WITHIN the pool, so 246 extra rows shift every incumbent's rank number. See the note below. |
+
+### THE CO-EQUAL RULE IS POPULATION-DEPENDENT — found by batch 1
+
+Batch 1 reported "the book moved" when nothing had earned its way in. Diagnosed:
+
+    top-18 membership vs the previous top-15    IDENTICAL, plus 3 incumbents
+    strategies entering from mode C             0
+    best C row in the pool                      rank 101 of 5,381
+    A/B rows whose rank number changed          5,943 of 5,971
+    Spearman of A/B ranks, before vs after      0.9188
+
+**Adding 246 rows that never reach rank 100 reshuffled almost every incumbent.**
+The rule ranks on total R, ranks on Sortino and averages the two RANK NUMBERS,
+and a rank number is a position within a population. A C row sitting 60th on R
+and 3,000th on Sortino pushes incumbents down by one in one ranking and not the
+other, so their averaged scores move relative to each other. Order is not
+preserved; the chosen N changes with it.
+
+**This is not a bug in the sweep. It is a property of rank-averaging**, and it
+was always true — it is why rank-averaging is not the same as averaging scores.
+It only becomes visible now because the pool grows every week as C tunes, so
+every batch will perturb the ranking even in weeks when C contributes nothing.
+
+**Consequence to decide before gate 4, flagged not fixed:** a book chosen by
+this rule is only stable for the population it was chosen in. Two candidate
+answers — rank within a FIXED reference population, or score on the metric
+values rather than their ranks — and both change previously reported numbers,
+so neither is adopted unilaterally. **Batch reporting now distinguishes
+membership change from rank churn**, so no future batch can claim a move that
+did not happen.
