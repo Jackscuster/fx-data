@@ -1,3 +1,5 @@
 2026-08-31 17:15:20 armed: main=14975 add=58239 warn=400M crit=200M
 2026-09-02 12:10:02 main pool 14975 gone; guard standing down
 2026-09-02 12:35:29 armed: main=68319 add=68418 warn=400M crit=200M
+2026-09-02 22:44:56 main pool 68319 gone; guard standing down
+2026-09-02 22:46:03 armed: main=38690 add=38759 warn=400M crit=200M
