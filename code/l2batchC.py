@@ -161,11 +161,23 @@ def main():
         run(['code/appstamp.py'], 'build stamp')
 
         # 4. the graft challenge, now with C in the pool
+        # MEMBERSHIP, not just N and mix. The co-equal rule scores on RANKS
+        # within the pool, so adding rows that never reach the top perturbs
+        # every incumbent's rank number and can change the chosen N without a
+        # single new strategy earning a place. Batch 1 did exactly that. The
+        # only honest question is whether the SET of strategies changed.
+        def _members(path, n):
+            if not os.path.exists(path):
+                return None
+            L = pd.read_csv(path, low_memory=False).sort_values('rank').head(n)
+            return set(map(tuple, L[['c1', 'c2', 'vol', 'base', 'slice']].values))
         before = None
         pj = os.path.join(ROOTOUT, 'portfolio_preview_combined_AB.json')
         if os.path.exists(pj):
             b = json.load(open(pj))
             before = (b.get('N'), b.get('mix'), (b.get('metrics') or {}).get('total_R'))
+            before_set = _members(os.path.join(ROOTOUT, 'gate2_combined_AB_leaderboard.csv'),
+                                  b.get('N') or 0)
         run(['code/l2sweepn.py', '--combine-c', '--lo', '5', '--hi', '25'],
             'graft challenge including C')
         after = None
@@ -207,13 +219,23 @@ def main():
             sec.append('| projected finish | **%s** (%.0f days left at %d workers) |'
                        % (pr['finish'], pr['days_left'], WORKERS))
         if before and after:
-            moved = (before[0], before[1]) != (after[0], after[1])
-            sec.append('| graft challenge | %s |'
-                       % ('**THE BOOK MOVED** — was N=%s %s at %.2f R, now N=%s %s at %.2f R'
-                          % (before[0], before[1], before[2] or 0, after[0], after[1], after[2] or 0)
-                          if moved else
-                          'unchanged — best book is still N=%s %s at %.2f R; no C crosser earns a place'
-                          % (before[0], before[1], before[2] or 0)))
+            after_set = _members(os.path.join(ROOTOUT, 'gate2_combined_ABC_leaderboard.csv'),
+                                 after[0] or 0)
+            n_c = (after[1] or {}).get('C', 0)
+            new_names = ((after_set - before_set) if (before_set and after_set) else set())
+            if n_c:
+                sec.append('| graft challenge | **A MODE C STRATEGY ENTERED THE BOOK** — '
+                           'N=%s, %s, %.2f R |' % (after[0], after[1], after[2] or 0))
+            elif new_names:
+                sec.append('| graft challenge | book membership changed but **no C strategy '
+                           'entered** — %d strategies swapped, N=%s -> %s |'
+                           % (len(new_names), before[0], after[0]))
+            else:
+                sec.append('| graft challenge | **no C crosser earns a place.** The same '
+                           'strategies as before; N moved %s -> %s only because the '
+                           'co-equal rule scores on ranks WITHIN the pool, so 246 extra '
+                           'rows shift every incumbent rank number |'
+                           % (before[0], after[0]))
         open(os.path.join(ROOTLIB, 'manifest_extra.md'), 'a').write('\n'.join(sec) + '\n')
         open(os.path.join(_R, 'GAUNTLET.md'), 'a').write('\n'.join(sec) + '\n')
         run(['code/persist.py'], 'render manifest')
