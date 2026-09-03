@@ -131,3 +131,15 @@ Regenerate: `python code/l2inverse.py --jobs 1` (~2.5 h on one core).
 now pools A-trend, A-chop AND B — the earlier version silently excluded A-chop.
 
 Regenerate: `python code/l2sweepn.py --pool-a` and `--combine`.
+
+### MODE C BATCH 1 — 2026-09-03
+
+| | |
+|---|---|
+| combinations processed | 2,222 total, 2,222 new this batch |
+| crossing the gate 2 label | **246 (11.07%)**, 246 new |
+| best crosser to date | `aroon x coppock_curve x waddah_attar_explosion x fantail_vma` — 97 blind trades, **47.69 R**, Sortino 46.64 |
+| C measured cost | **247.4 s/combination** (cumulative average) |
+| progress | 2,222 of 716,903 combinations (0.31%) |
+| projected finish | **2027-04-09** (218 days left at 9 workers) |
+| graft challenge | **THE BOOK MOVED** — was N=15 {'B': 13, 'A': 2} at 81.39 R, now N=18 {'B': 15, 'A': 3} at 79.55 R |

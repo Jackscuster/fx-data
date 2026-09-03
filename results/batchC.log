@@ -1,0 +1,13 @@
+2026-09-03 07:27:20 ================================================================
+2026-09-03 07:27:20 MODE C BATCH 1 starting
+2026-09-03 07:27:20   chunks folded in: 89 (89 new since batch 0)
+2026-09-03 07:27:20   combinations: 2222 total, 2222 new
+2026-09-03 07:27:20   crossers: 246 total (11.07%), 246 new
+2026-09-03 07:27:20   wrote gate2_modeC_crossers_batch01.csv (246 rows)
+2026-09-03 07:27:20   run: crisis split C/trend
+2026-09-03 07:35:32   run: rank + clean view C/trend
+2026-09-03 07:37:27   run: trade bundles C/trend
+2026-09-03 07:37:46   run: mode index
+2026-09-03 07:37:47   run: build stamp
+2026-09-03 07:37:48   run: graft challenge including C
+2026-09-03 07:38:34   run: render manifest
