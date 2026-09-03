@@ -1583,3 +1583,44 @@ everywhere the two compete.
 
 A's own book still trails B's on every axis except worst month (-0.77 vs -1.31),
 where A is the calmer book by a wide margin.
+
+## THE STAGED PASS ADMITS EVERYTHING — MEASURED, AND DROPPED
+
+**Mode C ran `--staged` for its first 1,272 combinations. Every single one took
+the deep pass.**
+
+    stage = deep                    1,272 of 1,272   (100%)
+    cheap_gain_R >= 0.02R           1,272 of 1,272   (100%)
+    cost                            234.9 s/combination
+    mode A, same cap, NO --staged   161.4 s/combination
+
+The +0.02R threshold was declared before any C tuning existed, and the intent
+was that cheap-pass combinations which barely improve would keep the cheap
+result and advance, sparing the deep pass. **The measurement says the threshold
+admits everything.** So the cheap pass is not a filter; it is a 45.5% surcharge
+paid before doing the full work anyway, and its banked state saves nothing
+because nothing stops at it.
+
+**`--staged` is therefore dropped and C relaunched without it.** That also
+restores Jack's literal instruction -- "same proven setup as A: `--sorted`
+`--cap 6`" -- which is what A ran. The 51 chunks already written stay: they
+recorded `stage=deep`, which IS the full tune, so they are identical to what the
+unstaged run produces and `plan_chunks` skips them (22,126 chunks queued against
+22,177 total).
+
+**This does not retire the 0.02R threshold as a declared idea.** It records that
+at 0.02R it does not discriminate. If round 2 wants a real cheap/deep split, the
+threshold has to be set from this distribution rather than chosen ahead of it --
+and now there is a distribution to set it from.
+
+    projection with --staged     44,871 engine-h   207.7 days   ~2027-03-28
+    projection without           31,558 engine-h   146.1 days   ~2027-01-26
+
+### AND A SECOND BUG, IN HOW POOLS ARE STOPPED
+
+`l2stoppool.sh` killed children first, then the parent. **`multiprocessing.Pool`
+REPOPULATES workers that die unexpectedly**, so the parent immediately spawned
+replacements, and killing the parent afterwards orphaned those. Nine fresh
+workers were left at 99% CPU with `ppid=1` -- none of them the pids that had
+just been killed. Fixed: parent first, so it cannot replace anything, then the
+children, then a sweep for whatever it managed to respawn.
