@@ -151,6 +151,18 @@ def main():
         out = os.path.join(ROOTOUT, 'gate2_combined_AB_leaderboard.csv')
         pooled(specs, out)
         sweep(out, None, 'combined_AB', lo, hi)
+    elif '--combine-c' in a:
+        # THE GRAFT CHALLENGE. Everything ranked so far -- A both slices, B, and
+        # mode C's crossers to date -- pooled and re-ranked, so a C strategy can
+        # only enter the best book by beating the incumbents on the same rule.
+        # C's leaderboard grows every week, so this is re-run every batch.
+        C_SPECS = [('gate2_modeC_trend_leaderboard.csv', 'trend', 'C', 'C-trend'),
+                   ('gate2_modeC_chop_leaderboard.csv', 'chop', 'C', 'C-chop')]
+        specs = _resolve(A_SPECS + B_SPECS + C_SPECS)
+        print('pooling: %s' % ', '.join(x[3] for x in specs), flush=True)
+        out = os.path.join(ROOTOUT, 'gate2_combined_ABC_leaderboard.csv')
+        pooled(specs, out)
+        sweep(out, None, 'combined_ABC', lo, hi)
     elif '--pool-a' in a:
         specs = _resolve(A_SPECS)
         print('pooling: %s' % ', '.join(x[3] for x in specs), flush=True)

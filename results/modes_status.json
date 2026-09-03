@@ -8,7 +8,7 @@
   "chop": "complete"
  },
  "C": {
-  "trend": "queued",
+  "trend": "running",
   "chop": "queued"
  }
 }
