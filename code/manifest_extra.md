@@ -143,3 +143,22 @@ Regenerate: `python code/l2sweepn.py --pool-a` and `--combine`.
 | progress | 2,222 of 716,903 combinations (0.31%) |
 | projected finish | **2027-04-09** (218 days left at 9 workers) |
 | graft challenge | **THE BOOK MOVED** — was N=15 {'B': 13, 'A': 2} at 81.39 R, now N=18 {'B': 15, 'A': 3} at 79.55 R |
+
+
+## Gate 3 — `gate3_verdicts.csv`, `gate3_passers.csv`, `gate3_index.json`
+
+| file | what it holds |
+|---|---|
+| `gate3_verdicts.csv` | EVERY one of the 5,135 A and B crossers, verdict and full metrics, kept whatever the verdict |
+| `gate3_passers.csv` | the 170 passers, ranked by the co-equal rule |
+| `gate3_index.json` | per mode/slice counts and top 20, read by the app's Gate 3 panel |
+| `gate3_bank/` | per-shard banking, written as each strategy completes so a stop loses one strategy |
+
+Every figure is on the CRISIS-EXCLUDED blind book. `luck_floor_p95` is that
+strategy's OWN p95 under 5,000 episode-level sign randomisations of its own
+trades; `margin_vs_floor_R` is expectancy minus that floor;
+`net_of_structure_R` is expectancy minus that strategy's own null MEAN.
+`max_dd_frac` is drawdown as a fraction of the strategy's own gross profit —
+fixed-R sizing has no compounding equity base to take a percentage of.
+
+Regenerate: `python code/l2gate3.py` (resumable; ~2.5 h on one core).

@@ -1666,3 +1666,73 @@ values rather than their ranks — and both change previously reported numbers,
 so neither is adopted unilaterally. **Batch reporting now distinguishes
 membership change from rank churn**, so no future batch can claim a move that
 did not happen.
+
+## GATE 3 — RESULTS ON ALL 5,135 A AND B CROSSERS
+
+Exam on the CRISIS-EXCLUDED blind book: six hard bars, a fresh per-strategy luck
+floor, and per-strategy net-of-structure. 5,135 examined on one core at nice 19
+in ~2.5 h, banked per strategy, mode C's pools untouched throughout.
+
+    PASS        170    (3.31%)
+    SELECTIVE     0
+    FAIL      4,965
+
+| slot | total | pass | pass % |
+|---|---|---|---|
+| B-chop | 1,003 | **64** | **6.38** |
+| B-trend | 1,650 | 59 | 3.58 |
+| A-chop | 678 | 13 | 1.92 |
+| A-trend | 1,804 | 34 | 1.88 |
+
+### GATE 3 IS A SHARPE GATE WEARING SIX BARS
+
+**Sharpe appears in 99.6% of the 4,965 failures** — 4,945 of them — and is
+frequently the only bar broken. Max drawdown appears in 62.3%, profit factor
+60.2%, expectancy 59.6%, Sortino 29.7%, Calmar 27.2%.
+
+The clearest illustration: **the largest book in the entire population, 156.0 R,
+fails.** It beats its own luck floor more than threefold (expectancy 0.380
+against a 0.116 floor) and dies on a Sharpe of 0.92 against the 1.1 bar. Three
+of the next four largest books fail the same way.
+
+That is not an argument that the bar is wrong. A 20-day Sharpe of 1.1 on fixed-R
+sizing is a real demand and these books are genuinely lumpy. It is an argument
+that **gate 3 is currently ONE test, not six**, and the record should say so
+rather than imply six independent hurdles were cleared.
+
+### THE FLOOR KILLS NOTHING THE BARS DO NOT
+
+**45.4% of the population beats its own luck floor, but only 3.3% clears the
+bars — and NOT ONE strategy that cleared the bars failed the floor.** The floor
+is entirely non-binding as a gate.
+
+It is still worth having, and the reason is visible in the near misses: twelve
+strategies with more than 40 R miss their own floor by margins between -0.001
+and -0.013 R, at p-values of 0.053 to 0.070. Those are books of 300-730 trades
+with expectancies of 0.06-0.14 R — high-volume, low-edge configurations whose
+raw R total looks respectable and whose per-trade edge is indistinguishable from
+a coin flip on their own trade distribution. The floor prices exactly that, and
+the hard bars would have caught them anyway.
+
+### TRADE COUNT NEVER BOUND
+
+**No strategy passed on fewer than 79 trades** (median passer: 112), so the
+SELECTIVE label never triggered. The amendment cost nothing and protected
+nothing — worth recording, because the next population may differ.
+
+### THE GRAFT: ELEVEN OF FIFTEEN PASS
+
+**11 PASS, 4 FAIL.** All four failures are B strategies, all killed by **Sharpe
+alone**, and they include the graft's two largest books:
+
+| graft # | R | Sharpe | verdict |
+|---|---|---|---|
+| 13 | **114.8** | 1.04 | FAIL |
+| 15 | **106.5** | 0.96 | FAIL |
+| 10 | 77.6 | 0.93 | FAIL |
+| 14 | 66.6 | 0.90 | FAIL |
+
+Both mode A entries pass. The book that the co-equal rule and the graft
+independently selected loses its two biggest earners at gate 3 — which is the
+tension between total R and risk-adjusted quality showing up as a hard verdict
+rather than as a ranking preference.
