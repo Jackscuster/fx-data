@@ -29,6 +29,7 @@ import numpy as np, pandas as pd
 
 import l2crisis as C
 import l2deliver as DL
+import l2trades as TR
 import l2sweep as S
 
 N_SHUF = 10000
@@ -102,15 +103,77 @@ def load_candidates():
     return P.reset_index(drop=True)
 
 
-def build_matrix(cands):
-    """days x candidates of daily R, crisis-INCLUDED (the account feels crisis)."""
+def _equity_series(cfg, wins):
+    """CLOSE-TO-CLOSE CHANGE IN EQUITY, every open position marked to that day's
+    close. This is what the prop limits actually measure: floating open losses
+    count toward both the daily and the trailing limit, and open equity is
+    logged at each daily close.
+
+    Booking a trade's whole R on its exit date -- what this used to do -- hides
+    every floating loss. A position open three weeks and closing badly showed
+    one bad day instead of fifteen deteriorating ones, so DIP95 measured
+    REALISED drawdown and sized the team against a number the account would
+    never see.
+
+    Costs stay charged at entry, as the engine charges them.
+    """
+    code = dict((s, c) for s, _, c in S.SLICES)[cfg['slice']]
+    daily = {}
+    for p in S.all_pairs():
+        try:
+            r = TR.run_pair(cfg, p)
+        except Exception:
+            continue
+        d, tr, cl = r['dates'], r['trades'], r['c']
+        if len(tr['r']) == 0:
+            continue
+        reg = S.regime_codes(p, d)
+        wb = {}
+        for k, (a, z) in S.WINDOWS.items():
+            w = np.flatnonzero((d >= a) & (d <= z))
+            if len(w):
+                wb[k] = (int(w[0]), int(w[-1]) + 1)
+        for j in range(len(tr['r'])):
+            eb, xb = int(tr['entry_bar'][j]), int(tr['exit_bar'][j])
+            if xb < 0 or reg[eb] != code:
+                continue
+            if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in ('W2', 'W3')):
+                continue
+            ent = float(tr['entry_px'][j]); u = float(tr['units'][j])
+            sgn = float(tr['dir'][j]); tot = float(tr['r'][j])
+            # mark to market each day; the LAST day carries the realised total so
+            # costs and the actual fill price are respected exactly
+            prev = 0.0
+            for b in range(eb, xb + 1):
+                if b == xb:
+                    cum = tot
+                else:
+                    cum = sgn * (cl[b] - ent) * u / S.RISK
+                daily[d[b]] = daily.get(d[b], 0.0) + (cum - prev)
+                prev = cum
+    return pd.Series(daily).sort_index() if daily else pd.Series(dtype=float)
+
+
+def build_matrix(cands, mode='equity'):
+    """days x candidates of daily R.
+
+    mode='equity'  close-to-close change with open positions marked to market
+    mode='closed'  the old behaviour: each trade booked on its exit date
+    Both are built; the equity one drives sizing, the closed one is reported
+    beside it so the gap is visible.
+    """
     wins = C.windows()
     series = {}
     for r in cands.to_dict('records'):
-        T = DL.blind_trades(r, wins)
-        if not len(T):
-            continue
-        s = T.groupby(pd.to_datetime(T.exit).dt.normalize()).R.sum()
+        if mode == 'closed':
+            T = DL.blind_trades(r, wins)
+            if not len(T):
+                continue
+            s = T.groupby(pd.to_datetime(T.exit).dt.normalize()).R.sum()
+        else:
+            s = _equity_series(r, wins)
+            if not len(s):
+                continue
         series[r['cand']] = s
     if not series:
         return None, []
@@ -183,9 +246,10 @@ def main():
     rng = np.random.default_rng(SEED)
     cands = load_candidates()
     print('candidates (passers incl. alternates): %d' % len(cands), flush=True)
-    M, cols = build_matrix(cands)
+    M, cols = build_matrix(cands, mode='equity')
     if M is None:
         raise SystemExit('no candidate return series')
+    Mc, cols_c = build_matrix(cands, mode='closed')   # reported, never sizes
     print('return matrix: %d days x %d candidates' % M.shape, flush=True)
     # timing probe on one scoring call
     tp = time.time()
@@ -208,8 +272,20 @@ def main():
     out = {}
     for tag, dipb, dayb in (('team1', 3.6, 3.6), ('team2', 5.4, 3.6)):
         team, votes, res, tried = greedy(M.values, cols, core, dipb, dayb, log, tag, rng)
+        # the same roster and votes, measured on CLOSED trades, for comparison
+        dip_closed = None
+        try:
+            common = [c for c in team if c in cols_c]
+            if common:
+                wv = np.zeros(len(cols_c))
+                for c in common:
+                    wv[cols_c.index(c)] = votes[c]
+                dc = team_daily(Mc.values, wv) * R_PCT
+                dip_closed = dip95(dc, rng=np.random.default_rng(SEED)) * res['scale']
+        except Exception:
+            pass
         out[tag] = dict(members=team, votes=votes, res=res, tried=tried,
-                        dip_budget=dipb, day_budget=dayb)
+                        dip_budget=dipb, day_budget=dayb, dip95_closed=dip_closed)
         print('%s: %d members, score %.2f%%, tried %d' % (tag, len(team), res['score'], tried), flush=True)
         rows = []
         for c in team:
@@ -232,7 +308,16 @@ def main():
         Cm.round(4).to_csv(os.path.join(ROOTOUT, '%s_corr.csv' % tag))
     pd.DataFrame(log).to_csv(os.path.join(ROOTOUT, 'team_build_log.csv'), index=False)
 
-    L = ['# Trading teams — built from the costed gate 3 cut\n']
+    L = ['# Trading teams — built from the costed gate 3 cut\n',
+         'Sizing uses the EQUITY series: close-to-close change with every open',
+         'position marked to that day\'s close. Floating open losses count toward',
+         'both the daily and the trailing prop limit, so realised-only accounting',
+         'would size the team against a drawdown the account never sees. The',
+         'closed-trade DIP95 is reported beside it so the gap is visible.\n',
+         '**Intraday lows are invisible in close-only data.** Every figure here is',
+         'a close-to-close number, so the true worst moment inside a day is worse',
+         'than anything below. The live limit needs margin on top of the 3.6%',
+         'budget; 3.6% is not a level to trade right up to.\n']
     for tag in ('team1', 'team2'):
         o = out[tag]; r = o['res']
         L.append('## %s (DIP95 budget %.1f%%, worst-day budget %.1f%%)\n'
@@ -248,6 +333,10 @@ def main():
         L.append('| members | %d |' % len(o['members']))
         L.append('| scale factor | %.3f |' % r['scale'])
         L.append('| candidates tried | %d |' % o['tried'])
+        cd = o.get('dip95_closed')
+        if cd is not None:
+            L.append('| DIP95 on CLOSED trades (not used for sizing) | %.2f%% |' % cd)
+            L.append('| gap, equity vs closed | **%+.2f%%** |' % (r['dip95'] - cd))
         L.append('| pairs correlated > 0.90 | %d |\n' % len(o['corr_above_090']))
     open(os.path.join(ROOTOUT, 'team_summary.md'), 'w').write('\n'.join(L) + '\n')
     json.dump({k: dict(members=v['members'], votes=v['votes'], **v['res'],
