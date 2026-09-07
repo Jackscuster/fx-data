@@ -1,4 +1,4 @@
-lna(False)
+a(False)
 /home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
   return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
 /home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
@@ -429,17 +429,17 @@ probing 14 routes from github-actions
   USD  fred-api       HTTP 400                 0  needs a free api key
   EUR  ecb            DATA                  4310  daily AAA curve, starts 2004-09
   JPY  mof            DATA               1176385  daily from 1974, Shift-JIS, Japanese era dates
-  GBP  boe-glc        DATA              39035542  daily from 1979, 39 MB of xlsx
+  GBP  boe-glc        DATA              39110776  daily from 1979, 39 MB of xlsx
   CAD  boc-valet      DATA                   545  daily
-  AUD  rba-f2         DATA                200040  has an explicit 2 year bond column
+  AUD  rba-f2         HTTP 403                 0  has an explicit 2 year bond column
   CHF  snb-daily      DATA               5461632  daily from 1988, 2J maturity
   NZD  rbnz-b2        HTTP 403                 0  bot-walled from the sandbox
   NZD  nz-dmo         HTTP 403                 0  Cloudflare challenge from the sandbox
-  USD  yahoo-^TNX     DATA                  1729  US 10y, already in the feed
+  USD  yahoo-^TNX     DATA                  1721  US 10y, already in the feed
   GBP  yahoo-GB2YR    HTTP 404                 0  speculative ticker
-  JPY  yahoo-2YY=F    DATA                  1523  CBOT 2y yield future, US not JP
+  JPY  yahoo-2YY=F    DATA                  1625  CBOT 2y yield future, US not JP
 
-github-actions: 7 of 8 currencies have at least one working free route
+github-actions: 6 of 8 currencies have at least one working free route
 wrote ext_probe_github-actions.csv
 
 === extsig.py --report-only ===
@@ -554,10 +554,10 @@ app_data.json       1.5 MB
 app_signals.json   46.5 MB  (175634 built, 167316 scorable)
 
 === appstamp.py ===
-app_ui.js build 729dbe4d8b7b (already current); app_version.json updated
+app_ui.js build 55a6adc14f29 (already current); app_version.json updated
 
 === freshness.py ===
-px28.csv last bar 2026-08-28 (6 days old)
+px28.csv last bar 2026-08-28 (10 days old)
   results/layer1_states.csv    last 2026-08-28  OK
   app_regime.json              last 2026-08-28  OK
   results/app_regime.json      last 2026-08-28  OK
@@ -566,7 +566,7 @@ px28.csv last bar 2026-08-28 (6 days old)
 
 ======================================================================
 FRESHNESS GATE FAILED -- the pipeline published stale data:
-  * data/px28.csv is 6 days old (limit 5). The daily fetch is not delivering new bars.
+  * data/px28.csv is 10 days old (limit 5). The daily fetch is not delivering new bars.
 ======================================================================
 Traceback (most recent call last):
   File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 153, in <module>
