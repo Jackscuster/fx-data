@@ -1,0 +1,9 @@
+GATE 3 starting 2026-09-03 14:16:34
+  mode C baseline pace: 245.5 s/combination
+  population 5135, already banked 2664, to examine 2471
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+GATE 3 PAUSED at 2026-09-03 14:17:31: mode C pace stepped 355.6 -> 1055.9 s/combination (+196.89%, tolerance 2%) on two consecutive windows. Gate 3 yields.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+banked 19 rows to shard_00_0903_141634.csv
