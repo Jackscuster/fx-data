@@ -1,0 +1,3 @@
+GATE 3 FINE-TUNE starting 2026-09-06 22:56:01
+  widened risk grid: 334 points per coordinate-descent sweep (was 193, 1.73x)
+  population 5135, banked 0, to fine-tune 570 (shard 6/9)

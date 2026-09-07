@@ -325,6 +325,42 @@ def run_combo(P, c1, c2, vol, base, ex, buf, plan=2, atr=None, **kw):
     return nt
 
 
+# ---------------------------------------------------------------- costs
+# OFF by default so every existing result reproduces byte for byte. Turned on
+# explicitly by the costed fine-tune. Layer 2 charged NO costs at all before
+# this: gates 1-3 to date are gross figures.
+COSTS = None            # dict pair -> cost fraction of price, round trip
+_CRISIS_WIN = None
+CRISIS_MULT = 2.0
+
+
+def load_costs(path=None):
+    """Load results/cost_table.csv and switch costing on."""
+    global COSTS, _CRISIS_WIN
+    import l2crisis as _C
+    t = pd.read_csv(path or os.path.join(ROOTOUT, 'cost_table.csv'))
+    COSTS = dict(zip(t.pair, t.cost_frac_roundtrip))
+    _CRISIS_WIN = _C.windows()
+    return COSTS
+
+
+def _cost_R(pair, entry_px, units, entry_dates):
+    """Cost of each trade expressed in R. Crisis-window entries pay double."""
+    f = COSTS.get(pair)
+    if not f:
+        return np.zeros(len(entry_px))
+    mult = np.ones(len(entry_px))
+    if _CRISIS_WIN:
+        for k, d in enumerate(entry_dates):
+            for a, z, ccy, _ in _CRISIS_WIN:
+                if ccy and ccy not in (pair[:3], pair[3:]):
+                    continue
+                if a <= d <= z:
+                    mult[k] = CRISIS_MULT
+                    break
+    return f * mult * np.abs(entry_px) * np.abs(units) / RISK
+
+
 def make_buffers(n):
     cap = 4 * n + 8
     b = {k: np.zeros(cap, np.int64) for k in
@@ -389,6 +425,16 @@ def score_combo(pairs_data, combo, buf_by_pair, atr_by_pair=None,
             if nt == 0:
                 continue
             r = buf['r'][:nt]
+            if COSTS:
+                # REALISTIC COSTS, charged per trade on the crisis-aware table.
+                # R is (px move x units) / risk_dollars, and units scales as
+                # 1/(atr_mult x ATR), so the cost of a trade in R is
+                #     cost_frac x entry_px x units / risk_dollars
+                # which grows without bound as the stop tightens. That is the
+                # whole point: a 0.10xATR stop books tiny wins gross and cannot
+                # survive a spread. Charged round-trip at entry, per GAUNTLET.
+                r = r - _cost_R(pair, buf['entry_px'][:nt], buf['units'][:nt],
+                                P['dates'][buf['entry_bar'][:nt]])
             eb = buf['entry_bar'][:nt]
             reg = P['regime'][eb]
             n_unlab += int((reg < 0).sum())

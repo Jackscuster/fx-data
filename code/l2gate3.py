@@ -204,6 +204,13 @@ def examine(cfg, wins, rng):
     m['passes_bars'] = not m['bars_failed']
     if m['passes_bars'] and m['beats_floor']:
         m['verdict'] = 'SELECTIVE' if m['n'] < MIN_TRADES else 'PASS'
+    elif m['beats_floor'] and m['bars_failed'] == 'sharpe':
+        # SHARPE_ONLY: clears the other five bars AND its own luck floor, and
+        # fails only on Sharpe. Kept as its own group rather than folded into
+        # FAIL, because Sharpe appeared in 99.6% of failures in the cut-only
+        # run and was frequently the sole cause -- a population that large
+        # deserves to be visible to the team builder rather than buried.
+        m['verdict'] = 'SHARPE_ONLY'
     else:
         m['verdict'] = 'FAIL'
     return m
