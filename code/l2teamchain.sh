@@ -12,7 +12,9 @@ say "running the costed gate 3 cut (Sharpe retired as a bar)"
 nice -n 19 /usr/bin/python3 code/l2gate3.py --no-pace-check >> "$LOG" 2>&1 || say "WARNING cut failed"
 say "BUILDING THE TEAMS"
 nice -n 19 /usr/bin/python3 code/l2team.py >> "$LOG" 2>&1 || say "WARNING team build failed"
-say "teams done; committing"
+say "teams done; running the AGREEMENT STUDY"
+nice -n 19 /usr/bin/python3 code/l2agree.py >> "$LOG" 2>&1 || say "WARNING agreement study failed"
+say "agreement study done; committing"
 /usr/bin/python3 code/appstamp.py >> "$LOG" 2>&1
 git add -A
 git commit -q -m "Gate 3 costed cut and the trading teams

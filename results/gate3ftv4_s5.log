@@ -5,3 +5,13 @@ GATE 3 FINE-TUNE starting 2026-09-07 12:11:08
   sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
   st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+    25/570  351.2 s/strategy  | 5110 left -> 498 h -> 2026-09-28
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+    50/570  407.7 s/strategy  | 5085 left -> 576 h -> 2026-10-01

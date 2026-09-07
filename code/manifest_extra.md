@@ -212,3 +212,33 @@ added and bind nothing:
 | `profit_concentration` | % of gross profit from the top 5% of winning trades |
 
 Regenerate: `python code/l2readopt.py`, then `python code/l2gate3.py`.
+
+
+## Agreement and opposition study — `agreement_*.csv`, `opposition_by_member_*.csv`
+
+Runs on the final rosters' own trade logs, after the team build and before mode
+C is relaunched.
+
+| file | what it holds |
+|---|---|
+| `agreement_levels_team{1,2}.csv` | per agreement level, IS and OOS side by side: position-days, episodes, R per unit, R per episode, hit rate, worst dip |
+| `agreement_by_member_team{1,2}.csv` | per member: % of trades at each level, R alone vs in agreement, and the two flags |
+| `agreement_opposition.csv` | the three handlings scored over the same episodes, overall and per split shape |
+| `opposition_by_member_team{1,2}.csv` | per member accuracy when opposed, ALL / IS / OOS |
+| `agreement_summary.md` | the plain-English verdict |
+
+**The unit is the position-day; the evidence is the episode.** A trade held 12
+days is 12 position-days of exposure but ONE observation. Every significance
+test groups consecutive days on the same pair at the same level into one
+episode, because treating them as independent would inflate every t-statistic
+by roughly the square root of the holding period.
+
+A trade's R is spread evenly across the days it was open, so a day's return
+belongs to the agreement level actually in force that day rather than to
+whatever was true on the exit date.
+
+**The null shuffles MEMBERSHIP, not returns** — which member fired each trade is
+permuted 1,000 times with the trades, calendar and pair mix held fixed, so a
+surviving slope is about agreement rather than about the sample.
+
+Regenerate: `python code/l2agree.py` (needs the rosters).
