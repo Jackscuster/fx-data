@@ -5,3 +5,4 @@ GATE 3 FINE-TUNE starting 2026-09-07 12:11:08
   sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
   st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+    25/570  262.7 s/strategy  | 5110 left -> 373 h -> 2026-09-23

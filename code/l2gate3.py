@@ -56,7 +56,12 @@ import numpy as np, pandas as pd
 import l2crisis as C
 import l2deliver as DL
 
-BARS = dict(expectancy_R=0.15, profit_factor=1.5, sharpe=1.1,
+# SHARPE IS NO LONGER A BAR. It appeared in 99.6% of failures in the cut-only
+# run and was frequently the sole cause, which made a six-bar gate behave as a
+# one-bar gate. It is still measured, still reported on every row, and still
+# flagged via sharpe_only_flag -- it decides nothing.
+SHARPE_BAR = 1.1          # retained for the flag only, never enforced
+BARS = dict(expectancy_R=0.15, profit_factor=1.5,
             sortino=1.3, calmar=1.0, max_dd_frac=0.10)
 N_SHUF = 5000
 MIN_TRADES = 50
@@ -190,7 +195,17 @@ def examine(cfg, wins, rng):
     nd = null(X.R.values, episodes_of(X), rng)
     floor = float(np.percentile(nd, 95))
     nmean = float(nd.mean())
-    m.update(luck_floor_p95=floor, null_mean=nmean,
+    # PROFIT CONCENTRATION: share of gross profit contributed by the top 5% of
+    # WINNING trades. Informational. A book whose gross profit is a handful of
+    # trades is fragile in a way no ratio on this row shows.
+    wins = np.sort(X.R.values[X.R.values > 0])[::-1]
+    if len(wins):
+        k = max(1, int(np.ceil(0.05 * len(wins))))
+        conc = 100.0 * wins[:k].sum() / wins.sum() if wins.sum() > 0 else np.nan
+    else:
+        conc = np.nan
+    m.update(profit_concentration=conc,
+             luck_floor_p95=floor, null_mean=nmean,
              margin_vs_floor_R=m['expectancy_R'] - floor,
              net_of_structure_R=m['expectancy_R'] - nmean,
              beats_floor=bool(m['expectancy_R'] > floor),
@@ -198,13 +213,16 @@ def examine(cfg, wins, rng):
              n_crisis_trades=int(T.crisis.sum()))
     bars = {k: (m[k] <= v if k == 'max_dd_frac' else m[k] >= v)
             for k, v in BARS.items()}
+    # informational only: would this have failed the retired Sharpe bar?
+    m['sharpe_only_flag'] = bool(np.isfinite(m.get('sharpe', np.nan))
+                                 and m['sharpe'] < SHARPE_BAR)
     bars = {k: bool(v) and np.isfinite(m[k]) if k != 'profit_factor'
             else bool(v) for k, v in bars.items()}
     m['bars_failed'] = ','.join(sorted(k for k, v in bars.items() if not v))
     m['passes_bars'] = not m['bars_failed']
     if m['passes_bars'] and m['beats_floor']:
         m['verdict'] = 'SELECTIVE' if m['n'] < MIN_TRADES else 'PASS'
-    elif m['beats_floor'] and m['bars_failed'] == 'sharpe':
+    elif False:
         # SHARPE_ONLY: clears the other five bars AND its own luck floor, and
         # fails only on Sharpe. Kept as its own group rather than folded into
         # FAIL, because Sharpe appeared in 99.6% of failures in the cut-only

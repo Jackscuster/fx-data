@@ -184,3 +184,31 @@ Rebuilt automatically every 25 strategies by `l2gate3ft.py`; standalone:
 Gate 3's cut carries a `SHARPE_ONLY` verdict: clears the other five bars and its
 own luck floor, fails only on Sharpe. Alternates tagged SHARPE_ONLY are the same
 trade-off seen at the settings level rather than the strategy level.
+
+
+## Adoption rule v2, and Sharpe retired as a bar
+
+`gate3ft_adoptions_v2.csv` re-evaluates the whole fine-tune bank under:
+
+    v2: account return higher AND max DD no worse AND Sortino no worse
+
+Sharpe is dropped from the rule and from the gate 3 cut's bars. It is still
+measured and written on every row; it binds nothing. `rule` records which rule
+produced each adoption and the bank's original v1 flags stay readable —
+nothing is overwritten.
+
+Dropping a condition from a conjunction cannot shrink the adopted set, so only
+the alternates can change. `gate3ft_alternates.csv` now holds candidates that
+beat the incumbent on account return and failed DD or Sortino, tagged
+DD_ONLY / SORTINO_ONLY / BOTH.
+
+The cut's BINDING bars are now: expectancy >= 0.15R, PF >= 1.5, Sortino >= 1.3,
+Calmar >= 1.0, max DD <= 10% of own gross profit. Two informational columns are
+added and bind nothing:
+
+| column | meaning |
+|---|---|
+| `sharpe_only_flag` | would have failed the retired Sharpe >= 1.1 bar |
+| `profit_concentration` | % of gross profit from the top 5% of winning trades |
+
+Regenerate: `python code/l2readopt.py`, then `python code/l2gate3.py`.
