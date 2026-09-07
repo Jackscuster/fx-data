@@ -162,3 +162,25 @@ trades; `margin_vs_floor_R` is expectancy minus that floor;
 fixed-R sizing has no compounding equity base to take a percentage of.
 
 Regenerate: `python code/l2gate3.py` (resumable; ~2.5 h on one core).
+
+
+## Gate 3 fine-tune alternates — `gate3ft_alternates.csv`
+
+Candidates that BEAT their incumbent on account return and were still rejected
+by the standing adoption rule, one row per strategy, with `failed_on` naming
+exactly which of DD / Sortino / Sharpe they missed and `tag` in
+{SHARPE_ONLY, DD_ONLY, SORTINO_ONLY, MULTI}.
+
+**What is recoverable.** The fine-tune bank stores ONE candidate per strategy —
+the final output of the coordinate descent. Intermediate candidates are not
+logged, so this file captures the case where the FINAL candidate beat the
+incumbent and was rejected. An intermediate candidate that did better on account
+return and was then superseded cannot be reconstructed; capturing those would
+require restarting the run.
+
+Rebuilt automatically every 25 strategies by `l2gate3ft.py`; standalone:
+`python code/l2alternates.py`.
+
+Gate 3's cut carries a `SHARPE_ONLY` verdict: clears the other five bars and its
+own luck floor, fails only on Sharpe. Alternates tagged SHARPE_ONLY are the same
+trade-off seen at the settings level rather than the strategy level.

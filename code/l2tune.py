@@ -76,6 +76,8 @@ GRID_BE     = _rng(0.01, 0.20, 0.01)          # % OF PRICE beyond TP1
 GRID_ARM    = _rng(1.00, 2.00, 0.05)
 GRID_TRAIL  = _rng(0.50, 2.00, 0.05)
 GRID_ATR    = list(range(2, 51))
+STOP_FLOOR_FN = None   # set by the fine-tune to enforce the realism floor
+ACCT_OBJECTIVE = False  # compare on a fixed 1.0xATR risk unit, never on raw R
 
 RISK_KNOBS_TREND = (('atr_len', GRID_ATR), ('atr_mult', GRID_STOP),
                     ('tp_mult', GRID_TP), ('be_pct', GRID_BE),
@@ -251,6 +253,7 @@ class Scorer:
 
     def __init__(self, cache=None, disk=False):
         self.pairs = S.all_pairs()
+        self.dates = {}
         self.raw, self.arr, self.reg, self.wb, self.buf = {}, {}, {}, {}, {}
         for p in self.pairs:
             d = S.load_pair(p)
@@ -258,6 +261,7 @@ class Scorer:
             self.arr[p] = tuple(d[k].values.astype(float)
                                 for k in ('open', 'high', 'low', 'close'))
             self.reg[p] = S.regime_codes(p, d.index)
+            self.dates[p] = d.index.values
             idx = d.index
             b = {}
             for k, (a, z) in S.WINDOWS.items():
@@ -319,6 +323,24 @@ class Scorer:
             if nt == 0:
                 continue
             r = b['r'][:nt]; eb = b['entry_bar'][:nt]
+            if ACCT_OBJECTIVE:
+                # ACCOUNT-NORMALISED R. Engine R is
+                #     r = price_move x units / risk,  units ~ 1 / (atr_mult x ATR)
+                # so r scales as 1/atr_mult: the SAME price move books more R the
+                # tighter the stop. Maximising expectancy in R therefore pays the
+                # tuner to shrink the stop, which is exactly what it did --
+                # median stop fell 1.00 -> 0.17xATR and win rates fell to 16%.
+                # Multiplying by atr_mult restates every trade against a FIXED
+                # 1.0xATR risk unit, so the objective no longer moves when the
+                # stop does. Applied before costs so costs stay in the same units.
+                r = r * float(risk.get('atr_mult', 1.0))
+            if S.COSTS:
+                # Realistic costs. The Scorer calls the engine DIRECTLY rather
+                # than through score_combo, so costing has to be applied here as
+                # well -- patching only score_combo left every tuning decision
+                # gross while the audit path looked costed.
+                r = r - S._cost_R(p, b['entry_px'][:nt], b['units'][:nt],
+                                  self.dates[p][eb])
             m = self.reg[p][eb] == code
             if not m.any():
                 continue
@@ -413,6 +435,14 @@ def tune_one(sc, combo, mode, sname, code, plan, tune_windows, defaults_ip,
                 ip[slot][pname] = bestv
                 cur = best
         for kname, grid in riskknobs:
+            # REALISM FLOOR on the stop, if one is installed. The floor depends
+            # on the CURRENT atr_len, so it is applied at sweep time rather than
+            # baked into the grid: a longer ATR is a wider stop in price terms
+            # for the same multiple, so the multiple that clears 3x cost differs.
+            if kname == 'atr_mult' and STOP_FLOOR_FN is not None:
+                fl = STOP_FLOOR_FN(risk.get('atr_len', S.ATR_LEN))
+                g2 = [v for v in grid if v >= fl - 1e-9]
+                grid = g2 if g2 else [min(grid, key=lambda v: abs(v - fl))]
             best, bestv = cur, risk[kname]
             for v in grid:
                 if v == risk[kname]:

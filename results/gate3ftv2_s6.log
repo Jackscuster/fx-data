@@ -1,0 +1,23 @@
+GATE 3 FINE-TUNE starting 2026-09-06 23:48:29
+  widened risk grid: 363 points per coordinate-descent sweep (was 193, 1.88x)
+  population 5135, banked 0, to fine-tune 570 (shard 6/9)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+    25/570  262.4 s/strategy  | 5110 left -> 372 h -> 2026-09-22
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+    50/570  270.1 s/strategy  | 5085 left -> 382 h -> 2026-09-23
+    75/570  250.4 s/strategy  | 5060 left -> 352 h -> 2026-09-21
+   100/570  255.8 s/strategy  | 5035 left -> 358 h -> 2026-09-22
+   125/570  261.1 s/strategy  | 5010 left -> 363 h -> 2026-09-22
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+   150/570  264.5 s/strategy  | 4985 left -> 366 h -> 2026-09-22

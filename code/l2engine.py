@@ -247,11 +247,20 @@ def run_bars(o, h, l, c, atr,
                 if l1_hit_stop and l1_hit_tp:
                     both_touched += 1
                 if l1_open and l1_hit_stop:
-                    t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = l1_stop
-                    t_r[l1_idx] = ((l1_stop - entry_px) * units_leg) / risk_dollars
+                    # GAP-AWARE FILL. A bar that OPENS below the stop gapped
+                    # through it overnight; the stop price was never available.
+                    # Fill at the open, which is worse. Filling at the stop
+                    # price silently assumes liquidity that did not exist and
+                    # flatters every strategy holding through a gap.
+                    px = o[i] if o[i] < l1_stop else l1_stop
+                    t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = px
+                    t_r[l1_idx] = ((px - entry_px) * units_leg) / risk_dollars
                     t_reason[l1_idx] = STOP
                     l1_open = False
                 elif l1_open and l1_hit_tp:
+                    # A gap ABOVE the target is not banked: a target never
+                    # fills better than its own price. Asymmetric on purpose --
+                    # gaps hurt, they never help.
                     t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = l1_tp
                     t_r[l1_idx] = ((l1_tp - entry_px) * units_leg) / risk_dollars
                     t_reason[l1_idx] = TARGET
@@ -269,8 +278,9 @@ def run_bars(o, h, l, c, atr,
                             frozen_close = cl
                             frozen_atr = a
                 if l2_open and not l2_moved and lo <= l2_stop:
-                    t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = l2_stop
-                    t_r[l2_idx] = ((l2_stop - entry_px) * units_leg) / risk_dollars
+                    px2 = o[i] if o[i] < l2_stop else l2_stop   # gap-aware
+                    t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = px2
+                    t_r[l2_idx] = ((px2 - entry_px) * units_leg) / risk_dollars
                     if l2_phase <= 1:
                         t_reason[l2_idx] = STOP          # still the initial stop
                     elif l2_phase == 2:
@@ -285,11 +295,13 @@ def run_bars(o, h, l, c, atr,
                 if l1_hit_stop and l1_hit_tp:
                     both_touched += 1
                 if l1_open and l1_hit_stop:
-                    t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = l1_stop
-                    t_r[l1_idx] = ((entry_px - l1_stop) * units_leg) / risk_dollars
+                    px = o[i] if o[i] > l1_stop else l1_stop    # gap-aware
+                    t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = px
+                    t_r[l1_idx] = ((entry_px - px) * units_leg) / risk_dollars
                     t_reason[l1_idx] = STOP
                     l1_open = False
                 elif l1_open and l1_hit_tp:
+                    # never better than the target price
                     t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = l1_tp
                     t_r[l1_idx] = ((entry_px - l1_tp) * units_leg) / risk_dollars
                     t_reason[l1_idx] = TARGET
@@ -303,8 +315,9 @@ def run_bars(o, h, l, c, atr,
                             frozen_close = cl
                             frozen_atr = a
                 if l2_open and not l2_moved and hi >= l2_stop:
-                    t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = l2_stop
-                    t_r[l2_idx] = ((entry_px - l2_stop) * units_leg) / risk_dollars
+                    px2 = o[i] if o[i] > l2_stop else l2_stop   # gap-aware
+                    t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = px2
+                    t_r[l2_idx] = ((entry_px - px2) * units_leg) / risk_dollars
                     if l2_phase <= 1:
                         t_reason[l2_idx] = STOP          # still the initial stop
                     elif l2_phase == 2:
@@ -539,7 +552,15 @@ def run_bars(o, h, l, c, atr,
         if plan == 2:
             units_leg = (0.5 * risk_dollars) / stop_dist
             l1_stop = entry_px - want * stop_dist
-            l1_tp = entry_px + want * tp_mult * a
+            # TP_NONE SENTINEL. tp_mult >= 900 means NO TARGET: leg 1 never
+            # takes profit and instead runs on leg 2's BE/arm/trail rules. The
+            # phase machine normally starts when TP1 is hit, so with no TP it is
+            # seeded at entry, with the close and ATR frozen HERE rather than at
+            # a TP1 that will never happen.
+            if tp_mult >= 900.0:
+                l1_tp = entry_px + want * 1.0e9 * a
+            else:
+                l1_tp = entry_px + want * tp_mult * a
             l2_stop = l1_stop
             l1_idx = nt; l2_idx = nt + 1
             t_entry_bar[nt] = i; t_dir[nt] = want; t_leg[nt] = 1
@@ -551,6 +572,10 @@ def run_bars(o, h, l, c, atr,
             t_route[nt] = rt; t_exit_bar[nt] = -1; t_reason[nt] = 0
             nt += 1
             l1_open = True; l2_open = True
+            if tp_mult >= 900.0:
+                l2_phase = 1
+                frozen_close = c[i]
+                frozen_atr = a
         else:
             units_leg = risk_dollars / stop_dist
             l1_stop = entry_px - want * stop_dist
