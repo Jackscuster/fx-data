@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='729dbe4d8b7b';
+const UI_BUILD='55a6adc14f29';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -5020,8 +5020,50 @@ function boot(BUNDLE,root){
     +cards+'</div>';
   }
 
+  // ---- GATE 3, per mode/slice. Loaded once, drawn in whichever slot is open.
+  let G3=null, G3tried=false;
+  function g3Load(){
+   if(G3||G3tried)return; G3tried=true;
+   fetch(bust(tvBase()+'results/gate3_index.json',(BUN.meta&&BUN.meta.built)))
+    .then(r=>r.ok?r.json():null).then(j=>{G3=j;if(j)tvRender();}).catch(()=>{});
+  }
+  function g3Key(){
+   const lab=(MD==='A')?('A-'+MSL):(MD==='B'?'B':('C-'+MSL));
+   return lab+'|'+MSL;
+  }
+  function g3Panel(){
+   if(!G3)return '';
+   const c=(G3.slots||{})[g3Key()];
+   if(!c)return '<div class="panel" style="margin-top:14px"><h3>Gate 3</h3>'
+     +'<div class="note">Not yet examined for this slot. Mode C crossers take the '
+     +'identical exam as weekly batches land.</div></div>';
+   const b=G3.bars||{};
+   const rows=(c.top||[]).map((r,i)=>'<tr><td>'+(i+1)+'</td><td>'+tvRecipe(r)+'</td>'
+     +'<td style="'+cSign(1)+'">'+r.verdict+'</td>'
+     +'<td>'+tvNum(r.n,0)+'</td>'+tdS(r.total_R,2)+tdS(r.expectancy_R,3)
+     +tdS(r.profit_factor,2,1)+tdS(r.sharpe,2)+tdS(r.sortino,2)+tdS(r.calmar,2)
+     +'<td>'+tvNum(100*(r.max_dd_frac||0),1)+'</td>'
+     +'<td>'+tvNum(r.luck_floor_p95,3)+'</td>'+tdS(r.margin_vs_floor_R,3)
+     +'<td>'+tvNum(r.p_value,4)+'</td>'+tdS(r.net_of_structure_R,3)+'</tr>').join('');
+   return '<div class="panel" style="margin-top:14px"><h3>Gate 3 \u2014 '+MD+' \u00b7 '+MSL
+    +'</h3><div class="note"><b>'+c.passed+' PASS</b> \u00b7 '+c.selective
+    +' SELECTIVE \u00b7 '+c.failed+' FAIL, of '+c.total+'. '+c.beats_floor
+    +' beat their own luck floor. Bars: expectancy \u2265'+b.expectancy_R
+    +'R, PF \u2265'+b.profit_factor+', Sharpe \u2265'+b.sharpe+', Sortino \u2265'
+    +b.sortino+', Calmar \u2265'+b.calmar+', max DD \u2264'+(100*b.max_dd_frac)
+    +'% of gross profit. The luck floor is built per strategy from its OWN trades '
+    +'by episode-level sign randomisation \u2014 not a shared floor. Trade count '
+    +'never fails a strategy; a thin passer is labelled SELECTIVE.</div>'
+    +(rows?('<div class="tw" style="overflow-x:auto"><table><thead><tr>'
+      +['#','Recipe','Verdict','n','Total R','Exp','PF','Sharpe','Sortino','Calmar',
+        'maxDD %','Own floor','Margin','p','Net-of-str'].map(h=>'<th>'+h+'</th>').join('')
+      +'</tr></thead><tbody>'+rows+'</tbody></table></div>')
+      :'<div class="note">No passers in this slot.</div>')+'</div>';
+  }
+
   function tvRender(){
-   $('#tvwrap').innerHTML=tvBars()+tvHeadline()+tvBoard()+tvCards()
+   g3Load();
+   $('#tvwrap').innerHTML=tvBars()+tvHeadline()+tvBoard()+g3Panel()+tvCards()
     +'<div id="tvcharts"></div>';
    $('#tvwrap').querySelectorAll('.tvview').forEach(b=>{
     b.onclick=()=>{TVVIEW=b.dataset.v;tvRender();};});
