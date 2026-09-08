@@ -88,3 +88,24 @@ GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
 493 alternates of 2069 finished strategies
 {'MULTI': 286, 'DD_ONLY': 197, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 2}
    150/444  281.0 s/strategy  | 3847 left -> 300 h -> 2026-09-20
+GATE 3 FINE-TUNE starting 2026-09-08 15:12:09
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+Traceback (most recent call last):
+  File "/Users/jackcuster/Documents/fx-data/code/l2gate3ft.py", line 363, in <module>
+    main()
+  File "/Users/jackcuster/Documents/fx-data/code/l2gate3ft.py", line 235, in main
+    P = G3.population()
+  File "/Users/jackcuster/Documents/fx-data/code/l2gate3.py", line 246, in population
+    D = pd.read_csv(p, low_memory=False)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1898, in _make_engine
+    return mapping[engine](f, **self.options)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 93, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+  File "pandas/_libs/parsers.pyx", line 581, in pandas._libs.parsers.TextReader.__cinit__
+pandas.errors.EmptyDataError: No columns to parse from file
