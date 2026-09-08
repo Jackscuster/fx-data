@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);
       screen with a button that re-fetches this file bypassing cache.
       A silent stale UI is the failure that cost an afternoon.
    ------------------------------------------------------------------ */
-const UI_BUILD='55a6adc14f29';
+const UI_BUILD='3bc8ce232e4a';
 const bust=(url,tok)=>url+(url.indexOf('?')<0?'?':'&')+'v='+encodeURIComponent(tok||UI_BUILD);
 function versionCheck(){
  fetch('app_version.json?t='+Date.now(),{cache:'no-store'})
@@ -5062,8 +5062,8 @@ function boot(BUNDLE,root){
   }
 
   function tvRender(){
-   g3Load();
-   $('#tvwrap').innerHTML=tvBars()+tvHeadline()+tvBoard()+g3Panel()+tvCards()
+   g3Load(); teamLoad();
+   $('#tvwrap').innerHTML=tvBars()+tvHeadline()+teamPanel()+tvBoard()+g3Panel()+tvCards()
     +'<div id="tvcharts"></div>';
    $('#tvwrap').querySelectorAll('.tvview').forEach(b=>{
     b.onclick=()=>{TVVIEW=b.dataset.v;tvRender();};});
@@ -5138,6 +5138,50 @@ function boot(BUNDLE,root){
       +TVI[i].file+' ('+e.message+')</span>';});
   }
 
+
+  // ---- TEAM tab data
+  let TEAMKPI=null, TEAMtried=false;
+  function teamLoad(){
+   if(TEAMKPI||TEAMtried)return; TEAMtried=true;
+   fetch(bust(tvBase()+'results/team_kpis_W3ONLY_GATE2.json',(BUN.meta&&BUN.meta.built)))
+    .then(r=>r.ok?r.json():null).then(j=>{TEAMKPI=j;if(j)tvRender();}).catch(()=>{});
+  }
+  function teamPanel(){
+   if(!TEAMKPI)return '';
+   const f=(v,d)=>(v==null||isNaN(v))?'\u2014':Number(v).toFixed(d==null?2:d);
+   const K=['members','scale','binds','total_return_pct','median_year_pct','mean_year_pct',
+            'max_dd_pct','dip95_pct','clustering_ratio','calmar','sortino','sharpe',
+            'profit_factor','expectancy_R','trades','win_rate_pct','avg_win_R','avg_loss_R',
+            'avg_hold_days','profit_concentration_pct','mean_corr','max_corr',
+            'max_positions_open','worst_day_pct','worst_month_pct'];
+   const T=TEAMKPI.team||[];
+   let h='<div class="panel" style="margin-top:14px"><h3>Team \u2014 W3ONLY_GATE2</h3>'
+    +'<div class="note">Built from an empty start on the W3-only clean cut. Budget binds on '
+    +'the WORSE of actual max drawdown and DIP95; clustering ratio is actual \u00f7 DIP95, so '
+    +'below 1 means losses cluster BETTER than a random reordering of the same days.</div>'
+    +'<div class="tw" style="overflow-x:auto"><table><thead><tr><th>metric</th>'
+    +T.map(t=>'<th>'+t.team+'</th>').join('')+'</tr></thead><tbody>';
+   K.forEach(k=>{h+='<tr><td>'+k+'</td>'+T.map(t=>{const v=t[k];
+     return '<td'+(typeof v==='number'?' style="'+cSign(v)+'"':'')+'>'
+       +(typeof v==='number'?f(v,3):(v==null?'\u2014':v))+'</td>';}).join('')+'</tr>';});
+   h+='</tbody></table></div>';
+   const M=(TEAMKPI.members||[]).filter(m=>m.team===(T[0]||{}).team);
+   if(M.length){
+    h+='<h3 style="margin-top:14px">Members \u2014 in the order the search added them</h3>'
+     +'<div class="tw" style="overflow-x:auto"><table><thead><tr>'
+     +['#','vote','src','slice','recipe','n','total R','exp','win%','avg win','avg loss',
+       'PF','Sortino','Calmar','hold (d)','top-5%'].map(x=>'<th>'+x+'</th>').join('')
+     +'</tr></thead><tbody>'
+     +M.map(m=>'<tr><td>'+m.add_order+'</td><td>'+f(m.vote,1)+'</td><td>'+m.src+'</td><td>'
+       +m.slice+'</td><td>'+tvRecipe(m)+'</td><td>'+f(m.trades,0)+'</td>'
+       +tdS(m.total_R,1)+tdS(m.expectancy_R,3)+'<td>'+f(m.win_rate_pct,1)+'</td>'
+       +tdS(m.avg_win_R,2)+tdS(m.avg_loss_R,2)+tdS(m.profit_factor,2,1)
+       +tdS(m.sortino,1)+tdS(m.calmar,1)+'<td>'+f(m.avg_hold_days,1)+'</td>'
+       +'<td>'+f(m.profit_concentration_pct,1)+'</td></tr>').join('')
+     +'</tbody></table></div>';
+   }
+   return h+'</div>';
+  }
 
   let TVPF=null,TVPF13=null,TVPF20=null,TVPFA=null,TVPFAB=null,TVPFG=null,TVPFtried=false;
   function tvPortfolio(){
