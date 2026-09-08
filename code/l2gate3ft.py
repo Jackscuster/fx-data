@@ -161,11 +161,14 @@ def rescore_incumbent(sc, cfg, combo, mode, sname, code, plan):
                                             'trail_mult', 'trail_arm', 'be_pct')}
     except Exception:
         return None
-    a = sc.score(combo, ip, rk, mode, sname, code, plan, ('W2', 'W3'))
-    parts = [a[w] for w in ('W2', 'W3') if a.get(w)]
-    if not parts:
+    # W3 ONLY. Scoring the incumbent's W2 with its ip2 inflates it -- ip2 was
+    # tuned on W1+W2 -- so the candidate, whose W2 is honestly scored under ip1,
+    # was being rejected against a flattered baseline. W3 is clean for both
+    # sides: no tune has seen it. Like-for-like, and honest.
+    a = sc.score(combo, ip, rk, mode, sname, code, plan, ('W3',))
+    g = a.get('W3')
+    if not g:
         return None
-    g = T._agg(np.concatenate([p['_r'] for p in parts]))
     return {k: v for k, v in g.items() if k != '_r'}
 
 
@@ -276,7 +279,15 @@ def main():
             res = T.full_walk(sc, combo, mode, sname, code, plan, cap=6)
             b = res['blind']
             rec['ft_seconds'] = round(time.time() - t1, 1)
-            rec['adopted'] = bool(adopt(b, base))
+            # compare the CANDIDATE'S W3 against the incumbent's W3 -- both
+            # clean, both the same window. Comparing a two-window candidate
+            # against a one-window incumbent would be wrong the other way.
+            cw3 = res.get('w3')
+            cw3 = ({k: v for k, v in cw3.items() if k != '_r'} if cw3 else None)
+            rec['adopted'] = bool(adopt(cw3, base))
+            rec['compare_basis'] = 'W3ONLY'
+            for k in ('total_R', 'max_dd_R', 'sortino', 'sharpe', 'n'):
+                rec['cw3_' + k] = (cw3 or {}).get(k)
             for k in ('total_R', 'expectancy_R', 'sortino', 'sharpe', 'calmar',
                       'profit_factor', 'ulcer_R', 'max_dd_R', 'win_rate',
                       'avg_win_R', 'avg_loss_R', 'win_loss_ratio',

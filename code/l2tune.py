@@ -567,7 +567,7 @@ def full_walk(sc, combo, mode, sname, code, plan, cap=None, staged=False,
         blind['n_blind'] = blind.pop('n')
         blind['n_w2'] = (w2['n'] if w2 else 0)
         blind['n_w3'] = (w3['n'] if w3 else 0)
-    return dict(blind=blind, ip1=ip1, rk1=rk1, ip2=ip2, rk2=rk2,
+    return dict(blind=blind, w2=w2, w3=w3, ip1=ip1, rk1=rk1, ip2=ip2, rk2=rk2,
                 stage1=i1, stage2=i2)
 
 

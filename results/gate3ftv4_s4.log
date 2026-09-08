@@ -16,3 +16,10 @@ GATE 3 FINE-TUNE starting 2026-09-07 12:11:08
     25/571  348.1 s/strategy  | 5110 left -> 494 h -> 2026-09-28
     50/571  279.8 s/strategy  | 5085 left -> 395 h -> 2026-09-24
     75/571  271.9 s/strategy  | 5060 left -> 382 h -> 2026-09-23
+GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 1138, to fine-tune 444 (shard 4/9)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st

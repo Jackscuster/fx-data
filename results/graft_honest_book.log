@@ -1,0 +1,28 @@
+ip1 available for 15 of 15
+  members            15
+  total_R_pct        57.806
+  max_dd_pct         5.348
+  dip95_pct          3.6
+  worst_day_pct      0.821
+  median_year_pct    4.598
+  mean_year_pct      5.255
+  worst_year_pct     -2.872
+  best_year_pct      16.275
+  sortino            7.238
+  calmar             10.809
+  scale              1.369
+  basis              W2(ip1)+W3(ip2) HONEST STITCH
+
+by year:
+2011     0.23
+2012     2.32
+2013     2.70
+2014    -2.87
+2015    16.27
+2016     5.01
+2017     6.39
+2018    12.29
+2019     4.60
+2020    10.06
+2021     0.80
+DONE in 0.6 min
