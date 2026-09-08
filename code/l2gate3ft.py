@@ -277,18 +277,28 @@ def main():
             b = res['blind']
             rec['ft_seconds'] = round(time.time() - t1, 1)
             rec['adopted'] = bool(adopt(b, base))
-            for k in ('total_R', 'expectancy_R', 'sortino', 'sharpe',
-                      'max_dd_R', 'win_rate', 'n'):
+            for k in ('total_R', 'expectancy_R', 'sortino', 'sharpe', 'calmar',
+                      'profit_factor', 'ulcer_R', 'max_dd_R', 'win_rate',
+                      'avg_win_R', 'avg_loss_R', 'win_loss_ratio',
+                      'profit_concentration', 'avg_hold_bars', 'n'):
                 rec['base_' + k] = (base or {}).get(k)
             rec['base_stop'] = cfg.get('risk_atr_mult')
             rec['base_tp'] = cfg.get('risk_tp_mult')
             for k in ('total_R', 'expectancy_R', 'profit_factor', 'sharpe',
                       'sortino', 'calmar', 'max_dd_R', 'ulcer_R', 'win_rate',
-                      'n_blind', 'n_w2', 'n_w3'):
+                      'avg_win_R', 'avg_loss_R', 'win_loss_ratio',
+                      'profit_concentration', 'avg_hold_bars', 'n_blind', 'n_w2', 'n_w3'):
                 rec['ft_' + k] = (b or {}).get(k)
             for k, v in (res['rk2'] or {}).items():
                 rec['ft_risk_' + k] = v
             rec['ft_ip2'] = json.dumps(res['ip2'], sort_keys=True)
+            # BANK THE FIRST TUNE TOO. The stitched blind is W2 under ip1/rk1
+            # plus W3 under ip2/rk2, so without ip1/rk1 the candidate's score
+            # cannot be reconstructed later -- re-scoring both windows with ip2
+            # is contaminated on W2, which is exactly the mistake the first
+            # back-fill made.
+            rec['ft_ip1'] = json.dumps(res.get('ip1'), sort_keys=True)
+            rec['ft_rk1'] = json.dumps(res.get('rk1'), sort_keys=True)
             rec['variants'] = int((res.get('stage1') or {}).get('evals', 0)
                                   + (res.get('stage2') or {}).get('evals', 0))
             rec['prev_total_R'] = old['total_R']

@@ -214,7 +214,7 @@ class SeriesCache:
 # ==========================================================================
 # scoring one configuration
 # ==========================================================================
-def _agg(r):
+def _agg(r, holds=None):
     n = len(r)
     if n == 0:
         return None
@@ -239,7 +239,24 @@ def _agg(r):
     # Ulcer index in R: the root-mean-square drawdown, which unlike max DD is
     # not decided by one bad day. Diagnostic; no floor is set on it.
     ulcer = float(np.sqrt(np.mean(ddv ** 2)))
+    wins_ = r[r > 0]; losses_ = r[r < 0]
+    # profit concentration: share of GROSS PROFIT from the top 5% of winners.
+    # A book whose profit is a handful of trades is fragile in a way no ratio
+    # above shows, and no ratio above would reveal it.
+    conc = np.nan
+    if len(wins_):
+        w_ = np.sort(wins_)[::-1]
+        k_ = max(1, int(np.ceil(0.05 * len(w_))))
+        conc = float(100.0 * w_[:k_].sum() / w_.sum()) if w_.sum() > 0 else np.nan
     return dict(n=n, expectancy_R=mean, total_R=tot, profit_factor=pf,
+                avg_hold_bars=(float(np.mean(holds)) if holds is not None
+                               and len(holds) else np.nan),
+                avg_win_R=(float(wins_.mean()) if len(wins_) else np.nan),
+                avg_loss_R=(float(losses_.mean()) if len(losses_) else np.nan),
+                win_loss_ratio=(float(wins_.mean() / abs(losses_.mean()))
+                                if len(wins_) and len(losses_) and losses_.mean() != 0
+                                else np.nan),
+                profit_concentration=conc,
                 win_rate=float((r > 0).mean()),
                 sharpe=(mean / sd * np.sqrt(252)) if sd > 0 else 0.0,
                 sortino=(mean / dn * np.sqrt(252)) if dn > 0 else np.nan,
@@ -288,6 +305,7 @@ class Scorer:
         c1, c2, vol, base, ex = combo
         kwm = S.mode_kw(mode)
         out = {w: [] for w in windows}
+        hold = {w: [] for w in windows}
         alen = int(risk['atr_len'])
         t1 = L.KIND[c1] == 'TERNARY'
         t2 = L.KIND[c2] == 'TERNARY'
@@ -349,7 +367,9 @@ class Scorer:
                 mm = m & (eb >= a) & (eb < z)
                 if mm.any():
                     out[w].append(r[mm])
-        return {w: (_agg(np.concatenate(v)) if v else None)
+                    hold[w].append((b['exit_bar'][:nt] - eb)[mm].astype(float))
+        return {w: (_agg(np.concatenate(v),
+                         np.concatenate(hold[w]) if hold[w] else None) if v else None)
                 for w, v in out.items()}
 
 
@@ -537,6 +557,12 @@ def full_walk(sc, combo, mode, sname, code, plan, cap=None, staged=False,
         # and PF is not a Sharpe or a PF of anything. Mode B used the averaged
         # form; A and C use the stitched one, and MANIFEST.md records it.
         st = _agg(np.concatenate([p['_r'] for p in parts]))
+        # avg hold is a mean of means across the two blind windows, weighted by
+        # trade count -- the stitched _agg cannot see holds, which live per window
+        _hn = [(p.get('avg_hold_bars'), p['n']) for p in parts
+               if p.get('avg_hold_bars') == p.get('avg_hold_bars')]
+        if _hn:
+            st['avg_hold_bars'] = float(sum(h * n for h, n in _hn) / sum(n for _, n in _hn))
         blind = {k: v for k, v in st.items() if k != '_r'}
         blind['n_blind'] = blind.pop('n')
         blind['n_w2'] = (w2['n'] if w2 else 0)
