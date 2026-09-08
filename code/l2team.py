@@ -72,16 +72,32 @@ def score_team(M, weights, years, dip_budget, day_budget, rng):
     if not np.any(d):
         return None
     D = dip95(d, rng=rng)
+    # ACTUAL max drawdown, in the order the days really happened.
+    eq = np.cumsum(d)
+    actual_dd = float(np.max(np.maximum.accumulate(eq) - eq))
+    # THE BUDGET BINDS ON THE WORSE OF THE TWO. DIP95 shuffles the day order,
+    # which destroys serial correlation -- so it measures the drawdown of a
+    # RANDOM arrangement of the same days, not the one that happened. The graft's
+    # honest book draws 5.35% where its DIP95 is 3.60%: losses cluster in time
+    # half again worse than the shuffle assumes. Sizing on DIP95 alone would
+    # knowingly under-size that risk.
+    risk = max(actual_dd, D)
     wd = float(-d.min()) if d.min() < 0 else 1e-9
-    s_dip = dip_budget / D if D > 0 else np.inf
+    s_risk = dip_budget / risk if risk > 0 else np.inf
     s_day = day_budget / wd if wd > 0 else np.inf
-    scale = float(min(s_dip, s_day))
+    scale = float(min(s_risk, s_day))
+    if s_day < s_risk:
+        binds = 'worst day'
+    else:
+        binds = 'actual maxDD' if actual_dd >= D else 'DIP95'
     yr = pd.Series(d * scale).groupby(years).sum()
     return dict(score=float(yr.median()), mean_year=float(yr.mean()),
                 worst_year=float(yr.min()), best_year=float(yr.max()),
                 n_years=int(len(yr)), dip95=float(D * scale),
-                worst_day=float(wd * scale), scale=scale,
-                binds='DIP95' if s_dip <= s_day else 'worst day')
+                actual_max_dd=float(actual_dd * scale),
+                # how much worse than a random reordering the clustering is
+                clustering_ratio=float(actual_dd / D) if D > 0 else np.nan,
+                worst_day=float(wd * scale), scale=scale, binds=binds)
 
 
 def load_candidates():
@@ -349,7 +365,10 @@ def main():
         L.append('| average year | %.2f%% |' % r['mean_year'])
         L.append('| worst year | %.2f%% |' % r['worst_year'])
         L.append('| best year | %.2f%% |' % r['best_year'])
-        L.append('| DIP95 | %.2f%% |' % r['dip95'])
+        L.append('| DIP95 (shuffled day order) | %.2f%% |' % r['dip95'])
+        L.append('| actual max drawdown | **%.2f%%** |' % r['actual_max_dd'])
+        L.append('| clustering ratio (actual / DIP95) | **%.2f** |'
+                 % r['clustering_ratio'])
         L.append('| worst day | %.2f%% |' % r['worst_day'])
         L.append('| binding budget | %s |' % r['binds'])
         L.append('| members | %d |' % len(o['members']))

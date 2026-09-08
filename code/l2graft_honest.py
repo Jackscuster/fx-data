@@ -109,7 +109,17 @@ def main():
     M = pd.DataFrame(series).fillna(0.0).sort_index()
     daily = M.mean(axis=1)                        # equal weight
     D = dip95(daily.values, rng)
-    scale = DIP_BUDGET / D if D > 0 else np.nan
+    eq0 = daily.cumsum()
+    actual0 = float((eq0.cummax() - eq0).max())
+    # bind on the WORSE of actual max drawdown and DIP95 -- the shuffle assumes
+    # a random day order and so understates clustered losses
+    risk0 = max(actual0, D)
+    wd0 = float(-daily.min()) if daily.min() < 0 else 1e-9
+    s_risk = DIP_BUDGET / risk0 if risk0 > 0 else np.nan
+    s_day = 3.6 / wd0 if wd0 > 0 else np.nan
+    scale = float(min(s_risk, s_day))
+    binds = ('worst day' if s_day < s_risk else
+             ('actual maxDD' if actual0 >= D else 'DIP95'))
     d = daily * scale
     eq = d.cumsum(); dd = float((eq.cummax() - eq).max())
     yr = d.groupby(d.index.year).sum()
@@ -121,6 +131,8 @@ def main():
                worst_year_pct=float(yr.min()), best_year_pct=float(yr.max()),
                sortino=float(d.mean() / neg.std(ddof=1) * np.sqrt(252)) if len(neg) > 1 else np.nan,
                calmar=float(d.sum() / dd) if dd > 0 else np.nan,
+               clustering_ratio=float(actual0 / D) if D > 0 else np.nan,
+               binds=binds,
                scale=scale, basis='W2(ip1)+W3(ip2) HONEST STITCH')
     pd.DataFrame([res]).to_csv(os.path.join(ROOTOUT, 'graft15_honest_book.csv'), index=False)
     yr.rename('R_pct').to_csv(os.path.join(ROOTOUT, 'graft15_honest_by_year.csv'))
