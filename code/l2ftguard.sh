@@ -16,11 +16,16 @@
 LOW=${1:-400}; HIGH=${2:-700}
 LOG=/Users/jackcuster/Documents/fx-data/results/ftguard.log
 cd /Users/jackcuster/Documents/fx-data
-# SINGLE INSTANCE without flock, which macOS does not ship. Count our own
-# siblings by name; if another is already running, exit quietly.
-me=$$
-others=$(pgrep -f "l2ftguard.sh" | grep -v "^${me}$" | wc -l | tr -d ' ')
-[ "$others" -gt 0 ] && exit 0
+# SINGLE INSTANCE via a pidfile. macOS ships no flock, and counting siblings by
+# name was worse than useless: pgrep -f also matches the nohup/setsid wrapper
+# that launched this very process, so the guard saw a "sibling", exited
+# immediately, and left the shards unprotected while reporting success.
+PIDF=/tmp/.l2ftguard.pid
+if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then
+  exit 0
+fi
+echo $$ > "$PIDF"
+trap 'rm -f "$PIDF"' EXIT
 say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
 say "armed: low=${LOW}M high=${HIGH}M"
 stopped=""
