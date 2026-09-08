@@ -1,0 +1,21 @@
+ip1 recovery (all): 1643 strategies, 7 already banked
+Traceback (most recent call last):
+  File "/Users/jackcuster/Documents/fx-data/code/l2recoverip1.py", line 89, in <module>
+    main()
+  File "/Users/jackcuster/Documents/fx-data/code/l2recoverip1.py", line 62, in main
+    sc = T.Scorer()
+  File "/Users/jackcuster/Documents/fx-data/code/l2tune.py", line 276, in __init__
+    d = S.load_pair(p)
+  File "/Users/jackcuster/Documents/fx-data/code/l2sweep.py", line 180, in load_pair
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1898, in _make_engine
+    return mapping[engine](f, **self.options)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 93, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+  File "pandas/_libs/parsers.pyx", line 581, in pandas._libs.parsers.TextReader.__cinit__
+pandas.errors.EmptyDataError: No columns to parse from file

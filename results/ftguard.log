@@ -15,3 +15,6 @@
 2026-09-08 00:41:35 stopped shards: 6 ; live now 8
 2026-09-08 01:07:37 swap free 802M > 700M -- restarting shard 6 (resumes from bank)
 2026-09-08 10:31:32 armed: low=400M high=700M
+2026-09-08 15:10:08 swap free 0M < 400M -- stopping shard 5 (pid 81109)
+2026-09-08 15:11:03 stopped shards: 5 ; live now 8
+2026-09-08 15:12:03 swap free 1661M > 700M -- restarting shard 5 (resumes from bank)
