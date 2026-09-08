@@ -200,3 +200,44 @@ questions, in order of value:
    10 clear effect size. Chop is panel-wide and synchronised; trend is idiosyncratic per
    pair. An 85% cross-pair agreement bar may simply be the wrong bar for trend.
 5. **Crisis as a scored third target.** Signals for it exist and were never scored.
+
+## OPEN — Layer 1 and Layer 2 do not share a bar
+
+**Blocking: must be settled before Layer 3 routing is built.**
+
+Layer 1 (regime states, crisis flags, low-vol flags) is computed on
+`data/px28.csv` — the Fed H.10 **noon New York** series. Layer 2 (every gate 1-3
+strategy) runs on `data/oanda_ohlc/*_mid.csv` — OANDA daily mid aligned to
+**17:00 New York**. The two layers are five hours apart on every single bar.
+
+Routing a strategy on a regime read taken five hours earlier is not obviously
+wrong, but it is not obviously right either, and nobody chose it — it is an
+artefact of Layer 1 predating the Layer 2 data build. Before routing is built,
+Layer 1 must be recomputed on the OANDA 5pm series so the regime and the
+strategies it routes share one bar.
+
+### Work involved
+
+Mechanical rather than conceptual. `build.py` produces px28 from H.10; the Layer
+1 chain (`sig2..sig5`, `sc2..sc5`, `measures.py`, `shapescore.py`,
+`twoscores.py`, `export.py`, `appfeed.py`) reads it. The change is a source
+swap plus a full rescore. Every scorer is resumable and idempotent but keyed on
+existing `.npz` files, so a source change means **discarding results/scores*/ and
+rescoring from cold — roughly 40 minutes per the documented cold-build time**,
+plus the analysis chain on top. Call it half a day of machine time, no new logic.
+
+### The history question, which is the real cost
+
+**H.10 reaches 1999. OANDA daily reaches 2002-06; OANDA hourly only 2004-05.**
+Moving Layer 1 to the OANDA series **loses 1999-2002 entirely** — three years,
+including the euro's first years and the 2000-2002 dollar cycle.
+
+Layer 1's split is IS 1999-2015 / OOS 2016-2026, so this removes ~18% of the
+in-sample window. Whether any Layer 1 survivor **depends** on that period is
+NOT yet known and must be measured before the swap, not after: re-run the Layer
+1 gates restricted to 2002+ and compare the survivor set. If survivors are
+stable, the swap is cheap. If the pre-2002 years are carrying a survivor, the
+choice becomes explicit — a shorter shared-bar history against a longer
+mismatched one — and that is Jack's call, not a silent consequence of a refactor.
+
+**Do not start this yet.**
