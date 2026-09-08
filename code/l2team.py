@@ -32,6 +32,24 @@ import l2deliver as DL
 import l2trades as TR
 import l2sweep as S
 
+
+# WHICH BLIND WINDOWS THIS PATH MAY READ.
+#
+# Default W3 ONLY. The configs handed to these functions carry ip2, the SECOND
+# tune, and ip2 was tuned on W1+W2 -- so reading W2 with them scores a window the
+# parameters have already seen. Measured on the graft: W2 total R is 452.0 under
+# ip2 against 92.4 under ip1, +389%.
+#
+# FX_BLIND_WINDOWS='W2,W3' is allowed only when the caller supplies ip1 for W2
+# and sets FX_HAVE_IP1=1. Setting it without ip1 raises rather than returning a
+# quietly inflated number.
+BLIND_WINDOWS = tuple(os.environ.get('FX_BLIND_WINDOWS', 'W3').split(','))
+if 'W2' in BLIND_WINDOWS and os.environ.get('FX_HAVE_IP1') != '1':
+    raise RuntimeError(
+        'CONTAMINATION GUARD: FX_BLIND_WINDOWS includes W2 but FX_HAVE_IP1 is '
+        'not set. W2 must be scored with the FIRST tune (ip1); these configs '
+        'carry ip2, tuned on W1+W2. Use W3 only, or supply ip1 deliberately.')
+
 N_SHUF = 10000
 SEED = 20260909
 R_PCT = 1.0                      # 1R = 1% of equity
@@ -153,7 +171,7 @@ def _equity_series(cfg, wins):
             eb, xb = int(tr['entry_bar'][j]), int(tr['exit_bar'][j])
             if xb < 0 or reg[eb] != code:
                 continue
-            if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in ('W2', 'W3')):
+            if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in BLIND_WINDOWS):
                 continue
             ent = float(tr['entry_px'][j]); u = float(tr['units'][j])
             sgn = float(tr['dir'][j]); tot = float(tr['r'][j])
@@ -294,7 +312,9 @@ def main():
 
     log = []
     out = {}
-    for tag, dipb, dayb in (('team1', 3.6, 3.6), ('team2', 5.4, 3.6)):
+    LBL = os.environ.get('TEAM_LABEL', '')
+    for tag0, dipb, dayb in (('team1', 3.6, 3.6), ('team2', 5.4, 3.6)):
+        tag = tag0 + LBL
         # first member = best score standing alone at THIS budget, so the two
         # teams may legitimately start from different strategies
         best_solo, best_c = None, None
@@ -344,7 +364,7 @@ def main():
                if abs(Cm.loc[a, b]) > 0.90]
         out[tag]['corr_above_090'] = hot
         Cm.round(4).to_csv(os.path.join(ROOTOUT, '%s_corr.csv' % tag))
-    pd.DataFrame(log).to_csv(os.path.join(ROOTOUT, 'team_build_log.csv'), index=False)
+    pd.DataFrame(log).to_csv(os.path.join(ROOTOUT, 'team_build_log%s.csv' % LBL), index=False)
 
     L = ['# Trading teams — built from the costed gate 3 cut\n',
          'Sizing uses the EQUITY series: close-to-close change with every open',
@@ -356,7 +376,7 @@ def main():
          'a close-to-close number, so the true worst moment inside a day is worse',
          'than anything below. The live limit needs margin on top of the 3.6%',
          'budget; 3.6% is not a level to trade right up to.\n']
-    for tag in ('team1', 'team2'):
+    for tag in sorted(out):
         o = out[tag]; r = o['res']
         L.append('## %s (DIP95 budget %.1f%%, worst-day budget %.1f%%)\n'
                  % (tag.upper(), o['dip_budget'], o['day_budget']))
@@ -379,11 +399,11 @@ def main():
             L.append('| DIP95 on CLOSED trades (not used for sizing) | %.2f%% |' % cd)
             L.append('| gap, equity vs closed | **%+.2f%%** |' % (r['dip95'] - cd))
         L.append('| pairs correlated > 0.90 | %d |\n' % len(o['corr_above_090']))
-    open(os.path.join(ROOTOUT, 'team_summary.md'), 'w').write('\n'.join(L) + '\n')
+    open(os.path.join(ROOTOUT, 'team_summary%s.md' % LBL), 'w').write('\n'.join(L) + '\n')
     json.dump({k: dict(members=v['members'], votes=v['votes'], **v['res'],
                        tried=v['tried'], corr_above_090=v['corr_above_090'])
                for k, v in out.items()},
-              open(os.path.join(ROOTOUT, 'team_index.json'), 'w'), indent=1)
+              open(os.path.join(ROOTOUT, 'team_index%s.json' % LBL), 'w'), indent=1)
     print('\nDONE in %.1f min' % ((time.time() - t0) / 60.0), flush=True)
 
 
