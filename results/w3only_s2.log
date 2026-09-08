@@ -1,0 +1,3 @@
+W3ONLY re-score: 1733 crossers to do (shard 2/3)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
