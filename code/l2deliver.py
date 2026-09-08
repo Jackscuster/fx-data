@@ -24,6 +24,24 @@ import json, glob
 import numpy as np, pandas as pd
 import l2trades as TR, l2crisis as C, l2sweep as S
 
+
+# WHICH BLIND WINDOWS THIS PATH MAY READ.
+#
+# Default W3 ONLY. The configs handed to these functions carry ip2, the SECOND
+# tune, and ip2 was tuned on W1+W2 -- so reading W2 with them scores a window the
+# parameters have already seen. Measured on the graft: W2 total R is 452.0 under
+# ip2 against 92.4 under ip1, +389%.
+#
+# FX_BLIND_WINDOWS='W2,W3' is allowed only when the caller supplies ip1 for W2
+# and sets FX_HAVE_IP1=1. Setting it without ip1 raises rather than returning a
+# quietly inflated number.
+BLIND_WINDOWS = tuple(os.environ.get('FX_BLIND_WINDOWS', 'W3').split(','))
+if 'W2' in BLIND_WINDOWS and os.environ.get('FX_HAVE_IP1') != '1':
+    raise RuntimeError(
+        'CONTAMINATION GUARD: FX_BLIND_WINDOWS includes W2 but FX_HAVE_IP1 is '
+        'not set. W2 must be scored with the FIRST tune (ip1); these configs '
+        'carry ip2, tuned on W1+W2. Use W3 only, or supply ip1 deliberately.')
+
 RISK_FRac = 0.02
 
 
@@ -49,7 +67,7 @@ def blind_trades(cfg, wins):
             eb, xb = int(tr['entry_bar'][j]), int(tr['exit_bar'][j])
             if xb < 0 or reg[eb] != code:
                 continue
-            if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in ('W2', 'W3')):
+            if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in BLIND_WINDOWS):
                 continue
             out.append(dict(pair=p, entry=d[eb], exit=d[xb], R=float(tr['r'][j]),
                             crisis=bool(C.flag(d[eb], d[xb], p, wins))))
@@ -112,7 +130,7 @@ def bundle(cfg, rank, wins):
         eb, xb = int(tr['entry_bar'][j]), int(tr['exit_bar'][j])
         if xb < 0 or reg[eb] != code:
             continue
-        if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in ('W2', 'W3')):
+        if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in BLIND_WINDOWS):
             continue
         dirn = int(tr['dir'][j])
         sp = TR.stop_path(r, eb, xb, dirn, float(tr['entry_px'][j]), risk, atr, c, h, l)
