@@ -241,3 +241,45 @@ choice becomes explicit — a shorter shared-bar history against a longer
 mismatched one — and that is Jack's call, not a silent consequence of a refactor.
 
 **Do not start this yet.**
+
+## OPEN — W2 CONTAMINATION: the FULLSTITCH rebuild (hard follow-up)
+
+**Found 2026-09-08. Everything downstream of gate 2 scored W2 with `ip2`.**
+
+The walk-forward stitch is W2 under the FIRST tune (`ip1`) and W3 under the
+second (`ip2`). `ip2` was tuned on W1+W2. `l2deliver.blind_trades` and
+`l2team._equity_series` take trades from W2 **and** W3 using the gate 2 `cfg`,
+whose settings are `ip2` — so every W2 number in the leaderboards, the co-equal
+ranking, the graft, the portfolio previews and the gate 3 cut was measured with
+parameters that had already seen that window.
+
+**Measured on the eight graft members that do have `ip1`: W2 total R is 452.0
+under `ip2` against 92.4 under `ip1` — +389%.** Trade counts differ too, so it is
+not a scaling artefact: `ip2` selects different trades.
+
+### Done now (W3ONLY)
+W3-only re-score under `ip2`, which no tune has seen. Half the blind sample, all
+honest. Every output labelled `W3ONLY`.
+
+### The follow-up, which is NOT done
+1. **Recover `ip1` for all B-trend crossers** — mode B's trend slice never
+   banked it (A and C do; C banks it on all 7,472 rows). ~1,650 strategies at
+   ~100 s each on one core, roughly **10 h**. `code/l2recoverip1.py --which all`.
+2. **Full W2(`ip1`)+W3(`ip2`) stitch re-score** for every crosser in every mode
+   and slice, cost-charged.
+3. **Rebuild** leaderboards, co-equal ranking and the gate 3 cut from the full
+   stitch, labelled `FULLSTITCH`.
+4. **Re-run the adoption evaluation** for every finished fine-tune strategy
+   against a clean incumbent.
+5. **Re-run the team builder and agreement study** on the full stitch and report
+   every roster difference against the W3-only team.
+6. **Mode C**: banks `ip1` already, so no recovery is needed — but its 299
+   finished chunks were scored through the same contaminated path and are marked
+   for clean re-scoring when C resumes.
+
+**Gate 2's pass bars are ABSOLUTE** (expectancy 0.08, PF 1.25, Sharpe 0.5,
+Sortino 0.7, Calmar 0.6, max DD 20%), not top-N or percentile, so nothing was
+displaced by an inflated neighbour and the crosser set is too LARGE, not too
+small. Contamination is not strictly monotonic per combination, so a small
+number of near-misses could still flip; the FULLSTITCH re-score should include
+combinations that failed the label narrowly.
