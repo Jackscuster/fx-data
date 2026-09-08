@@ -188,45 +188,96 @@ def _equity_series(cfg, wins):
     return pd.Series(daily).sort_index() if daily else pd.Series(dtype=float)
 
 
-def build_matrix(cands, mode='equity'):
+def _one_series(args):
+    """One candidate's daily series. Module-level so it pickles to a worker."""
+    r, mode = args
+    wins = C.windows()
+    if mode == 'closed':
+        T = DL.blind_trades(r, wins)
+        if not len(T):
+            return r['cand'], None
+        return r['cand'], T.groupby(pd.to_datetime(T.exit).dt.normalize()).R.sum()
+    s = _equity_series(r, wins)
+    return r['cand'], (s if len(s) else None)
+
+
+def build_matrix(cands, mode='equity', jobs=1):
     """days x candidates of daily R.
 
     mode='equity'  close-to-close change with open positions marked to market
-    mode='closed'  the old behaviour: each trade booked on its exit date
-    Both are built; the equity one drives sizing, the closed one is reported
-    beside it so the gap is visible.
+    mode='closed'  each trade booked on its exit date
+
+    PARALLEL ACROSS CANDIDATES. Each candidate runs the engine over 28 pairs
+    independently of every other, so this is the one stage where extra cores
+    buy time proportionally. It was the single-threaded bottleneck: ~25 minutes
+    per pass over 254 candidates.
+
+    The CLOSED matrix is no longer built for the whole field. It exists only to
+    report the DIP95 gap on the FINAL rosters, so building it for 254 candidates
+    doubled the slowest stage to produce a number used for a dozen. Callers pass
+    the finished roster instead.
     """
-    wins = C.windows()
-    series = {}
-    for r in cands.to_dict('records'):
-        if mode == 'closed':
-            T = DL.blind_trades(r, wins)
-            if not len(T):
-                continue
-            s = T.groupby(pd.to_datetime(T.exit).dt.normalize()).R.sum()
-        else:
-            s = _equity_series(r, wins)
-            if not len(s):
-                continue
-        series[r['cand']] = s
+    args = [(r, mode) for r in cands.to_dict('records')]
+    if jobs > 1 and len(args) > 8:
+        import multiprocessing as mp
+        with mp.Pool(jobs) as pool:
+            got = pool.map(_one_series, args, chunksize=4)
+    else:
+        got = [_one_series(a) for a in args]
+    series = {k: v for k, v in got if v is not None}
     if not series:
         return None, []
     M = pd.DataFrame(series).fillna(0.0).sort_index()
     return M, list(M.columns)
 
 
-def greedy(M, cols, core, dip_budget, day_budget, log, tag, rng):
-    years = M.index.year.values
-    A = M.values
+_POOL = None
+
+
+def _trial(args):
+    """One candidate trial, run in a worker. Module-level so it pickles."""
+    members, votes, dipb, dayb, seed = args
+    w = np.zeros(len(_G['cols']))
+    for c in members:
+        w[_G['idx'][c]] = votes[c]
+    return score_team(_G['A'], w, _G['years'], dipb, dayb,
+                      np.random.default_rng(seed))
+
+
+_G = {}
+
+
+def _init(A, cols, years):
+    _G['A'] = A; _G['cols'] = cols; _G['years'] = years
+    _G['idx'] = {c: i for i, c in enumerate(cols)}
+
+
+def greedy(A, cols, core, dip_budget, day_budget, log, tag, rng, years, jobs=1):
+    """A is already M.values; `years` is passed in rather than re-derived, since
+    an ndarray has no DatetimeIndex to take them from."""
     idx = {c: i for i, c in enumerate(cols)}
     team = list(core)
     votes = {c: 1.0 for c in team}
+
+    _init(A, cols, years)
 
     def sc(members, vd):
         w = np.zeros(len(cols))
         for c in members:
             w[idx[c]] = vd[c]
         return score_team(A, w, years, dip_budget, day_budget, rng)
+
+    def sc_many(jobs_list):
+        """Trials within a round are independent, so they run in parallel. The
+        ROUNDS are sequential -- each depends on the previous winner -- so this
+        is the only place parallelism is available."""
+        args = [(m, v, dip_budget, day_budget, SEED + i)
+                for i, (m, v) in enumerate(jobs_list)]
+        if jobs <= 1 or len(args) < 8:
+            return [_trial(a) for a in args]
+        import multiprocessing as mp
+        with mp.Pool(jobs, initializer=_init, initargs=(A, cols, years)) as pool:
+            return pool.map(_trial, args, chunksize=8)
 
     cur = sc(team, votes)
     log.append(dict(team=tag, step='core', candidate='', vote='', kept=True,
@@ -237,19 +288,21 @@ def greedy(M, cols, core, dip_budget, day_budget, log, tag, rng):
     while True:
         best, bestc, bestv = cur, None, None
         keys = {c.split('::')[0] for c in team}
-        for c in cols:
-            if c in team or c.split('::')[0] in keys:
-                continue          # at most one variant of a strategy on a team
-            for v in (1.0, 0.5):
-                tried += 1
-                vd = dict(votes); vd[c] = v
-                s = sc(team + [c], vd)
-                keep = s is not None and (best is None or s['score'] > best['score'])
-                log.append(dict(team=tag, step='add', candidate=c, vote=v,
-                                kept=False, score=None if s is None else s['score'],
-                                members=len(team) + 1))
-                if keep:
-                    best, bestc, bestv = s, c, v
+        cand = [(c, v) for c in cols
+                if c not in team and c.split('::')[0] not in keys
+                for v in (1.0, 0.5)]
+        jobs_list = [(team + [c], dict(votes, **{c: v})) for c, v in cand]
+        results = sc_many(jobs_list)
+        tried += len(cand)
+        for (c, v), s in zip(cand, results):
+            log.append(dict(team=tag, step='add', candidate=c, vote=v,
+                            kept=False, score=None if s is None else s['score'],
+                            members=len(team) + 1))
+            if s is not None and (best is None or s['score'] > best['score']):
+                best, bestc, bestv = s, c, v
+        print('    %s round: %d trials, best %.3f%%, members %d'
+              % (tag, len(cand), (best or {}).get('score', float('nan')), len(team)),
+              flush=True)
         if bestc is None:
             break
         team.append(bestc); votes[bestc] = bestv; cur = best
@@ -280,10 +333,14 @@ def main():
     rng = np.random.default_rng(SEED)
     cands = load_candidates()
     print('candidates (passers incl. alternates): %d' % len(cands), flush=True)
-    M, cols = build_matrix(cands, mode='equity')
+    JOBS = int(os.environ.get('TEAM_JOBS', '4'))
+    t_m = time.time()
+    M, cols = build_matrix(cands, mode='equity', jobs=JOBS)
     if M is None:
         raise SystemExit('no candidate return series')
-    Mc, cols_c = build_matrix(cands, mode='closed')   # reported, never sizes
+    print('equity matrix: %d days x %d candidates in %.1f min'
+          % (M.shape[0], M.shape[1], (time.time() - t_m) / 60), flush=True)
+    Mc, cols_c = None, []          # built later, for the final rosters only
     print('return matrix: %d days x %d candidates' % M.shape, flush=True)
     # timing probe on one scoring call
     tp = time.time()
@@ -329,11 +386,16 @@ def main():
             print('%s: no scoreable candidate' % tag, flush=True); continue
         print('%s seed: %s alone scores %.2f%%' % (tag, best_c, best_solo['score']), flush=True)
         core = [best_c]
-        team, votes, res, tried = greedy(M.values, cols, core, dipb, dayb, log, tag, rng)
+        team, votes, res, tried = greedy(M.values, cols, core, dipb, dayb, log,
+                                         tag, rng, years0,
+                                         jobs=int(os.environ.get('TEAM_JOBS', '4')))
         # the same roster and votes, measured on CLOSED trades, for comparison
         dip_closed = None
         try:
-            common = [c for c in team if c in cols_c]
+            # closed-trade matrix for THIS roster only
+            Mc, cols_c = build_matrix(cands[cands.cand.isin(team)],
+                                      mode='closed', jobs=JOBS)
+            common = [c for c in team if c in (cols_c or [])]
             if common:
                 wv = np.zeros(len(cols_c))
                 for c in common:
