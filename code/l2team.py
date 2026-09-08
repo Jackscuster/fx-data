@@ -261,16 +261,38 @@ def main():
     print('estimated: ~%d trials/round x 2 teams -> roughly %.1f h'
           % (2 * len(cols), 2 * (2 * len(cols) * 4) * per / 3600.0), flush=True)
 
-    # CORE = graft members that pass the costed cut
-    G = pd.read_csv(os.path.join(ROOTOUT, 'gate2_combined_AB_leaderboard.csv'),
-                    low_memory=False).sort_values('rank').head(15)
-    G['sid'] = G.src_label + '|' + G.slice + '|' + G.c1 + '|' + G.c2 + '|' + G.vol + '|' + G.base
-    core = [c for c in cols if c.split('::')[0] in set(G.sid) and c.endswith('OFFICIAL')]
-    print('core (graft members passing the costed cut): %d' % len(core), flush=True)
+    # NO SEED. The team starts EMPTY and its first member is whichever passer
+    # scores best alone at the budget. Seeding with the graft-15 would have
+    # imported a roster chosen by the co-equal rule on CONTAMINATED numbers --
+    # W2 scored with ip2 -- and greedy search cannot leave a seed it was handed,
+    # so a bad seed survives to the final roster however good the alternatives.
+    # No cap on size: add-one runs until nothing improves.
+    years0 = M.index.year.values
+    idx0 = {c: i for i, c in enumerate(cols)}
+
+    def solo(c, dipb, dayb):
+        w = np.zeros(len(cols)); w[idx0[c]] = 1.0
+        return score_team(M.values, w, years0, dipb, dayb, rng)
+
+    print('no seed: choosing the best single passer at each budget', flush=True)
 
     log = []
     out = {}
     for tag, dipb, dayb in (('team1', 3.6, 3.6), ('team2', 5.4, 3.6)):
+        # first member = best score standing alone at THIS budget, so the two
+        # teams may legitimately start from different strategies
+        best_solo, best_c = None, None
+        for c in cols:
+            s1 = solo(c, dipb, dayb)
+            log.append(dict(team=tag, step='solo', candidate=c, vote=1.0,
+                            kept=False, score=None if s1 is None else s1['score'],
+                            members=1))
+            if s1 is not None and (best_solo is None or s1['score'] > best_solo['score']):
+                best_solo, best_c = s1, c
+        if best_c is None:
+            print('%s: no scoreable candidate' % tag, flush=True); continue
+        print('%s seed: %s alone scores %.2f%%' % (tag, best_c, best_solo['score']), flush=True)
+        core = [best_c]
         team, votes, res, tried = greedy(M.values, cols, core, dipb, dayb, log, tag, rng)
         # the same roster and votes, measured on CLOSED trades, for comparison
         dip_closed = None

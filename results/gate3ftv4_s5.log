@@ -15,3 +15,6 @@ GATE 3 FINE-TUNE starting 2026-09-07 12:11:08
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
   fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
     50/570  407.7 s/strategy  | 5085 left -> 576 h -> 2026-10-01
+GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 1138, to fine-tune 444 (shard 5/9)

@@ -18,3 +18,6 @@ GATE 3 FINE-TUNE starting 2026-09-07 12:11:08
 /Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
   return (W * w).sum(axis=1) / w.sum()
     75/571  297.7 s/strategy  | 5060 left -> 418 h -> 2026-09-25
+GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 1138, to fine-tune 444 (shard 1/9)

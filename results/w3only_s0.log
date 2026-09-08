@@ -1,1 +1,49 @@
 W3ONLY re-score: 1734 crossers to do (shard 0/3)
+  50/1734  1.44 s each  ~0.7 h left
+  100/1734  1.11 s each  ~0.5 h left
+  150/1734  1.04 s each  ~0.5 h left
+  200/1734  1.07 s each  ~0.5 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+  250/1734  1.45 s each  ~0.6 h left
+  300/1734  1.59 s each  ~0.6 h left
+  350/1734  1.54 s each  ~0.6 h left
+  400/1734  1.49 s each  ~0.6 h left
+  450/1734  1.42 s each  ~0.5 h left
+  500/1734  1.44 s each  ~0.5 h left
+  550/1734  1.39 s each  ~0.5 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+  600/1734  1.36 s each  ~0.4 h left
+  650/1734  1.33 s each  ~0.4 h left
+  700/1734  1.32 s each  ~0.4 h left
+  750/1734  1.36 s each  ~0.4 h left
+  800/1734  1.33 s each  ~0.3 h left
+  850/1734  1.32 s each  ~0.3 h left
+  900/1734  1.30 s each  ~0.3 h left
+  950/1734  1.28 s each  ~0.3 h left
+  1000/1734  1.26 s each  ~0.3 h left
+  1050/1734  1.25 s each  ~0.2 h left
+  1100/1734  1.24 s each  ~0.2 h left
+  1150/1734  1.24 s each  ~0.2 h left
+  1200/1734  1.26 s each  ~0.2 h left
+  1250/1734  1.26 s each  ~0.2 h left
+  1300/1734  1.25 s each  ~0.2 h left
+  1350/1734  1.24 s each  ~0.1 h left
+  1400/1734  1.24 s each  ~0.1 h left
+  1450/1734  1.25 s each  ~0.1 h left
+  1500/1734  1.26 s each  ~0.1 h left
+  1550/1734  1.27 s each  ~0.1 h left
+  1600/1734  1.28 s each  ~0.0 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  1650/1734  1.29 s each  ~0.0 h left
+  1700/1734  1.30 s each  ~0.0 h left
+  1734/1734  1.31 s each  ~0.0 h left
+DONE in 37.9 min

@@ -18,3 +18,10 @@ GATE 3 FINE-TUNE starting 2026-09-07 12:11:08
 /Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
   return (W * w).sum(axis=1) / w.sum()
     75/571  249.3 s/strategy  | 5060 left -> 350 h -> 2026-09-22
+GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 1138, to fine-tune 444 (shard 2/9)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st

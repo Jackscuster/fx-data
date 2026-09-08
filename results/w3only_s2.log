@@ -1,3 +1,41 @@
 W3ONLY re-score: 1733 crossers to do (shard 2/3)
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
   sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+  50/1733  1.30 s each  ~0.6 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+  100/1733  1.07 s each  ~0.5 h left
+  150/1733  1.04 s each  ~0.5 h left
+  200/1733  1.03 s each  ~0.4 h left
+  250/1733  1.31 s each  ~0.5 h left
+  300/1733  1.47 s each  ~0.6 h left
+  350/1733  1.44 s each  ~0.6 h left
+  400/1733  1.43 s each  ~0.5 h left
+  450/1733  1.37 s each  ~0.5 h left
+  500/1733  1.41 s each  ~0.5 h left
+  550/1733  1.36 s each  ~0.4 h left
+  600/1733  1.32 s each  ~0.4 h left
+  650/1733  1.31 s each  ~0.4 h left
+  700/1733  1.29 s each  ~0.4 h left
+  750/1733  1.33 s each  ~0.4 h left
+  800/1733  1.29 s each  ~0.3 h left
+  850/1733  1.28 s each  ~0.3 h left
+  900/1733  1.28 s each  ~0.3 h left
+  950/1733  1.27 s each  ~0.3 h left
+  1000/1733  1.25 s each  ~0.3 h left
+  1050/1733  1.24 s each  ~0.2 h left
+  1100/1733  1.22 s each  ~0.2 h left
+  1150/1733  1.20 s each  ~0.2 h left
+  1200/1733  1.19 s each  ~0.2 h left
+  1250/1733  1.19 s each  ~0.2 h left
+  1300/1733  1.19 s each  ~0.1 h left
+  1350/1733  1.18 s each  ~0.1 h left
+  1400/1733  1.20 s each  ~0.1 h left
+  1450/1733  1.20 s each  ~0.1 h left
+  1500/1733  1.21 s each  ~0.1 h left
+  1550/1733  1.21 s each  ~0.1 h left
+  1600/1733  1.22 s each  ~0.0 h left
+  1650/1733  1.25 s each  ~0.0 h left
+  1700/1733  1.26 s each  ~0.0 h left
+  1733/1733  1.26 s each  ~0.0 h left
+DONE in 36.5 min
