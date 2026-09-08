@@ -435,7 +435,7 @@ probing 14 routes from github-actions
   CHF  snb-daily      DATA               5461632  daily from 1988, 2J maturity
   NZD  rbnz-b2        HTTP 403                 0  bot-walled from the sandbox
   NZD  nz-dmo         HTTP 403                 0  Cloudflare challenge from the sandbox
-  USD  yahoo-^TNX     DATA                  1721  US 10y, already in the feed
+  USD  yahoo-^TNX     DATA                  1715  US 10y, already in the feed
   GBP  yahoo-GB2YR    HTTP 404                 0  speculative ticker
   JPY  yahoo-2YY=F    DATA                  1562  CBOT 2y yield future, US not JP
 
