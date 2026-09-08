@@ -1,1 +1,62 @@
 candidates (passers incl. alternates): 254
+equity matrix: 1336 days x 254 candidates in 2.1 min
+return matrix: 1336 days x 254 candidates
+one team evaluation: 0.27 s  (10,000 shuffles)
+estimated: ~508 trials/round x 2 teams -> roughly 0.3 h
+no seed: choosing the best single passer at each budget
+team1_W3ONLY_GATE2 seed: A-chop|chop|halftrend_signals|schaff_trend_cycle_signals|choppiness_index_volume_signals|mcginley_dynamic_index::OFFICIAL alone scores 3.35%
+    team1_W3ONLY_GATE2 round: 506 trials, best 6.541%, members 1
+    team1_W3ONLY_GATE2 round: 504 trials, best 8.076%, members 2
+    team1_W3ONLY_GATE2 round: 502 trials, best 10.426%, members 3
+    team1_W3ONLY_GATE2 round: 500 trials, best 11.381%, members 4
+    team1_W3ONLY_GATE2 round: 498 trials, best 11.993%, members 5
+    team1_W3ONLY_GATE2 round: 496 trials, best 12.576%, members 6
+    team1_W3ONLY_GATE2 round: 494 trials, best 13.223%, members 7
+    team1_W3ONLY_GATE2 round: 492 trials, best 13.870%, members 8
+    team1_W3ONLY_GATE2 round: 490 trials, best 14.628%, members 9
+    team1_W3ONLY_GATE2 round: 488 trials, best 15.238%, members 10
+    team1_W3ONLY_GATE2 round: 486 trials, best 16.085%, members 11
+    team1_W3ONLY_GATE2 round: 484 trials, best 16.632%, members 12
+    team1_W3ONLY_GATE2 round: 482 trials, best 17.044%, members 13
+    team1_W3ONLY_GATE2 round: 480 trials, best 17.683%, members 14
+    team1_W3ONLY_GATE2 round: 478 trials, best 17.887%, members 15
+    team1_W3ONLY_GATE2 round: 476 trials, best 18.156%, members 16
+    team1_W3ONLY_GATE2 round: 474 trials, best 18.554%, members 17
+    team1_W3ONLY_GATE2 round: 472 trials, best 18.727%, members 18
+    team1_W3ONLY_GATE2 round: 470 trials, best 18.984%, members 19
+    team1_W3ONLY_GATE2 round: 468 trials, best 19.104%, members 20
+    team1_W3ONLY_GATE2 round: 466 trials, best 19.385%, members 21
+    team1_W3ONLY_GATE2 round: 464 trials, best 19.667%, members 22
+    team1_W3ONLY_GATE2 round: 462 trials, best 19.939%, members 23
+    team1_W3ONLY_GATE2 round: 460 trials, best 20.125%, members 24
+    team1_W3ONLY_GATE2 round: 458 trials, best 20.125%, members 25
+team1_W3ONLY_GATE2: 25 members, score 20.13%, tried 12075
+team2_W3ONLY_GATE2 seed: A-chop|chop|halftrend_signals|schaff_trend_cycle_signals|choppiness_index_volume_signals|mcginley_dynamic_index::OFFICIAL alone scores 4.97%
+    team2_W3ONLY_GATE2 round: 506 trials, best 9.812%, members 1
+    team2_W3ONLY_GATE2 round: 504 trials, best 12.114%, members 2
+    team2_W3ONLY_GATE2 round: 502 trials, best 15.639%, members 3
+    team2_W3ONLY_GATE2 round: 500 trials, best 17.072%, members 4
+    team2_W3ONLY_GATE2 round: 498 trials, best 17.989%, members 5
+    team2_W3ONLY_GATE2 round: 496 trials, best 18.864%, members 6
+    team2_W3ONLY_GATE2 round: 494 trials, best 19.834%, members 7
+    team2_W3ONLY_GATE2 round: 492 trials, best 20.805%, members 8
+    team2_W3ONLY_GATE2 round: 490 trials, best 21.943%, members 9
+    team2_W3ONLY_GATE2 round: 488 trials, best 22.856%, members 10
+    team2_W3ONLY_GATE2 round: 486 trials, best 24.128%, members 11
+    team2_W3ONLY_GATE2 round: 484 trials, best 24.948%, members 12
+    team2_W3ONLY_GATE2 round: 482 trials, best 25.567%, members 13
+    team2_W3ONLY_GATE2 round: 480 trials, best 26.524%, members 14
+    team2_W3ONLY_GATE2 round: 478 trials, best 26.830%, members 15
+    team2_W3ONLY_GATE2 round: 476 trials, best 27.234%, members 16
+    team2_W3ONLY_GATE2 round: 474 trials, best 27.831%, members 17
+    team2_W3ONLY_GATE2 round: 472 trials, best 28.090%, members 18
+    team2_W3ONLY_GATE2 round: 470 trials, best 28.476%, members 19
+    team2_W3ONLY_GATE2 round: 468 trials, best 28.656%, members 20
+    team2_W3ONLY_GATE2 round: 466 trials, best 29.077%, members 21
+    team2_W3ONLY_GATE2 round: 464 trials, best 29.500%, members 22
+    team2_W3ONLY_GATE2 round: 462 trials, best 29.908%, members 23
+    team2_W3ONLY_GATE2 round: 460 trials, best 30.188%, members 24
+    team2_W3ONLY_GATE2 round: 458 trials, best 30.188%, members 25
+team2_W3ONLY_GATE2: 25 members, score 30.19%, tried 12075
+
+DONE in 38.8 min

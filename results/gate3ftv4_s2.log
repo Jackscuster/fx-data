@@ -27,3 +27,77 @@ GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
   st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
 /Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
   return (W * w).sum(axis=1) / w.sum()
+134 alternates of 1262 finished strategies
+{'MULTI': 108, 'DD_ONLY': 18, 'SHARPE_ONLY': 6, 'SORTINO_ONLY': 2}
+    25/444  226.2 s/strategy  | 3972 left -> 250 h -> 2026-09-18
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+190 alternates of 1405 finished strategies
+{'MULTI': 142, 'DD_ONLY': 39, 'SHARPE_ONLY': 7, 'SORTINO_ONLY': 2}
+    50/444  236.2 s/strategy  | 3947 left -> 259 h -> 2026-09-18
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+263 alternates of 1566 finished strategies
+{'MULTI': 187, 'DD_ONLY': 67, 'SHARPE_ONLY': 7, 'SORTINO_ONLY': 2}
+    75/444  258.0 s/strategy  | 3922 left -> 281 h -> 2026-09-19
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+327 alternates of 1709 finished strategies
+{'MULTI': 224, 'DD_ONLY': 93, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 2}
+   100/444  259.6 s/strategy  | 3897 left -> 281 h -> 2026-09-19
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+397 alternates of 1876 finished strategies
+{'MULTI': 252, 'DD_ONLY': 135, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 2}
+   125/444  276.0 s/strategy  | 3872 left -> 297 h -> 2026-09-20
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+481 alternates of 2040 finished strategies
+{'MULTI': 281, 'DD_ONLY': 190, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 2}
+   150/444  273.8 s/strategy  | 3847 left -> 293 h -> 2026-09-20
