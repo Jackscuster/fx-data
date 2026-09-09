@@ -41,7 +41,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--label', default='_W3ONLY_GATE2')
     ap.add_argument('--n-random', type=int, default=1000)
-    ap.add_argument('--n-greedy-null', type=int, default=200)
+    # 200 GREEDY NULL RUNS COST 67 HOURS. Measured, not guessed: the real build
+    # did 24,150 trials in 39 min, and one null run rebuilds a whole team from
+    # empty -- about 20 min each. 25 runs cost 8.4 h and resolve a p-value to
+    # 0.04, which is enough to say whether the real score sits outside the null
+    # entirely. It is NOT enough to quote a precise p below 0.04, and the output
+    # says so rather than implying more precision than 25 draws can carry.
+    ap.add_argument('--n-greedy-null', type=int, default=25)
     a = ap.parse_args()
     t0 = time.time()
     rng = np.random.default_rng(SEED)
@@ -107,7 +113,8 @@ def main():
             greedy_null_mean=float(np.mean(gnull)) if len(gnull) else None,
             greedy_null_p95=float(np.percentile(gnull, 95)) if len(gnull) else None,
             greedy_null_max=float(np.max(gnull)) if len(gnull) else None,
-            greedy_null_p_value=float((gnull >= real['score']).mean()) if len(gnull) else None)
+            greedy_null_p_value=float((gnull >= real['score']).mean()) if len(gnull) else None,
+            greedy_null_p_resolution=(round(1.0 / len(gnull), 3) if len(gnull) else None))
         print(tag, json.dumps(out[tag], indent=1, default=str), flush=True)
     pd.DataFrame(out).T.to_csv(os.path.join(ROOTOUT, 'team_checks%s.csv' % a.label))
     json.dump(out, open(os.path.join(ROOTOUT, 'team_checks%s.json' % a.label), 'w'),

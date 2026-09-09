@@ -1,21 +1,40 @@
 ip1 recovery (all): 1643 strategies, 7 already banked
-Traceback (most recent call last):
-  File "/Users/jackcuster/Documents/fx-data/code/l2recoverip1.py", line 89, in <module>
-    main()
-  File "/Users/jackcuster/Documents/fx-data/code/l2recoverip1.py", line 62, in main
-    sc = T.Scorer()
-  File "/Users/jackcuster/Documents/fx-data/code/l2tune.py", line 276, in __init__
-    d = S.load_pair(p)
-  File "/Users/jackcuster/Documents/fx-data/code/l2sweep.py", line 180, in load_pair
-  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
-    return _read(filepath_or_buffer, kwds)
-  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 620, in _read
-    parser = TextFileReader(filepath_or_buffer, **kwds)
-  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
-    self._engine = self._make_engine(f, self.engine)
-  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1898, in _make_engine
-    return mapping[engine](f, **self.options)
-  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 93, in __init__
-    self._reader = parsers.TextReader(src, **kwds)
-  File "pandas/_libs/parsers.pyx", line 581, in pandas._libs.parsers.TextReader.__cinit__
-pandas.errors.EmptyDataError: No columns to parse from file
+  1/1643  154 s each  ~70.1 h left
+  2/1643  160 s each  ~72.8 h left
+  3/1643  157 s each  ~71.7 h left
+  4/1643  135 s each  ~61.3 h left
+  5/1643  136 s each  ~61.7 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  6/1643  140 s each  ~63.8 h left
+  7/1643  132 s each  ~59.8 h left
+  8/1643  127 s each  ~57.5 h left
+  9/1643  128 s each  ~57.9 h left
+  10/1643  129 s each  ~58.7 h left
+  11/1643  132 s each  ~59.6 h left
+  12/1643  138 s each  ~62.7 h left
+  13/1643  137 s each  ~62.1 h left
+  14/1643  135 s each  ~60.9 h left
+  15/1643  142 s each  ~64.1 h left
+  16/1643  140 s each  ~63.3 h left
+  17/1643  137 s each  ~61.9 h left
+  18/1643  136 s each  ~61.6 h left
+  19/1643  136 s each  ~61.1 h left
+  20/1643  142 s each  ~64.0 h left
+  21/1643  138 s each  ~62.3 h left
+  22/1643  136 s each  ~61.2 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+  23/1643  141 s each  ~63.3 h left
+  24/1643  137 s each  ~61.7 h left
+  25/1643  137 s each  ~61.4 h left
+  26/1643  135 s each  ~60.7 h left
+  27/1643  216 s each  ~97.0 h left
