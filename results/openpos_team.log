@@ -1,0 +1,8 @@
+W3 trades in the team-1 book: 1899 | open at 2020-12-31: 7 (0.4%)
+R booked on those open trades AS IS      : +8.51
+R if marked to market at the boundary    : +5.21
+Traceback (most recent call last):
+  File "<stdin>", line 51, in <module>
+  File "/Users/jackcuster/Documents/fx-data/code/l2team.py", line 69, in dip95
+    out = np.empty(n_shuf)
+TypeError: expected a sequence of integers or a single integer, got 'Generator(PCG64) at 0x1262C9D60'

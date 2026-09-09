@@ -42,3 +42,6 @@
 2026-09-08 23:06:30 swap free 1193M > 700M -- restarting shard 8 (resumes from bank)
 2026-09-08 23:07:30 swap free 986M > 700M -- restarting shard 7 (resumes from bank)
 2026-09-08 23:08:30 swap free 856M > 700M -- restarting shard 6 (resumes from bank)
+2026-09-09 10:03:17 swap free 375M < 400M -- stopping shard 6 (pid 52534)
+2026-09-09 10:03:22 stopped shards: 6 ; live now 7
+2026-09-09 10:06:22 swap free 759M > 700M -- restarting shard 6 (resumes from bank)

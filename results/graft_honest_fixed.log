@@ -1,0 +1,30 @@
+ip1 available for 15 of 15
+  members            15
+  total_R_pct        42.086
+  max_dd_pct         3.6
+  dip95_pct          2.666
+  worst_day_pct      0.586
+  median_year_pct    3.189
+  mean_year_pct      3.826
+  worst_year_pct     -1.559
+  best_year_pct      11.45
+  sortino            7.054
+  calmar             11.691
+  clustering_ratio   1.351
+  binds              actual maxDD
+  scale              0.977
+  basis              W2(ip1)+W3(ip2) HONEST STITCH
+
+by year:
+2011     0.70
+2012     1.57
+2013     1.53
+2014    -1.56
+2015    11.45
+2016     3.93
+2017     4.68
+2018     8.94
+2019     3.19
+2020     7.09
+2021     0.57
+DONE in 1.1 min

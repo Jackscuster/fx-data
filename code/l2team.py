@@ -175,6 +175,17 @@ def _equity_series(cfg, wins):
                 continue
             ent = float(tr['entry_px'][j]); u = float(tr['units'][j])
             sgn = float(tr['dir'][j]); tot = float(tr['r'][j])
+            # MARK TO MARKET AT THE WINDOW BOUNDARY, as in blind_trades: a
+            # position still open at the last bar is closed and valued there,
+            # never carried out of the window as realised profit.
+            _z = None
+            for _k in BLIND_WINDOWS:
+                _b = wb.get(_k)
+                if _b and _b[0] <= eb < _b[1]:
+                    _z = _b[1] - 1
+            if _z is not None and xb > _z:
+                xb = _z
+                tot = sgn * (cl[_z] - ent) * u / S.RISK
             # mark to market each day; the LAST day carries the realised total so
             # costs and the actual fill price are respected exactly
             prev = 0.0
