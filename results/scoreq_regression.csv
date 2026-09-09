@@ -1,15 +1,15 @@
 check,value,verdict
 "control, q=0.50 reproduces shipped",1.0,PASS
-"holdout trend separation, q=0.50",0.13420997581912808,
-"holdout trend separation, q=0.40",0.13202401283833043,DEGRADED
-"holdout chop separation, q=0.50",0.13534071498977934,
-"holdout chop separation, q=0.40",0.1119302701907626,DEGRADED
-holdout paired difference (worst of two),-0.02227970562836548,paired SE 0.0126
-agreement with shipped,0.8012888799822805,
+"holdout trend separation, q=0.50",0.13446887672660357,
+"holdout trend separation, q=0.40",0.13228386657398233,DEGRADED
+"holdout chop separation, q=0.50",0.1358256256594886,
+"holdout chop separation, q=0.40",0.11230712309868121,DEGRADED
+holdout paired difference (worst of two),-0.02216175362792236,paired SE 0.0123
+agreement with shipped,0.8013458964386969,
 "holdout median run, q=0.50",19.0,
 "holdout median run, q=0.40",20.0,ok
 "null p, chosen holdout separation",0.0196078431372549,
-"agreement with shipped, trending",0.831848034382035,
-"agreement with shipped, ranging",0.8257241813602015,
-"agreement with shipped, trend-in-range",0.9858842452647051,
-"agreement with shipped, neither",0.5298671956797266,
+"agreement with shipped, trending",0.831879313231273,
+"agreement with shipped, ranging",0.8258607137242572,
+"agreement with shipped, trend-in-range",0.9858920701793287,
+"agreement with shipped, neither",0.5298507462686567,
