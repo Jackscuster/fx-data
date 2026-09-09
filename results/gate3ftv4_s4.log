@@ -86,3 +86,10 @@ GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
   sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
   st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+GATE 3 FINE-TUNE starting 2026-09-08 22:05:52
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 2886, to fine-tune 250 (shard 4/9)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st

@@ -30,6 +30,9 @@ nice -n 19 /usr/bin/python3 code/l2agree.py >> "$LOG" 2>&1 || say "WARN agree"
 /usr/bin/python3 code/appstamp.py >> "$LOG" 2>&1
 git add -A; git commit -q -m "Gate 3 adopted-settings cut, teams, checks and agreement study" || true
 git pull --rebase -q origin main || true; git push -q origin main || true
+say "5b/6 resuming the B-trend ip1 recovery, now the machine is free"
+nohup nice -n 19 /usr/bin/python3 code/l2recoverip1.py --which all \
+      >> results/ip1_all.log 2>&1 &
 say "6/6 relaunching mode C"
 nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 6 \
       --sorted --cap 6 --seed-from A,B >> results/gate2_run_C.log 2>&1 &
