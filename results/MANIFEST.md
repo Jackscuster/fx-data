@@ -9,7 +9,6 @@ name, and this file says what that name means.
 
 | file | source column | shape | what it is |
 |---|---|---|---|
-| `states_g2_structural12.csv` | `restored from git f597f23` | 6916 x 28 | Structural generation 2: four shapes INCLUDING `broken` crossed with activity = 12 cells. NOT reproducible from current code; restored verbatim from history. |
 | `states_g1_ninebox.csv` | `state_28` | 6875 x 28 | Nine-box, generation 1. Straightness x scale terciles at a 28-bar window. The 7 and 128 legs are in layer1_legacy.csv as state_7 and state_128. |
 | `states_g3_shapescore9.csv` | `shape` | 6875 x 28 | Shape score, generation 3. One continuous trend-versus-range score cut at in-sample terciles into three shapes. Separates better than g4 (0.261 vs 0.104 on trending) but leaves 41% of days in an ambiguous middle. |
 | `states_g4_twoscore4.csv` | `shape2` | 6875 x 28 | Two-score, generation 4, CURRENT. Trend and chop scored independently and classified on the pair: trending / ranging / trend-in-range / neither. The ambiguous share falls to 20%. |
@@ -201,3 +200,83 @@ trades; `margin_vs_floor_R` is expectancy minus that floor;
 fixed-R sizing has no compounding equity base to take a percentage of.
 
 Regenerate: `python code/l2gate3.py` (resumable; ~2.5 h on one core).
+
+
+## Gate 3 fine-tune alternates — `gate3ft_alternates.csv`
+
+Candidates that BEAT their incumbent on account return and were still rejected
+by the standing adoption rule, one row per strategy, with `failed_on` naming
+exactly which of DD / Sortino / Sharpe they missed and `tag` in
+{SHARPE_ONLY, DD_ONLY, SORTINO_ONLY, MULTI}.
+
+**What is recoverable.** The fine-tune bank stores ONE candidate per strategy —
+the final output of the coordinate descent. Intermediate candidates are not
+logged, so this file captures the case where the FINAL candidate beat the
+incumbent and was rejected. An intermediate candidate that did better on account
+return and was then superseded cannot be reconstructed; capturing those would
+require restarting the run.
+
+Rebuilt automatically every 25 strategies by `l2gate3ft.py`; standalone:
+`python code/l2alternates.py`.
+
+Gate 3's cut carries a `SHARPE_ONLY` verdict: clears the other five bars and its
+own luck floor, fails only on Sharpe. Alternates tagged SHARPE_ONLY are the same
+trade-off seen at the settings level rather than the strategy level.
+
+
+## Adoption rule v2, and Sharpe retired as a bar
+
+`gate3ft_adoptions_v2.csv` re-evaluates the whole fine-tune bank under:
+
+    v2: account return higher AND max DD no worse AND Sortino no worse
+
+Sharpe is dropped from the rule and from the gate 3 cut's bars. It is still
+measured and written on every row; it binds nothing. `rule` records which rule
+produced each adoption and the bank's original v1 flags stay readable —
+nothing is overwritten.
+
+Dropping a condition from a conjunction cannot shrink the adopted set, so only
+the alternates can change. `gate3ft_alternates.csv` now holds candidates that
+beat the incumbent on account return and failed DD or Sortino, tagged
+DD_ONLY / SORTINO_ONLY / BOTH.
+
+The cut's BINDING bars are now: expectancy >= 0.15R, PF >= 1.5, Sortino >= 1.3,
+Calmar >= 1.0, max DD <= 10% of own gross profit. Two informational columns are
+added and bind nothing:
+
+| column | meaning |
+|---|---|
+| `sharpe_only_flag` | would have failed the retired Sharpe >= 1.1 bar |
+| `profit_concentration` | % of gross profit from the top 5% of winning trades |
+
+Regenerate: `python code/l2readopt.py`, then `python code/l2gate3.py`.
+
+
+## Agreement and opposition study — `agreement_*.csv`, `opposition_by_member_*.csv`
+
+Runs on the final rosters' own trade logs, after the team build and before mode
+C is relaunched.
+
+| file | what it holds |
+|---|---|
+| `agreement_levels_team{1,2}.csv` | per agreement level, IS and OOS side by side: position-days, episodes, R per unit, R per episode, hit rate, worst dip |
+| `agreement_by_member_team{1,2}.csv` | per member: % of trades at each level, R alone vs in agreement, and the two flags |
+| `agreement_opposition.csv` | the three handlings scored over the same episodes, overall and per split shape |
+| `opposition_by_member_team{1,2}.csv` | per member accuracy when opposed, ALL / IS / OOS |
+| `agreement_summary.md` | the plain-English verdict |
+
+**The unit is the position-day; the evidence is the episode.** A trade held 12
+days is 12 position-days of exposure but ONE observation. Every significance
+test groups consecutive days on the same pair at the same level into one
+episode, because treating them as independent would inflate every t-statistic
+by roughly the square root of the holding period.
+
+A trade's R is spread evenly across the days it was open, so a day's return
+belongs to the agreement level actually in force that day rather than to
+whatever was true on the exit date.
+
+**The null shuffles MEMBERSHIP, not returns** — which member fired each trade is
+permuted 1,000 times with the trades, calendar and pair mix held fixed, so a
+surviving slope is about agreement rather than about the sample.
+
+Regenerate: `python code/l2agree.py` (needs the rosters).

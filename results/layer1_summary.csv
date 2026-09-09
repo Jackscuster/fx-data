@@ -1,24 +1,24 @@
 area,claim,statistic,null,verdict,ref
-nine-box scale axis,separates on realised_vol,"0.885 vs surrogate 0.557, corrected +0.328",iid,HOLDS (p=0.016),16.4e
-nine-box scale axis,separates on avg_abs_move,"0.979 vs surrogate 0.895, corrected +0.084",iid,HOLDS (p=0.033),16.4e
-nine-box scale axis,separates on realised_vol,"0.885 vs surrogate 0.846, corrected +0.039",sign (degenerate here),p=0.131,16.4e
-nine-box scale axis,separates on avg_abs_move,"0.979 vs surrogate 0.922, corrected +0.057",sign (degenerate here),p=0.033,16.4e
-shape separation,structural raw,"real 0.213 vs surrogate 0.229, corrected -0.016",sign,FAILS (p=0.716),16.4c
-shape separation,structural M=5,"real 0.205 vs surrogate 0.214, corrected -0.009",sign,FAILS (p=0.622),16.4c
-shape separation,product M=5,"real 0.297 vs surrogate 0.310, corrected -0.013",sign,FAILS (p=0.602),16.4c
-shape separation,grid,"real 0.458 vs surrogate 0.512, corrected -0.054",sign,FAILS (p=0.985),16.4c
-shape separation,structural raw,"real 0.213 vs surrogate 0.216, corrected -0.003",iid,FAILS (p=0.507),16.4c
-shape separation,structural M=5,"real 0.205 vs surrogate 0.202, corrected +0.003",iid,FAILS (p=0.433),16.4c
-shape separation,product M=5,"real 0.297 vs surrogate 0.286, corrected +0.011",iid,FAILS (p=0.343),16.4c
-shape separation,grid,"real 0.458 vs surrogate 0.489, corrected -0.031",iid,FAILS (p=0.891),16.4c
-"shape separation, EPISODE basis",structural M=5,"real 0.233 vs surrogate 0.231, corrected +0.003",sign,FAILS (p=0.459),16.4e
-"shape separation, EPISODE basis",product M=5,"real 0.299 vs surrogate 0.307, corrected -0.008",sign,FAILS (p=0.557),16.4e
-"shape separation, EPISODE basis",grid,"real 0.352 vs surrogate 0.420, corrected -0.068",sign,FAILS (p=1.000),16.4e
-"shape separation, EPISODE basis",structural M=5,"real 0.233 vs surrogate 0.221, corrected +0.012",iid,FAILS (p=0.344),16.4e
-"shape separation, EPISODE basis",product M=5,"real 0.299 vs surrogate 0.290, corrected +0.009",iid,FAILS (p=0.311),16.4e
-"shape separation, EPISODE basis",grid,"real 0.352 vs surrogate 0.419, corrected -0.067",iid,FAILS (p=1.000),16.4e
-"structural cell, IS-selected",N=2 B=3 D=1.00 R=0.62,"holdout 0.492 vs surrogate 0.562, corrected -0.070",sign,FAILS (p=0.959),16.4d
-"structural cell, IS-selected",N=2 B=3 D=1.00 R=0.62,"holdout 0.492 vs surrogate 0.549, corrected -0.058",iid,FAILS (p=0.934),16.4d
+nine-box scale axis,separates on realised_vol,"0.885 vs surrogate 0.555, corrected +0.331",iid,HOLDS (p=0.016),16.4e
+nine-box scale axis,separates on avg_abs_move,"0.978 vs surrogate 0.896, corrected +0.082",iid,HOLDS (p=0.049),16.4e
+nine-box scale axis,separates on realised_vol,"0.885 vs surrogate 0.851, corrected +0.035",sign (degenerate here),p=0.148,16.4e
+nine-box scale axis,separates on avg_abs_move,"0.978 vs surrogate 0.925, corrected +0.053",sign (degenerate here),p=0.066,16.4e
+shape separation,structural raw,"real 0.213 vs surrogate 0.230, corrected -0.018",sign,FAILS (p=0.806),16.4c
+shape separation,structural M=5,"real 0.205 vs surrogate 0.215, corrected -0.010",sign,FAILS (p=0.642),16.4c
+shape separation,product M=5,"real 0.298 vs surrogate 0.306, corrected -0.008",sign,FAILS (p=0.622),16.4c
+shape separation,grid,"real 0.459 vs surrogate 0.512, corrected -0.052",sign,FAILS (p=0.960),16.4c
+shape separation,structural raw,"real 0.213 vs surrogate 0.219, corrected -0.006",iid,FAILS (p=0.587),16.4c
+shape separation,structural M=5,"real 0.205 vs surrogate 0.205, corrected +0.000",iid,FAILS (p=0.463),16.4c
+shape separation,product M=5,"real 0.298 vs surrogate 0.290, corrected +0.008",iid,FAILS (p=0.378),16.4c
+shape separation,grid,"real 0.459 vs surrogate 0.492, corrected -0.032",iid,FAILS (p=0.925),16.4c
+"shape separation, EPISODE basis",structural M=5,"real 0.235 vs surrogate 0.232, corrected +0.003",sign,FAILS (p=0.410),16.4e
+"shape separation, EPISODE basis",product M=5,"real 0.301 vs surrogate 0.305, corrected -0.005",sign,FAILS (p=0.508),16.4e
+"shape separation, EPISODE basis",grid,"real 0.353 vs surrogate 0.412, corrected -0.059",sign,FAILS (p=1.000),16.4e
+"shape separation, EPISODE basis",structural M=5,"real 0.235 vs surrogate 0.224, corrected +0.011",iid,FAILS (p=0.361),16.4e
+"shape separation, EPISODE basis",product M=5,"real 0.301 vs surrogate 0.298, corrected +0.003",iid,FAILS (p=0.393),16.4e
+"shape separation, EPISODE basis",grid,"real 0.353 vs surrogate 0.420, corrected -0.067",iid,FAILS (p=1.000),16.4e
+"structural cell, IS-selected",N=2 B=3 D=1.00 R=0.62,"holdout 0.491 vs surrogate 0.567, corrected -0.075",sign,FAILS (p=0.975),16.4d
+"structural cell, IS-selected",N=2 B=3 D=1.00 R=0.62,"holdout 0.491 vs surrogate 0.553, corrected -0.061",iid,FAILS (p=0.934),16.4d
 excursion,structure: non-trending minus trending / bars_to_peak,"observed +0.0270, published t 0.17",block bootstrap 21/63/126,FAILS (p 0.884/0.824/0.721),16.4e
 excursion,structure: non-trending minus trending / ratio,"observed +0.0520, published t --",block bootstrap 21/63/126,FAILS (p 0.245/0.182/0.127),16.4e
 excursion,structure: non-trending minus trending / path_eff,"observed -0.0002, published t -0.06",block bootstrap 21/63/126,FAILS (p 0.997/0.989/0.982),16.4e
@@ -29,13 +29,13 @@ excursion,grid: strong chop minus strong trend / ratio,"observed +0.2125, publis
 excursion,tier: all differ minus all agree / ratio,"observed +0.0671, published t --",block bootstrap 21/63/126,FAILS (p 0.344/0.236/0.185),16.4e
 excursion,tier: all differ minus all agree / bars_to_peak,"observed +0.1675, published t 0.73",block bootstrap 21/63/126,FAILS (p 0.530/0.498/0.432),16.4e
 excursion,tier: all differ minus all agree / path_eff,"observed -0.0093, published t -1.72",block bootstrap 21/63/126,FAILS (p 0.180/0.160/0.090),16.4e
-settling vs transitional,are they the same bars,"lift 1.014, Cramers V 0.0055",-,INDEPENDENT,16.4f
-regime change counts,shape only,"3022 changes, 4.053% of bars, mean gap 24.7 bars",-,COUNT,16.4k
-regime change counts,activity only,"3147 changes, 4.221% of bars, mean gap 23.7 bars",-,COUNT,16.4k
-regime change counts,both,"130 changes, 0.174% of bars, mean gap 573.6 bars",-,COUNT,16.4k
-regime change counts,split-join any,"6299 changes, 8.448% of bars, mean gap 11.8 bars",-,COUNT,16.4k
-regime change counts,combined (shipped),"5129 changes, 6.879% of bars, mean gap 14.5 bars",-,COUNT,16.4k
-"failed swings, IS-selected cell",X=0.98 Y=0.75 on activity only,"IS excess +0.092, holdout lift 0.901 vs surrogate 0.968, excess -0.067",sign,FAILS (p=0.637),16.4l
-"failed swings, IS-selected cell",X=0.98 Y=0.75 on activity only,"IS excess +0.092, holdout lift 0.901 vs surrogate 0.946, excess -0.044",iid,FAILS (p=0.582),16.4l
-"lead-time, IS-selected cell",rng fast=72 slow=118 on structural M=5,"IS excess +0.314, holdout lift 1.577 vs surrogate 1.052, excess +0.525",sign,FAILS (p=0.035),16.4i
-"lead-time, IS-selected cell",rng fast=72 slow=118 on structural M=5,"IS excess +0.314, holdout lift 1.577 vs surrogate 1.028, excess +0.549",iid,FAILS (p=0.025),16.4i
+settling vs transitional,are they the same bars,"lift 1.014, Cramers V 0.0054",-,INDEPENDENT,16.4f
+regime change counts,shape only,"3026 changes, 4.051% of bars, mean gap 24.7 bars",-,COUNT,16.4k
+regime change counts,activity only,"3154 changes, 4.222% of bars, mean gap 23.7 bars",-,COUNT,16.4k
+regime change counts,both,"130 changes, 0.174% of bars, mean gap 574.6 bars",-,COUNT,16.4k
+regime change counts,split-join any,"6310 changes, 8.447% of bars, mean gap 11.8 bars",-,COUNT,16.4k
+regime change counts,combined (shipped),"5139 changes, 6.879% of bars, mean gap 14.5 bars",-,COUNT,16.4k
+"failed swings, IS-selected cell",X=0.95 Y=2.00 on both,"IS excess +0.112, holdout lift 1.450 vs surrogate 1.209, excess +0.241",sign,FAILS (p=0.343),16.4l
+"failed swings, IS-selected cell",X=0.95 Y=2.00 on both,"IS excess +0.112, holdout lift 1.450 vs surrogate 1.178, excess +0.272",iid,FAILS (p=0.289),16.4l
+"lead-time, IS-selected cell",rng fast=72 slow=118 on product M=5,"IS excess +0.318, holdout lift 1.260 vs surrogate 0.966, excess +0.294",sign,FAILS (p=0.095),16.4i
+"lead-time, IS-selected cell",rng fast=72 slow=118 on product M=5,"IS excess +0.318, holdout lift 1.260 vs surrogate 0.961, excess +0.298",iid,FAILS (p=0.060),16.4i
