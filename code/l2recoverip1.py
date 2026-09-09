@@ -28,10 +28,26 @@ import l2tune as T
 OUT = os.path.join(ROOTOUT, 'gate2_ip1_recovered.csv')
 
 
+def out_path(shard, shards):
+    """One bank per shard. Parallel appends to a single CSV interleave rows and
+    corrupt it, so each worker owns a file and they are merged afterwards."""
+    return (OUT if shards <= 1 else
+            os.path.join(ROOTOUT, 'gate2_ip1_recovered_s%02d.csv' % shard))
+
+
 def banked():
-    if not os.path.exists(OUT):
-        return set()
-    return set(pd.read_csv(OUT).sid)
+    """Everything recovered so far, across every shard file, so a resumed or
+    re-sharded run never redoes work."""
+    out = set()
+    for f in [OUT] + sorted(glob.glob(os.path.join(ROOTOUT,
+                                                   'gate2_ip1_recovered_s*.csv'))):
+        if os.path.exists(f):
+            try:
+                d = pd.read_csv(f)
+                out |= set(d[d.sid != 'sid'].sid)
+            except Exception:
+                continue
+    return out
 
 
 def targets(which):
@@ -52,13 +68,18 @@ def targets(which):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--which', default='graft', choices=['graft', 'all'])
+    ap.add_argument('--shard', type=int, default=0)
+    ap.add_argument('--shards', type=int, default=1)
     a = ap.parse_args()
     S.load_costs(); T.ACCT_OBJECTIVE = True
     D = targets(a.which)
     done = banked()
-    D = D[~D.sid.isin(done)]
-    print('ip1 recovery (%s): %d strategies, %d already banked'
-          % (a.which, len(D), len(done)), flush=True)
+    D = D[~D.sid.isin(done)].reset_index(drop=True)
+    if a.shards > 1:
+        D = D.iloc[a.shard::a.shards].reset_index(drop=True)
+    OUTF = out_path(a.shard, a.shards)
+    print('ip1 recovery (%s): %d strategies this shard (%d/%d), %d already banked'
+          % (a.which, len(D), a.shard, a.shards, len(done)), flush=True)
     sc = T.Scorer()
     t0 = time.time()
     for i, cfg in enumerate(D.to_dict('records'), 1):
@@ -77,8 +98,8 @@ def main():
                    base=cfg['base'], slice=sn, mode='B',
                    ip1=json.dumps(ip1, sort_keys=True),
                    risk1=json.dumps(rk1, sort_keys=True))
-        pd.DataFrame([row]).to_csv(OUT, mode='a', index=False,
-                                   header=not os.path.exists(OUT))
+        pd.DataFrame([row]).to_csv(OUTF, mode='a', index=False,
+                                   header=not os.path.exists(OUTF))
         el = time.time() - t0
         print('  %d/%d  %.0f s each  ~%.1f h left'
               % (i, len(D), el / i, (el / i) * (len(D) - i) / 3600), flush=True)

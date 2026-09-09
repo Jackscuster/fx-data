@@ -1,0 +1,2 @@
+shell-init: error retrieving current directory: getcwd: cannot access parent directories: Operation not permitted
+/bin/bash: /Users/jackcuster/Documents/fx-data/code/l2chain2.sh: Operation not permitted
