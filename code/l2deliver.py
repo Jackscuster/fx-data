@@ -45,6 +45,15 @@ if 'W2' in BLIND_WINDOWS and os.environ.get('FX_HAVE_IP1') != '1':
 RISK_FRac = 0.02
 
 
+def _win_end(wb, eb):
+    """Last bar index of the blind window this entry falls in."""
+    for k in BLIND_WINDOWS:
+        b = wb.get(k)
+        if b and b[0] <= eb < b[1]:
+            return b[1] - 1
+    return None
+
+
 def blind_trades(cfg, wins):
     """Every blind-window trade in this slice, across all 28 pairs."""
     code = dict((s, c) for s, _, c in S.SLICES)[cfg['slice']]
@@ -69,8 +78,19 @@ def blind_trades(cfg, wins):
                 continue
             if not any(wb.get(k) and wb[k][0] <= eb < wb[k][1] for k in BLIND_WINDOWS):
                 continue
-            out.append(dict(pair=p, entry=d[eb], exit=d[xb], R=float(tr['r'][j]),
-                            crisis=bool(C.flag(d[eb], d[xb], p, wins))))
+            # MARK TO MARKET AT THE WINDOW BOUNDARY. A trade entered inside a
+            # blind window can still be open at the last bar; booking its final
+            # R counts profit the window never saw. It is closed at the
+            # boundary and valued there instead.
+            R_ = float(tr['r'][j]); ex_ = d[xb]
+            zz = _win_end(wb, eb)
+            if zz is not None and xb > zz:
+                px = float(r['c'][zz])
+                R_ = (float(tr['dir'][j]) * (px - float(tr['entry_px'][j]))
+                      * float(tr['units'][j]) / S.RISK)
+                ex_ = d[zz]
+            out.append(dict(pair=p, entry=d[eb], exit=ex_, R=R_,
+                            crisis=bool(C.flag(d[eb], ex_, p, wins))))
     return pd.DataFrame(out)
 
 

@@ -1,0 +1,4 @@
+AS IS (open counted as realised)   median year  20.81%  max DD  3.60%  DIP95  2.65%  scale 3.53  binds actualDD
+MARK-TO-MARKET at 2020-12-31       median year  21.23%  max DD  3.60%  DIP95  2.71%  scale 3.53  binds actualDD
+EXCLUDE open trades                median year  21.23%  max DD  3.60%  DIP95  2.71%  scale 3.53  binds actualDD
+DONE
