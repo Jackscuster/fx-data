@@ -1,0 +1,15 @@
+sid: A-trend|trend|ehlers_reverse_ema_signals|kase_peak_oscillator_signals|variance_volume_signals|frama_baseline
+adopted=True basis=W3ONLY | base_R -0.760 -> ft_R 226.962 | cw3_R 136.6418680092628
+banked: n_blind=402 win=0.269 sortino=63.98836633585771 conc=57.65901783080779
+
+W3 trades: 148 | total R -1.10 | win rate 23.0%
+winners 34 | top 5% = 2 trades | their share of gross profit: 15.0%
+top 1 trade alone: 7.5% of gross profit
+
+FIVE LARGEST TRADES:
+  NZDJPY  2020-05-18 -> 2020-06-10     +1.79 R
+  NZDJPY  2020-05-18 -> 2020-06-10     +1.79 R
+  AUDJPY  2020-05-18 -> 2020-06-09     +1.63 R
+  AUDJPY  2020-05-18 -> 2020-06-09     +1.63 R
+  EURUSD  2020-11-12 -> 2020-12-22     +1.55 R
+DONE

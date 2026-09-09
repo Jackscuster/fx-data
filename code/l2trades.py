@@ -54,7 +54,27 @@ def run_pair(cfg, pair, sc=None):
     bl = bl[0] if isinstance(bl, tuple) else bl
     el, es = _series(cfg['exit_ind'], ip['exit_ind'], o, h, l, c)[:2]
     plan = 2 if cfg['slice'] == 'trend' else 1
-    kwm = S.mode_kw('B')
+    # THE MODE IS THE STRATEGY'S OWN, NOT ALWAYS B. This was hardcoded to 'B',
+    # so every mode A and mode C configuration was run with MODE B'S EXIT RULES
+    # -- baseline cross instead of C1 flip or exit indicator. The exit rule
+    # decides when every trade ends, so it changes the trade set completely:
+    # one A-trend strategy produced 46 trades scored correctly and 148 through
+    # this path, +136.6 R against -1.1 R.
+    #
+    # Everything built on run_pair inherited it: blind_trades, _equity_series,
+    # the team builder, the portfolio previews, the trade charts and the crisis
+    # split. The tuner itself was never affected -- l2tune's Scorer always
+    # passed the real mode.
+    _mode = cfg.get('src_mode') or cfg.get('mode')
+    if not _mode:
+        lab = str(cfg.get('src_label', '')) or str(cfg.get('sid', ''))
+        _mode = lab[0] if lab[:1] in ('A', 'B', 'C') else None
+    if _mode not in ('A', 'B', 'C'):
+        raise RuntimeError(
+            'run_pair cannot tell which MODE this configuration is. Pass '
+            'src_mode/mode, or a src_label/sid beginning A, B or C. Guessing '
+            'silently is what produced the mode-B-for-everything bug.')
+    kwm = S.mode_kw(_mode)
     n = len(c); cap = 4 * n + 8
     t = {k: np.zeros(cap, np.int64) for k in
          ('entry_bar', 'exit_bar', 'dir', 'leg', 'reason', 'route')}

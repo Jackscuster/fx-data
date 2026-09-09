@@ -283,3 +283,42 @@ displaced by an inflated neighbour and the crosser set is too LARGE, not too
 small. Contamination is not strictly monotonic per combination, so a small
 number of near-misses could still flip; the FULLSTITCH re-score should include
 combinations that failed the label narrowly.
+
+## FIXED 2026-09-08 — run_pair ran every mode as mode B
+
+`l2trades.run_pair` had `kwm = S.mode_kw('B')` hardcoded. The mode sets the EXIT
+RULE — A exits on a C1 flip, B on a baseline cross, C on an exit indicator — so
+every mode A and mode C configuration was run with **B's exits**. The exit rule
+decides when every trade ends, so it changes the trade set outright: one A-trend
+strategy gave 46 trades and +97 R scored correctly against 148 trades and -1.1 R
+through this path.
+
+**Everything built on run_pair inherited it**: `blind_trades`, `_equity_series`,
+the team builder, the portfolio previews, the trade charts, the crisis split.
+The tuner was never affected — `l2tune`'s Scorer always passed the real mode,
+which is why the bank and the delivery layer disagreed.
+
+Fixed: the mode comes from `src_mode`/`mode`, or the leading letter of
+`src_label`/`sid`. If it cannot be determined, run_pair RAISES — guessing
+silently is what caused this.
+
+**Invalidated and needing rebuild:** the W3ONLY_GATE2 team (9 of its 25 members
+are A-strategies), `graft15_honest_book.csv`, every portfolio preview containing
+an A-strategy, and the trades tab for A rows.
+
+## OPEN — trades that never close inside their window
+
+The engine holds a position until its exit rule fires, so a trade entered inside
+W3 can still be open at the last bar. Those are marked to the final bar and
+counted as realised profit.
+
+Measured: **2.9% of W3 trades across 40 adopted strategies**, and only 12 of
+1,792 W3ONLY rows have `cw3_sortino > 200` (2 above 1,000; 3 of 216 adopted).
+So it is NOT systemic — but where it bites it dominates. The top W3ONLY
+adoption, `ehlers_reverse_ema x kase_peak_oscillator x variance x frama`, has a
+13% win rate and its entire +97 R comes from three positions entered in 2020 and
+still open in 2026, six years past the window's close.
+
+**Not yet decided:** whether to close open positions at the window boundary and
+book the mark, or exclude them. Either changes results; leaving them counted as
+realised profit is the one option that is clearly wrong.

@@ -1,0 +1,8 @@
+W3 window ends 2020-12-31 ; data ends 2026-08-14
+W3ONLY rows: 1792
+  cw3_sortino > 200 : 12
+  cw3_sortino > 1000: 2
+  adopted rows: 216, of which sortino>200: 3 (1%)
+
+over 40 adopted strategies: 117 of 4002 W3 trades exit AFTER the window closes (2.9%)
+DONE

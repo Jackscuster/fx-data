@@ -243,7 +243,19 @@ def main():
     done = banked()
     todo = [r for r in P.to_dict('records') if r['sid'] not in done]
     if a.shards > 1:
-        todo = [r for i, r in enumerate(todo) if i % a.shards == a.shard]
+        # SHARD ON A STABLE HASH OF THE SID, not on position in the todo list.
+        # Position-sharding assigns work from the list of strategies NOT YET
+        # BANKED, so two shards started at different times see different lists
+        # and claim overlapping work. That is exactly what happened: shards
+        # restarted at 22:30 and again at 10:23 produced 226 duplicated
+        # strategies, ~450 wasted strategy-runs. The results were byte-identical
+        # -- the tuner is deterministic -- so nothing was corrupted, only time
+        # was lost. A hash of the sid is fixed for all time, so a shard claims
+        # the same strategies no matter when it starts or what is already done.
+        import hashlib
+        todo = [r for r in todo
+                if int(hashlib.md5(r['sid'].encode()).hexdigest()[:8], 16)
+                % a.shards == a.shard]
     print('  population %d, banked %d, to fine-tune %d (shard %d/%d)'
           % (len(P), len(done), len(todo), a.shard, a.shards), flush=True)
     if a.limit:

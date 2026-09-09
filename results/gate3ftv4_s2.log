@@ -101,3 +101,14 @@ GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
 481 alternates of 2040 finished strategies
 {'MULTI': 281, 'DD_ONLY': 190, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 2}
    150/444  273.8 s/strategy  | 3847 left -> 293 h -> 2026-09-20
+GATE 3 FINE-TUNE starting 2026-09-08 22:40:04
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 2914, to fine-tune 247 (shard 2/9)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]

@@ -82,3 +82,6 @@ GATE 3 FINE-TUNE starting 2026-09-07 22:30:42
 447 alternates of 1977 finished strategies
 {'MULTI': 269, 'DD_ONLY': 168, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 2}
    125/444  307.7 s/strategy  | 3872 left -> 331 h -> 2026-09-22
+GATE 3 FINE-TUNE starting 2026-09-08 23:04:30
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 2936, to fine-tune 220 (shard 1/9)

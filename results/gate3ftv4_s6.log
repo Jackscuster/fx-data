@@ -52,3 +52,14 @@ GATE 3 FINE-TUNE starting 2026-09-08 01:07:37
 GATE 3 FINE-TUNE starting 2026-09-08 10:23:22
   widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
   population 5135, banked 2078, to fine-tune 339 (shard 6/9)
+GATE 3 FINE-TUNE starting 2026-09-08 23:08:31
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 2941, to fine-tune 257 (shard 6/9)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
