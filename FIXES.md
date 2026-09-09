@@ -322,3 +322,29 @@ still open in 2026, six years past the window's close.
 **Not yet decided:** whether to close open positions at the window boundary and
 book the mark, or exclude them. Either changes results; leaving them counted as
 realised profit is the one option that is clearly wrong.
+
+## QUEUED — re-runs of everything the mode bug touched
+
+`code/l2rerun.sh`, armed and single-instance. Waits for the main chain AND the
+fine-tune, then runs one study at a time on one core at nice 19, so it can never
+compete with mode C once the chain relaunches it.
+
+Each of these reads its configurations through `l2trades.run_pair`, which
+hardcoded mode B, so every mode A and C row in them was scored with B's exit
+rule:
+
+| study | output |
+|---|---|
+| crisis split, A-trend and A-chop | `gate2_crisis_split_modeA_*_all.csv` |
+| suppressed-vol flags | `gate2_*_leaderboard_clean.csv` |
+| entry timing | `entry_timing.csv`, `entry_timing_summary.md` |
+| calendar | `calendar_dow.csv`, `calendar_holidays.csv`, `calendar_by_member.csv` |
+| agreement study | `agreement_*.csv`, `opposition_by_member_*.csv` |
+| tripwire (stays PROVISIONAL) | `tripwire.csv`, `tripwire_summary.md` |
+
+**NOT re-run, because they were never affected:** the gate 3 cut and the W3-only
+leaderboards go through `l2tune`'s Scorer, which always passed the real mode.
+That asymmetry is exactly why the bank and the delivery layer disagreed.
+
+Already rebuilt outside the queue: the W3ONLY_GATE2 team baseline and
+`graft15_honest_book.csv`.
