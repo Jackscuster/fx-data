@@ -1,7 +1,64 @@
 candidates (passers incl. alternates): 254
-equity matrix: 1296 days x 254 candidates in 7.6 min
+equity matrix: 1296 days x 254 candidates in 3.8 min
 return matrix: 1296 days x 254 candidates
-one team evaluation: 0.31 s  (10,000 shuffles)
+one team evaluation: 0.34 s  (10,000 shuffles)
 estimated: ~508 trials/round x 2 teams -> roughly 0.4 h
 no seed: choosing the best single passer at each budget
 team1_W3ONLY_GATE2_FIXED seed: A-chop|chop|parabolic_sar_signals|lemantrend_signals|variance_volume_signals|wma_baseline::OFFICIAL alone scores 4.12%
+    team1_W3ONLY_GATE2_FIXED round: 506 trials, best 6.054%, members 1
+    team1_W3ONLY_GATE2_FIXED round: 504 trials, best 7.638%, members 2
+    team1_W3ONLY_GATE2_FIXED round: 502 trials, best 8.869%, members 3
+    team1_W3ONLY_GATE2_FIXED round: 500 trials, best 10.400%, members 4
+    team1_W3ONLY_GATE2_FIXED round: 498 trials, best 12.404%, members 5
+    team1_W3ONLY_GATE2_FIXED round: 496 trials, best 13.686%, members 6
+    team1_W3ONLY_GATE2_FIXED round: 494 trials, best 14.631%, members 7
+    team1_W3ONLY_GATE2_FIXED round: 492 trials, best 15.345%, members 8
+    team1_W3ONLY_GATE2_FIXED round: 490 trials, best 16.248%, members 9
+    team1_W3ONLY_GATE2_FIXED round: 488 trials, best 16.958%, members 10
+    team1_W3ONLY_GATE2_FIXED round: 486 trials, best 17.250%, members 11
+    team1_W3ONLY_GATE2_FIXED round: 484 trials, best 17.941%, members 12
+    team1_W3ONLY_GATE2_FIXED round: 482 trials, best 18.517%, members 13
+    team1_W3ONLY_GATE2_FIXED round: 480 trials, best 18.859%, members 14
+    team1_W3ONLY_GATE2_FIXED round: 478 trials, best 19.709%, members 15
+    team1_W3ONLY_GATE2_FIXED round: 476 trials, best 20.009%, members 16
+    team1_W3ONLY_GATE2_FIXED round: 474 trials, best 20.555%, members 17
+    team1_W3ONLY_GATE2_FIXED round: 472 trials, best 20.780%, members 18
+    team1_W3ONLY_GATE2_FIXED round: 470 trials, best 20.934%, members 19
+    team1_W3ONLY_GATE2_FIXED round: 468 trials, best 21.184%, members 20
+    team1_W3ONLY_GATE2_FIXED round: 466 trials, best 21.396%, members 21
+    team1_W3ONLY_GATE2_FIXED round: 464 trials, best 21.554%, members 22
+    team1_W3ONLY_GATE2_FIXED round: 462 trials, best 22.163%, members 23
+    team1_W3ONLY_GATE2_FIXED round: 460 trials, best 22.456%, members 24
+    team1_W3ONLY_GATE2_FIXED round: 458 trials, best 22.588%, members 25
+    team1_W3ONLY_GATE2_FIXED round: 456 trials, best 22.588%, members 26
+team1_W3ONLY_GATE2_FIXED: 26 members, score 22.59%, tried 12532
+team2_W3ONLY_GATE2_FIXED seed: A-chop|chop|parabolic_sar_signals|lemantrend_signals|variance_volume_signals|wma_baseline::OFFICIAL alone scores 6.18%
+    team2_W3ONLY_GATE2_FIXED round: 506 trials, best 9.080%, members 1
+    team2_W3ONLY_GATE2_FIXED round: 504 trials, best 11.456%, members 2
+    team2_W3ONLY_GATE2_FIXED round: 502 trials, best 13.303%, members 3
+    team2_W3ONLY_GATE2_FIXED round: 500 trials, best 15.601%, members 4
+    team2_W3ONLY_GATE2_FIXED round: 498 trials, best 18.606%, members 5
+    team2_W3ONLY_GATE2_FIXED round: 496 trials, best 20.529%, members 6
+    team2_W3ONLY_GATE2_FIXED round: 494 trials, best 21.946%, members 7
+    team2_W3ONLY_GATE2_FIXED round: 492 trials, best 23.018%, members 8
+    team2_W3ONLY_GATE2_FIXED round: 490 trials, best 24.372%, members 9
+    team2_W3ONLY_GATE2_FIXED round: 488 trials, best 25.438%, members 10
+    team2_W3ONLY_GATE2_FIXED round: 486 trials, best 25.875%, members 11
+    team2_W3ONLY_GATE2_FIXED round: 484 trials, best 26.912%, members 12
+    team2_W3ONLY_GATE2_FIXED round: 482 trials, best 27.775%, members 13
+    team2_W3ONLY_GATE2_FIXED round: 480 trials, best 28.289%, members 14
+    team2_W3ONLY_GATE2_FIXED round: 478 trials, best 29.564%, members 15
+    team2_W3ONLY_GATE2_FIXED round: 476 trials, best 30.014%, members 16
+    team2_W3ONLY_GATE2_FIXED round: 474 trials, best 30.832%, members 17
+    team2_W3ONLY_GATE2_FIXED round: 472 trials, best 31.170%, members 18
+    team2_W3ONLY_GATE2_FIXED round: 470 trials, best 31.402%, members 19
+    team2_W3ONLY_GATE2_FIXED round: 468 trials, best 31.776%, members 20
+    team2_W3ONLY_GATE2_FIXED round: 466 trials, best 32.094%, members 21
+    team2_W3ONLY_GATE2_FIXED round: 464 trials, best 32.332%, members 22
+    team2_W3ONLY_GATE2_FIXED round: 462 trials, best 33.244%, members 23
+    team2_W3ONLY_GATE2_FIXED round: 460 trials, best 33.684%, members 24
+    team2_W3ONLY_GATE2_FIXED round: 458 trials, best 33.882%, members 25
+    team2_W3ONLY_GATE2_FIXED round: 456 trials, best 33.882%, members 26
+team2_W3ONLY_GATE2_FIXED: 26 members, score 33.88%, tried 12532
+
+DONE in 73.8 min
