@@ -113,3 +113,8 @@ GATE 3 FINE-TUNE starting 2026-09-09 10:31:36
   sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
   st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+1614 alternates of 4084 finished strategies
+{'DD_ONLY': 895, 'MULTI': 708, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 3}
+    50/102  333.6 s/strategy  | 1321 left -> 122 h -> 2026-09-14

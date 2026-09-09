@@ -130,3 +130,16 @@ GATE 3 FINE-TUNE starting 2026-09-09 10:32:36
   fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
   fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+1587 alternates of 4028 finished strategies
+{'DD_ONLY': 877, 'MULTI': 699, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 3}
+    50/139  277.0 s/strategy  | 1320 left -> 102 h -> 2026-09-13
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
