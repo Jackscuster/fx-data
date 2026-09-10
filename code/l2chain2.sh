@@ -45,17 +45,15 @@ nice -n 19 /usr/bin/python3 code/l2cut.py --settings adopted >> "$LOG" 2>&1 || s
 say "3/6 team builder, both teams"
 TEAM_LABEL=_W3ONLY_ADOPTED TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2team.py >> "$LOG" 2>&1 || say "WARN team"
 TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2teamkpi.py --label _W3ONLY_ADOPTED >> "$LOG" 2>&1 || say "WARN kpi"
-say "4/6 selection holdout + random-team null"
-nice -n 19 /usr/bin/python3 code/l2teamcheck.py --label _W3ONLY_ADOPTED >> "$LOG" 2>&1 || say "WARN checks"
-say "5/6 agreement study"
+say "4/6 agreement study"
 nice -n 19 /usr/bin/python3 code/l2agree.py >> "$LOG" 2>&1 || say "WARN agree"
 /usr/bin/python3 code/appstamp.py >> "$LOG" 2>&1
 git add -A; git commit -q -m "Gate 3 adopted-settings cut, teams, checks and agreement study" || true
 git pull --rebase -q origin main || true; git push -q origin main || true
-say "5b/6 resuming the B-trend ip1 recovery, now the machine is free"
-nohup nice -n 19 /usr/bin/python3 code/l2recoverip1.py --which all \
-      >> results/ip1_all.log 2>&1 &
-say "6/6 relaunching mode C"
+# The B-trend ip1 recovery is NOT run here. At 216 s per strategy it is ~70 h
+# on this machine and would hold mode C hostage for three days. It is packaged
+# for a rented box instead -- see code/cloud_ip1.sh.
+say "5/6 relaunching mode C"
 nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 6 \
       --sorted --cap 6 --seed-from A,B >> results/gate2_run_C.log 2>&1 &
 sleep 25; MAIN=$(pgrep -f "l2tune.py --mode C --jobs 6" | head -1)
@@ -64,4 +62,9 @@ nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 3 \
 sleep 25; ADD=$(pgrep -f "l2tune.py --mode C --jobs 3" | head -1)
 nohup code/l2swapguard.sh "$MAIN" "$ADD" 400 200 >/dev/null 2>&1 &
 say "C relaunched main=$MAIN add=$ADD, guard armed; chunks $(ls results/gate2/modeC_*/chunk_*.csv 2>/dev/null|wc -l)"
+# CHECKS LAST, AND IN THE BACKGROUND. They are read-only on banked data and
+# block nothing, so they must never stand between mode C and the machine.
+say "6/6 selection holdout + random-team null, background, lowest priority"
+nohup nice -n 19 /usr/bin/python3 code/l2teamcheck.py --label _W3ONLY_ADOPTED \
+      >> results/teamcheck_adopted.log 2>&1 &
 say "CHAIN COMPLETE"
