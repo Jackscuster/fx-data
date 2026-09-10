@@ -251,3 +251,88 @@ Plain English, short. Percentages not decimals. No jargon without an inline
 definition. Say what you think; push back when the spec is wrong — your
 objections have repeatedly been right. Never tell him to stop working on
 something. Pick something sensible, tell him what you picked, keep going.
+
+---
+
+# STATE AT 2026-09-10
+
+## Where the pipeline is
+
+**Gate 3 fine-tune: COMPLETE.** All 5,135 gate-2 crossers re-tuned on widened
+grids under full costs, gap-aware fills and stop-first resolution.
+`results/gate3ft_costed_v4/` (untracked while it ran; re-add when convenient).
+
+**Adoption: ~12.5% on the W3-only basis.** That number is the single most
+consequential correction in the run. It was 0.18% until the incumbent stopped
+being scored on a window its own parameters had been tuned on — see W2
+CONTAMINATION below.
+
+**Team: `W3ONLY_ADOPTED`, 25 members.** Team 1 (3.6/3.6) median year 22.97%,
+worst 11.44%, max DD 2.69%. Team 2 (5.4/3.6) median 34.45%, worst 17.17%.
+Built from an EMPTY start — no graft seed — on the clean cut of 252 passers,
+with 494 strategies carrying the fine-tune's adopted settings.
+
+**Mode C: PAUSED BY DECISION at 299 chunks.** Not a fault. It stays paused until
+the full system is built and forward testing has started. Restart it
+deliberately; it is no longer in any chain.
+
+## Layer 4 sizing v2 — the current answer
+
+Net the votes per pair per day, size by the agreement curve, cap per currency,
+then scale to the budget. **Book C wins on every metric.**
+
+| | A stacked | B linear | **C curve 1/3/6** | D half |
+|---|---|---|---|---|
+| median year | 22.27% | 27.69% | **30.22%** | 26.18% |
+| worst year | 12.15% | 17.42% | **18.67%** | 16.81% |
+| max DD | 2.36% | 2.51% | **2.29%** | 2.48% |
+| Sortino | 8.36 | 9.87 | **10.26** | 9.53 |
+| Calmar | 40.93 | 49.70 | **60.60** | 48.07 |
+| max positions | 33 | 15 | **15** | 15 |
+
+**The 2% per-currency cap is KEPT.** Largest exposure ever reached is 2.62%, so
+3% and 4% never bind and are identical to uncapped; 2% binds on 9 days of 1,304
+and costs 0.03pp of median year. It is a genuine backstop, not a constraint.
+
+**v1 vs v2 — read v2.** v1 spread each trade's R across its holding days, which
+smooths the series, shrinks DIP95 and inflates the scale: it reported 55.56%
+where v2 reports 30.22%. v2 marks to market daily exactly as the team builder
+does, and book A reproduces the builder's figure (22.27% against 22.97%), which
+is the check that the path is right. v1's RANKING was correct; its levels were
+not comparable to anything.
+
+## Agreement study — verdicts
+
+**Agreement is worth extra size, from level 2, strongest at 3.** Return per unit
+rises monotonically: level 1 → 0.031 (IS) / 0.028 (OOS), level 2 → 0.079/0.065,
+level 3 → 0.193/0.124. Slope 1.9095 IS and 0.6238 OOS, both at the **100th
+percentile of a 1,000-shuffle membership null**, p=0.0000.
+
+**Do not size on level 4+** — 23 IS episodes, and the IS figure is 4.7x its OOS
+value. The curve stops at 3 for this reason.
+
+**Opposition: follow the majority at net size.** +0.028 R/unit, 54.9% hit,
+worst dip 9.2 R — against taking both sides (-0.034, 31.6%, dip 54.4 R) and
+sitting out (zero). Following the majority pays best when the majority is clear
+(3v1: +0.123) and reverses at 2v2 (-0.122), but 2v2 is 5 episodes. 1v1 and 2v1
+are 537 of 567 episodes and both favour the majority.
+
+**Nobody is reliably right when opposed.** One member of 25 clears 50% in both
+periods (`coral x lemantrend x williams_vix_fix x rma`, 67% IS / 60% OOS), which
+is about what chance gives. IS→OOS correlation of opposition accuracy is 0.376.
+Do not weight on it.
+
+**Two members earn only with company** — `kuskus_starlight x coral x variance x
+mcginley` and `volatility_quality x aroon x waddah_attar_explosion x
+fantail_vma`. Both are flat alone rather than loss-making. They count as ZERO
+when alone in Layer 4 sizing. **Zero members earn alone and lose in company.**
+
+## Still running / queued
+
+- **Selection holdout + random-team null** on the adopted team, all 9 cores.
+- **Re-run queue** (`code/l2rerun.sh`): entry timing, calendar, crisis split,
+  suppressed-vol, tripwire, agreement — everything the mode bug touched. Waits
+  for the chain, runs one at a time on one core.
+- **Cloud ip1 package** (`code/cloud_ip1.sh`): the B-trend ip1 recovery, ~97
+  core-hours. One command, one credential (GH_TOKEN). Hetzner CCX63 ~2 h / ~$3,
+  AWS c7i.16xlarge ~3 h / ~$9. NOT launched.

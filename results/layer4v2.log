@@ -1,0 +1,11 @@
+roster 25 members
+mark-to-market rows: 14028 over 1296 days
+  A_stacked        median  22.27%  worst  12.15%  maxDD  2.36%  cap-bound 0  max ccy expo nan%
+  B_netted_linear  median  27.69%  worst  17.42%  maxDD  2.51%  cap-bound 6  max ccy expo 3.02%
+  C_netted_curve   median  30.22%  worst  18.67%  maxDD  2.29%  cap-bound 9  max ccy expo 2.62%
+  D_netted_half    median  26.18%  worst  16.81%  maxDD  2.48%  cap-bound 0  max ccy expo 1.85%
+  cap 2%    median  30.22%  worst  18.67%  maxDD  2.29%  DIP95  3.60%  worst day  0.90%  bound 9  max expo 2.62%
+  cap 3%    median  30.25%  worst  18.95%  maxDD  2.29%  DIP95  3.60%  worst day  0.90%  bound 0  max expo 2.62%
+  cap 4%    median  30.25%  worst  18.95%  maxDD  2.29%  DIP95  3.60%  worst day  0.90%  bound 0  max expo 2.62%
+  cap none  median  30.25%  worst  18.95%  maxDD  2.29%  DIP95  3.60%  worst day  0.90%  bound 0  max expo 2.62%
+DONE in 1.6 min

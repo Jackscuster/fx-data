@@ -1,4 +1,4 @@
-# Intraday tripwire — graft15
+# Intraday tripwire — layer4_positions
 
 ## PROVISIONAL — DO NOT QUOTE THESE NUMBERS
 
@@ -22,12 +22,12 @@ Rerun unchanged on the Layer 4 book:
 with columns day, pair, dir, size, entry, stop.
 
 Equity rebuilt hour by hour with open positions marked to each hour's mid.
-Sized so DIP95 = 3.6% (scale 2.3544). Coverage 2004-05 onward.
+Sized so DIP95 = 3.6% (scale 1.0000). Coverage 2004-05 onward.
 
 **A spike that starts and ends inside one hour is invisible in hourly data,
 so every "undetectable" count is a FLOOR, not a ceiling.**
 
 
 
-**Lowest level that never lets 4.0% through: 3.5%**, firing 0.20 times a year with 0.0% false alarms, costing 0.000% of account per year to close at.
+**Lowest level that never lets 4.0% through: 3.5%**, firing 49.89 times a year with 1.6% false alarms, costing -0.719% of account per year to close at.
 
