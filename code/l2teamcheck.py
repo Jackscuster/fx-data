@@ -94,7 +94,8 @@ def main():
             order = np.argsort(ysh, kind='stable')
             lg = []
             tm2, vt2, res2, _ = TM.greedy(A[order], cols, [], dipb, dayb, lg,
-                                          'null', rng, ysh[order], jobs=1)
+                                          'null', rng, ysh[order],
+                                          jobs=int(os.environ.get('TEAM_JOBS', '1')))
             if res2:
                 gnull.append(res2['score'])
         gnull = np.array(gnull)
