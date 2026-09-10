@@ -1,0 +1,203 @@
+# HANDOFF — master record
+
+## READ THIS FIRST
+
+1. **Gate 3 is complete.** 5,135 crossers fine-tuned; 12.5% adopted new settings on the honest W3-only basis.
+2. **The current answer is Layer 4 book C**: netted votes, agreement curve 1/3/6, 2% per-currency cap. Team 1 **30.22% median year, 18.67% worst, 2.29% max DD**.
+3. **Everything is scored on W3 only (2016-2020).** W2 is contaminated — `ip2` was tuned on it. FULLSTITCH is a hard follow-up, not done.
+4. **Mode C is paused by decision** at 299 chunks until forward testing starts. It is in no chain. Restart it deliberately.
+5. **Sharpe binds nothing** — not in adoption, not in the cut. It is reported only.
+6. **Three chain stages once reported success while doing nothing.** `l2stagecheck.py` now verifies every stage's output. Trust no stage that has not been guarded.
+7. **`run_pair` ran every mode as B until 8 Sep.** Anything built before then on A or C strategies is void. See §2.
+8. **The B-trend `ip1` recovery is packaged for a rented box** — `code/cloud_ip1.sh`, ~2 h, ~$3, one credential. Not launched.
+9. **Read `FIXES.md` before trusting any number** produced earlier than 10 Sep.
+10. Working style, invariants and Layer 1 history are in `HANDOFF_3.md`; Layer 2 detail in `HANDOFF_LAYER2.md`.
+
+---
+
+# 1. STATE OF EVERY LAYER AND GATE
+
+## Gate 3 fine-tune — COMPLETE
+- All **5,135** gate-2 crossers re-tuned: widened grids, full costs (+50% markup, crisis x2), gap-aware fills, stop-first resolution, mark-to-market at window boundaries.
+- **Adoption 12.5% on the W3-only basis** (was 0.18% while the incumbent was scored on a contaminated W2 — see §2).
+- **494 strategies carry adopted settings** into the cut.
+- Bank: `results/gate3ft_costed_v4/` — untracked during the run because eight shards appended every few seconds and broke every rebase; **now back under git** (8.2 MB).
+
+## Gate 3 cut
+- `code/l2cut.py`, a build product. `--settings adopted|gate2`.
+- **252 passers** on adopted settings: 136 B, 63 A-trend, 52 A-chop, 1 C-trend.
+- `settings_basis` column records which basis produced the file. Bars: expectancy >= 0.15R, PF >= 1.5, Sortino >= 1.3, Calmar >= 1.0, max DD <= 10% of own gross profit. **Sharpe reported, never binding.**
+
+## The team — `W3ONLY_ADOPTED`
+25 members, empty start, no size cap.
+
+| | Team 1 (3.6/3.6) | Team 2 (5.4/3.6) |
+|---|---|---|
+| median year | **22.97%** | **34.45%** |
+| average year | 19.40% | 29.10% |
+| worst year | 11.44% | 17.17% |
+| best year | 25.62% | 38.42% |
+| max DD | 2.69% | 4.03% |
+| DIP95 | 3.60% | 5.40% |
+| worst day | 0.74% | 1.11% |
+| clustering ratio | 0.75 | 0.75 |
+| binding | DIP95 | DIP95 |
+| corr > 0.90 | 0 | 0 |
+
+Composition **13 B, 7 A-chop, 5 A-trend**; votes **4 full, 21 half**. Roster with votes and add order: `results/team1_W3ONLY_ADOPTED_roster.csv`, `team2_...`. KPIs: `team_kpis_W3ONLY_ADOPTED.csv`, per member `team_members_kpis_W3ONLY_ADOPTED.csv`.
+
+## The gate-2 baseline — `W3ONLY_GATE2_FIXED`
+26 members, built on gate 2's settings on the **fixed** code. It exists so the adopted-settings team has something to be measured against. Team 1 median 22.59%, worst 10.19%. The adopted team beats it on median, average, worst year, drawdown and worst day.
+
+## Layer 4 sizing v2 — the current answer
+Net votes per pair per day, size by agreement level, cap per currency, then scale to budget. **Marks to market daily, exactly as the team builder does** — book A reproduces the builder (22.27% vs 22.97%), which is the check that the path is right.
+
+**Team 1:**
+
+| | A stacked | B linear | **C curve 1/3/6** | D half |
+|---|---|---|---|---|
+| median year | 22.27% | 27.69% | **30.22%** | 26.18% |
+| worst year | 12.15% | 17.42% | **18.67%** | 16.81% |
+| max DD | 2.36% | 2.51% | **2.29%** | 2.48% |
+| Sortino | 8.36 | 9.87 | **10.26** | 9.53 |
+| Sharpe | 4.00 | 4.58 | **4.72** | 4.48 |
+| Calmar | 40.93 | 49.70 | **60.60** | 48.07 |
+| profit factor | 2.07 | 2.31 | **2.48** | 2.26 |
+| win rate | 56.40% | 58.26% | **58.87%** | 58.10% |
+| max positions | 33 | 15 | **15** | 15 |
+
+**Team 2:** C 45.33% median / 28.00% worst; A 33.41% / 18.22%.
+
+**The 2% cap is KEPT.** Largest single-currency exposure ever reached is **2.62%**, so 3% and 4% never bind and equal uncapped; **2% binds on 9 days of 1,304** and costs 0.03pp of median year. A genuine backstop, not a constraint.
+
+**v1 is superseded** — it spread R across holding days, smoothing the series and inflating the scale (55.56% vs 30.22%). Its ranking was right; its levels were not comparable to anything.
+
+## Agreement study — verdicts
+**Agreement earns extra size, from level 2, strongest at 3.**
+
+| level | IS R/unit | OOS R/unit | IS episodes |
+|---|---|---|---|
+| 1 | 0.0305 | 0.0279 | 715 |
+| 2 | 0.0789 | 0.0646 | 268 |
+| 3 | 0.1930 | 0.1236 | 98 |
+| 4 | 0.6846 | 0.1452 | 23 |
+
+**Null: slope 1.9095 IS / 0.6238 OOS, both at the 100th percentile of a 1,000-shuffle membership null, p=0.0000.** **Do not size on level 4+** — 23 IS episodes and the IS figure is 4.7x its OOS value. The curve stops at 3 for that reason.
+
+**Opposition: follow the majority at net size.** +0.028 R/unit, 54.9% hit, worst dip 9.2 R — versus taking both sides (-0.034, 31.6%, dip 54.4 R) and sitting out (zero). By split: 3v1 +0.123, 2v1 +0.052, 1v1 +0.012, 2v2 **-0.122** (only 5 episodes). 1v1 and 2v1 are 537 of 567 episodes and both favour the majority.
+
+**No per-member opposition weighting.** One member of 25 clears 50% in both periods (`coral x lemantrend x williams_vix_fix x rma`, 67%/60%); IS→OOS correlation 0.376. That is chance.
+
+**Two confirmation-dependent members**, flat alone and profitable in company — `kuskus_starlight x coral x variance x mcginley` and `volatility_quality x aroon x waddah_attar_explosion x fantail_vma`. They count as **zero when alone** in Layer 4. **Zero members earn alone and lose in company.**
+
+## Checks
+Selection holdout + 25-run greedy null on the adopted team, all 9 cores. **Still running at the time of writing (~550 of ~625 null rounds).** Results go to `results/team_checks_W3ONLY_ADOPTED.csv` and `teamcheck_adopted.log`.
+
+## Mode C
+**Paused by decision at 299 chunks.** Not a fault, not a stall. It stays paused until the full system is built and forward testing has started. It has been removed from every chain.
+
+---
+
+# 2. EVERY BUG FOUND AND FIXED THIS WEEK
+
+| bug | what it contaminated | redone |
+|---|---|---|
+| **W2/ip2 contamination.** The stitch is W2 under `ip1`, W3 under `ip2`; everything downstream scored both windows with `ip2`, which had been tuned on W1+W2. Measured on the graft: W2 total R **452.0 vs 92.4 — +389%**. | leaderboards, co-equal ranking, the graft, portfolio previews, the gate 3 cut, adoption decisions | everything re-scored **W3-only**; adoption 0.18% → 12.5%; FULLSTITCH still owed |
+| **Stale-incumbent back-fill error.** My back-fill re-scored candidates with `ip2` on both windows, producing numbers that disagreed with the bank in both directions, and I reported a "corrected" adoption list from them. **Retracted.** The bank was right; `ip1`/`rk1` are now banked so candidates stay reconstructible. | one erroneous report | retracted in full |
+| **`run_pair` hardcoded mode B.** Exit rule is per mode; every A and C strategy ran with B's exits. One A-trend strategy: 46 trades/+97 R correct vs 148/-1.1 R. | `blind_trades`, `_equity_series`, team builder, portfolio previews, trade charts, crisis split, entry timing, calendar, agreement, tripwire | team rebuilt (only 7 of 25 members survived); graft book rebuilt; re-run queue covers the rest |
+| **Chain fired on an incomplete bank.** Wait condition was "no shards running"; shard 5 died at 96.2% and its absence read as completion. | the first ADOPTED team | chain now waits for all 5,135 sids |
+| **The cut was never scripted.** `gate3_costed_verdicts.csv` existed only from an inline script typed by hand; the chain read it stale and produced the gate-2 team labelled ADOPTED. | that team, identical member for member | `l2cut.py`; files renamed `ADOPTED_MISLABELLED` with a README |
+| **Roster without settings.** The agreement study loaded rosters, then every engine call raised and was swallowed per pair, giving "no position-days". | agreement study, twice | settings joined from verdicts; refuses to run if any member lacks them |
+| **Swap guard exited silently.** Its single-instance check used `pgrep -f`, which matched its own `nohup` wrapper, so it exited immediately while reporting success. | shards ran unguarded | pidfile-based single instance |
+| **Persistence.** `nohup … &` inside tool calls did not survive; `launchd` could not read `~/Documents` (**TCC**, `Operation not permitted`). | chains died three times | `nohup /bin/bash -c 'exec …' & disown`. **The weekly `batchC` LaunchAgent has the same TCC problem and will fail** — needs Full Disk Access for `/bin/bash` |
+| **Per-pair silent swallows.** Five `except` clauses, four silent; the three identical ones around `TR.run_pair` hid all three "success while doing nothing" faults. | three stages | count by exception type and **raise if every pair failed**; `l2stagecheck.py` guards all six chain stages |
+| **Position-based sharding.** Restarted shards claimed overlapping work — 228 duplicates, 18.7 core-hours, byte-identical so nothing corrupted. | wasted time only | `md5(sid) % shards`; `--leftovers` for recovery |
+| **Open positions counted as realised.** Trades open at a window boundary were booked at the final bar — the top adoption's entire +97 R was three positions opened in 2020 and still open in 2026. | 2.9% of W3 trades; 12 rows with `cw3_sortino > 200` | mark-to-market at the boundary, everywhere |
+
+---
+
+# 3. EVERY RULE DECIDED
+
+| date | rule |
+|---|---|
+| 08 Sep | **Adoption**: account return strictly higher AND max DD no worse AND Sortino no worse. **Sharpe dropped.** |
+| 08 Sep | **Sharpe binds nothing anywhere** — not in adoption, not in the gate 3 cut. Reported only, plus `sharpe_only_flag`. |
+| 07 Sep | **Budgets** 3.6%/3.6% (Team 1) and 5.4%/3.6% (Team 2). |
+| 09 Sep | **Sizing binds on the WORSE of actual max drawdown and DIP95**, then the worst-day budget. DIP95 shuffles day order and so understates clustered losses. |
+| 07 Sep | **Score is the MEDIAN year**, not the mean. One extraordinary year must not carry a team. |
+| 09 Sep | **Mark-to-market at window boundaries**, everywhere. |
+| 09 Sep | **Team builder starts EMPTY, no size cap.** No graft seed — greedy cannot leave a seed it was handed. |
+| 08 Sep | **Clean over shortcut**: recover `ip1` uncapped as mode B actually ran it, never a faster capped approximation wearing the name of a recovery. |
+| 10 Sep | **A worker's absence is not evidence of finished work.** Wait on the artefact. |
+| 08 Sep | **W3-only now; FULLSTITCH is a hard follow-up**, registered in FIXES.md. |
+| 07 Sep | **Layer 1 must be re-confirmed on 2016-2020 only** when rebuilt on 5pm bars — OANDA daily starts 2002-06 against H.10's 1999. |
+| 10 Sep | **Mode C paused until forward testing starts.** |
+| 08 Sep | **Enter at 19:00 NY (Tokyo)** — cheapest of six candidate times, ~6 pips/trade better than the 17:00 reference, which carries double the spread. |
+| 08 Sep | **No calendar switches.** Every weekday is profitable in both periods; no holiday window justifies a cut. |
+| 10 Sep | **Opposition nets to the majority.** |
+| 10 Sep | **No per-member opposition weighting.** |
+
+---
+
+# 4. THE QUEUE, IN ORDER
+
+1. **Selection holdout + null checks** — running now, all 9 cores. Waits on nothing.
+2. **Tripwire on book C** — waits on Layer 4 v2 positions. Stays **PROVISIONAL**: its floating-loss baseline measures from entry, not prior close.
+3. **`code/l2rerun.sh`** — entry timing, calendar, crisis split, suppressed-vol, tripwire, agreement, all on fixed code. Waits for the chain and the fine-tune; one at a time, one core.
+4. **Cloud `ip1` recovery** — `code/cloud_ip1.sh`. **Hetzner CCX63, ~2 h, ~$3.21; AWS c7i.16xlarge ~3 h, ~$8.67.** One credential: `GH_TOKEN`. **Not launched.**
+5. **FULLSTITCH**, after (4): full W2(`ip1`)+W3(`ip2`) re-score of every crosser → rebuild leaderboards, ranking and cut → re-run adoption for all 5,135 → re-run team and agreement → report roster differences against the W3-only team. Mode C banks `ip1` already and needs no recovery, but its 299 chunks need clean re-scoring.
+6. **Parked**: the 670-candidate inversion test (screen only, never run); the 6 A_ENTRY_B_EXIT challengers.
+
+---
+
+# 5. FILES THAT MATTER
+
+**Banks and scores**
+- `results/gate3ft_costed_v4/` — the fine-tune bank, 5,135 rows, one file per shard
+- `results/gate3ft_costed_v4_dedup.csv` — deduplicated, 2,930 unique sids
+- `results/gate3ft_adoptions_v2.csv` — adoption under the v2 rule, with `rule` per row
+- `results/gate3ft_alternates.csv` — candidates that beat the incumbent but failed DD or Sortino
+- `results/gate2_w3only_scores_*.csv` — W3-only re-score of all 5,381 crossers
+- `results/gate2_ip1_recovered.csv` — recovered `ip1` (graft 15 + 34 of B-trend)
+
+**Verdicts and teams**
+- `results/gate3_costed_verdicts.csv` — the cut, 252 passers, `settings_basis` recorded
+- `results/team{1,2}_W3ONLY_ADOPTED_roster.csv` — the team, votes and add order
+- `results/team_kpis_W3ONLY_ADOPTED.csv` / `team_members_kpis_...` — full KPI sets
+- `results/team{1,2}_W3ONLY_GATE2_FIXED_roster.csv` — the gate-2 baseline
+- `results/team_per_year.csv` — per-year returns, all teams
+- `results/*ADOPTED_MISLABELLED*` + README — the void team, kept as record
+
+**Layer 4 and studies**
+- `results/layer4_sizing_v2.csv` / `_summary.md` — the current sizing answer
+- `results/layer4_positions_curve.csv` — book C's daily positions
+- `results/agreement_levels_*.csv`, `agreement_by_member_*.csv`, `agreement_opposition.csv`, `opposition_by_member_*.csv`
+- `results/variant_A_ENTRY_B_EXIT.csv` — the mode bug kept as a deliberate experiment
+- `results/entry_timing.csv`, `calendar_*.csv`, `tripwire.csv` — all need re-running on fixed code
+- `results/cost_table.csv` — per-pair costs, +50%, provenance per row
+
+**Scripts**
+- `code/l2gate3ft.py` fine-tune · `code/l2cut.py` the cut · `code/l2team.py` team builder · `code/l2teamkpi.py` KPIs · `code/l2teamcheck.py` holdout+nulls · `code/l2agree.py` agreement · `code/l2layer4v2.py` sizing · `code/l2recoverip1.py` ip1 · `code/cloud_ip1.sh` the rented box · `code/l2rerun.sh` the re-run queue · `code/l2chain2.sh` the chain
+
+**Guards**
+- `code/l2stagecheck.py` — every stage's output verified; writes `CHAIN_HALT.marker`
+- `code/l2swapguard.sh`, `code/l2ftguard.sh` — swap protection, pidfile single-instance
+- `code/l2stoppool.sh` — parent-first pool stop, never orphans
+
+---
+
+# 6. OPEN QUESTIONS
+
+**For Jack**
+1. **FULLSTITCH** — launch the cloud `ip1` recovery? ~$3 and two hours buys the full W2+W3 stitch.
+2. **Full Disk Access for `/bin/bash`** — without it the weekly `batchC` LaunchAgent cannot read `~/Documents` and will fail silently on schedule.
+3. **The 12 rows with `cw3_sortino > 200`** — individually check them; that metric is a reliable detector of open-position distortion.
+4. **The 6 A_ENTRY_B_EXIT challengers** — worth a proper gate 2 tune with B's exit? Their settings were tuned for A's exit, so they cannot be adopted as they stand.
+
+**For the next session**
+5. **Layer 1 rebuild on 5pm bars** — Layer 1 uses H.10 noon, Layer 2 uses OANDA 17:00 NY; five hours apart on every bar. Must be settled before Layer 3 routing. Measure the survivor set restricted to 2002+ BEFORE swapping.
+6. **Layer 3 routing** — not started. Blocked on (5).
+7. **Layer 6 engine design** — not started.
+8. **The duplicated kalman row** — cause found (position sharding) and fixed; the dedup is in `gate3ft_costed_v4_dedup.csv`. Confirm nothing downstream still reads the raw bank.
+9. **Tripwire's floating-loss baseline** — measures from entry, not prior close. Needs the Layer 4 restructuring anyway.
+10. **W4 is untouched** and must stay so until Jack declares all tuning finished.

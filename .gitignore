@@ -70,9 +70,3 @@ results/crisis_all/
 results/crisis_all.log
 results/ci_validation_state.txt
 data/oanda_h1/
-
-# LIVE FINE-TUNE BANK, untracked while the run is in flight.
-# Eight shards append to these files every few seconds, so any `git rebase`
-# aborts on a dirty tree and no push can complete. The data is on disk and is
-# regenerable; it is re-added once the run finishes.
-results/gate3ft_costed_v4/
