@@ -417,3 +417,63 @@ first.** Three separate faults — W2/ip2 contamination, the mode-B exit hardcod
 and open positions booked as realised — each invalidated whole classes of
 result, and each was found only because two independently computed numbers
 disagreed.
+
+## 2026-09-10 — THE GREEDY ROSTER SEARCH FAILED VALIDATION. RETIRED.
+
+**The 22.97% team score and the 30.22% Layer 4 figure are NOT demonstrated
+results. Do not quote them.**
+
+### Greedy null: p = 0.60
+
+    real team score        22.82%
+    greedy-null mean       22.79%   <- the search beats this by 0.021pp
+    greedy-null p95        23.96%   <- the real score is BELOW this
+    greedy-null max        24.63%   <- and below this
+    p-value                 0.60    <- 15 of 25 null runs matched or beat it
+
+The null re-runs the SAME greedy search on YEAR-SHUFFLED data. Shuffling
+destroys any real cross-member timing structure while preserving each
+strategy's own return distribution. A search on destroyed data reaching the same
+score means the search is extracting the strategies' individual quality, not any
+relationship between them. There is no demonstrated selection edge.
+
+### Selection holdout: 8% retained
+
+    roster re-picked on 2016-2018    41.83% on its own picking window
+    the same roster on 2019-2020      3.33%
+    retained                             8%
+    full team on that holdout         17.55%
+
+A roster chosen on three years keeps 8% of its score on the two it never saw.
+That is a fit to the picking window.
+
+### What passed, and why it is not enough
+
+The random-team comparison: the real team sits at the 100th percentile of 1,000
+random draws (mean 7.98%, max 12.06%). This was always the weak test — **a
+greedy search beats random selection even on pure noise**, which is exactly why
+the year-shuffled null was built alongside it. The weak test passing while the
+strong one fails is the expected signature of a search fitting noise.
+
+### Consequences
+
+- **Greedy roster search is retired.** Do not build another team with it.
+- **UNAFFECTED:** gate 3, the fine-tune, the cut, the adoption rule, and the 252
+  passers as individual strategies. Their gate 3 verdicts stand on their own
+  merits and were never selected against each other.
+- **AFFECTED:** every number that depends on a specific roster — team KPIs,
+  per-year returns, the gate-2 baseline comparison, and Layer 4's absolute
+  levels.
+- **POSSIBLY SURVIVING:** Layer 4's RELATIVE finding, that netting and the 1/3/6
+  curve beat stacking. That is a comparison of sizing methods on a FIXED roster
+  rather than a comparison of selections, so it does not obviously inherit the
+  fault — but it has not been re-tested on a validated roster, because there
+  isn't one.
+
+### What a replacement needs
+
+Any future selection method must clear the year-shuffled greedy null, not merely
+the random-team draw. The agreement study's own null (membership shuffle, p=0.0000
+at the 100th percentile) is the standard to match: that one passed decisively on
+the same data, which is evidence the test is capable of detecting real structure
+when it is there.
