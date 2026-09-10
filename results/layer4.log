@@ -1,0 +1,11 @@
+roster: 25 members
+position-days: 14115
+  A_stacked_placeholder    team1  median  55.56%  worst  28.46%  maxDD  3.60%  binds actual maxDD  cap bound 0 days
+  A_stacked_placeholder    team2  median  83.34%  worst  42.69%  maxDD  5.40%  binds actual maxDD  cap bound 0 days
+  B_netted_linear          team1  median  54.55%  worst  27.83%  maxDD  3.60%  binds actual maxDD  cap bound 423 days
+  B_netted_linear          team2  median  81.83%  worst  41.74%  maxDD  5.40%  binds actual maxDD  cap bound 423 days
+  C_netted_curve           team1  median  64.23%  worst  29.00%  maxDD  3.60%  binds actual maxDD  cap bound 664 days
+  C_netted_curve           team2  median  96.34%  worst  43.50%  maxDD  5.40%  binds actual maxDD  cap bound 664 days
+  D_netted_half_curve      team1  median  55.07%  worst  27.70%  maxDD  3.60%  binds actual maxDD  cap bound 353 days
+  D_netted_half_curve      team2  median  82.60%  worst  41.55%  maxDD  5.40%  binds actual maxDD  cap bound 353 days
+DONE in 1.3 min
