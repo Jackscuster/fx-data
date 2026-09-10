@@ -2,16 +2,27 @@
 
 ## READ THIS FIRST
 
-1. **Gate 3 is complete.** 5,135 crossers fine-tuned; 12.5% adopted new settings on the honest W3-only basis.
-2. **The current answer is Layer 4 book C**: netted votes, agreement curve 1/3/6, 2% per-currency cap. Team 1 **30.22% median year, 18.67% worst, 2.29% max DD**.
-3. **Everything is scored on W3 only (2016-2020).** W2 is contaminated — `ip2` was tuned on it. FULLSTITCH is a hard follow-up, not done.
-4. **Mode C is paused by decision** at 299 chunks until forward testing starts. It is in no chain. Restart it deliberately.
-5. **Sharpe binds nothing** — not in adoption, not in the cut. It is reported only.
-6. **Three chain stages once reported success while doing nothing.** `l2stagecheck.py` now verifies every stage's output. Trust no stage that has not been guarded.
-7. **`run_pair` ran every mode as B until 8 Sep.** Anything built before then on A or C strategies is void. See §2.
-8. **The B-trend `ip1` recovery is packaged for a rented box** — `code/cloud_ip1.sh`, ~2 h, ~$3, one credential. Not launched.
-9. **Read `FIXES.md` before trusting any number** produced earlier than 10 Sep.
-10. Working style, invariants and Layer 1 history are in `HANDOFF_3.md`; Layer 2 detail in `HANDOFF_LAYER2.md`.
+1. **THE TEAM IS NOT A RESULT.** The greedy roster search FAILED both validity
+   checks on 2026-09-10. **The 22.97% team score and the 30.22% Layer 4 figure
+   are not demonstrated and must not be quoted as findings.**
+2. **Greedy roster search is RETIRED.** Do not build another team with it, and
+   do not treat any roster it produced as a portfolio.
+3. **What still stands:** the 252 gate 3 passers are real, individually. Gate 3
+   itself, the fine-tune, the cut and the adoption rule are unaffected.
+4. **What does not:** the selection AMONG those passers, and every number that
+   depends on a specific roster.
+5. **Everything is scored on W3 only (2016-2020).** W2 is contaminated — `ip2`
+   was tuned on it. FULLSTITCH is a hard follow-up, not done.
+6. **Mode C is paused by decision** at 299 chunks until forward testing starts.
+   It is in no chain. Restart it deliberately.
+7. **Sharpe binds nothing** — not in adoption, not in the cut. Reported only.
+8. **`run_pair` ran every mode as B until 8 Sep**; three chain stages once
+   reported success while doing nothing. Trust no number produced before
+   2026-09-10 without reading `FIXES.md`.
+9. **The B-trend `ip1` recovery is packaged for a rented box** —
+   `code/cloud_ip1.sh`, ~2 h, ~$3, one credential. Not launched.
+10. Working style and Layer 1 history: `HANDOFF_3.md`. Layer 2 detail:
+    `HANDOFF_LAYER2.md`. Material held outside this repo: see the last section.
 
 ---
 
@@ -28,8 +39,10 @@
 - **252 passers** on adopted settings: 136 B, 63 A-trend, 52 A-chop, 1 C-trend.
 - `settings_basis` column records which basis produced the file. Bars: expectancy >= 0.15R, PF >= 1.5, Sortino >= 1.3, Calmar >= 1.0, max DD <= 10% of own gross profit. **Sharpe reported, never binding.**
 
-## The team — `W3ONLY_ADOPTED`
-25 members, empty start, no size cap.
+## The team — `W3ONLY_ADOPTED` — **NOT VALIDATED, DO NOT QUOTE**
+25 members, empty start, no size cap. **The figures below failed both validity
+checks — see VALIDITY below. They describe what the search produced, not an
+edge.**
 
 | | Team 1 (3.6/3.6) | Team 2 (5.4/3.6) |
 |---|---|---|
@@ -49,7 +62,7 @@ Composition **13 B, 7 A-chop, 5 A-trend**; votes **4 full, 21 half**. Roster wit
 ## The gate-2 baseline — `W3ONLY_GATE2_FIXED`
 26 members, built on gate 2's settings on the **fixed** code. It exists so the adopted-settings team has something to be measured against. Team 1 median 22.59%, worst 10.19%. The adopted team beats it on median, average, worst year, drawdown and worst day.
 
-## Layer 4 sizing v2 — the current answer
+## Layer 4 sizing v2 — **levels inherit the roster problem**
 Net votes per pair per day, size by agreement level, cap per currency, then scale to budget. **Marks to market daily, exactly as the team builder does** — book A reproduces the builder (22.27% vs 22.97%), which is the check that the path is right.
 
 **Team 1:**
@@ -67,6 +80,11 @@ Net votes per pair per day, size by agreement level, cap per currency, then scal
 | max positions | 33 | 15 | **15** | 15 |
 
 **Team 2:** C 45.33% median / 28.00% worst; A 33.41% / 18.22%.
+
+**These levels are built on a roster that failed validation.** The RELATIVE
+finding may survive — netting and the 1/3/6 curve beat stacking on a FIXED
+roster, which is a comparison of sizing methods rather than of selections — but
+no absolute Layer 4 number should be quoted.
 
 **The 2% cap is KEPT.** Largest single-currency exposure ever reached is **2.62%**, so 3% and 4% never bind and equal uncapped; **2% binds on 9 days of 1,304** and costs 0.03pp of median year. A genuine backstop, not a constraint.
 
@@ -90,8 +108,38 @@ Net votes per pair per day, size by agreement level, cap per currency, then scal
 
 **Two confirmation-dependent members**, flat alone and profitable in company — `kuskus_starlight x coral x variance x mcginley` and `volatility_quality x aroon x waddah_attar_explosion x fantail_vma`. They count as **zero when alone** in Layer 4. **Zero members earn alone and lose in company.**
 
-## Checks
-Selection holdout + 25-run greedy null on the adopted team, all 9 cores. **Still running at the time of writing (~550 of ~625 null rounds).** Results go to `results/team_checks_W3ONLY_ADOPTED.csv` and `teamcheck_adopted.log`.
+## VALIDITY — BOTH CHECKS FAILED
+
+**Greedy null, p = 0.60.**
+
+| | |
+|---|---|
+| real team score | 22.82% |
+| greedy-null mean | **22.79%** |
+| null p95 / max | 23.96% / 24.63% |
+| p-value | **0.60** — 15 of 25 shuffled-year runs matched or beat it |
+
+The null re-runs the identical search on **year-shuffled** data, which destroys
+cross-member timing while preserving each strategy's own return distribution.
+The real search beats that average by **0.021pp** and falls below both its p95
+and its maximum. The search is extracting the strategies' individual quality,
+not any relationship between them.
+
+**Selection holdout: 8% retained.**
+
+| | |
+|---|---|
+| roster re-picked on 2016-2018 | 41.83% on its own picking window |
+| the same roster on 2019-2020 | **3.33%** |
+| retained | **8%** |
+| full team on that holdout | 17.55% |
+
+**What passed:** the random-team comparison only — the real team sits at the
+100th percentile of 1,000 random draws (mean 7.98%, max 12.06%). That test was
+always the weak one: a greedy search beats random selection even on noise, which
+is precisely why the second null exists.
+
+Files: `results/teamcheck_adopted.log`, `team_checks_W3ONLY_ADOPTED.*`.
 
 ## Mode C
 **Paused by decision at 299 chunks.** Not a fault, not a stall. It stays paused until the full system is built and forward testing has started. It has been removed from every chain.
