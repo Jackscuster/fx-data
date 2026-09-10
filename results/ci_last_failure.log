@@ -694,7 +694,7 @@ DRIVER 4 -- YIELD CURVE SHAPE. 0 pairs:
   VERDICT: KEEPER  (halves flip: False, sub-periods flip: False)
 
 DRIVER 5 -- COMMODITIES
-  CL=F 2000-08-23 -> 2026-09-09 (6539 obs); GC=F 2000-08-30 -> 2026-09-09 (6530 obs)
+  CL=F 2000-08-23 -> 2026-09-10 (6540 obs); GC=F 2000-08-30 -> 2026-09-10 (6531 obs)
   both start ~1.6 years into the in-sample window.
   iron ore TIO=F is free but only from 2010-10-14 and scoped to AUD,
   which gold already covers. Coal and dairy are not free: NZD is
