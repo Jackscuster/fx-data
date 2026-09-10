@@ -400,3 +400,20 @@ core into two hours across nine.
 **The chain treated "no shards running" as completion.** Shard 5 died on a
 transient `EmptyDataError` at 96.2% and its absence read as done. It now waits
 until all 5,135 sids are banked.
+
+## 2026-09-10 — session close
+
+`HANDOFF.md` is now the master record: state of every layer and gate, every bug
+found this week with what it contaminated and what was redone, every rule
+decided with its date, the queue in order, the files that matter, and the open
+questions. Read its ten-line READ THIS FIRST block before anything else.
+
+The fine-tune bank `results/gate3ft_costed_v4/` is back under git. It was
+untracked during the run because eight shards appended to it every few seconds,
+which aborted every rebase and blocked all pushes for an hour.
+
+**Do not trust any number produced before 2026-09-10 without checking this file
+first.** Three separate faults — W2/ip2 contamination, the mode-B exit hardcode,
+and open positions booked as realised — each invalidated whole classes of
+result, and each was found only because two independently computed numbers
+disagreed.
