@@ -398,3 +398,4 @@ team2 roster missing -- skipped
 
 DONE in 0.0 min
 app_ui.js build 3bc8ce232e4a (already current); app_version.json updated
+2026-09-10 13:26:30 5/5 selection holdout + random-team null, ALL free cores

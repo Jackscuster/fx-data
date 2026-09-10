@@ -58,10 +58,18 @@ def blind_trades(cfg, wins):
     """Every blind-window trade in this slice, across all 28 pairs."""
     code = dict((s, c) for s, _, c in S.SLICES)[cfg['slice']]
     out = []
+    _fail = {}
     for p in S.all_pairs():
         try:
             r = TR.run_pair(cfg, p)
-        except Exception:
+        except Exception as _e:
+            # COUNT, NEVER SILENTLY SKIP. This swallow is why three separate
+            # faults reported success while doing nothing: a config missing
+            # ip2, a roster carrying no settings, and a hardcoded mode all
+            # raised here and were skipped pair by pair, leaving an empty
+            # result that downstream code read as "no trades".
+            _fail[type(_e).__name__ + ': ' + str(_e)[:80]] = _fail.get(
+                type(_e).__name__ + ': ' + str(_e)[:80], 0) + 1
             continue
         d, tr = r['dates'], r['trades']
         if len(tr['r']) == 0:
@@ -91,6 +99,13 @@ def blind_trades(cfg, wins):
                 ex_ = d[zz]
             out.append(dict(pair=p, entry=d[eb], exit=ex_, R=R_,
                             crisis=bool(C.flag(d[eb], ex_, p, wins))))
+    if _fail and not out:
+        raise RuntimeError(
+            'every one of the %d pairs failed and no trades were produced. '
+            'Causes: %s' % (len(S.all_pairs()), _fail))
+    if _fail:
+        print('  WARNING: %d of %d pairs failed: %s'
+              % (sum(_fail.values()), len(S.all_pairs()), _fail), flush=True)
     return pd.DataFrame(out)
 
 
