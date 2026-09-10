@@ -348,3 +348,55 @@ That asymmetry is exactly why the bank and the delivery layer disagreed.
 
 Already rebuilt outside the queue: the W3ONLY_GATE2 team baseline and
 `graft15_honest_book.csv`.
+
+## FIXED 2026-09-10 — three stages reported success while doing nothing
+
+All three shared one shape: **a fallback where a failure belonged.**
+
+1. **The cut read a stale verdicts file.** `gate3_costed_verdicts.csv` had only
+   ever been produced by an inline script typed by hand on 7 Sep. The chain
+   refreshed the W3-only scores and then read the old file, so the team labelled
+   ADOPTED was the gate 2 team — confirmed identical member for member. Now
+   `code/l2cut.py`, a build product, with `--settings adopted|gate2`.
+
+2. **The agreement study found no roster.** It looked for `team1_roster.csv`;
+   the chain writes `team1_W3ONLY_ADOPTED_roster.csv`. It printed "skipped" and
+   exited zero in seven seconds. Now honours `TEAM_LABEL` and globs for labelled
+   rosters.
+
+3. **The agreement study found a roster with no settings.** The roster is a
+   summary carrying the recipe and vote, not `ip2` or the risk parameters, so
+   every engine call raised and was swallowed per pair, giving "no position-days"
+   after the roster had loaded successfully. Now joins settings from the
+   verdicts file and REFUSES to run if any member lacks them.
+
+### The generic guard
+
+`code/l2stagecheck.py` verifies each stage's OUTPUT rather than its exit code:
+exists, non-empty, at least a declared per-stage minimum row count, and written
+DURING that stage rather than left from a previous run. Failure writes
+`results/CHAIN_HALT.marker` naming stage and reason and halts the chain. All six
+stages wired; every stage command now exits the chain on non-zero rather than
+logging WARN and continuing.
+
+### The swallow audit
+
+Five `except` clauses across l2team, l2agree, l2teamcheck, l2cut, l2deliver;
+four were silent. The three identical per-pair swallows around `TR.run_pair`
+hid all three faults above — they now COUNT failures by exception type and
+**raise if every pair failed**, so an empty book is never returned as a valid
+one. The closed-trade DIP95 swallow logs a warning instead of `pass`. `l2cut`
+already counted. `l2teamcheck` has none.
+
+## FIXED 2026-09-10 — shard assignment and the chain's completion test
+
+**Position-based sharding let restarted shards claim overlapping work** — 228
+duplicate strategy runs, 18.7 wasted core-hours, all byte-identical so nothing
+was corrupted. Sharding is now `md5(sid) % shards`, fixed for all time. A
+`--leftovers` mode splits remaining work by position instead, safe only when
+nothing else is running: it turned 194 leftover strategies from 15 hours on one
+core into two hours across nine.
+
+**The chain treated "no shards running" as completion.** Shard 5 died on a
+transient `EmptyDataError` at 96.2% and its absence read as done. It now waits
+until all 5,135 sids are banked.
