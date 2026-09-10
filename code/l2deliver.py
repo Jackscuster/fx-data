@@ -98,6 +98,14 @@ def blind_trades(cfg, wins):
                       * float(tr['units'][j]) / S.RISK)
                 ex_ = d[zz]
             out.append(dict(pair=p, entry=d[eb], exit=ex_, R=R_,
+                            # DIRECTION is needed by anything that NETS
+                            # positions -- Layer 4 cannot offset a long against
+                            # a short without it, and re-extracting trades
+                            # elsewhere would bypass the mark-to-market and the
+                            # fees applied here.
+                            dir=int(tr['dir'][j]),
+                            entry_px=float(tr['entry_px'][j]),
+                            units=float(tr['units'][j]),
                             crisis=bool(C.flag(d[eb], ex_, p, wins))))
     if _fail and not out:
         raise RuntimeError(
