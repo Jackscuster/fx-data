@@ -575,3 +575,82 @@
     null round: 442 trials, best 24.631%, members 31
     null round: 440 trials, best 24.631%, members 32
     null round: 504 trials, best 4.169%, members 0
+    null round: 502 trials, best 5.983%, members 1
+    null round: 500 trials, best 7.674%, members 2
+    null round: 498 trials, best 9.400%, members 3
+    null round: 496 trials, best 10.554%, members 4
+    null round: 494 trials, best 11.898%, members 5
+    null round: 492 trials, best 12.879%, members 6
+    null round: 490 trials, best 13.676%, members 7
+    null round: 488 trials, best 14.596%, members 8
+    null round: 486 trials, best 15.162%, members 9
+    null round: 484 trials, best 15.952%, members 10
+    null round: 482 trials, best 16.532%, members 11
+    null round: 480 trials, best 17.448%, members 12
+    null round: 478 trials, best 18.501%, members 13
+    null round: 476 trials, best 19.289%, members 14
+    null round: 474 trials, best 20.569%, members 15
+    null round: 472 trials, best 21.685%, members 16
+    null round: 470 trials, best 22.060%, members 17
+    null round: 468 trials, best 22.255%, members 18
+    null round: 466 trials, best 22.685%, members 19
+    null round: 464 trials, best 22.909%, members 20
+    null round: 462 trials, best 22.998%, members 21
+    null round: 460 trials, best 23.601%, members 22
+    null round: 458 trials, best 23.601%, members 23
+    null round: 504 trials, best 4.132%, members 0
+    null round: 502 trials, best 5.985%, members 1
+    null round: 500 trials, best 7.648%, members 2
+    null round: 498 trials, best 9.369%, members 3
+    null round: 496 trials, best 10.588%, members 4
+    null round: 494 trials, best 12.044%, members 5
+    null round: 492 trials, best 13.842%, members 6
+    null round: 490 trials, best 14.671%, members 7
+    null round: 488 trials, best 15.678%, members 8
+    null round: 486 trials, best 16.706%, members 9
+    null round: 484 trials, best 18.140%, members 10
+    null round: 482 trials, best 18.801%, members 11
+    null round: 480 trials, best 19.460%, members 12
+    null round: 478 trials, best 20.198%, members 13
+    null round: 476 trials, best 20.829%, members 14
+    null round: 474 trials, best 21.311%, members 15
+    null round: 472 trials, best 21.776%, members 16
+    null round: 470 trials, best 21.966%, members 17
+    null round: 468 trials, best 22.112%, members 18
+    null round: 466 trials, best 22.112%, members 19
+team1_W3ONLY_ADOPTED {
+ "real_score": 22.815765013429292,
+ "holdout_pick_members": 21,
+ "holdout_in_sample": 41.83469891943186,
+ "holdout_out_sample": 3.331721811206037,
+ "full_team_on_holdout": 17.545148753522085,
+ "random_n": 1000,
+ "random_mean": 7.977522593177307,
+ "random_p95": 10.179721814216668,
+ "random_max": 12.059737335003902,
+ "random_pctile_of_real": 100.0,
+ "greedy_null_n": 25,
+ "greedy_null_mean": 22.794718526804488,
+ "greedy_null_p95": 23.964548805676337,
+ "greedy_null_max": 24.631042171651707,
+ "greedy_null_p_value": 0.6,
+ "greedy_null_p_resolution": 0.04
+}
+    team2_W3ONLY_ADOPTED_pick round: 504 trials, best 13.227%, members 0
+    team2_W3ONLY_ADOPTED_pick round: 502 trials, best 19.297%, members 1
+    team2_W3ONLY_ADOPTED_pick round: 500 trials, best 26.336%, members 2
+    team2_W3ONLY_ADOPTED_pick round: 498 trials, best 31.825%, members 3
+    team2_W3ONLY_ADOPTED_pick round: 496 trials, best 35.609%, members 4
+    team2_W3ONLY_ADOPTED_pick round: 494 trials, best 40.413%, members 5
+    team2_W3ONLY_ADOPTED_pick round: 492 trials, best 44.266%, members 6
+    team2_W3ONLY_ADOPTED_pick round: 490 trials, best 47.653%, members 7
+    team2_W3ONLY_ADOPTED_pick round: 488 trials, best 50.106%, members 8
+    team2_W3ONLY_ADOPTED_pick round: 486 trials, best 52.359%, members 9
+    team2_W3ONLY_ADOPTED_pick round: 484 trials, best 54.747%, members 10
+    team2_W3ONLY_ADOPTED_pick round: 482 trials, best 56.199%, members 11
+    team2_W3ONLY_ADOPTED_pick round: 480 trials, best 57.636%, members 12
+    team2_W3ONLY_ADOPTED_pick round: 478 trials, best 58.979%, members 13
+    team2_W3ONLY_ADOPTED_pick round: 476 trials, best 60.126%, members 14
+    team2_W3ONLY_ADOPTED_pick round: 474 trials, best 61.397%, members 15
+    team2_W3ONLY_ADOPTED_pick round: 472 trials, best 61.696%, members 16
+    team2_W3ONLY_ADOPTED_pick round: 470 trials, best 62.011%, members 17

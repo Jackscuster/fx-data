@@ -201,3 +201,38 @@ Selection holdout + 25-run greedy null on the adopted team, all 9 cores. **Still
 8. **The duplicated kalman row** — cause found (position sharding) and fixed; the dedup is in `gate3ft_costed_v4_dedup.csv`. Confirm nothing downstream still reads the raw bank.
 9. **Tripwire's floating-loss baseline** — measures from entry, not prior close. Needs the Layer 4 restructuring anyway.
 10. **W4 is untouched** and must stay so until Jack declares all tuning finished.
+
+---
+
+## MATERIAL THAT IS NOT IN THIS REPO
+
+The following live in **Jack's Claude project**, not here. Do not reconstruct
+them from memory or infer them from code — **ask Jack to paste them** when the
+work reaches them.
+
+**Layer 6 — the daily engine.** Design docs only; nothing is built. Not in this
+repo.
+
+**The prop-firm profile — FundedTradingPlus.** The rules that shape every sizing
+decision:
+- **Floating losses count toward BOTH limits** — the daily limit and the trailing
+  limit. This is why the team builder and Layer 4 mark to market daily rather
+  than booking on exit; realised-only accounting would size against a drawdown
+  the account never sees.
+- **All 28 pairs are available**, so nothing in the universe is unreachable.
+- **The 6% trailing limit locks at +6%** — which is exactly the Team 2 budget
+  case (DIP95 5.4%, worst day 3.6%): the looser drawdown budget only applies
+  once the floor has locked at the starting balance.
+
+The full document is in the project. The three points above are the ones already
+load-bearing in this repo's code; anything else about the profile must come from
+Jack rather than be assumed.
+
+**Parked work, also documented in the project:**
+- **Disk cache redesign** — one file per indicator+params holding all 28 pairs,
+  with a real-scale cold-start test. To be done **before round 2**, not during.
+- **XAU pass** — gold, outside the 28-pair G8 universe.
+- **V5.2 Pine wiring** — TradingView export of the shipped configuration.
+- **Per-pair chart selector** — an app feature for the Trades tab.
+
+None of these is scheduled here and none blocks the current queue.
