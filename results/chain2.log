@@ -1,3 +1,306 @@
 2026-09-08 15:31:21 armed: waiting for the gate 3 fine-tune
 2026-09-08 22:21:59 armed: waiting for the gate 3 fine-tune
 2026-09-08 22:27:04 armed: waiting for the gate 3 fine-tune
+2026-09-10 05:27:30 fine-tune finished
+2026-09-10 05:27:30 1/6 re-judging every banked row on the W3-only basis
+re-evaluated 4941 strategies
+  beat on account return : 2437
+  adopted under v1       : 161
+  adopted under v2       : 171
+  newly adopted by v2    : 10
+  true rejects (v2)      : {'DD_ONLY': 1716, 'BOTH': 522, 'SORTINO_ONLY': 28}
+  alternates rewritten   : 2266 rows
+2026-09-10 05:27:32 2/6 gate 3 cut on ADOPTED settings (W3ONLY)
+W3ONLY re-score: 3467 crossers to do (shard 0/1)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+  50/3467  0.75 s each  ~0.7 h left
+  100/3467  0.70 s each  ~0.7 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+  150/3467  0.58 s each  ~0.5 h left
+  200/3467  0.54 s each  ~0.5 h left
+  250/3467  0.51 s each  ~0.5 h left
+  300/3467  0.51 s each  ~0.5 h left
+  350/3467  0.51 s each  ~0.4 h left
+  400/3467  0.52 s each  ~0.4 h left
+  450/3467  0.54 s each  ~0.5 h left
+  500/3467  0.70 s each  ~0.6 h left
+  550/3467  0.79 s each  ~0.6 h left
+  600/3467  0.77 s each  ~0.6 h left
+  650/3467  0.76 s each  ~0.6 h left
+  700/3467  0.76 s each  ~0.6 h left
+  750/3467  0.76 s each  ~0.6 h left
+  800/3467  0.76 s each  ~0.6 h left
+  850/3467  0.75 s each  ~0.5 h left
+  900/3467  0.73 s each  ~0.5 h left
+  950/3467  0.76 s each  ~0.5 h left
+  1000/3467  0.76 s each  ~0.5 h left
+  1050/3467  0.75 s each  ~0.5 h left
+  1100/3467  0.74 s each  ~0.5 h left
+  1150/3467  0.74 s each  ~0.5 h left
+  1200/3467  0.73 s each  ~0.5 h left
+  1250/3467  0.72 s each  ~0.4 h left
+  1300/3467  0.72 s each  ~0.4 h left
+  1350/3467  0.72 s each  ~0.4 h left
+  1400/3467  0.72 s each  ~0.4 h left
+  1450/3467  0.74 s each  ~0.4 h left
+  1500/3467  0.75 s each  ~0.4 h left
+  1550/3467  0.74 s each  ~0.4 h left
+  1600/3467  0.74 s each  ~0.4 h left
+  1650/3467  0.74 s each  ~0.4 h left
+  1700/3467  0.74 s each  ~0.4 h left
+  1750/3467  0.74 s each  ~0.4 h left
+  1800/3467  0.75 s each  ~0.3 h left
+  1850/3467  0.74 s each  ~0.3 h left
+  1900/3467  0.74 s each  ~0.3 h left
+  1950/3467  0.74 s each  ~0.3 h left
+  2000/3467  0.74 s each  ~0.3 h left
+  2050/3467  0.73 s each  ~0.3 h left
+  2100/3467  0.73 s each  ~0.3 h left
+  2150/3467  0.73 s each  ~0.3 h left
+  2200/3467  0.73 s each  ~0.3 h left
+  2250/3467  0.73 s each  ~0.2 h left
+  2300/3467  0.72 s each  ~0.2 h left
+  2350/3467  0.72 s each  ~0.2 h left
+  2400/3467  0.72 s each  ~0.2 h left
+  2450/3467  0.72 s each  ~0.2 h left
+  2500/3467  0.72 s each  ~0.2 h left
+  2550/3467  0.72 s each  ~0.2 h left
+  2600/3467  0.72 s each  ~0.2 h left
+  2650/3467  0.72 s each  ~0.2 h left
+  2700/3467  0.72 s each  ~0.2 h left
+  2750/3467  0.72 s each  ~0.1 h left
+  2800/3467  0.72 s each  ~0.1 h left
+  2850/3467  0.73 s each  ~0.1 h left
+  2900/3467  0.73 s each  ~0.1 h left
+  2950/3467  0.74 s each  ~0.1 h left
+  3000/3467  0.74 s each  ~0.1 h left
+  3050/3467  0.74 s each  ~0.1 h left
+  3100/3467  0.74 s each  ~0.1 h left
+  3150/3467  0.75 s each  ~0.1 h left
+  3200/3467  0.75 s each  ~0.1 h left
+  3250/3467  0.75 s each  ~0.0 h left
+  3300/3467  0.76 s each  ~0.0 h left
+  3350/3467  0.76 s each  ~0.0 h left
+  3400/3467  0.76 s each  ~0.0 h left
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  3450/3467  0.76 s each  ~0.0 h left
+  3467/3467  0.76 s each  ~0.0 h left
+DONE in 44.1 min
+2026-09-10 06:11:37 3/6 team builder, both teams
+candidates (passers incl. alternates): 254
+equity matrix: 1296 days x 254 candidates in 1.0 min
+return matrix: 1296 days x 254 candidates
+one team evaluation: 0.26 s  (10,000 shuffles)
+estimated: ~508 trials/round x 2 teams -> roughly 0.3 h
+no seed: choosing the best single passer at each budget
+team1_W3ONLY_ADOPTED seed: A-chop|chop|parabolic_sar_signals|lemantrend_signals|variance_volume_signals|wma_baseline::OFFICIAL alone scores 4.12%
+    team1_W3ONLY_ADOPTED round: 506 trials, best 6.054%, members 1
+    team1_W3ONLY_ADOPTED round: 504 trials, best 7.638%, members 2
+    team1_W3ONLY_ADOPTED round: 502 trials, best 8.869%, members 3
+    team1_W3ONLY_ADOPTED round: 500 trials, best 10.400%, members 4
+    team1_W3ONLY_ADOPTED round: 498 trials, best 12.404%, members 5
+    team1_W3ONLY_ADOPTED round: 496 trials, best 13.686%, members 6
+    team1_W3ONLY_ADOPTED round: 494 trials, best 14.631%, members 7
+    team1_W3ONLY_ADOPTED round: 492 trials, best 15.345%, members 8
+    team1_W3ONLY_ADOPTED round: 490 trials, best 16.248%, members 9
+    team1_W3ONLY_ADOPTED round: 488 trials, best 16.958%, members 10
+    team1_W3ONLY_ADOPTED round: 486 trials, best 17.250%, members 11
+    team1_W3ONLY_ADOPTED round: 484 trials, best 17.941%, members 12
+    team1_W3ONLY_ADOPTED round: 482 trials, best 18.517%, members 13
+    team1_W3ONLY_ADOPTED round: 480 trials, best 18.859%, members 14
+    team1_W3ONLY_ADOPTED round: 478 trials, best 19.709%, members 15
+    team1_W3ONLY_ADOPTED round: 476 trials, best 20.009%, members 16
+    team1_W3ONLY_ADOPTED round: 474 trials, best 20.555%, members 17
+    team1_W3ONLY_ADOPTED round: 472 trials, best 20.780%, members 18
+    team1_W3ONLY_ADOPTED round: 470 trials, best 20.934%, members 19
+    team1_W3ONLY_ADOPTED round: 468 trials, best 21.184%, members 20
+    team1_W3ONLY_ADOPTED round: 466 trials, best 21.396%, members 21
+    team1_W3ONLY_ADOPTED round: 464 trials, best 21.554%, members 22
+    team1_W3ONLY_ADOPTED round: 462 trials, best 22.163%, members 23
+    team1_W3ONLY_ADOPTED round: 460 trials, best 22.456%, members 24
+    team1_W3ONLY_ADOPTED round: 458 trials, best 22.588%, members 25
+    team1_W3ONLY_ADOPTED round: 456 trials, best 22.588%, members 26
+team1_W3ONLY_ADOPTED: 26 members, score 22.59%, tried 12532
+team2_W3ONLY_ADOPTED seed: A-chop|chop|parabolic_sar_signals|lemantrend_signals|variance_volume_signals|wma_baseline::OFFICIAL alone scores 6.18%
+    team2_W3ONLY_ADOPTED round: 506 trials, best 9.080%, members 1
+    team2_W3ONLY_ADOPTED round: 504 trials, best 11.456%, members 2
+    team2_W3ONLY_ADOPTED round: 502 trials, best 13.303%, members 3
+    team2_W3ONLY_ADOPTED round: 500 trials, best 15.601%, members 4
+    team2_W3ONLY_ADOPTED round: 498 trials, best 18.606%, members 5
+    team2_W3ONLY_ADOPTED round: 496 trials, best 20.529%, members 6
+    team2_W3ONLY_ADOPTED round: 494 trials, best 21.946%, members 7
+    team2_W3ONLY_ADOPTED round: 492 trials, best 23.018%, members 8
+    team2_W3ONLY_ADOPTED round: 490 trials, best 24.372%, members 9
+    team2_W3ONLY_ADOPTED round: 488 trials, best 25.438%, members 10
+    team2_W3ONLY_ADOPTED round: 486 trials, best 25.875%, members 11
+    team2_W3ONLY_ADOPTED round: 484 trials, best 26.912%, members 12
+    team2_W3ONLY_ADOPTED round: 482 trials, best 27.775%, members 13
+    team2_W3ONLY_ADOPTED round: 480 trials, best 28.289%, members 14
+    team2_W3ONLY_ADOPTED round: 478 trials, best 29.564%, members 15
+    team2_W3ONLY_ADOPTED round: 476 trials, best 30.014%, members 16
+    team2_W3ONLY_ADOPTED round: 474 trials, best 30.832%, members 17
+    team2_W3ONLY_ADOPTED round: 472 trials, best 31.170%, members 18
+    team2_W3ONLY_ADOPTED round: 470 trials, best 31.402%, members 19
+    team2_W3ONLY_ADOPTED round: 468 trials, best 31.776%, members 20
+    team2_W3ONLY_ADOPTED round: 466 trials, best 32.094%, members 21
+    team2_W3ONLY_ADOPTED round: 464 trials, best 32.332%, members 22
+    team2_W3ONLY_ADOPTED round: 462 trials, best 33.244%, members 23
+    team2_W3ONLY_ADOPTED round: 460 trials, best 33.684%, members 24
+    team2_W3ONLY_ADOPTED round: 458 trials, best 33.882%, members 25
+    team2_W3ONLY_ADOPTED round: 456 trials, best 33.882%, members 26
+team2_W3ONLY_ADOPTED: 26 members, score 33.88%, tried 12532
+
+DONE in 24.3 min
+ total_return_pct  median_year_pct  mean_year_pct  max_dd_pct  calmar  sortino  sharpe  worst_day_pct  worst_month_pct  best_month_pct  trades  total_R  expectancy_R  win_rate_pct  avg_win_R  avg_loss_R  profit_factor  avg_hold_days  profit_concentration_pct                 team  members  scale  dip95_pct  actual_max_dd_pct  clustering_ratio binds  mean_corr  max_corr  max_positions_open  mean_positions_when_live
+           92.572           22.588         18.514       2.722  34.014    8.017   3.945          0.843            1.634           5.543    1968  765.471         0.389        50.051      1.434      -0.674          2.184         10.261                    10.485 team1_W3ONLY_ADOPTED       26  3.198        3.6              2.722             0.756 DIP95      0.048     0.309                  16                     6.798
+          138.858           33.882         27.772       4.082  34.014    8.017   3.945          1.265            2.451           8.314    1968  765.471         0.389        50.051      1.434      -0.674          2.184         10.261                    10.485 team2_W3ONLY_ADOPTED       26  4.797        5.4              4.082             0.756 DIP95      0.048     0.309                  16                     6.798
+
+DONE in 2.9 min
+2026-09-10 06:38:51 4/6 selection holdout + random-team null
+    team1_W3ONLY_ADOPTED_pick round: 508 trials, best 8.801%, members 0
+    team1_W3ONLY_ADOPTED_pick round: 506 trials, best 12.823%, members 1
+    team1_W3ONLY_ADOPTED_pick round: 504 trials, best 17.409%, members 2
+    team1_W3ONLY_ADOPTED_pick round: 502 trials, best 21.161%, members 3
+    team1_W3ONLY_ADOPTED_pick round: 500 trials, best 23.907%, members 4
+    team1_W3ONLY_ADOPTED_pick round: 498 trials, best 27.130%, members 5
+    team1_W3ONLY_ADOPTED_pick round: 496 trials, best 29.511%, members 6
+    team1_W3ONLY_ADOPTED_pick round: 494 trials, best 31.496%, members 7
+    team1_W3ONLY_ADOPTED_pick round: 492 trials, best 33.337%, members 8
+    team1_W3ONLY_ADOPTED_pick round: 490 trials, best 35.060%, members 9
+    team1_W3ONLY_ADOPTED_pick round: 488 trials, best 36.609%, members 10
+    team1_W3ONLY_ADOPTED_pick round: 486 trials, best 37.590%, members 11
+    team1_W3ONLY_ADOPTED_pick round: 484 trials, best 38.246%, members 12
+    team1_W3ONLY_ADOPTED_pick round: 482 trials, best 39.360%, members 13
+    team1_W3ONLY_ADOPTED_pick round: 480 trials, best 39.953%, members 14
+    team1_W3ONLY_ADOPTED_pick round: 478 trials, best 40.705%, members 15
+    team1_W3ONLY_ADOPTED_pick round: 476 trials, best 41.832%, members 16
+    team1_W3ONLY_ADOPTED_pick round: 474 trials, best 42.154%, members 17
+    team1_W3ONLY_ADOPTED_pick round: 472 trials, best 42.443%, members 18
+    team1_W3ONLY_ADOPTED_pick round: 470 trials, best 42.591%, members 19
+    team1_W3ONLY_ADOPTED_pick round: 468 trials, best 42.737%, members 20
+    team1_W3ONLY_ADOPTED_pick round: 466 trials, best 43.029%, members 21
+    team1_W3ONLY_ADOPTED_pick round: 464 trials, best 43.095%, members 22
+    team1_W3ONLY_ADOPTED_pick round: 462 trials, best 44.398%, members 23
+    team1_W3ONLY_ADOPTED_pick round: 460 trials, best 44.398%, members 24
+    null round: 508 trials, best 4.150%, members 0
+    null round: 506 trials, best 6.051%, members 1
+    null round: 504 trials, best 7.565%, members 2
+    null round: 502 trials, best 9.394%, members 3
+    null round: 500 trials, best 10.588%, members 4
+    null round: 498 trials, best 12.034%, members 5
+    null round: 496 trials, best 13.819%, members 6
+    null round: 494 trials, best 15.175%, members 7
+    null round: 492 trials, best 15.830%, members 8
+    null round: 490 trials, best 16.691%, members 9
+    null round: 488 trials, best 17.533%, members 10
+    null round: 486 trials, best 18.269%, members 11
+    null round: 484 trials, best 19.397%, members 12
+    null round: 482 trials, best 19.795%, members 13
+    null round: 480 trials, best 20.193%, members 14
+    null round: 478 trials, best 20.700%, members 15
+    null round: 476 trials, best 21.482%, members 16
+    null round: 474 trials, best 21.708%, members 17
+    null round: 472 trials, best 21.920%, members 18
+    null round: 470 trials, best 22.357%, members 19
+    null round: 468 trials, best 22.357%, members 20
+    null round: 508 trials, best 4.209%, members 0
+    null round: 506 trials, best 5.960%, members 1
+    null round: 504 trials, best 7.597%, members 2
+    null round: 502 trials, best 9.282%, members 3
+    null round: 500 trials, best 10.489%, members 4
+    null round: 498 trials, best 11.339%, members 5
+    null round: 496 trials, best 12.594%, members 6
+    null round: 494 trials, best 13.257%, members 7
+    null round: 492 trials, best 14.167%, members 8
+    null round: 490 trials, best 14.758%, members 9
+    null round: 488 trials, best 15.603%, members 10
+    null round: 486 trials, best 16.359%, members 11
+    null round: 484 trials, best 17.989%, members 12
+    null round: 482 trials, best 18.975%, members 13
+    null round: 480 trials, best 19.663%, members 14
+    null round: 478 trials, best 19.847%, members 15
+    null round: 476 trials, best 20.221%, members 16
+    null round: 474 trials, best 20.543%, members 17
+    null round: 472 trials, best 21.806%, members 18
+    null round: 470 trials, best 21.978%, members 19
+    null round: 468 trials, best 22.464%, members 20
+    null round: 466 trials, best 22.507%, members 21
+    null round: 464 trials, best 22.629%, members 22
+    null round: 462 trials, best 22.629%, members 23
+    null round: 508 trials, best 4.169%, members 0
+    null round: 506 trials, best 6.059%, members 1
+    null round: 504 trials, best 7.758%, members 2
+    null round: 502 trials, best 9.100%, members 3
+    null round: 500 trials, best 10.323%, members 4
+    null round: 498 trials, best 11.490%, members 5
+    null round: 496 trials, best 12.619%, members 6
+    null round: 494 trials, best 14.531%, members 7
+    null round: 492 trials, best 15.449%, members 8
+    null round: 490 trials, best 16.483%, members 9
+    null round: 488 trials, best 17.088%, members 10
+    null round: 486 trials, best 17.566%, members 11
+    null round: 484 trials, best 18.775%, members 12
+    null round: 482 trials, best 19.391%, members 13
+    null round: 480 trials, best 19.817%, members 14
+    null round: 478 trials, best 20.074%, members 15
+    null round: 476 trials, best 20.581%, members 16
+    null round: 474 trials, best 21.169%, members 17
+    null round: 472 trials, best 21.594%, members 18
+    null round: 470 trials, best 21.755%, members 19
+    null round: 468 trials, best 21.996%, members 20
+    null round: 466 trials, best 22.050%, members 21
+    null round: 464 trials, best 22.095%, members 22
+    null round: 462 trials, best 22.263%, members 23
+    null round: 460 trials, best 22.263%, members 24
+    null round: 508 trials, best 4.137%, members 0
+    null round: 506 trials, best 6.043%, members 1
+    null round: 504 trials, best 7.707%, members 2
+    null round: 502 trials, best 8.882%, members 3
+    null round: 500 trials, best 10.420%, members 4
+    null round: 498 trials, best 12.535%, members 5
+    null round: 496 trials, best 13.866%, members 6
+    null round: 494 trials, best 14.687%, members 7
+    null round: 492 trials, best 15.419%, members 8
+    null round: 490 trials, best 16.373%, members 9
+    null round: 488 trials, best 17.305%, members 10
+    null round: 486 trials, best 18.008%, members 11
+    null round: 484 trials, best 18.475%, members 12
+    null round: 482 trials, best 19.572%, members 13
+    null round: 480 trials, best 20.141%, members 14
+    null round: 478 trials, best 20.269%, members 15
+    null round: 476 trials, best 20.659%, members 16
+    null round: 474 trials, best 21.350%, members 17
+    null round: 472 trials, best 21.666%, members 18
+    null round: 470 trials, best 21.747%, members 19
+    null round: 468 trials, best 21.846%, members 20
+    null round: 466 trials, best 21.901%, members 21
+    null round: 464 trials, best 22.078%, members 22
+    null round: 462 trials, best 22.187%, members 23
+    null round: 460 trials, best 22.931%, members 24
+    null round: 458 trials, best 22.962%, members 25
+    null round: 456 trials, best 23.464%, members 26
+    null round: 454 trials, best 23.464%, members 27
+    null round: 508 trials, best 4.157%, members 0
+    null round: 506 trials, best 6.062%, members 1
+    null round: 504 trials, best 7.766%, members 2
+    null round: 502 trials, best 9.133%, members 3
+    null round: 500 trials, best 10.442%, members 4
+    null round: 498 trials, best 12.618%, members 5
+    null round: 496 trials, best 13.767%, members 6
+    null round: 494 trials, best 14.710%, members 7
+2026-09-10 10:32:33 WARN checks
+2026-09-10 10:32:33 5/6 agreement study
+team1 roster missing -- skipped
+team2 roster missing -- skipped
+
+DONE in 0.0 min
+2026-09-10 10:34:06 armed: waiting for the gate 3 fine-tune to bank ALL 5,135

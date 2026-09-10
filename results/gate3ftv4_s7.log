@@ -118,3 +118,30 @@ GATE 3 FINE-TUNE starting 2026-09-09 10:31:36
 1614 alternates of 4084 finished strategies
 {'DD_ONLY': 895, 'MULTI': 708, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 3}
     50/102  333.6 s/strategy  | 1321 left -> 122 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+1686 alternates of 4239 finished strategies
+{'DD_ONLY': 926, 'MULTI': 749, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 3}
+    75/102  295.7 s/strategy  | 1296 left -> 106 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+1758 alternates of 4393 finished strategies
+{'DD_ONLY': 963, 'MULTI': 783, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 4}
+   100/102  271.0 s/strategy  | 1271 left -> 96 h -> 2026-09-13
+1763 alternates of 4402 finished strategies
+{'DD_ONLY': 965, 'MULTI': 786, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 4}
+   102/102  270.0 s/strategy  | 1269 left -> 95 h -> 2026-09-13
+
+banked 102 rows to ft_07_0909_103137.csv

@@ -165,3 +165,72 @@ GATE 3 FINE-TUNE starting 2026-09-09 12:27:25
   sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
 /Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
   st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+1642 alternates of 4146 finished strategies
+{'DD_ONLY': 907, 'MULTI': 724, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 3}
+    25/203  460.4 s/strategy  | 1246 left -> 159 h -> 2026-09-16
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+1718 alternates of 4311 finished strategies
+{'DD_ONLY': 944, 'MULTI': 762, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 4}
+    50/203  346.2 s/strategy  | 1221 left -> 117 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+1828 alternates of 4531 finished strategies
+{'DD_ONLY': 1005, 'MULTI': 811, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 4}
+    75/203  347.2 s/strategy  | 1196 left -> 115 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+1884 alternates of 4638 finished strategies
+{'DD_ONLY': 1051, 'MULTI': 821, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 4}
+   100/203  335.5 s/strategy  | 1171 left -> 109 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+1928 alternates of 4722 finished strategies
+{'DD_ONLY': 1086, 'MULTI': 830, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 4}
+   125/203  326.4 s/strategy  | 1146 left -> 104 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+1968 alternates of 4817 finished strategies
+{'DD_ONLY': 1099, 'MULTI': 856, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 5}
+   150/203  327.9 s/strategy  | 1121 left -> 102 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+1998 alternates of 4883 finished strategies
+{'DD_ONLY': 1110, 'MULTI': 875, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 5}
+   175/203  309.9 s/strategy  | 1096 left -> 94 h -> 2026-09-14
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+2019 alternates of 4925 finished strategies
+{'DD_ONLY': 1118, 'MULTI': 888, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 5}
+   200/203  289.2 s/strategy  | 1071 left -> 86 h -> 2026-09-13
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+2021 alternates of 4930 finished strategies
+{'DD_ONLY': 1120, 'MULTI': 888, 'SHARPE_ONLY': 8, 'SORTINO_ONLY': 5}
+   203/203  287.4 s/strategy  | 1068 left -> 85 h -> 2026-09-13
+
+banked 203 rows to ft_04_0909_122725.csv

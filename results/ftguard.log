@@ -73,3 +73,4 @@
 2026-09-09 12:28:24 swap free 1202M > 700M -- restarting shard 1 (resumes from bank)
 2026-09-09 12:29:24 swap free 1218M > 700M -- restarting shard 0 (resumes from bank)
 2026-09-09 12:30:24 swap free 1218M > 700M -- restarting shard 3 (resumes from bank)
+2026-09-10 05:27:13 no shards left; standing down

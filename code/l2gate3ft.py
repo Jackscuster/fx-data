@@ -226,6 +226,9 @@ def main():
     ap.add_argument('--shard', type=int, default=0)
     ap.add_argument('--shards', type=int, default=1)
     ap.add_argument('--no-pace-check', action='store_true')
+    ap.add_argument('--leftovers', action='store_true',
+                    help='split the remaining work evenly by position rather '
+                         'than by sid hash. Only safe when no other shards run.')
     a = ap.parse_args()
     os.makedirs(BANK, exist_ok=True)
     npts = widen()
@@ -242,7 +245,15 @@ def main():
         print('  OPEN-FLOOR pass: %d FLOOR_LIMITED strategies from v3' % len(P), flush=True)
     done = banked()
     todo = [r for r in P.to_dict('records') if r['sid'] not in done]
-    if a.shards > 1:
+    if a.leftovers:
+        # LEFTOVERS MODE. Hash sharding is stable, which is what makes it safe --
+        # but it also means a dead shard's slice can only be finished by that
+        # same shard number, and running 194 strategies on one core is ~15 h.
+        # Here the REMAINING work is split evenly across all shards by position,
+        # which is safe precisely because nothing else is running: there is no
+        # second generation of shards to overlap with.
+        todo = [r for i, r in enumerate(todo) if i % a.shards == a.shard]
+    elif a.shards > 1:
         # SHARD ON A STABLE HASH OF THE SID, not on position in the todo list.
         # Position-sharding assigns work from the list of strategies NOT YET
         # BANKED, so two shards started at different times see different lists

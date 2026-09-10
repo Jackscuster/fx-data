@@ -109,3 +109,6 @@ Traceback (most recent call last):
     self._reader = parsers.TextReader(src, **kwds)
   File "pandas/_libs/parsers.pyx", line 581, in pandas._libs.parsers.TextReader.__cinit__
 pandas.errors.EmptyDataError: No columns to parse from file
+GATE 3 FINE-TUNE starting 2026-09-10 09:29:30
+  widened risk grid: 379 points per coordinate-descent sweep (was 193, 1.96x)
+  population 5135, banked 4941, to fine-tune 194 (shard 5/9)
