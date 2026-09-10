@@ -1,1 +1,358 @@
-{}
+{
+ "team1": {
+  "slope_IS": {
+   "slope": 1.9094776766194483,
+   "null_mean": 1.0958279061268326,
+   "null_p95": 1.1954023888273753,
+   "percentile_of_real": 100.0,
+   "p_value": 0.0
+  },
+  "slope_OOS": {
+   "slope": 0.623831125854152,
+   "null_mean": 0.24743795055171,
+   "null_p95": 0.265905082874329,
+   "percentile_of_real": 100.0,
+   "p_value": 0.0
+  },
+  "opposition": {
+   "majority_accuracy_pct": 37.3,
+   "best_member": "B|trend|qqe_mod_signals|j_tpo_signals|waddah_attar_explosion_volume_signals|sma_baseline::OFFICIAL",
+   "best_member_accuracy_pct": 62.5,
+   "null_mean_accuracy": 0.4981,
+   "real_accuracy": 0.3618,
+   "shapes": {
+    "1v1": 403,
+    "2v1": 134,
+    "3v1": 21,
+    "2v2": 5,
+    "4v1": 2,
+    "4v2": 1,
+    "3v2": 1
+   }
+  },
+  "levels": [
+   {
+    "team": "team1",
+    "level": 1,
+    "share_of_roster": 4.0,
+    "period": "IS",
+    "position_days": 7157,
+    "episodes": 715,
+    "r_per_unit": 0.030476495154044957,
+    "r_per_episode": 0.305063322821678,
+    "hit_rate_pct": 51.6,
+    "worst_dip_R": 13.659
+   },
+   {
+    "team": "team1",
+    "level": 1,
+    "share_of_roster": 4.0,
+    "period": "OOS",
+    "position_days": 8048,
+    "episodes": 858,
+    "r_per_unit": 0.027931379183847065,
+    "r_per_episode": 0.26199503458228574,
+    "hit_rate_pct": 51.7,
+    "worst_dip_R": 11.628
+   },
+   {
+    "team": "team1",
+    "level": 2,
+    "share_of_roster": 8.0,
+    "period": "IS",
+    "position_days": 2933,
+    "episodes": 268,
+    "r_per_unit": 0.0789291788775382,
+    "r_per_episode": 0.8638032897306699,
+    "hit_rate_pct": 64.2,
+    "worst_dip_R": 6.156
+   },
+   {
+    "team": "team1",
+    "level": 2,
+    "share_of_roster": 8.0,
+    "period": "OOS",
+    "position_days": 4337,
+    "episodes": 346,
+    "r_per_unit": 0.06457061159259138,
+    "r_per_episode": 0.809372088084014,
+    "hit_rate_pct": 62.7,
+    "worst_dip_R": 6.462
+   },
+   {
+    "team": "team1",
+    "level": 3,
+    "share_of_roster": 12.0,
+    "period": "IS",
+    "position_days": 1411,
+    "episodes": 98,
+    "r_per_unit": 0.19304941065634465,
+    "r_per_episode": 2.7795175350622685,
+    "hit_rate_pct": 74.5,
+    "worst_dip_R": 6.367
+   },
+   {
+    "team": "team1",
+    "level": 3,
+    "share_of_roster": 12.0,
+    "period": "OOS",
+    "position_days": 1343,
+    "episodes": 105,
+    "r_per_unit": 0.12356344021712647,
+    "r_per_episode": 1.5804352401104842,
+    "hit_rate_pct": 81.9,
+    "worst_dip_R": 4.6
+   },
+   {
+    "team": "team1",
+    "level": 4,
+    "share_of_roster": 16.0,
+    "period": "IS",
+    "position_days": 448,
+    "episodes": 23,
+    "r_per_unit": 0.6846369276249898,
+    "r_per_episode": 13.33553667721719,
+    "hit_rate_pct": 87.0,
+    "worst_dip_R": 3.858
+   },
+   {
+    "team": "team1",
+    "level": 4,
+    "share_of_roster": 16.0,
+    "period": "OOS",
+    "position_days": 378,
+    "episodes": 23,
+    "r_per_unit": 0.14520416647499929,
+    "r_per_episode": 2.3863989098934666,
+    "hit_rate_pct": 91.3,
+    "worst_dip_R": 2.439
+   },
+   {
+    "team": "team1",
+    "level": 5,
+    "share_of_roster": 20.0,
+    "period": "IS",
+    "position_days": 55,
+    "episodes": 3,
+    "r_per_unit": 0.23252424477778771,
+    "r_per_episode": 4.262944487592777,
+    "hit_rate_pct": 100.0,
+    "worst_dip_R": 0.0
+   },
+   {
+    "team": "team1",
+    "level": 5,
+    "share_of_roster": 20.0,
+    "period": "OOS",
+    "position_days": 145,
+    "episodes": 8,
+    "r_per_unit": 0.17711248792123796,
+    "r_per_episode": 3.2101638435724373,
+    "hit_rate_pct": 87.5,
+    "worst_dip_R": 2.108
+   },
+   {
+    "team": "team1",
+    "level": 6,
+    "share_of_roster": 24.0,
+    "period": "OOS",
+    "position_days": 12,
+    "episodes": 2,
+    "r_per_unit": 0.2507738531404215,
+    "r_per_episode": 1.5046431188425293,
+    "hit_rate_pct": 100.0,
+    "worst_dip_R": 0.0
+   },
+   {
+    "team": "team1",
+    "level": 7,
+    "share_of_roster": 28.0,
+    "period": "OOS",
+    "position_days": 14,
+    "episodes": 1,
+    "r_per_unit": 0.17865489795090503,
+    "r_per_episode": 2.501168571312671,
+    "hit_rate_pct": 100.0,
+    "worst_dip_R": 0.0
+   }
+  ]
+ },
+ "team2": {
+  "slope_IS": {
+   "slope": 1.9094776766194483,
+   "null_mean": 1.0930761139336955,
+   "null_p95": 1.1985683232026816,
+   "percentile_of_real": 100.0,
+   "p_value": 0.0
+  },
+  "slope_OOS": {
+   "slope": 0.623831125854152,
+   "null_mean": 0.24771377332522734,
+   "null_p95": 0.26563216694872116,
+   "percentile_of_real": 100.0,
+   "p_value": 0.0
+  },
+  "opposition": {
+   "majority_accuracy_pct": 37.3,
+   "best_member": "B|trend|qqe_mod_signals|j_tpo_signals|waddah_attar_explosion_volume_signals|sma_baseline::OFFICIAL",
+   "best_member_accuracy_pct": 62.5,
+   "null_mean_accuracy": 0.4951,
+   "real_accuracy": 0.3618,
+   "shapes": {
+    "1v1": 403,
+    "2v1": 134,
+    "3v1": 21,
+    "2v2": 5,
+    "4v1": 2,
+    "4v2": 1,
+    "3v2": 1
+   }
+  },
+  "levels": [
+   {
+    "team": "team2",
+    "level": 1,
+    "share_of_roster": 4.0,
+    "period": "IS",
+    "position_days": 7157,
+    "episodes": 715,
+    "r_per_unit": 0.030476495154044957,
+    "r_per_episode": 0.305063322821678,
+    "hit_rate_pct": 51.6,
+    "worst_dip_R": 13.659
+   },
+   {
+    "team": "team2",
+    "level": 1,
+    "share_of_roster": 4.0,
+    "period": "OOS",
+    "position_days": 8048,
+    "episodes": 858,
+    "r_per_unit": 0.027931379183847065,
+    "r_per_episode": 0.26199503458228574,
+    "hit_rate_pct": 51.7,
+    "worst_dip_R": 11.628
+   },
+   {
+    "team": "team2",
+    "level": 2,
+    "share_of_roster": 8.0,
+    "period": "IS",
+    "position_days": 2933,
+    "episodes": 268,
+    "r_per_unit": 0.0789291788775382,
+    "r_per_episode": 0.8638032897306699,
+    "hit_rate_pct": 64.2,
+    "worst_dip_R": 6.156
+   },
+   {
+    "team": "team2",
+    "level": 2,
+    "share_of_roster": 8.0,
+    "period": "OOS",
+    "position_days": 4337,
+    "episodes": 346,
+    "r_per_unit": 0.06457061159259138,
+    "r_per_episode": 0.809372088084014,
+    "hit_rate_pct": 62.7,
+    "worst_dip_R": 6.462
+   },
+   {
+    "team": "team2",
+    "level": 3,
+    "share_of_roster": 12.0,
+    "period": "IS",
+    "position_days": 1411,
+    "episodes": 98,
+    "r_per_unit": 0.19304941065634465,
+    "r_per_episode": 2.7795175350622685,
+    "hit_rate_pct": 74.5,
+    "worst_dip_R": 6.367
+   },
+   {
+    "team": "team2",
+    "level": 3,
+    "share_of_roster": 12.0,
+    "period": "OOS",
+    "position_days": 1343,
+    "episodes": 105,
+    "r_per_unit": 0.12356344021712647,
+    "r_per_episode": 1.5804352401104842,
+    "hit_rate_pct": 81.9,
+    "worst_dip_R": 4.6
+   },
+   {
+    "team": "team2",
+    "level": 4,
+    "share_of_roster": 16.0,
+    "period": "IS",
+    "position_days": 448,
+    "episodes": 23,
+    "r_per_unit": 0.6846369276249898,
+    "r_per_episode": 13.33553667721719,
+    "hit_rate_pct": 87.0,
+    "worst_dip_R": 3.858
+   },
+   {
+    "team": "team2",
+    "level": 4,
+    "share_of_roster": 16.0,
+    "period": "OOS",
+    "position_days": 378,
+    "episodes": 23,
+    "r_per_unit": 0.14520416647499929,
+    "r_per_episode": 2.3863989098934666,
+    "hit_rate_pct": 91.3,
+    "worst_dip_R": 2.439
+   },
+   {
+    "team": "team2",
+    "level": 5,
+    "share_of_roster": 20.0,
+    "period": "IS",
+    "position_days": 55,
+    "episodes": 3,
+    "r_per_unit": 0.23252424477778771,
+    "r_per_episode": 4.262944487592777,
+    "hit_rate_pct": 100.0,
+    "worst_dip_R": 0.0
+   },
+   {
+    "team": "team2",
+    "level": 5,
+    "share_of_roster": 20.0,
+    "period": "OOS",
+    "position_days": 145,
+    "episodes": 8,
+    "r_per_unit": 0.17711248792123796,
+    "r_per_episode": 3.2101638435724373,
+    "hit_rate_pct": 87.5,
+    "worst_dip_R": 2.108
+   },
+   {
+    "team": "team2",
+    "level": 6,
+    "share_of_roster": 24.0,
+    "period": "OOS",
+    "position_days": 12,
+    "episodes": 2,
+    "r_per_unit": 0.2507738531404215,
+    "r_per_episode": 1.5046431188425293,
+    "hit_rate_pct": 100.0,
+    "worst_dip_R": 0.0
+   },
+   {
+    "team": "team2",
+    "level": 7,
+    "share_of_roster": 28.0,
+    "period": "OOS",
+    "position_days": 14,
+    "episodes": 1,
+    "r_per_unit": 0.17865489795090503,
+    "r_per_episode": 2.501168571312671,
+    "hit_rate_pct": 100.0,
+    "worst_dip_R": 0.0
+   }
+  ]
+ }
+}

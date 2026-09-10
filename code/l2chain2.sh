@@ -13,6 +13,19 @@ echo $$ > "$PIDF"; trap 'rm -f "$PIDF"' EXIT
 cd /Users/jackcuster/Documents/fx-data
 LOG=results/chain2.log
 say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
+# EVERY STAGE MUST PROVE IT PRODUCED SOMETHING. A stage that exits zero having
+# read a stale file, found no roster, or produced an empty frame has happened
+# three times in this chain. check() verifies the OUTPUT -- exists, non-empty,
+# minimum rows, and written DURING this stage -- and halts the whole chain on
+# failure rather than carrying on with nothing.
+check(){
+  local stage="$1"; shift
+  if ! /usr/bin/python3 code/l2stagecheck.py "$stage" "$@" >> "$LOG" 2>&1; then
+    say "!!! CHAIN HALTED at $stage -- see results/CHAIN_HALT.marker"
+    exit 1
+  fi
+}
+rm -f results/CHAIN_HALT.marker
 say "armed: waiting for the gate 3 fine-tune to bank ALL 5,135"
 # WAIT FOR THE BANK, NOT FOR THE SHARDS. The previous condition was "no shards
 # running", and a shard that DIED satisfied it: shard 5 fell over on a transient
@@ -38,15 +51,23 @@ PYX
 done
 say "fine-tune finished"
 say "1/5 re-judging every banked row on the W3-only basis"
-nice -n 19 /usr/bin/python3 code/l2readopt.py >> "$LOG" 2>&1 || say "WARN readopt"
+T0=$(date +%s); nice -n 19 /usr/bin/python3 code/l2readopt.py >> "$LOG" 2>&1 || { say "!!! readopt FAILED"; exit 1; }
+check readopt --since "$T0"
 say "2/5 W3-only re-score, then the CUT on adopted settings"
-nice -n 19 /usr/bin/python3 code/l2clean3.py >> "$LOG" 2>&1 || say "WARN clean3"
-nice -n 19 /usr/bin/python3 code/l2cut.py --settings adopted >> "$LOG" 2>&1 || say "WARN cut"
+T0=$(date +%s); nice -n 19 /usr/bin/python3 code/l2clean3.py >> "$LOG" 2>&1 || { say "!!! clean3 FAILED"; exit 1; }
+T0=$(date +%s); nice -n 19 /usr/bin/python3 code/l2cut.py --settings adopted >> "$LOG" 2>&1 || { say "!!! cut FAILED"; exit 1; }
+check cut --since "$T0"
 say "3/5 team builder, both teams"
-TEAM_LABEL=_W3ONLY_ADOPTED TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2team.py >> "$LOG" 2>&1 || say "WARN team"
-TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2teamkpi.py --label _W3ONLY_ADOPTED >> "$LOG" 2>&1 || say "WARN kpi"
+T0=$(date +%s)
+TEAM_LABEL=_W3ONLY_ADOPTED TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2team.py >> "$LOG" 2>&1 || { say "!!! team FAILED"; exit 1; }
+check team --label _W3ONLY_ADOPTED --since "$T0"
+T0=$(date +%s)
+TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2teamkpi.py --label _W3ONLY_ADOPTED >> "$LOG" 2>&1 || { say "!!! kpi FAILED"; exit 1; }
+check teamkpi --label _W3ONLY_ADOPTED --since "$T0"
 say "4/5 agreement study"
-nice -n 19 /usr/bin/python3 code/l2agree.py >> "$LOG" 2>&1 || say "WARN agree"
+T0=$(date +%s)
+TEAM_LABEL=_W3ONLY_ADOPTED nice -n 19 /usr/bin/python3 code/l2agree.py >> "$LOG" 2>&1 || { say "!!! agree FAILED"; exit 1; }
+check agree --since "$T0"
 /usr/bin/python3 code/appstamp.py >> "$LOG" 2>&1
 git add -A; git commit -q -m "Gate 3 adopted-settings cut, teams, checks and agreement study" || true
 git pull --rebase -q origin main || true; git push -q origin main || true
@@ -57,7 +78,9 @@ git pull --rebase -q origin main || true; git push -q origin main || true
 # and forward testing has started. Restart it deliberately, not as a side effect
 # of a build finishing.
 say "5/5 selection holdout + random-team null, ALL free cores"
+T0=$(date +%s)
 TEAM_JOBS=9 nice -n 19 /usr/bin/python3 code/l2teamcheck.py --label _W3ONLY_ADOPTED \
-      >> results/teamcheck_adopted.log 2>&1 || say "WARN checks"
+      >> results/teamcheck_adopted.log 2>&1 || { say "!!! checks FAILED"; exit 1; }
+check checks --label _W3ONLY_ADOPTED --since "$T0"
 say "checks done"
 say "CHAIN COMPLETE"

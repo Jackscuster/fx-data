@@ -42,10 +42,18 @@ def member_trades(cfg, wins):
     """Every blind trade with DIRECTION, which blind_trades does not carry."""
     code = dict((s, c) for s, _, c in S.SLICES)[cfg['slice']]
     out = []
+    _fail = {}
     for p in S.all_pairs():
         try:
             r = TR.run_pair(cfg, p)
-        except Exception:
+        except Exception as _e:
+            # COUNT, NEVER SILENTLY SKIP. This swallow is why three separate
+            # faults reported success while doing nothing: a config missing
+            # ip2, a roster carrying no settings, and a hardcoded mode all
+            # raised here and were skipped pair by pair, leaving an empty
+            # result that downstream code read as "no trades".
+            _fail[type(_e).__name__ + ': ' + str(_e)[:80]] = _fail.get(
+                type(_e).__name__ + ': ' + str(_e)[:80], 0) + 1
             continue
         d, tr = r['dates'], r['trades']
         if len(tr['r']) == 0:
@@ -64,6 +72,13 @@ def member_trades(cfg, wins):
                 continue
             out.append(dict(pair=p, entry=d[eb], exit=d[xb], R=float(tr['r'][j]),
                             dir=int(tr['dir'][j])))
+    if _fail and not out:
+        raise RuntimeError(
+            'every one of the %d pairs failed and no trades were produced. '
+            'Causes: %s' % (len(S.all_pairs()), _fail))
+    if _fail:
+        print('  WARNING: %d of %d pairs failed: %s'
+              % (sum(_fail.values()), len(S.all_pairs()), _fail), flush=True)
     return pd.DataFrame(out)
 
 
@@ -276,11 +291,45 @@ def opposition(PD, gside, tag, rng):
 
 
 def load_roster(tag):
-    f = os.path.join(ROOTOUT, '%s_roster.csv' % tag)
-    if not os.path.exists(f):
+    # ACCEPT A LABEL. The chain builds labelled rosters
+    # (team1_W3ONLY_ADOPTED_roster.csv); this looked only for the bare
+    # team1_roster.csv, found nothing, printed 'skipped' and exited in seven
+    # seconds -- a silent no-op the chain recorded as a completed stage.
+    lab = os.environ.get('TEAM_LABEL', '')
+    cands = ['%s%s_roster.csv' % (tag, lab)] if lab else []
+    cands += ['%s_roster.csv' % tag]
+    if not lab:
+        import glob as _g
+        cands += sorted(_g.glob(os.path.join(ROOTOUT, '%s_*_roster.csv' % tag)))
+    f = None
+    for c in cands:
+        c = c if os.path.isabs(c) else os.path.join(ROOTOUT, c)
+        if os.path.exists(c):
+            f = c
+            break
+    if f is None:
+        print('  no roster found for %s (looked for %s)' % (tag, cands), flush=True)
         return None
     R = pd.read_csv(f)
     R['member'] = R.sid.astype(str) + '::' + R.variant.astype(str)
+    # THE ROSTER IS A SUMMARY, NOT A CONFIGURATION. It carries the recipe and
+    # the vote but not ip2 or the risk settings, so every engine call raised and
+    # was swallowed by the per-pair try/except, giving 'no position-days' after
+    # the rosters had loaded successfully. Join the settings back on.
+    v = os.path.join(ROOTOUT, 'gate3_costed_verdicts.csv')
+    if os.path.exists(v):
+        V = pd.read_csv(v, low_memory=False)
+        keep = [c for c in ('sid', 'ip2', 'src_mode', 'src_label', 'exit_ind',
+                            'risk_atr_len', 'risk_atr_mult', 'risk_tp_mult',
+                            'risk_trail_mult', 'risk_trail_arm', 'risk_be_pct')
+                if c in V.columns]
+        R = R.merge(V[keep].drop_duplicates('sid'), on='sid', how='left',
+                    suffixes=('', '_v'))
+    missing = R.ip2.isna().sum() if 'ip2' in R.columns else len(R)
+    if missing:
+        raise SystemExit('%d of %d roster members have no settings after the '
+                         'join -- refusing to report an agreement study on a '
+                         'book that cannot be run' % (missing, len(R)))
     return R
 
 

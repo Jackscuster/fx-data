@@ -153,10 +153,18 @@ def _equity_series(cfg, wins):
     """
     code = dict((s, c) for s, _, c in S.SLICES)[cfg['slice']]
     daily = {}
+    _fail = {}
     for p in S.all_pairs():
         try:
             r = TR.run_pair(cfg, p)
-        except Exception:
+        except Exception as _e:
+            # COUNT, NEVER SILENTLY SKIP. This swallow is why three separate
+            # faults reported success while doing nothing: a config missing
+            # ip2, a roster carrying no settings, and a hardcoded mode all
+            # raised here and were skipped pair by pair, leaving an empty
+            # result that downstream code read as "no trades".
+            _fail[type(_e).__name__ + ': ' + str(_e)[:80]] = _fail.get(
+                type(_e).__name__ + ': ' + str(_e)[:80], 0) + 1
             continue
         d, tr, cl = r['dates'], r['trades'], r['c']
         if len(tr['r']) == 0:
@@ -196,6 +204,13 @@ def _equity_series(cfg, wins):
                     cum = sgn * (cl[b] - ent) * u / S.RISK
                 daily[d[b]] = daily.get(d[b], 0.0) + (cum - prev)
                 prev = cum
+    if _fail and not daily:
+        raise RuntimeError(
+            'every one of the %d pairs failed and no trades were produced. '
+            'Causes: %s' % (len(S.all_pairs()), _fail))
+    if _fail:
+        print('  WARNING: %d of %d pairs failed: %s'
+              % (sum(_fail.values()), len(S.all_pairs()), _fail), flush=True)
     return pd.Series(daily).sort_index() if daily else pd.Series(dtype=float)
 
 
@@ -413,8 +428,11 @@ def main():
                     wv[cols_c.index(c)] = votes[c]
                 dc = team_daily(Mc.values, wv) * R_PCT
                 dip_closed = dip95(dc, rng=np.random.default_rng(SEED)) * res['scale']
-        except Exception:
-            pass
+        except Exception as e:
+            # reported, never silent: this figure is diagnostic, so a failure
+            # must not stop the build -- but it must not vanish either
+            print('  WARNING: closed-trade DIP95 unavailable for %s: %s'
+                  % (tag, str(e)[:120]), flush=True)
         out[tag] = dict(members=team, votes=votes, res=res, tried=tried,
                         dip_budget=dipb, day_budget=dayb, dip95_closed=dip_closed)
         print('%s: %d members, score %.2f%%, tried %d' % (tag, len(team), res['score'], tried), flush=True)
