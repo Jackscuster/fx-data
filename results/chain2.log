@@ -307,3 +307,94 @@ DONE in 0.0 min
 2026-09-10 10:44:04 armed: waiting for the gate 3 fine-tune to bank ALL 5,135
 2026-09-10 10:44:26 armed: waiting for the gate 3 fine-tune to bank ALL 5,135
 2026-09-10 10:47:02 armed: waiting for the gate 3 fine-tune to bank ALL 5,135
+2026-09-10 12:57:21 bank complete: 5135/5135
+2026-09-10 12:57:21 fine-tune finished
+2026-09-10 12:57:21 1/5 re-judging every banked row on the W3-only basis
+re-evaluated 5135 strategies
+  beat on account return : 2564
+  adopted under v1       : 174
+  adopted under v2       : 184
+  newly adopted by v2    : 10
+  true rejects (v2)      : {'DD_ONLY': 1796, 'BOTH': 554, 'SORTINO_ONLY': 30}
+  alternates rewritten   : 2380 rows
+2026-09-10 12:57:21 2/5 W3-only re-score, then the CUT on adopted settings
+W3ONLY re-score: 0 crossers to do (shard 0/1)
+DONE in 0.0 min
+adopted settings substituted for 494 of 5201 strategies
+failures by bar: {'expectancy_R': 3628, 'profit_factor': 4067, 'sortino': 1481, 'calmar': 2688, 'max_dd_frac': 4728}
+PASS 252 of 5201 (4.85%) -> gate3_costed_verdicts.csv
+{'A-chop': 52, 'A-trend': 63, 'B': 136, 'C-trend': 1}
+2026-09-10 12:57:23 3/5 team builder, both teams
+candidates (passers incl. alternates): 252
+equity matrix: 1296 days x 252 candidates in 1.1 min
+return matrix: 1296 days x 252 candidates
+one team evaluation: 0.28 s  (10,000 shuffles)
+estimated: ~504 trials/round x 2 teams -> roughly 0.3 h
+no seed: choosing the best single passer at each budget
+team1_W3ONLY_ADOPTED seed: A-chop|chop|parabolic_sar_signals|lemantrend_signals|variance_volume_signals|wma_baseline::OFFICIAL alone scores 4.14%
+    team1_W3ONLY_ADOPTED round: 502 trials, best 6.078%, members 1
+    team1_W3ONLY_ADOPTED round: 500 trials, best 7.691%, members 2
+    team1_W3ONLY_ADOPTED round: 498 trials, best 9.098%, members 3
+    team1_W3ONLY_ADOPTED round: 496 trials, best 10.369%, members 4
+    team1_W3ONLY_ADOPTED round: 494 trials, best 11.632%, members 5
+    team1_W3ONLY_ADOPTED round: 492 trials, best 13.205%, members 6
+    team1_W3ONLY_ADOPTED round: 490 trials, best 14.684%, members 7
+    team1_W3ONLY_ADOPTED round: 488 trials, best 15.542%, members 8
+    team1_W3ONLY_ADOPTED round: 486 trials, best 16.153%, members 9
+    team1_W3ONLY_ADOPTED round: 484 trials, best 16.607%, members 10
+    team1_W3ONLY_ADOPTED round: 482 trials, best 17.946%, members 11
+    team1_W3ONLY_ADOPTED round: 480 trials, best 18.627%, members 12
+    team1_W3ONLY_ADOPTED round: 478 trials, best 19.061%, members 13
+    team1_W3ONLY_ADOPTED round: 476 trials, best 19.850%, members 14
+    team1_W3ONLY_ADOPTED round: 474 trials, best 20.242%, members 15
+    team1_W3ONLY_ADOPTED round: 472 trials, best 20.288%, members 16
+    team1_W3ONLY_ADOPTED round: 470 trials, best 20.646%, members 17
+    team1_W3ONLY_ADOPTED round: 468 trials, best 21.415%, members 18
+    team1_W3ONLY_ADOPTED round: 466 trials, best 21.443%, members 19
+    team1_W3ONLY_ADOPTED round: 464 trials, best 21.958%, members 20
+    team1_W3ONLY_ADOPTED round: 462 trials, best 22.039%, members 21
+    team1_W3ONLY_ADOPTED round: 460 trials, best 22.565%, members 22
+    team1_W3ONLY_ADOPTED round: 458 trials, best 22.680%, members 23
+    team1_W3ONLY_ADOPTED round: 456 trials, best 22.966%, members 24
+    team1_W3ONLY_ADOPTED round: 454 trials, best 22.966%, members 25
+team1_W3ONLY_ADOPTED: 25 members, score 22.97%, tried 11975
+team2_W3ONLY_ADOPTED seed: A-chop|chop|parabolic_sar_signals|lemantrend_signals|variance_volume_signals|wma_baseline::OFFICIAL alone scores 6.30%
+    team2_W3ONLY_ADOPTED round: 502 trials, best 9.117%, members 1
+    team2_W3ONLY_ADOPTED round: 500 trials, best 11.537%, members 2
+    team2_W3ONLY_ADOPTED round: 498 trials, best 13.647%, members 3
+    team2_W3ONLY_ADOPTED round: 496 trials, best 15.554%, members 4
+    team2_W3ONLY_ADOPTED round: 494 trials, best 17.447%, members 5
+    team2_W3ONLY_ADOPTED round: 492 trials, best 19.808%, members 6
+    team2_W3ONLY_ADOPTED round: 490 trials, best 22.026%, members 7
+    team2_W3ONLY_ADOPTED round: 488 trials, best 23.313%, members 8
+    team2_W3ONLY_ADOPTED round: 486 trials, best 24.230%, members 9
+    team2_W3ONLY_ADOPTED round: 484 trials, best 24.910%, members 10
+    team2_W3ONLY_ADOPTED round: 482 trials, best 26.919%, members 11
+    team2_W3ONLY_ADOPTED round: 480 trials, best 27.941%, members 12
+    team2_W3ONLY_ADOPTED round: 478 trials, best 28.591%, members 13
+    team2_W3ONLY_ADOPTED round: 476 trials, best 29.774%, members 14
+    team2_W3ONLY_ADOPTED round: 474 trials, best 30.363%, members 15
+    team2_W3ONLY_ADOPTED round: 472 trials, best 30.432%, members 16
+    team2_W3ONLY_ADOPTED round: 470 trials, best 30.969%, members 17
+    team2_W3ONLY_ADOPTED round: 468 trials, best 32.123%, members 18
+    team2_W3ONLY_ADOPTED round: 466 trials, best 32.165%, members 19
+    team2_W3ONLY_ADOPTED round: 464 trials, best 32.937%, members 20
+    team2_W3ONLY_ADOPTED round: 462 trials, best 33.058%, members 21
+    team2_W3ONLY_ADOPTED round: 460 trials, best 33.848%, members 22
+    team2_W3ONLY_ADOPTED round: 458 trials, best 34.021%, members 23
+    team2_W3ONLY_ADOPTED round: 456 trials, best 34.449%, members 24
+    team2_W3ONLY_ADOPTED round: 454 trials, best 34.449%, members 25
+team2_W3ONLY_ADOPTED: 25 members, score 34.45%, tried 11975
+
+DONE in 25.6 min
+ total_return_pct  median_year_pct  mean_year_pct  max_dd_pct  calmar  sortino  sharpe  worst_day_pct  worst_month_pct  best_month_pct  trades  total_R  expectancy_R  win_rate_pct  avg_win_R  avg_loss_R  profit_factor  avg_hold_days  profit_concentration_pct                 team  members  scale  dip95_pct  actual_max_dd_pct  clustering_ratio binds  mean_corr  max_corr  max_positions_open  mean_positions_when_live
+           96.989           22.966         19.398       2.688  36.077    8.409   4.002          0.741            1.074           5.953    1812  743.018          0.41        48.841      1.529      -0.671          2.217          9.506                     9.994 team1_W3ONLY_ADOPTED       25  3.308        3.6              2.688             0.747 DIP95      0.042     0.362                  15                     6.247
+          145.484           34.449         29.097       4.033  36.077    8.409   4.002          1.112            1.611           8.929    1812  743.018          0.41        48.841      1.529      -0.671          2.217          9.506                     9.994 team2_W3ONLY_ADOPTED       25  4.962        5.4              4.033             0.747 DIP95      0.042     0.362                  15                     6.247
+
+DONE in 3.3 min
+2026-09-10 13:26:23 4/5 agreement study
+team1 roster missing -- skipped
+team2 roster missing -- skipped
+
+DONE in 0.0 min
+app_ui.js build 3bc8ce232e4a (already current); app_version.json updated
