@@ -31,6 +31,9 @@ OUT = os.path.join(ROOTOUT, 'gate2_ip1_recovered.csv')
 def out_path(shard, shards):
     """One bank per shard. Parallel appends to a single CSV interleave rows and
     corrupt it, so each worker owns a file and they are merged afterwards."""
+    if os.environ.get('IP1_BOX'):
+        return os.path.join(ROOTOUT, 'gate2_ip1_recovered_box%s_s%02d.csv'
+                            % (os.environ['IP1_BOX'], shard))
     return (OUT if shards <= 1 else
             os.path.join(ROOTOUT, 'gate2_ip1_recovered_s%02d.csv' % shard))
 
@@ -50,11 +53,28 @@ def banked():
     return out
 
 
-def targets(which):
-    """Strategies missing ip1. Only mode B trend can be missing it."""
+def box_of(sid, of):
+    """md5(sid) %% N, fixed for all time. Position-based sharding let restarted
+    shards claim overlapping work on 2026-09-10: 228 duplicate runs, 18.7 wasted
+    core-hours."""
+    import hashlib
+    return int(hashlib.md5(sid.encode()).hexdigest(), 16) % of
+
+
+def targets(which, all_candidates=False):
+    """Strategies missing ip1. Only mode B trend can be missing it.
+
+    all_candidates drops the crosses_label filter. THE CLEAN FIELD NEEDS THIS.
+    crosses_label was decided on the stitched W2+W3 book, so re-labelling only
+    the crossers preserves exactly the contamination the rebuild removes -- the
+    crosser list IS the thing being rebuilt. ip2 is not required either: the
+    clean field scores W2 under ip1 and never touches ip2."""
     d = pd.read_csv(os.path.join(ROOTOUT, 'gate2_tuned_modeB.csv'), low_memory=False)
     d['sid'] = 'B|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|' + d.vol + '|' + d.base
-    d = d[(d.slice == 'trend') & (d.crosses_label == True) & d.ip2.notna()]
+    if all_candidates:
+        d = d[d.slice == 'trend']
+    else:
+        d = d[(d.slice == 'trend') & (d.crosses_label == True) & d.ip2.notna()]
     if 'ip1' in d.columns:
         d = d[d.ip1.isna()]
     if which == 'graft':
@@ -70,16 +90,25 @@ def main():
     ap.add_argument('--which', default='graft', choices=['graft', 'all'])
     ap.add_argument('--shard', type=int, default=0)
     ap.add_argument('--shards', type=int, default=1)
+    ap.add_argument('--all-candidates', action='store_true')
+    ap.add_argument('--box', type=int, default=0)
+    ap.add_argument('--of', type=int, default=1)
     a = ap.parse_args()
     S.load_costs(); T.ACCT_OBJECTIVE = True
-    D = targets(a.which)
+    D = targets(a.which, a.all_candidates)
     done = banked()
     D = D[~D.sid.isin(done)].reset_index(drop=True)
+    if a.of > 1:
+        D = D[[box_of(s_, a.of) == a.box for s_ in D.sid]].reset_index(drop=True)
     if a.shards > 1:
         D = D.iloc[a.shard::a.shards].reset_index(drop=True)
+    if a.of > 1:
+        os.environ['IP1_BOX'] = str(a.box)
     OUTF = out_path(a.shard, a.shards)
-    print('ip1 recovery (%s): %d strategies this shard (%d/%d), %d already banked'
-          % (a.which, len(D), a.shard, a.shards, len(done)), flush=True)
+    print('ip1 recovery (%s%s): %d strategies this shard (box %d/%d, shard %d/%d), '
+          '%d already banked' % (a.which, ', ALL CANDIDATES' if a.all_candidates else '',
+                                 len(D), a.box, a.of, a.shard, a.shards, len(done)),
+          flush=True)
     sc = T.Scorer()
     t0 = time.time()
     for i, cfg in enumerate(D.to_dict('records'), 1):
