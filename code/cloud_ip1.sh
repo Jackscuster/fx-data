@@ -69,11 +69,19 @@ echo "== pushing the bank back"
 git config user.name  "fx-cloud"
 git config user.email "fx-cloud@users.noreply.github.com"
 git add -f results/gate2_ip1_recovered.csv results/gate2_ip1_recovered_s*.csv results/ip1_cloud_*.log
-git commit -q -m "B-trend ip1 recovery, completed on a rented box" || true
+# "nothing to commit" is a legitimate outcome; ANY OTHER failure is not,
+# so the two are distinguished instead of collapsed into || true
+if git diff --cached --quiet; then
+  echo "== nothing new to commit"
+else
+  git commit -m "B-trend ip1 recovery, completed on a rented box"
+fi
 pushed=0
 for try in 1 2 3 4 5; do
-  git pull --rebase -q origin main || true
-  if git push -q origin main; then pushed=1; break; fi
+  if ! git pull --rebase origin main; then
+    echo "   pull failed on attempt $try (reported, not hidden)"
+  fi
+  if git push origin main; then pushed=1; break; fi
   echo "   push rejected (attempt $try); retrying in 30s"
   sleep 30
 done

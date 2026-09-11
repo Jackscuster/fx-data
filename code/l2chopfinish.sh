@@ -10,7 +10,7 @@
 set -e
 cd "$(dirname "$0")/.."
 NEED=57
-while [ "$(ls results/gate2/modeA_chop/chunk_*.csv 2>/dev/null | wc -l)" -lt "$NEED" ]; do
+while [ "$(ls results/gate2/modeA_chop/chunk_*.csv 2>/dev/null | wc -l)" -lt "$NEED" ]; do  # NOSILENCE-OK: counting files that may not exist yet; wc -l of nothing is 0
   sleep 300
 done
 echo "chop complete: $(date)"
@@ -33,16 +33,16 @@ json.dump(s, open(p, 'w'), indent=1)
 PY
 nice -n 19 /usr/bin/python3 code/l2modes.py
 # re-sweep BOTH pools with chop in them
-nice -n 19 /usr/bin/python3 code/l2sweepn.py --pool-a --lo 5 --hi 25 || true
+nice -n 19 /usr/bin/python3 code/l2sweepn.py --pool-a --lo 5 --hi 25 || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 nice -n 19 /usr/bin/python3 code/l2sweepn.py --combine --lo 5 --hi 25
 /usr/bin/python3 code/appstamp.py
 git add -A
-git commit -q -m "Mode A chop complete: A and A+B sweeps redone with chop included
+git commit -q -m "Mode A chop complete: A and A+B sweeps redone with chop included  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 
 Both sweeps were trend-only while chop tuned. Rerun by code/l2chopfinish.sh.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0198PoFd8YbETkDPepLUiDzL" || true
-git pull --rebase -q origin main || true
-git push -q origin main || true
+Claude-Session: https://claude.ai/code/session_0198PoFd8YbETkDPepLUiDzL" || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
+git pull --rebase -q origin main || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
+git push -q origin main || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 echo "REDO DONE $(date)"

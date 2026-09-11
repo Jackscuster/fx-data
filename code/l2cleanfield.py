@@ -59,8 +59,12 @@ def candidates(slices):
             continue
         d = pd.read_csv(os.path.join(ROOTOUT, f), low_memory=False)
         d = d[d.slice == sl].copy()
-        d['src_mode'] = mode; d['src_label'] = lab
-        d['sid'] = (lab + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|'
+        d['src_mode'] = mode
+        # SID CONVENTION MUST MATCH l2clean3 AND l2walkfwd: mode B's label is
+        # 'B', not 'B-chop'. It was 'B-chop' here, so every B sid failed to join
+        # and the clean field silently contributed ZERO B-chop strategies.
+        d['src_label'] = mode if mode == 'B' else lab
+        d['sid'] = (d.src_label + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|'
                     + d.vol + '|' + d.base)
         n0 = len(d)
         d = d[d.ip1.notna() & d.risk1.notna()] if 'ip1' in d.columns else d.iloc[0:0]
@@ -188,7 +192,8 @@ def main():
             continue
         d = pd.read_csv(os.path.join(ROOTOUT, f), low_memory=False)
         d = d[(d.slice == slc) & (d.crosses_label == True) & d.ip2.notna()]
-        got = set(lab + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|' + d.vol
+        pre = mode if mode == 'B' else lab
+        got = set(pre + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|' + d.vol
                   + '|' + d.base)
         # under --limit the universe is a handful of candidates, so the diff has
         # to be taken against the SAME handful or it reports the other 3,475 as

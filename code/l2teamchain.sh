@@ -17,13 +17,13 @@ nice -n 19 /usr/bin/python3 code/l2agree.py >> "$LOG" 2>&1 || say "WARNING agree
 say "agreement study done; committing"
 /usr/bin/python3 code/appstamp.py >> "$LOG" 2>&1
 git add -A
-git commit -q -m "Gate 3 costed cut and the trading teams
+git commit -q -m "Gate 3 costed cut and the trading teams  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 
 Built by code/l2team.py under the queued chain.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0198PoFd8YbETkDPepLUiDzL" || true
-git pull --rebase -q origin main || true; git push -q origin main || true
+Claude-Session: https://claude.ai/code/session_0198PoFd8YbETkDPepLUiDzL" || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
+git pull --rebase -q origin main || true; git push -q origin main || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 say "RELAUNCHING MODE C"
 nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 6 \
       --sorted --cap 6 --seed-from A,B >> results/gate2_run_C.log 2>&1 &
@@ -33,5 +33,5 @@ nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 3 \
 sleep 25; ADD=$(pgrep -f "l2tune.py --mode C --jobs 3" | head -1)
 nohup code/l2swapguard.sh "$MAIN" "$ADD" 400 200 >/dev/null 2>&1 &
 say "C relaunched main=$MAIN add=$ADD; swap guard armed"
-say "chunks on disk: $(ls results/gate2/modeC_*/chunk_*.csv 2>/dev/null | wc -l)"
+say "chunks on disk: $(ls results/gate2/modeC_*/chunk_*.csv 2>/dev/null | wc -l)"  # NOSILENCE-OK: counting files that may not exist yet; wc -l of nothing is 0
 say "CHAIN COMPLETE"

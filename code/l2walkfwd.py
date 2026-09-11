@@ -91,17 +91,33 @@ def recovered_ip1():
     return out
 
 
-def load_field(slices):
+def load_field(slices, field_sids=None):
+    """field_sids replaces gate 2's crosses_label entirely.
+
+    crosses_label IS the contamination -- it was decided on the stitched W2+W3
+    book. Filtering by it first and then intersecting with a clean field file
+    keeps only strategies BOTH agree on, which silently drops every one of the
+    2,510 that the clean re-label admits. Measured: 1,780 of 4,807 survived that
+    intersection, so the "clean" run would have been three-fifths of a clean
+    field with gate 2's peek still deciding membership.
+    """
     REC = recovered_ip1()
     F = []
     for lab in slices:
         f, mode, sl = SRC[lab]
         d = pd.read_csv(os.path.join(ROOTOUT, f), low_memory=False)
-        d = d[(d.slice == sl) & (d.crosses_label == True) & d.ip2.notna()].copy()
+        d = d[(d.slice == sl) & d.ip2.notna()].copy()
+        d['sid'] = (d.get('src_label', pd.Series(index=d.index, dtype=object))
+                    .fillna('') if False else None)
+        d = d.drop(columns=['sid'])
+        if field_sids is None:
+            d = d[d.crosses_label == True].copy()
         d['src_mode'] = mode
         d['src_label'] = mode if mode == 'B' else '%s-%s' % (mode, sl)
         d['sid'] = (d.src_label + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|'
                     + d.vol + '|' + d.base)
+        if field_sids is not None:
+            d = d[d.sid.isin(field_sids)].copy()
         if 'ip1' not in d.columns:
             d['ip1'] = np.nan; d['risk1'] = np.nan
         miss = d.ip1.isna()
@@ -224,17 +240,17 @@ def main():
     S.load_costs()
     sl = tuple(x for x in a.slices.split(',') if x)
     print('slices: %s' % (sl,), flush=True)
-    F = load_field(sl)
+    fs = None
+    if a.field_file:
+        fs = set(pd.read_csv(a.field_file, low_memory=False).sid)
+        print('field file %s: %d sids' % (os.path.basename(a.field_file), len(fs)),
+              flush=True)
+    F = load_field(sl, field_sids=fs)
     print('field: %d strategies' % len(F), flush=True)
     global TAG, TRADES_F, MARKS_F
     TAG = a.suffix
     os.environ['WF_TAG'] = TAG
     TRADES_F = OUT('wf_trades.pkl'); MARKS_F = OUT('wf_marks.pkl')
-    if a.field_file:
-        keep = set(pd.read_csv(a.field_file).sid)
-        n0 = len(F); F = F[F.sid.isin(keep)].reset_index(drop=True)
-        print('field file %s: %d of %d kept' % (os.path.basename(a.field_file),
-                                                len(F), n0), flush=True)
     if a.stage == 'engine':
         stage_engine(F, a.jobs)
     elif a.stage == 'nullre':

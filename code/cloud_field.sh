@@ -64,12 +64,20 @@ sudo apt-get install -y -qq git python3 python3-pip python3-venv >/dev/null
 # files banked() reads and restart it from zero. The bank is parked outside
 # /opt/fx and restored after the clone, which is what makes --box K resumable.
 mkdir -p /opt/fx_bank
-cp -f /opt/fx/results/gate2_ip1_recovered_box*.csv /opt/fx_bank/ 2>/dev/null || true
-cp -f /opt/fx/results/gate2_w2only_scores_box*.csv /opt/fx_bank/ 2>/dev/null || true
+# A glob that matches nothing expands to itself, so each name is TESTED rather
+# than the copy's stderr being thrown away. A cp that fails for any other reason
+# still aborts under set -e, which is the point.
+for f in /opt/fx/results/gate2_ip1_recovered_box*.csv \
+         /opt/fx/results/gate2_w2only_scores_box*.csv; do
+  [ -e "$f" ] && cp -f "$f" /opt/fx_bank/
+done
 rm -rf /opt/fx && git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" /opt/fx
 mkdir -p /opt/fx/results
-cp -f /opt/fx_bank/*.csv /opt/fx/results/ 2>/dev/null || true
-echo "== restored $(ls /opt/fx_bank/*.csv 2>/dev/null | wc -l) banked shard files"
+restored=0
+for f in /opt/fx_bank/*.csv; do
+  [ -e "$f" ] && cp -f "$f" /opt/fx/results/ && restored=$((restored+1))
+done
+echo "== restored $restored banked shard files"
 cd /opt/fx
 python3 -m venv .venv && . .venv/bin/activate
 pip install -q --upgrade pip && pip install -q -r requirements.lock
@@ -93,11 +101,19 @@ echo "== pushing shard $BOX"
 git config user.name  "fx-cloud"
 git config user.email "fx-cloud@users.noreply.github.com"
 git add -f results/gate2_ip1_recovered_box*.csv results/gate2_w2only_scores_box*.csv results/field_ip1_b*.log
-git commit -q -m "clean field: box ${BOX}/${OF} shard" || true
+# "nothing to commit" is a legitimate outcome; ANY OTHER failure is not,
+# so the two are distinguished instead of collapsed into || true
+if git diff --cached --quiet; then
+  echo "== nothing new to commit"
+else
+  git commit -m "clean field: box ${BOX}/${OF} shard"
+fi
 pushed=0
 for try in 1 2 3 4 5; do
-  git pull --rebase -q origin main || true
-  if git push -q origin main; then pushed=1; break; fi
+  if ! git pull --rebase origin main; then
+    echo "   pull failed on attempt $try (reported, not hidden)"
+  fi
+  if git push origin main; then pushed=1; break; fi
   echo "   push rejected (attempt $try); retrying in 30s"; sleep 30
 done
 if [ "$pushed" != "1" ]; then

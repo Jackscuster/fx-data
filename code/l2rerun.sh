@@ -11,7 +11,7 @@
 # study at a time on one core at nice 19, so it can never compete with mode C
 # once the chain relaunches it.
 PIDF=/tmp/.l2rerun.pid
-if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then exit 0; fi
+if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then exit 0; fi  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 echo $$ > "$PIDF"; trap 'rm -f "$PIDF"' EXIT
 cd /Users/jackcuster/Documents/fx-data
 LOG=results/rerun.log
@@ -29,6 +29,13 @@ run code/l2agree.py
 run code/l2tripwire.py
 say "re-runs done; committing"
 git add -A
-git commit -q -m "Re-run the mode-bug-affected studies on fixed code" || true
-git fetch -q origin && git rebase -q origin/main >/dev/null 2>&1 && git push -q origin main || true
+if git diff --cached --quiet; then
+  echo "nothing new to commit"
+else
+  git commit -m "Re-run the mode-bug-affected studies on fixed code"
+fi
+git fetch origin
+if ! git rebase origin/main; then echo "REBASE FAILED -- not pushing"; else
+  if ! git push origin main; then echo "PUSH FAILED -- results are local only"; fi
+fi
 say "RERUN COMPLETE"

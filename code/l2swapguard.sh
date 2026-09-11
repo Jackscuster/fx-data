@@ -21,11 +21,11 @@ killed=0
 while ps -p "$MAIN" >/dev/null 2>&1; do
   free=$(sysctl -n vm.swapusage | sed 's/.*free = \([0-9.]*\)M.*/\1/'); free=${free%%.*}
   if [ "$killed" -eq 0 ] && [ -n "$ADD" ] && ps -p "$ADD" >/dev/null 2>&1 \
-     && [ "$free" -lt "$WARN" ] 2>/dev/null; then
+     && [ "$free" -lt "$WARN" ] 2>/dev/null; then  # NOSILENCE-OK: numeric test on a possibly-empty var; emptiness is handled by the branch
     say "swap free ${free}M < ${WARN}M -- stopping ADDITIVE pool $ADD (main $MAIN untouched)"
-    pkill -TERM -P "$ADD" 2>/dev/null; kill "$ADD" 2>/dev/null; killed=1
+    pkill -TERM -P "$ADD" 2>/dev/null; kill "$ADD" 2>/dev/null; killed=1  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
   fi
-  if [ "$free" -lt "$CRIT" ] 2>/dev/null; then
+  if [ "$free" -lt "$CRIT" ] 2>/dev/null; then  # NOSILENCE-OK: numeric test on a possibly-empty var; emptiness is handled by the branch
     say "CRITICAL: swap free ${free}M with the additive pool already gone. Main pool "
     say "  $MAIN left running deliberately -- killing it would discard chunks hours deep."
   fi
