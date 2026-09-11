@@ -1,0 +1,116 @@
+=== [1/5] real walks, fixed writer + pick_stable fix Thu Sep 10 22:57:40 EDT 2026 ===
+slices: ('A-trend', 'A-chop', 'B-chop')
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+field: 3485 strategies
+  loaded 846526 trades, 7332303 marks, 3485 strategies
+  trade-year sums: 867858 rows, 0.4 s
+   step 1 build (2011, 2015): 620 passers, fails {'expectancy_R': 1341, 'profit_factor': 1919, 'sortino': 284, 'calmar': 847, 'max_dd_frac': 2636}
+   step 2 build (2011, 2018): 575 passers, fails {'expectancy_R': 1342, 'profit_factor': 2118, 'sortino': 49, 'calmar': 427, 'max_dd_frac': 2304}
+  real walk team1 in 3.7 min
+    team1  ALLPASS     median   2.274%  worst   0.915%  maxDD  3.32%  PF 1.22  members 620/575
+    team1  STABLE      median  -0.494%  worst  -2.452%  maxDD  3.70%  PF 0.98  members 441/16
+    team1  PICKED      median   1.242%  worst  -1.206%  maxDD  4.43%  PF 1.16  members 12/13
+    team1  FAMILY_CAP  median  -0.362%  worst  -1.367%  maxDD  3.10%  PF 1.02  members 7/7
+  real walk team2 in 3.6 min
+    team2  ALLPASS     median   3.412%  worst   1.372%  maxDD  4.97%  PF 1.22  members 620/575
+    team2  STABLE      median  -0.740%  worst  -3.679%  maxDD  5.55%  PF 0.98  members 441/16
+    team2  PICKED      median   1.862%  worst  -1.810%  maxDD  6.65%  PF 1.16  members 12/13
+    team2  FAMILY_CAP  median  -0.543%  worst  -2.051%  maxDD  4.65%  PF 1.02  members 7/7
+=== [2/5] three-way sizing Thu Sep 10 23:05:00 EDT 2026 ===
+slices: ('A-trend', 'A-chop', 'B-chop')
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+field: 3485 strategies
+  a_all_three_36       median  2.274%  worst  0.915%  maxDD  3.32%  worstday  0.80%  DIP95  4.79%  PF 1.22  Sortino 1.63  Calmar 4.15  binds DIP95/DIP95  (3.1 s)
+  b_risk_54_day_36     median  3.412%  worst  1.372%  maxDD  4.97%  worstday  1.20%  DIP95  7.19%  PF 1.22  Sortino 1.63  Calmar 4.15  binds DIP95/DIP95  (2.2 s)
+  c_actual_path_only   median  3.800%  worst  1.435%  maxDD  5.20%  worstday  1.25%  DIP95  7.67%  PF 1.22  Sortino 1.67  Calmar 4.35  binds actual maxDD/actual maxDD  (2.1 s)
+  -> results/walkforward_structures_sizing.csv
+=== [3/5] team-size sweep Thu Sep 10 23:05:09 EDT 2026 ===
+slices: ('A-trend', 'A-chop', 'B-chop')
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+field: 3485 strategies
+== team-size sweep, team1 ==
+  team1 coarse sweep: 10 sizes, 25 null, 25 random in 2.6 min
+  coarse peak: N=ALL at 13.77% total return
+  fine walk: 519 sizes, 101..619
+  team1 fine sweep: 519 sizes, 25 null, 25 random in 12.4 min
+  fine peak N=619 at 13.78% (beats random False, null p=0.720) -> answer N=ALL
+== team-size sweep, team2 ==
+  team2 coarse sweep: 10 sizes, 25 null, 25 random in 1.6 min
+  coarse peak: N=ALL at 20.65% total return
+  fine walk: 519 sizes, 101..619
+  team2 fine sweep: 519 sizes, 25 null, 25 random in 14.1 min
+  fine peak N=619 at 20.67% (beats random False, null p=0.720) -> answer N=ALL
+TEAM-SIZE SWEEP DONE in 30.7 min
+=== [4/5] identity null Thu Sep 10 23:35:51 EDT 2026 ===
+slices: ('A-trend', 'A-chop', 'B-chop')
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+field: 3485 strategies
+  identity null team1: 25 draws in 36.6 min
+  identity null team2: 25 draws in 36.2 min
+  team1  ALLPASS     real   2.274%  null mean   8.546%  p95   9.516%  max   9.888%  p=1.000
+  team1  FAMILY_CAP  real  -0.362%  null mean   3.385%  p95   4.534%  max   5.116%  p=1.000
+  team1  PICKED      real   1.242%  null mean   9.154%  p95  14.676%  max  19.869%  p=1.000
+  team1  STABLE      real  -0.494%  null mean   7.001%  p95   8.308%  max   8.413%  p=1.000
+  team2  ALLPASS     real   3.412%  null mean  12.819%  p95  14.274%  max  14.832%  p=1.000
+  team2  FAMILY_CAP  real  -0.543%  null mean   5.077%  p95   6.801%  max   7.675%  p=1.000
+  team2  PICKED      real   1.862%  null mean  13.659%  p95  22.030%  max  29.274%  p=1.000
+  team2  STABLE      real  -0.740%  null mean  10.501%  p95  12.462%  max  12.619%  p=1.000
+=== [5/5] random-entry null Fri Sep 11 00:56:18 EDT 2026 ===
+slices: ('A-trend', 'A-chop', 'B-chop')
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+field: 3485 strategies
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+  recovered unit scale for 846526 trades
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-trend  1804 strategies with ip1
+  B-chop   1003 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  random-entry null team1: 25 draws in 2.6 min
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  random-entry null team2: 25 draws in 2.5 min
+  team1  ALLPASS real   2.274%  random-entry mean  -0.159%  p95   0.252%  max   0.312%  p=0.000
+  team2  ALLPASS real   3.412%  random-entry mean  -0.239%  p95   0.378%  max   0.469%  p=0.000
+=== CHAIN DONE Fri Sep 11 01:01:38 EDT 2026 ===

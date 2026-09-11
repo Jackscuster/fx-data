@@ -1,0 +1,3 @@
+budget,coarse_peak_N,coarse_peak_return,fine_peak_N,fine_peak_return,fine_beats_random,fine_null_p,fine_replaces,answer_N,answer_return
+team1,ALL,13.767446748699507,619,13.779403930487499,False,0.72,False,ALL,13.767446748699507
+team2,ALL,20.651170123049262,619,20.669105895731246,False,0.72,False,ALL,20.651170123049262
