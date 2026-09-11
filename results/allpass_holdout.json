@@ -1,0 +1,29 @@
+{
+ "control_w3_passers": 271,
+ "control_overlap_with_real_cut": 252,
+ "real_cut_passers": 252,
+ "control_fails_by_bar": {
+  "expectancy_R": 3628,
+  "profit_factor": 3917,
+  "sortino": 1481,
+  "calmar": 2688,
+  "max_dd_frac": 4698
+ },
+ "holdout_cut_passers": 262,
+ "holdout_fails_by_bar": {
+  "expectancy_R": 3224,
+  "profit_factor": 3437,
+  "sortino": 1579,
+  "calmar": 2754,
+  "max_dd_frac": 4883
+ },
+ "holdout_overlap_with_real_cut": 76,
+ "team1_pick_window": 9.885389743606952,
+ "team1_holdout": 2.221245879911389,
+ "team1_retained_pct": 22.46998790662661,
+ "team1_real_cut_on_holdout": 6.597732617992087,
+ "team2_pick_window": 14.828084615410429,
+ "team2_holdout": 3.3318688198670836,
+ "team2_retained_pct": 22.469987906626606,
+ "team2_real_cut_on_holdout": 9.896598926988133
+}

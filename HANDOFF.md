@@ -2,9 +2,13 @@
 
 ## READ THIS FIRST
 
-1. **THE TEAM IS NOT A RESULT.** The greedy roster search FAILED both validity
-   checks on 2026-09-10. **The 22.97% team score and the 30.22% Layer 4 figure
-   are not demonstrated and must not be quoted as findings.**
+1. **THE TEAM IS NOT A RESULT.** The greedy roster search failed its SELECTION
+   HOLDOUT on 2026-09-10 — 8% retained. **The 22.97% team score and the 30.22%
+   Layer 4 figure are not demonstrated and must not be quoted as findings.**
+   Its OTHER failure, the greedy null at p=0.60, is **void**: that null applies
+   ONE year permutation to the whole matrix, so every member moves together and
+   the median year is arithmetically unchanged. See §1 VALIDITY. The holdout
+   alone is enough; the null said nothing.
 2. **Greedy roster search is RETIRED.** Do not build another team with it, and
    do not treat any roster it produced as a portfolio.
 3. **What still stands:** the 252 gate 3 passers are real, individually. Gate 3
@@ -20,8 +24,17 @@
    reported success while doing nothing. Trust no number produced before
    2026-09-10 without reading `FIXES.md`.
 9. **The B-trend `ip1` recovery is packaged for a rented box** —
-   `code/cloud_ip1.sh`, ~2 h, ~$3, one credential. Not launched.
-10. Working style and Layer 1 history: `HANDOFF_3.md`. Layer 2 detail:
+   `code/cloud_ip1.sh`, ~2 h, ~$3, one credential. 1,614 of 1,650 still to do.
+   Not launched.
+10. **THE DELIVERY PATH HAS NEVER CHARGED COSTS.** `l2trades.run_pair` returns
+   gross R; only `l2sweep.score_combo` and `l2tune.Scorer` subtract
+   `S._cost_R`. So `blind_trades`, `l2team._equity_series` and
+   `l2layer4v2.marks` — and therefore every team KPI and every Layer 4 level —
+   are **gross**. Drag is 2.6-8.5% of gross R and **18-19% of the median year**.
+   `code/l2allpass.py` charges it; nothing else does.
+11. **ALLPASS is the no-search construction and it is built** — §1A. Honest
+   holdout 22% retained; the agreement signal clears its null at p=0.00.
+12. Working style and Layer 1 history: `HANDOFF_3.md`. Layer 2 detail:
     `HANDOFF_LAYER2.md`. Material held outside this repo: see the last section.
 
 ---
@@ -108,9 +121,29 @@ no absolute Layer 4 number should be quoted.
 
 **Two confirmation-dependent members**, flat alone and profitable in company — `kuskus_starlight x coral x variance x mcginley` and `volatility_quality x aroon x waddah_attar_explosion x fantail_vma`. They count as **zero when alone** in Layer 4. **Zero members earn alone and lose in company.**
 
-## VALIDITY — BOTH CHECKS FAILED
+## VALIDITY — ONE CHECK FAILED, ONE CHECK IS VOID
 
-**Greedy null, p = 0.60.**
+**Greedy null, p = 0.60 — THE TEST IS BROKEN. DISREGARD THIS RESULT.**
+
+`l2teamcheck.py:88-93` draws ONE permutation and applies it to the whole
+matrix. Every member moves together, within-year day order survives the stable
+sort, and `score_team` then groups by the relabelled years — so the year blocks
+are the SAME BLOCKS under new names. Each member's daily series, every
+cross-member same-day alignment, every yearly total and therefore the MEDIAN
+YEAR, which is the score, are arithmetically unchanged. Only the path-dependent
+max drawdown moves. Verified on synthetic data (real yearly sums
+`[2.1511 0.6611 2.4805 1.9284 2.4635]`, null yearly sums the same five numbers
+reordered) and reproduced on the real ALLPASS book, where the same null returns
+p = 0.66. **p = 0.60 is what this test returns when the data has not changed.**
+
+A per-member permutation destroys cross-member timing as the docstring intends,
+but it also destroys the CORRELATION that sets the drawdown the budget divides
+by, so the null book scores five times the real one and returns p = 1.00.
+**Neither year-shuffle variant is a usable edge test for a drawdown-scaled
+portfolio.** The working replacement is the level-permutation null in
+`code/l2allpass.py` — see §1A.
+
+The numbers as they were reported:
 
 | | |
 |---|---|
@@ -137,9 +170,84 @@ not any relationship between them.
 **What passed:** the random-team comparison only — the real team sits at the
 100th percentile of 1,000 random draws (mean 7.98%, max 12.06%). That test was
 always the weak one: a greedy search beats random selection even on noise, which
-is precisely why the second null exists.
+is precisely why the second null exists — and the second null turned out not to
+exist in working form. **The selection holdout is the only valid evidence
+against the roster. It is sufficient on its own.**
 
 Files: `results/teamcheck_adopted.log`, `team_checks_W3ONLY_ADOPTED.*`.
+
+## 1A. ALLPASS — the no-search construction — BUILT 2026-09-10
+
+All 252 passers, equal weight, no selection. `code/l2allpass.py`, four stages.
+Full record: `results/allpass_summary.md`. **Costs charged**, unlike every
+earlier delivery-side number.
+
+**2016-2020, net of costs, median year:**
+
+| | curve 1/3/6 + 2% cap | stacked (no netting) |
+|---|---|---|
+| team1 (3.6/3.6) | **6.87%** | 8.24% |
+| team2 (5.4/3.6) | **10.30%** | 12.35% |
+
+worst year 4.57% / max DD 2.57% / PF 1.50 / Sortino 4.20 / Sharpe 2.39 /
+Calmar 13.61 / win rate 54.7%, team1 curve. Gross-of-cost medians are 8.51% and
+12.76% — **costs take 18-19% off the median year.**
+
+**Honest holdout — re-cut on 2016-2018 across all 5,201 crossers, scored on
+2019-2020:**
+
+| | curve | stacked |
+|---|---|---|
+| re-cut on 2016-2018, scored there | 9.89% | 14.49% |
+| **the same book on 2019-2020** | **2.22%** | **0.37%** |
+| **retained** | **22%** | **3%** |
+| real (2016-2020) cut on 2019-2020 | 6.60% | 10.36% |
+| holdout worst year | 1.19% | **-0.50%** |
+| holdout profit factor | 1.17 | 1.04 |
+
+Control: the same path re-cutting on the full W3 gives 271 passers containing
+**all 252** of the real cut, so the machinery is verified as a superset.
+
+**THE CUT IS ITSELF A FIT TO ITS WINDOW.** The 2016-2018 re-cut passes 262
+strategies of which only **76** are among the real 252. Which strategies clear
+gate 3 is about 30% reproducible when the window moves. Removing the roster
+search removed one layer of fitting and exposed the one underneath.
+
+**NETTING SURVIVES THE HOLDOUT; STACKING DOES NOT.** Stacking wins in-sample
+and is worth almost nothing out of it — negative worst year, PF 1.04, win rate
+exactly 50.0%, Sharpe 0.21. The in-sample ranking of the two constructions is
+the reverse of the out-of-sample ranking.
+
+**Nulls, 100 draws each, both budgets:**
+
+| null | real | null mean | null max | p |
+|---|---|---|---|---|
+| joint year shuffle (l2teamcheck's) | 6.802% | 6.817% | 6.907% | 0.66 |
+| per-member year shuffle | 6.802% | 35.100% | 39.297% | 1.00 |
+| **level permutation** | **6.865%** | **3.090%** | **4.418%** | **0.00** |
+
+The level permutation keeps every netted position's pair, day, direction and
+mark, and permutes only the AGREEMENT LEVELS across positions — same level
+distribution, same size mix, only the assignment changes. **100 of 100 draws
+beaten at both budgets.** Knowing which positions carry high agreement more
+than doubles the score. **The agreement signal is real; the 1/3/6 curve is what
+wastes it.**
+
+**THE 1/3/6 CURVE DOES NOT TRANSFER.** Level is an absolute net-vote count, so
+at 252 members it runs to 171 and the curve is flat at 6.0 from level 3 up:
+level 1 is 14.7% of position-days, level 2 is 16.4%, **level 3+ is 68.9%**. Two
+thirds of the book is pinned to one size. The agreement study calibrated
+"stop at 3" where level 4 meant near-unanimity of 25; at 252 members level 4 is
+four net votes out of 252. Sizing on the FRACTION voting rather than the count
+is the obvious repair and is NOT built.
+
+**THE 2% CAP IS DEAD WEIGHT AT THIS SIZE.** Largest currency exposure ever
+reached is 0.53% (team1) / 0.80% (team2), against 2.62% on the 25-member
+roster. It binds on **0 days of 1,296**. Keep it as a backstop; it does no work
+here.
+
+**Not established:** any tradeable absolute level. 2.22% is one median of two
+observations.
 
 ## Mode C
 **Paused by decision at 299 chunks.** Not a fault, not a stall. It stays paused until the full system is built and forward testing has started. It has been removed from every chain.
