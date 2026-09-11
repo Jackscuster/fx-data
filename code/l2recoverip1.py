@@ -42,8 +42,14 @@ def banked():
     """Everything recovered so far, across every shard file, so a resumed or
     re-sharded run never redoes work."""
     out = set()
-    for f in [OUT] + sorted(glob.glob(os.path.join(ROOTOUT,
-                                                   'gate2_ip1_recovered_s*.csv'))):
+    # BOX FILES MUST BE IN THIS GLOB. A box writes
+    # gate2_ip1_recovered_box<K>_s<NN>.csv, which 'gate2_ip1_recovered_s*.csv'
+    # does NOT match -- so a restarted box could not see its own finished work
+    # and would redo all of it. Same shape as the position-sharding fault of
+    # 2026-09-10 that burned 18.7 core-hours on 228 duplicate runs, and far more
+    # expensive on a job measured in days.
+    for f in [OUT] + sorted(glob.glob(os.path.join(
+            ROOTOUT, 'gate2_ip1_recovered_*s*.csv'))):
         if os.path.exists(f):
             try:
                 d = pd.read_csv(f)

@@ -59,7 +59,17 @@ echo "== box $BOX of $OF, $JOBS cores"
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update -qq
 sudo apt-get install -y -qq git python3 python3-pip python3-venv >/dev/null
+# PRESERVE THE BANK ACROSS A RELAUNCH. The clone is shallow and destructive,
+# so re-running this script on a box that already did work would wipe the very
+# files banked() reads and restart it from zero. The bank is parked outside
+# /opt/fx and restored after the clone, which is what makes --box K resumable.
+mkdir -p /opt/fx_bank
+cp -f /opt/fx/results/gate2_ip1_recovered_box*.csv /opt/fx_bank/ 2>/dev/null || true
+cp -f /opt/fx/results/gate2_w2only_scores_box*.csv /opt/fx_bank/ 2>/dev/null || true
 rm -rf /opt/fx && git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" /opt/fx
+mkdir -p /opt/fx/results
+cp -f /opt/fx_bank/*.csv /opt/fx/results/ 2>/dev/null || true
+echo "== restored $(ls /opt/fx_bank/*.csv 2>/dev/null | wc -l) banked shard files"
 cd /opt/fx
 python3 -m venv .venv && . .venv/bin/activate
 pip install -q --upgrade pip && pip install -q -r requirements.lock
