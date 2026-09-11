@@ -74,3 +74,7 @@ data/oanda_h1/
 # ALLPASS mark caches: 10 MB each, rebuilt in ~3 min by l2allpass.py --stage build
 results/allpass_marks.pkl
 results/allpass_holdout_marks.pkl
+
+# walk-forward engine caches: 210 MB, rebuilt by l2walkfwd.py --stage engine (32 min)
+results/wf_marks.pkl
+results/wf_trades.pkl

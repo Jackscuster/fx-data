@@ -256,6 +256,126 @@ here.
 **Not established:** any tradeable absolute level. 2.22% is one median of two
 observations.
 
+## 1B. WALK-FORWARD ON THE THREE SLICES WITH ip1 — 2026-09-11
+
+`code/l2walkfwd.py`. A-trend 1,804 + A-chop 678 + B-chop 1,003 = **3,485**, all
+with `ip1` banked. B-trend's 1,650 have none and join via `--slices
+A-trend,A-chop,B-chop,B-trend` once the cloud bank lands; `load_field` already
+falls back to `gate2_ip1_recovered*.csv`.
+
+**Clean stitch, W2 under `ip1` and W3 under `ip2`, cost-charged and
+account-normalised.** W1 is excluded: it is `ip1`'s own tuning window. Two steps,
+every decision — cut, members, curve, SIZE — taken on build years only:
+
+    step 1  build 2011-2015 (ip1)              trade 2016-2018 (ip2)
+    step 2  build 2011-2015 + 2016-2018        trade 2019-2020 (ip2)
+
+### The four structures, stitched 2016-2020, team1 budget
+
+| | members | median yr | worst yr | max DD | PF |
+|---|---|---|---|---|---|
+| **ALLPASS** | 620/575 | **+2.27%** | **+0.92%** | 3.32% | 1.22 |
+| PICKED (greedy on build years) | 12/13 | +1.24% | -1.21% | 4.43% | 1.16 |
+| FAMILY_CAP | 7/7 | -0.36% | -1.37% | 3.10% | 1.02 |
+| STABLE | 441/16 | -0.49% | -2.45% | 3.70% | 0.98 |
+
+**Every structure that SELECTS loses to taking every passer.** ALLPASS is the
+only one with a positive worst year.
+
+### THE TWO NULLS, AND THEY POINT IN OPPOSITE DIRECTIONS
+
+**RANDOM ENTRY — "is this better than nothing at all?" — p = 0.000.**
+Same strategies, pairs, directions, stop and target distances and maximum holds;
+entries moved to random bars. Real **2.274%** against a null mean of **-0.159%**,
+p95 0.252%, max 0.312%. **25 of 25 beaten, both budgets.** The entry signals
+carry real information. The unit scale is derived exactly (`k = 1/ATR`, since the
+engine sizes `units = RISK/(atr_mult x ATR)`) and validated against the bank at
+each trade's real entry: correlation **0.937** on the ip2 era.
+
+**IDENTITY — "does build-year quality predict trade-year quality?" — p = 1.000.**
+Traded years held at 2016-2020; only the link between a strategy and its
+build-year metrics is permuted, so a strategy passes on someone else's record and
+trades its own marks. Real 2.274% against a null mean of **8.546%**, p95 9.516%.
+**0 of 25 draws lost.** A random 620 of the field beats the 620 that passed gate
+3, by nearly 4x — at half the drawdown and PF 1.83 against 1.22.
+
+**Not a sizing artefact.** Scales are the same (1.016/1.154 real against
+1.037/1.168 null); the gap is raw return, 0.0098 against 0.0341 per unit.
+
+### THE CAUSE: GATE 3 CONCENTRATES THE BOOK INTO THE SLICE THAT DIED
+
+| | A-trend | B-chop | A-chop |
+|---|---|---|---|
+| field | 51.8% | 28.8% | 19.5% |
+| passers, build 2011-2015 | **78.4%** | 12.6% | 9.0% |
+| passers, build 2011-2018 | **79.7%** | 12.9% | 7.5% |
+
+mean R per trade-year row:
+
+| | A-chop | B-chop | A-trend |
+|---|---|---|---|
+| 2016-2018 | +0.193 | +0.174 | **+0.025** |
+| 2019-2020 | +0.080 | +0.049 | **-0.023** |
+
+**79% of the book goes into the one slice that earns nothing on the traded years
+and loses money in 2019-2020.** A random draw keeps the field's 52/29/20 mix and
+so keeps its A-chop and B-chop weight, which is where the return is. That is the
+whole gap. **The strategies work; the filter that chooses among them is broken.**
+
+**A PER-SLICE CUT CANNOT FIX IT AND MUST NOT BE BUILT AS ONE.** Gate 3's bars are
+ABSOLUTE — expectancy 0.15R, PF 1.5, Sortino 1.3, Calmar 1.0, maxDD 10% of own
+gross — so no strategy's pass depends on any other and applying them within a
+slice returns the **identical 620 sids**. Tested, not assumed. The concentration
+is not crowding-out; A-trend simply clears absolute bars more often on 2011-2015.
+Two constructions that DO bind are registered in FIXES.md: **SLICE_BALANCED**
+(all passers, equal risk share per slice) and **PER_SLICE_CUT** (equal member
+count per slice, 56 each at step 1, 43 at step 2).
+
+### Team-size sweep — the answer is ALL
+
+Ranked on build years by Sortino, tie-break Calmar, fixed in advance.
+Coarse N = 10..100 and ALL; fine walk by 1 across the peak's neighbours.
+
+**Coarse peak N = ALL (13.77% total return). Fine walk 519 sizes, peak N=619 at
+13.78% — 0 of 519 beat their random p95, 0 had null p < 0.05, so the decision
+rule rejected it and the answer stays ALL.** Every fixed size 10-100 has a
+NEGATIVE worst year and PF between 0.99 and 1.08. At N=75 and N=100 the random
+draw's median beats the ranked pick outright. `walkforward_teamsize.csv` carries
+both units in every column name.
+
+### Sizing — DIP95 binds, and what it costs
+
+| | median yr | worst yr | max DD | worst day | DIP95 | binds |
+|---|---|---|---|---|---|---|
+| (a) all three vs 3.6% | 2.274% | +0.92% | **3.32%** | 0.80% | 4.79% | DIP95 |
+| (b) risk 5.4 / day 3.6 | 3.412% | +1.37% | 4.97% | 1.20% | 7.19% | DIP95 |
+| (c) actual path only | 3.800% | +1.44% | **5.20%** | 1.25% | 7.67% | actual maxDD |
+
+**(c) breaches the limit it was sized against** — 5.20% realised against 3.6%,
+44% over — so its +1.53pp is unusable as specified. (b) stays inside both its
+limits with 0.43pp and 2.40pp of headroom, but its 5.4% budget only exists once
+the trailing limit has locked at +6%.
+
+Build-block diagnostics, ALLPASS: DIP95 binds at both steps at exactly 3.600%
+while max DD uses 2.15/2.30 and worst day 0.92/1.26. 277 and 334 trades a year,
+11.8 and 11.5 mean open positions, 0.83% and 1.02% mean gross exposure. **The 2%
+currency cap binds on 0 days of 1,296** at peak exposure 0.74%/0.94%. **43% of
+position-days are sized to ZERO** — the two thinnest agreement bins lose money on
+build years and the fitted curve declines to trade them.
+
+### The year-shuffled null is SUPERSEDED — confounded
+
+It permutes which years get TRADED, and 2011-2015 is far richer than 2016-2020:
+null score rises monotonically with rich years traded (3.36/5.29/6.84/7.66 at
+1/2/3/4, correlation 0.377) and **none of the 25 draws traded the real walk's
+composition of zero**. Adjusted p is 0.52, not 0.80. Files carry a SUPERSEDED
+header. Detail in FIXES.md.
+
+### Measured run time
+
+engine 32.3 min · real walks 7.3 min · sizing 7 s · team-size sweep 30.7 min ·
+identity null 36.6 min per budget · random-entry null 2.6 min per budget.
+
 ## Mode C
 **Paused by decision at 299 chunks.** Not a fault, not a stall. It stays paused until the full system is built and forward testing has started. It has been removed from every chain.
 

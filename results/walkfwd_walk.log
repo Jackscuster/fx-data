@@ -1,0 +1,29 @@
+slices: ('A-trend', 'A-chop', 'B-chop')
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+field: 3485 strategies
+  loaded 846526 trades, 7332303 marks, 3485 strategies
+  trade-year sums: 867858 rows, 0.5 s
+   step 1 build (2011, 2015): 620 passers, fails {'expectancy_R': 1341, 'profit_factor': 1919, 'sortino': 284, 'calmar': 847, 'max_dd_frac': 2636}
+   step 2 build (2011, 2018): 575 passers, fails {'expectancy_R': 1342, 'profit_factor': 2118, 'sortino': 49, 'calmar': 427, 'max_dd_frac': 2304}
+  real walk team1 in 3.9 min
+    team1  ALLPASS     median   2.274%  worst   0.915%  maxDD  3.32%  PF 1.22  members 620/575
+    team1  STABLE      median  -0.576%  worst  -2.086%  maxDD  3.29%  PF 0.98  members 23/12
+    team1  PICKED      median   1.242%  worst  -1.206%  maxDD  4.43%  PF 1.16  members 12/13
+    team1  FAMILY_CAP  median  -0.362%  worst  -1.367%  maxDD  3.10%  PF 1.02  members 7/7
+  real walk team2 in 3.5 min
+    team2  ALLPASS     median   3.412%  worst   1.372%  maxDD  4.97%  PF 1.22  members 620/575
+    team2  STABLE      median  -0.864%  worst  -3.128%  maxDD  4.94%  PF 0.98  members 23/12
+    team2  PICKED      median   1.862%  worst  -1.810%  maxDD  6.65%  PF 1.16  members 12/13
+    team2  FAMILY_CAP  median  -0.543%  worst  -2.051%  maxDD  4.65%  PF 1.02  members 7/7
+  null team1: 25 draws in 16.4 min
+  null team2: 25 draws in 16.6 min
+  team1  ALLPASS     real   2.274%  null mean   5.776%  p95  10.391%  max  10.956%  p=0.800
+  team1  FAMILY_CAP  real  -0.362%  null mean   2.148%  p95   7.747%  max   9.310%  p=0.880
+  team1  PICKED      real   1.242%  null mean   3.277%  p95   9.071%  max  13.244%  p=0.680
+  team1  STABLE      real  -0.576%  null mean   0.766%  p95   3.212%  max   3.825%  p=0.880
+  team2  ALLPASS     real   3.412%  null mean   8.659%  p95  15.586%  max  16.328%  p=0.800
+  team2  FAMILY_CAP  real  -0.543%  null mean   3.221%  p95  11.621%  max  13.965%  p=0.880
+  team2  PICKED      real   1.862%  null mean   4.822%  p95  13.606%  max  19.226%  p=0.680
+  team2  STABLE      real  -0.864%  null mean   1.149%  p95   4.818%  max   5.737%  p=0.880

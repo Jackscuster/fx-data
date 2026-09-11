@@ -1,5 +1,86 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 2026-09-10 (late 2) — THE WALK-FORWARD'S YEAR-SHUFFLED NULL IS CONFOUNDED
+
+**Third null in two days that changes the wrong thing.** Registered here as a
+pattern, not a one-off: every null must be checked against what it actually
+perturbs before its p-value is read.
+
+### What happened
+
+The walk-forward structures run used a year-shuffled null: permute calendar
+years, re-run the whole walk. In a WALK-FORWARD that is not the l2teamcheck
+no-op — permuting years changes which years are build and which are traded, so
+it does destroy the persistence claim. That much was right.
+
+**But it also changes WHICH YEARS GET TRADED, and the decade is not uniform.**
+2011-2015 is far richer than 2016-2020 for this field (the same fact the
+retention figure of ~25% reports). So a draw that happens to trade rich years
+scores well for a reason that has nothing to do with persistence.
+
+Measured across the 25 draws, team1 ALLPASS:
+
+    rich years traded   draws   mean null score
+        1                 3          3.357%
+        2                12          5.290%
+        3                 7          6.837%
+        4                 3          7.663%
+    correlation 0.377, monotone
+
+**None of the 25 draws traded the real walk's composition of ZERO rich years.**
+The real walk always trades 2016-2020. It was being compared against draws that
+all got an easier stretch.
+
+Fitting null score on rich-years-traded and reading it at zero:
+
+    team1  null = 2.308 + 1.445 x (rich years)  ->  2.308%  vs real 2.274%
+    team2  null = 3.465 + 2.164 x (rich years)  ->  3.465%  vs real 3.412%
+    raw p = 0.80        confound-adjusted p = 0.52
+
+So the verdict changes from "decisively worse than chance" to "indistinguishable
+from chance". Still no demonstrated persistence — but the stronger claim was an
+artefact.
+
+**The tell was the direction.** A real walk losing to its own null by a factor
+of two is not a finding, it is a symptom. Check the direction of every null
+before reading its p-value.
+
+### Files
+
+`results/walkforward_null_3slice.csv` and `..._null_summary_3slice.csv` are
+**marked SUPERSEDED in a header note** carrying the table above. Kept as record,
+not to be quoted.
+
+### Replaced by two nulls that each answer one question
+
+1. **IDENTITY** — `walkforward_null_identity_3slice.csv`. Traded years held at
+   2016-2020; only the link between a strategy and its build-year metrics is
+   permuted, so a strategy passes the cut on someone else's record and trades
+   its own marks. Answers: **does build-year quality predict trade-year
+   quality?** Verified to behave: 620 passers either way, overlap 111 against
+   ~110 expected by chance.
+2. **RANDOM ENTRY** — `walkforward_null_randomentry_3slice.csv`. Same
+   strategies, pairs, directions, stop and target distances and maximum holds;
+   entries moved to random bars inside the trade window. Answers: **is ALLPASS's
+   2016-2020 result better than nothing at all?**
+
+### A second bug found while building them
+
+**`pick_stable` used the wrong window.** It read `build[1] - 2 .. build[1]` —
+the SECOND element of the build-year list, not the last three. Step 1's build
+window is 2011-2015 and it was cutting on **2010-2012**, a year of which has no
+data at all. Corrected to the last three build years in play order. STABLE's
+membership changes from 23 to **441** at step 1 and 12 to **16** at step 2, so
+every STABLE number reported before 2026-09-10 22:50 is void.
+
+### And a writer flaw, fixed
+
+The null accumulated both budgets in memory and wrote once at the end, so a
+crash in team2 would have destroyed team1's 16.4 minutes of finished draws. Now
+writes per budget.
+
+---
+
 ## 2026-09-10 (late) — ALLPASS BUILT; THE GREEDY NULL IS BROKEN; COSTS WERE NEVER CHARGED
 
 Three results, in order of how much they change.

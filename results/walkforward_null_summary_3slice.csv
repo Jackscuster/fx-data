@@ -1,0 +1,36 @@
+# SUPERSEDED 2026-09-10 -- CONFOUNDED. Kept as record, do not quote.
+#
+# This is the YEAR-SHUFFLED null for the walk-forward structures. It permutes
+# calendar years and re-runs the whole walk. In a walk-forward that does destroy
+# the persistence claim -- unlike the static-team version in l2teamcheck, which
+# is a pure no-op -- but it ALSO changes WHICH YEARS GET TRADED, and the two
+# halves of this decade are not comparable: 2011-2015 is far richer than
+# 2016-2020 for this field.
+#
+# Measured on these 25 draws (team1 ALLPASS), null score against the number of
+# 2011-2015 years the draw happened to trade:
+#     1 rich year   3 draws   mean 3.357%
+#     2 rich years 12 draws   mean 5.290%
+#     3 rich years  7 draws   mean 6.837%
+#     4 rich years  3 draws   mean 7.663%
+# correlation 0.377, monotone. NONE of the 25 draws traded the real walk's
+# composition of ZERO rich years, so the comparison is not like-for-like.
+#
+# Fitting null score on rich-years-traded and reading it at zero:
+#     team1  null = 2.308 + 1.445 x (rich years)  ->  2.308% vs real 2.274%
+#     team2  null = 3.465 + 2.164 x (rich years)  ->  3.465% vs real 3.412%
+# raw p = 0.80 in both cases; confound-adjusted p = 0.52. The real walk sits ON
+# the null once the years are matched, not far below it.
+#
+# REPLACED BY: walkforward_null_identity_3slice.csv, which holds the traded
+# years fixed at 2016-2020 and permutes only the link between a strategy and its
+# build-year metrics.
+budget,structure,real,n,null_mean,null_p95,null_max,pctile_of_real,p_value,p_resolution
+team1,ALLPASS,2.274351497608397,25,5.775956488996923,10.390739159932604,10.956181201618085,20.0,0.8,0.04
+team1,FAMILY_CAP,-0.3617766102916921,25,2.1475670054773257,7.7474240498572575,9.310015955693089,12.0,0.88,0.04
+team1,PICKED,1.2415209067049437,25,3.27714049455465,9.07066925483098,13.243955126655258,32.0,0.68,0.04
+team1,STABLE,-0.5758179240432033,25,0.7658174748925576,3.21199412295558,3.8247414039323786,12.0,0.88,0.04
+team2,ALLPASS,3.4115272464125947,25,8.659155873374262,15.586108739898906,16.327507364644593,20.0,0.8,0.04
+team2,FAMILY_CAP,-0.5426649154375383,25,3.221350508215989,11.621136074785888,13.965023933539635,12.0,0.88,0.04
+team2,PICKED,1.8622813600574162,25,4.821707542111494,13.606003882246473,19.225795886372577,32.0,0.68,0.04
+team2,STABLE,-0.8637268860648044,25,1.1487262123388364,4.817991184433371,5.737112105898568,12.0,0.88,0.04
