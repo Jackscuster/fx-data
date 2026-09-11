@@ -1,746 +1,578 @@
-. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-DECISION 1 -- CHOP COMPONENT SET, on IS only
-  five components        IS chop |sep| 0.140
-  without `tests`        IS chop |sep| 0.151
-  -> drop `tests`
-
-DECISION 2 -- ACTIVITY, joint or separate. bump swept on IS.
-    bump    cells  mean|sep| min share   usable
-    0.00       12      0.062     0.049       12
-    0.25       12      0.060     0.041       12
-    0.50       12      0.063     0.034       12
-    0.75       12      0.064     0.026       12
-    1.00       12      0.062     0.020       12
-    1.50       12      0.068     0.012       11
-  -> chosen on IS: bump=0.75 (JOINT)
-
-========================================================================
-FINAL REPORT. chop set = four, activity bump = 0.75
-
-THE TWO AXES SEPARATELY, never blended
-  axis     IS |sep|  OOS |sep|   surrogate
-  ... 5/15 surrogates
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-  ... 10/15 surrogates
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-  ... 15/15 surrogates
-  trend       0.106      0.052       0.099   corrected -0.047
-         high: share 0.428 run 28 diag 0.980 | low: 0.572 42 0.985
-  chop        0.151      0.156       0.171   corrected -0.016
-         high: share 0.557 run 24 diag 0.981 | low: 0.443 24 0.976
-
-THE FULL GRID
-  IS   12 cells  mean|sep| 0.064  coverage 0.962  min share 0.026  median run 12  diagonal 0.935
-  OOS  12 cells  mean|sep| 0.072  coverage 1.000  min share 0.032  median run 12  diagonal 0.936
-  grid surrogate 0.079 -> corrected -0.007
-
-  per cell, holdout
-    cell                    sep   share    run   diag
-    medium neither        0.103   0.075     11  0.927
-    medium ranging        0.082   0.146     12  0.936
-    medium trend-in-range    0.071   0.069     11  0.925
-    medium trending       0.080   0.082     12  0.931
-    strong neither        0.090   0.032     11  0.921
-    strong ranging        0.052   0.073     12  0.933
-    strong trend-in-range    0.035   0.086     14  0.936
-    strong trending       0.106   0.108     17  0.948
-    weak neither          0.055   0.092     16  0.944
-    weak ranging          0.086   0.149     18  0.953
-    weak trend-in-range    0.036   0.038     11  0.932
-    weak trending         0.065   0.050     15  0.940
-
-EPISODE-BASED SIGNIFICANCE, not per-bar
-  74704 holdout bars -> 4642 episodes (16.1x). Every significance figure
-  above is a surrogate randomisation, which carries the dependence
-  in full; no per-bar t-statistic appears anywhere in this report.
-
-PER PAIR, trend and chop separately, holdout
-  trend  median 0.122, range 0.052 (AUDUSD) to 0.267 (GBPCAD)
-  chop   median 0.193, range 0.049 (CHFJPY) to 0.465 (EURJPY)
-
-wrote final_report.csv and final_pairs.csv
-
-=== paircharacter.py ===
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-PER-PAIR vs POOLED STANDARDISATION -- why this file changes it
-  spread of trending share across the 28 pairs:
-    per-pair z (what the classifier ships): 0.235 to 0.330, range 0.095
-    pooled z (used below):                  0.233 to 0.361, range 0.128
-
-SHARE OF DAYS IN EACH SHAPE STATE, per pair
-  ranked most trending to most ranging, by (trending - ranging), full sample
-  pair      trending  ranging      both  neither | trendiness medTrn medRng
-  EURUSD       0.359    0.265     0.189    0.186 |     +0.094     30     20
-  EURJPY       0.361    0.295     0.151    0.193 |     +0.066     28     25
-  USDJPY       0.334    0.302     0.205    0.159 |     +0.031     27     22
-  AUDUSD       0.322    0.292     0.182    0.203 |     +0.030     20     22
-  AUDNZD       0.317    0.303     0.159    0.221 |     +0.014     21     20
-  AUDJPY       0.302    0.294     0.196    0.208 |     +0.008     17     20
-  USDCAD       0.317    0.334     0.157    0.191 |     -0.016     22     27
-  NZDJPY       0.283    0.309     0.179    0.229 |     -0.026     22     17
-  GBPUSD       0.288    0.315     0.202    0.195 |     -0.027     18     22
-  GBPJPY       0.299    0.329     0.210    0.162 |     -0.030     22     19
-  CADJPY       0.295    0.328     0.184    0.193 |     -0.032     23     22
-  NZDCAD       0.284    0.319     0.203    0.194 |     -0.036     23     19
-  CHFJPY       0.294    0.330     0.205    0.171 |     -0.036     24     23
-  AUDCHF       0.262    0.306     0.219    0.214 |     -0.044     18     19
-  GBPAUD       0.282    0.328     0.222    0.169 |     -0.046     31     28
-  NZDUSD       0.283    0.330     0.173    0.214 |     -0.047     18     24
-  USDCHF       0.263    0.314     0.185    0.238 |     -0.051     24     20
-  EURNZD       0.270    0.323     0.175    0.232 |     -0.053     19     21
-  AUDCAD       0.273    0.326     0.190    0.212 |     -0.053     20     22
-  EURCAD       0.263    0.318     0.223    0.196 |     -0.054     22     21
-  EURCHF       0.282    0.364     0.196    0.158 |     -0.082     20     24
-  NZDCHF       0.259    0.358     0.204    0.179 |     -0.098     22     24
-  EURAUD       0.251    0.355     0.208    0.186 |     -0.104     16     26
-  GBPNZD       0.247    0.370     0.177    0.206 |     -0.123     24     21
-  EURGBP       0.250    0.380     0.155    0.216 |     -0.130     23     30
-  CADCHF       0.256    0.399     0.175    0.170 |     -0.143     24     22
-  GBPCHF       0.235    0.404     0.176    0.185 |     -0.169     19     28
-  GBPCAD       0.233    0.408     0.202    0.156 |     -0.175     20     24
-
-  spread of trending share: 0.233 to 0.361 (range 0.128)
-  spread of trendiness:     -0.175 to +0.094
-
-LONGEST RUNS ON RECORD
-  longest trending: EURAUD 237, EURCAD 234, USDCAD 227, GBPJPY 217, EURJPY 210
-  longest ranging:  GBPCHF 291, CADCHF 258, NZDJPY 245, GBPCAD 242, EURCHF 229
-  median across pairs: trending 148 bars, ranging 165 bars
-
-IS THE CHARACTER STABLE? 1999-2015 against 2016-2026
-  share_trending   rank correlation +0.005
-  share_ranging    rank correlation -0.142
-  trendiness       rank correlation -0.073
-  med_trending     rank correlation +0.118
-  med_ranging      rank correlation -0.385
-
-  pair      trend IS trend OOS | trendy IS trendy OOS | rank move
-  EURUSD       0.400     0.298 |    +0.173    -0.026 |  1 ->  7
-  NZDJPY       0.358     0.166 |    +0.103    -0.227 |  2 -> 23
-  NZDCAD       0.341     0.194 |    +0.099    -0.246 |  3 -> 25
-  NZDUSD       0.369     0.150 |    +0.080    -0.246 |  4 -> 26
-  USDCAD       0.353     0.262 |    +0.069    -0.149 |  5 -> 16
-  AUDCHF       0.300     0.204 |    +0.061    -0.204 |  6 -> 21
-  USDCHF       0.321     0.175 |    +0.058    -0.217 |  7 -> 22
-  AUDJPY       0.333     0.254 |    +0.058    -0.067 |  8 -> 10
-  AUDUSD       0.347     0.284 |    +0.051    -0.001 |  9 ->  6
-  AUDNZD       0.319     0.314 |    +0.042    -0.030 | 10 ->  8
-  USDJPY       0.351     0.306 |    +0.030    +0.032 | 11 ->  2
-  EURCAD       0.288     0.226 |    +0.020    -0.169 | 12 -> 18
-  EURNZD       0.309     0.211 |    +0.015    -0.157 | 13 -> 17
-  EURJPY       0.354     0.372 |    +0.012    +0.149 | 14 ->  1
-  GBPJPY       0.300     0.298 |    -0.022    -0.040 | 15 ->  9
-  GBPAUD       0.289     0.270 |    -0.029    -0.072 | 16 -> 11
-  AUDCAD       0.304     0.224 |    -0.032    -0.085 | 17 -> 12
-  CADCHF       0.314     0.166 |    -0.033    -0.313 | 18 -> 28
-  GBPUSD       0.285     0.292 |    -0.046    +0.003 | 19 ->  5
-  EURGBP       0.289     0.190 |    -0.052    -0.249 | 20 -> 27
-  CADJPY       0.296     0.294 |    -0.061    +0.012 | 21 ->  4
-  EURAUD       0.274     0.214 |    -0.061    -0.171 | 22 -> 19
-  EURCHF       0.311     0.237 |    -0.072    -0.098 | 23 -> 13
-  CHFJPY       0.282     0.312 |    -0.077    +0.026 | 24 ->  3
-  NZDCHF       0.252     0.272 |    -0.097    -0.100 | 25 -> 14
-  GBPNZD       0.274     0.205 |    -0.115    -0.136 | 26 -> 15
-  GBPCAD       0.254     0.201 |    -0.134    -0.238 | 27 -> 24
-  GBPCHF       0.235     0.235 |    -0.160    -0.182 | 28 -> 20
-
-TRANSITIONS -- does a pair go trend to range directly?
-  pooled, leaving TRENDING: neither 0.454  ranging 0.120  trend-in-range 0.426
-  pooled, leaving RANGING:  neither 0.400  trend-in-range 0.506  trending 0.094
-  trending -> ranging DIRECT, per pair: 0.021 to 0.208 (median 0.118)
-  most direct: CHFJPY 0.208, USDJPY 0.200, EURJPY 0.172, CADCHF 0.153
-  least direct: GBPCAD 0.021, GBPJPY 0.038, NZDCHF 0.077, USDCHF 0.080
-
-NULL: is any of this more than 28 pairs spreading out? 15 draws
-  ... 5/15
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-  ... 10/15
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-  ... 15/15
-
-  cross-pair sd of trending share: real 0.0335  surrogate 0.0430 +/- 0.0061
-  cross-pair range:                real 0.1278  surrogate 0.1763
-  IS-to-OOS rank correlation:      real -0.073  surrogate +0.005 +/- 0.199
-  p(dispersion) = 0.938   p(rank correlation) = 0.688
-
-wrote pair_character.csv, pair_transitions.csv, pair_ranking.csv
-
-=== persist.py ===
-PERSISTING EVERY GENERATION. Nothing is deleted or overwritten.
-  COULD NOT RESTORE g2: Command '['git', 'show', 'f597f23:results/combined_states.csv']' returned non-zero exit status 128.
-  wrote states_g1_ninebox.csv  6880 x 28, 9 states
-  wrote states_g3_shapescore9.csv  6880 x 28, 3 states
-  wrote states_g4_twoscore4.csv  6880 x 28, 4 states
-  wrote states_g4_twoscore12.csv  6880 x 28, 12 states
-
-RUN LENGTHS recomputed: 2435 rows (4 generations x 3 blocks x 29 pair slots)
-
-  pooled, all data, median run length per state
-    g1_ninebox         medium transitional 3  medium chop 4  weak transitional 3  weak chop 5  medium trend 5  strong transitional 4  strong trend 7  strong chop 5  weak trend 6
-    g3_shapescore9     drifting 15  range 17  trending 26
-    g4_twoscore4       ranging 23  trending 21  neither 18  trend-in-range 16
-    g4_twoscore12      weak ranging 18  medium ranging 12  strong trending 17  medium trending 12  weak neither 16  strong trend-in-range 13  medium neither 11  medium trend-in-range 11  strong ranging 13  weak trending 14  weak trend-in-range 11  strong neither 10
-
-wrote MANIFEST.md, run_lengths.csv and 4 generation files
-
-=== regenerate.py ===
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/regenerate.py:94: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  return classify(tr - a.replace(ACTW).astype(float) * BUMP, ch, fit)[0]
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/final.py:68: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - act.replace(ACTW).astype(float) * bump
-REGENERATING EVERY SUPERSEDED CLASSIFIER FROM COMMITTED CODE
-  g1_ninebox_7         rebuilt,  9 states, no archive to check
-  g1_ninebox           rebuilt,  9 states, MATCHES archive (100.000%)
-  g1_ninebox_128       rebuilt,  9 states, no archive to check
-  g2_structural4       rebuilt,  4 states, no archive to check
-  g2_structural12      rebuilt, 12 states, MATCHES archive (100.000%)
-  g3_gate3             rebuilt,  3 states, no archive to check
-  g3_shapescore9       rebuilt,  3 states, MATCHES archive (100.000%)
-  g3_score_N6          rebuilt,  3 states, no archive to check
-  g3_score_N44         rebuilt,  3 states, no archive to check
-  g4_twoscore4         rebuilt,  4 states, MATCHES archive (100.000%)
-  g4_twoscore12        rebuilt, 12 states, MATCHES archive (100.000%)
-  x_weighted3          rebuilt,  3 states, no archive to check
-  x_dwell1             rebuilt,  3 states, no archive to check
-  x_dwell13            rebuilt,  3 states, no archive to check
-
-  14 of 14 variants rebuilt from committed code; 0 genuinely gone
-  wrote regenerate_audit.csv and REGENERATE.md
-
-=== persist2.py ===
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-PART 1 -- DAILY SERIES, wide
-  series_trend_score.csv         6880 x 28  Trend score
-  series_chop_score.csv          6880 x 28  Chop score
-  series_measure_failed_swings.csv  6880 x 28  Failed swings
-  series_measure_retracement.csv  6880 x 28  Retracement depth slope
-  series_measure_swing_spacing.csv  6880 x 28  Swing spacing slope
-  series_measure_cross_pair.csv  6880 x 28  Cross-pair R-squared
-  series_measure_boundary_tests.csv  6941 x 28  Boundary test counts
-  series_measure_range_containment.csv  6941 x 28  Range containment
-
-PART 1 -- PER-PAIR CHARACTER BY BLOCK
-  pair_character_blocks.csv  84 rows (28 pairs x 3 blocks)
-  pair_rank_stability.csv    7 statistics
-  pair_rank_moves.csv        28 pairs, IS rank -> OOS rank
-    share_trending         rank correlation +0.005
-    share_ranging          rank correlation -0.142
-    share_trend-in-range   rank correlation -0.044
-    share_neither          rank correlation +0.232
-    trendiness             rank correlation -0.073
-    med_trending           rank correlation +0.118
-    med_ranging            rank correlation -0.385
-
-PART 2 -- FILENAMES
-  ninebox_state_summary.csv  correctly-named copy, 9 rows
-  nine_states.csv            header note added, 9 data rows intact
-
-wrote 8 series files, 3 character files, 1 renamed copy
-
-=== ratediff.py ===
-RATE DIFFERENTIAL MOMENTUM. 21 pairs (NZD has no yield data).
-
-QUESTION 1 -- PRESENT-TENSE ASSOCIATION, episode-based
-  does the sign of differential momentum match the price move?
-    W block state            episodes    agree      base    excess
-    5    is trending              721    0.630     0.616    +0.014
-    5    is ranging               698    0.648     0.616    +0.032
-    5   oos trending              473    0.577     0.598    -0.021
-    5   oos ranging               482    0.641     0.598    +0.043
-   21    is trending              719    0.551     0.553    -0.002
-   21    is ranging               698    0.567     0.553    +0.014
-   21   oos trending              473    0.543     0.563    -0.020
-   21   oos ranging               482    0.598     0.563    +0.035
-   63    is trending              706    0.511     0.522    -0.011
-   63    is ranging               696    0.542     0.522    +0.020
-   63   oos trending              473    0.507     0.544    -0.037
-   63   oos ranging               482    0.579     0.544    +0.035
-
-  CHOSEN ON IS: W=5 (excess +0.014 over the all-state base)
-  HOLDOUT, read once: agree 0.577, base 0.598, excess -0.021 (473 episodes)
-
-  PER PAIR, holdout, W=5: 9 of 21 pairs positive, median excess -0.027
-
-QUESTION 2 -- LEAD into trending
-  is   transition into trending         n=  708  agree 0.479   excess -0.023
-  is   matched non-transition bars      n= 2124  agree 0.502
-  oos  transition into trending         n=  468  agree 0.498   excess +0.002
-  oos  matched non-transition bars      n= 1404  agree 0.496
-
-NULL -- circular shift of the yield panel against price, 50 shifts
-  ... 10/50 shifts
-  ... 20/50 shifts
-  ... 30/50 shifts
-  ... 40/50 shifts
-  ... 50/50 shifts
-  is   ranging   real +0.0320 | null -0.0060 +/- 0.0189 over 50 shifts | rank 2 of 51 | p=0.039
-  is   trending  real +0.0141 | null +0.0050 +/- 0.0167 over 50 shifts | rank 15 of 51 | p=0.294
-  oos  ranging   real +0.0430 | null +0.0030 +/- 0.0155 over 50 shifts | rank 1 of 51 | p=0.020
-  oos  trending  real -0.0209 | null +0.0010 +/- 0.0215 over 50 shifts | rank 41 of 51 | p=0.804
-
-wrote ratediff_momentum_{coverage,q1,pairs,q2,null}.csv + .txt
-
-=== ratediff_pre1999.py ===
-/home/runner/work/fx-data/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
-/home/runner/work/fx-data/fx-data/code/ratediff_pre1999.py:70: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
-  adj = tr - a.replace(ACTW).astype(float) * BUMP
-PRE-1999 CONFIRMATION. 3 pairs: GBPUSD, USDCHF, GBPCHF
-  1990-01-02 -> 1998-12-31, 2264 bars. W=5 frozen, zero tuning.
-  labelled pre-1999 pair-days: 6285 of 6792
-
-  RANGING, pre-1999: 39 episodes, agree 0.590, base 0.537, excess +0.0529
-  trending, for reference: 57 episodes, excess -0.0105
-
-  NULL -- 50 circular shifts of the yield panel
-    ... 10/50
-    ... 20/50
-    ... 30/50
-    ... 40/50
-    ... 50/50
-
-  real +0.0529 | null +0.0056 +/- 0.0752 over 50 shifts | rank 18 of 51 | p=0.353
-
-  VERDICT RULE (fixed before the read): excess > 0 AND rank <= 3
-  RESULT: FAILED -- question closed
-
-wrote ratediff_pre1999_{result,null}.csv + .txt
-
-=== move.py ===
-EXTERNAL DRIVER #2 -- MOVE (bond volatility)
-  overlap: 2002-11-13 -> 2026-08-10, 5950 days | IS 3301, OOS 2649
-
-Q1 -- state occupancy by MOVE tercile (cut on IS: 75.2 / 99.6)
-  blk  state                 low     high    spread
-  is   trending            0.286    0.357    +0.071
-  is   ranging             0.320    0.279    -0.041
-  is   trend-in-range      0.213    0.187    -0.026
-  is   neither             0.181    0.177    -0.004
-  oos  trending            0.236    0.251    +0.016
-  oos  ranging             0.370    0.342    -0.029
-  oos  trend-in-range      0.195    0.193    -0.002
-  oos  neither             0.199    0.214    +0.015
-
-  correlation of the 21-bar MOVE change with the daily state share
-    is   trending         n=3280  r=+0.1433
-    is   ranging          n=3280  r=-0.1010
-    is   trend-in-range   n=3280  r=+0.0551
-    is   neither          n=3280  r=-0.1098
-    oos  trending         n=2649  r=-0.0390
-    oos  ranging          n=2649  r=+0.0684
-    oos  trend-in-range   n=2649  r=+0.0424
-    oos  neither          n=2649  r=-0.0800
-
-  CHOSEN ON IS: trending (spread +0.071). HOLDOUT read once: +0.016
-
-Q2 -- lead into trending, pooled by day
-  is   days with a transition into trending   n= 687  level  93.25  chg21  +0.84   diff +0.93
-  is   days with none                         n=2614  level  92.32  chg21  -0.67
-  oos  days with a transition into trending   n= 518  level  81.50  chg21  +1.68   diff +2.31
-  oos  days with none                         n=2131  level  79.19  chg21  -0.40
-
-NULL -- 50 circular shifts of MOVE against the state panel
-  ... 10/50
-  ... 20/50
-  ... 30/50
-  ... 40/50
-  ... 50/50
-  is   Q2 level  real +0.9285 | null -0.0852 +/- 1.0672 over 50 | rank 18 of 51 | p=0.353
-  is   Q2 chg21  real +1.5119 | null -0.0419 +/- 0.6967 over 50 | rank 5 of 51 | p=0.098
-  oos  Q2 level  real +2.3061 | null +0.1384 +/- 1.2063 over 50 | rank 6 of 51 | p=0.118
-  oos  Q2 chg21  real +2.0864 | null -0.1176 +/- 0.7634 over 50 | rank 1 of 51 | p=0.020
-  is   real +0.0711 | null -0.0044 +/- 0.0417 over 50 shifts | rank 4 of 51 | p=0.078
-  oos  real +0.0158 | null +0.0028 +/- 0.0364 over 45 shifts | rank 33 of 46 | p=0.717
-
-wrote move_{coverage,q1,q1_chg,q2,null}.csv + .txt
-
-=== drivers.py ===
-DRIVERS REFRAMED. crisis window = event date to +15 bars, forward only, 54 events.
-  crisis days: 753 of 6941 bars (10.8%)
-
-TEST 1 -- DRIVER A: does the SIZE of the rate-gap move differ by state?
-  blk  group       episodes  mean |chg| sep vs rest
-  is   trending         500      0.1566      +0.016
-  is   ranging          512      0.1432      -0.162
-  is   crisis           730      0.1629      +0.124
-  oos  trending         334      0.1115      -0.376
-  oos  ranging          316      0.1171      -0.310
-  oos  crisis           576      0.1833      +0.537
-  CHOSEN ON IS: ranging (sep -0.162). HOLDOUT read once: -0.310
-
-  NULL -- 50 circular shifts of the yield panel
-    ... 10/50
-    ... 20/50
-    ... 30/50
-    ... 40/50
-    ... 50/50
-    is   real -0.1619 | null +0.0052 +/- 0.1049 over 50 | rank 5 of 51 | p=0.098
-    oos  real -0.3095 | null +0.0333 +/- 0.1097 over 50 | rank 1 of 51 | p=0.020
-
-TEST 1 -- DRIVER B: MOVE by day type, POOLED BY DAY
-  overlap 2002-11-13 -> 2026-08-10, 5950 days (IS 3301, OOS 2649)
-  blk  group             days      level  sep level    sep chg
-  is   crisis             356     100.46     +0.286     +0.597
-  is   trend-leaning     1320      96.14     +0.194     -0.074
-  is   range-leaning     1625      87.83     -0.296     -0.160
-  oos  crisis             324     101.88     +0.906     +0.779
-  oos  trend-leaning      680      81.30     +0.080     -0.234
-  oos  range-leaning     1645      74.58     -0.478     -0.166
-  CHOSEN ON IS: range-leaning (sep -0.296). HOLDOUT read once: -0.478
-
-  NULL -- 50 circular shifts of MOVE
-    ... 10/50
-    ... 20/50
-    ... 30/50
-    ... 40/50
-    ... 50/50
-    is   real -0.2965 | null +0.0387 +/- 0.2561 over 50 | rank 12 of 51 | p=0.235
-    oos  real -0.4779 | null +0.0269 +/- 0.1603 over 50 | rank 1 of 51 | p=0.020
-
-TEST 2 -- does AGREEMENT add confidence?
-  A is   driver agrees (gap moving hard)    n= 409  median run  26.0  mean  39.7
-  A is   driver disagrees (gap quiet)       n= 310  median run  20.0  mean  32.4
-  A oos  driver agrees (gap moving hard)    n= 201  median run  19.0  mean  30.1
-  A oos  driver disagrees (gap quiet)       n= 272  median run  18.0  mean  28.1
-  B is   MOVE low                           n=1101  daily flip rate 0.0343
-  B is   MOVE high                          n=1100  daily flip rate 0.0332
-  B oos  MOVE low                           n=1459  daily flip rate 0.0344
-  B oos  MOVE high                          n= 670  daily flip rate 0.0372
-
-SUB-PERIOD ROBUSTNESS (holdout split three ways)
-  A ranging        2016-19 +0.160  2020-21 -0.438  2022-26 -0.342
-  A crisis         2016-19 -0.066  2020-21 +1.599  2022-26 +0.372
-  B range-leaning  2016-19 -0.538  2020-21 -0.314  2022-26 -0.624
-  B crisis         2016-19 +0.932  2020-21 +nan  2022-26 +0.783
-
-wrote driver_separation_{a,b}.csv, driver_confidence_{a,b}.csv, driver_subperiod.csv
-
-=== drivers_c.py ===
-DRIVER 3 -- EQUITY CORRELATION. ^GSPC 1996-12-09 to 2026-08-14,
-  overlap with FX 6,872 bars 1999-01-04 to 2026-07-30 (whole sample).
-  MECHANISM PREDICTION (pre-registered): JPY/CHF crosses should
-  separate most; EURGBP/AUDNZD types weakly.
-
-TEST 1 -- SEPARATION
-    W blk  group      episodes mean|corr| sep vs rest
-   21 is   trending        697     0.2645      -0.029
-   21 is   ranging         711     0.2498      -0.171
-   21 is   crisis          990     0.2826      +0.172
-   21 oos  trending        444     0.2983      +0.129
-   21 oos  ranging         437     0.2773      -0.066
-   21 oos  crisis          778     0.2806      -0.050
-   63 is   trending        697     0.2103      -0.013
-   63 is   ranging         711     0.1971      -0.137
-   63 is   crisis          990     0.2233      +0.129
-   63 oos  trending        444     0.2339      +0.000
-   63 oos  ranging         437     0.2390      +0.049
-   63 oos  crisis          778     0.2310      -0.039
-  CHOSEN ON IS: W=21, crisis (sep +0.172). HOLDOUT read once: -0.050
-
-  MECHANISM CHECK, |sep| on the holdout at W=21
-    JPY/CHF crosses  mean |sep| 0.247  (n=13)
-    all others       mean |sep| 0.195  (n=15)
-    top 5: EURAUD -0.74, USDCHF +0.63, NZDJPY -0.48, AUDCHF -0.36, GBPJPY +0.28
-    -> prediction HOLDS
-
-  SUB-PERIOD SPLIT (run before reporting the holdout pass)
-    2016-19  trending +0.050  ranging -0.176  crisis +0.112
-    2020-21  trending +0.045  ranging +0.030  crisis -0.105
-    2022-26  trending +0.155  ranging -0.022  crisis -0.092
-
-  NULL -- 50 circular shifts of the S&P series
-    ... 10/50
-    ... 20/50
-    ... 30/50
-    ... 40/50
-    ... 50/50
-    is   real +0.1719 | null -0.0219 +/- 0.0834 over 50 | rank 2 of 51 | p=0.039
-    oos  real -0.0496 | null -0.0128 +/- 0.0751 over 50 | rank 27 of 51 | p=0.529
-
-TEST 2 -- CONFIDENCE (third and final attempt)
-  is   trending  driver high (corr strong)  n= 511  median run  24.0  mean  37.0
-  is   trending  driver low (corr weak)     n= 488  median run  23.0  mean  34.4
-  is   ranging   driver high (corr strong)  n= 457  median run  23.0  mean  38.3
-  is   ranging   driver low (corr weak)     n= 509  median run  22.0  mean  37.0
-  oos  trending  driver high (corr strong)  n= 366  median run  19.0  mean  29.0
-  oos  trending  driver low (corr weak)     n= 260  median run  18.0  mean  28.6
-  oos  ranging   driver high (corr strong)  n= 387  median run  28.0  mean  45.0
-  oos  ranging   driver low (corr weak)     n= 282  median run  20.5  mean  35.2
-  run-length gaps (high minus low): is trending +1.0  is ranging +1.0  oos trending +1.0  oos ranging +7.5
-  3 of 4 cells are under 2 bars -- noise on a ~23-bar median.
-
-TEST 3 -- FORWARD ODDS. base rate first, then by driver tercile.
-
-  DRIVER C
-    is   P(crisis in 20 bars)       base 0.121 | low 0.102 (x0.84)  mid 0.116 (x0.96)  high 0.146 (x1.20)
-    oos  P(crisis in 20 bars)       base 0.152 | low 0.222 (x1.46)  mid 0.169 (x1.11)  high 0.092 (x0.60)
-    is   P(trending in 20 bars)     base 0.441 | low 0.439 (x0.99)  mid 0.429 (x0.97)  high 0.455 (x1.03)
-    oos  P(trending in 20 bars)     base 0.382 | low 0.368 (x0.96)  mid 0.372 (x0.97)  high 0.402 (x1.05)
-    is   P(ranging in 20 bars)      base 0.437 | low 0.447 (x1.02)  mid 0.440 (x1.01)  high 0.423 (x0.97)
-    oos  P(ranging in 20 bars)      base 0.509 | low 0.514 (x1.01)  mid 0.514 (x1.01)  high 0.501 (x0.98)
-
-  DRIVER B
-    is   P(crisis in 20 bars)       base 0.133 | low 0.148 (x1.11)  mid 0.141 (x1.06)  high 0.110 (x0.83)
-    oos  P(crisis in 20 bars)       base 0.134 | low 0.106 (x0.80)  mid 0.106 (x0.79)  high 0.255 (x1.91)
-    is   P(trending in 20 bars)     base 0.462 | low 0.434 (x0.94)  mid 0.453 (x0.98)  high 0.500 (x1.08)
-    oos  P(trending in 20 bars)     base 0.378 | low 0.373 (x0.99)  mid 0.372 (x0.98)  high 0.404 (x1.07)
-    is   P(ranging in 20 bars)      base 0.443 | low 0.451 (x1.02)  mid 0.465 (x1.05)  high 0.413 (x0.93)
-    oos  P(ranging in 20 bars)      base 0.484 | low 0.516 (x1.07)  mid 0.453 (x0.94)  high 0.485 (x1.00)
-
-  FORWARD CRISIS -- null and sub-period, 50 shifts
-    C equity |corr|  is   lift 1.214 | null 0.912 +/- 0.212 | rank 19 of 51 | p=0.373
-    C equity |corr|  oos  lift 0.605 | null 0.977 +/- 0.197 | rank 5 of 51 | p=0.098
-    B MOVE level     is   lift 0.827 | null 0.998 +/- 0.225 | rank 28 of 51 | p=0.549
-    B MOVE level     oos  lift 1.665 | null 0.945 +/- 0.265 | rank 2 of 46 | p=0.043
-
-  FORWARD CRISIS LIFT BY SUB-PERIOD
-    C equity |corr|  2016-19 0.38  2020-21 1.73  2022-26 0.60
-    B MOVE level     2016-19 nan  2020-21 nan  2022-26 1.18
-
-wrote driver_separation_c, driver_confidence_c, driver_forward_c, driver_forward_b, driver_subperiod_c, driver_mechanism_c
-
-=== rates10y.py ===
-DAILY 10-YEAR YIELDS. FRED is daily for USD only -- every other G8
-long-rate series there is MONTHLY, so the rest come from the same
-central-bank caches the 2-year file used.
-  USD  FRED DGS10           1962-01-02 -> 2026-09-08, 16156 obs
-  EUR  Bundesbank R10XX     FAILED HTTP Error 400: Bad Request
-  GBP  BoE GLC 10y          FAILED [Errno 2] No such file or directory: '/home/runner
-  CHF  SNB 10J0             FAILED [Errno 2] No such file or directory: '/home/runner
-  JPY  MoF JGB 10y          FAILED [Errno 2] No such file or directory: '/home/runner
-  AUD  2y exists, no daily 10y NOT AVAILABLE
-  CAD  2y exists, no daily 10y NOT AVAILABLE
-  NZD  neither tenor exists anywhere NOT AVAILABLE
-
-  coverage on the FX calendar:
-    USD  1.000 of 6941 bars
-
-  currencies with BOTH tenors: USD
-  pairs with a full curve slope: 0 of 28 -- 
-
-wrote data/rates10y.csv and results/rates10y_coverage.csv + .txt
-
-=== drivers_de.py ===
-DRIVER 4 -- YIELD CURVE SHAPE. 0 pairs: 
-  AUD/CAD have a 2y but no daily 10y; NZD has neither.
-
-  reading 1: |slope gap| (level)
-  blk  group      episodes        mean sep vs rest
-  is   trending          0         nan        +nan
-  is   ranging           0         nan        +nan
-  is   crisis            0         nan        +nan
-  oos  trending          0         nan        +nan
-  oos  ranging           0         nan        +nan
-  oos  crisis            0         nan        +nan
-  CHOSEN ON IS: trending (+nan). HOLDOUT read once: +nan
-  SUB-PERIOD SPLIT (before reporting any holdout pass)
-    2016-19  trending +nan  ranging +nan  crisis +nan
-    2020-21  trending +nan  ranging +nan  crisis +nan
-    2022-26  trending +nan  ranging +nan  crisis +nan
-  NULL -- 50 circular shifts
-    ... 25/50
-    ... 50/50
-/home/runner/work/fx-data/fx-data/code/drivers_de.py:152: RuntimeWarning: Mean of empty slice.
-  n_shifts=len(v), null_mean=float(v.mean()),
-/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/numpy/_core/_methods.py:138: RuntimeWarning: invalid value encountered in scalar divide
-  ret = ret.dtype.type(ret / rcount)
-/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/numpy/_core/_methods.py:218: RuntimeWarning: Degrees of freedom <= 0 for slice
-  ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/numpy/_core/_methods.py:175: RuntimeWarning: invalid value encountered in divide
-  arrmean = um.true_divide(arrmean, div, out=arrmean,
-/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/numpy/_core/_methods.py:210: RuntimeWarning: invalid value encountered in scalar divide
-  ret = ret.dtype.type(ret / rcount)
-/home/runner/work/fx-data/fx-data/code/drivers_de.py:156: RuntimeWarning: Mean of empty slice.
-  ' | p=%.3f' % (tag, real, v.mean(), v.std(), len(v), rank,
-/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/pandas/core/arraylike.py:399: RuntimeWarning: invalid value encountered in log
-  result = getattr(ufunc, method)(*inputs, **kwargs)
-    is   real +nan | null +nan +/- nan over 0 | rank 1 of 1 | p=1.000
-    oos  real +nan | null +nan +/- nan over 0 | rank 1 of 1 | p=1.000
-  VERDICT: KEEPER  (halves flip: False, sub-periods flip: False)
-
-DRIVER 5 -- COMMODITIES
-  CL=F 2000-08-23 -> 2026-09-10 (6540 obs); GC=F 2000-08-30 -> 2026-09-10 (6531 obs)
-  both start ~1.6 years into the in-sample window.
-  iron ore TIO=F is free but only from 2010-10-14 and scoped to AUD,
-  which gold already covers. Coal and dairy are not free: NZD is
-  recorded UNTESTABLE for commodities.
-  scope: 18 pairs (CAD 7, JPY 7, AUD 7). No EUR/GBP/CHF-only pairs tested -- no mechanism.
-  blk  group      episodes        mean sep vs rest
-  is   trending        426      0.0585      -0.199
-  is   ranging         401      0.0641      -0.033
-  is   crisis          634      0.0704      +0.194
-  oos  trending        295      0.0661      -0.108
-  oos  ranging         285      0.0652      -0.120
-  oos  crisis          494      0.0812      +0.181
-  CHOSEN ON IS: trending (-0.199). HOLDOUT read once: -0.108
-  SUB-PERIOD SPLIT (before reporting any holdout pass)
-    2016-19  trending -0.122  ranging -0.009  crisis +0.105
-    2020-21  trending -0.532  ranging -0.458  crisis +1.378
-    2022-26  trending +0.138  ranging +0.056  crisis -0.134
-  NULL -- 50 circular shifts
-    ... 25/50
-    ... 50/50
-    is   real -0.1993 | null -0.0339 +/- 0.0876 over 50 | rank 3 of 51 | p=0.059
-    oos  real -0.1077 | null -0.0356 +/- 0.1366 over 50 | rank 23 of 51 | p=0.451
-  VERDICT: DEAD -- sign flips  (halves flip: False, sub-periods flip: True)
-
-TEST 2 -- FORWARD ODDS (reported, cannot kill)
-
-  DRIVER D
+t(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+/home/runner/work/fx-data/fx-data/code/failswing.py:82: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  return (f & ~f.shift(1).fillna(False)).shift(1).fillna(False)
+
+SHAPE ONLY -- IS EXCESS over its own surrogate
+Y      0.50   0.75   1.00   1.50   2.00   3.00   4.00
+X                                                    
+0.85 -0.007 -0.036 -0.034 +0.019 +0.014 -0.097 -0.049
+0.90 +0.001 -0.035 -0.019 +0.044 +0.018 -0.035 -0.015
+0.93 +0.017 -0.018 -0.013 +0.064 +0.010 -0.097 -0.045
+0.95 -0.068 -0.083 -0.070 -0.021 -0.097 -0.225 -0.137
+0.97 -0.129 -0.150 -0.129 -0.040 -0.163 -0.207 -0.091
+0.98 -0.161 -0.185 -0.224 -0.098 -0.252 -0.221 -0.034
+0.99 -0.289 -0.300 -0.358 -0.148 -0.247 -0.181 -0.011
+  cells > +0.05:  1 of 49, largest contiguous 1   |  > +0.10:  0, largest 0
+
+ACTIVITY ONLY -- IS EXCESS over its own surrogate
+Y      0.50   0.75   1.00   1.50   2.00   3.00   4.00
+X                                                    
+0.85 +0.024 +0.005 +0.023 +0.107 +0.090 +0.108 -0.017
+0.90 +0.013 -0.006 +0.003 +0.104 +0.075 +0.070 +0.060
+0.93 +0.074 +0.027 +0.023 +0.048 +0.045 +0.085 +0.198
+0.95 +0.153 +0.093 +0.084 +0.118 +0.065 +0.044 +0.147
+0.97 +0.146 +0.052 +0.050 +0.072 +0.074 -0.020 +0.135
+0.98 +0.121 +0.019 +0.024 -0.045 +0.050 -0.072 +0.072
+0.99 +0.137 +0.007 -0.046 -0.037 +0.132 -0.086 +0.160
+  cells > +0.05: 28 of 49, largest contiguous 15   |  > +0.10: 13, largest 4
+
+BOTH -- IS EXCESS over its own surrogate
+Y      0.50   0.75   1.00   1.50   2.00   3.00   4.00
+X                                                    
+0.85 +0.088 +0.087 +0.020 +0.059 +0.106 +0.054 +0.005
+0.90 +0.090 +0.051 +0.018 +0.071 +0.117 +0.058 -0.034
+0.93 +0.123 +0.074 +0.040 +0.083 +0.119 -0.006 -0.052
+0.95 +0.162 +0.101 +0.031 +0.084 +0.112 +0.089 +0.122
+0.97 +0.076 +0.032 -0.049 +0.054 +0.103 +0.183 +0.120
+0.98 -0.021 -0.013 -0.139 -0.057 -0.047 -0.118 +0.144
+0.99 -0.233 -0.205 -0.293 -0.221 -0.332 +0.044 +0.104
+  cells > +0.05: 27 of 49, largest contiguous 18   |  > +0.10: 13, largest 10
+
+COMBINED (SHIPPED) -- IS EXCESS over its own surrogate
+Y      0.50   0.75   1.00   1.50   2.00   3.00   4.00
+X                                                    
+0.85 +0.031 +0.010 +0.001 +0.077 +0.074 +0.023 -0.020
+0.90 +0.019 -0.007 +0.001 +0.091 +0.073 +0.040 +0.015
+0.93 +0.046 +0.011 +0.008 +0.073 +0.053 -0.019 +0.037
+0.95 +0.024 -0.005 -0.004 +0.041 -0.002 -0.070 +0.025
+0.97 -0.011 -0.055 -0.042 +0.026 -0.025 -0.068 +0.031
+0.98 -0.073 -0.106 -0.131 -0.086 -0.128 -0.161 +0.022
+0.99 -0.210 -0.213 -0.231 -0.107 -0.096 -0.106 +0.083
+  cells > +0.05:  7 of 49, largest contiguous 6   |  > +0.10:  0, largest 0
+
+  raw best cell (NOT chosen): X=0.93 Y=4.00 activity only, excess +0.198, fires on 0.855% of bars -- a grid corner
+
+CHOSEN ON IS by 3x3 neighbourhood mean: X=0.95 Y=2.00, "both"
+  neighbourhood mean excess +0.091 over 8 neighbours, fires on 1.653% of bars
+  IS lift 0.757  surrogate 0.645  excess +0.112  z +0.91
+  its 8 neighbours: mean +0.089, min -0.006, max +0.183
+
+HOLDOUT, READ ONCE, 200 surrogate draws of each kind
+  sign  lift 1.450   surrogate 1.209 +/- 0.738   excess +0.241   p=0.343
+  iid   lift 1.450   surrogate 1.178 +/- 0.662   excess +0.272   p=0.289
+
+  SURVIVES (excess > 0.05 and p < 0.05 against BOTH nulls): NO
+
+wrote failswing_surface.csv and failswing_confirm.csv
+
+=== layer1sum.py ===
+LAYER 1, MERGED. results/layer1_states.csv
+  192640 rows, 28 pairs, 1999-04-01 to 2026-09-04
+  columns: date, pair, trend_score, chop_score, shape2, activity, scale_28, combined2, settling, m_fail, m_retr, m_space, m_panel, sample
+
+  COVERAGE, holdout
+    activity   1.000
+    settling   1.000
+
+  SHARES, holdout
+    activity  medium 0.384  weak 0.322  strong 0.293
+    settling  0.2 0.069  0.4 0.069  0.6 0.069  0.8 0.069  1.0 0.725
+
+==========================================================================
+EVERY CLAIM, WITH THE TEST THAT WAS RUN ON IT
+
+  NINE-BOX SCALE AXIS
+    separates on realised_vol                      HOLDS (p=0.016)
+      0.885 vs surrogate 0.555, corrected +0.331   [null: iid, 16.4e]
+    separates on avg_abs_move                      HOLDS (p=0.049)
+      0.978 vs surrogate 0.896, corrected +0.082   [null: iid, 16.4e]
+    separates on realised_vol                      p=0.148
+      0.885 vs surrogate 0.851, corrected +0.035   [null: sign (degenerate here), 16.4e]
+    separates on avg_abs_move                      p=0.066
+      0.978 vs surrogate 0.925, corrected +0.053   [null: sign (degenerate here), 16.4e]
+
+  SHAPE SEPARATION
+    structural raw                                 FAILS (p=0.806)
+      real 0.213 vs surrogate 0.230, corrected -0.018   [null: sign, 16.4c]
+    structural M=5                                 FAILS (p=0.642)
+      real 0.205 vs surrogate 0.215, corrected -0.010   [null: sign, 16.4c]
+    product M=5                                    FAILS (p=0.622)
+      real 0.298 vs surrogate 0.306, corrected -0.008   [null: sign, 16.4c]
+    grid                                           FAILS (p=0.960)
+      real 0.459 vs surrogate 0.512, corrected -0.052   [null: sign, 16.4c]
+    structural raw                                 FAILS (p=0.587)
+      real 0.213 vs surrogate 0.219, corrected -0.006   [null: iid, 16.4c]
+    structural M=5                                 FAILS (p=0.463)
+      real 0.205 vs surrogate 0.205, corrected +0.000   [null: iid, 16.4c]
+    product M=5                                    FAILS (p=0.378)
+      real 0.298 vs surrogate 0.290, corrected +0.008   [null: iid, 16.4c]
+    grid                                           FAILS (p=0.925)
+      real 0.459 vs surrogate 0.492, corrected -0.032   [null: iid, 16.4c]
+
+  SHAPE SEPARATION, EPISODE BASIS
+    structural M=5                                 FAILS (p=0.410)
+      real 0.235 vs surrogate 0.232, corrected +0.003   [null: sign, 16.4e]
+    product M=5                                    FAILS (p=0.508)
+      real 0.301 vs surrogate 0.305, corrected -0.005   [null: sign, 16.4e]
+    grid                                           FAILS (p=1.000)
+      real 0.353 vs surrogate 0.412, corrected -0.059   [null: sign, 16.4e]
+    structural M=5                                 FAILS (p=0.361)
+      real 0.235 vs surrogate 0.224, corrected +0.011   [null: iid, 16.4e]
+    product M=5                                    FAILS (p=0.393)
+      real 0.301 vs surrogate 0.298, corrected +0.003   [null: iid, 16.4e]
+    grid                                           FAILS (p=1.000)
+      real 0.353 vs surrogate 0.420, corrected -0.067   [null: iid, 16.4e]
+
+  STRUCTURAL CELL, IS-SELECTED
+    N=2 B=3 D=1.00 R=0.62                          FAILS (p=0.975)
+      holdout 0.491 vs surrogate 0.567, corrected -0.075   [null: sign, 16.4d]
+    N=2 B=3 D=1.00 R=0.62                          FAILS (p=0.934)
+      holdout 0.491 vs surrogate 0.553, corrected -0.061   [null: iid, 16.4d]
+
+  EXCURSION
+    structure: non-trending minus trending / bars_ FAILS (p 0.884/0.824/0.721)
+      observed +0.0270, published t 0.17   [null: block bootstrap 21/63/126, 16.4e]
+    structure: non-trending minus trending / ratio FAILS (p 0.245/0.182/0.127)
+      observed +0.0520, published t --   [null: block bootstrap 21/63/126, 16.4e]
+    structure: non-trending minus trending / path_ FAILS (p 0.997/0.989/0.982)
+      observed -0.0002, published t -0.06   [null: block bootstrap 21/63/126, 16.4e]
+    grid: strong chop minus strong trend / path_ef FAILS (p 0.212/0.222/0.213)
+      observed +0.0143, published t 2.12   [null: block bootstrap 21/63/126, 16.4e]
+    grid: strong chop minus strong trend / bars_to HOLDS (p 0.001/0.004/0.000)
+      observed +1.4363, published t 4.79   [null: block bootstrap 21/63/126, 16.4e]
+    grid: strong chop minus strong trend / mfe     FAILS (p 0.673/0.629/0.565)
+      observed +0.0004, published t 0.48   [null: block bootstrap 21/63/126, 16.4e]
+    grid: strong chop minus strong trend / ratio   HOLDS (p 0.027/0.003/0.000)
+      observed +0.2125, published t --   [null: block bootstrap 21/63/126, 16.4e]
+    tier: all differ minus all agree / ratio       FAILS (p 0.344/0.236/0.185)
+      observed +0.0671, published t --   [null: block bootstrap 21/63/126, 16.4e]
+    tier: all differ minus all agree / bars_to_pea FAILS (p 0.530/0.498/0.432)
+      observed +0.1675, published t 0.73   [null: block bootstrap 21/63/126, 16.4e]
+    tier: all differ minus all agree / path_eff    FAILS (p 0.180/0.160/0.090)
+      observed -0.0093, published t -1.72   [null: block bootstrap 21/63/126, 16.4e]
+
+  SETTLING VS TRANSITIONAL
+    are they the same bars                         INDEPENDENT
+      lift 1.014, Cramers V 0.0054   [null: -, 16.4f]
+
+  REGIME CHANGE COUNTS
+    shape only                                     COUNT
+      3026 changes, 4.051% of bars, mean gap 24.7 bars   [null: -, 16.4k]
+    activity only                                  COUNT
+      3154 changes, 4.222% of bars, mean gap 23.7 bars   [null: -, 16.4k]
+    both                                           COUNT
+      130 changes, 0.174% of bars, mean gap 574.6 bars   [null: -, 16.4k]
+    split-join any                                 COUNT
+      6310 changes, 8.447% of bars, mean gap 11.8 bars   [null: -, 16.4k]
+    combined (shipped)                             COUNT
+      5139 changes, 6.879% of bars, mean gap 14.5 bars   [null: -, 16.4k]
+
+  FAILED SWINGS, IS-SELECTED CELL
+    X=0.95 Y=2.00 on both                          FAILS (p=0.343)
+      IS excess +0.112, holdout lift 1.450 vs surrogate 1.209, excess +0.241   [null: sign, 16.4l]
+    X=0.95 Y=2.00 on both                          FAILS (p=0.289)
+      IS excess +0.112, holdout lift 1.450 vs surrogate 1.178, excess +0.272   [null: iid, 16.4l]
+
+  LEAD-TIME, IS-SELECTED CELL
+    rng fast=72 slow=118 on product M=5            FAILS (p=0.095)
+      IS excess +0.318, holdout lift 1.260 vs surrogate 0.966, excess +0.294   [null: sign, 16.4i]
+    rng fast=72 slow=118 on product M=5            FAILS (p=0.060)
+      IS excess +0.318, holdout lift 1.260 vs surrogate 0.961, excess +0.298   [null: iid, 16.4i]
+
+==========================================================================
+WHAT TO ROUTE ON
+  activity / scale_28   the only axis whose separation survives a
+                        surrogate, and only against IID
+  shape, combined       carried as description. Orthogonal to
+                        activity (V 0.094) and to the nine-box
+                        straightness family (V 0.193), so not
+                        redundant -- but failing their own nulls,
+                        so not informative either
+  settling              a weight, not a state. 22.6% of holdout bars
+                        carry a reduced one
+  tier                  description only, permutation p=0.257
+
+wrote layer1_summary.csv
+
+=== horizon.py --report-only ===
+
+HORIZON SWEEP -- the 111 old survivors
+ H   n eff_is eff_oos t_oos agree  mono retention  passing
+ 5 111 0.0174  0.0263   7.7 0.811 0.804     0.955        2
+10 111 0.0226  0.0310  11.8 0.873 0.907     0.991       13
+15 111 0.0242  0.0282  13.2 0.882 0.955     1.000       16
+20 111 0.0224  0.0244  13.3 0.881 0.970     1.000       11
+
+chop signals against the rest (median |OOS effect|)
+chop  non-chop   chop
+H                    
+5       0.0282 0.0260
+10      0.0338 0.0308
+15      0.0270 0.0287
+20      0.0239 0.0252
+
+THE NULL AT EACH HORIZON -- what a zero effect earns
+ H null_t null_t_p90 null_eff null_agree t_oos eff_oos t_ratio eff_ratio
+ 5   2.16       5.10   0.0076      0.632   7.7  0.0263   3.55x     3.47x
+10   2.69       7.08   0.0071      0.627  11.8  0.0310   4.39x     4.36x
+15   3.44       8.31   0.0076      0.627  13.2  0.0282   3.85x     3.71x
+20   4.05       9.43   0.0077      0.625  13.3  0.0244   3.28x     3.16x
+t_ratio is the honest cross-horizon comparison: real t divided by the t the same procedure gets from a shifted target.
+
+DOES ANYTHING THAT FAILS AT 20 DAYS PASS AT A SHORTER ONE?
+  H= 5: 9 pass, 8 of them fail at 20d
+        ats_40_250_ph, ra_cx3_m750_ph, rb_ep750_mu_20_pl, rb_oc750_mu_20_pl, ts_md_8_pl, za_cx2.5_m750_ph, za_xsctop_r20_pv, zb_ep750_sd1.5_v10_pl
+        their 20d failure: {'agree': 5, 'eff': 2, '': 1}
+  H=10: 33 pass, 30 of them fail at 20d
+        cx1.5_m30_ch, cx1.5_x5_ch, cx2.5_m120_ch, cx3_m60_ph, pvr_180_ch, pvr_250_ch, ra_ats_120_250_ch, ra_cx1.5_s75_ch
+        their 20d failure: {'eff': 11, 'agree': 8, 'mono': 7, '': 3, 'agree,eff': 1}
+  H=15: 43 pass, 39 of them fail at 20d
+        bvr_150_ch, cx1.5_m10_ch, cx1.5_m5_ch, cx1.5_s20_ch, cx1.5_x120_ch, cx1.5_x150_ch, cx2.5_m120_ch, cx3_m150_ch
+        their 20d failure: {'mono': 13, 'eff': 9, 'agree': 9, 'agree,eff': 4, '': 3, 'decay': 1}
+
+=== extdata.py --probe ===
+probing 14 routes from github-actions
+  USD  us-treasury    DATA                 19098  daily, has 2 Yr
+  USD  fred-graph     UNREACHABLE              0  keyless CSV host
+  USD  fred-api       HTTP 400                 0  needs a free api key
+  EUR  ecb            DATA                  4310  daily AAA curve, starts 2004-09
+  JPY  mof            DATA               1176385  daily from 1974, Shift-JIS, Japanese era dates
+  GBP  boe-glc        DATA              39110776  daily from 1979, 39 MB of xlsx
+  CAD  boc-valet      DATA                   545  daily
+  AUD  rba-f2         DATA                200245  has an explicit 2 year bond column
+  CHF  snb-daily      DATA               5461632  daily from 1988, 2J maturity
+  NZD  rbnz-b2        HTTP 403                 0  bot-walled from the sandbox
+  NZD  nz-dmo         HTTP 403                 0  Cloudflare challenge from the sandbox
+  USD  yahoo-^TNX     DATA                  1728  US 10y, already in the feed
+  GBP  yahoo-GB2YR    HTTP 404                 0  speculative ticker
+  JPY  yahoo-2YY=F    DATA                  1474  CBOT 2y yield future, US not JP
+
+github-actions: 7 of 8 currencies have at least one working free route
+wrote ext_probe_github-actions.csv
+
+=== extsig.py --report-only ===
+
+CONSTRUCTION TRANSFER: 21 of 29 survivors produced anything on external data
+        survivors  transferred
+module                        
+sig3            3            0
+sig4            3            0
+sig5            1            1
+sig6           20           20
+sig7            2            0
+did not transfer: rd_xsctop_r15_pd, z_paneldisp_40, z_panelvol_40, z_panelvol_60, za_xsctop_r20_pv, zz_paneldisp_D40, zz_panelvol_D40, zz_panelvol_D60
+
+OUT-OF-SAMPLE SIGN RETENTION BY SOURCE
+                  group      n retention vs_price_baseline
+                 dollar      3     1.000            +0.394
+            commodities      9     0.889            +0.283
+              us-yields      9     0.778            +0.171
+                  bonds     12     0.750            +0.144
+                 credit      9     0.667            +0.060
+              rates-vol      3     0.667            +0.060
+             equity-vol     12     0.583            -0.023
+                  panel     18     0.556            -0.051
+           ALL EXTERNAL     75     0.693            +0.087
+(FX price, all signals) 167316     0.606            +0.000
+   (FX cross-sectional)    964     0.669            +0.063
+
+through the gauntlet unchanged: 0 of 75 external signals survive
+
+wrote ext_signals.csv, ext_retention.csv, ext_transfer.csv
+
+=== carrysig.py --report-only ===
+
+CONSTRUCTION TRANSFER: 29 of 29 survivors ran on the carry panel
+
+OUT-OF-SAMPLE SIGN RETENTION
+                         group      n retention vs_price_baseline
+carry: surviving constructions     28     0.500            -0.106
+    carry: differential direct      2     1.000            +0.394
+       (FX price, all signals) 167316     0.606            +0.000
+
+strongest by |OOS t|:
+          signal        si        so        ti         to       ao        mo  held
+        cx4_m375 -0.008245 -0.026757 -5.291563 -14.262486 0.892857 -0.916496  True
+  z_paneldisp_40 -0.000391  0.019815 -0.246886  10.707705 0.642857  0.665220 False
+zz_paneldisp_D40 -0.000391  0.019815 -0.246886  10.707705 0.642857  0.665220 False
+    rb_pdm_50_ch  0.003809 -0.017091  2.297017  -9.018309 0.642857 -0.730792 False
+za_xsctop_r20_pv  0.014743  0.018375  7.965409   8.507571 0.750000  0.673287  True
+   zb_cx2_s90_ch  0.011286 -0.016398  6.547469  -7.983631 0.714286 -0.530025 False
+     zd_cx3_x375  0.036176 -0.018783 12.723825  -6.902611 0.607143 -0.739264 False
+   z_panelvol_60 -0.003243 -0.011158 -1.963073  -5.928108 0.642857 -0.757710  True
+ zz_panelvol_D60 -0.003243 -0.011158 -1.963073  -5.928108 0.642857 -0.757710  True
+      rc_cx3_s30  0.005189 -0.009301  3.355562  -5.060194 0.678571 -0.361629 False
+   ra_cx2_x25_ch  0.008045  0.010264  4.807056   4.988710 0.678571  0.358468  True
+   cx1.5_x150_ch -0.002955 -0.008388 -1.877943  -4.612778 0.571429 -0.235279  True
+
+through the gauntlet unchanged: 0 of 30 survive
+
+wrote carry_signals.csv, carry_retention.csv
+
+=== inflation.py --adjust-only ===
+
+SELECTION INFLATION  (50 null runs, 29 real survivors)
+rank       real     null*  adjusted    manuf%       p  runs*
+1        0.0473    0.0442    0.0030       94%   0.098     10
+2        0.0472    0.0418    0.0054       89%   0.020      4
+3        0.0465    0.0423    0.0042       91%   0.020      2
+5        0.0437      --        --         --%   0.020      0
+10       0.0328      --        --         --%   0.020      0
+32          nan      --        --         --%     nan      0
+* conditional on the null producing a survivor at that rank
+
+survivor count: real 29, null median 0, max 3, p=0.020
+wrote inflation_adjusted.csv, inflation_summary.csv, inflation_families.csv
+==============================================================================
+VALIDATION — is the estimator detecting anything?
+==============================================================================
+
+1. SHUFFLED LABELS (500 shuffles, run lengths preserved)
+   real trend-minus-chop efficiency gap : +0.03037
+   shuffled null: mean -0.00010  sd 0.00524  95th +0.00868
+   real sits at the 100.0% percentile of the null, z = +5.81
+   VERDICT: PASS - real labels clearly beat shuffled
+
+4. PERSISTENCE AND TRANSITIONS
+regime  n_runs  median_len  mean_len  share_runs_under_5  share_bars_under_5  diagonal
+  chop     524       9.000    42.889               0.317               0.015     0.977
+   mid    1041      10.000    22.296               0.388               0.032     0.956
+ trend     520       9.000    54.462               0.365               0.014     0.982
+
+   transition matrix (row = from, col = to)
+        chop    mid  trend
+chop   0.977  0.023  0.000
+mid    0.021  0.956  0.022
+trend  0.000  0.018  0.982
+
+   mean diagonal 0.972
+   short runs: 35.7% of RUNS are under 5 days, but only 2.0% of BARS
+   VERDICT: PASS - strong diagonal, time is spent in persistent runs
+
+==============================================================================
+SUMMARY
+==============================================================================
+           test  passes
+shuffled_labels    True
+    persistence    True
+
+=== bundle.py ===
+{'sweep': 38, 'ladder': 18, 'logic': 12, 'duration': 4, 'funnel': 3, 'audit': 20, 'ninebox': 10, 'ninebox_surv': 10, 'mtf': 7, 'mtfagree': 3, 'mtfagree_surv': 3, 'composite': 1, 'val_summary': 2, 'val_shuffle': 1, 'val_synth': 1, 'val_refit': 1, 'val_persist': 3, 'val_trans': 3, 'crisis': 5, 'crisisev': 270, 'famret': 302, 'pairtrend': 28, 'horizon': 4, 'entry': 9, 'termstruct': 19, 'scaleocc': 4, 'durbands': 6, 'clsval': 17, 'combval': 30, 'structsel': 144, 'epicount': 3, 'episep': 24, 'epiexc': 10, 'pairclf': 28, 'transedge': 18, 'transpairs': 5, 'magnull': 12, 'axesab': 4, 'axesct': 3, 'axescts': 3, 'axesset': 1, 'leadtime': 36, 'masweep': 3420, 'maridge': 5, 'maconfirm': 2, 'maiss': 12, 'l1sum': 40, 'shape3cov': 15, 'shapewin': 39, 'shapesc': 39, 'shapesplit': 207, 'scoredist': 2, 'twocells': 6, 'meas1': 8, 'chopcomp': 4, 'finalrep': 5, 'finalpairs': 56, 'paircha': 28, 'pairrank': 28, 'runlen': 84, 'regen': 14, 'pairtrans': 336, 'charblocks': 84, 'rankstab': 7, 'rankmoves': 28, 'rdq1': 24, 'rdq2': 4, 'rdnull': 4, 'rdpairs': 42, 'rdpre': 1, 'precov': 3, 'mvq1': 24, 'mvchg': 8, 'mvq2': 4, 'mvnull': 6, 'mvcov': 1, 'drvsepa': 8, 'drvsepb': 8, 'drvconf': 8, 'drvsub': 12, 'drvsepc': 14, 'drvconfc': 8, 'drvfwdc': 20, 'drvfwdb': 20, 'drvsubc': 9, 'drvmech': 28, 'drvfwdsub': 6, 'drvsepd': 8, 'drvsepe': 8, 'drvfwdd': 24, 'drvfwde': 24, 'drvsubd': 9, 'drvsube': 9, 'drvprog': 7, 'cotsep': 32, 'cotsub': 36, 'cotfwd': 28, 'cotcov': 8, 'stcorr': 756, 'stcorrs': 2, 'stblk': 16, 'stbrd': 22, 'stbrds': 4, 'stneff': 308, 'stext': 40, 'rfinv': 12, 'rfagr': 60, 'rfdis': 6, 'rfthr': 6, 'wsens': 15, 'knobs': 22, 'knobrank': 11, 'knobstate': 84, 'knobsep': 84, 'sqdec': 6, 'sqreg': 14, 'today': 28, 'todayhdr': 1, 'pairmech': 28, 'r10cov': 8, 'chronep': 6, 'chronsep': 30, 'chrondet': 84, 'bothep': 15, 'failsurf': 70, 'scoreyears': 11, 'shapesplitp': 252, 'shapescc': 1, 'shapewinc': 1, 'shape3lb': 5, 'oldnew': 5, 'chgcount': 5, 'chgtrack': 24, 'fswing': 196, 'fswingc': 2, 'structselres': 2, 'shapeval': 9, 'ribsweep': 30, 'ninestates': 9, 'nineexc': 9, 'nineper': 28, 'ninetrans': 9, 'durhaz': 6, 'scaleexc': 4, 'newtarget': 4, 'termpairs': 28, 'entrypair': 28, 'subnull': 8, 'subnullpairs': 28, 'agreepairs': 28, 'extret': 11, 'carryret': 3, 'carrysig': 31, 'ratecov': 8, 'extcov': 27, 'exttr': 29, 'infl': 6, 'inflsum': 3, 'inflfam': 6, 'stability': 13, 'clusters': 15, 'survivors': 29, 'independents': 15, 'meta': 'meta'}
+app_data.json       1.5 MB
+app_signals.json   46.5 MB  (175634 built, 167316 scorable)
+
+=== appstamp.py ===
+app_ui.js build 3bc8ce232e4a (already current); app_version.json updated
+
+=== freshness.py ===
+px28.csv last bar 2026-09-04 (7 days old)
+  results/layer1_states.csv    last 2026-09-04  OK
+  app_regime.json              last 2026-09-04  OK
+  results/app_regime.json      last 2026-09-04  OK
+  app_data.json                last 2026-09-04  OK
+  results/app_data.json        last 2026-09-04  OK
+
+======================================================================
+FRESHNESS GATE FAILED -- the pipeline published stale data:
+  * data/px28.csv is 7 days old (limit 5). The daily fetch is not delivering new bars.
+======================================================================
 Traceback (most recent call last):
-  File "/home/runner/work/fx-data/fx-data/code/drivers_de.py", line 306, in <module>
-    main()
-  File "/home/runner/work/fx-data/fx-data/code/drivers_de.py", line 277, in main
-    FD = forward(D_lvl.mean(axis=1), st, ev, px.index, fit.values,
-  File "/home/runner/work/fx-data/fx-data/code/drivers_de.py", line 171, in forward
-    q = np.nanquantile(drv_daily[fit], [1 / 3, 2 / 3])
-  File "/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/pandas/core/series.py", line 1161, in __getitem__
-    key = check_bool_indexer(self.index, key)
-  File "/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/pandas/core/indexing.py", line 2717, in check_bool_indexer
-    return check_array_indexer(index, result)
-  File "/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/site-packages/pandas/core/indexers/utils.py", line 539, in check_array_indexer
-    raise IndexError(
-IndexError: Boolean index has wrong length: 6941 instead of 0
-Traceback (most recent call last):
-  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 73, in <module>
-    run('drivers_de.py')     # DRIVERS 4 yield curve + 5 commodities
+  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 153, in <module>
+    run('freshness.py')          # FAIL LOUDLY if anything published is stale
   File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 7, in run
     subprocess.run([sys.executable,os.path.join(C,m)],check=True)
   File "/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/subprocess.py", line 528, in run
     raise CalledProcessError(retcode, process.args,
-subprocess.CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.9.25/x64/bin/python', '/home/runner/work/fx-data/fx-data/code/drivers_de.py']' returned non-zero exit status 1.
+subprocess.CalledProcessError: Command '['/opt/hostedtoolcache/Python/3.9.25/x64/bin/python', '/home/runner/work/fx-data/fx-data/code/freshness.py']' returned non-zero exit status 1.
