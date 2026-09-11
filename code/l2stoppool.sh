@@ -17,15 +17,15 @@ echo "stopping pool $PARENT (children: $KIDS)"
 # the parent afterwards orphans those replacements. Observed on mode C: nine
 # fresh workers at 99% CPU with ppid=1, none of them the pids that had just
 # been killed. Kill the parent, THEN the children it can no longer replace.
-kill "$PARENT" 2>/dev/null
+kill "$PARENT" 2>/dev/null  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 sleep 3
-[ -n "$KIDS" ] && kill $KIDS 2>/dev/null
+[ -n "$KIDS" ] && kill $KIDS 2>/dev/null  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 # and anything the pool respawned before the parent died
-NEW=$(pgrep -P 1 -f multiprocessing.spawn 2>/dev/null | tr '\n' ' ')
+NEW=$(pgrep -P 1 -f multiprocessing.spawn 2>/dev/null | tr '\n' ' ')  # NOSILENCE-OK: pgrep exits 1 when nothing matches -- that is the answer, not a failure
 sleep 3
-LEFT=$(pgrep -P "$PARENT" 2>/dev/null | tr '\n' ' ')
+LEFT=$(pgrep -P "$PARENT" 2>/dev/null | tr '\n' ' ')  # NOSILENCE-OK: pgrep exits 1 when nothing matches -- that is the answer, not a failure
 for k in $KIDS $NEW; do ps -p "$k" >/dev/null 2>&1 && LEFT="$LEFT $k"; done
 if [ -n "$(echo $LEFT | tr -d ' ')" ]; then
-  echo "second pass on survivors: $LEFT"; kill -9 $LEFT 2>/dev/null; sleep 3
+  echo "second pass on survivors: $LEFT"; kill -9 $LEFT 2>/dev/null; sleep 3  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 fi
 echo "pool $PARENT stopped; stragglers: $(for k in $KIDS; do ps -p $k >/dev/null 2>&1 && echo -n "$k "; done)"

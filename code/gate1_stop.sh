@@ -19,40 +19,40 @@ set -u
 # their PPID is 1, so neither the pattern nor the process tree finds them on its
 # own. Match on the interpreter running a multiprocessing bootstrap, then verify
 # nothing is left rather than trusting the match.
-PARENTS=$(pgrep -f 'l2sweep\.py' || true)
-KIDS=$(pgrep -f 'multiprocessing' || true)
+PARENTS=$(pgrep -f 'l2sweep\.py' || true)  # NOSILENCE-OK: pgrep exits 1 when nothing matches -- that is the answer, not a failure
+KIDS=$(pgrep -f 'multiprocessing' || true)  # NOSILENCE-OK: pgrep exits 1 when nothing matches -- that is the answer, not a failure
 
 if [ -z "$PARENTS$KIDS" ]; then
   echo "gate 1: nothing running"
   exit 0
 fi
 
-[ -n "$KIDS" ]    && echo "killing workers: $KIDS"  && kill $KIDS 2>/dev/null
-[ -n "$PARENTS" ] && echo "killing parent:  $PARENTS" && kill $PARENTS 2>/dev/null
+[ -n "$KIDS" ]    && echo "killing workers: $KIDS"  && kill $KIDS 2>/dev/null  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
+[ -n "$PARENTS" ] && echo "killing parent:  $PARENTS" && kill $PARENTS 2>/dev/null  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 
 # give them a moment, then confirm
 i=0
 while [ $i -lt 10 ]; do
   sleep 1
-  LEFT=$(pgrep -f 'l2sweep\.py|multiprocessing' || true)
+  LEFT=$(pgrep -f 'l2sweep\.py|multiprocessing' || true)  # NOSILENCE-OK: pgrep exits 1 when nothing matches -- that is the answer, not a failure
   [ -z "$LEFT" ] && break
   i=$((i + 1))
 done
 
-LEFT=$(pgrep -f 'l2sweep\.py|multiprocessing' || true)
+LEFT=$(pgrep -f 'l2sweep\.py|multiprocessing' || true)  # NOSILENCE-OK: pgrep exits 1 when nothing matches -- that is the answer, not a failure
 if [ -n "$LEFT" ]; then
   echo "still alive after 10s, sending KILL: $LEFT"
-  kill -9 $LEFT 2>/dev/null
+  kill -9 $LEFT 2>/dev/null  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
   sleep 2
 fi
 
 # VERIFY, do not assume. A stop script that reports success while workers keep
 # writing is worse than no stop script, because the next launch then mixes two
 # configurations in one output directory.
-LEFT=$(pgrep -f 'l2sweep\.py|multiprocessing' || true)
+LEFT=$(pgrep -f 'l2sweep\.py|multiprocessing' || true)  # NOSILENCE-OK: pgrep exits 1 when nothing matches -- that is the answer, not a failure
 if [ -n "$LEFT" ]; then
   echo "FAILED: still running after KILL: $LEFT"
   exit 1
 fi
 
-echo "gate 1: stopped, verified none left. $(ls results/gate1/shard_*.csv 2>/dev/null | wc -l | tr -d ' ') shards banked."
+echo "gate 1: stopped, verified none left. $(ls results/gate1/shard_*.csv 2>/dev/null | wc -l | tr -d ' ') shards banked."  # NOSILENCE-OK: counting files that may not exist yet; wc -l of nothing is 0

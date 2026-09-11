@@ -8,7 +8,7 @@ while true; do
   n=$(/usr/bin/python3 -c "
 import pandas as pd,glob
 fs=glob.glob('results/gate3ft_costed_v3/*.csv')
-print(sum(len(pd.read_csv(f,low_memory=False)) for f in fs) if fs else 0)" 2>/dev/null)
+print(sum(len(pd.read_csv(f,low_memory=False)) for f in fs) if fs else 0)" 2>/dev/null)  # NOSILENCE-OK: counting rows in files that may not exist yet
   [ "${n:-0}" -ge 5135 ] && { say "v3 complete: $n"; break; }
   pgrep -f "l2gate3ft.py --shard" >/dev/null || { say "v3 shards gone at $n rows"; break; }
   sleep 300

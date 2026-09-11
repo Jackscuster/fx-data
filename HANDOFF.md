@@ -415,6 +415,10 @@ identity null 36.6 min per budget · random-entry null 2.6 min per budget.
 | 08 Sep | **W3-only now; FULLSTITCH is a hard follow-up**, registered in FIXES.md. |
 | 07 Sep | **Layer 1 must be re-confirmed on 2016-2020 only** when rebuilt on 5pm bars — OANDA daily starts 2002-06 against H.10's 1999. |
 | 10 Sep | **Mode C paused until forward testing starts.** |
+| 11 Sep | **NO SILENCED ERRORS.** No `2>/dev/null`, no `\|\| true`, no `-q` on git, no bare or swallowing `except` anywhere in `code/`. Every failure prints and halts. A line that has earned an exception carries `# NOSILENCE-OK: <reason>` and the reason is read. Enforced mechanically by `code/l2nosilence.py`, which `l2stagecheck.no_silenced_errors()` runs before any chain starts and which writes `CHAIN_HALT.marker` on a finding. |
+| 11 Sep | **NO GIT TREE OPERATIONS WHILE A CHAIN IS RUNNING.** No `stash`, no `rebase`, no `checkout`. `git stash -u` deletes untracked files from the working tree — on 11 Sep it unlinked a running chain's logs out from under it and took an uncommitted module with it. Chains write a pidfile via `chain_pidfile`; `assert_no_chain` in `code/l2chainguard.sh` refuses the operation while one is live. Stage explicit paths with `git add <path>`, or wait. |
+| 11 Sep | **COMMIT A CODE CHANGE BEFORE LAUNCHING A CHAIN THAT NEEDS IT.** A committed file cannot be lost to a stash. `need_flags` in `code/l2chainguard.sh` asserts every flag a stage passes actually exists in the script it calls — a stage that dies on its own arguments exits in one second and reads as a fast success. |
+| 11 Sep | **CHAIN LOGS LIVE OUTSIDE `results/`**, so a git operation on the repo cannot touch a running job's stdout. |
 | 08 Sep | **Enter at 19:00 NY (Tokyo)** — cheapest of six candidate times, ~6 pips/trade better than the 17:00 reference, which carries double the spread. |
 | 08 Sep | **No calendar switches.** Every weekday is profitable in both periods; no holiday window justifies a cut. |
 | 10 Sep | **Opposition nets to the majority.** |

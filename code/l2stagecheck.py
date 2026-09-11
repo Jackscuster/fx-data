@@ -38,6 +38,26 @@ STAGES = {
 }
 
 
+
+def no_silenced_errors():
+    """NO SILENCED ERRORS. Refuses to start a chain while any silencing pattern
+    is unmarked in code/.
+
+    On 2026-09-11 `git stash pop -q 2>/dev/null` hid the one message saying the
+    uncommitted l2walkfwd.py was still in a stash; six chain stages then ran
+    against a binary with no --suffix and exited in a second each. The chain's
+    own guards printed all six failures -- it was the git error I suppressed
+    that cost the two hours. A failure that cannot print surfaces somewhere
+    else, later, looking like something it is not.
+    """
+    import subprocess
+    r = subprocess.run([sys.executable, os.path.join(ROOTLIB, 'l2nosilence.py')],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        print(r.stdout, flush=True)
+        return False, 'silenced-error sites found; see output above'
+    return True, r.stdout.strip().splitlines()[-1] if r.stdout.strip() else 'clean'
+
 def halt(stage, reason):
     msg = ('CHAIN HALTED at stage "%s"\n%s\n\n%s\n'
            % (stage, dt.datetime.now().strftime('%F %T'), reason))

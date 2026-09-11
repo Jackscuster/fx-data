@@ -21,7 +21,7 @@ cd /Users/jackcuster/Documents/fx-data
 # that launched this very process, so the guard saw a "sibling", exited
 # immediately, and left the shards unprotected while reporting success.
 PIDF=/tmp/.l2ftguard.pid
-if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then
+if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
   exit 0
 fi
 echo $$ > "$PIDF"
@@ -38,10 +38,10 @@ while true; do
     victim=$(pgrep -f "l2gate3ft.py --shard" | tail -1)
     sh=$(ps -o command= -p "$victim" | sed -n 's/.*--shard \([0-9]*\).*/\1/p')
     say "swap free ${free}M < ${LOW}M -- stopping shard $sh (pid $victim)"
-    kill "$victim" 2>/dev/null; sleep 3
-    for k in $(pgrep -P "$victim" 2>/dev/null); do kill "$k" 2>/dev/null; done
+    kill "$victim" 2>/dev/null; sleep 3  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
+    for k in $(pgrep -P "$victim" 2>/dev/null); do kill "$k" 2>/dev/null; done  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
     sleep 2
-    ps -p "$victim" >/dev/null 2>&1 && kill -9 "$victim" 2>/dev/null
+    ps -p "$victim" >/dev/null 2>&1 && kill -9 "$victim" 2>/dev/null  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
     stopped="$stopped $sh"
     say "stopped shards:$stopped ; live now $(pgrep -f 'l2gate3ft.py --shard' | wc -l | tr -d ' ')"
   elif [ "${free:-0}" -gt "$HIGH" ] && [ -n "$stopped" ]; then

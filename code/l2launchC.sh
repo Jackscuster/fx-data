@@ -22,8 +22,8 @@ say(){ echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
 say "armed; waiting for mode A chop to complete"
 DEADLINE=$(( $(date +%s) + 86400 ))
 while true; do
-  n=$(ls results/gate2/modeA_chop/chunk_*.csv 2>/dev/null | wc -l)
-  grep -q "REDO DONE" /tmp/chopfinish.log 2>/dev/null && { say "chopfinish reported REDO DONE"; break; }
+  n=$(ls results/gate2/modeA_chop/chunk_*.csv 2>/dev/null | wc -l)  # NOSILENCE-OK: counting files that may not exist yet; wc -l of nothing is 0
+  grep -q "REDO DONE" /tmp/chopfinish.log 2>/dev/null && { say "chopfinish reported REDO DONE"; break; }  # NOSILENCE-OK: absence of the file is a legitimate answer here
   if [ "$n" -ge 57 ]; then
     # chunks are all in but the finisher has not reported. Give it four hours,
     # then go anyway: C's start is not allowed to depend on a post-step.
@@ -66,14 +66,14 @@ nohup code/l2swapguard.sh "$MAIN" "$ADD" 400 200 >/dev/null 2>&1 &
 say "swap guard armed: main=$MAIN protected, additive=$ADD sacrificed first"
 
 git add -A
-git commit -q -m "Mode A final record, mode C projected from it, mode C launched
+git commit -q -m "Mode A final record, mode C projected from it, mode C launched  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 
 Launched by code/l2launchC.sh under the standing order. C runs --sorted --cap 6
 --staged --seed-from A,B, no disk cache, 6+3 workers across a main and an
 additive --reverse pool, caffeinated, swap guard armed from minute one.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_0198PoFd8YbETkDPepLUiDzL" || true
-git pull --rebase -q origin main || true
-git push -q origin main || true
+Claude-Session: https://claude.ai/code/session_0198PoFd8YbETkDPepLUiDzL" || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
+git pull --rebase -q origin main || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
+git push -q origin main || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 say "MODE C LAUNCHED"

@@ -8,7 +8,7 @@
 # with pgrep also matches the nohup wrapper -- that mistake left an earlier
 # guard exiting immediately while reporting success.
 PIDF=/tmp/.l2chain2.pid
-if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then exit 0; fi
+if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then exit 0; fi  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 echo $$ > "$PIDF"; trap 'rm -f "$PIDF"' EXIT
 cd /Users/jackcuster/Documents/fx-data
 LOG=results/chain2.log
@@ -33,13 +33,24 @@ say "armed: waiting for the gate 3 fine-tune to bank ALL 5,135"
 # and everything downstream ran on a bank missing 194 strategies. Absence of a
 # worker is not evidence of finished work.
 while true; do
-  n=$(/usr/bin/python3 - <<'PYX' 2>/dev/null
-import glob,pandas as pd
+  n=$(/usr/bin/python3 - <<'PYX'
+import glob,sys,pandas as pd
+# COUNT THE UNREADABLE, NEVER SWALLOW THEM. Eight shards append to these files
+# continuously so a read can land mid-write, which is why the try exists -- but
+# a file that is unreadable on EVERY pass is a dead shard, and swallowing that
+# is how a 96.2%-complete bank read as finished on 2026-09-10.
 fs=glob.glob('results/gate3ft_costed_v4/*.csv')
-s=set()
+s=set(); bad=0
 for f in fs:
-    try: s|=set(pd.read_csv(f,usecols=['sid'],low_memory=False).sid)
-    except Exception: pass
+    try:
+        s|=set(pd.read_csv(f,usecols=['sid'],low_memory=False).sid)
+    except Exception as e:
+        bad+=1
+        print('  bank file unreadable this pass: %s: %s' % (f, str(e)[:60]),
+              file=sys.stderr)
+if bad:
+    print('  WARNING %d of %d bank files unreadable this pass' % (bad, len(fs)),
+          file=sys.stderr)
 print(len(s))
 PYX
 )
@@ -69,8 +80,14 @@ T0=$(date +%s)
 TEAM_LABEL=_W3ONLY_ADOPTED nice -n 19 /usr/bin/python3 code/l2agree.py >> "$LOG" 2>&1 || { say "!!! agree FAILED"; exit 1; }
 check agree --since "$T0"
 /usr/bin/python3 code/appstamp.py >> "$LOG" 2>&1
-git add -A; git commit -q -m "Gate 3 adopted-settings cut, teams, checks and agreement study" || true
-git pull --rebase -q origin main || true; git push -q origin main || true
+git add -A
+  if git diff --cached --quiet; then
+    say "nothing new to commit"
+  else
+    git commit -m "Gate 3 adopted-settings cut, teams, checks and agreement study"
+  fi
+if ! git pull --rebase origin main; then say "pull failed (reported, not hidden)"; fi
+  if ! git push origin main; then say "PUSH FAILED -- results are local only"; fi
 # The B-trend ip1 recovery is NOT run here. At 216 s per strategy it is ~70 h
 # on this machine and would hold mode C hostage for three days. It is packaged
 # for a rented box instead -- see code/cloud_ip1.sh.
