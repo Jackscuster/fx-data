@@ -1,0 +1,144 @@
+== STAGE 1  ALLPASS construction ==
+ALLPASS field: 252 passers ({'B': 136, 'A-trend': 63, 'A-chop': 52, 'C-trend': 1}), basis ['adopted']
+  marks: 251624 rows, 252 members, 1296 days, 2.6 min
+  team1  A_stacked       net_of_costs median   8.236%  worst   5.317%  maxDD  2.40%  PF 1.67  cap-bound 0  max expo n/a
+  team1  A_stacked       gross        median  10.085%  worst   6.523%  maxDD  2.40%  PF 1.76  cap-bound 0  max expo n/a
+  team1  C_netted_curve  net_of_costs median   6.865%  worst   4.569%  maxDD  2.57%  PF 1.50  cap-bound 0  max expo 0.53%
+  team1  C_netted_curve  gross        median   8.509%  worst   5.897%  maxDD  2.57%  PF 1.58  cap-bound 0  max expo 0.58%
+  team2  A_stacked       net_of_costs median  12.354%  worst   7.976%  maxDD  3.60%  PF 1.67  cap-bound 0  max expo n/a
+  team2  A_stacked       gross        median  15.127%  worst   9.785%  maxDD  3.60%  PF 1.76  cap-bound 0  max expo n/a
+  team2  C_netted_curve  net_of_costs median  10.298%  worst   6.854%  maxDD  3.85%  PF 1.50  cap-bound 0  max expo 0.80%
+  team2  C_netted_curve  gross        median  12.764%  worst   8.846%  maxDD  3.86%  PF 1.58  cap-bound 0  max expo 0.87%
+== STAGE 2  field re-score on sub-windows ==
+  field 5201 crossers, adopted settings on 494
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  field re-score: 5201 rows, 0 errors, 33.4 min
+== STAGE 3  honest holdout ==
+  control: re-cutting on the FULL W3 through this path gives 271 passers, 252 of them in the real cut of 252
+  re-cut on 2016-2018: 262 passers (76 also in the real cut)
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+  marks: 246316 rows, 262 members, 1296 days, 3.3 min
+  team1  pick window 9.89%  ->  holdout 2.22%  retained 22%  (real cut on the same holdout 6.60%)
+  team2  pick window 14.83%  ->  holdout 3.33%  retained 22%  (real cut on the same holdout 9.90%)
+== STAGE 4  year-shuffled nulls ==
+    team1: 250463 rows on the truncated calendar (1161 dropped), real 6.802%
+    team1 null_joint 20/100  last 6.866%
+    team1 null_joint 40/100  last 6.851%
+    team1 null_joint 60/100  last 6.815%
+    team1 null_joint 80/100  last 6.785%
+    team1 null_joint 100/100  last 6.846%
+    team1 null_per_member 20/100  last 35.874%
+    team1 null_per_member 40/100  last 35.164%
+    team1 null_per_member 60/100  last 35.666%
+    team1 null_per_member 80/100  last 34.332%
+    team1 null_per_member 100/100  last 37.730%
+    team1 level null 20/100  last 2.550%
+    team1 level null 40/100  last 3.471%
+    team1 level null 60/100  last 2.830%
+    team1 level null 80/100  last 2.650%
+    team1 level null 100/100  last 2.486%
+    team2: 250463 rows on the truncated calendar (1161 dropped), real 10.203%
+    team2 null_joint 20/100  last 10.299%
+    team2 null_joint 40/100  last 10.277%
+    team2 null_joint 60/100  last 10.222%
+    team2 null_joint 80/100  last 10.178%
+    team2 null_joint 100/100  last 10.268%
+    team2 null_per_member 20/100  last 53.431%
+    team2 null_per_member 40/100  last 53.790%
+    team2 null_per_member 60/100  last 53.795%
+    team2 null_per_member 80/100  last 52.157%
+    team2 null_per_member 100/100  last 56.477%
+    team2 level null 20/100  last 3.825%
+    team2 level null 40/100  last 5.206%
+    team2 level null 60/100  last 4.245%
+    team2 level null 80/100  last 3.975%
+    team2 level null 100/100  last 3.729%
+  team1  null_joint       real   6.802%  null mean   6.817%  p95   6.867%  max   6.907%  p=0.660
+  team1  null_per_member  real   6.802%  null mean  35.100%  p95  37.647%  max  39.297%  p=1.000
+  team1  null_levels      real   6.865%  null mean   3.090%  p95   4.015%  max   4.418%  p=0.000
+  team2  null_joint       real  10.203%  null mean  10.225%  p95  10.300%  max  10.360%  p=0.660
+  team2  null_per_member  real  10.203%  null mean  52.729%  p95  56.480%  max  59.865%  p=1.000
+  team2  null_levels      real  10.298%  null mean   4.634%  p95   6.023%  max   6.627%  p=0.000
+DONE in 46.0 min

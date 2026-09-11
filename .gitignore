@@ -70,3 +70,7 @@ results/crisis_all/
 results/crisis_all.log
 results/ci_validation_state.txt
 data/oanda_h1/
+
+# ALLPASS mark caches: 10 MB each, rebuilt in ~3 min by l2allpass.py --stage build
+results/allpass_marks.pkl
+results/allpass_holdout_marks.pkl

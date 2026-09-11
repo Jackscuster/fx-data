@@ -62,10 +62,25 @@ if parts:
 PY
 
 echo "== pushing the bank back"
+# RETRY, BECAUSE THE PUSH IS THE ONLY COPY. Two hours of compute lives in these
+# files and nowhere else; the scheduled CI run commits to main every weekday at
+# 06:00 UTC, so a rejected push here is an ordinary event, not an exception.
+# Failing out under `set -e` would leave the bank on a box about to be destroyed.
 git config user.name  "fx-cloud"
 git config user.email "fx-cloud@users.noreply.github.com"
 git add -f results/gate2_ip1_recovered.csv results/gate2_ip1_recovered_s*.csv results/ip1_cloud_*.log
 git commit -q -m "B-trend ip1 recovery, completed on a rented box" || true
-git pull --rebase -q origin main || true
-git push -q origin main
+pushed=0
+for try in 1 2 3 4 5; do
+  git pull --rebase -q origin main || true
+  if git push -q origin main; then pushed=1; break; fi
+  echo "   push rejected (attempt $try); retrying in 30s"
+  sleep 30
+done
+if [ "$pushed" != "1" ]; then
+  echo "!! PUSH FAILED. DO NOT DESTROY THIS BOX."
+  echo "!! The recovered bank is at /opt/fx/results/gate2_ip1_recovered*.csv"
+  echo "!! Copy it off first:  scp root@<ip>:/opt/fx/results/gate2_ip1_recovered*.csv ."
+  exit 1
+fi
 echo "== DONE. Shut the box down."

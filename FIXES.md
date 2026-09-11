@@ -1,5 +1,111 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 2026-09-10 (late) — ALLPASS BUILT; THE GREEDY NULL IS BROKEN; COSTS WERE NEVER CHARGED
+
+Three results, in order of how much they change.
+
+### 1. `l2teamcheck.py`'s year-shuffled greedy null is a no-op. p=0.60 is void.
+
+`l2teamcheck.py:88-93` draws ONE permutation and applies it to the whole matrix:
+
+    perm = rng.permutation(uy); mapping = dict(zip(uy, perm))
+    ysh = np.array([mapping[y] for y in years])
+    order = np.argsort(ysh, kind='stable')
+    TM.greedy(A[order], cols, ..., ysh[order], ...)
+
+Every member moves together. Within-year day order survives the stable sort, and
+`score_team` groups by the relabelled years, so the year blocks are the SAME
+BLOCKS under new names. Each member's daily series, every cross-member same-day
+alignment, every yearly total and therefore the MEDIAN YEAR — the score — are
+arithmetically unchanged. Only the path-dependent max drawdown moves.
+
+Verified on synthetic data:
+
+    real yearly sums  [2.1511 0.6611 2.4805 1.9284 2.4635]
+    null yearly sums  [2.4805 2.4635 1.9284 0.6611 2.1511]
+
+and reproduced on the real ALLPASS book, where the identical null returns
+p = 0.66 against the team's 0.60.
+
+**The docstring describes the right test and the code does not implement it.**
+A per-member permutation does destroy cross-member timing — but it also destroys
+the CORRELATION that sets the drawdown the budget divides by, so the null book
+scores five times the real one and returns p = 1.00. **Neither year-shuffle
+variant is a usable edge test for a drawdown-scaled portfolio.** One changes
+nothing; the other changes the wrong thing.
+
+**Consequence:** the greedy roster search still fails, but on ONE test, not two.
+The selection holdout (8% retained) is valid and sufficient. The inference drawn
+from the null — "the search extracts individual quality, not any relationship
+between them" — is **unsupported and retracted**.
+
+**Owed:** `l2teamcheck.py` still contains the broken null. It was left alone
+because the team 2 run was mid-flight in it. Either fix it to permute per member
+AND stop treating the result as an edge test, or delete it and keep the holdout.
+Do not leave a test in the tree that returns 0.6 on unchanged data.
+
+### 2. The delivery path has never charged costs.
+
+`l2trades.run_pair` calls the engine directly and returns GROSS R. Only
+`l2sweep.score_combo` and `l2tune.Scorer` subtract `S._cost_R`. So
+`l2deliver.blind_trades` (whose comment claims "the fees applied here"),
+`l2team._equity_series` and `l2layer4v2.marks` are all gross — and therefore so
+are every team KPI, every portfolio preview and every Layer 4 level ever
+reported.
+
+Measured: **2.6%-8.5% of gross R per strategy, and 18-19% of the median year**,
+the larger figure because costs also widen the daily losses and shrink the scale
+the risk budget allows.
+
+`code/l2allpass.py` charges the cost on the entry day's mark and reports gross
+beside net. **Owed:** do the same in `run_pair`'s consumers, or in `run_pair`
+itself behind a flag, so one path cannot be silently gross while the other is
+costed. That asymmetry is the same shape as the mode-B hardcode.
+
+### 3. ALLPASS is built. `code/l2allpass.py`, `results/allpass_summary.md`.
+
+All 252 passers, equal weight, no selection, costs charged. Team 1 curve 1/3/6
+with the 2% cap: **median year 6.87%**, worst 4.57%, max DD 2.57%, PF 1.50.
+Team 2: 10.30%. Stacked beats it in-sample (8.24% / 12.35%).
+
+**Honest holdout — re-cut on 2016-2018 across all 5,201 crossers, scored on
+2019-2020: 2.22%, 22% retained** (stacked 0.37%, 3% retained, negative worst
+year). Control: re-cutting on the full W3 through the same path gives 271
+passers containing all 252 of the real cut.
+
+Two things fall out of it and both need work:
+
+- **The CUT is a fit to its window.** 262 pass on 2016-2018; only **76** of them
+  are among the real 252. Which strategies clear gate 3 is ~30% reproducible
+  when the window moves. This is a layer of fitting BELOW the roster search and
+  it was hidden by it. **Owed:** decide whether gate 3's bars need a stability
+  requirement across sub-windows, rather than a single pass on the whole window.
+
+- **The 1/3/6 curve does not transfer to 252 members.** Level is an absolute
+  net-vote count, so it runs to 171 and the curve is flat at 6.0 from 3 up:
+  level 1 is 14.7% of position-days, level 2 is 16.4%, **level 3+ is 68.9%**.
+  The agreement study calibrated "stop at 3" where level 4 meant near-unanimity
+  of 25 members. **Owed:** a curve on the FRACTION of members voting, not the
+  count. Not built.
+
+**The agreement signal itself is real and this is the one clean positive.** A
+level-permutation null — keep every netted position's pair, day, direction and
+mark, permute only the agreement LEVELS across positions, so the size mix is
+identical and only the assignment changes — gives real 6.865% against a null
+mean of 3.090% and a null MAX of 4.418%. **100 of 100 draws beaten, both
+budgets, p = 0.00.** Knowing which positions carry high agreement more than
+doubles the score. It is the sizing rule that wastes it, not the signal.
+
+**Also owed:** the 2% currency cap binds on **0 days of 1,296** at this size
+(largest exposure 0.53%). Harmless, but it is no longer doing what the 25-member
+measurement said it did.
+
+**Not owed but noted:** Layer 2 results are not wired into `app_ui.js` or
+`app_data.json` — none of them are, this is not new — and ALLPASS is not in
+`l2chain2.sh`, which is still built around the retired greedy team.
+
+---
+
 Work through in order. Each is self-contained.
 
 ---
