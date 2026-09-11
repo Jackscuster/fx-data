@@ -145,30 +145,37 @@ portfolio.** The working replacement is the level-permutation null in
 
 The numbers as they were reported:
 
-| | |
-|---|---|
-| real team score | 22.82% |
-| greedy-null mean | **22.79%** |
-| null p95 / max | 23.96% / 24.63% |
-| p-value | **0.60** — 15 of 25 shuffled-year runs matched or beat it |
+**Both teams, 2026-09-10. Team 2 completed 21:05 in 459 min.**
 
-The null re-runs the identical search on **year-shuffled** data, which destroys
-cross-member timing while preserving each strategy's own return distribution.
-The real search beats that average by **0.021pp** and falls below both its p95
-and its maximum. The search is extracting the strategies' individual quality,
-not any relationship between them.
+| | Team 1 | Team 2 |
+|---|---|---|
+| real team score | 22.82% | 34.20% |
+| greedy-null mean | 22.79% | 34.58% |
+| null p95 / max | 23.96% / 24.63% | 36.05% / 36.38% |
+| p-value | 0.60 | 0.68 |
 
-**Selection holdout: 8% retained.**
+In BOTH cases the null MEAN sits at or above the real score — Team 2's by
+0.38pp. That is the artefact, not a finding: the null data is the real data with
+its year blocks relabelled, so the median year cannot move and only the
+path-dependent max drawdown does. **Disregard both p-values.**
 
-| | |
-|---|---|
-| roster re-picked on 2016-2018 | 41.83% on its own picking window |
-| the same roster on 2019-2020 | **3.33%** |
-| retained | **8%** |
-| full team on that holdout | 17.55% |
+**Selection holdout: 8% retained, BOTH teams. This is the valid test and both
+teams fail it.**
 
-**What passed:** the random-team comparison only — the real team sits at the
-100th percentile of 1,000 random draws (mean 7.98%, max 12.06%). That test was
+| | Team 1 | Team 2 |
+|---|---|---|
+| roster re-picked on 2016-2018 | 41.83% on its own picking window | 62.76% |
+| the same roster on 2019-2020 | **3.33%** | **4.98%** |
+| **retained** | **8.0%** | **7.9%** |
+| full team on that holdout | 17.55% | 26.20% |
+| members picked | 21 | 21 |
+
+Team 2's looser drawdown budget scales every figure up and changes nothing:
+the retention is identical to a tenth of a point.
+
+**What passed:** the random-team comparison only — both teams sit at the
+100th percentile of 1,000 random draws (Team 1 mean 7.98%, max 12.06%; Team 2
+mean 11.98%, max 17.28%). That test was
 always the weak one: a greedy search beats random selection even on noise, which
 is precisely why the second null exists — and the second null turned out not to
 exist in working form. **The selection holdout is the only valid evidence
