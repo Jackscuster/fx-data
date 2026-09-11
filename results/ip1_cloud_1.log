@@ -1,0 +1,115 @@
+ip1 recovery (all): 101 strategies this shard (1/16), 36 already banked
+  1/101  146 s each  ~4.0 h left
+  2/101  152 s each  ~4.2 h left
+  3/101  115 s each  ~3.1 h left
+  4/101  563 s each  ~15.2 h left
+  5/101  496 s each  ~13.2 h left
+  6/101  446 s each  ~11.8 h left
+  7/101  398 s each  ~10.4 h left
+  8/101  386 s each  ~10.0 h left
+  9/101  361 s each  ~9.2 h left
+  10/101  348 s each  ~8.8 h left
+  11/101  325 s each  ~8.1 h left
+  12/101  304 s each  ~7.5 h left
+/opt/fx/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/opt/fx/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+  13/101  295 s each  ~7.2 h left
+  14/101  284 s each  ~6.9 h left
+  15/101  268 s each  ~6.4 h left
+  16/101  264 s each  ~6.2 h left
+/opt/fx/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/opt/fx/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/opt/fx/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/opt/fx/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  17/101  257 s each  ~6.0 h left
+  18/101  256 s each  ~5.9 h left
+  19/101  248 s each  ~5.6 h left
+  20/101  238 s each  ~5.4 h left
+  21/101  239 s each  ~5.3 h left
+  22/101  238 s each  ~5.2 h left
+  23/101  235 s each  ~5.1 h left
+  24/101  231 s each  ~4.9 h left
+  25/101  229 s each  ~4.8 h left
+  26/101  228 s each  ~4.7 h left
+  27/101  226 s each  ~4.6 h left
+  28/101  223 s each  ~4.5 h left
+  29/101  222 s each  ~4.4 h left
+  30/101  226 s each  ~4.5 h left
+  31/101  223 s each  ~4.3 h left
+  32/101  220 s each  ~4.2 h left
+  33/101  217 s each  ~4.1 h left
+  34/101  215 s each  ~4.0 h left
+  35/101  213 s each  ~3.9 h left
+  36/101  214 s each  ~3.9 h left
+  37/101  216 s each  ~3.8 h left
+  38/101  213 s each  ~3.7 h left
+  39/101  212 s each  ~3.7 h left
+  40/101  213 s each  ~3.6 h left
+  41/101  212 s each  ~3.5 h left
+  42/101  211 s each  ~3.5 h left
+  43/101  211 s each  ~3.4 h left
+  44/101  207 s each  ~3.3 h left
+  45/101  206 s each  ~3.2 h left
+  46/101  207 s each  ~3.2 h left
+  47/101  208 s each  ~3.1 h left
+  48/101  241 s each  ~3.6 h left
+  49/101  240 s each  ~3.5 h left
+  50/101  238 s each  ~3.4 h left
+  51/101  236 s each  ~3.3 h left
+  52/101  234 s each  ~3.2 h left
+  53/101  232 s each  ~3.1 h left
+  54/101  229 s each  ~3.0 h left
+  55/101  228 s each  ~2.9 h left
+  56/101  228 s each  ~2.8 h left
+  57/101  227 s each  ~2.8 h left
+  58/101  225 s each  ~2.7 h left
+  59/101  223 s each  ~2.6 h left
+  60/101  223 s each  ~2.5 h left
+  61/101  221 s each  ~2.5 h left
+  62/101  219 s each  ~2.4 h left
+  63/101  278 s each  ~2.9 h left
+  64/101  278 s each  ~2.9 h left
+  65/101  278 s each  ~2.8 h left
+  66/101  276 s each  ~2.7 h left
+  67/101  275 s each  ~2.6 h left
+  68/101  273 s each  ~2.5 h left
+  69/101  273 s each  ~2.4 h left
+  70/101  270 s each  ~2.3 h left
+  71/101  269 s each  ~2.2 h left
+  72/101  268 s each  ~2.2 h left
+  73/101  267 s each  ~2.1 h left
+  74/101  264 s each  ~2.0 h left
+  75/101  262 s each  ~1.9 h left
+  76/101  261 s each  ~1.8 h left
+  77/101  258 s each  ~1.7 h left
+  78/101  256 s each  ~1.6 h left
+  79/101  254 s each  ~1.5 h left
+  80/101  274 s each  ~1.6 h left
+  81/101  272 s each  ~1.5 h left
+  82/101  270 s each  ~1.4 h left
+  83/101  268 s each  ~1.3 h left
+  84/101  267 s each  ~1.3 h left
+  85/101  265 s each  ~1.2 h left
+  86/101  262 s each  ~1.1 h left
+  87/101  261 s each  ~1.0 h left
+  88/101  260 s each  ~0.9 h left
+  89/101  259 s each  ~0.9 h left
+  90/101  258 s each  ~0.8 h left
+  91/101  257 s each  ~0.7 h left
+  92/101  255 s each  ~0.6 h left
+  93/101  254 s each  ~0.6 h left
+  94/101  253 s each  ~0.5 h left
+  95/101  251 s each  ~0.4 h left
+  96/101  249 s each  ~0.3 h left
+  97/101  248 s each  ~0.3 h left
+  98/101  246 s each  ~0.2 h left
+  99/101  246 s each  ~0.1 h left
+  100/101  245 s each  ~0.1 h left
+  101/101  243 s each  ~0.0 h left
+DONE in 409.5 min
