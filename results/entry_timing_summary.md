@@ -20,12 +20,12 @@ wrong way, so total cost = drift + spread.
 
 | entry time | total cost (pips) |
 |---|---|
-| 19:00 NY Tokyo | 3.809 |
-| 03:00 NY London | 5.204 |
-| 18:01 NY Sydney | 7.492 |
-| 17:00 NY (engine ref) | 9.813 |
-| 08:00 NY New York | 11.739 |
-| 12:00 NY (H.10 noon) | 18.008 |
+| 19:00 NY Tokyo | 3.825 |
+| 03:00 NY London | 5.100 |
+| 18:01 NY Sydney | 7.495 |
+| 17:00 NY (engine ref) | 9.814 |
+| 08:00 NY New York | 11.713 |
+| 12:00 NY (H.10 noon) | 17.968 |
 
-**Cheapest: 19:00 NY Tokyo** at 3.809 pips, against 18.008 for the dearest (12:00 NY (H.10 noon)) — a saving of 14.199 pips per trade.
+**Cheapest: 19:00 NY Tokyo** at 3.825 pips, against 17.968 for the dearest (12:00 NY (H.10 noon)) — a saving of 14.143 pips per trade.
 
