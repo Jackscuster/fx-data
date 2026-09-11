@@ -1,0 +1,116 @@
+ip1 recovery (all): 100 strategies this shard (15/16), 36 already banked
+  1/100  128 s each  ~3.5 h left
+  2/100  114 s each  ~3.1 h left
+  3/100  118 s each  ~3.2 h left
+/opt/fx/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/opt/fx/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+  4/100  139 s each  ~3.7 h left
+  5/100  141 s each  ~3.7 h left
+  6/100  164 s each  ~4.3 h left
+  7/100  171 s each  ~4.4 h left
+  8/100  156 s each  ~4.0 h left
+  9/100  148 s each  ~3.7 h left
+  10/100  151 s each  ~3.8 h left
+  11/100  147 s each  ~3.6 h left
+  12/100  150 s each  ~3.7 h left
+  13/100  146 s each  ~3.5 h left
+  14/100  140 s each  ~3.3 h left
+  15/100  139 s each  ~3.3 h left
+/opt/fx/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/opt/fx/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/opt/fx/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/opt/fx/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  16/100  144 s each  ~3.4 h left
+  17/100  151 s each  ~3.5 h left
+  18/100  149 s each  ~3.4 h left
+  19/100  146 s each  ~3.3 h left
+  20/100  154 s each  ~3.4 h left
+  21/100  152 s each  ~3.3 h left
+  22/100  153 s each  ~3.3 h left
+  23/100  151 s each  ~3.2 h left
+  24/100  155 s each  ~3.3 h left
+  25/100  152 s each  ~3.2 h left
+  26/100  154 s each  ~3.2 h left
+  27/100  153 s each  ~3.1 h left
+  28/100  150 s each  ~3.0 h left
+  29/100  149 s each  ~2.9 h left
+  30/100  146 s each  ~2.8 h left
+  31/100  146 s each  ~2.8 h left
+  32/100  145 s each  ~2.7 h left
+  33/100  144 s each  ~2.7 h left
+  34/100  142 s each  ~2.6 h left
+  35/100  140 s each  ~2.5 h left
+  36/100  142 s each  ~2.5 h left
+  37/100  144 s each  ~2.5 h left
+  38/100  144 s each  ~2.5 h left
+  39/100  143 s each  ~2.4 h left
+  40/100  144 s each  ~2.4 h left
+  41/100  145 s each  ~2.4 h left
+  42/100  143 s each  ~2.3 h left
+  43/100  145 s each  ~2.3 h left
+  44/100  143 s each  ~2.2 h left
+  45/100  145 s each  ~2.2 h left
+  46/100  144 s each  ~2.2 h left
+  47/100  145 s each  ~2.1 h left
+  48/100  146 s each  ~2.1 h left
+  49/100  147 s each  ~2.1 h left
+  50/100  146 s each  ~2.0 h left
+  51/100  145 s each  ~2.0 h left
+  52/100  146 s each  ~1.9 h left
+  53/100  146 s each  ~1.9 h left
+  54/100  146 s each  ~1.9 h left
+  55/100  145 s each  ~1.8 h left
+  56/100  145 s each  ~1.8 h left
+  57/100  146 s each  ~1.7 h left
+  58/100  145 s each  ~1.7 h left
+  59/100  145 s each  ~1.6 h left
+  60/100  145 s each  ~1.6 h left
+  61/100  146 s each  ~1.6 h left
+  62/100  147 s each  ~1.5 h left
+  63/100  147 s each  ~1.5 h left
+  64/100  148 s each  ~1.5 h left
+  65/100  148 s each  ~1.4 h left
+  66/100  149 s each  ~1.4 h left
+  67/100  149 s each  ~1.4 h left
+  68/100  175 s each  ~1.6 h left
+  69/100  175 s each  ~1.5 h left
+  70/100  174 s each  ~1.4 h left
+  71/100  173 s each  ~1.4 h left
+  72/100  171 s each  ~1.3 h left
+  73/100  170 s each  ~1.3 h left
+  74/100  171 s each  ~1.2 h left
+  75/100  171 s each  ~1.2 h left
+  76/100  172 s each  ~1.1 h left
+  77/100  173 s each  ~1.1 h left
+  78/100  195 s each  ~1.2 h left
+  79/100  196 s each  ~1.1 h left
+  80/100  194 s each  ~1.1 h left
+  81/100  193 s each  ~1.0 h left
+  82/100  192 s each  ~1.0 h left
+  83/100  191 s each  ~0.9 h left
+  84/100  190 s each  ~0.8 h left
+  85/100  189 s each  ~0.8 h left
+  86/100  190 s each  ~0.7 h left
+  87/100  189 s each  ~0.7 h left
+  88/100  187 s each  ~0.6 h left
+  89/100  186 s each  ~0.6 h left
+  90/100  187 s each  ~0.5 h left
+  91/100  186 s each  ~0.5 h left
+/opt/fx/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+  92/100  184 s each  ~0.4 h left
+  93/100  183 s each  ~0.4 h left
+  94/100  184 s each  ~0.3 h left
+  95/100  183 s each  ~0.3 h left
+  96/100  182 s each  ~0.2 h left
+  97/100  183 s each  ~0.2 h left
+  98/100  183 s each  ~0.1 h left
+  99/100  183 s each  ~0.1 h left
+  100/100  183 s each  ~0.0 h left
+DONE in 304.4 min
