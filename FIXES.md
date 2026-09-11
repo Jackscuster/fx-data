@@ -1,5 +1,44 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 2026-09-11 — PROCESS FAILURE: git tree operations under live background work
+
+**Mine, not the code's. Two hours lost, nothing corrupted.**
+
+While three background jobs were writing to `results/`, I ran `git stash -q -u`
+to get a clean tree for a rebase. `-u` stashes UNTRACKED files, which unlinked
+both chain logs out from under running processes — they kept writing to deleted
+inodes, `chain3.sh` lost its stdout and died, and the three-slice clean field
+never started. The same stash also took the MODIFIED `code/l2walkfwd.py`
+carrying the `--suffix` / `--field-file` support, and the
+`git stash pop -q 2>/dev/null` afterwards failed silently. Six chain stages then
+ran against a binary that had never heard of `--suffix` and exited in one second
+each.
+
+**The compounding error was `2>/dev/null` on the pop.** The one message that
+would have said "your work is still in a stash" was the one I threw away. The
+chain's own `|| echo FAILED` guard worked perfectly and printed all six
+failures; it was the git error I suppressed, not the job errors.
+
+### Rules, now binding
+
+1. **Never `git stash` while background work is running.** Stage explicit paths
+   — `git add <path>` — or wait. `-u` in particular deletes untracked files from
+   the working tree.
+2. **Never redirect a git error to /dev/null.** Not `pop`, not `pull`, not
+   `rebase`. If a git command can fail silently it eventually will, and the
+   failure surfaces somewhere unrelated an hour later.
+3. **Commit a code change before launching a chain that depends on it.** A
+   committed file cannot be lost by a stash, and a chain that fails on arguments
+   is a chain whose code was never verified to exist.
+4. **Chain logs live outside `results/`**, in the scratchpad, so git operations
+   on the repo cannot touch a running job's stdout.
+
+Nothing was corrupted and no result was wrong — `gate2_cleanfield.csv` and
+`field_diff.csv`, the expensive 61.5-minute part, were already on disk. The cost
+was entirely wall clock.
+
+---
+
 ## 2026-09-10 (late 2) — THE WALK-FORWARD'S YEAR-SHUFFLED NULL IS CONFOUNDED
 
 **Third null in two days that changes the wrong thing.** Registered here as a
