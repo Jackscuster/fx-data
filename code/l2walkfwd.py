@@ -59,6 +59,18 @@ SRC = {'A-trend': ('gate2_tuned_modeA_trend.csv', 'A', 'trend'),
        'B-trend': ('gate2_tuned_modeB.csv',       'B', 'trend'),
        'B-chop':  ('gate2_tuned_modeB.csv',       'B', 'chop')}
 
+# EVERY OUTPUT IS SUFFIXABLE so a clean-field run cannot overwrite the
+# contaminated one. TAG is read from the ENVIRONMENT, not set as a module
+# constant in main(): under spawn a constant is '' again inside every pool
+# worker, which would silently point a clean run at the contaminated caches.
+TAG = os.environ.get('WF_TAG', '')
+
+
+def OUT(name):
+    stem, dot, ext = name.rpartition('.')
+    return os.path.join(ROOTOUT, '%s%s%s%s' % (stem, TAG, dot, ext))
+
+
 TRADES_F = os.path.join(ROOTOUT, 'wf_trades.pkl')
 MARKS_F = os.path.join(ROOTOUT, 'wf_marks.pkl')
 
@@ -205,6 +217,8 @@ def main():
     ap.add_argument('--jobs', type=int, default=int(os.environ.get('WF_JOBS', '5')))
     ap.add_argument('--n-null', type=int, default=25)
     ap.add_argument('--n-rand', type=int, default=N_RAND)
+    ap.add_argument('--suffix', default='')
+    ap.add_argument('--field-file', default='')
     ap.add_argument('--structures', default=','.join(STRUCTURES))
     a = ap.parse_args()
     S.load_costs()
@@ -212,6 +226,15 @@ def main():
     print('slices: %s' % (sl,), flush=True)
     F = load_field(sl)
     print('field: %d strategies' % len(F), flush=True)
+    global TAG, TRADES_F, MARKS_F
+    TAG = a.suffix
+    os.environ['WF_TAG'] = TAG
+    TRADES_F = OUT('wf_trades.pkl'); MARKS_F = OUT('wf_marks.pkl')
+    if a.field_file:
+        keep = set(pd.read_csv(a.field_file).sid)
+        n0 = len(F); F = F[F.sid.isin(keep)].reset_index(drop=True)
+        print('field file %s: %d of %d kept' % (os.path.basename(a.field_file),
+                                                len(F), n0), flush=True)
     if a.stage == 'engine':
         stage_engine(F, a.jobs)
     elif a.stage == 'nullre':
@@ -856,11 +879,11 @@ def stage_walk(jobs, n_null, structures):
                      k['max_dd_pct'], k['profit_factor'],
                      k['members_step1'], k['members_step2']), flush=True)
     O = pd.DataFrame(rows)
-    O.to_csv(os.path.join(ROOTOUT, 'walkforward_structures_3slice.csv'), index=False)
+    O.to_csv(OUT('walkforward_structures_3slice.csv'), index=False)
     pd.DataFrame(rosters).to_csv(
-        os.path.join(ROOTOUT, 'walkforward_rosters_3slice.csv'), index=False)
+        OUT('walkforward_rosters_3slice.csv'), index=False)
     pd.DataFrame(daily).to_csv(
-        os.path.join(ROOTOUT, 'walkforward_daily_3slice.csv'))
+        OUT('walkforward_daily_3slice.csv'))
     if n_null <= 0:
         return O
     # ---- null
@@ -892,11 +915,11 @@ def stage_walk(jobs, n_null, structures):
         # end means a crash in the second throws away the first -- 16.4 minutes
         # of finished work held in memory for no reason.
         pd.DataFrame(nrows).to_csv(
-            os.path.join(ROOTOUT, 'walkforward_null_3slice.csv'), index=False)
+            OUT('walkforward_null_3slice.csv'), index=False)
         print('  null %s: %d draws in %.1f min' % (bt, len(got), (time.time() - t0) / 60),
               flush=True)
     N = pd.DataFrame(nrows)
-    N.to_csv(os.path.join(ROOTOUT, 'walkforward_null_3slice.csv'), index=False)
+    N.to_csv(OUT('walkforward_null_3slice.csv'), index=False)
     summ = []
     for (bt, s), g in N.groupby(['budget', 'structure']):
         real = float(O[(O.budget == bt) & (O.structure == s)].median_year_pct.iloc[0])
@@ -911,7 +934,7 @@ def stage_walk(jobs, n_null, structures):
               % (bt, s, real, v.mean(), np.percentile(v, 95), v.max(),
                  (v >= real).mean()), flush=True)
     pd.DataFrame(summ).to_csv(
-        os.path.join(ROOTOUT, 'walkforward_null_summary_3slice.csv'), index=False)
+        OUT('walkforward_null_summary_3slice.csv'), index=False)
     return O
 
 
@@ -1008,6 +1031,8 @@ _SG = {}
 
 def _init_size():
     S.load_costs()
+    globals()['TRADES_F'] = OUT('wf_trades.pkl')
+    globals()['MARKS_F'] = OUT('wf_marks.pkl')
     _SG['T'] = pd.read_pickle(TRADES_F)
     _SG['M'] = pd.read_pickle(MARKS_F)
     _SG['TY'] = trade_year_sums(_SG['M'])
@@ -1158,11 +1183,11 @@ def stage_size(jobs, n_null, n_rand):
     ordn = {v: i for i, v in enumerate(list(COARSE))}
     O['_o'] = O.N.map(lambda n: (0, ordn.get(n, 99)) if n in ordn else (1, n))
     O = O.sort_values(['budget', '_o']).drop(columns='_o')
-    O.to_csv(os.path.join(ROOTOUT, 'walkforward_teamsize.csv'), index=False)
+    O.to_csv(OUT('walkforward_teamsize.csv'), index=False)
     pd.DataFrame(randrows).to_csv(
-        os.path.join(ROOTOUT, 'walkforward_teamsize_random.csv'), index=False)
+        OUT('walkforward_teamsize_random.csv'), index=False)
     pd.DataFrame(verdicts.values()).to_csv(
-        os.path.join(ROOTOUT, 'walkforward_teamsize_verdict.csv'), index=False)
+        OUT('walkforward_teamsize_verdict.csv'), index=False)
     print('TEAM-SIZE SWEEP DONE in %.1f min' % ((time.time() - t00) / 60), flush=True)
     return O, verdicts
 
@@ -1226,7 +1251,7 @@ def stage_sizing(jobs):
             'mean_gross_exposure_pct', 'cap_bound_days', 'members_step1',
             'members_step2', 'trading_days']
     O = O[[c for c in cols if c in O.columns]]
-    O.to_csv(os.path.join(ROOTOUT, 'walkforward_structures_sizing.csv'), index=False)
+    O.to_csv(OUT('walkforward_structures_sizing.csv'), index=False)
     print('  -> results/walkforward_structures_sizing.csv', flush=True)
     return O
 
@@ -1287,7 +1312,7 @@ def stage_null_identity(jobs, n_null, structures):
                                  total_return_pct=v[1], members_step1=v[2],
                                  members_step2=v[3]))
         pd.DataFrame(rows).to_csv(
-            os.path.join(ROOTOUT, 'walkforward_null_identity_3slice.csv'), index=False)
+            OUT('walkforward_null_identity_3slice.csv'), index=False)
         if errs:
             print('  WARNING: %d of %d identity draws failed: %s'
                   % (len(errs), len(got), errs[0]), flush=True)
@@ -1310,7 +1335,7 @@ def stage_null_identity(jobs, n_null, structures):
               % (bt, s, rl, v.mean(), np.percentile(v, 95), v.max(),
                  (v >= rl).mean()), flush=True)
     pd.DataFrame(summ).to_csv(
-        os.path.join(ROOTOUT, 'walkforward_null_identity_summary_3slice.csv'), index=False)
+        OUT('walkforward_null_identity_summary_3slice.csv'), index=False)
     return pd.DataFrame(summ)
 
 
@@ -1463,6 +1488,8 @@ _RG = {}
 
 def _init_rand():
     S.load_costs()
+    globals()['TRADES_F'] = OUT('wf_trades.pkl')
+    globals()['MARKS_F'] = OUT('wf_marks.pkl')
     _RG['T'] = pd.read_pickle(TRADES_F)
     _RG['M'] = pd.read_pickle(MARKS_F)
     _RG['TY'] = trade_year_sums(_RG['M'])
@@ -1511,7 +1538,7 @@ def stage_null_randomentry(jobs, n_null):
             rows.append(dict(budget=bt, structure='ALLPASS', draw=i,
                              median_year_pct=g[0], total_return_pct=g[1]))
         pd.DataFrame(rows).to_csv(
-            os.path.join(ROOTOUT, 'walkforward_null_randomentry_3slice.csv'),
+            OUT('walkforward_null_randomentry_3slice.csv'),
             index=False)
         if errs:
             print('  WARNING: %d of %d random-entry draws failed: %s'
@@ -1534,7 +1561,7 @@ def stage_null_randomentry(jobs, n_null):
               'max %7.3f%%  p=%.3f' % (bt, rl, v.mean(), np.percentile(v, 95),
                                        v.max(), (v >= rl).mean()), flush=True)
     pd.DataFrame(summ).to_csv(
-        os.path.join(ROOTOUT, 'walkforward_null_randomentry_summary_3slice.csv'),
+        OUT('walkforward_null_randomentry_summary_3slice.csv'),
         index=False)
     return pd.DataFrame(summ)
 
