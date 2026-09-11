@@ -11,18 +11,18 @@ reported for them, restricted to pairs holding that currency.
 
 | period | day | trades | hit % | R/unit |
 |---|---|---|---|---|
-| IS | Mon | 320 | 46.9 | 0.8616 |
-| IS | Tue | 264 | 47.0 | 0.516 |
-| IS | Wed | 346 | 44.8 | 0.5519 |
-| IS | Thu | 397 | 48.6 | 0.5784 |
-| IS | Fri | 329 | 39.8 | 0.4767 |
-| OOS | Mon | 275 | 39.6 | 0.3322 |
-| OOS | Tue | 279 | 35.1 | 0.2793 |
-| OOS | Wed | 339 | 36.6 | 0.2625 |
-| OOS | Thu | 355 | 38.3 | 0.3126 |
-| OOS | Fri | 267 | 34.1 | 0.1971 |
+| IS | Mon | 0 | nan | nan |
+| IS | Tue | 0 | nan | nan |
+| IS | Wed | 0 | nan | nan |
+| IS | Thu | 0 | nan | nan |
+| IS | Fri | 0 | nan | nan |
+| OOS | Mon | 275 | 39.6 | 0.3293 |
+| OOS | Tue | 279 | 34.4 | 0.2773 |
+| OOS | Wed | 339 | 37.5 | 0.2579 |
+| OOS | Thu | 355 | 38.6 | 0.3265 |
+| OOS | Fri | 267 | 34.1 | 0.2093 |
 
 ## Verdict
 
-Members whose weekday spread beats a within-year date shuffle at p<0.05: **5 of 15**. Named: g01, g03, g09, g10, g15
+Members whose weekday spread beats a within-year date shuffle at p<0.05: **2 of 15**. Named: g09, g14
 

@@ -1,1 +1,46 @@
 2026-09-09 10:34:01 armed: waiting for the main chain
+2026-09-10 21:09:27 chain finished; re-running the affected studies on fixed code
+2026-09-10 21:09:27   -> code/l2crisis_all.py
+crossers 1804, chunks 73 total, 0 to do
+wrote gate2_crisis_split_modeA_trend_all.csv (2083 rows)
+DONE
+2026-09-10 21:11:06   -> code/l2crisis_all.py
+crossers 678, chunks 28 total, 0 to do
+wrote gate2_crisis_split_modeA_chop_all.csv (678 rows)
+DONE
+2026-09-10 21:11:39   -> code/l2suppvol.py
+2026-09-10 21:11:40   -> code/l2entrytime.py
+graft entries: 3169
+entry_time
+19:00 NY Tokyo            3.825
+03:00 NY London           5.100
+18:01 NY Sydney           7.495
+17:00 NY (engine ref)     9.814
+08:00 NY New York        11.713
+12:00 NY (H.10 noon)     17.968
+DONE in 0.7 min
+2026-09-10 21:12:21   -> code/l2calendar.py
+graft trades: 1515 across 15 members
+DONE in 0.5 min
+2026-09-10 21:12:52   -> code/l2agree.py
+team1: 26 members
+  30267 position-days, 18451 pair-days
+  slope tests took 39.6 s
+team2: 26 members
+  30267 position-days, 18451 pair-days
+  slope tests took 38.7 s
+
+DONE in 2.8 min
+2026-09-10 21:15:40   -> code/l2tripwire.py
+roster: graft15, 15 members
+trades: 3169
+scale so DIP95 = 3.6%: 2.3130
+ level_pct  days_tripped  false_alarms  false_alarm_pct  went_past_3_6  went_past_4_0  undetectable_4_0  cost_of_closing_per_year  trips_per_year
+       1.5             3             1             33.3              2              2                 0                    -0.071             0.3
+       2.0             2             0              0.0              2              2                 0                     0.000             0.2
+       2.5             2             0              0.0              2              2                 0                     0.000             0.2
+       3.0             2             0              0.0              2              2                 0                     0.000             0.2
+       3.2             2             0              0.0              2              2                 0                     0.000             0.2
+       3.5             2             0              0.0              2              2                 0                     0.000             0.2
+DONE in 0.8 min
+2026-09-10 21:16:28 re-runs done; committing

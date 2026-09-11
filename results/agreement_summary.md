@@ -5,17 +5,17 @@ Consecutive days of one position are not independent observations.
 
 ## TEAM1
 
-**Does agreement predict return?**  in-sample slope 1.9095 R per level (null mean 1.0958, real sits at the 100.0th percentile, p=0.0000); out-of-sample slope 0.6238 (p=0.0000).
+**Does agreement predict return?**  in-sample slope 3.6405 R per level (null mean 1.8226, real sits at the 100.0th percentile, p=0.0000); out-of-sample slope 0.5915 (p=0.0000).
 
 **Verdict:** agreement is worth extra size -- the slope is positive, beats its membership-shuffle null in-sample and holds its sign out-of-sample.
 
-**Opposition.** shapes: {'1v1': 403, '2v1': 134, '3v1': 21, '2v2': 5, '4v1': 2, '4v2': 1, '3v2': 1}. Majority accuracy 37.3%; best individual B|trend|qqe_mod_signals|j_tpo_signals|waddah_attar_explosion_volume_signals|sma_baseline::OFFICIAL at 62.5%.
+**Opposition.** shapes: {'1v1': 607, '2v1': 140, '3v1': 39, '4v1': 3, '2v2': 2, '3v2': 2, '5v1': 1}. Majority accuracy 36.0%; best individual B|trend|dspo_signals|trend_direction_force_index_signals|waddah_attar_explosion_volume_signals|ema_baseline::OFFICIAL at 100.0%.
 
 ## TEAM2
 
-**Does agreement predict return?**  in-sample slope 1.9095 R per level (null mean 1.0931, real sits at the 100.0th percentile, p=0.0000); out-of-sample slope 0.6238 (p=0.0000).
+**Does agreement predict return?**  in-sample slope 3.6405 R per level (null mean 1.8308, real sits at the 100.0th percentile, p=0.0000); out-of-sample slope 0.5915 (p=0.0000).
 
 **Verdict:** agreement is worth extra size -- the slope is positive, beats its membership-shuffle null in-sample and holds its sign out-of-sample.
 
-**Opposition.** shapes: {'1v1': 403, '2v1': 134, '3v1': 21, '2v2': 5, '4v1': 2, '4v2': 1, '3v2': 1}. Majority accuracy 37.3%; best individual B|trend|qqe_mod_signals|j_tpo_signals|waddah_attar_explosion_volume_signals|sma_baseline::OFFICIAL at 62.5%.
+**Opposition.** shapes: {'1v1': 607, '2v1': 140, '3v1': 39, '4v1': 3, '2v2': 2, '3v2': 2, '5v1': 1}. Majority accuracy 36.0%; best individual B|trend|dspo_signals|trend_direction_force_index_signals|waddah_attar_explosion_volume_signals|ema_baseline::OFFICIAL at 100.0%.
 
