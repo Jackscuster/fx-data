@@ -1,0 +1,38 @@
+{
+ "team1_W3ONLY_ADOPTED": {
+  "real_score": 22.815765013429292,
+  "holdout_pick_members": 21,
+  "holdout_in_sample": 41.83469891943186,
+  "holdout_out_sample": 3.331721811206037,
+  "full_team_on_holdout": 17.545148753522085,
+  "random_n": 1000,
+  "random_mean": 7.977522593177307,
+  "random_p95": 10.179721814216668,
+  "random_max": 12.059737335003902,
+  "random_pctile_of_real": 100.0,
+  "greedy_null_n": 25,
+  "greedy_null_mean": 22.794718526804488,
+  "greedy_null_p95": 23.964548805676337,
+  "greedy_null_max": 24.631042171651707,
+  "greedy_null_p_value": 0.6,
+  "greedy_null_p_resolution": 0.04
+ },
+ "team2_W3ONLY_ADOPTED": {
+  "real_score": 34.20183648067728,
+  "holdout_pick_members": 21,
+  "holdout_in_sample": 62.763182964405814,
+  "holdout_out_sample": 4.981685787348461,
+  "full_team_on_holdout": 26.196076614929417,
+  "random_n": 1000,
+  "random_mean": 11.982457346778526,
+  "random_p95": 15.012684430290875,
+  "random_max": 17.282956318941277,
+  "random_pctile_of_real": 100.0,
+  "greedy_null_n": 25,
+  "greedy_null_mean": 34.577923770290724,
+  "greedy_null_p95": 36.05347850073586,
+  "greedy_null_max": 36.378000025338224,
+  "greedy_null_p_value": 0.68,
+  "greedy_null_p_resolution": 0.04
+ }
+}

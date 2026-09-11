@@ -1254,3 +1254,53 @@ team1_W3ONLY_ADOPTED {
     null round: 478 trials, best 28.480%, members 13
     null round: 476 trials, best 29.275%, members 14
     null round: 474 trials, best 30.699%, members 15
+    null round: 472 trials, best 31.328%, members 16
+    null round: 470 trials, best 31.500%, members 17
+    null round: 468 trials, best 31.608%, members 18
+    null round: 466 trials, best 32.412%, members 19
+    null round: 464 trials, best 33.103%, members 20
+    null round: 462 trials, best 33.517%, members 21
+    null round: 460 trials, best 33.517%, members 22
+    null round: 504 trials, best 6.203%, members 0
+    null round: 502 trials, best 9.054%, members 1
+    null round: 500 trials, best 11.494%, members 2
+    null round: 498 trials, best 13.909%, members 3
+    null round: 496 trials, best 15.925%, members 4
+    null round: 494 trials, best 17.764%, members 5
+    null round: 492 trials, best 20.716%, members 6
+    null round: 490 trials, best 22.693%, members 7
+    null round: 488 trials, best 23.459%, members 8
+    null round: 486 trials, best 24.757%, members 9
+    null round: 484 trials, best 26.380%, members 10
+    null round: 482 trials, best 27.659%, members 11
+    null round: 480 trials, best 28.431%, members 12
+    null round: 478 trials, best 29.619%, members 13
+    null round: 476 trials, best 30.518%, members 14
+    null round: 474 trials, best 31.201%, members 15
+    null round: 472 trials, best 31.256%, members 16
+    null round: 470 trials, best 31.695%, members 17
+    null round: 468 trials, best 31.890%, members 18
+    null round: 466 trials, best 32.204%, members 19
+    null round: 464 trials, best 32.479%, members 20
+    null round: 462 trials, best 32.817%, members 21
+    null round: 460 trials, best 32.883%, members 22
+    null round: 458 trials, best 32.883%, members 23
+team2_W3ONLY_ADOPTED {
+ "real_score": 34.20183648067728,
+ "holdout_pick_members": 21,
+ "holdout_in_sample": 62.763182964405814,
+ "holdout_out_sample": 4.981685787348461,
+ "full_team_on_holdout": 26.196076614929417,
+ "random_n": 1000,
+ "random_mean": 11.982457346778526,
+ "random_p95": 15.012684430290875,
+ "random_max": 17.282956318941277,
+ "random_pctile_of_real": 100.0,
+ "greedy_null_n": 25,
+ "greedy_null_mean": 34.577923770290724,
+ "greedy_null_p95": 36.05347850073586,
+ "greedy_null_max": 36.378000025338224,
+ "greedy_null_p_value": 0.68,
+ "greedy_null_p_resolution": 0.04
+}
+DONE in 459.4 min
