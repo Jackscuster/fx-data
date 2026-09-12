@@ -48,15 +48,22 @@ def main():
 
     frames = [S] + ([C] if C is not None else [])
     A = pd.concat(frames, ignore_index=True, sort=False)
+    # ALLPASS is walked by both the structures stage and the controls stage
+    # (the controls need it as their own baseline). Keep the structures copy.
+    A = A.drop_duplicates(['budget', 'structure'], keep='first')
 
-    # expectancy: mean of the structure's own daily series
-    D = D.set_index(D.columns[0])
-    exp = {}
+    # expectancy: mean daily return = total return / trading days. Identical to
+    # the mean of the daily series, and every row carries both columns, so the
+    # control structures (which write no daily file) get it too.
+    A['expectancy_pct_per_day'] = A.total_return_pct / A.trading_days
+    D = D.set_index(D.columns[0])  # kept for the consistency check below
     for col in D.columns:
         bt, _, st = col.partition('|')
-        exp[(bt, st)] = float(pd.to_numeric(D[col], errors='coerce').dropna().mean())
-    A['expectancy_pct_per_day'] = [exp.get((r.budget, r.structure), np.nan)
-                                   for r in A.itertuples()]
+        m = float(pd.to_numeric(D[col], errors='coerce').dropna().mean())
+        r = A[(A.budget == bt) & (A.structure == st)]
+        if len(r) and abs(float(r.expectancy_pct_per_day.iloc[0]) - m) > 1e-9:
+            raise SystemExit('expectancy mismatch for %s: table %.6f vs daily %.6f'
+                             % (col, r.expectancy_pct_per_day.iloc[0], m))
 
     def pmap(N, col='p_value'):
         if N is None:
