@@ -2,6 +2,44 @@
 
 ## READ THIS FIRST
 
+0. **THE CLEAN THREE-SLICE RESULT (12 Sep) — THE HONEST NUMBER.** Field
+   `gate2_cleanfield.csv`, 4,807 strategies chosen on W2 alone under `ip1`
+   (A-trend 2,960 / A-chop 930 / B-chop 917), walked forward 2016-2020, costs
+   charged, both nulls valid and on the right field. Full table:
+   `results/walkforward_report_3slice_cleanfield.csv`.
+
+   | structure | members | median yr | worst yr | max DD | DIP95 | PF | Sortino | identity p | random-entry p |
+   |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+   | **NO_CUT** (whole field) | 4807 | **5.02%** / 7.53% | +4.59% / +6.89% | 2.0% / 3.0% | 3.1% / 4.6% | 1.51 | 3.90 | — | — |
+   | NO_CUT_SLICE_BALANCED | 4807 | 5.82% / 8.72% | +4.96% / +7.45% | 2.3% / 3.4% | 3.5% / 5.2% | 1.53 | 4.02 | — | — |
+   | ALLPASS (gate-3 cut) | 1094→1008 | 2.06% / 3.09% | +0.44% / +0.66% | 3.0% / 4.5% | 4.4% / 6.6% | 1.21 | 1.66 | **1.000** | **0.000** |
+   | STABLE | 823→19 | 0.94% / 1.41% | −4.52% / −6.78% | 5.5% / 8.2% | 6.0% / 9.0% | 0.99 | −0.05 | 1.000 | — |
+   | SLICE_BALANCED | 1094→1008 | 0.61% / 0.92% | −1.49% / −2.23% | 2.6% / 4.0% | 3.9% / 5.8% | 1.16 | 1.48 | — | — |
+   | PICKED (greedy) | 14→16 | 0.09% / 0.13% | −2.28% / −3.42% | 6.3% / 9.4% | 10.0% / 15.1% | 1.11 | 0.92 | 0.960 | — |
+   | FAMILY_CAP | 4→5 | −1.01% / −1.52% | −2.13% / −3.19% | 4.0% / 6.0% | 7.3% / 10.9% | 0.95 | −0.30 | 0.960 | — |
+
+   (team1 / team2 budgets; members at step 1 → step 2.) Per slice, walked alone
+   with the cut: A-trend 0.23% (PF 1.06), A-chop 5.85% (PF 1.44), B-chop 4.17%
+   (PF 1.40).
+
+   **Plain English.** The strategies have edge and the selection destroys it.
+   Trading every one of the 4,807 clean-field strategies, equal weight, no
+   further filtering, made 5.0% a year at the conservative budget with a worst
+   year of +4.6% and a 2% drawdown. Every layer of selection on top of that
+   made it worse: the gate-3 cut alone takes the median year from 5.0% to 2.1%
+   and *raises* the drawdown; the stability filter, the greedy search and the
+   family cap take it to roughly zero or below. The two nulls say why. Against
+   random entry timing, the cut book is ahead of all 25 draws (p=0.000) — the
+   entries are real. Against the identity null, where each strategy is admitted
+   on a *random other strategy's* build record, the cut book is behind all 25
+   draws (p=1.000): picking passers by their build-year metrics chooses worse
+   than picking at random. The build-year record does not predict the trade
+   years; the breadth does. And the breadth is two slices — the trend slice, 62%
+   of the field, earns 0.2% on its own; the two chop slices earn 4-6%. The
+   honest system is the whole clean field, not a team, and the next question is
+   whether that holds when B-trend (3,428 more strategies) is added — the
+   four-slice chain is running.
+
 1. **THE TEAM IS NOT A RESULT.** The greedy roster search failed its SELECTION
    HOLDOUT on 2026-09-10 — 8% retained. **The 22.97% team score and the 30.22%
    Layer 4 figure are not demonstrated and must not be quoted as findings.**
@@ -373,8 +411,15 @@ header. Detail in FIXES.md.
 
 ### Measured run time
 
-engine 32.3 min · real walks 7.3 min · sizing 7 s · team-size sweep 30.7 min ·
-identity null 36.6 min per budget · random-entry null 2.6 min per budget.
+Contaminated field (3,485): engine 32.3 min · real walks 7.3 min · sizing 7 s ·
+team-size sweep 30.7 min · identity null 36.6 min per budget · random-entry
+null 2.6 min per budget.
+
+Clean field (4,807), 12 Sep, RAM-capped: engine 32.1 min (9 workers) · walk
+15.8 min · identity null 133 min (6 workers, 59 min per budget) · random-entry
+null 4.9 min (3 workers, 2.3 min per budget, after the K/BR pickle fix) ·
+sizing 7 s · team-size sweep 31 min · slice controls 50 s · per-slice walks
+10 s · report 1 s. B-trend W2 scoring 35.9 min (14,815 at 0.87 s, 6 workers).
 
 ## Mode C
 **Paused by decision at 299 chunks.** Not a fault, not a stall. It stays paused until the full system is built and forward testing has started. It has been removed from every chain.
