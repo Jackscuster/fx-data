@@ -1,7 +1,15 @@
 #!/bin/bash
 # MEMORY GUARD: pause a process tree before the kernel panics.
 #
-#   bash code/l2memguard.sh <root pid> [pause_gb=3] [resume_gb=4] [poll_s=5]
+#   bash code/l2memguard.sh <root pid> [pause_gb=3] [resume_gb=4] [poll_s=5] [max_pause_s=900]
+#
+# A PAUSE IS BOUNDED. On macOS a stopped process's pages go to the compressor,
+# where they still count as used -- so once a big tree is paused, "available"
+# cannot climb back on its own and the guard would wait forever. On 12 Sep the
+# four-slice identity null sat paused from 16:13 to 17:26 that way. After
+# max_pause_s without recovery the guard HALTS the stage (SIGTERM to the root,
+# then SIGKILL) so the chain exits with its marker and can be relaunched with a
+# smaller pool. A halt with a reason beats an hour of nothing.
 #
 # Watches available memory (free + inactive + speculative pages on macOS;
 # MemAvailable on Linux). When it drops below pause_gb, every process under
@@ -16,7 +24,7 @@
 # which is what gives the compressor room to catch up and the operator time to
 # see the message.
 set -uo pipefail
-ROOT="${1:?root pid}"; PAUSE_GB="${2:-3}"; RESUME_GB="${3:-4}"; POLL="${4:-5}"
+ROOT="${1:?root pid}"; PAUSE_GB="${2:-3}"; RESUME_GB="${3:-4}"; POLL="${4:-5}"; MAX_PAUSE="${5:-900}"
 avail_gb() {
   if [ -r /proc/meminfo ]; then
     awk '/MemAvailable/ {printf "%.2f", $2/1048576}' /proc/meminfo
@@ -35,13 +43,19 @@ tree() {  # every descendant of ROOT, deepest last
   done
   printf '%s\n' "${out[@]}"
 }
-paused=0
+paused=0; paused_at=0
 while kill -0 "$ROOT" 2>/dev/null; do  # NOSILENCE-OK: kill -0 is the liveness probe; a dead root is the exit condition
   a=$(avail_gb)
   if [ "$paused" = 0 ] && awk -v a="$a" -v t="$PAUSE_GB" 'BEGIN{exit !(a<t)}'; then
     echo "$(date '+%F %T') MEMGUARD: available ${a} GB < ${PAUSE_GB} GB -- PAUSING tree under $ROOT"
     tree | xargs -n 50 kill -STOP 2>/dev/null  # NOSILENCE-OK: a child may exit between listing and signalling
-    paused=1
+    paused=1; paused_at=$(date +%s)
+  elif [ "$paused" = 1 ] && [ $(( $(date +%s) - paused_at )) -ge "$MAX_PAUSE" ]; then
+    echo "$(date '+%F %T') MEMGUARD: paused ${MAX_PAUSE}s and available is still ${a} GB -- HALTING the stage (relaunch with a smaller pool)"
+    tree | xargs -n 50 kill -CONT 2>/dev/null  # NOSILENCE-OK: a child may exit between listing and signalling
+    kill -TERM "$ROOT" 2>/dev/null; sleep 10  # NOSILENCE-OK: the root may already be gone
+    tree | xargs -n 50 kill -KILL 2>/dev/null  # NOSILENCE-OK: whatever is left is meant to die
+    paused=0
   elif [ "$paused" = 1 ] && awk -v a="$a" -v t="$RESUME_GB" 'BEGIN{exit !(a>t)}'; then
     echo "$(date '+%F %T') MEMGUARD: available ${a} GB > ${RESUME_GB} GB -- resuming"
     tree | xargs -n 50 kill -CONT 2>/dev/null  # NOSILENCE-OK: a child may exit between listing and signalling
