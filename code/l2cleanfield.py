@@ -52,6 +52,17 @@ OUT = os.path.join(ROOTOUT, 'gate2_cleanfield.csv')
 DIFF = os.path.join(ROOTOUT, 'field_diff.csv')
 
 
+def recovered_ip1():
+    """Every gate2_ip1_recovered*.csv -- crossers (_s*) and box candidates
+    (_box*_s*) -- as sid -> row. Same glob as l2walkfwd.recovered_ip1."""
+    out = {}
+    for f in sorted(glob.glob(os.path.join(ROOTOUT, 'gate2_ip1_recovered*.csv'))):
+        d = pd.read_csv(f, low_memory=False)
+        for r in d[d.sid != 'sid'].to_dict('records'):
+            out[r['sid']] = r
+    return out
+
+
 def candidates(slices):
     F = []
     for f, mode, sl, lab in SRC:
@@ -66,8 +77,21 @@ def candidates(slices):
         d['src_label'] = mode if mode == 'B' else lab
         d['sid'] = (d.src_label + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|'
                     + d.vol + '|' + d.base)
+        # RECOVERED ip1 COUNTS. B-trend has no ip1 in gate2_tuned_modeB.csv; the
+        # boxes banked it in gate2_ip1_recovered*.csv (14,815 of 14,815). This
+        # function never looked there, so the boxes' own scoring step dropped
+        # every B-trend candidate on 2026-09-11/12 right after recovering it.
+        if 'ip1' not in d.columns:
+            d['ip1'] = np.nan; d['risk1'] = np.nan
+        REC = recovered_ip1()
+        miss = d.ip1.isna() | d.risk1.isna()
+        if miss.any() and REC:
+            for i in d.index[miss]:
+                r = REC.get(d.at[i, 'sid'])
+                if r is not None:
+                    d.at[i, 'ip1'] = r['ip1']; d.at[i, 'risk1'] = r['risk1']
         n0 = len(d)
-        d = d[d.ip1.notna() & d.risk1.notna()] if 'ip1' in d.columns else d.iloc[0:0]
+        d = d[d.ip1.notna() & d.risk1.notna()]
         if len(d) < n0:
             print('  %-8s %d of %d dropped: no ip1 banked' % (lab, n0 - len(d), n0),
                   flush=True)
@@ -131,7 +155,19 @@ def main():
                     help='first N candidates only -- for the sharding dry run')
     ap.add_argument('--merge', action='store_true',
                     help='merge every box bank, then label and diff')
+    ap.add_argument('--bank', type=int, default=-1,
+                    help='write this run\'s scores to gate2_w2only_scores_<NN>.csv '
+                         'instead of _00 -- so a B-trend-only scoring run cannot '
+                         'overwrite the three-slice bank already there')
+    ap.add_argument('--out-suffix', default='',
+                    help='suffix for gate2_cleanfield<S>.csv and field_diff<S>.csv, '
+                         'so a four-slice merge cannot overwrite the three-slice field '
+                         'a chain is running on')
     a = ap.parse_args()
+    global OUT, DIFF
+    if a.out_suffix:
+        OUT = os.path.join(ROOTOUT, 'gate2_cleanfield%s.csv' % a.out_suffix)
+        DIFF = os.path.join(ROOTOUT, 'field_diff%s.csv' % a.out_suffix)
     import multiprocessing as mp
     t0 = time.time(); S.load_costs()
     sl = tuple(x for x in a.slices.split(',') if x)
@@ -148,7 +184,16 @@ def main():
         if not fs:
             raise SystemExit('no box banks to merge')
         R = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
-        R = R[R.sid != 'sid'].drop_duplicates('sid')
+        R = R[R.sid != 'sid']
+        # THE BOXES RAN THE PRE-15:19 CODE, which spelled mode-B sids
+        # 'B-chop|chop|...' / 'B-trend|trend|...'. candidates() spells them
+        # 'B|chop|...'. Normalise the bank to the current convention or every
+        # B row fails to join and the field silently loses two slices.
+        fixed = R.sid.str.replace(r'^B-(chop|trend)\|', 'B|', regex=True)
+        n_fix = int((fixed != R.sid).sum())
+        if n_fix:
+            print('  normalised %d bank sids from B-<slice>| to B| spelling' % n_fix, flush=True)
+        R = R.assign(sid=fixed).drop_duplicates('sid')
         print('merged %d box banks -> %d scored strategies' % (len(fs), len(R)), flush=True)
         miss = set(D.sid) - set(R.sid)
         if miss:
@@ -169,7 +214,11 @@ def main():
         el = time.time() - t0
         print('  scored %d in %.1f min (%.2f s each, %d jobs)'
               % (len(R), el / 60, el * a.jobs / max(len(R), 1), a.jobs), flush=True)
-        R.to_csv(BOXBANK % a.box if a.of > 1 else BANK % 0, index=False)
+        bank = BOXBANK % a.box if a.of > 1 else BANK % (a.bank if a.bank >= 0 else 0)
+        if a.bank < 0 and a.of == 1 and os.path.exists(bank):
+            raise SystemExit('refusing to overwrite %s -- pass --bank NN' % bank)
+        R.to_csv(bank, index=False)
+        print('  bank written: %s' % bank, flush=True)
         if a.shard_only:
             print('shard-only: box %d written, stopping. Merge from the Mac with '
                   '--merge' % a.box, flush=True)
@@ -202,7 +251,8 @@ def main():
     new = set(C.sid)
     rows = []
     for sid in sorted(old | new):
-        rows.append(dict(sid=sid, slice=sid.split('|')[0],
+        parts = sid.split('|')
+        rows.append(dict(sid=sid, slice=parts[0] if parts[0] != 'B' else 'B-' + parts[1],
                          in_contaminated=sid in old, in_clean=sid in new,
                          status=('stays' if sid in old and sid in new else
                                  ('ENTERS' if sid in new else 'LEAVES'))))

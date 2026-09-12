@@ -26,18 +26,27 @@
 # makes stage_walk return after the structures, and the two VALID nulls -- the
 # identity null and the random-entry null -- run as their own stages.
 #
-# THE RANDOM-ENTRY NULL IS CAPPED BY RAM, NOT BY CORES. Each of its workers
-# peaks at ~2 GB; nine of them on a 16 GB Mac (with the old 6.9 GB init) demanded
-# ~70 GB, the compressor thrashed, watchdogd starved, and the kernel panicked --
-# twice, 2026-09-11 23:33 and 2026-09-12 11:45, both inside this stage.
+# EVERY POOL STAGE IS CAPPED BY RAM, NOT BY CORES: workers = min(--jobs,
+# 60% of physical RAM / that stage's measured per-worker GB). The random-entry
+# null's workers peak at ~2 GB (2.5 budgeted -> 3 on 16 GB); nine of them with
+# the old 6.9 GB init demanded ~70 GB from a 16 GB Mac, the compressor
+# thrashed, watchdogd starved, and the kernel panicked -- twice, 2026-09-11
+# 23:33 and 2026-09-12 11:45, both inside that stage. code/l2memguard.sh
+# shadows every stage and SIGSTOPs it below 3 GB free, SIGCONT above 4 GB.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 source code/l2chainguard.sh
 
 JOBS=9; FROM=""; RESUME=0; LIMIT=""; SUF=_cleanfield
+FIELD=results/gate2_cleanfield.csv
+SLICES='A-trend,A-chop,B-chop'
+WANT="4807 A-trend=2960 A-chop=930 B-chop=917"
 while [ $# -gt 0 ]; do
   case "$1" in
     --jobs)   JOBS="$2"; shift 2;;
+    --field)  FIELD="$2"; shift 2;;
+    --slices) SLICES="$2"; shift 2;;
+    --want)   WANT="$2"; shift 2;;      # "<total> <slice>=<n> ..." the field file must match
     --from)   FROM="$2"; shift 2;;
     --resume) RESUME=1; shift;;
     --limit)  LIMIT="$2"; shift 2;;
@@ -45,9 +54,6 @@ while [ $# -gt 0 ]; do
     *) echo "unknown arg $1"; exit 2;;
   esac
 done
-FIELD=results/gate2_cleanfield.csv
-SLICES='A-trend,A-chop,B-chop'
-WANT="4807 A-trend=2960 A-chop=930 B-chop=917"
 
 # CHAIN LOGS LIVE OUTSIDE results/ so a git operation on the repo cannot unlink
 # a running job's stdout -- 2026-09-11, `git stash -u`, two hours. AND OUTSIDE
@@ -61,16 +67,16 @@ say(){ echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
 # ---- dry run: a small field file derived from the real one, own suffix
 if [ -n "$LIMIT" ]; then
   SUF="${SUF}_dry"; LOG="$LOGDIR/cfchain${SUF}.log"
-  FIELD="results/gate2_cleanfield_dry${LIMIT}.csv"
-  WANT=$(/usr/bin/env python3 - "$LIMIT" "$FIELD" <<'PYD'
+  SRC_FIELD="$FIELD"; FIELD="${FIELD%.csv}_dry${LIMIT}.csv"
+  WANT=$(/usr/bin/env python3 - "$LIMIT" "$FIELD" "$SRC_FIELD" "$SLICES" <<'PYD'
 import sys, pandas as pd
 n, out = int(sys.argv[1]), sys.argv[2]
-d = pd.read_csv('results/gate2_cleanfield.csv', low_memory=False)
+d = pd.read_csv(sys.argv[3], low_memory=False)
 lab = d.sid.map(lambda s: s.split('|')[0] if not s.startswith('B|') else 'B-' + s.split('|')[1])
 keep = pd.concat([g.head(n) for _, g in d.groupby(lab, sort=False)])
 keep.to_csv(out, index=False)
 c = lab[keep.index].value_counts()
-print('%d %s' % (len(keep), ' '.join('%s=%d' % (k, c[k]) for k in ('A-trend', 'A-chop', 'B-chop'))))
+print('%d %s' % (len(keep), ' '.join('%s=%d' % (k, c.get(k, 0)) for k in sys.argv[4].split(','))))
 PYD
 )
   NNULL=3; NRAND=3
@@ -83,18 +89,22 @@ STAGES="engine walk nullid nullre sizing size ctrl perslice report"
 if [ -n "$FROM" ]; then
   case " $STAGES " in *" $FROM "*) ;; *) echo "unknown stage $FROM"; exit 2;; esac
 fi
-chain_pidfile cleanfield
+chain_pidfile "cf${SUF}"
 
-# ---- RAM-derived cap for the random-entry null: ~2 GB per worker, keep 25% free
+# ---- RAM-derived caps: workers = min(JOBS, 60% of RAM / per-worker GB)
 ram_gb=$(/usr/bin/env python3 -c "
 import os
 try: b = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
 except (ValueError, OSError): b = int(__import__('subprocess').check_output(['sysctl','-n','hw.memsize']))
 print(b // 2**30)")
-NULLRE_JOBS=$(( ram_gb * 3 / 4 / 2 )); [ "$NULLRE_JOBS" -lt 1 ] && NULLRE_JOBS=1
-[ "$NULLRE_JOBS" -gt "$JOBS" ] && NULLRE_JOBS=$JOBS
-
-say "=== PRE-FLIGHT === jobs=$JOBS nullre_jobs=$NULLRE_JOBS (${ram_gb} GB RAM) suffix=$SUF"
+budget_gb=$(( ram_gb * 6 / 10 ))
+cap(){  # cap <per-worker GB, may be fractional> -> workers
+  local w; w=$(/usr/bin/env python3 -c "import math; print(max(1, min($JOBS, int($budget_gb / $1))))"); echo "$w"; }
+ENGINE_JOBS=$(cap 0.5)    # engine workers: bars + one strategy's trades
+NULLID_JOBS=$(cap 1.5)    # _init_null: 1.0 GB tables + the walk's book
+NULLRE_JOBS=$(cap 2.5)    # _init_rand: 1.3 GB init, 2.0 GB peak per draw (measured)
+SIZE_JOBS=$(cap 1.5)      # _init_size: as _init_null
+say "=== PRE-FLIGHT === ${ram_gb} GB RAM, ${budget_gb} GB budget: engine=$ENGINE_JOBS nullid=$NULLID_JOBS nullre=$NULLRE_JOBS size=$SIZE_JOBS (--jobs $JOBS)  field=$FIELD suffix=$SUF"
 if ! /usr/bin/env python3 code/l2nosilence.py 2>&1 | tee -a "$LOG" | tail -1 | grep -q "NO SILENCED ERRORS"; then
   say "!! HALT: silenced errors present"; exit 3
 fi
@@ -150,28 +160,36 @@ run(){
   local name="$1" jobs="$2"; shift 2
   local t0 t1; t0=$(date +%s)
   say "--- $name --- ($jobs workers)"
-  if ! nice -n 19 /usr/bin/env python3 code/l2walkfwd.py "$@" \
+  nice -n 19 /usr/bin/env python3 code/l2walkfwd.py "$@" \
         --jobs "$jobs" --slices "$SLICES" --suffix "$SUF" --field-file "$FIELD" \
-        >> "$LOG" 2>&1; then
-    say "!!! CHAIN HALTED at $name"; echo "$name" > results/CHAIN_HALT.marker; exit 1
+        >> "$LOG" 2>&1 &
+  local py=$!
+  bash code/l2memguard.sh "$py" 3 4 5 >> "$LOG" 2>&1 &
+  local guard=$!
+  if ! wait "$py"; then
+    say "!!! CHAIN HALTED at $name"; echo "$name" > results/CHAIN_HALT.marker; wait "$guard"; exit 1
   fi
+  wait "$guard"
   t1=$(date +%s)
   say "$name done in $(( (t1 - t0) / 60 )) min $(( (t1 - t0) % 60 )) s"
 }
 rm -f results/CHAIN_HALT.marker
 T_ALL=$(date +%s)
-want engine   && run engine  "$JOBS"        --stage engine
+want engine   && run engine  "$ENGINE_JOBS" --stage engine
 want walk     && run walk    "$JOBS"        --stage walk   --n-null 0
-want nullid   && run nullid  "$JOBS"        --stage nullid --n-null "$NNULL"
+want nullid   && run nullid  "$NULLID_JOBS" --stage nullid --n-null "$NNULL"
 want nullre   && run nullre  "$NULLRE_JOBS" --stage nullre --n-null "$NNULL"
 want sizing   && run sizing  "$JOBS"        --stage sizing
-want size     && run size    "$JOBS"        --stage size   --n-null "$NNULL" --n-rand "$NRAND"
+want size     && run size    "$SIZE_JOBS"   --stage size   --n-null "$NNULL" --n-rand "$NRAND"
 want ctrl     && run ctrl    "$JOBS"        --stage ctrl
 if want perslice; then
   t0=$(date +%s); say "--- perslice ---"
-  if ! nice -n 19 /usr/bin/env python3 code/l2cfperslice.py --suffix "$SUF" --field-file "$FIELD" --slices "$SLICES" >> "$LOG" 2>&1; then
-    say "!!! CHAIN HALTED at perslice"; echo perslice > results/CHAIN_HALT.marker; exit 1
+  nice -n 19 /usr/bin/env python3 code/l2cfperslice.py --suffix "$SUF" --field-file "$FIELD" --slices "$SLICES" >> "$LOG" 2>&1 &
+  py=$!; bash code/l2memguard.sh "$py" 3 4 5 >> "$LOG" 2>&1 & guard=$!
+  if ! wait "$py"; then
+    say "!!! CHAIN HALTED at perslice"; echo perslice > results/CHAIN_HALT.marker; wait "$guard"; exit 1
   fi
+  wait "$guard"
   say "perslice done in $(( ($(date +%s) - t0) / 60 )) min $(( ($(date +%s) - t0) % 60 )) s"
 fi
 say "--- report ---"
