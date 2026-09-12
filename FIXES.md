@@ -1,5 +1,218 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 2026-09-12 — THE MAC PANICKED TWICE UNDER THE RANDOM-ENTRY NULL. CHAINS MOVE TO THE CLOUD.
+
+**Cause, from `/Library/Logs/DiagnosticReports`.** Both crashes are the same
+kernel panic: `watchdog timeout: no checkins from watchdogd in 94 seconds` —
+23:33:55 on 11 Sep and 11:45:20 on 12 Sep, MacBookPro18,1, macOS 26.3.1. The
+panic's memory block shows the compressor at 25M and 35M operations: the
+machine was swapping so hard that userland could not check in for a minute and
+a half. Not thermal, not a driver, not a kernel bug — memory. (11:52 was a
+manual power-button reset, `btn_rst / force_off`.) The 01:59 "reboot" I
+reported was a stale `kern.boottime`; the chain ran in `nullre` from 01:54
+until the 11:45 panic.
+
+**Every death was inside `--stage nullre`.** Measured: `_init_rand()` peaked at
+**6.9 GB per process** (steady state 1.4 GB) because each worker re-ran
+`load_field()` over the full gate2_tuned CSVs and `recover_k()` over 1.09M
+trades. Under spawn all nine workers paid that transient at once — ~70 GB
+demanded from 16 GB.
+
+**Fixed.** The parent builds K and BR once, writes `wf_randk<TAG>.pkl`
+(205 MB), and workers load it through `WF_RANDK`: 1.31 GB after init, 2.0 GB
+peak per draw, and seed 1 reproduces the single-process value exactly (1.258).
+`l2cfchain.sh` caps the stage at `RAM × ¾ ÷ 2 GB` workers regardless of
+`--jobs`. On the 16 GB Mac that is 6; on a 32 GB CPX62 it is 12.
+
+**Rule.** Pool stages are capped by RAM, not cores — `min(--jobs, 60% of RAM ÷ per-worker GB)`, so the random-entry null gets 3 workers on the 16 GB Mac — and `code/l2memguard.sh` pauses (SIGSTOP) a stage when free memory falls below 3 GB and resumes it above 4 GB. The chain stays on the Mac. `code/cloud_walk.sh` runs the same chain on a rented box, `--resume` skipping whatever the repo already carries, results to `walk-<date>` then main; it is an option, kept in the repo, not the default. Its script was verified end to end on the Mac with `--local --limit 250 --jobs 2` (750 strategies; the smallest limit at which all four structures populate — STABLE has one member at step 2 with 450).
+
+**Also fixed on the way:** `results/gate2_cleanfield.csv` as committed at
+300fcff spelled B-chop sids `B-chop|chop|…`; `load_field` builds `B|chop|…`, so
+the committed file would have intersected with zero B-chop strategies. The
+on-disk rewrite of 15:19 (two minutes after the commit) has the right spelling
+and is what every clean-field number was run on; it is committed now.
+
+---
+
+## 2026-09-11 (late 3) — THE IDENTITY NULL WAS DRAWN FROM THE WRONG FIELD
+
+**Found by the identity-null audit that was asked for. Every identity null
+ever run with a `--suffix` compared a real walk on one field against null
+draws on another.**
+
+The clean-field identity null landed at 20:08 with p = 1.000 for every
+structure — and `mean_members_step1/2` of **620 / 575**, which is the
+CONTAMINATED field's exact ALLPASS passer count. The clean field's is
+1,094 / 1,008. A null whose draws carry a different field's member count is
+not a null of the real it sits next to.
+
+**Cause.** macOS `multiprocessing` **spawns**: each pool worker re-imports
+`l2walkfwd` from scratch, so `TRADES_F` / `MARKS_F` in the worker are the
+module DEFAULTS — `results/wf_trades.pkl`, the unsuffixed file, which holds
+the 3,485 contaminated field — not the suffixed path `main()` set in the
+parent. `_init_size` and `_init_rand` each re-derived the path from `WF_TAG`.
+`_init_null` never did. So the parent's real walk used the clean 4,807 and
+every `_init_null` worker used the contaminated 3,485. This also covers the
+year-shuffled null inside `stage_walk` (same initializer), already superseded
+for other reasons. The unsuffixed 01:24 run is internally consistent — both
+sides used the same unsuffixed pickles — but its levels are contaminated
+anyway.
+
+**Fixed.** One resolver, `_worker_tables()`, that every initializer goes
+through: it re-derives the paths from `WF_TAG`, and PROVES the field — `main()`
+exports `WF_EXPECT_SIDS`, and a worker whose pickle disagrees prints why,
+SIGTERMs the parent stage and exits. It cannot merely raise: a Pool respawns a
+worker whose initializer dies, forever and silently, and the first version of
+this guard hung exactly that way. Verified: matching count loads and reports
+`wf_trades_cleanfield.pkl, 4807`; mismatched count halts the stage with the
+message and exit 143.
+
+**Also: chain logs must not live in the session scratchpad.** It is wiped when
+the Claude session ends, and at 23:36 it took the running chain's log — and the
+chain — with it. Logs now go to `$HOME/fx-data-logs/`, and the chain is
+launched detached from the session's process group.
+
+---
+
+## 2026-09-11 (late 2) — THE FIELD AUDIT, AND A TRAPDOOR IN `load_field`
+
+**Two findings. The first clears a run that was suspected; the second condemns
+every random-entry null ever produced.**
+
+### 1. The 16:19–16:46 run was CLEAN. The 3,485 figure was mine, from a stale log.
+
+The run was suspected of having used the contaminated field because it was
+reported against 3,485 members (A-trend 1,804 / A-chop 678 / B-chop 1,003).
+It did not. From the files:
+
+- `results/wf_trades_cleanfield.pkl` holds **4,807** sids —
+  A-trend 2,960 / A-chop 930 / B-chop 917.
+- `results/gate2_cleanfield.csv` holds **4,807** sids — the same 2,960 / 930 / 917.
+- The two sid sets are **identical** (`set(a) == set(b)` is True), not merely
+  the same size.
+- Every output carried the `_cleanfield` suffix. Nothing was overwritten.
+
+**The 3,485 counts came from `results/walkfwd_slices.log`, whose mtime is
+10:45** — a different run, six hours earlier, on the contaminated field. I read
+that log, attributed its member counts to the 16:19 run, and reported them.
+The run itself was fine; the reporting was not.
+
+The stages in that window were: engine → 16:02, structures/rosters/daily →
+16:19, year-shuffled null → 16:46 (27 min), sizing → 16:46:37. A separate
+clean-field team-size sweep finished 17:31.
+
+**The genuinely contaminated files are the unsuffixed `*_3slice.csv` set from
+01:24** (ALLPASS 620/575, the 3,485 field) and they carried NO warning header.
+Thirteen files are now headered `FIELD CONTAMINATED`.
+
+**And the null I quoted was the wrong null.** `stage_walk`'s built-in null is
+the YEAR-SHUFFLED one, which HANDOFF already records as superseded and
+confounded. I reported its p-values (0.52–0.96, every structure below its null
+mean) as the clean-field verdict without that caveat. Those two `_cleanfield`
+null files now carry a `SUPERSEDED` header. The valid nulls — identity and
+random-entry — had never been run on the clean field at all.
+
+### 2. `load_field(slices, field_sids=None)` was a trapdoor
+
+`None` did not mean "no filter". It meant `crosses_label == True` — **the
+contaminated field**. A caller that passed the argument got the clean field; a
+caller that forgot it got a different and worse population, silently, with no
+line in any log to say so.
+
+**One caller had forgotten it.** `_init_rand()`, the pool initializer for the
+random-entry null, called `load_field(SLICES3)` with no field file. So every
+random-entry null was built on the contaminated field *even when the run that
+spawned it was launched with `--field-file gate2_cleanfield.csv`*. The run
+would name the clean field in its own log and then null itself against a
+different one.
+
+A default that silently changes the population is not a default. It is a
+trapdoor, and it is the same class of fault as the silenced error: the
+information that something was wrong existed and was thrown away.
+
+### Fixed
+
+1. **`load_field(slices, field_file)` — the field file is REQUIRED.** No
+   fallback, by design. Missing argument raises; the message names the
+   contaminated path it refuses to take.
+2. **It prints the field before it works**: absolute path, sids in file,
+   per-slice counts — the first line of every walk-forward log.
+3. **It asserts and halts.** Loaded totals and per-slice counts must equal the
+   file's. A mismatch prints expected-vs-loaded per slice, names any sids
+   dropped for un-banked `ip1`, and exits. Verified all three ways: correct
+   file loads 4,807 and prints OK; missing argument halts; a decoy file with one
+   unloadable sid halts with `expected 4808 / loaded 4807`.
+4. **`_init_rand()` reads `WF_FIELD_FILE`** (set by `main()` before any pool is
+   built) and refuses to guess if it is unset.
+5. **`assert_field` added to `code/l2chainguard.sh`** — checks the field file's
+   total, per-slice counts and duplicate sids in pre-flight, before a chain
+   spends a minute. Verified positive and negative.
+
+### Still owed
+
+**`PER_SLICE_CUT` is not reconstructed.** The module that produced
+`walkforward_slicebalanced.csv`, `walkforward_nocut.csv` and
+`walkforward_slice_controls.csv` is not in this repo — it went with the 11 Sep
+`git stash -u` and there is no stash to recover it from. `NO_CUT`,
+`SLICE_BALANCED` and `NO_CUT_SLICE_BALANCED` are reconstructible from the
+labels and the old member counts and have been rebuilt. `PER_SLICE_CUT` is not:
+gate 3's bars are ABSOLUTE, so "the cut applied per slice" is arithmetically
+the same set as the cut, yet the old run reported 168/129 members against
+ALLPASS's 620/575. It did something the repo no longer records — a per-slice
+quantile, or a top-N — and inventing which would produce an authoritative
+number from a definition nobody chose.
+
+---
+
+## 2026-09-11 (late) — PROCESS FAILURE: a chain reported as running that had halted
+
+**Mine, not the code's. Roughly 35 minutes of wall clock lost to a chain nobody
+was watching, and a false progress report on top of it.**
+
+The clean-field chain halted at **15:25** in its own pre-flight —
+`code/l2nosilence.py` found one silenced-error site, wrote
+`results/CHAIN_HALT.marker`, and the chain exited before its first stage.
+`results/cleanfield_chain.log` was **0 lines**. At about **16:00** I reported
+that chain to Jack as "running, ~2 hours". It had been dead for 35 minutes.
+
+**The error was reporting a launch instead of verifying a run.** I had issued
+the launch command, seen no error from it, and treated the absence of a
+complaint as evidence of work. It is the same mistake the chain's own
+`while` loop was hardened against on 10 Sep — *absence of a worker is not
+evidence of finished work* — applied at the other end of the job: absence of an
+error is not evidence of started work. A pidfile is not enough either; the
+pidfile existed and the PID was gone.
+
+**The ETA was the worse half.** "~2 hours" was derived from what the script
+would have done had it run. Nothing had run, so the number described a
+hypothetical. An ETA quoted off a stage that was never entered is fabrication,
+not estimation.
+
+### Rules, now binding
+
+1. **A launch is not confirmed until the first stage is measurably running.**
+   Three proofs, all three required, before the word "running" is used:
+   the pidfile's PID answers `kill -0`; a named worker is alive under it in
+   `ps`; and the stage log has GROWN across at least **60 seconds** of wall
+   clock. One sample is not growth.
+2. **Quote the stage the log reached, never the stage the script would reach.**
+   No ETA may be derived from a stage that has not started. If the long pole has
+   never completed on this machine, say that instead of inventing a number.
+3. **Check the halt marker before relaunching.** `results/CHAIN_HALT.marker`
+   names the stage and the reason. A stale marker from a fixed fault is
+   cleared by the chain itself at start — but read it first, because it is the
+   only record of why the last run stopped.
+4. **`pgrep -f 'a|b'` does not work here.** BSD `pgrep` takes a basic regex, so
+   the alternation matches nothing and returns a count of zero — which reads
+   exactly like "no workers running". Verify a worker with `ps -p` on a PID from
+   `pgrep -P <chain pid>`, not with an alternation pattern.
+
+Nothing was corrupted and no result was wrong; the clean-field outputs already
+on disk were untouched. The cost was wall clock and a report that was not true
+when it was made.
+
+---
+
 ## 2026-09-11 — PROCESS FAILURE: git tree operations under live background work
 
 **Mine, not the code's. Two hours lost, nothing corrupted.**

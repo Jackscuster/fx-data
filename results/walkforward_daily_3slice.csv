@@ -1,3 +1,9 @@
+# FIELD CONTAMINATED -- gate 2 selected the 3,485 with sight of 2016-2020; structure comparisons valid, levels not.
+# l2tune.crosses_label() applies its bars to the STITCHED W2+W3 blind book and requires n_w3 >= MIN_TRADES_BLIND, so membership of this field depends on
+# performance in the very years this walk-forward trades. Every structure and every null draw is drawn from the same field, so relative
+# statements hold; no absolute level here is an out-of-sample number. See FIXES.md, fourth contamination.
+# HEADERED 2026-09-11 by audit: this run used the CONTAMINATED field (3,485; A-trend 1,804 / A-chop 678 / B-chop 1,003), NOT the clean field gate2_cleanfield.csv (4,807; 2,960 / 930 / 917).
+# The clean-field results carry the _cleanfield suffix. DO NOT QUOTE LEVELS FROM THIS FILE.
 ,team1|ALLPASS,team1|STABLE,team1|PICKED,team1|FAMILY_CAP,team2|ALLPASS,team2|STABLE,team2|PICKED,team2|FAMILY_CAP
 2016-01-04,-0.0030019221420494588,-0.003056289637990116,0.0,0.0,-0.004502883213074188,-0.004584434456985174,0.0,0.0
 2016-01-05,0.005658360089932286,0.004655085491931471,-0.004259934384330563,0.0,0.008487540134898428,0.006982628237897207,-0.006389901576495845,0.0

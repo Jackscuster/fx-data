@@ -63,3 +63,59 @@ assert_no_chain() {
     exit 4
   fi
 }
+
+# ---------------------------------------------------------------- FIELD GUARD
+#   assert_field <field.csv> <expected_total> <slice=count> [slice=count ...]
+#
+# THE FIELD IS THE ONE THING A RUN CANNOT RECOVER FROM GETTING WRONG. Every
+# other mistake shows up as an error; the wrong field produces a complete,
+# plausible, correctly-formatted table of results for a population nobody
+# chose. On 2026-09-11 a walk-forward's member counts were read from a stale
+# log belonging to a different run six hours earlier and reported as that
+# run's field.
+#
+# This checks the FILE, before the chain spends a minute. l2walkfwd.load_field
+# checks again after loading, against the same file. Both must agree.
+assert_field() {
+  local ff="$1"; shift
+  local want_total="$1"; shift
+  if [ ! -f "$ff" ]; then
+    echo "!! HALT: field file does not exist: $ff"; exit 5
+  fi
+  FIELD_FILE="$ff" WANT_TOTAL="$want_total" WANT_SLICES="$*" \
+  python3 - <<'PYF' || exit 5
+import os, sys, collections, pandas as pd
+ff = os.environ['FIELD_FILE']
+want_total = int(os.environ['WANT_TOTAL'])
+pairs = [x for x in os.environ['WANT_SLICES'].split() if x]
+d = pd.read_csv(ff, low_memory=False)
+if 'sid' not in d.columns:
+    print('!! HALT: %s has no sid column' % ff); sys.exit(1)
+if d.sid.duplicated().any():
+    print('!! HALT: %s has %d duplicate sids' % (ff, int(d.sid.duplicated().sum())))
+    sys.exit(1)
+def lab(s):
+    p = str(s).split('|')
+    return p[0] if p[0] != 'B' else 'B-' + p[1]
+got = collections.Counter(lab(s) for s in d.sid)
+print('   field file %s: %d sids  %s'
+      % (os.path.basename(ff), len(d),
+         '  '.join('%s=%d' % (k, got[k]) for k in sorted(got))))
+bad = []
+if len(d) != want_total:
+    bad.append('total %d, expected %d' % (len(d), want_total))
+for p in pairs:
+    k, _, v = p.partition('=')
+    if got.get(k, 0) != int(v):
+        bad.append('%s %d, expected %s' % (k, got.get(k, 0), v))
+if bad:
+    print('!! HALT: field file is not the field this chain was written for:')
+    for b in bad:
+        print('!!   %s' % b)
+    print('!! Fix the field file or the chain, and do not run on a field')
+    print('!! nobody chose. THE WRONG FIELD PRODUCES A COMPLETE, PLAUSIBLE TABLE.')
+    sys.exit(1)
+print('   pre-flight ok: field %s is %d (%s)'
+      % (os.path.basename(ff), want_total, ' '.join(pairs)))
+PYF
+}

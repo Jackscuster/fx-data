@@ -1,0 +1,55 @@
+slices: ('A-trend', 'A-chop', 'B-chop')
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+field: 3485 strategies
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+  team1  ALLPASS                median   2.274%  worst   0.915%  maxDD  3.32%  PF 1.22  members 620/575
+  team1  SLICE_BALANCED         median  -0.221%  worst  -1.790%  maxDD  3.25%  PF 0.96  members 620/575
+  team1  PER_SLICE_CUT          median   3.898%  worst   1.715%  maxDD  2.51%  PF 1.32  members 168/129
+  team1  NO_CUT                 median   9.069%  worst   7.746%  maxDD  1.40%  PF 1.88  members 3485/3485
+  team1  NO_CUT_SLICE_BALANCED  median  -0.374%  worst  -0.726%  maxDD  1.56%  PF 1.00  members 3485/3485
+  team2  ALLPASS                median   3.412%  worst   1.372%  maxDD  4.97%  PF 1.22  members 620/575
+  team2  SLICE_BALANCED         median  -0.332%  worst  -2.685%  maxDD  4.88%  PF 0.96  members 620/575
+  team2  PER_SLICE_CUT          median   5.847%  worst   2.572%  maxDD  3.76%  PF 1.32  members 168/129
+  team2  NO_CUT                 median  13.603%  worst  11.619%  maxDD  2.09%  PF 1.88  members 3485/3485
+  team2  NO_CUT_SLICE_BALANCED  median  -0.560%  worst  -1.088%  maxDD  2.34%  PF 1.00  members 3485/3485
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  team1 controls in 27.8 min
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-trend  1804 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  A-chop    678 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1
+  B-chop   1003 strategies with ip1

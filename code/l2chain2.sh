@@ -70,10 +70,10 @@ T0=$(date +%s); nice -n 19 /usr/bin/python3 code/l2cut.py --settings adopted >> 
 check cut --since "$T0"
 say "3/5 team builder, both teams"
 T0=$(date +%s)
-TEAM_LABEL=_W3ONLY_ADOPTED TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2team.py >> "$LOG" 2>&1 || { say "!!! team FAILED"; exit 1; }
+TEAM_LABEL=_W3ONLY_ADOPTED TEAM_JOBS=9 nice -n 19 /usr/bin/python3 code/l2team.py >> "$LOG" 2>&1 || { say "!!! team FAILED"; exit 1; }
 check team --label _W3ONLY_ADOPTED --since "$T0"
 T0=$(date +%s)
-TEAM_JOBS=6 nice -n 19 /usr/bin/python3 code/l2teamkpi.py --label _W3ONLY_ADOPTED >> "$LOG" 2>&1 || { say "!!! kpi FAILED"; exit 1; }
+TEAM_JOBS=9 nice -n 19 /usr/bin/python3 code/l2teamkpi.py --label _W3ONLY_ADOPTED >> "$LOG" 2>&1 || { say "!!! kpi FAILED"; exit 1; }
 check teamkpi --label _W3ONLY_ADOPTED --since "$T0"
 say "4/5 agreement study"
 T0=$(date +%s)
