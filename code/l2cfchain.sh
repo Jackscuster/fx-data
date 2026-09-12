@@ -100,10 +100,15 @@ print(b // 2**30)")
 budget_gb=$(( ram_gb * 6 / 10 ))
 cap(){  # cap <per-worker GB, may be fractional> -> workers
   local w; w=$(/usr/bin/env python3 -c "import math; print(max(1, min($JOBS, int($budget_gb / $1))))"); echo "$w"; }
-ENGINE_JOBS=$(cap 0.5)    # engine workers: bars + one strategy's trades
-NULLID_JOBS=$(cap 1.5)    # _init_null: 1.0 GB tables + the walk's book
-NULLRE_JOBS=$(cap 2.5)    # _init_rand: 1.3 GB init, 2.0 GB peak per draw (measured)
-SIZE_JOBS=$(cap 1.5)      # _init_size: as _init_null
+# Per-worker GB, overridable per run (NULLID_GB=3 ...). The defaults are the
+# three-slice measurements (4,807 strategies, 1,094-passer book). The book is
+# what scales: on the four-slice field (8,235; 2,323 passers) six identity-null
+# workers at the 1.5 GB budget drove the Mac under 3 GB free at spawn and the
+# guard held the stage paused for 73 minutes. Budget 3 GB there.
+ENGINE_JOBS=$(cap "${ENGINE_GB:-0.5}")   # engine workers: bars + one strategy's trades
+NULLID_JOBS=$(cap "${NULLID_GB:-1.5}")   # _init_null: 1.0 GB tables + the walk's book
+NULLRE_JOBS=$(cap "${NULLRE_GB:-2.5}")   # _init_rand: 1.3 GB init, 2.0 GB peak per draw (measured)
+SIZE_JOBS=$(cap "${SIZE_GB:-1.5}")       # _init_size: as _init_null
 say "=== PRE-FLIGHT === ${ram_gb} GB RAM, ${budget_gb} GB budget: engine=$ENGINE_JOBS nullid=$NULLID_JOBS nullre=$NULLRE_JOBS size=$SIZE_JOBS (--jobs $JOBS)  field=$FIELD suffix=$SUF"
 if ! /usr/bin/env python3 code/l2nosilence.py 2>&1 | tee -a "$LOG" | tail -1 | grep -q "NO SILENCED ERRORS"; then
   say "!! HALT: silenced errors present"; exit 3
@@ -164,7 +169,7 @@ run(){
         --jobs "$jobs" --slices "$SLICES" --suffix "$SUF" --field-file "$FIELD" \
         >> "$LOG" 2>&1 &
   local py=$!
-  bash code/l2memguard.sh "$py" 3 4 5 >> "$LOG" 2>&1 &
+  bash code/l2memguard.sh "$py" 3 4 5 900 >> "$LOG" 2>&1 &
   local guard=$!
   if ! wait "$py"; then
     say "!!! CHAIN HALTED at $name"; echo "$name" > results/CHAIN_HALT.marker; wait "$guard"; exit 1
@@ -185,7 +190,7 @@ want ctrl     && run ctrl    "$JOBS"        --stage ctrl
 if want perslice; then
   t0=$(date +%s); say "--- perslice ---"
   nice -n 19 /usr/bin/env python3 code/l2cfperslice.py --suffix "$SUF" --field-file "$FIELD" --slices "$SLICES" >> "$LOG" 2>&1 &
-  py=$!; bash code/l2memguard.sh "$py" 3 4 5 >> "$LOG" 2>&1 & guard=$!
+  py=$!; bash code/l2memguard.sh "$py" 3 4 5 900 >> "$LOG" 2>&1 & guard=$!
   if ! wait "$py"; then
     say "!!! CHAIN HALTED at perslice"; echo perslice > results/CHAIN_HALT.marker; wait "$guard"; exit 1
   fi
