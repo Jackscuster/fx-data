@@ -44,6 +44,9 @@ def main():
     D = rd('walkforward_daily_3slice')
     NI = rd('walkforward_null_identity_summary_3slice', need=False)
     NR = rd('walkforward_null_randomentry_summary_3slice', need=False)
+    NRN = rd('walkforward_null_randomentry_nocut_summary_3slice', need=False)
+    if NRN is not None:
+        NR = NRN if NR is None else pd.concat([NR, NRN], ignore_index=True)
     PS = rd('walkforward_perslice_3slice', need=False)
 
     frames = [S] + ([C] if C is not None else [])

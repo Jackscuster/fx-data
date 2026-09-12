@@ -325,7 +325,10 @@ def main():
     ap.add_argument('--n-rand', type=int, default=N_RAND)
     ap.add_argument('--suffix', default='')
     ap.add_argument('--field-file', default='')
-    ap.add_argument('--structures', default=','.join(STRUCTURES))
+    ap.add_argument('--structures', default=','.join(DEFAULT_STRUCTURES))
+    ap.add_argument('--nocut', action='store_true',
+                    help='nullre: null-test the UNCUT book -- NO_CUT and '
+                         'NO_CUT_SLICE_BALANCED -- instead of the cut ALLPASS')
     a = ap.parse_args()
     S.load_costs()
     sl = tuple(x for x in a.slices.split(',') if x)
@@ -350,7 +353,7 @@ def main():
     if a.stage == 'engine':
         stage_engine(F, a.jobs)
     elif a.stage == 'nullre':
-        stage_null_randomentry(a.jobs, a.n_null)
+        stage_null_randomentry(a.jobs, a.n_null, nocut=a.nocut)
     elif a.stage == 'nullid':
         stage_null_identity(a.jobs, a.n_null,
                             [x for x in a.structures.split(',') if x])
@@ -803,7 +806,13 @@ def pick_slice_balanced(P, **k):
 # identity null and the team-size sweep all run. SLICE_BALANCED is a control,
 # registered by stage_controls() for the duration of that stage only.
 STRUCTURES = {'ALLPASS': pick_allpass, 'STABLE': pick_stable,
-              'PICKED': pick_greedy, 'FAMILY_CAP': pick_familycap}
+              'PICKED': pick_greedy, 'FAMILY_CAP': pick_familycap,
+              'SLICE_BALANCED': pick_slice_balanced}
+# What --structures means when not given. SLICE_BALANCED is a control and is
+# never in the default; it is reachable by name, from --stage ctrl and from
+# --stage nullre --nocut, both of which need it inside spawned workers -- which
+# is why it lives in the dict and not in a stage-local registration.
+DEFAULT_STRUCTURES = ('ALLPASS', 'STABLE', 'PICKED', 'FAMILY_CAP')
 
 
 # ----------------------------------------------------------------- the walk
@@ -880,7 +889,7 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
     identity for the real walk, a permutation for a null draw. Every decision
     at a step uses only that step's build years.
     """
-    structures = structures or list(STRUCTURES)
+    structures = structures or list(DEFAULT_STRUCTURES)
     inv = {v: k for k, v in ymap.items()}
     out = {s: dict(daily=[], days=[], members=[], curves=[], cuts=[]) for s in structures}
     for si, st in enumerate(STEPS):
@@ -1158,7 +1167,6 @@ def stage_controls(jobs):
     or a top-N -- and guessing which would produce an authoritative-looking
     number from an invented definition.
     """
-    STRUCTURES['SLICE_BALANCED'] = pick_slice_balanced   # control, this stage only
     T = pd.read_pickle(TRADES_F); M = pd.read_pickle(MARKS_F)
     print('  loaded %d trades, %d marks, %d strategies'
           % (len(T), len(M), T.sid.nunique()), flush=True)
@@ -1786,8 +1794,17 @@ def _init_rand():
           flush=True)
 
 
+# THE TWO BOOKS THE RANDOM-ENTRY NULL CAN TEST. The cut book (ALLPASS) and the
+# uncut book -- NO_CUT and its slice-balanced twin -- which after 12 Sep IS the
+# book, and had never been null-tested. Same synthetic marks, same walk; the only
+# difference is whether gate 3's bars are applied.
+RAND_BOOKS = {False: {'ALLPASS': 'ALLPASS'},
+              True:  {'ALLPASS': 'NO_CUT', 'SLICE_BALANCED': 'NO_CUT_SLICE_BALANCED'}}
+
+
 def _rand_one(args):
-    seed, dipb, dayb = args
+    seed, dipb, dayb, nocut = (args + (False,))[:4]
+    names = RAND_BOOKS[nocut]
     try:
         rng = np.random.default_rng(seed)
         M = _RG['M']; T = _RG['T']; TY = _RG['TY']
@@ -1798,61 +1815,66 @@ def _rand_one(args):
         MM = pd.concat(parts, ignore_index=True)
         MM['sid'] = MM.sid.astype(str); MM['pair'] = MM.pair.astype(str)
         MM['day'] = pd.to_datetime(MM.day)
-        r = walk(T, TY, MM, {y: y for y in YEARS}, dipb, dayb, ['ALLPASS'])
-        return (r['ALLPASS'][0]['median_year_pct'],
-                r['ALLPASS'][0]['total_return_pct'])
+        r = walk(T, TY, MM, {y: y for y in YEARS}, dipb, dayb, list(names), nocut=nocut)
+        return {names[s]: (r[s][0]['median_year_pct'], r[s][0]['total_return_pct'])
+                for s in names}
     except Exception as e:
-        return ('_err', type(e).__name__ + ': ' + str(e)[:90])
+        return {'_err': type(e).__name__ + ': ' + str(e)[:90]}
 
 
-def stage_null_randomentry(jobs, n_null):
+def stage_null_randomentry(jobs, n_null, nocut=False):
     import multiprocessing as mp
+    names = RAND_BOOKS[nocut]
+    tag = '_nocut' if nocut else ''
     _init_rand()
     print('  recovered unit scale for %d trades' % len(_RG['K']), flush=True)
     real = {}
     for bt, dipb, dayb in BUDGETS:
         R = walk(_RG['T'], _RG['TY'], _RG['M'], {y: y for y in YEARS}, dipb, dayb,
-                 ['ALLPASS'])
-        real[bt] = R['ALLPASS'][0]
+                 list(names), nocut=nocut)
+        for s, lab in names.items():
+            real[(bt, lab)] = R[s][0]
+        print('  real %s: %s' % (bt, '  '.join('%s %.3f%%' % (lab, real[(bt, lab)]['median_year_pct'])
+                                              for lab in names.values())), flush=True)
     rows = []
     for bt, dipb, dayb in BUDGETS:
         t0 = time.time()
-        args = [(20260912 + i, dipb, dayb) for i in range(n_null)]
+        args = [(20260912 + i, dipb, dayb, nocut) for i in range(n_null)]
         with mp.Pool(jobs, initializer=_init_rand) as pool:
             got = pool.map(_rand_one, args, chunksize=1)
-        errs = [g[1] for g in got if g[0] == '_err']
+        errs = [g['_err'] for g in got if '_err' in g]
         for i, g in enumerate(got):
-            if g[0] == '_err':
+            if '_err' in g:
                 continue
-            rows.append(dict(budget=bt, structure='ALLPASS', draw=i,
-                             median_year_pct=g[0], total_return_pct=g[1]))
+            for lab, (med, tot) in g.items():
+                rows.append(dict(budget=bt, structure=lab, draw=i,
+                                 median_year_pct=med, total_return_pct=tot))
         pd.DataFrame(rows).to_csv(
-            OUT('walkforward_null_randomentry_3slice.csv'),
-            index=False)
+            OUT('walkforward_null_randomentry%s_3slice.csv' % tag), index=False)
         if errs:
             print('  WARNING: %d of %d random-entry draws failed: %s'
                   % (len(errs), len(got), errs[0]), flush=True)
-        print('  random-entry null %s: %d draws in %.1f min'
-              % (bt, len(got) - len(errs), (time.time() - t0) / 60), flush=True)
+        print('  random-entry null%s %s: %d draws in %.1f min'
+              % (tag, bt, len(got) - len(errs), (time.time() - t0) / 60), flush=True)
     N = pd.DataFrame(rows)
     summ = []
-    for bt, g in N.groupby('budget'):
+    for (bt, lab), g in N.groupby(['budget', 'structure']):
         v = g.median_year_pct.values
-        rl = real[bt]['median_year_pct']
-        summ.append(dict(budget=bt, structure='ALLPASS', real_median_year=rl,
+        rl = real[(bt, lab)]['median_year_pct']
+        summ.append(dict(budget=bt, structure=lab, real_median_year=rl,
                          n=len(v), null_mean=float(v.mean()),
                          null_p95=float(np.percentile(v, 95)),
                          null_max=float(v.max()),
                          pctile_of_real=float(100.0 * (v < rl).mean()),
                          p_value=float((v >= rl).mean()),
                          p_resolution=round(1.0 / len(v), 3)))
-        print('  %-6s ALLPASS real %7.3f%%  random-entry mean %7.3f%%  p95 %7.3f%%  '
-              'max %7.3f%%  p=%.3f' % (bt, rl, v.mean(), np.percentile(v, 95),
+        print('  %-6s %-22s real %7.3f%%  random-entry mean %7.3f%%  p95 %7.3f%%  '
+              'max %7.3f%%  p=%.3f' % (bt, lab, rl, v.mean(), np.percentile(v, 95),
                                        v.max(), (v >= rl).mean()), flush=True)
     pd.DataFrame(summ).to_csv(
-        OUT('walkforward_null_randomentry_summary_3slice.csv'),
-        index=False)
+        OUT('walkforward_null_randomentry%s_summary_3slice.csv' % tag), index=False)
     return pd.DataFrame(summ)
+
 
 if __name__ == '__main__':
     main()
