@@ -76,5 +76,13 @@ results/allpass_marks.pkl
 results/allpass_holdout_marks.pkl
 
 # walk-forward engine caches: 210 MB, rebuilt by l2walkfwd.py --stage engine (32 min)
-results/wf_marks.pkl
-results/wf_trades.pkl
+results/wf_marks*.pkl
+results/wf_trades*.pkl
+
+# random-entry null unit-scale cache, rebuilt by the parent of --stage nullre
+results/wf_randk*.pkl
+
+# clean-field chain scratch: dry-run outputs (--limit) and live pidfiles
+results/*_cleanfield_dry*
+results/gate2_cleanfield_dry*.csv
+results/chain_pids/

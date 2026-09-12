@@ -91,33 +91,99 @@ def recovered_ip1():
     return out
 
 
-def load_field(slices, field_sids=None):
-    """field_sids replaces gate 2's crosses_label entirely.
+def field_label(sid):
+    """The slice label a sid belongs to. `src_label` already carries the slice
+    for mode A (`A-trend`), but mode B's is bare `B` -- so B-chop and B-trend
+    are only separable via the sid's second field. Counting on `src_label`
+    alone merges them and a per-slice assert built on it cannot see a whole
+    slice go missing."""
+    p = str(sid).split('|')
+    return p[0] if p[0] != 'B' else 'B-' + p[1]
 
-    crosses_label IS the contamination -- it was decided on the stitched W2+W3
-    book. Filtering by it first and then intersecting with a clean field file
-    keeps only strategies BOTH agree on, which silently drops every one of the
-    2,510 that the clean re-label admits. Measured: 1,780 of 4,807 survived that
-    intersection, so the "clean" run would have been three-fifths of a clean
-    field with gate 2's peek still deciding membership.
+
+def field_counts(sids, slices):
+    """Per-slice counts restricted to the requested slices, plus anything the
+    file holds outside them (reported, never silently dropped)."""
+    got = {lab: 0 for lab in slices}
+    extra = {}
+    for sid in sids:
+        lab = field_label(sid)
+        if lab in got:
+            got[lab] += 1
+        else:
+            extra[lab] = extra.get(lab, 0) + 1
+    return got, extra
+
+
+def load_field(slices, field_file):
+    """THE FIELD FILE IS MANDATORY. It is the ONLY source of membership.
+
+    field_sids replaces gate 2's crosses_label entirely. crosses_label IS the
+    contamination -- it was decided on the stitched W2+W3 book. Filtering by it
+    first and then intersecting with a clean field file keeps only strategies
+    BOTH agree on, which silently drops every one of the 2,510 that the clean
+    re-label admits. Measured: 1,780 of 4,807 survived that intersection, so
+    the "clean" run would have been three-fifths of a clean field with gate 2's
+    peek still deciding membership.
+
+    THERE IS NO FALLBACK, BY DESIGN. The old signature was
+    `load_field(slices, field_sids=None)` and None meant `crosses_label == True`
+    -- the contaminated field. A caller that simply forgot the argument got a
+    different and worse field with no warning, and one did: `_init_rand()`
+    called `load_field(SLICES3)` with no field file, so EVERY random-entry null
+    was built on the contaminated field even when the run that spawned it was
+    launched with --field-file. A default that silently changes the population
+    is not a default, it is a trapdoor. Missing argument now halts.
+
+    The count is asserted against the file, not trusted. The first line of the
+    log names the file and the per-slice counts so a wrong field is visible in
+    the first second of a 30-minute run rather than in its results.
     """
+    if not field_file:
+        raise SystemExit(
+            'load_field: field_file is REQUIRED and was not given.\n'
+            '  There is no crosses_label fallback -- that path is the '
+            'CONTAMINATED field.\n'
+            '  Pass --field-file results/gate2_cleanfield.csv (or the field '
+            'you actually mean).')
+    if not os.path.exists(field_file):
+        raise SystemExit('load_field: field file does not exist: %s' % field_file)
+    FF = pd.read_csv(field_file, low_memory=False)
+    if 'sid' not in FF.columns:
+        raise SystemExit('load_field: %s has no sid column' % field_file)
+    field_sids = set(FF.sid)
+    slices = tuple(slices)
+    exp, extra = field_counts(field_sids, slices)
+    exp_tot = sum(exp.values())
+    # FIRST LINE OF EVERY WALK-FORWARD LOG NAMES THE FIELD. On 11 Sep a run was
+    # reported against the wrong member counts because the only record of the
+    # field was a stale log from an earlier run six hours before.
+    print('FIELD FILE %s: %d sids in file, %d in slices (%s)'
+          % (os.path.abspath(field_file), len(field_sids), exp_tot,
+             '  '.join('%s=%d' % (lab, exp[lab]) for lab in slices)),
+          flush=True)
+    if extra:
+        print('  file also holds %d sids OUTSIDE the requested slices: %s'
+              % (sum(extra.values()),
+                 '  '.join('%s=%d' % (k, extra[k]) for k in sorted(extra))),
+              flush=True)
+    if exp_tot == 0:
+        raise SystemExit(
+            'load_field: field file %s holds NO sids in slices %s'
+            % (field_file, ','.join(slices)))
+
     REC = recovered_ip1()
     F = []
+    lost = {}
     for lab in slices:
         f, mode, sl = SRC[lab]
         d = pd.read_csv(os.path.join(ROOTOUT, f), low_memory=False)
         d = d[(d.slice == sl) & d.ip2.notna()].copy()
-        d['sid'] = (d.get('src_label', pd.Series(index=d.index, dtype=object))
-                    .fillna('') if False else None)
-        d = d.drop(columns=['sid'])
-        if field_sids is None:
-            d = d[d.crosses_label == True].copy()
         d['src_mode'] = mode
         d['src_label'] = mode if mode == 'B' else '%s-%s' % (mode, sl)
         d['sid'] = (d.src_label + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|'
                     + d.vol + '|' + d.base)
-        if field_sids is not None:
-            d = d[d.sid.isin(field_sids)].copy()
+        d = d[d.sid.isin(field_sids)].copy()
         if 'ip1' not in d.columns:
             d['ip1'] = np.nan; d['risk1'] = np.nan
         miss = d.ip1.isna()
@@ -129,11 +195,34 @@ def load_field(slices, field_sids=None):
         n0 = len(d)
         d = d[d.ip1.notna() & d.risk1.notna()]
         if len(d) < n0:
+            lost[lab] = lost.get(lab, 0) + (n0 - len(d))
             print('  %s: %d of %d dropped, no ip1 banked' % (lab, n0 - len(d), n0),
                   flush=True)
         F.append(d)
-        print('  %-8s %4d strategies with ip1' % (lab, len(d)), flush=True)
+        print('  %-8s %4d strategies with ip1 (file says %d)'
+              % (lab, len(d), exp[lab]), flush=True)
     D = pd.concat(F, ignore_index=True).drop_duplicates('sid').reset_index(drop=True)
+
+    # ---- THE ASSERT. Halt, never warn-and-continue. A field that is short by
+    # a slice still produces a full-looking table of results, and that table is
+    # indistinguishable from a correct one after the fact.
+    got, _ = field_counts(D.sid, slices)
+    bad = [lab for lab in slices if got[lab] != exp[lab]]
+    if bad or len(D) != exp_tot:
+        msg = ['load_field: FIELD MISMATCH -- the loaded field is not the file.',
+               '  field file : %s' % os.path.abspath(field_file),
+               '  expected   : %d  (%s)'
+               % (exp_tot, '  '.join('%s=%d' % (l, exp[l]) for l in slices)),
+               '  loaded     : %d  (%s)'
+               % (len(D), '  '.join('%s=%d' % (l, got[l]) for l in slices))]
+        if lost:
+            msg.append('  dropped for no banked ip1: %s'
+                       % '  '.join('%s=%d' % (k, v) for k, v in sorted(lost.items())))
+            msg.append('  -> recover ip1 for those sids, or pass a field file '
+                       'that does not contain them. Do NOT proceed short.')
+        raise SystemExit('\n'.join(msg))
+    print('  FIELD OK: %d strategies, per-slice counts match %s'
+          % (len(D), os.path.basename(field_file)), flush=True)
     return D
 
 
@@ -240,13 +329,19 @@ def main():
     S.load_costs()
     sl = tuple(x for x in a.slices.split(',') if x)
     print('slices: %s' % (sl,), flush=True)
-    fs = None
-    if a.field_file:
-        fs = set(pd.read_csv(a.field_file, low_memory=False).sid)
-        print('field file %s: %d sids' % (os.path.basename(a.field_file), len(fs)),
-              flush=True)
-    F = load_field(sl, field_sids=fs)
+    if not a.field_file:
+        raise SystemExit(
+            'l2walkfwd: --field-file is REQUIRED.\n'
+            '  Running without it used to mean the crosses_label field, which '
+            'is the CONTAMINATED one.\n'
+            '  e.g. --field-file results/gate2_cleanfield.csv')
+    # Pool initializers take no arguments, so workers read the field file from
+    # the environment. Set it BEFORE any pool is built.
+    os.environ['WF_FIELD_FILE'] = os.path.abspath(a.field_file)
+    os.environ['WF_SLICES'] = ','.join(sl)
+    F = load_field(sl, a.field_file)
     print('field: %d strategies' % len(F), flush=True)
+    os.environ['WF_EXPECT_SIDS'] = str(int(F.sid.nunique()))
     global TAG, TRADES_F, MARKS_F
     TAG = a.suffix
     os.environ['WF_TAG'] = TAG
@@ -262,6 +357,8 @@ def main():
         stage_sizing(a.jobs)
     elif a.stage == 'size':
         stage_size(a.jobs, a.n_null, a.n_rand)
+    elif a.stage == 'ctrl':
+        stage_controls(a.jobs)
     elif a.stage == 'walk':
         stage_walk(a.jobs, a.n_null, [x for x in a.structures.split(',') if x])
 
@@ -334,15 +431,22 @@ def metrics(T, TY, years):
     return out.reset_index()
 
 
-def cut(T, TY, years, perm=None):
+def cut(T, TY, years, perm=None, apply_bars=True):
     """perm maps sid -> the sid whose build-year metrics it is judged on. The
     IDENTITY NULL: a strategy passes on someone else's build record and then
-    trades its own. Applied to the metrics, never to the marks."""
+    trades its own. Applied to the metrics, never to the marks.
+
+    apply_bars=False is the NO_CUT control: the same frame, same columns, same
+    build years, with gate 3's bars simply not applied. It is the honest
+    counterfactual for "what does the cut buy" -- the cut is the ONLY thing that
+    differs between it and ALLPASS."""
     D = metrics(T, TY, years)
     if not len(D):
         return D, {}
     if perm is not None:
         D = D.assign(sid=D.sid.map(perm)).dropna(subset=['sid'])
+    if not apply_bars:
+        return D.reset_index(drop=True), {}
     ok = pd.Series(True, index=D.index); fails = {}
     for k, v in BARS.items():
         good = (D[k] <= v) if k == 'max_dd_frac' else (D[k] >= v)
@@ -667,6 +771,36 @@ def pick_greedy(P, B=None, build=None, curve=None, dipb=3.6, dayb=3.6, log=None,
     return team
 
 
+def pick_slice_balanced(P, **k):
+    """THE SAME ROSTER AS ALLPASS, WEIGHTED SO EACH SLICE COUNTS EQUALLY.
+
+    Not a membership control -- a WEIGHTING control. ALLPASS gives every member
+    one unit, so a slice with 2,960 of the 4,807 members decides the book and
+    the other two are rounding. This gives each SLICE one unit, split equally
+    among its members, which answers a different question: is the result a
+    property of the field, or of the one slice that happens to dominate it.
+
+    Returns (members, weights). A structure may return either a bare list --
+    equal weight, the old behaviour -- or this pair.
+    """
+    mem = list(P.sid)
+    per = {}
+    for sid in mem:
+        lab = field_label(sid)
+        per[lab] = per.get(lab, 0) + 1
+    n_sl = len(per)
+    # each slice gets 1/n_sl of the book, split equally inside the slice; scaled
+    # by len(mem)/n_sl so the TOTAL weight matches ALLPASS's and the two are
+    # compared at the same gross size rather than at different ones.
+    tot = float(len(mem))
+    w = {sid: (tot / n_sl) / per[field_label(sid)] for sid in mem}
+    return mem, w
+
+
+# THE FOUR, AND ONLY THE FOUR. main() defaults --structures to the keys of
+# this dict, so a fifth key here silently changes what the walk stage, the
+# identity null and the team-size sweep all run. SLICE_BALANCED is a control,
+# registered by stage_controls() for the duration of that stage only.
 STRUCTURES = {'ALLPASS': pick_allpass, 'STABLE': pick_stable,
               'PICKED': pick_greedy, 'FAMILY_CAP': pick_familycap}
 
@@ -740,7 +874,7 @@ def diagnostics(B, sgn, sz, raw_sz, gross, per_unit, tsrc, C):
 
 
 def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
-         use_dip=True, perm=None):
+         use_dip=True, perm=None, nocut=False):
     """One complete walk. `ymap` maps a calendar year to the year it PLAYS --
     identity for the real walk, a permutation for a null draw. Every decision
     at a step uses only that step's build years.
@@ -752,7 +886,7 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
         b0, b1 = st['build']; t0, t1 = st['trade']
         bsrc = [inv[y] for y in range(b0, b1 + 1)]
         tsrc = [inv[y] for y in range(t0, t1 + 1)]
-        P, fails = cut(T, TY, bsrc, perm=perm)
+        P, fails = cut(T, TY, bsrc, perm=perm, apply_bars=not nocut)
         if not len(P):
             raise RuntimeError('step %d: nothing passed the cut' % (si + 1))
         allp = list(P.sid)
@@ -767,13 +901,18 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
         for s in structures:
             mem = STRUCTURES[s](P, B=B, T=T, TY=TY, build=tuple(bsrc), curve=curve,
                                 dipb=dipb, dayb=dayb, perm=perm)
+            # A structure returns a bare member list (equal weight) or a
+            # (members, weights) pair. Weighting controls need the second form.
+            wts = None
+            if isinstance(mem, tuple):
+                mem, wts = mem
             mem = [m for m in mem if m in set(B.members)]
             if len(mem) < 2:
                 raise RuntimeError('step %d %s: %d members' % (si + 1, s, len(mem)))
             idx = {m: i for i, m in enumerate(B.members)}
             w = np.zeros(len(B.members), np.float32)
             for c in mem:
-                w[idx[c]] = 1.0
+                w[idx[c]] = 1.0 if wts is None else np.float32(wts[c])
             # SIZE IS DECIDED ON THE BUILD YEARS AND NOT TOUCHED AGAIN.
             d0, den, _, _, _, _ = B.series(w, curve)
             db = d0[ybuild]
@@ -836,12 +975,48 @@ def ymaps(n, seed=20260910):
 _NG = {}
 
 
+def _worker_tables():
+    """THE ONE PLACE A POOL WORKER RESOLVES ITS PICKLES.
+
+    macOS multiprocessing SPAWNS: a worker re-imports this module from scratch,
+    so TRADES_F / MARKS_F are the module DEFAULTS -- results/wf_trades.pkl, the
+    unsuffixed file -- not whatever main() set in the parent. _init_size and
+    _init_rand each re-derived the path from WF_TAG; _init_null did not, and so
+    on 2026-09-11 every identity-null draw of the CLEAN-field run was drawn
+    from the CONTAMINATED 3,485 field while the real walk it was compared to
+    used the clean 4,807. The summary said p=1.000 with mean_members 620/575 --
+    the contaminated field's exact passer count, sitting next to a clean real.
+
+    Every worker now resolves through here, and PROVES it loaded the same field
+    as the parent: main() exports WF_EXPECT_SIDS and the worker halts if its
+    pickle disagrees. A null drawn from a different population than the real
+    is not a null.
+    """
+    globals()['TAG'] = os.environ.get('WF_TAG', '')
+    globals()['TRADES_F'] = OUT('wf_trades.pkl')
+    globals()['MARKS_F'] = OUT('wf_marks.pkl')
+    T = pd.read_pickle(TRADES_F); M = pd.read_pickle(MARKS_F)
+    want = os.environ.get('WF_EXPECT_SIDS', '')
+    n = int(T.sid.nunique())
+    if want and n != int(want):
+        # A Pool RESPAWNS a worker whose initializer dies, forever, silently.
+        # So this cannot merely raise: it says why, takes the parent stage
+        # down with it, and exits. A halt, not a hang.
+        import signal
+        msg = ('!! worker loaded %s with %d sids but the parent field has %s -- '
+               'the null would be drawn from a different population than the real'
+               % (TRADES_F, n, want))
+        print(msg, flush=True); print(msg, file=sys.stderr, flush=True)
+        os.kill(os.getppid(), signal.SIGTERM)
+        os._exit(3)
+    return T, M
+
+
 def _init_null():
     """Each worker loads the tables ONCE. Passing them per task would pickle
     177 MB of marks for every draw."""
     S.load_costs()
-    _NG['T'] = pd.read_pickle(TRADES_F)
-    _NG['M'] = pd.read_pickle(MARKS_F)
+    _NG['T'], _NG['M'] = _worker_tables()
     _NG['TY'] = trade_year_sums(_NG['M'])
 
 
@@ -954,6 +1129,77 @@ def stage_walk(jobs, n_null, structures):
     return O
 
 
+def stage_controls(jobs):
+    """THE SLICE CONTROLS. What does the gate-3 cut buy, and what does the
+    dominant slice buy?
+
+    Four books, two axes, one walk each:
+
+        ALLPASS                cut applied, one unit per member   (the result)
+        SLICE_BALANCED         cut applied, one unit per SLICE
+        NO_CUT                 no cut,      one unit per member
+        NO_CUT_SLICE_BALANCED  no cut,      one unit per SLICE
+
+    NO_CUT is the same walk with gate 3's bars not applied -- same field, same
+    build years, same sizing, same budgets. The cut is the only difference, so
+    the difference IS the cut.
+
+    RECONSTRUCTED 2026-09-11. The module that produced the earlier
+    walkforward_slicebalanced.csv / walkforward_nocut.csv is NOT in this repo --
+    it was lost with the 11 Sep `git stash -u`. These definitions are written
+    from what the labels can only mean plus the old run's member counts
+    (SLICE_BALANCED carried ALLPASS's exact member count, 620/575, so it was a
+    weighting and not a membership change; NO_CUT_SLICE_BALANCED carried
+    NO_CUT's, 3485/3485). PER_SLICE_CUT IS DELIBERATELY ABSENT: gate 3's BARS
+    ARE ABSOLUTE, so "the cut, per slice" is arithmetically the same set as the
+    cut, yet the old run reported 168/129 against ALLPASS's 620/575. It
+    therefore did something the repo no longer records -- a per-slice quantile
+    or a top-N -- and guessing which would produce an authoritative-looking
+    number from an invented definition.
+    """
+    STRUCTURES['SLICE_BALANCED'] = pick_slice_balanced   # control, this stage only
+    T = pd.read_pickle(TRADES_F); M = pd.read_pickle(MARKS_F)
+    print('  loaded %d trades, %d marks, %d strategies'
+          % (len(T), len(M), T.sid.nunique()), flush=True)
+    TY = trade_year_sums(M)
+    ident = {y: y for y in YEARS}
+    rows, rosters = [], []
+    for nocut, names in ((False, {'ALLPASS': 'ALLPASS',
+                                  'SLICE_BALANCED': 'SLICE_BALANCED'}),
+                         (True,  {'ALLPASS': 'NO_CUT',
+                                  'SLICE_BALANCED': 'NO_CUT_SLICE_BALANCED'})):
+        for bt, dipb, dayb in BUDGETS:
+            t0 = time.time()
+            R = walk(T, TY, M, ident, dipb, dayb, list(names), nocut=nocut)
+            print('  %s walk %s in %.1f min'
+                  % ('NO_CUT' if nocut else 'CUT', bt, (time.time() - t0) / 60),
+                  flush=True)
+            for s, (k, cuts, x, dy) in R.items():
+                lab = names[s]
+                k.update(budget=bt, dip_budget=dipb, day_budget=dayb,
+                         structure=lab, cut_applied=(not nocut), kind='control')
+                rows.append(k)
+                for c in cuts:
+                    rosters.append(dict(budget=bt, structure=lab, step=c['step'],
+                                        passers=c['passers'], members=c['members'],
+                                        scale=c['scale'],
+                                        build_dip95_pct=c['build_dip95_pct'],
+                                        build_max_dd_pct=c['build_max_dd_pct'],
+                                        build_worst_day_pct=c['build_worst_day_pct']))
+                print('    %-6s %-22s median %7.3f%%  worst %7.3f%%  maxDD %5.2f%%  '
+                      'PF %.2f  members %d/%d'
+                      % (bt, lab, k['median_year_pct'], k['worst_year_pct'],
+                         k['max_dd_pct'], k['profit_factor'],
+                         k['members_step1'], k['members_step2']), flush=True)
+            pd.DataFrame(rows).to_csv(
+                OUT('walkforward_slicecontrols_3slice.csv'), index=False)
+    pd.DataFrame(rows).to_csv(
+        OUT('walkforward_slicecontrols_3slice.csv'), index=False)
+    pd.DataFrame(rosters).to_csv(
+        OUT('walkforward_slicecontrols_rosters_3slice.csv'), index=False)
+    return pd.DataFrame(rows)
+
+
 # ------------------------------------------------------------ TEAM-SIZE SWEEP
 COARSE = (10, 15, 20, 25, 30, 40, 50, 75, 100, 'ALL')
 N_RAND = 25
@@ -1047,10 +1293,7 @@ _SG = {}
 
 def _init_size():
     S.load_costs()
-    globals()['TRADES_F'] = OUT('wf_trades.pkl')
-    globals()['MARKS_F'] = OUT('wf_marks.pkl')
-    _SG['T'] = pd.read_pickle(TRADES_F)
-    _SG['M'] = pd.read_pickle(MARKS_F)
+    _SG['T'], _SG['M'] = _worker_tables()
     _SG['TY'] = trade_year_sums(_SG['M'])
 
 
@@ -1503,14 +1746,43 @@ _RG = {}
 
 
 def _init_rand():
+    """Each random-entry worker needs T, M, TY, and the per-trade unit scale K
+    with the bars BR.
+
+    WORKERS LOAD K AND BR FROM A PICKLE THE PARENT WROTE. THEY DO NOT REBUILD
+    THEM. Building K means load_field() -- which reads the full gate2_tuned
+    CSVs -- and recover_k() over 1.09M trades: a 6.9 GB transient per process,
+    against a 1.4 GB steady state. Under spawn every worker paid that transient
+    at the same moment; nine of them on a 16 GB Mac demanded ~70 GB, the
+    compressor thrashed, watchdogd starved, and the kernel panicked -- 23:33
+    and 11:45 on 11-12 Sep, both inside this stage. The parent builds K once,
+    writes wf_randk<TAG>.pkl, and points workers at it through WF_RANDK.
+    """
     S.load_costs()
-    globals()['TRADES_F'] = OUT('wf_trades.pkl')
-    globals()['MARKS_F'] = OUT('wf_marks.pkl')
-    _RG['T'] = pd.read_pickle(TRADES_F)
-    _RG['M'] = pd.read_pickle(MARKS_F)
+    _RG['T'], _RG['M'] = _worker_tables()
     _RG['TY'] = trade_year_sums(_RG['M'])
-    F = load_field(SLICES3)
+    rk = os.environ.get('WF_RANDK', '')
+    if rk:
+        if not os.path.exists(rk):
+            raise SystemExit('_init_rand: WF_RANDK points at a missing file: %s' % rk)
+        _RG['K'], _RG['BR'] = pd.read_pickle(rk)
+        return
+    # THE PARENT PATH. The random-entry null must use the same field as the
+    # run: this line was `load_field(SLICES3)` -- no field file, so the old None
+    # default sent every random-entry null to the contaminated crosses_label
+    # field regardless of what the run itself was launched with.
+    ff = os.environ.get('WF_FIELD_FILE', '')
+    if not ff:
+        raise SystemExit('_init_rand: WF_FIELD_FILE is not set -- refusing to '
+                         'guess the field for the random-entry null.')
+    sls = tuple(x for x in os.environ.get('WF_SLICES', ','.join(SLICES3)).split(',') if x)
+    F = load_field(sls, ff)
     _RG['K'], _RG['BR'] = recover_k(_RG['T'], _RG['M'], F)
+    rk = OUT('wf_randk.pkl')
+    pd.to_pickle((_RG['K'], _RG['BR']), rk)
+    os.environ['WF_RANDK'] = rk
+    print('  wrote %s for the workers (%.0f MB)' % (rk, os.path.getsize(rk) / 2**20),
+          flush=True)
 
 
 def _rand_one(args):
