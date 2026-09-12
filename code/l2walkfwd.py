@@ -76,16 +76,17 @@ MARKS_F = os.path.join(ROOTOUT, 'wf_marks.pkl')
 
 
 def recovered_ip1():
-    """B-trend's ip1, once the rented box has banked it. Absent until then."""
+    """B-trend's ip1, banked by the rented boxes. Every gate2_ip1_recovered*.csv:
+    the 3,266 crossers from cloud_ip1.sh (_s*.csv) AND the 13,165 candidates
+    from cloud_field.sh (_box*_s*.csv). The glob was `_s*` only, so the box
+    files were invisible: on 2026-09-12 the four-slice merge dropped all 14,815
+    B-trend candidates as "no ip1 banked" with every one of them on disk.
+
+    A file that cannot be read is an error, not a skip: the boxes append while
+    running, but by the time this is called they have pushed."""
     out = {}
-    for f in ([os.path.join(ROOTOUT, 'gate2_ip1_recovered.csv')] +
-              sorted(glob.glob(os.path.join(ROOTOUT, 'gate2_ip1_recovered_s*.csv')))):
-        if not os.path.exists(f):
-            continue
-        try:
-            d = pd.read_csv(f)
-        except Exception:
-            continue
+    for f in sorted(glob.glob(os.path.join(ROOTOUT, 'gate2_ip1_recovered*.csv'))):
+        d = pd.read_csv(f, low_memory=False)
         for r in d[d.sid != 'sid'].to_dict('records'):
             out[r['sid']] = r
     return out
