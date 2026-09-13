@@ -2,43 +2,84 @@
 
 ## READ THIS FIRST
 
-0. **THE CLEAN THREE-SLICE RESULT (12 Sep) — THE HONEST NUMBER.** Field
-   `gate2_cleanfield.csv`, 4,807 strategies chosen on W2 alone under `ip1`
-   (A-trend 2,960 / A-chop 930 / B-chop 917), walked forward 2016-2020, costs
-   charged, both nulls valid and on the right field. Full table:
-   `results/walkforward_report_3slice_cleanfield.csv`.
+0. **THE CLEAN-FIELD RESULT (12-13 Sep) — THE HONEST NUMBER, THREE SLICES AND
+   FOUR.** Fields chosen on W2 alone under `ip1`, walked forward 2016-2020,
+   costs charged, both nulls valid and drawn from the same field as the real.
+   Every cell below is team1 / team2 (3.6%/3.6% and 5.4%/3.6% budgets); members
+   are step 1 → step 2. Full tables: `results/walkforward_report_3slice_cleanfield.csv`
+   and `..._cleanfield_4slice.csv`.
 
-   | structure | members | median yr | worst yr | max DD | DIP95 | PF | Sortino | identity p | random-entry p |
+   **Three slices — `gate2_cleanfield.csv`, 4,807 (A-trend 2,960 / A-chop 930 / B-chop 917)**
+
+   | structure | members | median yr | worst yr | max DD | worst day | DIP95 | PF | Sortino | Calmar | identity p | random-entry p |
+   |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+   | NO_CUT | 4807→4807 | 5.02 / 7.53 | 4.59 / 6.89 | 2.01 / 3.02 | 0.56 / 0.83 | 3.09 / 4.63 | 1.51 | 3.90 | 14.5 | — | 0.000 (null max 0.00) |
+   | NO_CUT_SLICE_BALANCED | 4807→4807 | 5.82 / 8.72 | 4.96 / 7.45 | 2.26 / 3.40 | 0.69 / 1.03 | 3.48 / 5.22 | 1.53 | 4.02 | 15.5 | — | 0.000 (null max 0.00) |
+   | ALLPASS | 1094→1008 | 2.06 / 3.09 | 0.44 / 0.66 | 3.02 / 4.53 | 0.78 / 1.17 | 4.43 / 6.64 | 1.21 | 1.66 | 4.0 | 1.000 | 0.000 |
+   | STABLE | 823→19 | 0.94 / 1.41 | -4.52 / -6.78 | 5.48 / 8.22 | 0.44 / 0.66 | 5.98 / 8.97 | 0.99 | -0.05 | -0.0 | 1.000 | — |
+   | SLICE_BALANCED | 1094→1008 | 0.61 / 0.92 | -1.49 / -2.23 | 2.63 / 3.95 | 0.41 / 0.61 | 3.87 / 5.81 | 1.16 | 1.48 | 3.2 | — | — |
+   | PICKED | 14→16 | 0.09 / 0.13 | -2.28 / -3.42 | 6.25 / 9.38 | 1.56 / 2.34 | 10.04 / 15.06 | 1.11 | 0.92 | 1.9 | 0.960 | — |
+   | FAMILY_CAP | 4→5 | -1.01 / -1.52 | -2.13 / -3.19 | 3.98 / 5.97 | 0.63 / 0.94 | 7.27 / 10.90 | 0.95 | -0.30 | -0.5 | 0.960 | — |
+
+   **Four slices — `gate2_cleanfield_4slice.csv`, 8,235 (+ B-trend 3,428)**
+
+   | structure | members | median yr | worst yr | max DD | worst day | DIP95 | PF | Sortino | Calmar | identity p | random-entry p |
+   |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+   | NO_CUT | 8235→8235 | 5.09 / 7.64 | 3.93 / 5.89 | 1.86 / 2.79 | 0.64 / 0.96 | 3.04 / 4.56 | 1.49 | 3.92 | 15.0 | — | 0.000 (null max 0.19) |
+   | NO_CUT_SLICE_BALANCED | 8235→8235 | 4.60 / 6.91 | 2.80 / 4.20 | 2.65 / 3.97 | 0.62 / 0.93 | 3.37 / 5.06 | 1.46 | 3.71 | 10.9 | — | 0.000 (null max 0.02) |
+   | ALLPASS | 2323→2142 | 2.85 / 4.27 | 0.44 / 0.66 | 3.20 / 4.80 | 0.71 / 1.06 | 4.57 / 6.85 | 1.23 | 1.84 | 4.7 | 1.000 | 0.000 |
+   | STABLE | 1888→40 | 1.24 / 1.86 | -2.07 / -3.10 | 2.63 / 3.94 | 0.38 / 0.57 | 4.83 / 7.24 | 1.06 | 0.49 | 1.0 | 1.000 | — |
+   | SLICE_BALANCED | 2323→2142 | -0.94 / -1.42 | -1.70 / -2.55 | 4.06 / 6.09 | 0.31 / 0.46 | 5.65 / 8.47 | 0.89 | -0.97 | -0.8 | — | — |
+   | PICKED | 22→30 | 3.04 / 4.55 | 2.02 / 3.02 | 4.32 / 6.87 | 1.69 / 2.41 | 10.76 / 15.57 | 1.20 | 1.46 | 5.9 | 0.320 | — |
+   | FAMILY_CAP | 3→3 | -0.42 / -0.63 | -0.97 / -1.45 | 2.76 / 4.15 | 0.54 / 0.80 | 5.31 / 7.97 | 1.05 | 0.22 | 0.6 | 0.720 | — |
+
+   **Per slice, each walked alone with the cut (four-slice field; the first three are identical in the three-slice run)**
+
+   | slice | strategies | passers | median yr | worst yr | max DD | worst day | PF | Sortino | Calmar |
    |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-   | **NO_CUT** (whole field) | 4807 | **5.02%** / 7.53% | +4.59% / +6.89% | 2.0% / 3.0% | 3.1% / 4.6% | 1.51 | 3.90 | — | — |
-   | NO_CUT_SLICE_BALANCED | 4807 | 5.82% / 8.72% | +4.96% / +7.45% | 2.3% / 3.4% | 3.5% / 5.2% | 1.53 | 4.02 | — | — |
-   | ALLPASS (gate-3 cut) | 1094→1008 | 2.06% / 3.09% | +0.44% / +0.66% | 3.0% / 4.5% | 4.4% / 6.6% | 1.21 | 1.66 | **1.000** | **0.000** |
-   | STABLE | 823→19 | 0.94% / 1.41% | −4.52% / −6.78% | 5.5% / 8.2% | 6.0% / 9.0% | 0.99 | −0.05 | 1.000 | — |
-   | SLICE_BALANCED | 1094→1008 | 0.61% / 0.92% | −1.49% / −2.23% | 2.6% / 4.0% | 3.9% / 5.8% | 1.16 | 1.48 | — | — |
-   | PICKED (greedy) | 14→16 | 0.09% / 0.13% | −2.28% / −3.42% | 6.3% / 9.4% | 10.0% / 15.1% | 1.11 | 0.92 | 0.960 | — |
-   | FAMILY_CAP | 4→5 | −1.01% / −1.52% | −2.13% / −3.19% | 4.0% / 6.0% | 7.3% / 10.9% | 0.95 | −0.30 | 0.960 | — |
+   | A-trend | 2960 | 921→882 | 0.23 / 0.35 | -0.29 / -0.44 | 1.01 / 1.52 | 0.24 / 0.36 | 1.06 | 0.36 | 1.0 |
+   | A-chop | 930 | 82→53 | 5.85 / 8.77 | 2.39 / 3.58 | 2.34 / 3.51 | 1.19 / 1.78 | 1.44 | 2.59 | 12.9 |
+   | B-chop | 917 | 91→73 | 4.17 / 6.26 | 1.04 / 1.56 | 2.76 / 4.14 | 0.94 / 1.41 | 1.40 | 2.30 | 8.8 |
+   | B-trend | 3428 | 1229→1134 | 0.85 / 1.28 | 0.00 / 0.00 | 0.81 / 1.21 | 0.31 / 0.47 | 1.19 | 1.08 | 4.4 |
 
-   (team1 / team2 budgets; members at step 1 → step 2.) Per slice, walked alone
-   with the cut: A-trend 0.23% (PF 1.06), A-chop 5.85% (PF 1.44), B-chop 4.17%
-   (PF 1.40).
+   **On the p-values.** Identity p: the strategy is admitted on a *random other
+   strategy's* build record and trades its own; p is the share of 25 draws at or
+   above the real. Random-entry p: every trade keeps its size and holding period
+   but enters at a random bar; p as above. **The random-entry null of the UNCUT
+   book is vacuous by construction and is reported as such**: the sizing curve
+   sizes on |net votes| / members and gives zero to bins that do not earn, and
+   under random entries thousands of members disagree on direction on every
+   (pair, day), so the book carries almost nothing — every draw scores within
+   0.00-0.29% of zero. The real beats all 25, but the null has no width. The
+   cut book (1,094-2,323 members) nets less completely and its random-entry
+   null is a genuine distribution. **The "—" cells are absences, not
+   omissions of a number that exists:** the uncut book has no selection to
+   permute, so its identity null is the real walk by construction (every
+   strategy passes whatever build record it is handed); and the random-entry
+   null walks the cut book as ALLPASS and the uncut pair only, so STABLE,
+   SLICE_BALANCED, PICKED and FAMILY_CAP have no random-entry p — their
+   entries are ALLPASS's entries, and ALLPASS's p is 0.000 on both fields.
 
-   **Plain English.** The strategies have edge and the selection destroys it.
-   Trading every one of the 4,807 clean-field strategies, equal weight, no
-   further filtering, made 5.0% a year at the conservative budget with a worst
-   year of +4.6% and a 2% drawdown. Every layer of selection on top of that
-   made it worse: the gate-3 cut alone takes the median year from 5.0% to 2.1%
-   and *raises* the drawdown; the stability filter, the greedy search and the
-   family cap take it to roughly zero or below. The two nulls say why. Against
-   random entry timing, the cut book is ahead of all 25 draws (p=0.000) — the
-   entries are real. Against the identity null, where each strategy is admitted
-   on a *random other strategy's* build record, the cut book is behind all 25
-   draws (p=1.000): picking passers by their build-year metrics chooses worse
-   than picking at random. The build-year record does not predict the trade
-   years; the breadth does. And the breadth is two slices — the trend slice, 62%
-   of the field, earns 0.2% on its own; the two chop slices earn 4-6%. The
-   honest system is the whole clean field, not a team, and the next question is
-   whether that holds when B-trend (3,428 more strategies) is added — the
-   four-slice chain is running.
+   **Plain English.** The strategies have edge and every form of selection
+   destroys it, on both fields. Trading the whole clean field, equal weight,
+   nothing filtered, made 5.0% a year at the conservative budget on three
+   slices and 5.1% on four, with a worst year of +3.9% to +4.6% and a drawdown
+   of 2%. The gate-3 cut alone takes that to 2.1-2.8% and raises the drawdown;
+   admitting strategies on their own build record picks *worse than random* —
+   the identity null beats the cut book in 25 of 25 draws on both fields
+   (p=1.000). Stability, greedy search and the family cap take it to zero or
+   below on three slices; on four, greedy reaches 3.0% but sits at the 68th
+   percentile of its null (p=0.32) — not a result. Adding B-trend neither
+   raised nor diluted the book: its 3,428 strategies earn 0.85% alone (above
+   A-trend's 0.23%, far below the chop slices' 4-6%), and the netted book
+   absorbed them at the same median with a lower drawdown and a lower worst
+   year. The trend slices are 78% of the strategies and roughly 15% of the
+   return; the two chop slices are the engine. Equal weight per slice helps the
+   uncut three-slice book (5.8%) and hurts the four-slice one (4.6%), because
+   it now hands half the book to the trend slices. **The honest system is the
+   whole clean field, not a team.** The open question is whether a null that
+   keeps direction agreement and randomises only timing would give the uncut
+   book a real p-value; nothing here claims one.
 
 1. **THE TEAM IS NOT A RESULT.** The greedy roster search failed its SELECTION
    HOLDOUT on 2026-09-10 — 8% retained. **The 22.97% team score and the 30.22%
@@ -419,7 +460,14 @@ Clean field (4,807), 12 Sep, RAM-capped: engine 32.1 min (9 workers) · walk
 15.8 min · identity null 133 min (6 workers, 59 min per budget) · random-entry
 null 4.9 min (3 workers, 2.3 min per budget, after the K/BR pickle fix) ·
 sizing 7 s · team-size sweep 31 min · slice controls 50 s · per-slice walks
-10 s · report 1 s. B-trend W2 scoring 35.9 min (14,815 at 0.87 s, 6 workers).
+10 s · uncut random-entry null 9 min (2 workers). B-trend W2 scoring 35.9 min
+(14,815 at 0.87 s, 6 workers).
+
+Clean field, four slices (8,235), 12-13 Sep: engine 49 min (9 workers) · walk
+64 min · identity null 470 min (3 workers, ~203 min per budget) · random-entry
+null 8.5 min (3 workers) · sizing 25 s · team-size sweep 90 min (2 workers; one
+worker peaks at 5.7 GB on the ALL team size) · slice controls 2 min · per-slice
+walks 10 s · uncut random-entry null 17 min (2 workers).
 
 ## Mode C
 **Paused by decision at 299 chunks.** Not a fault, not a stall. It stays paused until the full system is built and forward testing has started. It has been removed from every chain.
