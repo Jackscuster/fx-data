@@ -91,7 +91,7 @@ def main():
     out.to_csv(p, index=False)
 
     pd.set_option('display.width', 250)
-    print('=== CLEAN FIELD, THREE SLICES — every structure, both budgets ===')
+    print('=== CLEAN FIELD %s — every structure, both budgets ===' % TAG)
     print(out.to_string(index=False, float_format=lambda v: '%8.3f' % v))
     if PS is not None:
         print('\n=== PER SLICE, each walked alone ===')
