@@ -183,8 +183,15 @@
    (7) After Batch 2: the REFIT PROGRAMME, item 0c below — scoped, queued,
    NOT to be started until Jack says go.
 
-0c. **REFIT PROGRAMME — rolling re-tune with rolling selection. SCOPED 14 Sep,
-   QUEUED BEHIND BATCH 1 AND BATCH 2. NO RUN UNTIL JACK SAYS GO.** Question:
+0c. **REFIT PROGRAMME — rolling re-tune with rolling selection. SCOPED 14 Sep;
+   BUILD APPROVED 14 Sep, TO START AFTER BATCH 2 LANDS; THE RUN WAITS FOR
+   JACK'S WORD.** Decisions taken 14 Sep: second tuning window is **2014-18**
+   (five-year rule holds, so the two-block version's tunes are the annual
+   version's windows 1 and 4 — zero extra tunes, it IS nearly free and runs);
+   passers labelled on the tuning window's own record; **annual version
+   runs**, two-block on top; **three CPX62s for the tunes when Jack gives the
+   word — never rent anything unprompted**; report the build ETA and the
+   50-strategy timing probe before the run. Question:
    how long does a freshly tuned strategy keep its edge, and does picking on
    fresh settings beat "everyone votes"? Field: the four-slice clean field,
    8,235 (A-trend 2,960 / A-chop 930 / B-chop 917 / B-trend 3,428). Every
@@ -194,7 +201,8 @@
    1. Tune every strategy on a trailing window, trade the NEXT block untouched.
       Annual: tune 2011-15 → trade 2016; 2012-16 → 2017; 2013-17 → 2018;
       2014-18 → 2019; 2015-19 → 2020. Two-block: tune 2011-15 → trade 2016-18;
-      tune 2011-18 → trade 2019-20. The 2011-15 tune is shared by both.
+      tune 2014-18 → trade 2019-20 — both tunes are annual windows, so the
+      two-block version is the annual settings scored on longer blocks.
    2. At each step, three books on the fresh settings, routed as the base
       (5pm states, TRENDING/RANGING, WEAK blocks trend entries, crisis on):
       ALL (equal, netted); PASSERS (gate-2 floors + gate-3 bars on the tuning
@@ -229,19 +237,15 @@
    tuning window. Agreement bar: item 7's min-votes curve refit on the tuning
    window. Sizing: the fitted curve and both budgets, team1 / team2.
 
-   **Two things in the spec to decide before go, scoped as written.**
-   (i) The two-block version's second window is 2011-18, eight years — as
-   specified, and as the existing walk's STEPS have it — while the rule says
-   five years never shortened. Under a strict five-year rule it would be
-   2014-18, which also costs 1.6× less on that window. (ii) PASSERS are
-   labelled on the tuning window's own in-sample record, not a blind one (the
-   current field labels on W2 under ip1, which never saw W2). In-sample labels
-   pass more; the trade block is the only judge either way. Holding out a
-   blind label year would shorten the tune to four years, so it is not
-   proposed.
+   **Two spec points, decided 14 Sep.** (i) Second tuning window 2014-18,
+   not 2011-18: the five-year rule holds. (ii) PASSERS are labelled on the
+   tuning window's own in-sample record, not a blind one (the current field
+   labels on W2 under ip1, which never saw W2). In-sample labels pass more;
+   the trade block is the only judge.
 
-   **Candidate count.** Annual: 5 windows × 8,235 = 41,175 tunes. Two-block:
-   2 × 8,235 = 16,470 (8,235 new if annual runs). Both: 49,410.
+   **Candidate count.** Annual: 5 windows × 8,235 = **41,175 tunes**.
+   Two-block: 0 new tunes (windows 1 and 4 of the annual), only its books
+   (~12 core-h) and nulls on its winners.
 
    **Core-hours.** Per-tune time is the one unknown: 157 s per combination
    (mode B, uncapped, 900 real) and 216 s for uncapped stage 1 alone; the cap
@@ -254,8 +258,8 @@
    | version | tunes | tune core-h (range) | score+engine+walks | nulls (4 winners × 28) | total |
    |---|--:|--:|--:|--:|--:|
    | annual | 41,175 | 1,716 (570-2,520) | ~25 | ~112 | **~1,850** |
-   | two-block (2011-18 at 1.6×) | 16,470 | 892 (300-1,300) | ~12 | ~112 | **~1,015** |
-   | both, 2011-15 shared | 49,410 | 2,265 | ~37 | ~224 | **~2,525** |
+   | two-block on top of annual | 0 | 0 | ~12 | ~112 | **~125** |
+   | both | 41,175 | 1,716 | ~37 | ~224 | **~1,975** |
 
    Null costs from the four-slice measurements: identity 470 min × 3 workers
    = 23.5 core-h per book, regime-shuffle 4.3, random-entry 0.4. Scoring each
@@ -265,17 +269,16 @@
 
    **Wall time and cost.**
 
-   | where | effective cores | annual | two-block | both |
-   |---|--:|--:|--:|--:|
-   | Mac, 9 workers, 0.7 duty under the guard, nulls RAM-capped at 3 | 6.3 | ~12 days | ~7 days | ~16 days |
-   | one CPX62, 16 vCPU shared (~0.6× a P-core), ~$0.10/h | 9.6 | 8 days, ~$19 | 4.4 days, ~$11 | 11 days, ~$26 |
-   | three CPX62 | 29 | 2.7 days, ~$19 | 1.5 days, ~$11 | 3.6 days, ~$26 |
-   | one CCX63, 48 dedicated vCPU, ~$1.60/h | ~38 | 2 days, ~$78 | 1.1 days, ~$43 | 2.6 days, ~$101 |
+   | where | effective cores | annual tunes | both versions, all in |
+   |---|--:|--:|--:|
+   | Mac, 9 workers, 0.7 duty under the guard, nulls RAM-capped at 3 | 6.3 | ~11 days | ~13 days |
+   | one CPX62, 16 vCPU shared (~0.6× a P-core), ~$0.10/h | 9.6 | 7.4 days, ~$18 | 8.6 days, ~$21 |
+   | **three CPX62 (decided)** | 29 | **2.5 days, ~$18** | 2.8 days, ~$21 |
+   | one CCX63, 48 dedicated vCPU, ~$1.60/h | ~38 | 1.9 days, ~$72 | 2.2 days, ~$83 |
 
-   The Mac figure assumes nothing else heavy runs; at the current queue rate
-   it would hold the machine for two weeks. Recommendation: three CPX62 boxes
-   for the tunes (the sharding is already md5(sid) % N), the walks and nulls
-   on one box or the Mac.
+   The Mac figure assumes nothing else heavy runs. Decided: three CPX62
+   boxes for the tunes (sharding is md5(sid) % N already), rented by Jack on
+   his word; walks and nulls on the Mac or one box afterwards.
 
    **Does the cloud tooling carry it?** `cloud_field.sh`: the skeleton does —
    provisioning, `--box k --of N` sharding by md5(sid), banking outside the
@@ -286,7 +289,9 @@
    (`l2walkfwd.STEPS`) is hard-coded to the two-step ip1/ip2 stitch; it does
    NOT carry a five-step walk with different settings per step.
 
-   **To build before go (~3 days).** (a) `code/l2refit.py`: per (sid,
+   **To build after Batch 2 lands (~3 days of build, none of it heavy on the
+   Mac; the 50-strategy timing probe is ~2 core-hours and also waits for
+   Batch 2).** (a) `code/l2refit.py`: per (sid,
    window) calls `l2tune.tune_one` with `tune_windows` = the trailing five
    years (the hook exists — `l2recoverip1` uses it), banks settings + `evals`
    per shard, resumable on (sid, window); then scores every sealed year to
