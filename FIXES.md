@@ -26,6 +26,8 @@ and planned a fetch. `du` reports 0 for those files on this volume (the same
 APFS quirk seen on `results/scores*`); the files are 453 MB and complete,
 2002-05 → 2026-09. No fetch was needed and none was made.
 
+**The repo is on an iCloud-synced volume** (`brctl status` shows CloudDocs syncing `~/Documents`): dataless files read as 0 bytes to `du`, and local reads time out (errno 60) under load — `sc7` ×2 and `prep` ×1 today. Move the repo, or disable Desktop & Documents sync. Retry once on a read timeout.
+
 **Untested code (syntax-checked only):** `l2exit.py`, `l2oppose.py`,
 `l2killswitch.py`, `l2carry.py`, and the kernel hooks `OPPOSITION`,
 `NET_ROW_MASK ('callable', f)`. Smoke-test each on `_cleanfield` before the
