@@ -1,3 +1,4 @@
+# SUPERSEDED 2026-09-13 -- BUILT ON THE FED H.10 NOON FIX. Layer 2 trades OANDA 17:00 NY bars; the same estimator rebuilt on those bars is in results/layer1_5pm/ (analysis) and results/layer1_states_5pm.csv (states, 2002-12-19..2020-12-31, 2021+ sealed). Kept in place; nothing deleted.
 vintage,scope,state,pair_bars,agreement,expected,kappa
 2009,all overlapping days,ALL,189765,0.9418280504834927,0.2654649906748797,0.9208043881122089
 2009,all overlapping days,trending,53758,0.9429480263402656,,

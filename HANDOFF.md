@@ -2,7 +2,199 @@
 
 ## READ THIS FIRST
 
-0. **THE CLEAN-FIELD RESULT (12-13 Sep) — THE HONEST NUMBER, THREE SLICES AND
+0. **LAYER 1 ON THE 5PM BAR, AND THE FIRST ROUTING TEST (13-14 Sep).** Four
+   things, each from files: (A) whether the signal-library survivors depend on
+   1999-2002; (B) Layer 1 rebuilt on OANDA 17:00 NY closes, validated on
+   2016-2020 with 2021+ sealed, against the H.10 noon build on the same window;
+   (C) routing the four-slice clean field on the rebuilt states, against
+   always-on; (D) the return search on the NO_CUT book. Measured run times:
+   A 150 min · B 114 (scoring) + 111 (analysis) + 1 · A2 control 150 + 107 ·
+   always-on engine 52.7 · C 6 h 15 (of which regime-shuffle nulls 4 h 20 on one
+   worker) · D 32 min. Every number below is net of costs, sized on the build
+   blocks only, both budgets team1 / team2 unless stated.
+
+   **(A) 1999-2002 dependence.** The gauntlet's survivor SET depends on it; the
+   signals mostly do not. 1999+ passes 29, 2002-06+ passes 33, only 6 pass both
+   (`z_panelvol_40/60`, `zz_panelvol_D40/D60`, `rc_cx1.5_x180_ch`,
+   `rd_xsctop_r15_pd`). The churn is one gate — IS effect ≥ 0.0221 — with t-stats
+   and agreement unchanged: 1999-2002 carried larger effect sizes for the
+   trend-duration chop signals, moving the same family across a threshold
+   noise-calibrated on the longer panel. The shipped estimator uses none of
+   these signals. `results/layer1_survivors_1999_vs_2002.csv`.
+
+   **(B) Noon vs 5pm — five present-tense checks on the SAME window** (2002-09-24
+   → 2020-12-31, IS to 2015, holdout 2016-2020; the A2 column is the noon build
+   re-run on exactly that window, which is the only fair comparison). Source:
+   `results/layer1_5pm/` and the H.10 files now headered SUPERSEDED.
+
+   | check | noon, full history | noon, same window (A2) | **5pm** | moved? |
+   |---|---|---|---|---|
+   | separation, chop axis OOS / surrogate / corrected | 0.156 / 0.171 / −0.016 | 0.188 / 0.173 / +0.016 | 0.203 / 0.168 / **+0.035** | 5pm best; all within noise of each other |
+   | separation, trend axis, corrected | −0.047 | −0.066 | −0.052 | fails everywhere |
+   | separation, 12-cell grid OOS / null / corrected | 0.072 / 0.079 / −0.007 | 0.091 / 0.090 / +0.001 | 0.088 / 0.098 / −0.010 | no |
+   | persistence: high-cell run trend / chop; grid median run | 28 / 24; 12 | — ; 12.2 | 30 / 24; 12 | no |
+   | refit stability, vintages 2009 / 2012 / 2018 / 2021 | 0.942 / 0.954 / 0.963 / 0.952 | 0.909 / 0.937 / 0.952 / 0.943 | 0.909 / 0.942 / 0.955 / 0.943 | 5pm = A2: the drop is the shorter history, not the source |
+   | coverage (grid OOS); min cell share | 1.000; 0.032 | 1.000; 0.051 | 1.000; 0.024 | no |
+   | null: scale axis on realised vol, corrected | +0.331, p 0.016 HOLDS | +0.338, p 0.016 HOLDS | +0.388, p 0.016 HOLDS | no |
+   | null: strong chop − strong trend, bars to peak | +1.44, t 4.79 HOLDS | **+1.55, t 3.41 HOLDS** (p ≤ 0.002 ×3) | **+0.33, t 0.75 FAILS** (p ≈ 0.5) | **YES — the source, not the window** |
+   | null: structural separation, raw, corrected | −0.018 | −0.039 | +0.081, p 0.02 | 5pm better, but "FAILS" by the module's own bar |
+   | state shares trending / ranging / TIR / neither | 28.3 / 33.5 / 19.0 / 19.1 | 28.8 / 32.8 / 19.2 / 19.2 | 29.5 / 32.6 / 18.6 / 19.3 | no (the quoted 40/40/7/13 matches no build) |
+   | median run length (shape2, per pair) | 19 bars | 19 | 20 | no |
+   | gauntlet survivors, same window | — | 61 | **5** (3 shared) | **YES** — 56 signals lose pair agreement (0.93 → 0.6-0.86) and half their OOS t |
+
+   Noon and 5pm agree on `shape2` on **72.2%** of 123,453 overlapping pair-days
+   (activity 64.6%): ranging holds 78.5%, trending 76.7%, **neither 64.4%,
+   trend-in-range 62.3%** — the two mixed states are the unstable ones. Every
+   OANDA bar before 2005-01-03 is a single-quote day (O=H=L=C); their daily
+   returns correlate 0.856 with H.10, the same as later eras (0.82-0.84).
+   Series built by `build5pm.py`: 28 pairs triangulated from the 7 USD legs as
+   `build.py` does, 2002-09-24 (NZDUSD's start) onward, direct-cross gap 0.38 bp
+   median; asserts EURUSD 1.5991 / USDCHF 0.7209 on the 17:00 closes.
+
+   **(C) ROUTING, four-slice clean field, NO_CUT, one-bar lag.** Layer 2 already
+   routes on Layer 1 (`GAUNTLET.md` §"REGIME SLICING", `f79f2b1`, 15 Aug): every
+   strategy runs regime-agnostic and each trade is kept only if the H.10 `shape2`
+   at its entry bar is the slice's regime — so the published 5.09 / 7.64 is the
+   H.10-ROUTED book, not always-on. `WF_ROUTE=off` gives the always-on stream
+   (7,648,503 trades, 63.5M marks, 52.7 min); every rule below is an exact
+   post-filter on it, and the H.10 rule reproduces the published book to the
+   trade (1,948,908) and to every decimal. Crisis flag = `crisis.py legdiv20`
+   above its IS 95th percentile, flagging the two diverging legs, lagged one bar.
+   Random-entry null: entries drawn only from bars the rule permits.
+   Regime-shuffle null: the state runs of each pair reordered (run lengths and
+   shares kept), the always-on stream re-routed, 25 draws, both budgets.
+
+   | book | entries kept | median yr | worst yr | max DD | worst day | DIP95 | PF | Sortino | Calmar | exp %/day | in budget | rand-entry p (null max) | regime-shuffle p (null mean / max) |
+   |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+   | ALWAYS-ON (every entry, every regime) | 100% | 3.38 / 5.07 | 2.51 / 3.77 | 1.51 / 2.27 | 0.46 / 0.70 | 2.31 / 3.46 | 1.49 | 3.61 | 13.2 | 0.015 / 0.023 | yes | — | — |
+   | H.10-routed (reproduces the published book) | 25% | 5.09 / 7.64 | 3.93 / 5.89 | 1.86 / 2.79 | 0.64 / 0.96 | 3.04 / 4.56 | 1.49 | 3.92 | 15.0 | 0.022 / 0.032 | yes | — | — |
+   | 5pm: trend→TRENDING, chop→RANGING, crisis on | 27% | 4.39 / 6.58 | 3.31 / 4.96 | 1.79 / 2.69 | 0.56 / 0.84 | 3.32 / 4.98 | 1.43 | 3.44 | 14.0 | 0.019 / 0.029 | yes | 0.000 (0.28 / 0.41) | 0.000 (3.24 / 4.86 / 4.08 / 6.11) |
+   | 5pm: + TREND-IN-RANGE admitted | 41% | 3.23 / 4.84 | 1.92 / 2.88 | 2.23 / 3.34 | 0.73 / 1.10 | 3.60 / 5.40 | 1.33 | 2.51 | 8.2 | 0.014 / 0.021 | yes | 0.000 (0.18 / 0.26) | 0.160 (2.73 / 4.09 / 3.66 / 5.49) |
+   | **5pm: + WEAK blocks new trend entries** | 21% | 5.12 / 7.69 | 3.62 / 5.43 | 1.77 / 2.66 | 0.67 / 1.01 | 3.35 / 5.02 | 1.49 | 3.62 | 16.4 | 0.022 / 0.034 | yes | 0.000 (0.20 / 0.30) | 0.040 (3.65 / 5.48 / 5.13 / 7.70) |
+   | 5pm: TIR admitted + WEAK block | 33% | 3.35 / 5.02 | 2.70 / 4.04 | 2.31 / 3.47 | 0.85 / 1.27 | 3.37 / 5.06 | 1.37 | 2.78 | 8.6 | 0.015 / 0.023 | yes | 0.000 (1.23 / 1.84) | 0.160 (2.89 / 4.34 / 3.59 / 5.38) |
+
+   Per year, NO_CUT return %, team1:
+
+   | book (team1) | 2016 | 2017 | 2018 | 2019 | 2020 |
+   |---|--:|--:|--:|--:|--:|
+   | ALWAYS-ON (every entry, every regime) | 2.67 | 3.38 | 6.58 | 2.51 | 4.80 |
+   | H.10-routed (reproduces the published book) | 4.36 | 3.93 | 8.52 | 5.09 | 6.04 |
+   | 5pm: trend→TRENDING, chop→RANGING, crisis on | 3.91 | 3.31 | 8.12 | 5.38 | 4.39 |
+   | 5pm: + TREND-IN-RANGE admitted | 3.23 | 1.92 | 6.45 | 3.94 | 2.77 |
+   | 5pm: + WEAK blocks new trend entries | 5.79 | 3.62 | 10.56 | 5.12 | 3.95 |
+   | 5pm: TIR admitted + WEAK block | 3.35 | 2.75 | 6.64 | 4.51 | 2.70 |
+
+   Per slice, each walked alone (team1, median year %):
+
+   | slice alone (team1) | ALWAYS-ON | 5pm TIRx/ACTi | 5pm TIRx/ACTw | 5pm TIRi/ACTi |
+   |---|--:|--:|--:|--:|
+   | A-trend | 1.80 | 0.60 | 0.28 | 0.90 |
+   | A-chop | 8.05 | 5.80 | 5.80 | 5.80 |
+   | B-chop | 11.20 | 8.28 | 8.28 | 8.28 |
+   | B-trend | 3.02 | 1.06 | 0.54 | 1.48 |
+
+   Regime dependence at the trade level (2016-2020, rule TIRx/ACTi, mean R per
+   trade net of costs): A-chop inside −0.059 vs outside −0.099; B-chop −0.028 vs
+   −0.054; A-trend −0.046 vs −0.038; B-trend −0.026 vs −0.026. By state at
+   entry: `neither` ≈ 0.00 for every slice (the least bad), `trend-in-range` the
+   worst everywhere (−0.05 to −0.16). **Every slice has negative mean R per
+   trade; the book's return is the netting and the sizing curve, not per-trade
+   expectancy.** `results/routing_*_4slice.csv`.
+
+   **Plain English on routing.** Taking every entry in every regime makes
+   3.4%. Gating trend entries to TRENDING bars and chop entries to RANGING bars
+   on the 5pm states makes 4.4%, and blocking new trend entries when activity
+   is WEAK as well makes 5.1% — the same as the noon gate — with a lower
+   drawdown and only 21% of the entries. Both of those beat routing on
+   scrambled labels of the same run-length structure in 25 of 25 and 24 of 25
+   draws. Admitting TREND-IN-RANGE bars for trend entries takes the book BELOW
+   always-on and its labels no longer beat scrambled ones (p 0.16) — that state
+   is overlap, as §16.4t said. Per slice alone, routing makes every slice
+   WORSE (A-chop 8.1 → 5.8, B-chop 11.2 → 8.3); it helps the netted book by
+   removing trend entries that fight the chop book. And the activity axis,
+   which "carries nothing" as a predictor, does real work as a gate: it is the
+   difference between 4.4% and 5.1%.
+
+   **(D) THE RETURN SEARCH, NO_CUT book (the H.10-routed four-slice book):**
+
+   | item | median yr | worst yr | max DD | worst day | DIP95 | PF | Sortino | Calmar | in budget |
+   |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+   | 1 sizing (a) as now, NO_CUT team1 | 5.09 | 3.93 | 1.86 | 0.64 | 3.04 | 1.49 | 3.92 | 15.0 | yes |
+   | 1 sizing (b) DIP95+maxDD vs 5.4, worst day vs 3.6, NO_CUT | 7.64 | 5.89 | 2.79 | 0.96 | 4.56 | 1.49 | 3.92 | 15.0 | yes |
+   | 1 sizing (c) actual path only, NO_CUT | 8.36 | 7.52 | 2.96 | 1.05 | 5.29 | 1.50 | 4.01 | 16.9 | yes |
+   | 1 sizing (a), NO_CUT_SLICE_BALANCED | 4.60 | 2.80 | 2.65 | 0.62 | 3.37 | 1.46 | 3.71 | 10.9 | yes |
+   | 1 sizing (b), NO_CUT_SLICE_BALANCED | 6.91 | 4.20 | 3.97 | 0.93 | 5.06 | 1.46 | 3.71 | 10.9 | yes |
+   | 1 sizing (c), NO_CUT_SLICE_BALANCED | 7.94 | 4.83 | 4.56 | 1.10 | 5.87 | 1.46 | 3.72 | 11.1 | NO |
+   | 2 costs zero (0.0 bp), drag 0.0% | 6.70 / 10.05 | 5.33 / 7.99 | 1.80 / 2.70 | 0.68 / 1.02 | 3.07 / 4.61 | 1.59 | 4.57 | 19.9 | yes |
+   | 2 costs as_run (3.1 bp), drag 24.0% | 5.09 / 7.64 | 3.93 / 5.89 | 1.86 / 2.79 | 0.64 / 0.96 | 3.04 / 4.56 | 1.49 | 3.92 | 15.0 | yes |
+   | 2 costs raw_spread (2.1 bp), drag 16.8% | 5.58 / 8.36 | 4.36 / 6.54 | 1.83 / 2.75 | 0.65 / 0.97 | 3.03 / 4.54 | 1.52 | 4.14 | 16.5 | yes |
+   | 2 costs entry_1900 (3.9 bp), drag 28.9% | 4.76 / 7.14 | 3.58 / 5.37 | 1.85 / 2.77 | 0.62 / 0.94 | 3.04 / 4.56 | 1.47 | 3.77 | 14.2 | yes |
+   | 3 voltarget_20, target = build-block vol 3.10 / 4.66, lev 1.35 | 7.57 / 11.35 | 7.55 / 11.33 | 2.25 / 3.38 | 1.06 / 1.60 | 4.87 / 7.31 | 1.52 | 4.06 | 21.5 | NO |
+   | 3 voltarget_60, target = build-block vol 3.10 / 4.66, lev 1.24 | 6.93 / 10.39 | 6.19 / 9.28 | 2.49 / 3.74 | 0.82 / 1.23 | 4.65 / 6.98 | 1.51 | 4.02 | 18.2 | NO |
+   | 4 as run: JPY share 0.124 build / 0.122 trade, largest block 0.186 | 5.09 / 7.64 | 3.93 / 5.89 | 1.86 / 2.79 | 0.64 / 0.96 | 3.04 / 4.56 | 1.49 | 3.92 | 15.0 | yes |
+   | 4 risk parity (3 iterations): JPY share 0.128 build / 0.120 trade, largest block 0.133 | 5.20 / 7.79 | 3.96 / 5.94 | 1.87 / 2.80 | 0.70 / 1.05 | 3.04 / 4.56 | 1.50 | 3.95 | 15.2 | yes |
+   | 6 direction-preserving null, NO_CUT: null mean -1.07 / -1.60, p95 -0.63 / -0.95, max -0.48 / -0.72, **p = 0.000 / 0.000** | 5.09 / 7.64 | | | | | | | | |
+
+   Per year, NO_CUT (a-sizing):
+
+   | NO_CUT team1 / team2 | 2016 | 2017 | 2018 | 2019 | 2020 |
+   |---|--:|--:|--:|--:|--:|
+   | return % | 4.36 / 6.55 | 3.93 / 5.89 | 8.52 / 12.77 | 5.09 / 7.64 | 6.04 / 9.05 |
+   | max DD % | 0.96 / 1.45 | 0.71 / 1.07 | 0.65 / 0.97 | 1.36 / 2.04 | 1.86 / 2.79 |
+   | realised vol % | 2.41 / 3.62 | 1.79 / 2.68 | 2.12 / 3.19 | 2.37 / 3.56 | 2.91 / 4.36 |
+
+   Reading: **costs take 24% of the median year** (6.70 → 5.09; raw spreads
+   without the ×1.5 markup would take 17%, the measured 19:00 NY entry cost
+   29% — it is higher than the table, not lower). **Vol targeting to the build
+   block's own vol runs at 1.24-1.35× and breaks the DIP95 budget** (4.7-4.9%
+   vs 3.6) in exchange for +1.8-2.5 points — it is leverage, not information.
+   **The book is already at currency parity**: JPY carries 12.4% of the
+   variance against 12.5% for equal blocks, the largest block (EUR) 18.6%;
+   equalising moves the median +0.1 point. **Sizing rule (c)** — actual path
+   only, DIP95 measured never binding — makes 8.36% at 2.96% max DD, inside
+   both hard limits, with DIP95 reading 5.29%; that is the same +65% for +59%
+   drawdown trade the cut book showed. **Every trade year stayed inside both
+   budgets** on every row marked "yes". The direction-preserving null is the
+   first null with width on the uncut book: random timing inside the book's own
+   (pair, day) direction LOSES 1.1 / 1.6% a year; the real is 5.1 / 7.6 (p =
+   0.000). `results/returns_*_cleanfield_4slice.csv`.
+
+   **(7) REFIT SCOPE — rolling gate 3 fine-tune per build block, 8,235 field.**
+   Measured on the whole 5,569-strategy bank rather than 10: **304 s per
+   strategy** mean (median 240, p90 448; chop 252, trend 327). Two build blocks
+   (2011-15, 2011-18) × 8,235 = 16,470 fine-tunes ≈ **1,390 core-hours** at the
+   measured rate, ~1,800 if the longer block scales with its length. Mac (9
+   cores, ~0.7 duty under the guard): **~9 days**. One CPX62 (16 vCPU at ~0.6×
+   a P-core): **~8 days**; three boxes ~2.7 days, ~$20. Not started.
+
+   **(8) CARRY SCOPE — a carry sleeve from the repo's 2-year yields.** Data:
+   `data/rates2y.csv` (7 currencies, 1998-06 → 2026-08; **NZD absent**, CAD
+   89%, CHF 93% coverage) and `data/carry28.csv` (21 of 28 pairs, 1999 →
+   2026-07). Construction: rank the 21 pairs by 2y differential monthly, long
+   the top third / short the bottom third at month-end, held a month, sized like
+   the rest — marks on the same daily OANDA closes, so it enters the netting as
+   28 more members whose positions net against the strategies' at the (pair,
+   day) level, with its own slice label `carry` and no regime gate. Effort:
+   one day — a mark generator in `l2walkfwd` shape, the NZD gap either left
+   (21 pairs) or filled from RBNZ data (a fetch, blocked in the sandbox per
+   HANDOFF_3 §2). Known prior: HANDOFF_3 §16.5 found carry signals at 50%
+   retention for REGIME prediction; that is not the same question. Not started.
+
+   **THE SWAP — decided by Jack, gated on the A2 control, NOT executed.** Four of
+   the five checks hold on 5pm as well as or better than on noon over the same
+   window; one does not — the single pre-specified contrast that ever held
+   (strong chop vs strong trend on bars to peak) holds on noon and fails on 5pm
+   on the same window, and the signal-library gauntlet drops from 61 survivors
+   to 5. Neither is a property of the states Layer 2 routes on, and the routing
+   test says the 5pm states route as well as the noon ones — but the gate set
+   was "the A2 control confirms the validation", and it confirms four of five.
+   Prepared and reversible: `results/layer1_states_5pm.csv` (validated, to
+   2020-12-31); the full-length 5pm states with 2021+ tagged `sealed`; the
+   reader fix (`comment='#'`) is a one-line change in each reader listed in
+   FIXES. Not done: the rename, the `pipeline.py` source switch, the `scores6`
+   regeneration. Say the word and it is one commit.
+
+0b. **THE CLEAN-FIELD RESULT (12-13 Sep) — THE HONEST NUMBER, THREE SLICES AND
    FOUR.** Fields chosen on W2 alone under `ip1`, walked forward 2016-2020,
    costs charged, both nulls valid and drawn from the same field as the real.
    Every cell below is team1 / team2 (3.6%/3.6% and 5.4%/3.6% budgets); members

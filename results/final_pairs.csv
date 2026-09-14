@@ -1,3 +1,4 @@
+# SUPERSEDED 2026-09-13 -- BUILT ON THE FED H.10 NOON FIX. Layer 2 trades OANDA 17:00 NY bars; the same estimator rebuilt on those bars is in results/layer1_5pm/ (analysis) and results/layer1_states_5pm.csv (states, 2002-12-19..2020-12-31, 2021+ sealed). Kept in place; nothing deleted.
 axis,pair,sep
 trend,EURGBP,0.17928825715007654
 trend,EURAUD,0.15192571805885832

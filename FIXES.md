@@ -1,5 +1,32 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 2026-09-13 — LAYER 1 REBUILT ON THE 5PM BAR: two pipeline order faults found on the way
+
+**1. `pipeline.py` runs `persist.py`, `refit.py`, `windowsens.py`, `today.py` and
+`knobs.py` BEFORE `export.py`.** `persist.py` copies `layer1_states.csv` into
+`states_g4_twoscore4.csv`, the "shipped states" the four checks assert against
+(agreement > 0.9999). On a repo where the classifier has not changed that
+reads the *previous* run's states and passes by accident. On a rebuild from a
+different source it compares the new classifier to the old states: on the 5pm
+rebuild all four asserted out at **0.7215** — which is the noon-vs-5pm state
+agreement, not a fault. Fix owed: move `export.py` ahead of `persist.py` in
+`pipeline.py` (the same class of fault `appfeed.py` had, noted in the pipeline
+comments). Until then a source rebuild needs a second pass of those five.
+
+**2. A cold build cannot run `sc5`, `sc6`, `sc7` without `signals.json`.** Each
+reads it to skip names an earlier batch scored. `pipeline.py` orders them
+before `prep.py` and only works because CI runs on a repo that already carries
+the file. Cold order: sc2–4 → prep → sc5 → prep → sc6 ‖ sc7 → pool7 → prep →
+dedup. `~/fx-data-logs/l1score.sh` does this; `pipeline.py` should.
+
+**Layer 2's interface file was NOT headered.** `results/layer1_states.csv` is
+read by `l2sweep.regime_codes` without `comment='#'`; a SUPERSEDED line would
+break every Layer 2 module. The 5pm states are `results/layer1_states_5pm.csv`
+(2002-12-19 → 2020-12-31, 2021+ sealed); the H.10 file stays as the live
+interface until Jack decides the swap — it is the only one that reaches today.
+
+---
+
 ## 2026-09-12 — THE MAC PANICKED TWICE UNDER THE RANDOM-ENTRY NULL. CHAINS MOVE TO THE CLOUD.
 
 **Cause, from `/Library/Logs/DiagnosticReports`.** Both crashes are the same

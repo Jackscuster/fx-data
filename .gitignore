@@ -86,3 +86,7 @@ results/wf_randk*.pkl
 results/*_cleanfield_dry*
 results/gate2_cleanfield_dry*.csv
 results/chain_pids/
+
+# routing permission tables and the direction-null symlinks: regenerable from l2route / l2returns
+results/route_*.pkl
+results/wf_*_dirnull.pkl

@@ -1,0 +1,9 @@
+representative,batch,fam,to,si,ao,tsb,stronger_target,n_members,members
+zz_paneldisp_D30,multi-timeframe,zz_paneldisp,-25.57,-0.02233,0.893,,,7,zz_paneldisp_D30|z_panelvol_40|zz_panelvol_D40|z_panelvol_60|zz_panelvol_D60|zz_paneldisp_D90|z_paneldisp_90
+rc_xsctop_r15_ts,trend-nonmomentum,cross-sectional,-21.51,-0.02316,0.929,6.0,chop,4,rc_xsctop_r15_ts|rb_xsctop_r20_pd|rc_xsctop_r10_pd|rc_xsctop_r15_pd
+ps_coexmax_D375,regime-v5,ps_coexmax,-18.68,-0.02583,0.929,,trend,2,ps_coexmax_D375|rd_cx2_x375
+hz500_dd0.01_pl,trend-duration,hz_dd,-18.26,-0.02227,0.964,5.0,trend,13,hz500_dd0.01_pl|hz500_bu_8_pl|hz500_bu_5_pl|hz500_fl_3_pl|hz500_hi_8_pl|hz500_md_5_pl|hz500_sg1_v20_pl|hz500_sg1_v10_pl|hz500_su1_v10_pl|hz500_sg1_v40_pl|hz500_sg1_v60_pl|hz750_mu_5_pl|hz750_sd1_v60_pl
+ze_xsctop_r10_pd,trend-nonmomentum,cross-sectional,-18.21,-0.03143,0.893,6.0,chop,2,ze_xsctop_r10_pd|rd_xsctop_r15_pd
+cx1.5_x15_ph,trend-duration,cx1._x,-16.44,-0.03294,0.893,5.0,trend,2,cx1.5_x15_ph|cx2_m8_ph
+rd_cx2.5_x250_ch,trend-duration,cx2._x,-14.13,-0.02213,0.929,5.0,trend,2,rd_cx2.5_x250_ch|rc_cx1.5_x180_ch
+rc_pvr_375_ch,trend-duration,pvr,-8.98,-0.02738,0.929,5.0,trend,1,rc_pvr_375_ch

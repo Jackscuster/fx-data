@@ -252,6 +252,13 @@ def engine_one(row):
     """
     sid = row['sid']
     code = dict((s, c) for s, _, c in S.SLICES)[row['slice']]
+    # WF_ROUTE=off: keep EVERY trade the strategy fired, in every regime. This
+    # is the ALWAYS-ON stream. The engine's normal behaviour is to keep only
+    # entries whose bar Layer 1 labelled with the slice's regime -- so the
+    # regime routing is a post-filter on this stream, and any other routing
+    # rule (other states, other windows, a crisis flag, a shuffled null) is
+    # the same post-filter applied by l2route.py. One engine run serves all.
+    route_off = os.environ.get('WF_ROUTE', '') == 'off'
     T, M = [], []
     tid = 0
     for era, (a, z) in ERAS.items():
@@ -273,7 +280,7 @@ def engine_one(row):
             dv = d.values
             for j in range(len(tr['r'])):
                 eb, xb = int(tr['entry_bar'][j]), int(tr['exit_bar'][j])
-                if xb < 0 or reg[eb] != code or not (lo <= eb < hi):
+                if xb < 0 or (reg[eb] != code and not route_off) or not (lo <= eb < hi):
                     continue
                 ent = float(tr['entry_px'][j]); u = float(tr['units'][j])
                 sgn = float(tr['dir'][j]); tot = float(tr['r'][j]) * am
@@ -289,7 +296,17 @@ def engine_one(row):
                         cum - prev - (cst if b == eb else 0.0)), tid))
                     prev = cum
                 T.append((sid, tid, p, dv[eb], dv[end], float(prev - cst), era))
-    return T, M
+    # RETURN FRAMES, NOT TUPLES. The parent used to receive every mark as a
+    # Python tuple and copy the lot twice into DataFrames -- on the always-on
+    # stream (tens of millions of marks) that assembly ran for hours through
+    # the compressor. Typed frames pickle across the pool as numpy buffers
+    # and concatenate in the parent at ~1x their size.
+    Tf = pd.DataFrame(T, columns=['sid', 'tid', 'pair', 'entry', 'exit', 'R', 'era'])
+    Mf = pd.DataFrame(M, columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid'])
+    if len(Mf):
+        Mf['dir'] = Mf['dir'].astype(np.int8); Mf['mark'] = Mf['mark'].astype(np.float32)
+        Mf['tid'] = Mf['tid'].astype(np.int32); Mf['day'] = pd.to_datetime(Mf.day)
+    return Tf, Mf
 
 
 def stage_engine(field, jobs):
@@ -301,15 +318,14 @@ def stage_engine(field, jobs):
             got = pool.map(engine_one, recs, chunksize=4)
     else:
         _init(); got = [engine_one(r) for r in recs]
-    T = pd.DataFrame([x for g, _ in got for x in g],
-                     columns=['sid', 'tid', 'pair', 'entry', 'exit', 'R', 'era'])
-    M = pd.DataFrame([x for _, g in got for x in g],
-                     columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid'])
+    T = pd.concat([g for g, _ in got if len(g)], ignore_index=True)
+    M = pd.concat([g for _, g in got if len(g)], ignore_index=True)
+    del got
     for c in ('sid', 'pair'):
         T[c] = T[c].astype('category'); M[c] = M[c].astype('category')
     T['entry'] = pd.to_datetime(T.entry); T['exit'] = pd.to_datetime(T.exit)
     M['day'] = pd.to_datetime(M.day)
-    M['dir'] = M['dir'].astype(np.int8)
+    M['dir'] = M['dir'].astype(np.int8); M['tid'] = M['tid'].astype(np.int64)
     T.to_pickle(TRADES_F); M.to_pickle(MARKS_F)
     print('  engine: %d trades, %d mark rows, %d strategies, %.1f min'
           % (len(T), len(M), T.sid.nunique(), (time.time() - t) / 60), flush=True)
@@ -358,13 +374,13 @@ def main():
         stage_null_identity(a.jobs, a.n_null,
                             [x for x in a.structures.split(',') if x])
     elif a.stage == 'sizing':
-        stage_sizing(a.jobs)
+        stage_sizing(a.jobs, nocut=a.nocut)
     elif a.stage == 'size':
         stage_size(a.jobs, a.n_null, a.n_rand)
     elif a.stage == 'ctrl':
         stage_controls(a.jobs)
     elif a.stage == 'walk':
-        stage_walk(a.jobs, a.n_null, [x for x in a.structures.split(',') if x])
+        stage_walk(a.jobs, a.n_null, [x for x in a.structures.split(',') if x], nocut=a.nocut)
 
 
 
@@ -509,6 +525,7 @@ class Book:
         self.nd = len(self.udays)
         self.dyears = pd.DatetimeIndex(self.udays).year.values
         ccy = sorted({c for p in set(self.pair) for c in (p[:3], p[3:])})
+        self.ccy = ccy
         cidx = {c: i for i, c in enumerate(ccy)}
         self.nc = len(ccy)
         self.bc = np.array([cidx[p[:3]] for p in self.pair])
@@ -533,8 +550,13 @@ class Book:
         mk = np.where(sgn > 0, ml, ms)
         return sgn * live, sz * live, mk * live, f
 
-    def series(self, w, curve, cap_pct=None, per_unit=None, den=None):
+    def series(self, w, curve, cap_pct=None, per_unit=None, den=None, pair_scale=None):
         sgn, sz, mk, f = self.net(w, curve)
+        if pair_scale is not None:
+            # CURRENCY RISK PARITY OVERLAY: a per-pair multiplier on position size,
+            # applied before the currency cap so the cap still binds on the
+            # scaled book. dict pair -> factor; pairs absent get 1.0.
+            sz = sz * np.array([pair_scale.get(p, 1.0) for p in self.pair], np.float32)
         binds, worst = 0, float('nan')
         if cap_pct is not None and per_unit:
             E = np.zeros((self.nd, self.nc, 2), np.float32)
@@ -552,7 +574,7 @@ class Book:
         np.add.at(gross, self.dpos, sz)
         if den is None:
             den = float(gross[gross > 0].mean()) if (gross > 0).any() else 1.0
-        self.last = dict(sgn=sgn, sz=sz, gross=gross)
+        self.last = dict(sgn=sgn, sz=sz, gross=gross, row_pnl=mk * sz)
         return pnl / den, den, binds, worst, sz, f
 
 
@@ -884,7 +906,7 @@ def diagnostics(B, sgn, sz, raw_sz, gross, per_unit, tsrc, C):
 
 
 def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
-         use_dip=True, perm=None, nocut=False):
+         use_dip=True, perm=None, nocut=False, pair_scale=None):
     """One complete walk. `ymap` maps a calendar year to the year it PLAYS --
     identity for the real walk, a permutation for a null draw. Every decision
     at a step uses only that step's build years.
@@ -930,7 +952,12 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
             per_unit = sc / den
             raw_sz = B.net(w, curve)[1].copy()       # multiplier BEFORE the cap
             d1, _, binds, worst, sz, f = B.series(w, curve, cap_pct=CAP_PCT,
-                                                  per_unit=per_unit, den=den)
+                                                  per_unit=per_unit, den=den,
+                                                  pair_scale=pair_scale)
+            # per-currency daily PnL of the SIZED book, half of each row to each
+            # leg, for the risk-parity overlay and the JPY-block share
+            _rp = B.last['row_pnl'] * (sc / den)
+            _cc = np.zeros((B.nd, B.nc)); np.add.at(_cc, (B.dpos, B.bc), 0.5 * _rp); np.add.at(_cc, (B.dpos, B.qc), 0.5 * _rp)
             gross = B.last['gross']; sgn = B.last['sgn']
             dg = dict(diagnostics(B, sgn, sz, raw_sz, gross, per_unit, tsrc, C))
             out[s]['daily'].append(d1[ytrade] * sc)
@@ -938,6 +965,8 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
             out[s]['members'].append(len(mem))
             out[s]['curves'].append(C)
             out[s]['cuts'].append(dict(step=si + 1, passers=len(P), members=len(mem),
+                                       build_daily=d1[ybuild] * sc, build_days=B.udays[ybuild],
+                                       ccy_daily=pd.DataFrame(_cc, index=B.udays, columns=B.ccy),
                                        scale=sc, cap_bound=binds, max_expo=worst,
                                        roster=mem, binds=bbind,
                                        build_dip95_pct=bD * sc,
@@ -1039,7 +1068,7 @@ def _null_one(args):
     return {s: r[s][0]['median_year_pct'] for s in structures}
 
 
-def stage_walk(jobs, n_null, structures):
+def stage_walk(jobs, n_null, structures, nocut=False):
     T = pd.read_pickle(TRADES_F); M = pd.read_pickle(MARKS_F)
     print('  loaded %d trades, %d marks, %d strategies'
           % (len(T), len(M), T.sid.nunique()), flush=True)
@@ -1050,10 +1079,13 @@ def stage_walk(jobs, n_null, structures):
     rows, rosters, curves, daily = [], [], [], {}
     for bt, dipb, dayb in BUDGETS:
         t0 = time.time()
-        R = walk(T, TY, M, ident, dipb, dayb, structures, verbose=(bt == 'team1'))
+        R = walk(T, TY, M, ident, dipb, dayb, structures, verbose=(bt == 'team1'), nocut=nocut)
         print('  real walk %s in %.1f min' % (bt, (time.time() - t0) / 60), flush=True)
         for s, (k, cuts, x, dy) in R.items():
-            k.update(budget=bt, dip_budget=dipb, day_budget=dayb, kind='real')
+            if nocut:   # the uncut book is not ALLPASS; say so in every row
+                s = {'ALLPASS': 'NO_CUT', 'SLICE_BALANCED': 'NO_CUT_SLICE_BALANCED'}.get(s, 'NO_CUT_' + s)
+                k['structure'] = s
+            k.update(budget=bt, dip_budget=dipb, day_budget=dayb, kind='real', cut_applied=(not nocut))
             rows.append(k)
             daily['%s|%s' % (bt, s)] = pd.Series(x, index=pd.DatetimeIndex(dy))
             for c in cuts:
@@ -1471,7 +1503,7 @@ SIZINGS = (
 )
 
 
-def stage_sizing(jobs):
+def stage_sizing(jobs, nocut=False):
     """ALLPASS under three sizing rules, same stitched 2016-2020, same walk.
 
     The scale is still set on the BUILD blocks in every case and never revisited
@@ -1482,10 +1514,13 @@ def stage_sizing(jobs):
     TY = trade_year_sums(M)
     ident = {y: y for y in YEARS}
     rows = []
+    structs = ['ALLPASS', 'SLICE_BALANCED'] if nocut else ['ALLPASS']
     for tag, dipb, dayb, use_dip, desc in SIZINGS:
-        t0 = time.time()
-        R = walk(T, TY, M, ident, dipb, dayb, ['ALLPASS'], use_dip=use_dip)
-        k, cuts, x, dy = R['ALLPASS']
+      t0 = time.time()
+      R = walk(T, TY, M, ident, dipb, dayb, structs, use_dip=use_dip, nocut=nocut)
+      for st in structs:
+        k, cuts, x, dy = R[st]
+        k['structure'] = ({'ALLPASS': 'NO_CUT', 'SLICE_BALANCED': 'NO_CUT_SLICE_BALANCED'}[st] if nocut else st)
         k.update(sizing=tag, description=desc, dip_budget=dipb, day_budget=dayb,
                  dip95_binding=use_dip,
                  binds_step1=cuts[0]['binds'], binds_step2=cuts[1]['binds'],
@@ -1501,14 +1536,14 @@ def stage_sizing(jobs):
                  mean_gross_exposure_pct=np.mean([c['mean_gross_exposure_pct'] for c in cuts]),
                  cap_bound_days=sum(c['cap_bound'] for c in cuts))
         rows.append(k)
-        print('  %-20s median %6.3f%%  worst %6.3f%%  maxDD %5.2f%%  worstday %5.2f%%  '
+        print('  %-20s %-22s median %6.3f%%  worst %6.3f%%  maxDD %5.2f%%  worstday %5.2f%%  '
               'DIP95 %5.2f%%  PF %.2f  Sortino %.2f  Calmar %.2f  binds %s/%s  (%.1f s)'
-              % (tag, k['median_year_pct'], k['worst_year_pct'], k['max_dd_pct'],
+              % (tag, k['structure'], k['median_year_pct'], k['worst_year_pct'], k['max_dd_pct'],
                  k['worst_day_pct'], k['dip95_pct'], k['profit_factor'],
                  k['sortino'], k['calmar'], k['binds_step1'], k['binds_step2'],
                  time.time() - t0), flush=True)
     O = pd.DataFrame(rows)
-    cols = ['sizing', 'description', 'dip_budget', 'day_budget', 'dip95_binding',
+    cols = ['sizing', 'structure', 'description', 'dip_budget', 'day_budget', 'dip95_binding',
             'median_year_pct', 'worst_year_pct', 'max_dd_pct', 'worst_day_pct',
             'dip95_pct', 'profit_factor', 'sortino', 'calmar', 'mean_year_pct',
             'best_year_pct', 'total_return_pct', 'worst_month_pct', 'sharpe',
@@ -1689,7 +1724,7 @@ def recover_k(T, M, field):
     return K, BR
 
 
-def random_entry_marks(K, BR, tsrc, rng):
+def random_entry_marks(K, BR, tsrc, rng, allowed=None):
     """Every trade-year trade rebuilt at a RANDOM entry bar: same pair, same
     direction, same stop and target distances, same maximum hold.
 
@@ -1719,6 +1754,34 @@ def random_entry_marks(K, BR, tsrc, rng):
         f = S.COSTS.get(p, 0.0)
         hold = np.clip(gg.hold.values.astype(int), 1, max(z - a - 2, 1))
         start = a + (rng.random(len(gg)) * np.maximum(z - a - hold, 1)).astype(int)
+        if allowed is not None:
+            # THE ROUTED NULL: a random entry bar drawn only from the bars the
+            # routing rule permits for that pair and slice -- random timing
+            # under the same rule, so the null book obeys the regime too.
+            # Two kinds of permission table share this hook: routing masks keyed
+            # (pair, 'trend'|'chop') -- the bars the regime rule allows that
+            # slice to enter -- and DIRECTION masks keyed (pair, 'dir+1'|'dir-1')
+            # -- the bars on which the real book's net side on that pair was
+            # long or short. The second is the DIRECTION-PRESERVING null: entry
+            # timing is random, but a long trade lands only where the book was
+            # net long, so the (pair, day) agreement that the sizing curve pays
+            # for survives, and the null has width.
+            kinds = gg.sid.map(lambda x: 'trend' if x.split('|')[1] == 'trend' else 'chop').values
+            dirs = gg['dir'].values.astype(int)
+            keys = [(k, np.flatnonzero(kinds == k)) for k in ('trend', 'chop')] + \
+                   [('dir%+d' % d, np.flatnonzero(dirs == d)) for d in (1, -1)]
+            for kind, sel in keys:
+                if not len(sel):
+                    continue
+                ok = allowed.get((p, kind))
+                if ok is None:
+                    continue
+                cand = np.flatnonzero(ok[a:z + 1]) + a
+                for j in sel:
+                    c_ok = cand[cand <= z - hold[j]]
+                    start[j] = int(c_ok[int(rng.random() * len(c_ok))]) if len(c_ok) else -1
+            keep = start >= 0
+            gg = gg[keep]; hold = hold[keep]; start = start[keep]
         for j, r in enumerate(gg.itertuples()):
             s0, L = int(start[j]), int(hold[j])
             L = min(L, z - s0)
@@ -1775,6 +1838,7 @@ def _init_rand():
         if not os.path.exists(rk):
             raise SystemExit('_init_rand: WF_RANDK points at a missing file: %s' % rk)
         _RG['K'], _RG['BR'] = pd.read_pickle(rk)
+        _load_allowed()
         return
     # THE PARENT PATH. The random-entry null must use the same field as the
     # run: this line was `load_field(SLICES3)` -- no field file, so the old None
@@ -1792,6 +1856,25 @@ def _init_rand():
     os.environ['WF_RANDK'] = rk
     print('  wrote %s for the workers (%.0f MB)' % (rk, os.path.getsize(rk) / 2**20),
           flush=True)
+    _load_allowed()
+
+
+def _load_allowed():
+    """WF_ALLOWED: a pickle of {(pair, 'trend'|'chop'): bool Series by date} --
+    the bars on which the routing rule permits a new entry. Aligned here to each
+    pair's bar index so random_entry_marks can draw from it directly."""
+    al = os.environ.get('WF_ALLOWED', '')
+    if not al:
+        _RG['ALLOWED'] = None
+        return
+    raw = pd.read_pickle(al)
+    out = {}
+    for (p, kind), ser in raw.items():
+        if p in _RG['BR']:
+            out[(p, kind)] = ser.reindex(_RG['BR'][p]['idx']).fillna(False).values.astype(bool)
+    _RG['ALLOWED'] = out
+    print('  random-entry null is ROUTED: entries drawn from permitted bars (%s, %d pair-kinds)'
+          % (os.path.basename(al), len(out)), flush=True)
 
 
 # THE TWO BOOKS THE RANDOM-ENTRY NULL CAN TEST. The cut book (ALLPASS) and the
@@ -1811,7 +1894,7 @@ def _rand_one(args):
         parts = [M[M.day.dt.year <= 2015]]
         for st in STEPS:
             tsrc = list(range(st['trade'][0], st['trade'][1] + 1))
-            parts.append(random_entry_marks(_RG['K'], _RG['BR'], tsrc, rng))
+            parts.append(random_entry_marks(_RG['K'], _RG['BR'], tsrc, rng, allowed=_RG.get('ALLOWED')))
         MM = pd.concat(parts, ignore_index=True)
         MM['sid'] = MM.sid.astype(str); MM['pair'] = MM.pair.astype(str)
         MM['day'] = pd.to_datetime(MM.day)

@@ -1,0 +1,41 @@
+area,claim,statistic,null,verdict,ref
+nine-box scale axis,separates on realised_vol,"0.919 vs surrogate 0.531, corrected +0.388",iid,HOLDS (p=0.016),16.4e
+nine-box scale axis,separates on avg_abs_move,"1.038 vs surrogate 0.917, corrected +0.121",iid,HOLDS (p=0.082),16.4e
+nine-box scale axis,separates on realised_vol,"0.919 vs surrogate 0.848, corrected +0.071",sign (degenerate here),p=0.082,16.4e
+nine-box scale axis,separates on avg_abs_move,"1.038 vs surrogate 0.972, corrected +0.066",sign (degenerate here),p=0.115,16.4e
+shape separation,structural raw,"real 0.314 vs surrogate 0.233, corrected +0.081",sign,FAILS (p=0.020),16.4c
+shape separation,structural M=5,"real 0.307 vs surrogate 0.218, corrected +0.089",sign,FAILS (p=0.015),16.4c
+shape separation,product M=5,"real 0.384 vs surrogate 0.340, corrected +0.044",sign,FAILS (p=0.174),16.4c
+shape separation,grid,"real 0.503 vs surrogate 0.540, corrected -0.037",sign,FAILS (p=0.856),16.4c
+shape separation,structural raw,"real 0.314 vs surrogate 0.224, corrected +0.090",iid,FAILS (p=0.025),16.4c
+shape separation,structural M=5,"real 0.307 vs surrogate 0.211, corrected +0.096",iid,FAILS (p=0.015),16.4c
+shape separation,product M=5,"real 0.384 vs surrogate 0.320, corrected +0.063",iid,FAILS (p=0.075),16.4c
+shape separation,grid,"real 0.503 vs surrogate 0.513, corrected -0.010",iid,FAILS (p=0.652),16.4c
+"shape separation, EPISODE basis",structural M=5,"real 0.307 vs surrogate 0.231, corrected +0.076",sign,FAILS (p=0.033),16.4e
+"shape separation, EPISODE basis",product M=5,"real 0.355 vs surrogate 0.346, corrected +0.010",sign,FAILS (p=0.393),16.4e
+"shape separation, EPISODE basis",grid,"real 0.379 vs surrogate 0.433, corrected -0.054",sign,FAILS (p=0.984),16.4e
+"shape separation, EPISODE basis",structural M=5,"real 0.307 vs surrogate 0.227, corrected +0.080",iid,FAILS (p=0.049),16.4e
+"shape separation, EPISODE basis",product M=5,"real 0.355 vs surrogate 0.334, corrected +0.022",iid,FAILS (p=0.262),16.4e
+"shape separation, EPISODE basis",grid,"real 0.379 vs surrogate 0.436, corrected -0.057",iid,FAILS (p=1.000),16.4e
+"structural cell, IS-selected",N=3 B=1 D=0.50 R=1.00,"holdout 0.388 vs surrogate 0.371, corrected +0.018",sign,FAILS (p=0.298),16.4d
+"structural cell, IS-selected",N=3 B=1 D=0.50 R=1.00,"holdout 0.388 vs surrogate 0.359, corrected +0.029",iid,FAILS (p=0.223),16.4d
+excursion,structure: non-trending minus trending / bars_to_peak,"observed +0.0385, published t 0.16",block bootstrap 21/63/126,FAILS (p 0.802/0.678/0.692),16.4e
+excursion,structure: non-trending minus trending / ratio,"observed +0.0120, published t --",block bootstrap 21/63/126,FAILS (p 0.782/0.633/0.633),16.4e
+excursion,structure: non-trending minus trending / path_eff,"observed -0.0062, published t -1.05",block bootstrap 21/63/126,FAILS (p 0.609/0.762/0.802),16.4e
+excursion,grid: strong chop minus strong trend / path_eff,"observed +0.0168, published t 1.70",block bootstrap 21/63/126,FAILS (p 0.300/0.209/0.019),16.4e
+excursion,grid: strong chop minus strong trend / bars_to_peak,"observed +0.3309, published t 0.75",block bootstrap 21/63/126,FAILS (p 0.525/0.510/0.635),16.4e
+excursion,grid: strong chop minus strong trend / mfe,"observed -0.0017, published t -1.58",block bootstrap 21/63/126,FAILS (p 0.526/0.529/0.779),16.4e
+excursion,grid: strong chop minus strong trend / ratio,"observed +0.1086, published t --",block bootstrap 21/63/126,FAILS (p 0.548/0.498/0.153),16.4e
+excursion,tier: all differ minus all agree / ratio,"observed +0.1101, published t --",block bootstrap 21/63/126,FAILS (p 0.275/0.259/0.271),16.4e
+excursion,tier: all differ minus all agree / bars_to_peak,"observed +0.3835, published t 1.13",block bootstrap 21/63/126,FAILS (p 0.327/0.160/0.216),16.4e
+excursion,tier: all differ minus all agree / path_eff,"observed +0.0089, published t 1.13",block bootstrap 21/63/126,FAILS (p 0.525/0.668/0.865),16.4e
+settling vs transitional,are they the same bars,"lift 1.004, Cramers V 0.0014",-,INDEPENDENT,16.4f
+regime change counts,shape only,"1455 changes, 4.013% of bars, mean gap 24.9 bars",-,COUNT,16.4k
+regime change counts,activity only,"1521 changes, 4.195% of bars, mean gap 23.8 bars",-,COUNT,16.4k
+regime change counts,both,"54 changes, 0.149% of bars, mean gap 671.5 bars",-,COUNT,16.4k
+regime change counts,split-join any,"3030 changes, 8.356% of bars, mean gap 12.0 bars",-,COUNT,16.4k
+regime change counts,combined (shipped),"2443 changes, 6.737% of bars, mean gap 14.8 bars",-,COUNT,16.4k
+"failed swings, IS-selected cell",X=0.97 Y=3.00 on activity only,"IS excess +0.194, holdout lift 0.738 vs surrogate 1.029, excess -0.290",sign,FAILS (p=0.811),16.4l
+"failed swings, IS-selected cell",X=0.97 Y=3.00 on activity only,"IS excess +0.194, holdout lift 0.738 vs surrogate 0.961, excess -0.223",iid,FAILS (p=0.731),16.4l
+"lead-time, IS-selected cell",rng fast=44 slow=92 on product M=5,"IS excess +0.290, holdout lift 1.160 vs surrogate 1.023, excess +0.137",sign,FAILS (p=0.279),16.4i
+"lead-time, IS-selected cell",rng fast=44 slow=92 on product M=5,"IS excess +0.290, holdout lift 1.160 vs surrogate 1.016, excess +0.144",iid,FAILS (p=0.269),16.4i
