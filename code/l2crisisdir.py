@@ -46,7 +46,7 @@ def panel():
         d = S.load_pair(p)
         px[p] = d['close']
     L = pd.read_csv(os.path.join(ROOTOUT, 'layer1_states.csv'),
-                    usecols=['date', 'pair', 'shape2'], parse_dates=['date'])
+                    usecols=['date', 'pair', 'shape2'], parse_dates=['date'], comment='#')
     return px, L.set_index(['date', 'pair'])['shape2']
 
 

@@ -90,3 +90,6 @@ results/chain_pids/
 # routing permission tables and the direction-null symlinks: regenerable from l2route / l2returns
 results/route_*.pkl
 results/wf_*_dirnull.pkl
+
+# H.10 score batches archived at the 14 Sep swap; regenerable
+results/scores_h10_archive/

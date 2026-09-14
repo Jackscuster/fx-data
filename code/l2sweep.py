@@ -207,7 +207,7 @@ def regime_codes(pair, index):
     """
     global _LAB
     if _LAB is None:
-        L_ = pd.read_csv(LABELS, parse_dates=['date'], usecols=['date', 'pair', 'shape2'])
+        L_ = pd.read_csv(LABELS, parse_dates=['date'], usecols=['date', 'pair', 'shape2'], comment='#')
         _LAB = {p: g.set_index('date').shape2 for p, g in L_.groupby('pair')}
     m = REGIME_CODE
     s = _LAB.get(pair)

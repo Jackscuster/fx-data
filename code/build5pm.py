@@ -54,11 +54,13 @@ def main():
     px = pd.DataFrame(index=u.index)
     for a, b in itertools.combinations(PRI, 2):
         px[a + b] = u[a] / u[b]
-    assert list(px.columns) == list(pd.read_csv(os.path.join(ROOTDATA, 'px28.csv'), index_col=0, nrows=1).columns), \
-        'column order differs from px28.csv'
+    ref = os.path.join(ROOTDATA, 'px28_h10.csv')
+    if os.path.exists(ref):
+        assert list(px.columns) == list(pd.read_csv(ref, index_col=0, nrows=1).columns), 'column order differs from px28_h10.csv'
     px.index.name = 'Date'
     px.to_csv(OUT)
-    print('px28_5pm', px.shape, px.index.min().date(), px.index.max().date())
+    px.to_csv(os.path.join(ROOTDATA, 'px28.csv'))   # THE panel every Layer 1 module reads, since the 14 Sep swap
+    print('px28_5pm -> px28.csv', px.shape, px.index.min().date(), px.index.max().date())
     emax, cmin = px.EURUSD.max(), px.USDCHF.min()
     print('EURUSD close max %.4f on %s | USDCHF close min %.4f on %s'
           % (emax, px.EURUSD.idxmax().date(), cmin, px.USDCHF.idxmin().date()))
