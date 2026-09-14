@@ -48,8 +48,9 @@
    5pm; gate-1 constants untouched, unlabelled OANDA bars 3.7% → 0.0%). All
    score batches regenerated on 5pm in the main tree (`sc2-7`, 28/28 each;
    H.10 batches parked in `results/scores_h10_archive/`, gitignored); the
-   pool/prep/dedup pass was launched detached at 14:10 and writes
-   `signals.json` (log `~/fx-data-logs/l1_MAIN5PM.log`). **NOT yet done for
+   pool/prep/dedup pass ran at 14:35 (after one filesystem-timeout retry):
+   `signals.json` 175,634 records on the 5pm panel, **8 gate-7 survivors**
+   (H.10 had 29), clustered by `dedup.py`. **NOT yet done for
    the swap: the Layer 1 analysis chain on the 5pm panel in the main tree**
    (`bash ~/fx-data-logs/l1analyse.sh /Users/jackcuster/Documents/fx-data
    MAIN5PM`, 111 min, then the second pass persist/regenerate/persist2/refit/
@@ -143,6 +144,15 @@
    **Batch 1 clock so far:** item 1 70 min · 2 0.1 · 3 2.4 · 4 4.5 (+nulls
    39) · 5 10 (+null 27) · 6 11.2 · 9 4.9 + 27 · sanity 3 — plus item 7
    running since 11:52.
+
+   **THE DISK.** This repo lives under `~/Documents`, and `brctl status` shows
+   iCloud Drive syncing that container. Symptoms seen today: `du` reporting 0
+   bytes for real files (dataless, evicted), and `[Errno 60] Operation timed
+   out` on plain local reads of `.npz` and `signals.json` under load (killed
+   `sc7` twice, `prep` once). Every scorer is resumable and every stage was
+   re-run to completion, but the fix is Jack's: move the repo out of the
+   iCloud-synced folder or turn off Desktop & Documents syncing. Until then,
+   retry a read-timeout failure once before believing it.
 
    **RESUME INSTRUCTION FOR A FRESH SESSION.** (1) `tail -5 ~/fx-data-logs/
    batch1.log` and `pgrep -fl "item7.sh|queue_b1_tail.sh|nulls_q2.sh"` — the

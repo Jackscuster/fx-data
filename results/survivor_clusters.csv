@@ -1,17 +1,8 @@
-# SUPERSEDED 2026-09-13 -- BUILT ON THE FED H.10 NOON FIX. Layer 2 trades OANDA 17:00 NY bars; the same estimator rebuilt on those bars is in results/layer1_5pm/ (analysis) and results/layer1_states_5pm.csv (states, 2002-12-19..2020-12-31, 2021+ sealed). Kept in place; nothing deleted.
 representative,batch,fam,to,si,ao,tsb,stronger_target,n_members,members
-z_panelvol_40,cross-sectional,z_panelvol,-25.59,-0.02566,0.964,6.0,,8,z_panelvol_40|zz_panelvol_D40|z_paneldisp_40|zz_paneldisp_D40|z_panelvol_60|zz_panelvol_D60|zz_coex3_D120|zb_cx3_m120
-cx4_m375,trend-duration,cx_m,-21.75,-0.02353,0.929,6.0,trend,1,cx4_m375
-rc_cx3_s30,trend-duration,cx_s,-19.49,-0.02326,0.893,6.0,trend,1,rc_cx3_s30
-rb_dts_60_750_ch,trend-duration,dts,-17.87,-0.0221,0.929,5.0,trend,7,rb_dts_60_750_ch|rb_pdm_50_ch|ra_cx2_x25_ch|zc_cx2_s150_ch|zb_cx2_s90_ch|rc_ats_120_750_ch|ra_cx2_m75_ch
-ts_dd0.02_ol,trend-duration,ts_dd,-16.14,-0.02371,0.893,6.0,trend,1,ts_dd0.02_ol
-zd_cx3_x375,trend-duration,cx_x,-15.95,-0.02835,0.893,5.0,trend,1,zd_cx3_x375
-cx1.5_x150_ch,trend-duration,cx1._x,-15.43,-0.02234,0.893,5.0,trend,1,cx1.5_x150_ch
-rd_xsctop_r15_pd,trend-nonmomentum,cross-sectional,-15.06,-0.02367,0.893,6.0,chop,1,rd_xsctop_r15_pd
-za_cx4_m750_ch,trend-duration,cx_m,-14.8,-0.02263,0.893,5.0,trend,1,za_cx4_m750_ch
-ra_cx2.5_m120,trend-duration,cx2._m,-14.39,-0.02404,0.964,6.0,chop,1,ra_cx2.5_m120
-ra_oc750_fl_8_pl,trend-duration,oc_fl,14.22,0.02267,0.893,5.0,trend,2,ra_oc750_fl_8_pl|ra_ep750_fl_8_pl
-za_xsctop_r20_pv,trend-nonmomentum,cross-sectional,-13.75,-0.02384,0.893,5.0,chop,1,za_xsctop_r20_pv
-rc_ats_60_500_ch,trend-duration,ats,-10.51,-0.02244,0.893,5.0,trend,1,rc_ats_60_500_ch
-rc_cx1.5_x180_ch,trend-duration,cx1._x,-10.42,-0.02316,0.893,6.0,trend,1,rc_cx1.5_x180_ch
-ra_cx2.5_m10,trend-duration,cx2._m,-9.1,-0.02226,0.893,5.0,trend,1,ra_cx2.5_m10
+rb_xsctop_r30_pd,trend-nonmomentum,cross-sectional,-15.97,-0.02804,0.893,6.0,chop,1,rb_xsctop_r30_pd
+rd_xsctop_r10_ts,trend-nonmomentum,cross-sectional,-15.86,-0.02419,0.929,6.0,chop,1,rd_xsctop_r10_ts
+rb_pdm_75_ch,trend-duration,pdm,15.32,0.02475,0.929,6.0,trend,2,rb_pdm_75_ch|rb_bd5_60_ch
+rc_xsctop_e90_ts,trend-nonmomentum,cross-sectional,-15.22,-0.02605,0.893,5.0,trend,1,rc_xsctop_e90_ts
+rd_xsctop_r120_ts,trend-nonmomentum,cross-sectional,-13.93,-0.03192,0.893,6.0,trend,1,rd_xsctop_r120_ts
+ts_sg2_v10_pl,trend-duration,ts_sg,-12.77,-0.02727,0.893,6.0,trend,1,ts_sg2_v10_pl
+rb_cx1.5_m120_ch,trend-duration,cx1._m,-9.88,-0.02683,0.893,6.0,trend,1,rb_cx1.5_m120_ch
