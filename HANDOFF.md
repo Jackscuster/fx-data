@@ -83,7 +83,10 @@
    the checking years — 2021-2026 judges it once.** Direction-preserving null
    mean −0.96 / −1.44, max −0.35 / −0.52, p = 0.000 (39 min). Regime-shuffle
    null: first run failed on a routing-option tuple bug (fixed), REQUEUED
-   behind item 7 (`~/fx-data-logs/nulls_q2.sh`). Pickles `_cc_chopcore`.
+   behind ITEM 8 (`~/fx-data-logs/nulls_q2.sh`, pid 35462, waits for "BATCH 1
+   TAIL COMPLETE" — it originally waited on "ITEM 7 COMPLETE", which would
+   have run it alongside item 8's two workers; re-pointed 14:57; prints
+   "NULLS Q2 COMPLETE"). Pickles `_cc_chopcore`.
 
    **Item 5 — trend gate (10 min).** NOT-RANGING (chop axis) admits 41% of
    entries; trend slices alone improve (A-trend 1.24% vs 0.28%, B-trend 1.88%
@@ -101,18 +104,28 @@
    5.21 / 7.81 with worse drawdown (near-uniform weights). **Winner: equal.**
    `results/members_weighted_routed_tirexcl_actweak.csv`.
 
-   **Item 7 — agreement sweep: RUNNING** (`~/fx-data-logs/item7.sh`, pid
-   10005, started 11:52, log `~/fx-data-logs/batch1.log`). Curve-shape stage
-   done (`results/agree_curveshape_routed_tirexcl_actweak.csv`); min-votes
-   sweep in progress: grid 1,2,3 then geomspace(4, p99.5 ≈ 972, 12), real +
-   zero-cost twin (spread paid) + 5 random-N draws per step, both budgets,
-   ~2-3 min per walk under load. So far min_votes 1-6 are identical (those
-   rows already size to zero under the fitted curve); the curve bends higher
-   up. Writes `results/agree_minvotes_routed_tirexcl_actweak.csv` after every
-   step. Expected to finish ~19:00-20:00; prints "ITEM 7 COMPLETE" to the log.
+   **Item 7 — agreement sweep: DONE (curve-shape 15.9 min + min-votes 170
+   min, `ITEM 7 COMPLETE` 14:58).** Grid 1,2,3 then geomspace(4, p99.5=1,747,
+   12); real + zero-cost twin + 5 random-N draws per step, both budgets.
+   Real book is IDENTICAL to the base (5.12 / 7.69, worst 3.62 / 5.43, 298
+   trades/yr) for min_votes 1-63: no row with |net| < 63 is ever sized under
+   the fitted curve, so the bar bites nothing there and the random-N rows at
+   those k (which drop sized rows too) are not a like-for-like control.
+   Where the bar bites: **min_votes 110: 5.53 / 8.30, worst 3.24 / 4.86,
+   maxDD 1.74 / 2.61, 253 trades/yr** (random-N same count: mean 2.90 / 4.35,
+   max 3.29 / 4.94 — beaten); 191: 4.22 / 6.33, worst 2.52 / 3.78 (random
+   2.31 / 3.47, max 3.02 / 4.53 — beaten); 332 and above collapse (1.63 /
+   2.45 down to 0.3 / 0.5, worst years negative, random-N max above real
+   from 332 up). Spread paid is flat ~1.47 / 2.21 %/yr to 110 then falls with
+   the trade count. **Read: the agreement bar adds ~+0.4 / +0.6 to the
+   median at 110 and costs ~0.4 / 0.6 on the worst year — return up, floor
+   down, not a clean win.** Winner not picked: 25-draw control at 110 and
+   191 and both nulls run at the Batch 1 boundary per the resume
+   instruction. `results/agree_minvotes_routed_tirexcl_actweak.csv`,
+   `agree_curveshape_routed_tirexcl_actweak.csv`.
 
-   **Item 8 — team-size curve: QUEUED** behind item 7 (`~/fx-data-logs/
-   queue_b1_tail.sh`, pid 18892, waits for "ITEM 7 COMPLETE"): top-N by each
+   **Item 8 — team-size curve: RUNNING since 14:59** (`~/fx-data-logs/
+   queue_b1_tail.sh`, pid 18892; 420 walks): top-N by each
    of five yardsticks, N on a 14-point log grid from 25 to 8,235, 10 random-N
    draws per N, 2 workers — `python3 code/l2members.py --stage teamsize
    --jobs 2 --n-rand 10`. Writes `results/members_teamsize_routed_tirexcl_
