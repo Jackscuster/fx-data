@@ -96,12 +96,18 @@ def stage_costs(tag, field):
     tab = pd.read_csv(os.path.join(ROOTOUT, 'cost_table.csv')).set_index('pair')
     et = pd.read_csv(os.path.join(ROOTOUT, 'entry_timing.csv'))
     e19 = et[(et.entry_time.str.startswith('19:00')) & (et.period.str.startswith('IS'))].set_index('group').total_cost_pips
+    rec = pd.read_csv(os.path.join(ROOTOUT, 'spread_reconciliation.csv')).set_index('pair') if os.path.exists(os.path.join(ROOTOUT, 'spread_reconciliation.csv')) else None
     models = {
         'zero':        lambda p: 0.0,
         'as_run':      lambda p: float(tab.cost_frac_roundtrip[p]),
         'raw_spread':  lambda p: float(tab.cost_frac_roundtrip[p] / tab.markup[p]),
         'entry_1900':  lambda p: float(e19['major' if p in MAJORS else 'cross'] * tab.pip_size[p] / tab.median_price[p]),
     }
+    if rec is not None:
+        # MEASURED per pair from the OANDA hourly bid/ask, 2016-2020 medians (l2spread.py)
+        models['oanda_1900'] = lambda p: float(rec.oanda_19_pips[p] * tab.pip_size[p] / tab.median_price[p])
+        models['oanda_1700'] = lambda p: float(rec.oanda_17_pips[p] * tab.pip_size[p] / tab.median_price[p])
+        models['oanda_best_hour'] = lambda p: float(rec.oanda_best_pips[p] * tab.pip_size[p] / tab.median_price[p])
     print('  19:00 NY IS cost, pips: %s  (assumed round-trip, as cost_table.marked_up_pips is)' % e19.round(3).to_dict(), flush=True)
     rows = []
     for name, f in models.items():

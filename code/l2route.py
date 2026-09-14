@@ -80,18 +80,22 @@ def crisis_flags(px_path, split='2016-01-01'):
     return F
 
 
-def permitted(shape, act, flags, tir, activity):
-    """{(pair, kind): bool Series by date}: may a NEW entry open on this bar."""
+def permitted(shape, act, flags, tir, activity, chop_always=False, trend_gate='trending'):
+    """{(pair, kind): bool Series by date}: may a NEW entry open on this bar.
+    chop_always: chop slices are never gated (chop-core). trend_gate:
+    'trending' = the trend axis says TRENDING (plus TIR if tir=incl);
+    'not-ranging' = the chop axis does not say RANGING (so trending,
+    trend-in-range and neither all admit)."""
     out = {}
     ts = TREND_STATES[tir]
     for p in shape.columns:
         cr = flags[p[:3]] | flags[p[3:]]
         cr = cr.reindex(shape.index).fillna(False)
         sh = shape[p]; ac = act[p]
-        tr = sh.isin(ts) & ~cr
+        tr = (sh.isin(ts) if trend_gate == 'trending' else (sh.notna() & ~sh.isin(CHOP_STATES))) & ~cr
         if activity == 'weak':
             tr = tr & (ac != 'weak')
-        ch = sh.isin(CHOP_STATES) & ~cr
+        ch = (sh.notna() if chop_always else sh.isin(CHOP_STATES)) & ~cr
         out[(p, 'trend')] = tr.fillna(False).astype(bool)
         out[(p, 'chop')] = ch.fillna(False).astype(bool)
     return out
@@ -114,13 +118,13 @@ def route(T, M, allowed):
     return Tr, Mr, ok
 
 
-def dependence(T, shape, act, flags, tir, activity, years):
+def dependence(T, shape, act, flags, tir, activity, years, chop_always=False, trend_gate='trending'):
     """Each slice's trades INSIDE vs OUTSIDE its regime, trade-level R, trade years only."""
     K = T[['sid', 'tid', 'pair', 'entry', 'R']].copy()
     K['kind'] = K.sid.astype(str).map(kind_of)
     K['slice'] = K.sid.astype(str).map(W.field_label)
     K = K[K.entry.dt.year.isin(years)].reset_index(drop=True)
-    al = permitted(shape, act, flags, tir, activity)
+    al = permitted(shape, act, flags, tir, activity, chop_always, trend_gate)
     inside = np.zeros(len(K), bool)
     for (p, kind), g in K.groupby(['pair', 'kind'], observed=True):
         ser = al.get((p, kind))
@@ -172,11 +176,11 @@ def _init_shuf():
 
 def _shuf_one(args):
     """One shuffled label set, routed ONCE, walked under both budgets."""
-    seed, tir, activity = args
+    seed, tir, activity, chop_always, trend_gate = args
     try:
         rng = np.random.default_rng(seed)
         sh = shuffle_states(_SG['shape'], rng)
-        al = permitted(sh, _SG['act'], _SG['flags'], tir, activity)
+        al = permitted(sh, _SG['act'], _SG['flags'], tir, activity, chop_always, trend_gate)
         Tr, Mr, _ = route(_SG['T'], _SG['M'], al)
         TY = W.trade_year_sums(Mr)
         out = {}
@@ -198,6 +202,8 @@ def main():
     ap.add_argument('--tir', choices=['excl', 'incl'], required=True)
     ap.add_argument('--activity', choices=['ignore', 'weak'], required=True)
     ap.add_argument('--shuffle-null', type=int, default=0)
+    ap.add_argument('--chop-always', action='store_true', help='chop-core: chop slices take every entry (their own rules), only trend slices are gated')
+    ap.add_argument('--trend-gate', choices=['trending', 'not-ranging'], default='trending', help='trend entries on TRENDING (trend axis) or on NOT RANGING (chop axis)')
     ap.add_argument('--no-crisis', action='store_true', help='reproduction check only: the engine\'s own routing has no crisis flag')
     ap.add_argument('--jobs', type=int, default=3)
     a = ap.parse_args()
@@ -215,7 +221,7 @@ def main():
     if a.no_crisis:
         flags[:] = False
         print('  crisis flag DISABLED (reproduction of the engine\'s own routing)', flush=True)
-    al = permitted(shape, act, flags, a.tir, a.activity)
+    al = permitted(shape, act, flags, a.tir, a.activity, a.chop_always, a.trend_gate)
     cov = {k: float(v.loc['2011':'2020'].mean()) for k, v in al.items()}
     print('  permitted-bar share 2011-2020: trend %.3f  chop %.3f'
           % (np.mean([v for (p, k), v in cov.items() if k == 'trend']),
@@ -230,7 +236,7 @@ def main():
         import multiprocessing as mp
         rows = []
         t0 = time.time()
-        args = [(20260913 + i, a.tir, a.activity) for i in range(a.shuffle_null)]
+        args = [(20260913 + i, a.tir, a.activity, a.chop_always, a.trend_gate) for i in range(a.shuffle_null)]
         with mp.Pool(a.jobs, initializer=_init_shuf) as pool:
             got = pool.map(_shuf_one, args, chunksize=1)
         errs = [g['_err'] for g in got if '_err' in g]
@@ -269,7 +275,7 @@ def main():
     pd.to_pickle(Tr, W.OUT('wf_trades.pkl')); pd.to_pickle(Mr, W.OUT('wf_marks.pkl'))
     pd.to_pickle(al, W.OUT('route_allowed.pkl'))
     print('  wrote %s, %s, %s' % (W.OUT('wf_trades.pkl'), W.OUT('wf_marks.pkl'), W.OUT('route_allowed.pkl')), flush=True)
-    D = dependence(T, shape, act, flags, a.tir, a.activity, years=[2016, 2017, 2018, 2019, 2020])
+    D = dependence(T, shape, act, flags, a.tir, a.activity, years=[2016, 2017, 2018, 2019, 2020], chop_always=a.chop_always, trend_gate=a.trend_gate)
     D.to_csv(W.OUT('walkforward_regime_dependence.csv'), index=False)
     print(D[D.inside.isin([True, False])].to_string(index=False, float_format=lambda v: '%8.3f' % v), flush=True)
 
