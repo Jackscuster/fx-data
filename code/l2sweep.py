@@ -156,7 +156,8 @@ def floor_path(mode):
     time in this project a floor has had to be re-measured after the setup
     moved; it is written down here so it is the last time it comes as news."""
     return os.path.join(ROOTOUT, 'gate1_luck_floor_mode%s.csv' % mode)
-LABELS = os.path.join(ROOTOUT, 'layer1_states.csv')
+# WF_LABELS overrides the states file the slicer routes on (the 5pm rebuild).
+LABELS = os.environ.get('WF_LABELS') or os.path.join(ROOTOUT, 'layer1_states.csv')
 
 
 def slot_options():

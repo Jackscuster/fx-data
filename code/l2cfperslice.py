@@ -31,6 +31,7 @@ def main():
     ap.add_argument('--field-file', default=os.path.join(ROOTOUT, 'gate2_cleanfield.csv'))
     ap.add_argument('--slices', default=','.join(W.SLICES3))
     ap.add_argument('--structures', default='ALLPASS')
+    ap.add_argument('--nocut', action='store_true', help='walk the uncut book (NO_CUT)')
     a = ap.parse_args()
 
     W.S.load_costs()
@@ -59,9 +60,11 @@ def main():
         TYs = W.trade_year_sums(Ms)
         for bt, dipb, dayb in W.BUDGETS:
             t0 = time.time()
-            R = W.walk(Ts, TYs, Ms, ident, dipb, dayb, structures)
+            R = W.walk(Ts, TYs, Ms, ident, dipb, dayb, structures, nocut=a.nocut)
             for s, (k, cuts, x, dy) in R.items():
-                k.update(slice=sl, budget=bt, structure=s, field_n=n,
+                if a.nocut:
+                    s = {'ALLPASS': 'NO_CUT'}.get(s, 'NO_CUT_' + s)
+                k.update(slice=sl, budget=bt, structure=s, cut_applied=(not a.nocut), field_n=n,
                          dip_budget=dipb, day_budget=dayb, kind='per_slice',
                          expectancy_pct_per_day=float(np.mean(x)))
                 rows.append(k)

@@ -1,0 +1,64 @@
+signal,batch,family,in_h10_2002-2020,in_5pm_2002-2020,to_h10_2002-2020,si_h10_2002-2020,ao_h10_2002-2020,mo_h10_2002-2020,dec_h10_2002-2020,tsb_h10_2002-2020,to_5pm_2002-2020,si_5pm_2002-2020,ao_5pm_2002-2020,mo_5pm_2002-2020,dec_5pm_2002-2020,tsb_5pm_2002-2020,fails_in_other
+cx1.5_m10_ph,trend-duration,cx1._m,True,False,-21.24,-0.02255,0.893,-0.983,1.833,5.0,-11.23,-0.01985,0.679,-0.803,1.049,5.0,effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+cx1.5_s10_ph,trend-duration,cx1._s,True,False,-19.01,-0.02823,0.893,-0.956,1.272,5.0,-15.72,-0.01963,0.786,-0.665,1.449,2.0,effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+hz500_bu_10_pl,trend-duration,hz_bu,True,False,-15.63,-0.02327,0.929,-0.993,1.214,6.0,-12.36,-0.02523,0.857,-0.984,0.863,6.0,agree >= 0.893
+hz500_bu_15_pl,trend-duration,hz_bu,True,False,-12.71,-0.02754,0.929,-0.966,0.833,6.0,-11.84,-0.02651,0.714,-0.96,0.785,6.0,agree >= 0.893
+hz500_bu_5_pl,trend-duration,hz_bu,True,False,-15.26,-0.0231,0.929,-0.995,1.184,6.0,-11.16,-0.02103,0.786,-0.928,0.936,6.0,effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+hz500_bu_8_pl,trend-duration,hz_bu,True,False,-14.96,-0.02347,0.893,-0.992,1.145,6.0,-12.24,-0.0244,0.857,-0.991,0.885,6.0,agree >= 0.893
+hz500_fl_3_pl,trend-duration,hz_fl,True,False,-12.95,-0.02384,0.929,-0.967,0.985,6.0,-9.99,-0.02107,0.75,-0.952,0.849,6.0,effect >= 0.0221;agree >= 0.893
+hz500_hi_15_pl,trend-duration,hz_hi,True,False,-13.47,-0.02614,0.929,-0.988,0.93,6.0,-11.63,-0.0261,0.679,-0.954,0.785,6.0,agree >= 0.893
+hz500_hi_8_pl,trend-duration,hz_hi,True,False,-14.88,-0.02405,0.893,-0.984,1.114,6.0,-12.26,-0.0232,0.75,-0.977,0.934,6.0,agree >= 0.893
+hz500_md_5_pl,trend-duration,hz_md,True,False,-12.13,-0.02525,0.893,-0.998,0.874,6.0,-7.41,-0.02265,0.643,-0.978,0.586,6.0,|t| OOS >= 8;agree >= 0.893;decay >= 0.60
+hz500_sg1_v10_pl,trend-duration,hz_sg,True,False,-11.44,-0.02758,0.893,-0.962,0.752,5.0,-7.63,-0.02381,0.714,-0.904,0.573,6.0,|t| OOS >= 8;agree >= 0.893;monotonic >= 0.95;decay >= 0.60
+hz500_sg1_v20_pl,trend-duration,hz_sg,True,False,-12.11,-0.02798,0.893,-0.974,0.786,5.0,-7.05,-0.02215,0.679,-0.863,0.572,6.0,|t| OOS >= 8;agree >= 0.893;monotonic >= 0.95;decay >= 0.60
+hz500_sg1_v40_pl,trend-duration,hz_sg,True,False,-12.03,-0.02927,0.929,-0.978,0.745,5.0,-6.94,-0.02206,0.679,-0.93,0.565,6.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95;decay >= 0.60
+hz500_sg1_v60_pl,trend-duration,hz_sg,True,False,-11.25,-0.02614,0.929,-0.971,0.783,6.0,-6.29,-0.02204,0.571,-0.966,0.513,6.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;decay >= 0.60
+hz500_su1_v10_pl,trend-duration,hz_su,True,False,-13.89,-0.02584,0.929,-0.997,0.977,6.0,-10.06,-0.02237,0.679,-0.972,0.8,6.0,agree >= 0.893
+hz500_su1_v120_pl,trend-duration,hz_su,True,False,-10.11,-0.02439,0.893,-0.95,0.748,6.0,-4.09,-0.02027,0.571,-0.886,0.363,6.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95;decay >= 0.60
+hz500_su1_v20_pl,trend-duration,hz_su,True,False,-13.21,-0.02326,0.929,-0.995,1.032,5.0,-7.66,-0.02005,0.714,-0.973,0.681,6.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893
+hz500_su1_v40_pl,trend-duration,hz_su,True,False,-12.72,-0.02501,0.929,-0.986,0.922,6.0,-7.71,-0.01917,0.643,-0.947,0.717,6.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+hz500_su1_v60_pl,trend-duration,hz_su,True,False,-11.53,-0.02231,0.893,-0.991,0.938,6.0,-7.31,-0.01858,0.643,-0.904,0.704,6.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+hz750_bu_10_pl,trend-duration,hz_bu,True,False,-12.25,-0.02314,0.893,-0.957,0.997,5.0,-10.71,-0.02235,0.714,-0.94,0.877,5.0,agree >= 0.893;monotonic >= 0.95
+hz750_hi_8_pl,trend-duration,hz_hi,True,False,-12.51,-0.02283,0.893,-0.978,1.027,5.0,-10.22,-0.02145,0.75,-0.953,0.874,5.0,effect >= 0.0221;agree >= 0.893
+hz750_sg1_v20_pl,trend-duration,hz_sg,True,False,-11.23,-0.02526,0.893,-0.951,0.838,5.0,-6.08,-0.0217,0.571,-0.896,0.52,5.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95;decay >= 0.60
+hz750_su1_v10_pl,trend-duration,hz_su,True,False,-13.45,-0.02523,0.964,-0.97,1.008,5.0,-9.55,-0.01943,0.786,-0.998,0.906,5.0,effect >= 0.0221;agree >= 0.893
+hz750_su1_v20_pl,trend-duration,hz_su,True,False,-13.5,-0.02315,0.893,-0.952,1.102,4.0,-7.67,-0.01904,0.679,-0.965,0.743,5.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893
+hz750_su1_v40_pl,trend-duration,hz_su,True,False,-12.92,-0.02426,0.893,-0.957,1.005,4.0,-7.85,-0.0179,0.714,-0.948,0.811,5.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+ra_ts_hi_8_pl,trend-duration,ts_hi,True,False,-12.16,-0.02344,0.929,-0.955,0.976,5.0,-9.52,-0.02195,0.714,-0.988,0.797,5.0,effect >= 0.0221;agree >= 0.893
+ra_ts_sg1_v40_pl,trend-duration,ts_sg,True,False,-9.96,-0.02296,0.893,-0.959,0.831,5.0,-5.91,-0.01806,0.643,-0.961,0.614,5.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893
+ra_ts_sg1_v60_pl,trend-duration,ts_sg,True,False,-9.79,-0.02267,0.929,-0.956,0.826,5.0,-5.23,-0.01918,0.607,-0.927,0.513,5.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95;decay >= 0.60
+ra_ts_su1_v10_pl,trend-duration,ts_su,True,False,-11.42,-0.02272,0.893,-0.994,0.961,5.0,-8.24,-0.02092,0.643,-0.963,0.729,5.0,effect >= 0.0221;agree >= 0.893
+ra_ts_su1_v20_pl,trend-duration,ts_su,True,False,-11.06,-0.0228,0.893,-0.98,0.929,5.0,-6.96,-0.01876,0.643,-0.88,0.69,5.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+rb_bd5_20_ch,trend-duration,bd,True,False,-18.65,-0.02369,0.929,-0.978,1.499,6.0,-10.91,-0.01763,0.821,-0.935,1.132,5.0,effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+rb_pdm_50_ch,trend-duration,pdm,True,False,18.37,0.02618,0.893,0.995,1.315,6.0,14.0,0.01889,0.821,0.725,1.35,6.0,effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+rb_xsctop_r10_ts,trend-nonmomentum,cross-sectional,True,False,-20.92,-0.02666,0.893,-0.983,1.531,5.0,-14.75,-0.03594,0.821,-0.99,0.79,5.0,agree >= 0.893
+rb_xsctop_r15_ts,trend-nonmomentum,cross-sectional,True,False,-20.46,-0.02217,0.893,-0.974,1.735,5.0,-13.53,-0.0247,0.786,-0.946,1.024,5.0,agree >= 0.893;monotonic >= 0.95
+rb_xsctop_r20_pd,trend-nonmomentum,cross-sectional,True,False,-17.2,-0.02782,0.893,-0.956,1.171,6.0,-12.48,-0.0356,0.786,-0.901,0.626,6.0,agree >= 0.893;monotonic >= 0.95
+rb_xsctop_r30_pd,trend-nonmomentum,cross-sectional,True,False,-22.25,-0.03127,0.929,-0.967,1.307,4.0,-15.35,-0.02804,0.786,-0.97,0.957,5.0,agree >= 0.893
+rc_cx2_s150_ch,trend-duration,cx_s,True,False,-10.9,-0.02915,0.893,-0.982,0.711,6.0,-4.44,-0.00949,0.643,-0.651,0.862,3.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+rc_xsctop_r10_pd,trend-nonmomentum,cross-sectional,True,False,-25.87,-0.02671,0.964,-0.986,1.761,5.0,-13.38,-0.0257,0.75,-0.886,0.91,5.0,agree >= 0.893;monotonic >= 0.95
+rc_xsctop_r10_ts,trend-nonmomentum,cross-sectional,True,False,-21.9,-0.03022,0.893,-0.966,1.376,4.0,-15.66,-0.03591,0.786,-0.912,0.822,5.0,agree >= 0.893;monotonic >= 0.95
+rc_xsctop_r15_pd,trend-nonmomentum,cross-sectional,True,False,-23.05,-0.02713,0.929,-0.965,1.53,6.0,-13.64,-0.03235,0.786,-0.853,0.741,6.0,agree >= 0.893;monotonic >= 0.95
+rc_xsctop_r15_ts,trend-nonmomentum,cross-sectional,True,False,-22.65,-0.02215,0.964,-0.988,1.91,5.0,-11.44,-0.02886,0.821,-0.912,0.733,6.0,agree >= 0.893;monotonic >= 0.95
+rc_xsctop_r20_pd,trend-nonmomentum,cross-sectional,True,False,-19.1,-0.03245,0.964,-0.969,1.074,6.0,-14.32,-0.03743,0.893,-0.936,0.668,6.0,monotonic >= 0.95
+rc_xsctop_r20_ts,trend-nonmomentum,cross-sectional,False,True,-19.21,-0.01075,0.964,-0.982,3.418,5.0,-10.98,-0.02979,0.929,-0.958,0.678,5.0,effect >= 0.0221
+rc_xsctop_r30_pd,trend-nonmomentum,cross-sectional,True,True,-19.37,-0.02279,0.964,-0.959,1.536,5.0,-16.97,-0.02472,0.893,-0.975,1.197,5.0,
+rd_xsctop_r10_pd,trend-nonmomentum,cross-sectional,True,False,-22.51,-0.02483,0.929,-0.968,1.641,5.0,-11.5,-0.02178,0.786,-0.72,0.924,4.0,effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+rd_xsctop_r15_pd,trend-nonmomentum,cross-sectional,True,False,-18.45,-0.03317,0.929,-0.965,0.998,6.0,-13.63,-0.03051,0.857,-0.809,0.78,6.0,agree >= 0.893;monotonic >= 0.95
+rd_xsctop_r5_ts,trend-nonmomentum,cross-sectional,True,False,-18.26,-0.0288,0.964,-0.979,1.204,5.0,-18.77,-0.02619,0.857,-0.959,1.302,5.0,agree >= 0.893
+z_paneldisp_30,cross-sectional,z_paneldisp,True,False,-25.98,-0.02327,0.929,-0.992,2.14,,-23.6,-0.01204,0.893,-0.922,3.62,,effect >= 0.0221;monotonic >= 0.95
+z_panelvol_15,cross-sectional,z_panelvol,True,True,-22.35,-0.02505,0.964,-0.983,1.697,,-17.82,-0.02322,0.893,-0.957,1.417,,
+z_panelvol_20,cross-sectional,z_panelvol,True,False,-26.29,-0.02422,0.893,-0.974,2.077,,-20.05,-0.01791,0.857,-0.982,2.071,,effect >= 0.0221;agree >= 0.893
+z_panelvol_40,cross-sectional,z_panelvol,True,False,-23.12,-0.02763,0.929,-0.977,1.572,6.0,-22.23,-0.01804,0.857,-0.986,2.278,6.0,effect >= 0.0221;agree >= 0.893
+za_pdm_60_ch,trend-duration,pdm,True,False,19.05,0.02581,0.929,0.964,1.371,6.0,14.96,0.01236,0.893,0.815,2.216,6.0,effect >= 0.0221;monotonic >= 0.95
+za_pdm_75_ch,trend-duration,pdm,True,False,20.03,0.02588,0.929,0.993,1.442,6.0,16.85,0.01558,0.857,0.883,2.001,6.0,effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+za_xsctop_r20_pd,trend-nonmomentum,cross-sectional,True,False,-20.51,-0.03366,0.893,-0.972,1.172,6.0,-17.44,-0.0332,0.857,-0.882,0.955,6.0,agree >= 0.893;monotonic >= 0.95
+zd_pdm_60_ch,trend-duration,pdm,True,False,16.6,0.02576,0.893,0.955,1.189,6.0,6.92,0.01324,0.643,0.683,0.926,3.0,|t| OOS >= 8;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+zd_xsctop_r15_pd,trend-nonmomentum,cross-sectional,True,False,-25.08,-0.03005,0.964,-0.994,1.508,5.0,-16.42,-0.03735,0.821,-0.936,0.778,6.0,agree >= 0.893;monotonic >= 0.95
+zd_xsctop_r30_pd,trend-nonmomentum,cross-sectional,False,True,-21.86,-0.02019,0.929,-0.869,1.954,5.0,-17.26,-0.03643,0.893,-0.974,0.828,5.0,effect >= 0.0221;monotonic >= 0.95
+ze_cx2.5_x150_ch,trend-duration,cx2._x,True,False,-16.83,-0.02875,0.929,-0.959,1.109,6.0,-9.95,0.00261,0.786,-0.673,6.91,1.0,sign holds OOS;effect >= 0.0221;agree >= 0.893;monotonic >= 0.95
+ze_xsctop_r15_ts,trend-nonmomentum,cross-sectional,True,False,-19.84,-0.02224,0.964,-0.965,1.653,5.0,-5.46,-0.02474,0.607,-0.516,0.406,5.0,|t| OOS >= 8;agree >= 0.893;monotonic >= 0.95;decay >= 0.60
+zz_paneldisp_D30,multi-timeframe,zz_paneldisp,True,False,-26.05,-0.02327,0.929,-0.992,2.146,,-23.6,-0.01189,0.893,-0.922,3.67,,effect >= 0.0221;monotonic >= 0.95
+zz_panelvol_D15,multi-timeframe,zz_panelvol,True,True,-22.4,-0.02505,0.964,-0.982,1.701,,-17.82,-0.02317,0.893,-0.957,1.42,,
+zz_panelvol_D20,multi-timeframe,zz_panelvol,True,False,-26.23,-0.02422,0.893,-0.975,2.072,,-20.05,-0.01803,0.857,-0.982,2.059,,effect >= 0.0221;agree >= 0.893
+zz_panelvol_D40,multi-timeframe,zz_panelvol,True,False,-23.12,-0.02763,0.929,-0.978,1.572,6.0,-22.23,-0.01813,0.857,-0.986,2.268,6.0,effect >= 0.0221;agree >= 0.893

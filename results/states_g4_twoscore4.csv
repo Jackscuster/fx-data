@@ -1,3 +1,4 @@
+# SUPERSEDED 2026-09-13 -- BUILT ON THE FED H.10 NOON FIX. Layer 2 trades OANDA 17:00 NY bars; the same estimator rebuilt on those bars is in results/layer1_5pm/ (analysis) and results/layer1_states_5pm.csv (states, 2002-12-19..2020-12-31, 2021+ sealed). Kept in place; nothing deleted.
 date,AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY
 1999-04-01,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 1999-04-02,,,,,,,,,,,,,,,,,,,,,,,,,,,,

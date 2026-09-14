@@ -1,3 +1,4 @@
+# SUPERSEDED 2026-09-13 -- BUILT ON THE FED H.10 NOON FIX. Layer 2 trades OANDA 17:00 NY bars; the same estimator rebuilt on those bars is in results/layer1_5pm/ (analysis) and results/layer1_states_5pm.csv (states, 2002-12-19..2020-12-31, 2021+ sealed). Kept in place; nothing deleted.
 item,is_sep,oos_sep,surrogate,corrected,hi_share,hi_run,hi_diag,coverage,min_share,median_run,diagonal,cells
 trend,0.10557625098097465,0.05219004706782565,0.09948761928298516,-0.04729757221515951,0.4277281002355965,28.0,0.979684467538972,,,,,
 chop,0.1505667310356734,0.15553289810288906,0.17121445641887598,-0.015681558315986915,0.5568778110944528,24.0,0.9813621278437785,,,,,
