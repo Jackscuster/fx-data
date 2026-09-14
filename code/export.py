@@ -84,7 +84,7 @@ SCHEMA of results/layer1_states.csv
 
 READING IT.
 
-  s = pd.read_csv('results/layer1_states.csv', parse_dates=['date'])
+  s = pd.read_csv('results/layer1_states.csv', parse_dates=['date'], comment='#')
   s = s[s.sample == 'oos']                      # thresholds were learned on 'is'
   wide = s.pivot(index='date', columns='pair', values='state_28')
 
@@ -259,7 +259,19 @@ def check(T, multi, tier):
 def main():
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
     T, multi, tier = build(px)
-    T.to_csv(OUT, index=False, float_format='%.6g')
+    # THE 5PM INTERFACE. First line is a comment-safe header; every reader passes
+    # comment='#'. Rows after the confirmation window are APPLIED with the IS
+    # cuts and never measured -- tagged 'sealed' so no report can quote them by
+    # accident. The window edge is the swap decision of 14 Sep, not a constant
+    # anyone should move without re-validating.
+    SEALED_FROM = '2021-01-01'
+    T['sample'] = np.where(T['date'] >= pd.Timestamp(SEALED_FROM), 'sealed', T['sample'])
+    with open(OUT, 'w') as fh:
+        fh.write('# LAYER 1 STATES -- OANDA 17:00 NY closes (data/px28.csv from build5pm.py). IS to 2015 (cuts fitted), '
+                 'CONFIRMED 2016-2020 (results/layer1_5pm/), rows from %s APPLIED WITH THE SAME CUTS AND NEVER MEASURED '
+                 '(sample=sealed). Rows are lagged one bar: a row dated D is built from bars <= D-1. Readers pass comment="#".\n'
+                 % SEALED_FROM)
+        T.to_csv(fh, index=False, float_format='%.6g')
 
     print('LAYER 1 INTERFACE  %s' % os.path.basename(OUT))
     print('  %d rows, %d pairs, %s to %s, %.1f MB'

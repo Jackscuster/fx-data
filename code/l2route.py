@@ -50,7 +50,7 @@ def kind_of(sid):
 
 
 def load_states(path):
-    d = pd.read_csv(path, parse_dates=['date'], usecols=['date', 'pair', 'shape2', 'activity'])
+    d = pd.read_csv(path, parse_dates=['date'], usecols=['date', 'pair', 'shape2', 'activity'], comment='#')
     shape = d.pivot(index='date', columns='pair', values='shape2')
     act = d.pivot(index='date', columns='pair', values='activity')
     return shape, act

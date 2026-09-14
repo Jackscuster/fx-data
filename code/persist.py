@@ -117,7 +117,7 @@ def runs(v):
 
 
 def main():
-    S = pd.read_csv(L1, parse_dates=['date'])
+    S = pd.read_csv(L1, parse_dates=['date'], comment='#')
     L = pd.read_csv(LG, parse_dates=['date'])
     src = {L1: S, LG: L}
     print('PERSISTING EVERY GENERATION. Nothing is deleted or overwritten.')

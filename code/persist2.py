@@ -58,7 +58,7 @@ def write_wide(w, name, title, note):
 def main():
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
     fit = np.asarray(px.index < SPLIT)
-    S = pd.read_csv(L1, parse_dates=['date'])
+    S = pd.read_csv(L1, parse_dates=['date'], comment='#')
     print('PART 1 -- DAILY SERIES, wide')
 
     for col, name, title, note in [

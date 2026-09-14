@@ -151,7 +151,7 @@ def main():
             S = None
         else:
             S = pd.read_csv(LEG_, usecols=sorted(need)).merge(
-                pd.read_csv(L1, usecols=['date', 'pair', 'activity']),
+                pd.read_csv(L1, usecols=['date', 'pair', 'activity'], comment='#'),
                 on=['date', 'pair'], how='left')
     else:
         S = None

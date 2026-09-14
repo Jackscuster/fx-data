@@ -53,7 +53,7 @@ def rnd(v, n):
 
 def main():
     px = pd.read_csv(PX, index_col=0, parse_dates=True)
-    S = pd.read_csv(L1, parse_dates=['date'])
+    S = pd.read_csv(L1, parse_dates=['date'], comment='#')
     print('building the regime feed from %d rows' % len(S))
     dates = sorted(S.date.unique())
     di = {d: i for i, d in enumerate(dates)}

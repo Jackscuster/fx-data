@@ -5,7 +5,8 @@ C=os.path.join(R,'code')
 def run(m):
     print('\n=== %s ==='%m,flush=True)
     subprocess.run([sys.executable,os.path.join(C,m)],check=True)
-run('build.py')
+run('build.py')      # H.10 noon panel -> data/px28_h10.csv (reference only since 14 Sep)
+run('build5pm.py')   # OANDA 17:00 NY panel -> data/px28.csv: THE Layer 1 source
 for m in ('sc2.py','sc2.py','sc2.py','sc2.py','sc2.py'):   # resumable, idempotent
     run(m)
 run('sc3.py'); run('sc3.py')
