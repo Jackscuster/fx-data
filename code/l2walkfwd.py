@@ -402,6 +402,10 @@ SIZE_CAP = 6.0         # the old curve topped out at 6; the fitted curve is
 MIN_BIN = 30
 N_BINS = 6
 BUDGETS = (('team1', 3.6, 3.6), ('team2', 5.4, 3.6))
+NET_MIN_VOTES = 0.5      # see Book.net; l2agree.py sweeps it
+NET_ROW_MASK = None
+CURVE_MODE = 'fitted'
+OPPOSITION = 'net'       # 'net' (majority, as now) | 'sitout' | 'hedge' -- l2oppose.py
 
 
 def trade_year_sums(M):
@@ -540,14 +544,58 @@ class Book:
     def net(self, w, curve):
         nl = self.L @ w; ns = self.Sm @ w
         net = nl - ns
-        act = np.abs(net) >= 0.5
+        # AGREEMENT SWEEP HOOKS (l2agree.py). NET_MIN_VOTES: a row trades only
+        # when |net votes| reaches it (0.5 = any net vote, the shipped rule).
+        # NET_ROW_MASK: an explicit row mask -- the random-N control keeps the
+        # same COUNT of rows the vote threshold keeps, chosen at random.
+        # CURVE_MODE: the fitted curve or a stated alternative shape.
+        act = np.abs(net) >= NET_MIN_VOTES
+        if NET_ROW_MASK is not None:
+            if isinstance(NET_ROW_MASK, tuple) and NET_ROW_MASK[0] == 'callable':
+                act = act & NET_ROW_MASK[1](self)        # e.g. the volatility floor, per Book
+            elif isinstance(NET_ROW_MASK, tuple) and NET_ROW_MASK[0] == 'random':
+                # ('random', share, seed): keep a random `share` of the active
+                # rows -- the same count the vote threshold would keep. Seeded
+                # per Book size so every structure in a walk sees one draw.
+                _, share, seed = NET_ROW_MASK
+                keep = np.random.default_rng(seed + len(net)).random(len(net)) < share
+                act = act & keep
+            else:
+                act = act & NET_ROW_MASK
         f = np.abs(net) / max(float(w.sum()), 1.0)
-        sz = curve(f) * act
+        if OPPOSITION == 'sitout':
+            # SAME-PAIR OPPOSITION: stand aside on any row with votes on both sides
+            act = act & ~((nl > 0) & (ns > 0))
+        if CURVE_MODE == 'fitted':
+            sz = curve(f) * act
+        elif CURVE_MODE == 'flat':
+            sz = np.where(act, float(SIZE_CAP), 0.0).astype(np.float32)
+        elif CURVE_MODE == 'linear':
+            sz = (np.clip(f, 0, 1) * SIZE_CAP * act).astype(np.float32)
+        elif CURVE_MODE == 'sqrt':
+            sz = (np.sqrt(np.clip(f, 0, 1)) * SIZE_CAP * act).astype(np.float32)
+        elif CURVE_MODE == 'square':
+            sz = (np.clip(f, 0, 1) ** 2 * SIZE_CAP * act).astype(np.float32)
+        else:
+            raise SystemExit('unknown CURVE_MODE %r' % CURVE_MODE)
         live = sz > 0
         ml = np.divide(self.LM @ w, nl, out=np.zeros_like(nl), where=nl > 0)
         ms = np.divide(self.SM @ w, ns, out=np.zeros_like(ns), where=ns > 0)
         sgn = np.where(net > 0, 1.0, -1.0)
         mk = np.where(sgn > 0, ml, ms)
+        if OPPOSITION == 'hedge':
+            # BOTH SIDES OPEN: the long side sized on its own vote fraction, the
+            # short side on its own; the row's P&L is the sum, its gross the sum.
+            # Returned as one row with a size-weighted mark so series() needs
+            # no change; sgn carries the larger side for the currency cap.
+            fl = nl / max(float(w.sum()), 1.0); fs = ns / max(float(w.sum()), 1.0)
+            szl = curve(fl) * (nl >= 0.5); szs = curve(fs) * (ns >= 0.5)
+            if NET_ROW_MASK is not None and not isinstance(NET_ROW_MASK, tuple):
+                szl = szl * NET_ROW_MASK; szs = szs * NET_ROW_MASK
+            tot = szl + szs
+            mk = np.divide(szl * ml + szs * ms, tot, out=np.zeros_like(tot), where=tot > 0)
+            sgn = np.where(nl >= ns, 1.0, -1.0); sz = tot; live = tot > 0
+        self.last_votes = (nl, ns)
         return sgn * live, sz * live, mk * live, f
 
     def series(self, w, curve, cap_pct=None, per_unit=None, den=None, pair_scale=None):

@@ -2,7 +2,163 @@
 
 ## READ THIS FIRST
 
-0. **LAYER 1 ON THE 5PM BAR, AND THE FIRST ROUTING TEST (13-14 Sep).** Four
+0. **BATCH 1 / BATCH 2 IN PROGRESS (14 Sep) — READ THIS BEFORE RESUMING.**
+   Session context was cleared at ~14:15 with Batch 1 mid-run. Everything
+   below is from files. The base book is the four-slice clean field routed on
+   the 5pm states, trend→TRENDING, chop→RANGING, WEAK blocks new trend
+   entries, crisis on: pickles `_routed_tirexcl_actweak`, always-on stream
+   `_cleanfield_4slice_allon` (7,648,503 trades). Both budgets are team1 /
+   team2 (3.6/3.6 and 5.4/3.6). Nulls run on winners only.
+
+   **Sanity checks (Jack's, done first).** (a) Rank persistence, each member's
+   2011-2015 record vs its own 2016-2018 record, Spearman: Sortino −0.026,
+   expectancy +0.003, PF −0.013, Calmar +0.003, gate-3 composite −0.011
+   (n 8,234; per slice on expectancy −0.005 to +0.044). **Near zero, not
+   negative: no persistence, and no join fault** — the identity null stands.
+   (b) The cost table charges majors 1.95 pips (published ThinkMarkets ×1.5)
+   and every cross a flat 4.2 (2× the widest major ×1.5). Measured OANDA
+   hourly bid/ask 2016-2020 medians: majors 4.4 pips at 17:00, 2.0 at 19:00,
+   1.7 at 23:00; crosses 8.7 / 3.3 / 2.7. The table is right on average for
+   a 19:00 entry and wrong per pair by up to 2× both ways (GBPNZD pays 7.8,
+   charged 4.2; NZDJPY pays 2.6, charged 4.2). `entry_timing.csv` (19:00,
+   graft entries, to 2026) reads 4.36 / 2.26 — same source, consistent. On the
+   base book the drag is:
+
+   | cost model (base book) | mean cost | median yr | drag of zero-cost median |
+   |---|--:|--:|--:|
+   | zero | 0.0 bp | 6.60 / 9.90 | 0.0% |
+   | as_run | 3.1 bp | 5.12 / 7.69 | 22.4% |
+   | raw_spread | 2.1 bp | 5.59 / 8.39 | 15.3% |
+   | entry_1900 | 3.9 bp | 4.82 / 7.23 | 26.9% |
+   | oanda_1900 | 2.8 bp | 5.29 / 7.93 | 19.8% |
+   | oanda_1700 | 7.4 bp | 3.72 / 5.59 | 43.6% |
+   | oanda_best_hour | 2.3 bp | 5.51 / 8.27 | 16.5% |
+
+   17:00 entry (the daily close, the engine's reference) would nearly double
+   the drag; the best hour is 21:00-23:00 NY. `results/spread_by_hour.csv`,
+   `spread_reconciliation.csv`, `returns_costs_routed_tirexcl_actweak.csv`.
+
+   **Item 1 — SWAP DONE (`fc44717`, 1 h 10).** `layer1_states.csv` is the 5pm
+   file (header, `sample=sealed` from 2021); H.10 is `layer1_states_h10.csv`;
+   every reader passes `comment='#'`; `px28.csv` is the 5pm panel
+   (`build5pm.py`), H.10 is `px28_h10.csv`; `pipeline.py` runs `build5pm.py`.
+   Six checks passed (regime_codes == direct read 1,600/1,600; every reader
+   opens; new reader on old file 500/500; interface == validated 5pm file;
+   one strategy through the engine matches its post-filter, 205 H.10 / 190
+   5pm; gate-1 constants untouched, unlabelled OANDA bars 3.7% → 0.0%). All
+   score batches regenerated on 5pm in the main tree (`sc2-7`, 28/28 each;
+   H.10 batches parked in `results/scores_h10_archive/`, gitignored); the
+   pool/prep/dedup pass was launched detached at 14:10 and writes
+   `signals.json` (log `~/fx-data-logs/l1_MAIN5PM.log`). **NOT yet done for
+   the swap: the Layer 1 analysis chain on the 5pm panel in the main tree**
+   (`bash ~/fx-data-logs/l1analyse.sh /Users/jackcuster/Documents/fx-data
+   MAIN5PM`, 111 min, then the second pass persist/regenerate/persist2/refit/
+   windowsens/scoreq/today/knobs/episodes/mechanism/layer1sum) — the analysis
+   CSVs in `results/` are still the H.10 ones with SUPERSEDED headers until
+   it runs. Queue it after item 8, one job at a time.
+
+   **Item 2 — expectancy (0.1 min).** On its own trade years 2016-2020, net
+   of costs: 2,996 of 8,235 members (36%) have positive expectancy; median
+   −0.047 R/trade (A-chop −0.059, A-trend −0.052, B-chop −0.035, B-trend
+   −0.044), median PF 0.87. 1,506 (18%) clear the gate-2 floors (PF ≥ 1.05,
+   ≥ 50 trades) on the trade years; **58 (0.7%) clear the gate-3 bars**.
+   → per Jack's rule, the re-tune is the fix and this is the reason: nearly
+   two-thirds of the field loses per trade on the years it is judged on; the
+   book's return is the netting and the sizing curve on a losing population.
+   `results/members_expectancy_routed_tirexcl_actweak.csv`.
+
+   **Item 3 — attribution (2.4 min).** By build-year quality decile, all five
+   yardsticks, the shape is a HUMP: deciles 4-7 carry ~55-60% of the
+   trade-year return; the top decile 1.6-6.5%, the bottom 3-4%. Mean R per
+   trade on the trade years is negative in every decile (best −0.01 to −0.02
+   in deciles 7-8, top decile −0.025, bottom −0.075). Drawdown share follows
+   entry share. **No yardstick separates good from average at the top.**
+   `results/members_attribution_routed_tirexcl_actweak.csv`.
+
+   **Item 4 — CHOP-CORE (4.5 min) = 6.98% / 10.47%**, worst +5.14 / +7.70,
+   max DD 2.04 / 3.06, DIP95 3.34 / 5.01, PF 1.61, Sortino 4.45, in budget.
+   Chop slices take every entry (A-chop alone 7.9%, B-chop alone 11.1%),
+   trend slices gated as the base, crisis on. **Winner of item 4; chosen on
+   the checking years — 2021-2026 judges it once.** Direction-preserving null
+   mean −0.96 / −1.44, max −0.35 / −0.52, p = 0.000 (39 min). Regime-shuffle
+   null: first run failed on a routing-option tuple bug (fixed), REQUEUED
+   behind item 7 (`~/fx-data-logs/nulls_q2.sh`). Pickles `_cc_chopcore`.
+
+   **Item 5 — trend gate (10 min).** NOT-RANGING (chop axis) admits 41% of
+   entries; trend slices alone improve (A-trend 1.24% vs 0.28%, B-trend 1.88%
+   vs 0.55%) but the book falls to 3.41 / 5.12 vs 5.12 / 7.69. **Winner:
+   TRENDING (the base).** Trend-slice mean R per trade on TRENDING bars:
+   **+0.33 / +0.30 in 2011-2015, −0.048 / −0.028 in 2016-2020**; every other
+   state ~0 in both eras — the trend slices' in-regime edge was entirely in
+   the tuning years. `results/trendgate_meanR_by_state_era.csv`. Base
+   direction-preserving null: mean −1.43 / −2.14, max −0.79 / −1.19, p =
+   0.000 (27 min); base regime-shuffle p = 0.040 (Part C).
+
+   **Item 6 — weighted book (11.2 min).** Member weight ∝ build-year quality
+   hurts on every yardstick: Sortino 1.95 / 2.92, expectancy 1.77 / 2.65, PF
+   3.08 / 4.61, Calmar 2.15 / 3.23 vs equal 5.12 / 7.69; gate-3 composite
+   5.21 / 7.81 with worse drawdown (near-uniform weights). **Winner: equal.**
+   `results/members_weighted_routed_tirexcl_actweak.csv`.
+
+   **Item 7 — agreement sweep: RUNNING** (`~/fx-data-logs/item7.sh`, pid
+   10005, started 11:52, log `~/fx-data-logs/batch1.log`). Curve-shape stage
+   done (`results/agree_curveshape_routed_tirexcl_actweak.csv`); min-votes
+   sweep in progress: grid 1,2,3 then geomspace(4, p99.5 ≈ 972, 12), real +
+   zero-cost twin (spread paid) + 5 random-N draws per step, both budgets,
+   ~2-3 min per walk under load. So far min_votes 1-6 are identical (those
+   rows already size to zero under the fitted curve); the curve bends higher
+   up. Writes `results/agree_minvotes_routed_tirexcl_actweak.csv` after every
+   step. Expected to finish ~19:00-20:00; prints "ITEM 7 COMPLETE" to the log.
+
+   **Item 8 — team-size curve: QUEUED** behind item 7 (`~/fx-data-logs/
+   queue_b1_tail.sh`, pid 18892, waits for "ITEM 7 COMPLETE"): top-N by each
+   of five yardsticks, N on a 14-point log grid from 25 to 8,235, 10 random-N
+   draws per N, 2 workers — `python3 code/l2members.py --stage teamsize
+   --jobs 2 --n-rand 10`. Writes `results/members_teamsize_routed_tirexcl_
+   actweak.csv`; prints "BATCH 1 TAIL COMPLETE". ~4-7 h.
+
+   **Item 9 — entry cost: DONE** (4.9 min + 27 min), see sanity (b).
+
+   **Item 10 — cleanup: NOT DONE.** `fx-data-l1A`, `-l1B`, `-l1Bfull` (1.1
+   GB, sibling directories of the repo) can be deleted once the pool pass and
+   the Layer 1 chain on 5pm have run in the main tree.
+
+   **Batch 2 code — WRITTEN, UNTESTED ON REAL DATA (syntax-checked only):**
+   `code/l2exit.py` (item 11: `--stage bestmember` position ledger by each
+   yardstick; `--stage volfloor` ATR-percentile floor swept 0-0.5),
+   `code/l2oppose.py` (item 12 `--stage opposition` majority/sit-out/hedge
+   via `l2walkfwd.OPPOSITION`; item 13 `--stage legflip` leg 1 closed at the
+   TRENDING flip, legs identified as same (sid, pair, entry) records),
+   `code/l2killswitch.py` (item 14: trigger swept 0.5-3.6% on the hourly mid
+   path from `data/oanda_h1`), `code/l2carry.py` (item 15: 21-pair 2y-carry
+   sleeve, fraction × rebalance swept, alone and added). Kernel hooks in
+   `l2walkfwd.py`: `NET_MIN_VOTES`, `NET_ROW_MASK` (bool array | ('random',
+   share, seed) | ('callable', f)), `CURVE_MODE`, `OPPOSITION`; `Book.series`
+   `pair_scale`; `walk(nocut=..., pair_scale=...)`. Item 16 (stacked run) is
+   NOT written — compose from the winners. Run each Batch 2 stage on the
+   three-slice book `_cleanfield` first as a smoke test (1-min walks), then
+   on the base book, ONE heavy job at a time — the harness kills processes
+   when the Mac's free memory drops under ~2.5 GB (it did so twice today).
+
+   **Batch 1 clock so far:** item 1 70 min · 2 0.1 · 3 2.4 · 4 4.5 (+nulls
+   39) · 5 10 (+null 27) · 6 11.2 · 9 4.9 + 27 · sanity 3 — plus item 7
+   running since 11:52.
+
+   **RESUME INSTRUCTION FOR A FRESH SESSION.** (1) `tail -5 ~/fx-data-logs/
+   batch1.log` and `pgrep -fl "item7.sh|queue_b1_tail.sh|nulls_q2.sh"` — the
+   three detached drivers survive a session clear (ppid 1). (2) Do not start
+   any other heavy job while item 7 or item 8 runs. (3) When "BATCH 1 TAIL
+   COMPLETE" appears: read `agree_minvotes_*`, `agree_curveshape_*`,
+   `members_teamsize_*`, pick the item 7 and 8 winners from the curves, run
+   the 25-draw random-N control on each winner and both nulls
+   (`~/fx-data-logs/l3nulls.sh <suffix> <route args>` for routing variants;
+   for kernel settings set the global and rerun the walk), then item 10.
+   (4) Run the Layer 1 chain on 5pm in the main tree and commit the
+   regenerated `results/` (that finishes the swap). (5) Batch 2, one stage at
+   a time, smoke-tested on `_cleanfield` first. (6) One table, HANDOFF item 0,
+   commit after each item.
+
+0a. **LAYER 1 ON THE 5PM BAR, AND THE FIRST ROUTING TEST (13-14 Sep).** Four
    things, each from files: (A) whether the signal-library survivors depend on
    1999-2002; (B) Layer 1 rebuilt on OANDA 17:00 NY closes, validated on
    2016-2020 with 2021+ sealed, against the H.10 noon build on the same window;

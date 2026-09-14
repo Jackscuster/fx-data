@@ -1,5 +1,38 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 2026-09-14 — BATCH 1 mid-run at the context clear; what is owed
+
+**Owed by the swap (commit `fc44717`):** the Layer 1 analysis chain has not
+been re-run on the 5pm panel in the main tree, so `results/final_report.csv`,
+`layer1_summary.csv`, `refit_*`, `twoscores*`, `survivor_clusters.csv`,
+`family_retention.csv`, `states_g4_twoscore4.csv` are still the H.10 outputs
+under a SUPERSEDED header. Run `~/fx-data-logs/l1analyse.sh <repo> MAIN5PM`
+then the second pass (see HANDOFF item 0), then commit `results/`. The
+score batches ARE regenerated on 5pm (28/28 each); `signals.json` is being
+rebuilt by the detached pool pass.
+
+**Owed by item 4:** the chop-core regime-shuffle null — first run died on a
+tuple-size bug in `l2route._shuf_one` after I added `--chop-always` /
+`--trend-gate` (fixed: `args` now carries five fields); requeued in
+`~/fx-data-logs/nulls_q2.sh` behind item 7.
+
+**Owed by the memory limit:** two runs today were killed by the harness for
+low memory (a cost rerun; earlier a shuffle null). Rule now in force: one
+heavy job at a time on this Mac; the drivers are serialised
+(`item7.sh` → `queue_b1_tail.sh` → `nulls_q2.sh`).
+
+**A wrong claim to retract:** I reported `data/oanda_h1` as "56 empty stubs"
+and planned a fetch. `du` reports 0 for those files on this volume (the same
+APFS quirk seen on `results/scores*`); the files are 453 MB and complete,
+2002-05 → 2026-09. No fetch was needed and none was made.
+
+**Untested code (syntax-checked only):** `l2exit.py`, `l2oppose.py`,
+`l2killswitch.py`, `l2carry.py`, and the kernel hooks `OPPOSITION`,
+`NET_ROW_MASK ('callable', f)`. Smoke-test each on `_cleanfield` before the
+base book.
+
+---
+
 ## 2026-09-13 — LAYER 1 REBUILT ON THE 5PM BAR: two pipeline order faults found on the way
 
 **1. `pipeline.py` runs `persist.py`, `refit.py`, `windowsens.py`, `today.py` and
