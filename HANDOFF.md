@@ -167,6 +167,128 @@
    regenerated `results/` (that finishes the swap). (5) Batch 2, one stage at
    a time, smoke-tested on `_cleanfield` first. (6) One table, HANDOFF item 0,
    commit after each item.
+   (7) After Batch 2: the REFIT PROGRAMME, item 0c below — scoped, queued,
+   NOT to be started until Jack says go.
+
+0c. **REFIT PROGRAMME — rolling re-tune with rolling selection. SCOPED 14 Sep,
+   QUEUED BEHIND BATCH 1 AND BATCH 2. NO RUN UNTIL JACK SAYS GO.** Question:
+   how long does a freshly tuned strategy keep its edge, and does picking on
+   fresh settings beat "everyone votes"? Field: the four-slice clean field,
+   8,235 (A-trend 2,960 / A-chop 930 / B-chop 917 / B-trend 3,428). Every
+   number below is a plan, not a result.
+
+   **Design (Jack's spec, verbatim in substance).**
+   1. Tune every strategy on a trailing window, trade the NEXT block untouched.
+      Annual: tune 2011-15 → trade 2016; 2012-16 → 2017; 2013-17 → 2018;
+      2014-18 → 2019; 2015-19 → 2020. Two-block: tune 2011-15 → trade 2016-18;
+      tune 2011-18 → trade 2019-20. The 2011-15 tune is shared by both.
+   2. At each step, three books on the fresh settings, routed as the base
+      (5pm states, TRENDING/RANGING, WEAK blocks trend entries, crisis on):
+      ALL (equal, netted); PASSERS (gate-2 floors + gate-3 bars on the tuning
+      window); TOP-N by the tuning window's record, all five yardsticks, N on
+      the 14-point log grid 25..8,235, random-N control (10 draws) at every N.
+   3. Decay curve: mean R per trade in months 1-12 after the tuning window
+      ends, pooled over strategies and windows → the live re-tune cadence.
+   4. Report: does re-tuning restore per-strategy expectancy (median R/trade
+      on the trade block, against item 2's −0.047); does picking on fresh
+      settings beat ALL on unseen years; what cadence the decay implies.
+
+   **Rules, frozen.** Tune only on closed years; trade only years sealed at
+   tuning time; every choice (settings, passers, N, agreement bar) made on the
+   tuning window and applied unchanged; the window is five years rolled one
+   year, never shortened; grids declared before the run (below); luck floor
+   deflated by the banked count of settings tried per strategy; verdict = count
+   of traded years won (5 of 5 annual, 2 of 2 two-block), never the average;
+   retention (trade-block result ÷ tuning-window result, annualised) reported
+   for every book, under 20% = a fit whatever the raw number; random-entry,
+   identity and regime-shuffle nulls on every winner; 2021-2026 sealed.
+
+   **Grids, declared now.** Gate-2 grids as `l2tune.py` has them (stop
+   1.00-1.50, tp 1.00-3.00, be 0.01-0.20, arm 1.00-2.00, trail 0.50-2.00,
+   ATR 2-50, indicator parameters 12 log points 0.1×-10× default), coordinate
+   descent, two passes, adopt only if better on the tuning window. **Indicator
+   cap 6 for all four slices** — a fresh tune, not a recovery, so B's uncapped
+   history does not bind; uncapped B would cost ~4× per tune. Per tune that is
+   ~240 (chop) to ~1,100 (trend, five indicators) configurations, banked
+   exactly in `evals` per (sid, window) as `l2tune` already does; annual total
+   ~20-45 M configurations, the deflation input. Passer bars: `l2tune.LABEL`
+   floors (expectancy, PF, ≥ 50 trades) and the `l2gate3` bars, both on the
+   tuning window. Agreement bar: item 7's min-votes curve refit on the tuning
+   window. Sizing: the fitted curve and both budgets, team1 / team2.
+
+   **Two things in the spec to decide before go, scoped as written.**
+   (i) The two-block version's second window is 2011-18, eight years — as
+   specified, and as the existing walk's STEPS have it — while the rule says
+   five years never shortened. Under a strict five-year rule it would be
+   2014-18, which also costs 1.6× less on that window. (ii) PASSERS are
+   labelled on the tuning window's own in-sample record, not a blind one (the
+   current field labels on W2 under ip1, which never saw W2). In-sample labels
+   pass more; the trade block is the only judge either way. Holding out a
+   blind label year would shorten the tune to four years, so it is not
+   proposed.
+
+   **Candidate count.** Annual: 5 windows × 8,235 = 41,175 tunes. Two-block:
+   2 × 8,235 = 16,470 (8,235 new if annual runs). Both: 49,410.
+
+   **Core-hours.** Per-tune time is the one unknown: 157 s per combination
+   (mode B, uncapped, 900 real) and 216 s for uncapped stage 1 alone; the cap
+   is documented as ~10× faster on the four wide indicators; gate-3 fine-tune
+   (risk knobs only, widened grids, two stages) measured 304 s mean on 5,569
+   and 97 s on the banked sample. **Planning figure 150 s per five-year tune,
+   range 50-220 s; step 0 of the run is a 50-strategy timing probe on the
+   field's indicator mix and the whole table scales linearly with it.**
+
+   | version | tunes | tune core-h (range) | score+engine+walks | nulls (4 winners × 28) | total |
+   |---|--:|--:|--:|--:|--:|
+   | annual | 41,175 | 1,716 (570-2,520) | ~25 | ~112 | **~1,850** |
+   | two-block (2011-18 at 1.6×) | 16,470 | 892 (300-1,300) | ~12 | ~112 | **~1,015** |
+   | both, 2011-15 shared | 49,410 | 2,265 | ~37 | ~224 | **~2,525** |
+
+   Null costs from the four-slice measurements: identity 470 min × 3 workers
+   = 23.5 core-h per book, regime-shuffle 4.3, random-entry 0.4. Scoring each
+   window's settings on every sealed year to 2020 (not just the next block)
+   is ~4 core-h and extends the decay curve to 24-48 months for the early
+   windows — recommended, it is measurement not trading.
+
+   **Wall time and cost.**
+
+   | where | effective cores | annual | two-block | both |
+   |---|--:|--:|--:|--:|
+   | Mac, 9 workers, 0.7 duty under the guard, nulls RAM-capped at 3 | 6.3 | ~12 days | ~7 days | ~16 days |
+   | one CPX62, 16 vCPU shared (~0.6× a P-core), ~$0.10/h | 9.6 | 8 days, ~$19 | 4.4 days, ~$11 | 11 days, ~$26 |
+   | three CPX62 | 29 | 2.7 days, ~$19 | 1.5 days, ~$11 | 3.6 days, ~$26 |
+   | one CCX63, 48 dedicated vCPU, ~$1.60/h | ~38 | 2 days, ~$78 | 1.1 days, ~$43 | 2.6 days, ~$101 |
+
+   The Mac figure assumes nothing else heavy runs; at the current queue rate
+   it would hold the machine for two weeks. Recommendation: three CPX62 boxes
+   for the tunes (the sharding is already md5(sid) % N), the walks and nulls
+   on one box or the Mac.
+
+   **Does the cloud tooling carry it?** `cloud_field.sh`: the skeleton does —
+   provisioning, `--box k --of N` sharding by md5(sid), banking outside the
+   clone, resumability, the push/retry block — but its two Python steps are
+   hard-coded to `l2recoverip1.py` and `l2cleanfield.py --shard-only`. Needs
+   `code/cloud_refit.sh`, a copy with those two lines swapped for the new
+   tuner and scorer. `cloud_walk.sh` runs `l2cfchain.sh`, whose kernel
+   (`l2walkfwd.STEPS`) is hard-coded to the two-step ip1/ip2 stitch; it does
+   NOT carry a five-step walk with different settings per step.
+
+   **To build before go (~3 days).** (a) `code/l2refit.py`: per (sid,
+   window) calls `l2tune.tune_one` with `tune_windows` = the trailing five
+   years (the hook exists — `l2recoverip1` uses it), banks settings + `evals`
+   per shard, resumable on (sid, window); then scores every sealed year to
+   2020 under each window's settings (`l2cleanfield`-style, 0.87 s per
+   strategy per five years). (b) `l2walkfwd`: `STEPS` becomes a list and the
+   engine's trade table carries a `step` column, so 2017's trades come from
+   the 2012-16 settings; the routing (`l2route`), sizing, min-votes,
+   team-size and null stages then run unchanged on the routed pickles. (c)
+   `cloud_refit.sh` from `cloud_field.sh`; `l2refitchain.sh` from
+   `l2cfchain.sh`. (d) Smoke test: `--limit 250` on the three-slice
+   `_cleanfield`, 2 cores, before any box is rented. Outputs:
+   `results/refit_settings_<window>.csv`, `refit_books_annual.csv`,
+   `refit_books_twoblock.csv`, `refit_teamsize_*.csv`, `refit_decay.csv`,
+   `refit_report.csv`; HANDOFF item 0 table; nothing wired to the app (Layer
+   2 never is).
 
 0a. **LAYER 1 ON THE 5PM BAR, AND THE FIRST ROUTING TEST (13-14 Sep).** Four
    things, each from files: (A) whether the signal-library survivors depend on
