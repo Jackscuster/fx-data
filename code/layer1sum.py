@@ -39,7 +39,7 @@ OUT = os.path.join(ROOTOUT, 'layer1_summary.csv')
 
 def rd(f):
     p = os.path.join(ROOTOUT, f)
-    return pd.read_csv(p) if os.path.exists(p) else pd.DataFrame()
+    return pd.read_csv(p, comment='#') if os.path.exists(p) else pd.DataFrame()   # layer1_states.csv carries a '#' header
 
 
 def main():

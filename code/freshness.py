@@ -46,7 +46,7 @@ def _last(path, kind):
         d = pd.read_csv(path, index_col=0, parse_dates=True)
         return d.index.max(), None
     if kind == 'csv_datecol':
-        d = pd.read_csv(path, parse_dates=['date'])
+        d = pd.read_csv(path, parse_dates=['date'], comment='#')   # layer1_states.csv carries a '#' header
         return d.date.max(), None
     if kind == 'regime':
         j = json.load(open(path))

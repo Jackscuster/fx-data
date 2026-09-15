@@ -244,7 +244,95 @@
    a time, smoke-tested on `_cleanfield` first. (6) One table, HANDOFF item 0,
    commit after each item.
    (7) After Batch 2: the REFIT PROGRAMME, item 0c below — scoped, queued,
-   NOT to be started until Jack says go.
+   NOT to be started until Jack says go. **(15 Sep: SUPERSEDED BY 0d — the
+   kernel had a look-ahead; nothing Book-based below 0d may be quoted.)**
+
+0d. **15 SEP — THE NETTING LAYER HAD A ONE-BAR LOOK-AHEAD. EVERY LAYER 2 BOOK
+   NUMBER IN THIS FILE IS CONTAMINATED UNTIL RERUN. READ THIS BEFORE QUOTING
+   ANYTHING BELOW.**
+
+   **How it was found.** Batch 2 item 12 (same-pair opposition) returned
+   sit-out = **20.06% / 28.71%, worst year 18%, worst month 0.26%, Sortino
+   7.8**. Too good. The check: on the trade years, rows with votes on both
+   sides carry the stop-outs (exit-day marks mean −0.353 R there vs +0.016 R
+   on unanimous rows) and six times the entries (535k vs 84k). The entries
+   are the tell.
+
+   **The mechanism.** `l2engine` fills an entry AT THE CLOSE OF ITS SIGNAL BAR
+   — documented there: "the project's usual one-bar lag is deliberately
+   absent". So a member's presence on its entry day D is decided by D's
+   close. `l2walkfwd.Book` counted that member's vote on row D, whose mark is
+   the D−1 → D move of the OTHER members' positions. Entrants are
+   confirmations of the move that just happened: on 34,104 pair-days with
+   both entrants and open positions, the entrants' direction agrees with the
+   sign of that day's move on **83%**, corr **0.61**; mean move **+0.29 R**
+   when they go long, **−0.30 R** when short. Entry-day marks are pure cost
+   (mean −0.023, 99% in [−0.1, 0], none positive) — the entrant had no
+   exposure on the day its vote sized. Every row was sized larger on the days
+   that had already gone its way, and the agreement curve learned exactly
+   that.
+
+   **Why the nulls never caught it.** A random entrant has no relation to the
+   day's move, so every random-entry null sat at ~0 and every real book beat
+   it at p = 0.000. The regime-shuffle null keeps the same-day entrants, so
+   shuffled books stayed positive (chop-core p = 0.44). The level-permutation
+   null permuted agreement levels that themselves carry the leak.
+
+   **Measured, both budgets, same walk, same pickles:**
+
+   | book | as run (entry-day vote) | **vote from the next day (fixed)** |
+   |---|---|---|
+   | BASE `_routed_tirexcl_actweak` | 5.12 / 7.69, worst 3.62 / 5.43, DD 1.77 / 2.66, PF 1.49 | **−1.00 / −1.50**, worst −1.50 / −2.24, DD 2.72 / 4.08, DIP95 5.61 / 8.41, PF 0.94 |
+   | CHOP-CORE `_cc_chopcore` | 6.98 / 10.46, worst 5.14 / 7.70, PF 1.61 | **−0.82 / −1.23**, worst −1.70 / −2.55, DD 3.11 / 4.66, PF 0.93 |
+   | CHOP-ONLY `_cc_choponly` (chosen on the checking years) | 10.59 / 15.88, worst 8.89 / 13.34, PF 1.88 | **−0.44 / −0.66**, worst −1.08 / −1.63, DD 2.19 / 3.28, PF 0.95 |
+   | sit-out (item 12) | 20.06 / 28.71 | −1.36 / −2.03 (entry-day rows dropped, costs out) |
+
+   Every fixed book is negative, out of budget, PF < 1. The whole Layer 2
+   edge was the one-bar look-ahead in the vote.
+
+   **The fix, applied:** `l2walkfwd.VOTE_ON_ENTRY_DAY = False` (default). A
+   position votes from the day AFTER its fill; its entry cost rides on its
+   first voted day's mark (`vote_from_next_day`, inside `Book.__init__`, so
+   every module and every null worker gets it). `True` reproduces the old
+   numbers for the record. 1,608 single-day trades (filled and closed the
+   same day) have no exposure day; their −50.3 R of cost is dropped and
+   printed. Nothing else in the kernel changed.
+
+   **What is contaminated:** everything produced through `Book` — the base
+   book, every structure in §0b and §1A/1B, the routing tests (0a C/D), the
+   agreement study and curve, sizing and Layer 4 v2, Batch 1 items 2-9 (the
+   per-member EXPECTANCY in item 2 is per-trade and stands), Batch 2 items
+   11-14, chop-core, CHOP-ONLY. **Not contaminated:** anything per strategy
+   — gate 2 / gate 3, `metrics()`, rank persistence, the Layer 1 estimator.
+
+   **Where things stand.** Batch 1 and Batch 2 ran to completion on the
+   contaminated kernel (markers in `batch1.log`; results below, kept for the
+   record, each now labelled). The refit build (0c) is NOT started — its
+   walk would inherit the kernel, and the question it asks (does re-tuning
+   restore an edge) has to be asked of a book that has one. Nothing is
+   running. **Decision for Jack:** rerun the Layer 2 chain under the fix from
+   the always-on stream (route → walk → per-slice → nulls, ~1 h per book) to
+   put honest numbers on the base, chop-core and chop-only, then decide what
+   Layer 2 is for.
+
+   **Results of the boundary and Batch 2 as run (contaminated, for the
+   record).** 25-draw controls: min_votes 110 5.53 / 8.30 vs random max
+   5.25 / 7.87 (beaten); 191 4.22 / 6.33 vs 4.83 / 7.25 (not). Top-5,272 by
+   expectancy 6.12 / 9.18 vs random max 5.67 / 8.50, worst 4.04 / 6.06 vs
+   3.93 / 5.89, max DD 2.41 / 3.61 vs 2.17 / 3.26 (return and floor up, DD
+   above every draw). Item 11 best-member ledger 0.3-0.9% on every yardstick,
+   out of budget; vol floor hurts at every q (q 0.10-0.20 in budget at
+   3.6-3.8%). Item 12 net 5.12 / sit-out 20.06 / hedge 0.43. Item 13 close
+   leg 1 at the flip 5.36 / 8.05 vs 5.12 / 7.69, DD 1.86 vs 1.77; 16.4% of
+   leg-1 trades open at a flip. Item 14 kill-switch: every trigger below the
+   day budget costs 0.3-2.9%/yr and fires on days that recover; in budget
+   only where it never fires. Item 15 carry: smoke test crashed in
+   `fit_curve` on a one-member book (fixed: flat curve), not rerun. Item 10
+   done (variant copies deleted). Layer 1 chain on 5pm: 125 min + 5, two
+   failures fixed (`export.py` string-date compare; `layer1sum.py` /
+   `freshness.py` read the interface without `comment='#'`); `export.py` has
+   NOT been rerun — when it is, diff its output against
+   `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
 0c. **REFIT PROGRAMME — rolling re-tune with rolling selection. SCOPED 14 Sep;
    BUILD APPROVED 14 Sep, TO START AFTER BATCH 2 LANDS; THE RUN WAITS FOR

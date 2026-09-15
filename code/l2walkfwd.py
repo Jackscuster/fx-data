@@ -406,6 +406,19 @@ NET_MIN_VOTES = 0.5      # see Book.net; l2agree.py sweeps it
 NET_ROW_MASK = None
 CURVE_MODE = 'fitted'
 OPPOSITION = 'net'       # 'net' (majority, as now) | 'sitout' | 'hedge' -- l2oppose.py
+# VOTE TIMING -- THE ONE-BAR LOOK-AHEAD FOUND 15 SEP. The engine fills an entry
+# AT THE CLOSE OF ITS SIGNAL BAR (l2engine: "the project's usual one-bar lag is
+# deliberately absent"), so a member's presence on its entry day D is decided
+# by D's close. The Book counted that member's vote on row D, whose mark is
+# the D-1 -> D move of the OTHER members' positions. Entrants are confirmations
+# of the move that just happened (their direction agrees with the sign of that
+# day's move on 83% of pair-days, corr 0.61), so the row was sized larger on
+# the days that had already gone its way. With entry-day votes excluded the
+# base book goes from 5.12 / 7.69 to -0.74 / -1.10 before costs. The fix: a
+# position votes from the day AFTER entry, and its entry cost (the entry-day
+# mark, pure cost -- 99% in [-0.1, 0], none positive) is carried into its
+# first voted day. True reproduces the contaminated numbers, for the record.
+VOTE_ON_ENTRY_DAY = False
 
 
 def trade_year_sums(M):
@@ -481,6 +494,31 @@ def cut(T, TY, years, perm=None, apply_bars=True):
 
 
 # --------------------------------------------------------- the netting kernel
+def vote_from_next_day(M, col):
+    """Shift each trade's entry-day row into its next day: the vote starts the
+    day after the fill, the entry cost rides on the first voted day's mark. A
+    trade with a single mark row (filled and closed the same day) has no day
+    of exposure and no vote; its cost is dropped and counted in the print."""
+    d = pd.DataFrame({'sid': M.sid.astype(str).values, 'tid': M.tid.values, 'day': M.day.values,
+                      'dir': M['dir'].values, 'mark': M.mark.values.astype(np.float64),
+                      'pair': M.pair.astype(str).values, 'col': col})
+    d = d.sort_values(['sid', 'tid', 'day'], kind='stable').reset_index(drop=True)
+    g = d.groupby(['sid', 'tid'], sort=False)
+    first = g.cumcount() == 0
+    nxt = first.shift(-1, fill_value=False)   # the row after a first row, same trade if the trade has >1 row
+    same = (d.sid.values[:-1] == d.sid.values[1:]) & (d.tid.values[:-1] == d.tid.values[1:])
+    carry = np.zeros(len(d)); ok = np.where(first.values[:-1] & same)[0]
+    carry[ok + 1] = d.mark.values[ok]
+    lost = float(d.mark.values[first.values & ~np.append(same, False)].sum())
+    if lost:
+        print('  vote_from_next_day: %d single-day trades, cost %.1f R not charged' % (int((first.values & ~np.append(same, False)).sum()), lost), flush=True)
+    d['mark'] = d.mark.values + carry
+    d = d[~first.values]
+    out = pd.DataFrame({'sid': d.sid.values, 'tid': d.tid.values, 'day': pd.DatetimeIndex(d.day.values),
+                        'dir': d['dir'].values, 'mark': d.mark.values.astype(np.float32), 'pair': d.pair.values})
+    return out, d.col.values.astype(np.int64)
+
+
 class Book:
     """Sparse (position x member) matrices so one candidate book costs four
     matrix-vector products.
@@ -509,6 +547,8 @@ class Book:
         col = M.sid.astype(str).map(midx).values
         keep = ~pd.isna(col)
         M = M[keep]; col = col[keep].astype(np.int64)
+        if not VOTE_ON_ENTRY_DAY:
+            M, col = vote_from_next_day(M, col)
         pc, upair = pd.factorize(M.pair.astype(str), sort=True)
         dc, uday = pd.factorize(M.day.values, sort=True)
         key = pc.astype(np.int64) * len(uday) + dc
@@ -705,6 +745,10 @@ def fit_curve(B, w, years, log=None):
     ms = np.divide(B.SM @ w, ns, out=np.zeros_like(ns), where=ns > 0)
     mk = np.where(net > 0, ml, ms)[m]
     qs = np.unique(np.quantile(f, np.linspace(0, 1, N_BINS + 1)))
+    if len(qs) < 3:
+        # one vote fraction only (a one-member book, e.g. a carry sleeve walked
+        # alone): there is no curve to fit, every active row is sized alike
+        return (lambda f: (np.abs(f) > 0).astype(float)), None
     qs[0] = -np.inf; qs[-1] = np.inf
     b = np.digitize(f, qs[1:-1])
     rows = []
