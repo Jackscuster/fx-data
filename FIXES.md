@@ -1,5 +1,59 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 2026-09-15 — THE NETTING LAYER HAD A ONE-BAR LOOK-AHEAD. EVERY LAYER 2 BOOK NUMBER IS CONTAMINATED.
+
+**Found by item 12 (sit-out) returning 20.06% / 28.71% with a worst year of 18%.**
+That was too good, and the check found the mechanism: `l2engine` fills an entry
+AT THE CLOSE OF ITS SIGNAL BAR (documented there: "the project's usual one-bar
+lag is deliberately absent"). `l2walkfwd.Book` counted a member's vote on its
+ENTRY day D — a presence decided by D's close — against row D's mark, which is
+the D−1 → D move of the OTHER members' positions. Entrants are confirmations of
+the move that just happened (their direction agrees with the sign of that day's
+move on 83% of pair-days, corr 0.61; mean move +0.29 R when they go long, −0.30 R
+when short), so every row was sized larger on the days that had already gone
+its way. Entry-day marks are pure cost (99% in [−0.1, 0], none positive), so
+the entrant had no exposure on the day its vote sized.
+
+**Measured, base book `_routed_tirexcl_actweak`, both budgets:** as run 5.12 /
+7.69; with entry-day rows dropped (no same-day vote, costs out) **−0.74 / −1.10**;
+sit-out 20.06 → −1.36. **Under the fix (costs in): base −1.00 / −1.50, chop-core
+−0.82 / −1.23, chop-only −0.44 / −0.66, all PF < 1, all out of budget.** HANDOFF 0d.
+
+**What this contaminates:** every number produced through `Book` — the base
+book, NO_CUT / ALLPASS / every structure, the routing tests (Part C), the
+agreement curve and its level-permutation null, sizing, the team-size curve,
+Batch 1 items 2–9, Batch 2 items 11–14, chop-core, CHOP-ONLY, the clean-field
+result (§0b), Layer 4 v2. Per-strategy numbers (gate 2/3, expectancy per
+member, `metrics()`) are per-trade sums and are NOT affected. The nulls did not
+catch it because random entrants have no relation to the day's move — the null
+sat at zero and the real "beat" it at p = 0.000, on every book, every time.
+
+**Fix applied:** `l2walkfwd.VOTE_ON_ENTRY_DAY = False` (default) — a position
+votes from the day after its fill and its entry cost rides on its first voted
+day's mark (`vote_from_next_day`, inside `Book.__init__`, so every module and
+every null worker gets it). `True` reproduces the old numbers for the record.
+1,608 single-day trades (filled and closed the same day) have no exposure day;
+their −50.3 R of cost is dropped and printed.
+
+**Owed:** rerun every Book-based result under the fix before quoting any of it;
+the HANDOFF tables above item 0d are the contaminated ones and say so. The refit
+build (item 0c) waits — its walk would inherit whatever the kernel does.
+
+---
+
+## 2026-09-15 — three small faults from the Layer 1 chain and the carry smoke test
+
+- `export.py` compared a string date column to a Timestamp (`TypeError`), so
+  the chain never rewrote `layer1_states.csv` (which is why the interface check
+  passed). Fixed (`pd.to_datetime`). Not yet rerun — when it runs, DIFF the
+  output against `~/fx-data-logs/layer1_states_5pm_interface_backup.csv`.
+- `layer1sum.py` and `freshness.py` read `layer1_states.csv` without
+  `comment='#'` (KeyError 'sample'). Fixed.
+- `l2walkfwd.fit_curve` crashed on a one-member book (a carry sleeve alone: one
+  vote fraction, no bins). Guarded: flat curve. Item 15 not rerun.
+
+---
+
 ## 2026-09-14 — BATCH 1 mid-run at the context clear; what is owed
 
 **Owed by the swap (commit `fc44717`):** the Layer 1 analysis chain has not

@@ -265,7 +265,7 @@ def main():
     # accident. The window edge is the swap decision of 14 Sep, not a constant
     # anyone should move without re-validating.
     SEALED_FROM = '2021-01-01'
-    T['sample'] = np.where(T['date'] >= pd.Timestamp(SEALED_FROM), 'sealed', T['sample'])
+    T['sample'] = np.where(pd.to_datetime(T['date']) >= pd.Timestamp(SEALED_FROM), 'sealed', T['sample'])
     with open(OUT, 'w') as fh:
         fh.write('# LAYER 1 STATES -- OANDA 17:00 NY closes (data/px28.csv from build5pm.py). IS to 2015 (cuts fitted), '
                  'CONFIRMED 2016-2020 (results/layer1_5pm/), rows from %s APPLIED WITH THE SAME CUTS AND NEVER MEASURED '
