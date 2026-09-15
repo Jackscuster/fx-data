@@ -19,8 +19,8 @@ compare two things that are not comparable.
 CONTROL: rebuilding at 106 reproduces the shipped states exactly, and
 the run asserts it.
 
-THE RESULT, AND IT IS NOT THE COMFORTABLE ONE. 0.806 agreement at 90
-bars and 0.831 at 120, against 0.939-0.964 for the refit test. Moving
+THE RESULT, AND IT IS NOT THE COMFORTABLE ONE. 0.812 agreement at 90
+bars and 0.835 at 120, against 0.939-0.964 for the refit test. Moving
 the lookback by 15% changes roughly ONE CALL IN SIX; re-estimating
 every fitted number from a fit window seven years shorter changes one
 in twenty. THE WINDOW IS A BIGGER LEVER THAN THE FITTING.
