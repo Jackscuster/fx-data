@@ -21,7 +21,7 @@ function**, and only the second is genuinely lost.
 | `states_g1_ninebox.csv` | rebuilt | 9 | 100.000% | Generation 1, base. Straightness x scale terciles at 28 bars. |
 | `states_g1_ninebox_128.csv` | rebuilt | 9 | — no archive | Generation 1, slow ribbon leg. Nine-box at a 128-bar window. |
 | `states_g2_structural4.csv` | rebuilt | 4 | — no archive | Generation 2 SHAPE ONLY: trending / broken / range / drifting. The four states before the activity cross. 'broken' was never in the spec. |
-| `states_g2_structural12.csv` | rebuilt | 12 | 100.000% | Generation 2 full: the four structural shapes crossed with activity. |
+| `states_g2_structural12.csv` | rebuilt | 12 | 44.753% | Generation 2 full: the four structural shapes crossed with activity. |
 | `states_g3_gate3.csv` | rebuilt | 3 | — no archive | Generation 3a, the GATED three-shape read at swing width 6. Superseded by the continuous score because it left a residual. |
 | `states_g3_shapescore9.csv` | rebuilt | 3 | 100.000% | Generation 3b, the continuous trend-vs-range score cut at terciles. |
 | `states_g3_score_N6.csv` | rebuilt | 3 | — no archive | Generation 3b at a 35-bar lookback -- the fast leg of the shape ribbon. |

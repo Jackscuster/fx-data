@@ -23,18 +23,18 @@ error of the PAIRED difference, from a moving-block bootstrap over
 calendar dates, 21-bar blocks, 200 draws.
 
 IN-SAMPLE RESULT
-  q=0.40  trend 0.1777  chop 0.1419  worst 0.1419  run  20  min share 0.100  eligible
-  q=0.45  trend 0.1728  chop 0.1394  worst 0.1394  run  19  min share 0.139  eligible
-  q=0.50  trend 0.1735  chop 0.1334  worst 0.1334  run  19  min share 0.187  eligible
-  q=0.55  trend 0.1637  chop 0.1322  worst 0.1322  run  20  min share 0.141  eligible
-  q=0.60  trend 0.1563  chop 0.1295  worst 0.1295  run  20  min share 0.103  eligible
+  q=0.40  trend 0.1115  chop 0.1175  worst 0.1115  run  20  min share 0.103  eligible
+  q=0.45  trend 0.1119  chop 0.1277  worst 0.1119  run  20  min share 0.140  eligible
+  q=0.50  trend 0.1117  chop 0.1123  worst 0.1117  run  20  min share 0.188  eligible
+  q=0.55  trend 0.1091  chop 0.1106  worst 0.1091  run  20  min share 0.143  eligible
+  q=0.60  trend 0.1063  chop 0.1107  worst 0.1063  run  20  min share 0.103  eligible
 
-CHOSEN ON IN-SAMPLE: 0.40 -- challenger cleared eligibility and beat the default by >1 paired SE.
+CHOSEN ON IN-SAMPLE: 0.50 -- no challenger cleared the declared bar, so THE DEFAULT WINS.
 
-HOLDOUT, read once, for that value only: trend 0.1323, chop 0.1123,
-median run 20 bars, flip rate 0.0353, smallest state share 0.109.
+HOLDOUT, read once, for that value only: trend 0.1328, chop 0.1290,
+median run 20 bars, flip rate 0.0332, smallest state share 0.173.
 
-THEN THE GUARDRAIL. it did not survive. On the holdout, on identical rows, 0.40 is worse than 0.50 on BOTH axes -- trend and chop -- so by the declared rule 0.50 stays and this is recorded as TESTED, MEDIAN SURVIVED. See scoreq_regression.csv.
+THEN THE GUARDRAIL. not triggered: the in-sample choice was the shipped value, so there was nothing to regress.
 
 FINAL: score_q stays at 0.50.
 
