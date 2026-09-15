@@ -212,12 +212,14 @@ def _ts_one(args):
         return dict(n=n, yardstick=yard, seed=(-1 if seed is None else seed), dipb=dipb, err=type(e).__name__ + ': ' + str(e)[:80])
 
 
-def stage_teamsize(tag, jobs, n_rand):
+def stage_teamsize(tag, jobs, n_rand, grid_override='', out_name='members_teamsize.csv', seed_base=20260914):
     import multiprocessing as mp
     T, M, TY = load(tag)
     os.environ['WF_EXPECT_SIDS'] = str(int(T.sid.nunique()))
     total = int(T.sid.nunique())
     grid = sorted(set([int(x) for x in np.geomspace(25, total, 14)] + [total]))
+    if grid_override:
+        grid = [int(x) for x in grid_override.split(',')]
     print('  N grid: %s' % grid, flush=True)
     args = []
     for bt, dipb, dayb in W.BUDGETS:
@@ -225,13 +227,13 @@ def stage_teamsize(tag, jobs, n_rand):
             for y in YARDS:
                 args.append((n, y, None, dipb, dayb))
             for s in range(n_rand):
-                args.append((n, 'random', 20260914 + s, dipb, dayb))
+                args.append((n, 'random', seed_base + s, dipb, dayb))
     print('  %d walks' % len(args), flush=True)
     t0 = time.time()
     with mp.Pool(jobs, initializer=_init_ts) as pool:
         got = pool.map(_ts_one, args, chunksize=2)
     O = pd.DataFrame(got); O['budget'] = O.dipb.map({3.6: 'team1', 5.4: 'team2'})
-    O.to_csv(W.OUT('members_teamsize.csv'), index=False)
+    O.to_csv(W.OUT(out_name), index=False)
     print('  done in %.1f min; errors %d' % ((time.time() - t0) / 60, O.get('err', pd.Series(dtype=object)).notna().sum()), flush=True)
     ok = O[O.get('err', pd.Series(index=O.index, dtype=object)).isna()] if 'err' in O else O
     real = ok[ok.yardstick != 'random'].pivot_table(index='n', columns=['budget', 'yardstick'], values='median_year_pct')
@@ -248,11 +250,14 @@ def main():
     ap.add_argument('--suffix', default='_routed_tirexcl_actweak')
     ap.add_argument('--jobs', type=int, default=2)
     ap.add_argument('--n-rand', type=int, default=10)
+    ap.add_argument('--grid', default='', help='teamsize: override the N grid, e.g. 5272 (winner control)')
+    ap.add_argument('--out-name', default='members_teamsize.csv', help='teamsize: write elsewhere so the sweep is kept')
+    ap.add_argument('--seed-base', type=int, default=20260914, help='teamsize: fresh draws, not the sweep\'s')
     a = ap.parse_args()
     W.S.load_costs()
     t0 = time.time(); print('=== %s on %s ===' % (a.stage, a.suffix), flush=True)
     {'expectancy': lambda: stage_expectancy(a.suffix), 'attribution': lambda: stage_attribution(a.suffix),
-     'weighted': lambda: stage_weighted(a.suffix), 'teamsize': lambda: stage_teamsize(a.suffix, a.jobs, a.n_rand)}[a.stage]()
+     'weighted': lambda: stage_weighted(a.suffix), 'teamsize': lambda: stage_teamsize(a.suffix, a.jobs, a.n_rand, a.grid, a.out_name, a.seed_base)}[a.stage]()
     print('=== %s done in %.1f min ===' % (a.stage, (time.time() - t0) / 60), flush=True)
 
 

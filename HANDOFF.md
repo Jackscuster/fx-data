@@ -76,7 +76,8 @@
    entry share. **No yardstick separates good from average at the top.**
    `results/members_attribution_routed_tirexcl_actweak.csv`.
 
-   **Item 4 — CHOP-CORE (4.5 min) = 6.98% / 10.47%**, worst +5.14 / +7.70,
+   **Item 4 — CHOP-CORE (4.5 min) = 6.98% / 10.47%** (regime-shuffle null
+   p = 0.440 — see the addendum after item 8), worst +5.14 / +7.70,
    max DD 2.04 / 3.06, DIP95 3.34 / 5.01, PF 1.61, Sortino 4.45, in budget.
    Chop slices take every entry (A-chop alone 7.9%, B-chop alone 11.1%),
    trend slices gated as the base, crisis on. **Winner of item 4; chosen on
@@ -124,12 +125,52 @@
    instruction. `results/agree_minvotes_routed_tirexcl_actweak.csv`,
    `agree_curveshape_routed_tirexcl_actweak.csv`.
 
-   **Item 8 — team-size curve: RUNNING since 14:59** (`~/fx-data-logs/
-   queue_b1_tail.sh`, pid 18892; 420 walks): top-N by each
-   of five yardsticks, N on a 14-point log grid from 25 to 8,235, 10 random-N
-   draws per N, 2 workers — `python3 code/l2members.py --stage teamsize
-   --jobs 2 --n-rand 10`. Writes `results/members_teamsize_routed_tirexcl_
-   actweak.csv`; prints "BATCH 1 TAIL COMPLETE". ~4-7 h.
+   **Item 8 — team-size curve: DONE (243 min, 420 walks, 0 errors).** Top-N
+   by build-year quality, all five yardsticks, N on the 14-point log grid
+   25..8,235, 10 random-N draws per N, both budgets. **Picking on build-year
+   quality is worse than picking at random at every N up to 2,160**: the
+   real top-N median year is negative or ~0 for every yardstick from 25 to
+   2,160 (team1 −0.97 to +0.28; Sortino alone reaches 3.1 / 4.6 at 232-363,
+   about the random mean there), while random-N is +1.7 / +2.6 at 148 and
+   +4.5 / +6.8 by 1,383. Worst years negative for every yardstick at every
+   N ≤ 2,160. At 3,375 (top 41%) still below ALL (4.82 / 7.23 calmar, 4.72 /
+   7.07 expectancy vs 5.12 / 7.69). **The one point above ALL: N = 5,272
+   (drop the bottom 36%)** — expectancy_R 6.12 / 9.18, worst 4.04 / 6.06,
+   maxDD 2.41 / 3.61; calmar 5.82 / 8.72, worst 3.98 / 5.97, maxDD 2.15 /
+   3.23; random-N at 5,272: mean 5.09 / 7.63, max 5.79 / 8.69 (10 draws).
+   **Read: return up ~+1.0 / +1.5 and worst year up +0.4 / +0.6, but max DD
+   up +0.64 / +0.95 — return traded against drawdown, not a clean win; and
+   it is one point out of 70 real trials against a 10-draw max.** Together
+   with sanity (a) (rank persistence ~0) and item 3 (the hump): the members
+   that ranked best on the build years are the fitted ones. Winner: **ALL /
+   equal stands** unless the 25-draw control at 5,272 says otherwise.
+   `results/members_teamsize_routed_tirexcl_actweak.csv`.
+
+   **Item 4 addendum — chop-core regime-shuffle null: DONE (57 min, 20:00).**
+   real 6.98 / 10.47 vs shuffled-regime mean 6.87 / 10.31, p95 7.54 / 11.32,
+   max 7.65 / 11.48, **p = 0.440 both budgets**. Chop-core is NOT
+   distinguishable from a book routed on shuffled regime labels: taking every
+   chop entry regardless of state leaves the trend gate as the only thing the
+   regime does, and the shuffle shows that gate is worth nothing on this
+   book. Chop-core's edge over the base (5.12 / 7.69) is from switching the
+   chop gate OFF, not from the estimator. (Base regime-shuffle p = 0.040.)
+
+   **Batch 1 boundary — RUNNING since 22:58 (`~/fx-data-logs/b1_boundary.sh`,
+   pid 91532, serial, prints "B1 BOUNDARY COMPLETE"):** (1) 25-draw random-N
+   control, fresh seeds (20260924+), on the item 7 candidate (min_votes 110
+   and 191 → `agree_minvotes_winner_*.csv`) and the item 8 candidate (N =
+   5,272 and 3,375 → `members_teamsize_winner_*.csv`); `l2agree.py` and
+   `l2members.py` gained `--grid --out-name --seed-base` so the sweeps are
+   kept. (2) The Layer 1 analysis chain on 5pm in the main tree
+   (`l1analyse.sh <repo> MAIN5PM`, ~111 min) then the second pass; the
+   interface `layer1_states.csv` is backed up to `~/fx-data-logs/
+   layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…) and the driver
+   reports whether the chain changed it — if it did, compare before
+   committing. **NOT run: the direction-preserving and regime-shuffle nulls
+   on the two candidates.** Neither beats the base on both return and risk
+   (110: worst year down; 5,272: max DD up), so under "never trade return
+   against risk" neither is a winner and ~3 h of nulls on them would be spent
+   on a non-result; Jack can call for them. Then item 10, then Batch 2.
 
    **Item 9 — entry cost: DONE** (4.9 min + 27 min), see sanity (b).
 
