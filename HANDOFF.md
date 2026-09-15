@@ -170,7 +170,29 @@
    on the two candidates.** Neither beats the base on both return and risk
    (110: worst year down; 5,272: max DD up), so under "never trade return
    against risk" neither is a winner and ~3 h of nulls on them would be spent
-   on a non-result; Jack can call for them. Then item 10, then Batch 2.
+   on a non-result; Jack can call for them.
+
+   **THE REST OF THE QUEUE IS ONE DETACHED DRIVER — `~/fx-data-logs/
+   chain_all.sh` (pid 92588, launched 23:20), one heavy job at a time, each
+   starting the moment the previous prints its marker.** Order and markers:
+   waits for "B1 BOUNDARY COMPLETE" → **CHOP-ONLY** reference row (Jack, 14
+   Sep: chop slices always on, NO trend strategies, crisis on, same walk,
+   both budgets; `l2route --trend-gate never` added; walked with `--slices
+   A-chop,B-chop`, pickles `_cc_choponly`; direction-preserving null 25
+   draws; the regime-shuffle null is NOT run because with no trend strategies
+   and chop always on the routing reads no regime state, so shuffling the
+   states returns the real book by construction — **CHOSEN ON THE CHECKING
+   YEARS**, mark it so wherever it is quoted) → "CHOP-ONLY COMPLETE" → **item
+   10** (deletes `fx-data-l1A/-l1B/-l1Bfull` only if the chain reported the
+   interface file unchanged; else "ITEM 10 SKIPPED") → **Batch 2 smoke tests**
+   on `_cleanfield` (bestmember, volfloor, opposition, legflip, killswitch,
+   carry) → "SMOKE COMPLETE: …" → **Batch 2 on the base book in order**,
+   each stage only if its smoke passed ("ITEM 11 bestmember COMPLETE" …
+   "ITEM 15 carry COMPLETE", or SKIPPED/FAILED) → "BATCH 2 COMPLETE". Item 16
+   (stacked) is composed from the winners by hand; the refit build (item 0c)
+   is code work and starts at "BATCH 2 COMPLETE". Rough ETA from the 23:00
+   start: boundary ~02:30 · CHOP-ONLY ~03:15 · smoke ~04:00 · Batch 2
+   ~07:00-08:00 (15 Sep). Every marker is in `batch1.log`.
 
    **Item 9 — entry cost: DONE** (4.9 min + 27 min), see sanity (b).
 
