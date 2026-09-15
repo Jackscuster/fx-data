@@ -54,7 +54,7 @@ def vote_profile(T, M):
     return v
 
 
-def stage_minvotes(tag, field, n_rand, n_rand_winner, jobs, grid_override=''):
+def stage_minvotes(tag, field, n_rand, n_rand_winner, jobs, grid_override='', out_name='agree_minvotes.csv', seed_base=20260914):
     T, M, TY = load(tag)
     v = vote_profile(T, M)
     vmax = int(np.percentile(v[v >= 1], 99.5))
@@ -89,7 +89,7 @@ def stage_minvotes(tag, field, n_rand, n_rand_winner, jobs, grid_override=''):
             share = float((v >= k).mean()) if k > 1 else 1.0
             if k > 1:
                 for d in range(n_rand):
-                    rng = np.random.default_rng(20260914 + d)
+                    rng = np.random.default_rng(seed_base + d)
                     W.NET_MIN_VOTES = 0.5
                     nrow_total = None
                     def mask_for(B):
@@ -97,14 +97,14 @@ def stage_minvotes(tag, field, n_rand, n_rand_winner, jobs, grid_override=''):
                     # the mask must match the Book's row count; walk() builds the
                     # Book itself, so the mask is drawn per row inside net() via a
                     # callable seeded here
-                    W.NET_ROW_MASK = ('random', share, 20260914 + d)
+                    W.NET_ROW_MASK = ('random', share, seed_base + d)
                     kr, _ = one(T, TY, M, dipb, dayb)
                     rows.append(dict(budget=bt, min_votes=k, control='random', draw=d, median_year_pct=kr['median_year_pct'], worst_year_pct=kr['worst_year_pct'],
                                      max_dd_pct=kr['max_dd_pct'], worst_day_pct=kr['worst_day_pct'], dip95_pct=kr['dip95_pct'], profit_factor=kr['profit_factor'], sortino=kr['sortino']))
                 W.NET_ROW_MASK = None
-            pd.DataFrame(rows).to_csv(W.OUT('agree_minvotes.csv'), index=False)
+            pd.DataFrame(rows).to_csv(W.OUT(out_name), index=False)
     W.NET_MIN_VOTES = 0.5; W.NET_ROW_MASK = None
-    O = pd.DataFrame(rows); O.to_csv(W.OUT('agree_minvotes.csv'), index=False)
+    O = pd.DataFrame(rows); O.to_csv(W.OUT(out_name), index=False)
     print(O[O.control == 'real'][['budget', 'min_votes', 'median_year_pct', 'worst_year_pct', 'max_dd_pct', 'spread_paid_pct_yr', 'position_days']].to_string(index=False, float_format=lambda v: '%8.3f' % v), flush=True)
     R = O[O.control == 'random'].groupby(['budget', 'min_votes']).median_year_pct.agg(['mean', 'std', 'max'])
     print('random-N control:', flush=True); print(R.to_string(float_format=lambda v: '%8.3f' % v), flush=True)
@@ -132,12 +132,14 @@ def main():
     ap.add_argument('--n-rand-winner', type=int, default=25)
     ap.add_argument('--jobs', type=int, default=1)
     ap.add_argument('--grid', default='', help='override the vote grid, e.g. 1,3,10 (testing only)')
+    ap.add_argument('--out-name', default='agree_minvotes.csv', help='winner control: write elsewhere so the sweep is kept')
+    ap.add_argument('--seed-base', type=int, default=20260914, help='winner control: fresh draws, not the sweep\'s')
     a = ap.parse_args()
     W.S.load_costs(); os.environ['WF_FIELD_FILE'] = os.path.abspath(a.field_file); os.environ['WF_SLICES'] = 'A-trend,A-chop,B-chop,B-trend'
     t0 = time.time(); print('=== %s on %s ===' % (a.stage, a.suffix), flush=True)
     if a.stage == 'minvotes':
         F = W.load_field(('A-trend', 'A-chop', 'B-chop', 'B-trend'), a.field_file)
-        stage_minvotes(a.suffix, F, a.n_rand, a.n_rand_winner, a.jobs, a.grid)
+        stage_minvotes(a.suffix, F, a.n_rand, a.n_rand_winner, a.jobs, a.grid, a.out_name, a.seed_base)
     else:
         stage_curveshape(a.suffix)
     print('=== %s done in %.1f min ===' % (a.stage, (time.time() - t0) / 60), flush=True)
