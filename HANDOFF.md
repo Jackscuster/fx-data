@@ -2,7 +2,22 @@
 
 ## READ THIS FIRST
 
-0. **BATCH 1 / BATCH 2 IN PROGRESS (14 Sep) — READ THIS BEFORE RESUMING.**
+0. **THE LAYER 2 BOOK HAD A ONE-BAR LOOK-AHEAD (found 15 Sep). Every book
+   number in this file below item 0d was produced with it and is labelled
+   VOTE-TIMING LEAK in `results/`. The fixed numbers, same walk, same
+   pickles, both budgets (item 1 of 15 Sep; nulls in 0d as they land):**
+
+   | book | as run (contaminated) | fixed |
+   |---|---|---|
+   | BASE | 5.12 / 7.69, worst 3.62 / 5.43, PF 1.49 | **−1.00 / −1.50**, worst −1.50 / −2.24, PF 0.94 |
+   | CHOP-CORE | 6.98 / 10.46 | **−0.82 / −1.23**, PF 0.93 |
+   | CHOP-ONLY (checking years) | 10.59 / 15.88 | **−0.44 / −0.66**, PF 0.95 |
+   | sit-out (item 12) | 20.06 / 28.71 | −1.36 / −2.03 |
+
+   The mechanism, the evidence and the fix are in **0d**; the rule is in §3.
+   Per-strategy numbers (gate 2/3, member expectancy, Layer 1) stand.
+
+0-prev. **BATCH 1 / BATCH 2 (14 Sep) — as run on the contaminated kernel; kept for the record.**
    Session context was cleared at ~14:15 with Batch 1 mid-run. Everything
    below is from files. The base book is the four-slice clean field routed on
    the 5pm states, trend→TRENDING, chop→RANGING, WEAK blocks new trend
@@ -1145,6 +1160,7 @@ walks 10 s · uncut random-entry null 17 min (2 workers).
 
 | date | rule |
 |---|---|
+| **15 Sep** | **NO VOTE ON THE FILL DAY.** A position may not vote on a (pair, day) row until the day AFTER its fill. The engine fills at the signal bar's close, so a fill on D is decided by D's close, and row D's mark is that day's move of the other members' positions. Enforced mechanically: `l2walkfwd.check_no_same_day_entrant` halts any walk whose vote includes a same-day entrant; `VOTE_ON_ENTRY_DAY = False` is the only default; `WF_ALLOW_VOTE_LEAK=1` is the sole way through and prints CONTAMINATED. Every book in the repo is built through `Book`, so the rule covers walk-forward, all three nulls, team-size, agreement, opposition, exit, kill-switch, carry. `l2layer4.py` / `l2layer4v2.py` carry their own netting with the same fault: retired, headered, not fixed. Per-strategy scoring (`l2tune.Scorer`, gate 2/3, the refit pilot) never touches `Book`. |
 | 08 Sep | **Adoption**: account return strictly higher AND max DD no worse AND Sortino no worse. **Sharpe dropped.** |
 | 08 Sep | **Sharpe binds nothing anywhere** — not in adoption, not in the gate 3 cut. Reported only, plus `sharpe_only_flag`. |
 | 07 Sep | **Budgets** 3.6%/3.6% (Team 1) and 5.4%/3.6% (Team 2). |

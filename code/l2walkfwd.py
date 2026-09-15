@@ -519,6 +519,21 @@ def vote_from_next_day(M, col):
     return out, d.col.values.astype(np.int64)
 
 
+def check_no_same_day_entrant(M, entry_day):
+    """HARD RULE (HANDOFF section 3, 15 Sep): no (pair, day) row's vote may include
+    a member whose position was filled on that day. A fill is decided at that
+    day's close; the row's mark is that day's move. Any such row halts the walk.
+    Reproduction of the contaminated numbers needs WF_ALLOW_VOTE_LEAK=1 set on
+    purpose, and is labelled by the caller."""
+    bad = int((M.day.values <= entry_day).sum())
+    if bad and os.environ.get('WF_ALLOW_VOTE_LEAK') != '1':
+        raise SystemExit('VOTE-TIMING LEAK: %d position-day rows would vote on their own fill day '
+                         '(HANDOFF 0d). Set VOTE_ON_ENTRY_DAY=False, or WF_ALLOW_VOTE_LEAK=1 to reproduce '
+                         'the contaminated numbers knowingly.' % bad)
+    if bad:
+        print('  !! WF_ALLOW_VOTE_LEAK=1: %d same-day entrant votes kept -- CONTAMINATED, for reproduction only' % bad, flush=True)
+
+
 class Book:
     """Sparse (position x member) matrices so one candidate book costs four
     matrix-vector products.
@@ -547,8 +562,14 @@ class Book:
         col = M.sid.astype(str).map(midx).values
         keep = ~pd.isna(col)
         M = M[keep]; col = col[keep].astype(np.int64)
+        # the fill day is the first mark day (checked on every trade, 100%); keep it
+        # from BEFORE any shift so the check below tests the truth, not the shift
+        fill = M.groupby(['sid', 'tid'], observed=True).day.min()
         if not VOTE_ON_ENTRY_DAY:
             M, col = vote_from_next_day(M, col)
+        key = pd.MultiIndex.from_arrays([M.sid.astype(str).values, M.tid.values])
+        fill.index = pd.MultiIndex.from_arrays([fill.index.get_level_values(0).astype(str), fill.index.get_level_values(1)])
+        check_no_same_day_entrant(M, fill.reindex(key).values)
         pc, upair = pd.factorize(M.pair.astype(str), sort=True)
         dc, uday = pd.factorize(M.day.values, sort=True)
         key = pc.astype(np.int64) * len(uday) + dc

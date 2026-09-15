@@ -92,11 +92,12 @@ def kp(k, dipb, dayb):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--suffix', default='_routed_tirexcl_actweak')
+    ap.add_argument('--alone-only', action='store_true', help='each sleeve walked alone only, with its own per-trade expectancy; no book walks (15 Sep: the book is contaminated, HANDOFF 0d)')
     a = ap.parse_args(); W.S.load_costs()
     W.TAG = a.suffix; os.environ['WF_TAG'] = a.suffix
     T = pd.read_pickle(W.OUT('wf_trades.pkl')); M = pd.read_pickle(W.OUT('wf_marks.pkl')); TY = W.trade_year_sums(M)
     t0 = time.time(); rows = []
-    for bt, dipb, dayb in W.BUDGETS:
+    for bt, dipb, dayb in ([] if a.alone_only else W.BUDGETS):
         r = W.walk(T, TY, M, IDENT, dipb, dayb, ['ALLPASS'], nocut=True); k = kp(r['ALLPASS'][0], dipb, dayb)
         k.update(sleeve='book alone', frac=np.nan, period='', budget=bt, ret_per_dip=k['median_year_pct'] / max(k['dip95_pct'], 1e-9)); rows.append(k)
     for frac in (1 / 6, 1 / 4, 1 / 3, 1 / 2):
@@ -107,10 +108,22 @@ def main():
             Tc['sid'] = Tc.sid.astype('category'); Tc['pair'] = Tc.pair.astype('category'); Mc['sid'] = Mc.sid.astype('category'); Mc['pair'] = Mc.pair.astype('category')
             Mc['dir'] = Mc['dir'].astype(np.int8)
             TYc = W.trade_year_sums(Mc)
+            # the sleeve's own per-trade record, net of costs: what a new member type has to show first
+            ex = {}
+            for lab, y0, y1 in (('build', 2011, 2015), ('trade', 2016, 2020)):
+                tt = Tc[Tc.entry.dt.year.between(y0, y1)]
+                ex[lab] = dict(n=int(len(tt)), expectancy_R=float(tt.R.mean()) if len(tt) else np.nan, share_pos=float((tt.R > 0).mean()) if len(tt) else np.nan,
+                               profit_factor=float(tt.R[tt.R > 0].sum() / max(-tt.R[tt.R < 0].sum(), 1e-9)) if len(tt) else np.nan)
+            print('    carry f=%.2f %-9s per-trade: build 2011-15 n %4d  R/trade %+.3f  win %.2f  PF %.2f | trade 2016-20 n %4d  R/trade %+.3f  win %.2f  PF %.2f'
+                  % (frac, period, ex['build']['n'], ex['build']['expectancy_R'], ex['build']['share_pos'], ex['build']['profit_factor'],
+                     ex['trade']['n'], ex['trade']['expectancy_R'], ex['trade']['share_pos'], ex['trade']['profit_factor']), flush=True)
             for bt, dipb, dayb in W.BUDGETS:
                 r = W.walk(Tc, TYc, Mc, IDENT, dipb, dayb, ['ALLPASS'], nocut=True); k = kp(r['ALLPASS'][0], dipb, dayb)
-                k.update(sleeve='carry alone', frac=frac, period=period, budget=bt, ret_per_dip=k['median_year_pct'] / max(k['dip95_pct'], 1e-9), positions=len(Tc)); rows.append(k)
+                k.update(sleeve='carry alone', frac=frac, period=period, budget=bt, ret_per_dip=k['median_year_pct'] / max(k['dip95_pct'], 1e-9), positions=len(Tc),
+                         **{'pt_%s_%s' % (lab, kk): v for lab in ex for kk, v in ex[lab].items()}); rows.append(k)
                 print('    carry f=%.2f %-9s alone %-6s median %6.3f%%  worst %6.3f%%  maxDD %5.2f%%  DIP95 %5.2f%%  PF %.2f  ret/DIP %.2f' % (frac, period, bt, k['median_year_pct'], k['worst_year_pct'], k['max_dd_pct'], k['dip95_pct'], k['profit_factor'], k['ret_per_dip']), flush=True)
+                if a.alone_only:
+                    continue
                 Ta = pd.concat([T.assign(sid=T.sid.astype(str), pair=T.pair.astype(str)), Tc.assign(sid=Tc.sid.astype(str), pair=Tc.pair.astype(str))], ignore_index=True)
                 Ma = pd.concat([M.assign(sid=M.sid.astype(str), pair=M.pair.astype(str)), Mc.assign(sid=Mc.sid.astype(str), pair=Mc.pair.astype(str))], ignore_index=True)
                 for c in ('sid', 'pair'):
