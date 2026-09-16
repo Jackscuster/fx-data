@@ -1083,7 +1083,7 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
             if isinstance(mem, tuple):
                 mem, wts = mem
             mem = [m for m in mem if m in set(B.members)]
-            if len(mem) < 2:
+            if len(mem) < (1 if len(B.members) == 1 else 2):   # a one-member sleeve (carry alone) is a legitimate book
                 raise RuntimeError('step %d %s: %d members' % (si + 1, s, len(mem)))
             idx = {m: i for i, m in enumerate(B.members)}
             w = np.zeros(len(B.members), np.float32)
@@ -1114,7 +1114,7 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
                                   size_scale=float(sc), scale_binds=bbind, cap_pct=CAP_PCT, cap_bound_days=int(binds),
                                   net_min_votes=NET_MIN_VOTES, curve_mode=CURVE_MODE, opposition=OPPOSITION,
                                   vote_on_entry_day=VOTE_ON_ENTRY_DAY, dip_budget=dipb, day_budget=dayb,
-                                  build_median_year_pct=float(np.median([(d1[ybuild] * sc)[pd.DatetimeIndex(B.udays[ybuild]).year == y].sum() for y in sorted(set(pd.DatetimeIndex(B.udays[ybuild]).year))]) * 100) if ybuild.any() else np.nan))
+                                  build_median_year_pct=float(np.median([(d1[ybuild] * sc)[pd.DatetimeIndex(B.udays[ybuild]).year == y].sum() for y in sorted(set(pd.DatetimeIndex(B.udays[ybuild]).year))])) if ybuild.any() else np.nan))   # same units as kpis: the daily series is already in percent
             out[s]['cuts'].append(dict(step=si + 1, passers=len(P), members=len(mem),
                                        build_daily=d1[ybuild] * sc, build_days=B.udays[ybuild],
                                        ccy_daily=pd.DataFrame(_cc, index=B.udays, columns=B.ccy),

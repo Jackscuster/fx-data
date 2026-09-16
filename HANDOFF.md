@@ -17,6 +17,50 @@
    The mechanism, the evidence and the fix are in **0d**; the rule is in §3.
    Per-strategy numbers (gate 2/3, member expectancy, Layer 1) stand.
 
+   **16 Sep, morning — everything Jack queued on the 15th has run. From files:**
+
+   *Fixed nulls, both budgets.* Random-entry (25 draws, same permitted bars):
+   base −1.00 / −1.50 vs null max −0.02 / −0.02, **p = 1.000**; chop-core
+   −0.82 / −1.23 vs max −0.08 / −0.12, p = 1.000; chop-only −0.44 / −0.66 vs
+   a flat null, p = 1.000. Regime-shuffle (25 draws): base vs shuffled mean
+   −0.60 / −0.89, max 0.13 / 0.19, **p = 0.880**; chop-core vs −0.74 / −1.12,
+   max 0.02 / 0.03, **p = 0.520**. The real entries are worse than random
+   entries; the real routing is no better than shuffled labels.
+
+   *In-sample check (a).* The fixed base on its own build block 2011-2015:
+   **+4.44% median year** at the build-block scale (2011-2018: +2.60%);
+   trade years −1.00 → retention −0.43, flagged FIT. Ten-trade hand check
+   PASS: every mark rebuilt from closes, ATR, stop multiple, legs and the
+   cost table; first vote the day after the fill (`audit_handcheck_10.csv`).
+
+   *Refit pilot (b), 250 strategies (A-trend 90, A-chop 28, B-chop 28,
+   B-trend 104), 237 min on 4 workers, `refit_pilot*.csv`.* Mean 98 s per
+   five-year tune (median 71, p90 133), median 539 configurations tried.
+   Median R per trade net of costs on the unseen year, share positive:
+
+   | trade year | settings | flat table as run | 17:00 measured | 22:00 measured |
+   |---|---|---|---|---|
+   | 2016 | 2005-10 (ip1) | −0.066, 39% | −0.086, 34% | −0.064, 40% |
+   | 2016 | fresh tune 2011-15 | **−0.048, 42%** | −0.064, 40% | −0.045, 43% |
+   | 2017 | 2005-10 (ip1) | −0.075, 38% | −0.096, 35% | −0.069, 39% |
+   | 2017 | fresh tune 2012-16 | **−0.022, 45%** | −0.045, 43% | −0.018, 46% |
+
+   Tuning-window medians under the fresh tune: 0.97 and 0.92 R/trade —
+   retention −4% and −3%. By slice at 22:00: every slice negative on both
+   years except B-trend 2016 (+0.009); A-chop goes from +0.01 (ip1) to −0.10
+   after re-tuning. **Plainly: re-tuning does not restore an edge. The
+   median R per trade on unseen years is negative before and after, at
+   every cost level, in every slice. Re-tuning lifts the in-sample number
+   4× and the unseen year by 0.02-0.05 R, to a number still below zero.**
+
+   *Carry (item 4), alone, fixed kernel, 12 sleeves.* Every sleeve loses per
+   trade on the build years AND the trade years: weekly −0.07 to −0.09 R
+   (PF 0.84-0.88), monthly −0.22 to −0.43, quarterly −0.48 to −1.08. Not a
+   member. `carry_routed_tirexcl_actweak.csv`.
+
+   *Audit.* `results/audit_2026-09.csv`: **25 of 26 PASS**; item 26 (repo
+   under the iCloud-synced ~/Documents) is the move, done next.
+
 0-prev. **BATCH 1 / BATCH 2 (14 Sep) — as run on the contaminated kernel; kept for the record.**
    Session context was cleared at ~14:15 with Batch 1 mid-run. Everything
    below is from files. The base book is the four-slice clean field routed on
