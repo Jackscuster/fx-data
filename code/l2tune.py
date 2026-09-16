@@ -316,7 +316,7 @@ class Scorer:
         # at 28 pairs x hundreds of scores per combination.
         self._nosus = {p: np.zeros(len(self.arr[p][3]), bool) for p in self.pairs}
 
-    def score(self, combo, ip, risk, mode, sname, code, plan, windows):
+    def score(self, combo, ip, risk, mode, sname, code, plan, windows, routed=True):
         """One configuration. `ip` maps slot -> params dict. Returns
         {window: agg} over trades ENTERED in that window, in this slice."""
         self.n_eval += 1
@@ -378,7 +378,10 @@ class Scorer:
                 # gross while the audit path looked costed.
                 r = r - S._cost_R(p, b['entry_px'][:nt], b['units'][:nt],
                                   self.dates[p][eb])
-            m = self.reg[p][eb] == code
+            # routed: only entries whose bar Layer 1 labelled with the slice's regime
+            # (the field's own rule); always-on (routed=False): every entry the
+            # strategy fired, so regime dependence is MEASURED per strategy (audit 15)
+            m = (self.reg[p][eb] == code) if routed else np.ones(len(eb), bool)
             if not m.any():
                 continue
             for w in windows:
