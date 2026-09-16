@@ -186,10 +186,30 @@ def load_pair(pair):
         i += 1
     d = d.iloc[i:]
     d['suspect'] = False
+    # AUDIT 10 (16 Sep): 2021-2026 is SEALED. The loader refuses bars past
+    # SEAL_END unless FX_ALLOW_W4=1 is set on purpose, and says so once.
+    if os.environ.get('FX_ALLOW_W4') == '1':
+        if not _W4_LOGGED:
+            print('  !! FX_ALLOW_W4=1: bars after %s are being served -- the sealed years are OPEN in this process' % SEAL_END, flush=True)
+            _W4_LOGGED.append(True)
+    else:
+        d = d[d.index <= pd.Timestamp(SEAL_END)]
     return d
 
 
+SEAL_END = '2020-12-31'
+_W4_LOGGED = []
 _LAB = None
+
+
+def layer1_header_check(path):
+    """AUDIT 2 and 14 (16 Sep): the interface file must say, on line 1, that it
+    is the OANDA 17:00 NY build and that rows are lagged one bar. Halts if not."""
+    with open(path) as fh:
+        line = fh.readline()
+    if not line.startswith('#') or 'OANDA 17:00 NY' not in line or 'lagged one bar' not in line:
+        raise RuntimeError('LAYER 1 INTERFACE HEADER: %s does not declare the 5pm build and the one-bar lag on line 1' % path)
+    return line
 
 
 def regime_codes(pair, index):
@@ -207,6 +227,7 @@ def regime_codes(pair, index):
     """
     global _LAB
     if _LAB is None:
+        layer1_header_check(LABELS)
         L_ = pd.read_csv(LABELS, parse_dates=['date'], usecols=['date', 'pair', 'shape2'], comment='#')
         _LAB = {p: g.set_index('date').shape2 for p, g in L_.groupby('pair')}
     m = REGIME_CODE
@@ -339,7 +360,13 @@ def load_costs(path=None):
     """Load results/cost_table.csv and switch costing on."""
     global COSTS, _CRISIS_WIN
     import l2crisis as _C
-    t = pd.read_csv(path or os.path.join(ROOTOUT, 'cost_table.csv'))
+    path = path or os.environ.get('FX_COST_TABLE') or os.path.join(ROOTOUT, 'cost_table.csv')
+    t = pd.read_csv(path)
+    # AUDIT 16/17 (16 Sep): 28 distinct pairs, every cost positive, and the
+    # table named in the log so no run is silently on the flat one.
+    assert t.pair.nunique() == 28 and len(t) == 28, 'cost table %s: expected 28 distinct pair rows' % path
+    assert (t.cost_frac_roundtrip > 0).all(), 'cost table %s: a zero or negative cost' % path
+    print('  costs: %s (%d pairs, %d distinct costs, median %.1f bp round trip)' % (os.path.basename(path), len(t), t.cost_frac_roundtrip.round(8).nunique(), 1e4 * t.cost_frac_roundtrip.median()), flush=True)
     COSTS = dict(zip(t.pair, t.cost_frac_roundtrip))
     _CRISIS_WIN = _C.windows()
     return COSTS

@@ -36,7 +36,7 @@ import numpy as np, pandas as pd
 
 STATE = os.path.join(ROOTOUT, 'modeC_batch_state.json')
 MARKER = os.path.join(ROOTOUT, 'BATCH_FAILED.marker')
-LOG = os.path.join(ROOTOUT, 'batchC.log')
+LOG = os.path.join(_R, 'logs', 'batchC.log')
 POP = {'trend': 554422, 'chop': 162481}
 WORKERS = 9
 

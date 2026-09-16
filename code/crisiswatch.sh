@@ -3,7 +3,7 @@
 # Same backstop as valwatch.sh and for the same reason: a seventeen-hour job
 # that dies quietly gets restarted from zero by whoever notices first.
 R=/Users/jackcuster/Documents/fx-data
-LOG=$R/results/crisis_all.log
+LOG=$R/logs/crisis_all.log
 while :; do
   if [ -s "$LOG" ] && grep -q "^DONE" "$LOG"; then exit 0; fi
   if ! pgrep -f "l2crisis_all.py" >/dev/null 2>&1; then

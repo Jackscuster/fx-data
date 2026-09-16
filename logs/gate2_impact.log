@@ -1,0 +1,106 @@
+response: 144 (indicator, slot) tasks, 2 workers
+  10/144 indicators done
+  20/144 indicators done
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  30/144 indicators done
+  40/144 indicators done
+  50/144 indicators done
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+  60/144 indicators done
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  70/144 indicators done
+  80/144 indicators done
+/Users/jackcuster/Documents/fx-data/code/l2pine.py:164: RuntimeWarning: invalid value encountered in divide
+  return (W * w).sum(axis=1) / w.sum()
+  90/144 indicators done
+  100/144 indicators done
+  110/144 indicators done
+  120/144 indicators done
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1884: RuntimeWarning: overflow encountered in scalar multiply
+  st = fr if not np.isfinite(st) else index_smooth * fr + (1 - index_smooth) * st
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1881: RuntimeWarning: overflow encountered in scalar multiply
+  sm = r if not np.isfinite(sm) else price_smooth * r + (1 - price_smooth) * sm
+  130/144 indicators done
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar multiply
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1855: RuntimeWarning: overflow encountered in scalar multiply
+  mama[i] = al * src[i] + (1 - al) * mama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: invalid value encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+/Users/jackcuster/Documents/fx-data/code/l2lib.py:1856: RuntimeWarning: overflow encountered in scalar add
+  fama[i] = .5 * al * mama[i] + (1 - .5 * al) * fama[i - 1]
+  140/144 indicators done
+
+390 (indicator, parameter) rows in 2969 s
+
+INDICATORS ABOVE THE CAP -- what the cap keeps and drops:
+  fx_sniper_ergodic_cci_signals (8 params)
+     keep: cci_length, trigger_length, trigger_length, ema1_length, ema2_length, cci_length
+     drop: ema1_length, ema2_length
+  hieken_ashi_smoothed_signals (32 params)
+     keep: ma_len1, ma_len2, vol_factor1, vol_factor2, ma_len1, ma_len2
+     drop: vol_factor1, vol_factor2, alma_offset1, alma_offset2, alma_sigma1, alma_sigma2, ama_smooth1, ama_smooth2 ...
+  ichimoku_signals (8 params)
+     keep: base_len, displacement, displacement, base_len, conversion_len, span_b_len
+     drop: span_b_len, conversion_len
+  lemantrend_signals (8 params)
+     keep: fast_period, fast_period, slow_period, slow_period, smooth, smooth
+     drop: medium_period, medium_period
+  rex_oscillator_signals (44 params)
+     keep: smooth, sigSmooth, sigSmooth, smooth, almaOffset, almaSigma
+     drop: framaFast, framaSlow, jurikPhase, jurikPower, lsOffset, modFBW, modFilter, sigAlmaOff ...
+  schaff_trend_cycle_exit (7 params)
+     keep: macdFast, macdSlow, cycleLen, d1, d2, upperBand
+     drop: lowerBand
+  schaff_trend_cycle_signals (16 params)
+     keep: macdFast, macdFast, cycleLen, stc_midline, macdSlow, macdSlow
+     drop: cycleLen, d1, d2, stc_midline, d2, lowerBand, d1, upperBand ...
+  waddah_attar_explosion_signals (10 params)
+     keep: fastEma, slowEma, slowEma, fastEma, sensitivity, bbLen
+     drop: bbStd, bbLen, bbStd, sensitivity
+
+TOP-1 PARAMETER PER INDICATOR (the cheap pass knob), highest response first:
+                          indicator     parameter  default  response_R  n_combos
+   fractal_dimension_volume_signals        length     30.0    0.206566         8
+                       rma_baseline     ma_length     20.0    0.182234         8
+                      kama_baseline        length     10.0    0.179640         8
+            variance_volume_signals      lookback     20.0    0.179471         8
+               glitch_index_signals        length     30.0    0.169601         8
+                       sma_baseline        length     20.0    0.160387         8
+                   ichimoku_signals      base_len     26.0    0.160116         8
+                        dpo_signals           len     50.0    0.159823         8
+    efficiency_ratio_volume_signals        length     10.0    0.159673         8
+           kuskus_starlight_signals range_periods     30.0    0.159151         8
+trend_direction_force_index_signals      lookback     13.0    0.154318         8
+                        t3_baseline        length     10.0    0.154317         8
+             mcginley_dynamic_index    mci_length     14.0    0.148777         8
+            laguerre_filter_signals         alpha      0.2    0.147936         8
+                      j_tpo_signals           len     40.0    0.146589         8
+                       ema_baseline     ma_length     20.0    0.145697         8
+                      aroon_signals        length     25.0    0.145452         8
+                       tma_baseline        length     20.0    0.144106         8
+                 supertrend_signals        factor      3.0    0.143478         8
+                  mama_fama_signals    fast_limit      0.5    0.142709         8
+
+parameters whose response is ZERO (never move the score): 86 of 390

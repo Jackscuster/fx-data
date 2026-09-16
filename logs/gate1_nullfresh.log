@@ -1,0 +1,38 @@
+null: 32 surrogates x 1200 combos, 8 workers, floors {'trend': 0.0789746052852731, 'chop': 0.0948921307658818}
+  surrogate  1/32 done
+  surrogate  2/32 done
+  surrogate  3/32 done
+  surrogate  4/32 done
+  surrogate  5/32 done
+  surrogate  6/32 done
+  surrogate  7/32 done
+  surrogate  8/32 done
+  surrogate  9/32 done
+  surrogate 10/32 done
+  surrogate 11/32 done
+  surrogate 12/32 done
+  surrogate 13/32 done
+  surrogate 14/32 done
+  surrogate 15/32 done
+  surrogate 16/32 done
+  surrogate 17/32 done
+  surrogate 18/32 done
+  surrogate 19/32 done
+  surrogate 20/32 done
+  surrogate 21/32 done
+  surrogate 22/32 done
+  surrogate 23/32 done
+  surrogate 24/32 done
+  surrogate 25/32 done
+  surrogate 26/32 done
+  surrogate 27/32 done
+  surrogate 28/32 done
+  surrogate 29/32 done
+  surrogate 30/32 done
+  surrogate 31/32 done
+  surrogate 32/32 done
+
+TRUE NULL PASS RATE, fresh controls vs the frozen floor
+slice  n_controls  floor_expectancy_R  null_exp_only_pct  null_pf_only_pct  null_joint_pct   se_pct  ci95_lo_pct  ci95_hi_pct
+trend       31822            0.078975           6.473509         31.537930        6.473509 0.137935     6.203157     6.743861
+ chop       26088            0.094892           6.106256         52.648727        6.106256 0.148247     5.815692     6.396820

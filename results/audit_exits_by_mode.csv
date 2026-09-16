@@ -1,0 +1,61 @@
+mode,slice,sid,n_trades,fired_own_rule,forbidden_rules,legs
+A,trend,halftrend_signals|kuskus_starlight_signals|rma_baseline,64,False,[],"{1: 32, 2: 32}"
+A,trend,parabolic_sar_signals|center_of_gravity_signals|sma_baseline,220,True,[],"{1: 110, 2: 110}"
+A,trend,lemantrend_signals|price_momentum_oscillator_signals|super_smoother_2p,112,True,[],"{1: 56, 2: 56}"
+A,trend,fx_sniper_ergodic_cci_signals|mama_fama_signals|t3_baseline,134,True,[],"{1: 67, 2: 67}"
+A,trend,price_momentum_oscillator_signals|chandelier_exit_signals|frama_baseli,76,False,[],"{1: 38, 2: 38}"
+A,trend,donchian_breakout_signals|halftrend_signals|rma_baseline,50,True,[],"{1: 25, 2: 25}"
+A,trend,fx_sniper_ergodic_cci_signals|kase_peak_oscillator_signals|sma_baselin,216,True,[],"{1: 108, 2: 108}"
+A,trend,didi_index_signals|mama_fama_signals|tma_baseline,74,True,[],"{1: 37, 2: 37}"
+A,trend,kalman_filter_signals|waddah_attar_explosion_signals|tma_baseline,64,False,[],"{1: 32, 2: 32}"
+A,trend,fx_sniper_ergodic_cci_signals|kuskus_starlight_signals|sma_baseline,150,True,[],"{1: 75, 2: 75}"
+A,chop,mama_fama_signals|donchian_breakout_signals|wma_baseline,20,False,[],{0: 20}
+A,chop,adx_dmi_signals|polychromatic_momentum_signals|fantail_vma,115,True,[],{0: 115}
+A,chop,supertrend_signals|kase_peak_oscillator_signals|lsma_baseline,48,False,[],{0: 48}
+A,chop,dspo_signals|bears_bulls_impulse_signals|sma_baseline,29,True,[],{0: 29}
+A,chop,polychromatic_momentum_signals|bears_bulls_impulse_signals|frama_basel,87,True,[],{0: 87}
+A,chop,schaff_trend_cycle_signals|fisher_transform_signals|alma_baseline,58,True,[],{0: 58}
+A,chop,aroon_signals|bears_bulls_impulse_signals|mcginley_dynamic_index,68,False,[],{0: 68}
+A,chop,kuskus_starlight_signals|lemantrend_signals|fantail_vma,59,True,[],{0: 59}
+A,chop,chandelier_exit_signals|parabolic_sar_signals|tma_baseline,98,True,[],{0: 98}
+A,chop,center_of_gravity_signals|linreg_slope_signals|wma_baseline,59,True,[],{0: 59}
+B,trend,adx_dmi_signals|supertrend_signals|wma_baseline,18,True,[],"{1: 9, 2: 9}"
+B,trend,vortex_signals|donchian_breakout_signals|wma_baseline,60,True,[],"{1: 30, 2: 30}"
+B,trend,fisher_transform_signals|kuskus_starlight_signals|sma_baseline,54,True,[],"{1: 27, 2: 27}"
+B,trend,coppock_curve_signals|coppock_curve_signals|rma_baseline,100,True,[],"{1: 50, 2: 50}"
+B,trend,rex_oscillator_signals|polychromatic_momentum_signals|mcginley_dynamic,38,True,[],"{1: 19, 2: 19}"
+B,trend,waddah_attar_explosion_signals|didi_index_signals|t3_baseline,66,True,[],"{1: 33, 2: 33}"
+B,trend,center_of_gravity_signals|volatility_quality_signals|kama_baseline,236,True,[],"{1: 118, 2: 118}"
+B,chop,price_momentum_oscillator_signals|fisher_transform_signals|rma_baselin,95,True,[],{0: 95}
+B,trend,glitch_index_signals|chandelier_exit_signals|mcginley_dynamic_index,104,True,[],"{1: 52, 2: 52}"
+B,chop,aroon_signals|vortex_signals|fantail_vma,67,True,[],{0: 67}
+B,trend,ehlers_reverse_ema_signals|supertrend_signals|rma_baseline,130,True,[],"{1: 65, 2: 65}"
+B,trend,ehlers_reverse_ema_signals|vortex_signals|wma_baseline,186,True,[],"{1: 93, 2: 93}"
+B,trend,bears_bulls_impulse_signals|dpo_signals|mcginley_dynamic_index,186,True,[],"{1: 93, 2: 93}"
+B,chop,hieken_ashi_smoothed_signals|lemantrend_signals|fantail_vma,151,True,[],{0: 151}
+B,trend,ehlers_reverse_ema_signals|donchian_breakout_signals|wma_baseline,84,True,[],"{1: 42, 2: 42}"
+B,trend,bears_bulls_impulse_signals|dspo_signals|kama_baseline,112,True,[],"{1: 56, 2: 56}"
+B,trend,polychromatic_momentum_signals|parabolic_sar_signals|t3_baseline,62,True,[],"{1: 31, 2: 31}"
+B,trend,bears_bulls_impulse_signals|vortex_signals|lsma_baseline,98,True,[],"{1: 49, 2: 49}"
+B,trend,fisher_transform_signals|mama_fama_signals|ema_baseline,374,True,[],"{1: 187, 2: 187}"
+B,trend,laguerre_filter_signals|aroon_signals|sma_baseline,82,True,[],"{1: 41, 2: 41}"
+C,trend,adx_dmi_signals|bears_bulls_impulse_signals|frama_baseline,22,True,[],"{1: 11, 2: 11}"
+C,trend,aroon_signals|adx_dmi_signals|wma_baseline,16,True,[],"{1: 8, 2: 8}"
+C,trend,aroon_signals|chandelier_exit_signals|hma_baseline,60,True,[],"{1: 30, 2: 30}"
+C,trend,adx_dmi_signals|coral_signals|frama_baseline,24,False,[],"{1: 12, 2: 12}"
+C,trend,adx_dmi_signals|dpo_signals|wma_baseline,16,True,[],"{1: 8, 2: 8}"
+C,trend,aroon_signals|center_of_gravity_signals|hma_baseline,244,True,[],"{1: 122, 2: 122}"
+C,trend,waddah_attar_explosion_signals|vortex_signals|fantail_vma,66,True,[],"{1: 33, 2: 33}"
+C,trend,aroon_signals|coral_signals|rma_baseline,62,True,[],"{1: 31, 2: 31}"
+C,trend,waddah_attar_explosion_signals|waddah_attar_explosion_signals|mcginley,58,True,[],"{1: 29, 2: 29}"
+C,trend,waddah_attar_explosion_signals|waddah_attar_explosion_signals|tma_base,60,True,[],"{1: 30, 2: 30}"
+C,trend,aroon_signals|coppock_curve_signals|ema_baseline,44,True,[],"{1: 22, 2: 22}"
+C,trend,adx_dmi_signals|donchian_breakout_signals|wma_baseline,50,False,[],"{1: 25, 2: 25}"
+C,trend,aroon_signals|coppock_curve_signals|wma_baseline,88,True,[],"{1: 44, 2: 44}"
+C,trend,aroon_signals|coral_signals|hma_baseline,118,True,[],"{1: 59, 2: 59}"
+C,trend,waddah_attar_explosion_signals|vortex_signals|wma_baseline,74,True,[],"{1: 37, 2: 37}"
+C,trend,aroon_signals|chandelier_exit_signals|t3_baseline,98,True,[],"{1: 49, 2: 49}"
+C,trend,aroon_signals|coppock_curve_signals|tma_baseline,44,True,[],"{1: 22, 2: 22}"
+C,trend,aroon_signals|bears_bulls_impulse_signals|kama_baseline,128,True,[],"{1: 64, 2: 64}"
+C,trend,waddah_attar_explosion_signals|vortex_signals|t3_baseline,48,True,[],"{1: 24, 2: 24}"
+C,trend,adx_dmi_signals|dspo_signals|wma_baseline,16,True,[],"{1: 8, 2: 8}"

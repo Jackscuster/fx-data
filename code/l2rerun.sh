@@ -14,7 +14,7 @@ PIDF=/tmp/.l2rerun.pid
 if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then exit 0; fi  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 echo $$ > "$PIDF"; trap 'rm -f "$PIDF"' EXIT
 cd /Users/jackcuster/Documents/fx-data
-LOG=results/rerun.log
+LOG=logs/rerun.log
 say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
 say "armed: waiting for the main chain"
 while pgrep -f l2chain2.sh >/dev/null || pgrep -f "l2gate3ft.py --shard" >/dev/null; do sleep 300; done

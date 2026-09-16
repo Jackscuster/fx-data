@@ -1,0 +1,24 @@
+
+=== LUCK FLOOR, mode A (C1-flip exit) ===
+  surrogate  1/12: eligible {'trend': 331, 'chop': 262}
+  surrogate  2/12: eligible {'trend': 333, 'chop': 263}
+  surrogate  3/12: eligible {'trend': 333, 'chop': 267}
+  surrogate  4/12: eligible {'trend': 328, 'chop': 259}
+  surrogate  5/12: eligible {'trend': 330, 'chop': 264}
+  surrogate  6/12: eligible {'trend': 330, 'chop': 263}
+  surrogate  7/12: eligible {'trend': 324, 'chop': 262}
+  surrogate  8/12: eligible {'trend': 329, 'chop': 264}
+  surrogate  9/12: eligible {'trend': 330, 'chop': 263}
+  surrogate 10/12: eligible {'trend': 331, 'chop': 265}
+  surrogate 11/12: eligible {'trend': 328, 'chop': 264}
+  surrogate 12/12: eligible {'trend': 332, 'chop': 265}
+mode slice    n      mean       p50      p95      p99      max
+   A trend 3959 -0.000934 -0.007724 0.097221 0.204109 0.487038
+   A  chop 3161  0.025009  0.027887 0.109919 0.150889 0.249598
+  expectancy bar, mode A trend = 0.097221 R
+  expectancy bar, mode A chop  = 0.109919 R
+
+ALL SIX FLOORS
+mode slice    n      p95
+   A trend 3959 0.097221
+   A  chop 3161 0.109919

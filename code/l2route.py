@@ -39,6 +39,7 @@ the regime-dependence table (each slice's trades inside vs outside its regime).
 import argparse, time
 import numpy as np, pandas as pd
 import l2walkfwd as W
+import l2sweep as S
 
 CCY = ['EUR', 'GBP', 'AUD', 'NZD', 'USD', 'CAD', 'CHF', 'JPY']
 TREND_STATES = {'excl': {'trending'}, 'incl': {'trending', 'trend-in-range'}}
@@ -49,8 +50,17 @@ def kind_of(sid):
     return 'trend' if str(sid).split('|')[1] == 'trend' else 'chop'
 
 
+def _seal(df):
+    """AUDIT 10: nothing past SEAL_END reaches a routing decision unless FX_ALLOW_W4=1 (logged by l2sweep)."""
+    if os.environ.get('FX_ALLOW_W4') == '1':
+        return df
+    return df[df.index <= pd.Timestamp(S.SEAL_END)]
+
+
 def load_states(path):
+    S.layer1_header_check(path)   # AUDIT 14: the 5pm header, or halt
     d = pd.read_csv(path, parse_dates=['date'], usecols=['date', 'pair', 'shape2', 'activity'], comment='#')
+    d = d[d.date <= pd.Timestamp(S.SEAL_END)] if os.environ.get('FX_ALLOW_W4') != '1' else d
     shape = d.pivot(index='date', columns='pair', values='shape2')
     act = d.pivot(index='date', columns='pair', values='activity')
     return shape, act
@@ -58,7 +68,7 @@ def load_states(path):
 
 def crisis_flags(px_path, split='2016-01-01'):
     """date x currency bool, lagged one bar. crisis.py's legdiv20, IS threshold."""
-    px = pd.read_csv(px_path, index_col=0, parse_dates=True)
+    px = _seal(pd.read_csv(px_path, index_col=0, parse_dates=True))
     r = np.log(px.astype(float)).diff()
     ci = {}
     for c in CCY:
@@ -179,6 +189,7 @@ def _init_shuf():
 
 def _shuf_one(args):
     """One shuffled label set, routed ONCE, walked under both budgets."""
+    os.environ['WF_NULL'] = '1'
     seed, tir, activity, chop_always, trend_gate = args
     try:
         rng = np.random.default_rng(seed)

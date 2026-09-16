@@ -58,6 +58,17 @@ SRC = {'A-trend': ('gate2_tuned_modeA_trend.csv', 'A', 'trend'),
        'A-chop':  ('gate2_tuned_modeA_chop.csv',  'A', 'chop'),
        'B-trend': ('gate2_tuned_modeB.csv',       'B', 'trend'),
        'B-chop':  ('gate2_tuned_modeB.csv',       'B', 'chop')}
+# AUDIT 3 (16 Sep): the settings that score a window were tuned on years that
+# end before it. W2 is scored with ip1 (tuned on W1, ends 2010); W3 with ip2
+# (tuned on W1+W2, ends 2015). Asserted here, at import, so no walk can run
+# on a stitch that breaks it.
+SETTINGS_TUNE_END = {'W2': 2010, 'W3': 2015}
+SETTINGS_SCORE_START = {'W2': 2011, 'W3': 2016}
+for _w in SETTINGS_TUNE_END:
+    assert SETTINGS_TUNE_END[_w] < SETTINGS_SCORE_START[_w], 'settings for %s were tuned on years reaching %d, scoring starts %d' % (_w, SETTINGS_TUNE_END[_w], SETTINGS_SCORE_START[_w])
+for _st in STEPS:
+    assert _st['build'][1] < _st['trade'][0], 'STEPS: build block must end before the trade block'
+
 
 # EVERY OUTPUT IS SUFFIXABLE so a clean-field run cannot overwrite the
 # contaminated one. TAG is read from the ENVIRONMENT, not set as a module
@@ -267,7 +278,10 @@ def engine_one(row):
         for p in S.all_pairs():
             try:
                 r = TR.run_pair(cfg, p)
-            except Exception:
+            except Exception as e:
+                # AUDIT 25: never silenced. A pair that fails is named, once per
+                # strategy, and counted in the engine's log.
+                print('  engine: %s on %s FAILED %s: %s' % (sid[:60], p, type(e).__name__, str(e)[:80]), flush=True)
                 continue
             d, tr, cl = r['dates'], r['trades'], r['c']
             if len(tr['r']) == 0:
@@ -306,6 +320,14 @@ def engine_one(row):
     if len(Mf):
         Mf['dir'] = Mf['dir'].astype(np.int8); Mf['mark'] = Mf['mark'].astype(np.float32)
         Mf['tid'] = Mf['tid'].astype(np.int32); Mf['day'] = pd.to_datetime(Mf.day)
+        # AUDIT 18: marks and trade R are in the same account-normalised unit --
+        # the marks of a trade sum to its R (float32 tolerance), or the engine halts.
+        ms = Mf.groupby('tid').mark.sum().astype(np.float64)
+        rr = Tf.set_index('tid').R.astype(np.float64)
+        gap = float((ms.reindex(rr.index) - rr).abs().max()) if len(rr) else 0.0
+        if gap > 1e-3 * max(1.0, float(rr.abs().max())):
+            raise RuntimeError('UNIT MISMATCH %s: marks sum differs from trade R by %.4g' % (sid[:60], gap))
+        check_mark_convention(Mf, sid[:40])
     return Tf, Mf
 
 
@@ -1028,10 +1050,18 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
     structures = structures or list(DEFAULT_STRUCTURES)
     inv = {v: k for k, v in ymap.items()}
     out = {s: dict(daily=[], days=[], members=[], curves=[], cuts=[]) for s in structures}
+    decisions = []
     for si, st in enumerate(STEPS):
         b0, b1 = st['build']; t0, t1 = st['trade']
+        # AUDIT 7 (16 Sep): every decision at this step reads the build block
+        # only, and the build block ends before the trade block starts. A
+        # violation halts the walk, it is not a warning.
+        if not b1 < t0:
+            raise RuntimeError('step %d: build %d-%d does not end before trade %d-%d' % (si + 1, b0, b1, t0, t1))
         bsrc = [inv[y] for y in range(b0, b1 + 1)]
         tsrc = [inv[y] for y in range(t0, t1 + 1)]
+        if set(bsrc) & set(tsrc):
+            raise RuntimeError('step %d: a played year is in both build and trade' % (si + 1))
         P, fails = cut(T, TY, bsrc, perm=perm, apply_bars=not nocut)
         if not len(P):
             raise RuntimeError('step %d: nothing passed the cut' % (si + 1))
@@ -1078,6 +1108,13 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
             out[s]['days'].append(B.udays[ytrade])
             out[s]['members'].append(len(mem))
             out[s]['curves'].append(C)
+            # AUDIT 8: the decisions log -- what was decided, on which window
+            decisions.append(dict(structure=s, step=si + 1, build='%d-%d' % (b0, b1), trade='%d-%d' % (t0, t1),
+                                  cut_applied=not nocut, passers=len(P), members=len(mem), curve_bins=(len(C) if C is not None else 0),
+                                  size_scale=float(sc), scale_binds=bbind, cap_pct=CAP_PCT, cap_bound_days=int(binds),
+                                  net_min_votes=NET_MIN_VOTES, curve_mode=CURVE_MODE, opposition=OPPOSITION,
+                                  vote_on_entry_day=VOTE_ON_ENTRY_DAY, dip_budget=dipb, day_budget=dayb,
+                                  build_median_year_pct=float(np.median([(d1[ybuild] * sc)[pd.DatetimeIndex(B.udays[ybuild]).year == y].sum() for y in sorted(set(pd.DatetimeIndex(B.udays[ybuild]).year))]) * 100) if ybuild.any() else np.nan))
             out[s]['cuts'].append(dict(step=si + 1, passers=len(P), members=len(mem),
                                        build_daily=d1[ybuild] * sc, build_days=B.udays[ybuild],
                                        ccy_daily=pd.DataFrame(_cc, index=B.udays, columns=B.ccy),
@@ -1095,8 +1132,19 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
         _MONTHS = dy
         k = kpis(x, pd.DatetimeIndex(dy).year.values)
         k.update(structure=s, members_step1=out[s]['members'][0],
-                 members_step2=out[s]['members'][1])
+                 members_step2=out[s]['members'][-1])
+        # AUDIT 9: retention = trade-block result / build-block result, on the
+        # same statistic (median year, at the trade block's own size scale).
+        # Under 20% is a fit whatever the raw number, and the flag says so.
+        bm = [d['build_median_year_pct'] for d in decisions if d['structure'] == s]
+        bmed = float(np.nanmedian(bm)) if bm else np.nan
+        k['build_median_year_pct'] = bmed
+        k['retention'] = float(k['median_year_pct'] / bmed) if bmed and bmed > 0 else np.nan
+        k['retention_flag'] = ('FIT' if (np.isfinite(k['retention']) and k['retention'] < 0.2) else
+                               ('NEGATIVE_BUILD' if not (bmed > 0) else 'ok'))
         res[s] = (k, out[s]['cuts'], x, dy)
+    if decisions and all(k == v for k, v in ymap.items()) and perm is None and not os.environ.get('WF_NULL'):
+        pd.DataFrame(decisions).to_csv(OUT('decisions.csv'), index=False)   # the real walk only; null draws set WF_NULL
     return res
 
 
@@ -1174,6 +1222,7 @@ def _init_null():
 
 
 def _null_one(args):
+    os.environ['WF_NULL'] = '1'
     ymap, dipb, dayb, structures = args
     try:
         r = walk(_NG['T'], _NG['TY'], _NG['M'], ymap, dipb, dayb, structures)
@@ -1690,6 +1739,7 @@ def stage_sizing(jobs, nocut=False):
 # score on rich-years-traded and reading it at zero gives a null of 2.31%
 # against the real 2.27% -- p 0.52, not the 0.80 the raw comparison reports.
 def _ident_one(args):
+    os.environ['WF_NULL'] = '1'
     seed, dipb, dayb, structures = args
     ident = {y: y for y in YEARS}
     try:
@@ -1933,7 +1983,25 @@ def random_entry_marks(K, BR, tsrc, rng, allowed=None):
             rows.append((r.sid, p, di[s0], d, np.float32(-f * abs(ent) * k / r.atr_mult), tid))
             for q in range(n):
                 rows.append((r.sid, p, di[s0 + 1 + q], d, np.float32(mk[q]), tid))
-    return pd.DataFrame(rows, columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid'])
+    out = pd.DataFrame(rows, columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid'])
+    check_mark_convention(out, 'random-entry null')
+    return out
+
+
+def check_mark_convention(M, what):
+    """AUDIT 5 (16 Sep): every marks table -- real or null -- has one tid per
+    trade, a fill-day first row whose mark is the cost only (<= 0), and one
+    direction per trade. Halts otherwise."""
+    if not len(M):
+        return
+    g = M.groupby(['sid', 'tid'], observed=True)
+    first_mark = g.mark.first() if M.index.is_monotonic_increasing else None
+    d = M.sort_values(['sid', 'tid', 'day'], kind='stable')
+    g = d.groupby(['sid', 'tid'], observed=True)
+    fm = g.mark.first(); nd = g['dir'].nunique()
+    bad_cost = int((fm > 1e-6).sum()); bad_dir = int((nd != 1).sum())
+    if bad_cost or bad_dir:
+        raise RuntimeError('MARK CONVENTION (%s): %d trades whose fill-day mark is not a cost, %d trades with two directions' % (what, bad_cost, bad_dir))
 
 
 _RG = {}
@@ -2009,6 +2077,7 @@ RAND_BOOKS = {False: {'ALLPASS': 'ALLPASS'},
 
 def _rand_one(args):
     seed, dipb, dayb, nocut = (args + (False,))[:4]
+    os.environ['WF_NULL'] = '1'
     names = RAND_BOOKS[nocut]
     try:
         rng = np.random.default_rng(seed)

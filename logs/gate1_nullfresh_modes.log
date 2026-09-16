@@ -1,0 +1,123 @@
+
+=== FRESH NULL, mode A ===
+null: 32 surrogates x 1200 combos, 8 workers, floors {'trend': 0.0972206958204911, 'chop': 0.1099192404755819}
+  surrogate  1/32 done
+  surrogate  2/32 done
+  surrogate  3/32 done
+  surrogate  4/32 done
+  surrogate  5/32 done
+  surrogate  6/32 done
+  surrogate  7/32 done
+  surrogate  8/32 done
+  surrogate  9/32 done
+  surrogate 10/32 done
+  surrogate 11/32 done
+  surrogate 12/32 done
+  surrogate 13/32 done
+  surrogate 14/32 done
+  surrogate 15/32 done
+  surrogate 16/32 done
+  surrogate 17/32 done
+  surrogate 18/32 done
+  surrogate 19/32 done
+  surrogate 20/32 done
+  surrogate 21/32 done
+  surrogate 22/32 done
+  surrogate 23/32 done
+  surrogate 24/32 done
+  surrogate 25/32 done
+  surrogate 26/32 done
+  surrogate 27/32 done
+  surrogate 28/32 done
+  surrogate 29/32 done
+  surrogate 30/32 done
+  surrogate 31/32 done
+  surrogate 32/32 done
+mode slice  n_controls  floor_expectancy_R  null_exp_only_pct  null_pf_only_pct  null_joint_pct   se_pct  ci95_lo_pct  ci95_hi_pct
+   A trend       31828            0.097221           5.592560         33.426543        5.592560 0.128796     5.340119     5.845001
+   A  chop       25534            0.109919           6.998512         50.838098        6.998512 0.159657     6.685584     7.311440
+
+=== FRESH NULL, mode B ===
+null: 32 surrogates x 1200 combos, 8 workers, floors {'trend': 0.0897542708738921, 'chop': 0.092979270256209}
+  surrogate  1/32 done
+  surrogate  2/32 done
+  surrogate  3/32 done
+  surrogate  4/32 done
+  surrogate  5/32 done
+  surrogate  6/32 done
+  surrogate  7/32 done
+  surrogate  8/32 done
+  surrogate  9/32 done
+  surrogate 10/32 done
+  surrogate 11/32 done
+  surrogate 12/32 done
+  surrogate 13/32 done
+  surrogate 14/32 done
+  surrogate 15/32 done
+  surrogate 16/32 done
+  surrogate 17/32 done
+  surrogate 18/32 done
+  surrogate 19/32 done
+  surrogate 20/32 done
+  surrogate 21/32 done
+  surrogate 22/32 done
+  surrogate 23/32 done
+  surrogate 24/32 done
+  surrogate 25/32 done
+  surrogate 26/32 done
+  surrogate 27/32 done
+  surrogate 28/32 done
+  surrogate 29/32 done
+  surrogate 30/32 done
+  surrogate 31/32 done
+  surrogate 32/32 done
+mode slice  n_controls  floor_expectancy_R  null_exp_only_pct  null_pf_only_pct  null_joint_pct  se_pct  ci95_lo_pct  ci95_hi_pct
+   B trend       31159            0.089754           5.577843         32.732116        5.577843 0.13001     5.323022     5.832663
+   B  chop       25602            0.092979           7.018983         52.628701        7.018983 0.15966     6.706048     7.331917
+
+=== FRESH NULL, mode C ===
+null: 32 surrogates x 1200 combos, 8 workers, floors {'trend': 0.0968595076648677, 'chop': 0.1182288098064842}
+  surrogate  1/32 done
+  surrogate  2/32 done
+  surrogate  3/32 done
+  surrogate  4/32 done
+  surrogate  5/32 done
+  surrogate  6/32 done
+  surrogate  7/32 done
+  surrogate  8/32 done
+  surrogate  9/32 done
+  surrogate 10/32 done
+  surrogate 11/32 done
+  surrogate 12/32 done
+  surrogate 13/32 done
+  surrogate 14/32 done
+  surrogate 15/32 done
+  surrogate 16/32 done
+  surrogate 17/32 done
+  surrogate 18/32 done
+  surrogate 19/32 done
+  surrogate 20/32 done
+  surrogate 21/32 done
+  surrogate 22/32 done
+  surrogate 23/32 done
+  surrogate 24/32 done
+  surrogate 25/32 done
+  surrogate 26/32 done
+  surrogate 27/32 done
+  surrogate 28/32 done
+  surrogate 29/32 done
+  surrogate 30/32 done
+  surrogate 31/32 done
+  surrogate 32/32 done
+mode slice  n_controls  floor_expectancy_R  null_exp_only_pct  null_pf_only_pct  null_joint_pct   se_pct  ci95_lo_pct  ci95_hi_pct
+   C trend       31619            0.096860           6.322148          32.87264        6.322148 0.136860     6.053902     6.590394
+   C  chop       25613            0.118229           6.157030          52.48897        6.157030 0.150195     5.862647     6.451412
+
+TRUE NULL PASS RATES, fresh controls vs each mode's frozen floor
+mode slice  n_controls  floor_expectancy_R  null_exp_only_pct  null_pf_only_pct  null_joint_pct   se_pct  ci95_lo_pct  ci95_hi_pct
+   A trend       31828            0.097221           5.592560         33.426543        5.592560 0.128796     5.340119     5.845001
+   A  chop       25534            0.109919           6.998512         50.838098        6.998512 0.159657     6.685584     7.311440
+   B trend       31159            0.089754           5.577843         32.732116        5.577843 0.130010     5.323022     5.832663
+   B  chop       25602            0.092979           7.018983         52.628701        7.018983 0.159660     6.706048     7.331917
+   C trend       31619            0.096860           6.322148         32.872640        6.322148 0.136860     6.053902     6.590394
+   C  chop       25613            0.118229           6.157030         52.488970        6.157030 0.150195     5.862647     6.451412

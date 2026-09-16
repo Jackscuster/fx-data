@@ -2,7 +2,7 @@
 # QUEUE: fine-tune -> costed cut -> TEAM BUILD -> then C relaunch.
 # Mode C stays paused until the team build finishes.
 cd "$(dirname "$0")/.."
-LOG=results/teamchain.log
+LOG=logs/teamchain.log
 say(){ echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
 say "armed: waiting for the gate 3 fine-tune to finish"
 while pgrep -f "l2gate3ft.py --shard" >/dev/null; do sleep 300; done
@@ -26,10 +26,10 @@ Claude-Session: https://claude.ai/code/session_0198PoFd8YbETkDPepLUiDzL" || true
 git pull --rebase -q origin main || true; git push -q origin main || true  # NOSILENCE-OK: historical one-shot script, already run; kept as record
 say "RELAUNCHING MODE C"
 nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 6 \
-      --sorted --cap 6 --seed-from A,B >> results/gate2_run_C.log 2>&1 &
+      --sorted --cap 6 --seed-from A,B >> logs/gate2_run_C.log 2>&1 &
 sleep 25; MAIN=$(pgrep -f "l2tune.py --mode C --jobs 6" | head -1)
 nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 3 \
-      --sorted --cap 6 --seed-from A,B --reverse >> results/gate2_run_C_rev.log 2>&1 &
+      --sorted --cap 6 --seed-from A,B --reverse >> logs/gate2_run_C_rev.log 2>&1 &
 sleep 25; ADD=$(pgrep -f "l2tune.py --mode C --jobs 3" | head -1)
 nohup code/l2swapguard.sh "$MAIN" "$ADD" 400 200 >/dev/null 2>&1 &
 say "C relaunched main=$MAIN add=$ADD; swap guard armed"

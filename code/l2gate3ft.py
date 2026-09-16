@@ -169,7 +169,7 @@ def rescore_incumbent(sc, cfg, combo, mode, sname, code, plan):
     g = a.get('W3')
     if not g:
         return None
-    return {k: v for k, v in g.items() if k != '_r'}
+    return {k: v for k, v in g.items() if k not in ('_r', '_dates')}
 
 
 def adopt(new, old):
@@ -306,7 +306,7 @@ def main():
             # clean, both the same window. Comparing a two-window candidate
             # against a one-window incumbent would be wrong the other way.
             cw3 = res.get('w3')
-            cw3 = ({k: v for k, v in cw3.items() if k != '_r'} if cw3 else None)
+            cw3 = ({k: v for k, v in cw3.items() if k not in ('_r', '_dates')} if cw3 else None)
             rec['adopted'] = bool(adopt(cw3, base))
             rec['compare_basis'] = 'W3ONLY'
             for k in ('total_R', 'max_dd_R', 'sortino', 'sharpe', 'n'):
