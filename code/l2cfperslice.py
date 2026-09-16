@@ -58,6 +58,7 @@ def main():
         if n < 2:
             raise SystemExit('%s: %d strategies -- refusing to walk' % (sl, n))
         TYs = W.trade_year_sums(Ms)
+        os.environ['WF_DECISIONS_TAG'] = '_perslice_' + sl   # its own decisions log, never the book's
         for bt, dipb, dayb in W.BUDGETS:
             t0 = time.time()
             R = W.walk(Ts, TYs, Ms, ident, dipb, dayb, structures, nocut=a.nocut)
