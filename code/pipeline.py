@@ -11,7 +11,11 @@ for m in ('sc2.py','sc2.py','sc2.py','sc2.py','sc2.py'):   # resumable, idempote
     run(m)
 run('sc3.py'); run('sc3.py')
 for _ in range(6): run('sc4.py')
+# AUDIT 23 (16 Sep): a COLD build has no signals.json, and sc5/sc6/sc7 read it to
+# skip names an earlier batch scored. Pool what exists before each of them.
+run('prep.py')
 for _ in range(8): run('sc5.py')
+run('prep.py')
 # sc6 is the v6 duration batch: ~107k signals/pair, ~4 min/pair, resumable per
 # block. It is NOT run here -- a full pass is ~2 h and Actions times out at 180
 # min with the rest of the pipeline still to go. Score it locally and commit
@@ -62,6 +66,12 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('chopmore.py')       # chop redundancy, and what the 'both' cell is
     run('final.py')          # final settings on IS, full report on the holdout
     run('paircharacter.py')  # per-pair CHARACTER, and whether it is stable
+    # AUDIT 23 (16 Sep): export.py BEFORE persist.py. persist.py copies
+    # layer1_states.csv into states_g4_twoscore4.csv, which the four checks
+    # assert against; with export.py later in the order they compared the new
+    # classifier to the PREVIOUS run's states (FIXES 13 Sep: 0.7215 on the 5pm
+    # rebuild). export.py's inputs (ninestate.py, final.py) are all above.
+    run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
     run('persist.py')        # every generation to its own named file + manifest
     run('regenerate.py')     # rebuild every superseded classifier, check vs archive
     run('persist2.py')       # daily series wide, character by block, filename fix
@@ -92,7 +102,7 @@ if os.path.exists(os.path.join(R, 'results', 'entry_events.csv')):
     run('axes2.py')          # scale ablation, shape x activity, settling overlap
     run('leadtime.py')       # can a fast signal bridge the confirmation delay
     run('masweep.py')        # ...and the same three, both windows swept 1-200
-    run('export.py')         # THE LAYER 1 INTERFACE -- results/layer1_states.csv
+    # export.py now runs before persist.py (see above); appfeed still needs it first.
     # appfeed READS layer1_states.csv, so it must run AFTER export.py writes it.
     # It used to sit nine lines earlier and therefore published the PREVIOUS
     # run's states every time -- which is why the board read 2026-08-21 while

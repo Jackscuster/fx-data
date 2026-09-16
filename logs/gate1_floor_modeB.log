@@ -1,0 +1,24 @@
+
+=== LUCK FLOOR, mode B (baseline-cross exit) ===
+  surrogate  1/12: eligible {'trend': 334, 'chop': 267}
+  surrogate  2/12: eligible {'trend': 334, 'chop': 268}
+  surrogate  3/12: eligible {'trend': 333, 'chop': 269}
+  surrogate  4/12: eligible {'trend': 329, 'chop': 266}
+  surrogate  5/12: eligible {'trend': 330, 'chop': 268}
+  surrogate  6/12: eligible {'trend': 331, 'chop': 266}
+  surrogate  7/12: eligible {'trend': 326, 'chop': 264}
+  surrogate  8/12: eligible {'trend': 333, 'chop': 267}
+  surrogate  9/12: eligible {'trend': 331, 'chop': 267}
+  surrogate 10/12: eligible {'trend': 332, 'chop': 270}
+  surrogate 11/12: eligible {'trend': 331, 'chop': 266}
+  surrogate 12/12: eligible {'trend': 333, 'chop': 270}
+mode slice    n      mean       p50      p95      p99      max
+   B trend 3977 -0.001056 -0.009834 0.089754 0.194956 0.501342
+   B  chop 3208  0.020739  0.021249 0.092979 0.132688 0.225673
+  expectancy bar, mode B trend = 0.089754 R
+  expectancy bar, mode B chop  = 0.092979 R
+
+ALL SIX FLOORS
+mode slice    n      p95
+   B trend 3977 0.089754
+   B  chop 3208 0.092979

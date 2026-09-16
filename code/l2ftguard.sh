@@ -2,7 +2,7 @@
 # SWAP GUARD for the gate 3 fine-tune shards.
 #
 # The earlier guard only ever protected mode C's pools and exited when they did
-# (results/swapguard.log, 2026-09-06 22:43), leaving the nine shards unguarded.
+# (logs/swapguard.log, 2026-09-06 22:43), leaving the nine shards unguarded.
 # This one watches the shards themselves.
 #
 # HYSTERESIS, deliberately wide. Stop a shard below LOW, and do not bring one
@@ -14,7 +14,7 @@
 # finished work is on disk and its in-flight strategy is the only loss; the
 # restart re-reads the bank and skips everything already done.
 LOW=${1:-400}; HIGH=${2:-700}
-LOG=/Users/jackcuster/Documents/fx-data/results/ftguard.log
+LOG=/Users/jackcuster/Documents/fx-data/logs/ftguard.log
 cd /Users/jackcuster/Documents/fx-data
 # SINGLE INSTANCE via a pidfile. macOS ships no flock, and counting siblings by
 # name was worse than useless: pgrep -f also matches the nohup/setsid wrapper
@@ -50,7 +50,7 @@ while true; do
     say "swap free ${free}M > ${HIGH}M -- restarting shard $sh (resumes from bank)"
     FT_COSTED=1 FT_BANK=gate3ft_costed_v4 nohup nice -n 19 /usr/bin/python3 \
       code/l2gate3ft.py --shard "$sh" --shards 9 --no-pace-check \
-      >> results/gate3ftv4_s$sh.log 2>&1 &
+      >> logs/gate3ftv4_s$sh.log 2>&1 &
   fi
   sleep 60
 done

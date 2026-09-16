@@ -1,0 +1,11 @@
+sid,pair,entry,exit,days,dir,legs,atr_len,atr_mult,entry_px,atr_entry,cost_R,fill_mark,R_engine,R_from_marks,first_vote,fill_plus_1,checks,mismatches,status
+A-chop|chop|ehlers_reverse_ema_signals|supertrend_signals|da,EURUSD,2020-05-04,2020-05-06,3,1,1,6,1.05,1.09054,0.008802,0.0172,-0.0163,-1.0663,-1.0663,2020-05-05,2020-05-05,4,0,ok
+B|trend|bears_bulls_impulse_signals|fisher_transform_signals,GBPAUD,2020-11-05,2020-11-10,4,-1,2,3,1.0,1.8053,0.018504,0.011,-0.011,-0.511,-0.511,2020-11-06,2020-11-06,5,0,ok
+B|chop|dpo_signals|dpo_signals|waddah_attar_explosion_volume,NZDJPY,2016-01-04,2016-01-07,4,-1,1,11,1.0,80.638,0.923996,0.0469,-0.0469,2.9531,2.9531,2016-01-05,2016-01-05,5,0,ok
+A-chop|chop|coppock_curve_signals|fx_sniper_ergodic_cci_sign,CADCHF,2016-02-26,2016-04-05,28,1,1,40,1.0,0.73764,0.010422,0.0387,-0.0387,-1.0387,-1.0387,2016-02-29,2016-02-29,29,0,ok
+B|trend|fisher_transform_signals|j_tpo_signals|variance_volu,NZDCAD,2019-01-16,2019-01-22,5,-1,2,3,1.0,0.89823,0.006912,0.0328,-0.0328,-0.3026,-0.3026,2019-01-17,2019-01-17,6,0,ok
+A-trend|trend|kuskus_starlight_signals|price_momentum_oscill,EURCHF,2019-09-26,2019-10-01,4,-1,2,18,1.0,1.08536,0.005521,0.0359,-0.0359,-0.5359,-0.5359,2019-09-27,2019-09-27,5,0,ok
+A-chop|chop|chandelier_exit_signals|fx_sniper_ergodic_cci_si,EURCHF,2016-09-29,2016-09-30,2,-1,1,36,1.0,1.08448,0.00473,0.0838,-0.0838,-1.0838,-1.0838,2016-09-30,2016-09-30,3,0,ok
+A-trend|trend|kalman_filter_signals|price_momentum_oscillato,AUDJPY,2017-02-20,2017-02-24,5,1,2,3,1.0,86.961,0.827032,0.011,-0.011,-0.511,-0.511,2017-02-21,2017-02-21,6,0,ok
+B|chop|supertrend_signals|parabolic_sar_signals|volatility_r,USDCHF,2019-05-22,2019-05-23,2,-1,1,34,1.0,1.00968,0.004731,0.0464,-0.0464,1.4536,1.4536,2019-05-23,2019-05-23,3,0,ok
+A-chop|chop|chandelier_exit_signals|fx_sniper_ergodic_cci_si,CHFJPY,2019-10-15,2019-10-21,5,1,1,37,1.0,108.992,0.629141,0.0653,-0.0653,1.8347,1.8347,2019-10-16,2019-10-16,6,0,ok

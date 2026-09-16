@@ -1,0 +1,19 @@
+  surrogate  1/12: eligible {'trend': 342, 'chop': 273}
+  surrogate  2/12: eligible {'trend': 343, 'chop': 276}
+  surrogate  3/12: eligible {'trend': 345, 'chop': 278}
+  surrogate  4/12: eligible {'trend': 338, 'chop': 276}
+  surrogate  5/12: eligible {'trend': 339, 'chop': 275}
+  surrogate  6/12: eligible {'trend': 342, 'chop': 274}
+  surrogate  7/12: eligible {'trend': 337, 'chop': 274}
+  surrogate  8/12: eligible {'trend': 343, 'chop': 277}
+  surrogate  9/12: eligible {'trend': 342, 'chop': 276}
+  surrogate 10/12: eligible {'trend': 340, 'chop': 279}
+  surrogate 11/12: eligible {'trend': 343, 'chop': 275}
+  surrogate 12/12: eligible {'trend': 343, 'chop': 278}
+
+controls reproduced: p95 identical for every slice
+
+NULL PASS RATES, per slice (what pure noise achieves)
+slice  n_controls  floor_expectancy_R  pf_floor  null_exp_only_pct  null_pf_only_pct  null_joint_pct
+trend        4097            0.078975      1.05           5.003661         29.509397        5.003661
+ chop        3311            0.094892      1.05           5.013591         51.555421        5.013591

@@ -37,7 +37,7 @@ def build_marks(frac, period):
     pairs = [p for p in car.columns]
     px = {}
     for p in pairs:
-        d = pd.read_csv(os.path.join(ROOTDATA, 'oanda_ohlc', '%s_mid.csv' % p), parse_dates=['date']).set_index('date')
+        d = W.S.load_pair(p)   # the sealed loader (AUDIT 10), not a raw read
         d['atr'] = L.P.atr(d.high.values, d.low.values, d.close.values, ATR_LEN)
         px[p] = d
     idx = px[pairs[0]].index

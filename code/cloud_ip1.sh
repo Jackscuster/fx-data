@@ -41,7 +41,7 @@ echo "== recovering B-trend ip1 across $JOBS shards"
 mkdir -p results
 for i in $(seq 0 $((JOBS-1))); do
   nohup python3 code/l2recoverip1.py --which all --shard "$i" --shards "$JOBS" \
-        > "results/ip1_cloud_$i.log" 2>&1 &
+        > "logs/ip1_cloud_$i.log" 2>&1 &
 done
 wait
 echo "== merging shard banks"
@@ -68,7 +68,7 @@ echo "== pushing the bank back"
 # Failing out under `set -e` would leave the bank on a box about to be destroyed.
 git config user.name  "fx-cloud"
 git config user.email "fx-cloud@users.noreply.github.com"
-git add -f results/gate2_ip1_recovered.csv results/gate2_ip1_recovered_s*.csv results/ip1_cloud_*.log
+git add -f results/gate2_ip1_recovered.csv results/gate2_ip1_recovered_s*.csv logs/ip1_cloud_*.log
 # "nothing to commit" is a legitimate outcome; ANY OTHER failure is not,
 # so the two are distinguished instead of collapsed into || true
 if git diff --cached --quiet; then

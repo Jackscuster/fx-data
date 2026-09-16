@@ -86,13 +86,13 @@ if ! bash code/l2cfchain.sh --resume --jobs "$JOBS" $LIMIT; then
   echo "!! Partial outputs are still pushed below so nothing finished is lost."
 fi
 echo "== chain wall time: $(( ($(date +%s) - t0) / 60 )) min"
-cp -f "$CF_LOGDIR"/cfchain_cleanfield*.log results/ 2>/dev/null || true  # NOSILENCE-OK: the log is a courtesy copy; its absence is reported by the push list, not hidden
+cp -f "$CF_LOGDIR"/cfchain_cleanfield*.log logs/ 2>/dev/null || true  # NOSILENCE-OK: the log is a courtesy copy; its absence is reported by the push list, not hidden
 
 # ---- push results to walk-<date>, then merge into main
 git config user.name  "fx-cloud"
 git config user.email "fx-cloud@users.noreply.github.com"
 git checkout -b "$BRANCH"
-git add -f results/*_cleanfield*.csv results/cfchain_cleanfield*.log results/CHAIN_HALT.marker 2>/dev/null || true  # NOSILENCE-OK: the marker exists only on a halt; a missing courtesy log is not a failure
+git add -f results/*_cleanfield*.csv logs/cfchain_cleanfield*.log results/CHAIN_HALT.marker 2>/dev/null || true  # NOSILENCE-OK: the marker exists only on a halt; a missing courtesy log is not a failure
 if git diff --cached --quiet; then
   echo "== nothing new to commit"
 else

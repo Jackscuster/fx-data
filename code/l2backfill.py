@@ -50,7 +50,7 @@ def score(sc, cfg, ip, rk, mode, sname, code, plan):
     parts = [a[w] for w in ('W2', 'W3') if a.get(w)]
     if not parts:
         return None
-    g = T._agg(np.concatenate([p['_r'] for p in parts]))
+    g = T._agg(np.concatenate([p['_r'] for p in parts]), dates=(np.concatenate([p['_dates'] for p in parts]) if all(p.get('_dates') is not None for p in parts) else None))
     hn = [(p.get('avg_hold_bars'), p['n']) for p in parts
           if p.get('avg_hold_bars') == p.get('avg_hold_bars')]
     if hn:

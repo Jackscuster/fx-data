@@ -16,7 +16,7 @@
 # CI and diagnostics, which is where the inversion test and the dashboard work
 # go: on spare capacity, never at C's expense.
 cd "$(dirname "$0")/.."
-LOG=results/launchC.log
+LOG=logs/launchC.log
 say(){ echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
 
 say "armed; waiting for mode A chop to complete"
@@ -50,14 +50,14 @@ say "recording mode A and projecting mode C"
 
 say "launching mode C main pool (6 workers)"
 nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 6 \
-      --sorted --cap 6 --staged --seed-from A,B > results/gate2_run_C.log 2>&1 &
+      --sorted --cap 6 --staged --seed-from A,B > logs/gate2_run_C.log 2>&1 &
 sleep 20
 MAIN=$(pgrep -f "l2tune.py --mode C --jobs 6" | head -1)
 say "main pool pid $MAIN"
 
 say "launching mode C additive --reverse pool (3 workers)"
 nohup caffeinate -i -m -s /usr/bin/python3 code/l2tune.py --mode C --jobs 3 \
-      --sorted --cap 6 --staged --seed-from A,B --reverse > results/gate2_run_C_rev.log 2>&1 &
+      --sorted --cap 6 --staged --seed-from A,B --reverse > logs/gate2_run_C_rev.log 2>&1 &
 sleep 20
 ADD=$(pgrep -f "l2tune.py --mode C --jobs 3" | head -1)
 say "reverse pool pid $ADD"

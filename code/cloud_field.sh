@@ -88,7 +88,7 @@ echo "== [1/2] B-trend ip1 recovery, box $BOX of $OF"
 for i in $(seq 0 $((JOBS-1))); do
   nohup python3 code/l2recoverip1.py --which all --all-candidates \
         --box "$BOX" --of "$OF" --shard "$i" --shards "$JOBS" \
-        > "results/field_ip1_b${BOX}_s${i}.log" 2>&1 &
+        > "logs/field_ip1_b${BOX}_s${i}.log" 2>&1 &
 done
 wait
 
@@ -100,7 +100,7 @@ python3 code/l2cleanfield.py --slices A-trend,A-chop,B-chop,B-trend \
 echo "== pushing shard $BOX"
 git config user.name  "fx-cloud"
 git config user.email "fx-cloud@users.noreply.github.com"
-git add -f results/gate2_ip1_recovered_box*.csv results/gate2_w2only_scores_box*.csv results/field_ip1_b*.log
+git add -f results/gate2_ip1_recovered_box*.csv results/gate2_w2only_scores_box*.csv logs/field_ip1_b*.log
 # "nothing to commit" is a legitimate outcome; ANY OTHER failure is not,
 # so the two are distinguished instead of collapsed into || true
 if git diff --cached --quiet; then
