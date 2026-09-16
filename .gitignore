@@ -93,3 +93,4 @@ results/wf_*_dirnull.pkl
 
 # H.10 score batches archived at the 14 Sep swap; regenerable
 results/scores_h10_archive/
+code/__pycache__/
