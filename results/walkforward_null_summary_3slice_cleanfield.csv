@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 # SUPERSEDED -- YEAR-SHUFFLED NULL, CONFOUNDED. It permutes which years get TRADED, and 2011-2015 is far richer than 2016-2020: the null score rises monotonically with the number of rich years drawn
 # (3.36/5.29/6.84/7.66 at 1/2/3/4, correlation 0.377) and none of the 25 draws traded the real walk's composition of zero. Adjusted p is 0.52, not 0.80.
 # THE VALID NULLS ARE THE IDENTITY NULL AND THE RANDOM-ENTRY NULL -- see walkforward_null_identity_* and walkforward_null_randomentry_*. Do not quote a p-value from this file.

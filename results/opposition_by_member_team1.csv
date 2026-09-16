@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 team,member,period,opposed_episodes,accuracy_pct,r_per_unit_opposed,r_per_unit_overall
 team1,A-chop|chop|bears_bulls_impulse_signals|didi_index_signals|variance_volume_signals|ema_baseline::OFFICIAL,ALL,22,27.3,-0.07176454575438382,0.0653353529128754
 team1,A-chop|chop|bears_bulls_impulse_signals|didi_index_signals|variance_volume_signals|ema_baseline::OFFICIAL,IS,13,30.8,-0.06548277812808895,0.0653353529128754

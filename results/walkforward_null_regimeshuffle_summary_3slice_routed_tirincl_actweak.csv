@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 budget,structure,real_median_year,n,null_mean,null_p95,null_max,pctile_of_real,p_value,p_resolution
 team1,NO_CUT,3.349715711099295,25,2.894559776252626,3.4472902852271474,3.587789770058972,84.0,0.16,0.04
 team2,NO_CUT,5.024573566648943,25,4.341839664378939,5.17093542784072,5.381684655088459,84.0,0.16,0.04

@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 sid,pnl,dd,rows,sortino,expectancy_R,profit_factor,calmar,gate3_composite,slice
 A-chop|chop|adx_dmi_signals|chandelier_exit_signals|chaikin_volatility_volume_signals|alma_baseline,0.040280536,-0.00026897626,2010.0,11.641371262542073,0.16794373039792923,1.2919576168060303,2.5221596,3.9717803278688524,A-chop
 A-chop|chop|adx_dmi_signals|chandelier_exit_signals|efficiency_ratio_volume_signals|vidya,0.00846863,-0.0005986122,812.0,19.999885450751396,0.2635612256939287,1.4121970534324646,2.341967,3.614139344262295,A-chop

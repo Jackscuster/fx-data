@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 # FIELD CONTAMINATED -- gate 2 selected the 3,485 with sight of 2016-2020; structure comparisons valid, levels not.
 # l2tune.crosses_label() applies its bars to the STITCHED W2+W3 blind book and requires n_w3 >= MIN_TRADES_BLIND, so membership of this field depends on
 # performance in the very years this walk-forward trades. Every structure and every null draw is drawn from the same field, so relative

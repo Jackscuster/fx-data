@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 pair,times_backing,eff_both,rank_is,rank_oos,backing_rate
 NZDJPY,59,0.22734016914124777,6.0,9.0,0.7866666666666666
 EURCHF,58,0.2137341126183557,22.0,23.0,0.7733333333333333

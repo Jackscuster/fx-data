@@ -527,7 +527,8 @@ def check_no_same_day_entrant(M, entry_day):
     purpose, and is labelled by the caller."""
     bad = int((M.day.values <= entry_day).sum())
     if bad and os.environ.get('WF_ALLOW_VOTE_LEAK') != '1':
-        raise SystemExit('VOTE-TIMING LEAK: %d position-day rows would vote on their own fill day '
+        # a RuntimeError, not SystemExit: inside a Pool task SystemExit kills the worker and the map hangs forever
+        raise RuntimeError('VOTE-TIMING LEAK: %d position-day rows would vote on their own fill day '
                          '(HANDOFF 0d). Set VOTE_ON_ENTRY_DAY=False, or WF_ALLOW_VOTE_LEAK=1 to reproduce '
                          'the contaminated numbers knowingly.' % bad)
     if bad:
@@ -1853,7 +1854,7 @@ def random_entry_marks(K, BR, tsrc, rng, allowed=None):
     3.00. That clips the null's upside, so it makes the null EASIER for the real
     book to beat, not harder. Stated rather than hidden.
     """
-    rows = []
+    rows = []; tid = 10 ** 9   # offset so a random trade's id never collides with a real 2011-2015 trade's on the same sid
     lo = pd.Timestamp('%d-01-01' % min(tsrc)); hi = pd.Timestamp('%d-12-31' % max(tsrc))
     for p, g in K.groupby('pair', observed=True):
         B = BR[p]; di = B['idx']; c = B['c']; hh = B['h']; ll = B['l']
@@ -1921,9 +1922,17 @@ def random_entry_marks(K, BR, tsrc, rng, allowed=None):
             px[:n - 1] = c[s0 + 1:s0 + n]
             px[n - 1] = e_px
             mk = d * np.diff(np.concatenate(([ent], px))) * k
-            mk[0] -= f * abs(ent) * k / r.atr_mult
+            # SAME CONVENTION AS THE REAL MARKS (15 Sep): a fill-day row carrying
+            # the cost only, then the move days, one tid per trade. Before this
+            # the null started on the day after the fill with the cost folded
+            # into the first move and tid 0 on every row -- which is why the
+            # random-entry null never had the vote-timing leak the real book had
+            # (its entrants already voted a day late), and why Book's shift and
+            # the same-day check need a real trade key here.
+            tid += 1
+            rows.append((r.sid, p, di[s0], d, np.float32(-f * abs(ent) * k / r.atr_mult), tid))
             for q in range(n):
-                rows.append((r.sid, p, di[s0 + 1 + q], d, np.float32(mk[q]), 0))
+                rows.append((r.sid, p, di[s0 + 1 + q], d, np.float32(mk[q]), tid))
     return pd.DataFrame(rows, columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid'])
 
 
