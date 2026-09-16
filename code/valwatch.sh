@@ -13,7 +13,7 @@
 # It restarts only when the run is ABSENT, never when it is merely slow, and it
 # stops for good once the log shows a clean pass -- so a green result is not
 # overwritten by a needless rerun.
-R=/Users/jackcuster/Documents/fx-data
+R=/Users/jackcuster/fx-data
 LOG=$R/logs/ci_pinned_validation.log
 PY=/private/tmp/claude-501/-Users-jackcuster-Documents-fx-data/02556050-6b5b-4d3c-ae62-ce5c2508df92/scratchpad/pin-venv/bin/python
 STATE=$R/results/ci_validation_state.txt

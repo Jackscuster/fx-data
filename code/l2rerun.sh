@@ -13,7 +13,7 @@
 PIDF=/tmp/.l2rerun.pid
 if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then exit 0; fi  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 echo $$ > "$PIDF"; trap 'rm -f "$PIDF"' EXIT
-cd /Users/jackcuster/Documents/fx-data
+cd /Users/jackcuster/fx-data
 LOG=logs/rerun.log
 say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
 say "armed: waiting for the main chain"
