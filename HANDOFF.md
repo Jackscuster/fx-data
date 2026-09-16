@@ -97,6 +97,27 @@
    risk columns, not the step's settings. **The full run is NOT started and
    nothing is rented** (Jack's word, and the pilot's answer, first).
 
+   **Smoke, tune stage done 14:34 (225 min, 750 fresh tunes: mean 68 s,
+   median 48, p90 93).** 250 strategies × 5 rolling windows, every number
+   per strategy through the Scorer, `refit_report_refit_smoke.csv`:
+
+   | window → trade | routed: build median R → trade median R (share +) | always-on: build → trade |
+   |---|---|---|
+   | 2011-15 → 2016 | 0.98 → **−0.045** (43%) | 0.28 → −0.083 |
+   | 2012-16 → 2017 | 0.92 → **−0.018** (46%) | 0.24 → −0.004 |
+   | 2013-17 → 2018 | 0.96 → **+0.041** (55%) | 0.24 → +0.036 |
+   | 2014-18 → 2019 | 0.93 → **−0.082** (37%) | 0.24 → −0.078 |
+   | 2015-19 → 2020 | 0.88 → **−0.005** (49%) | 0.22 → −0.016 |
+
+   **Count of traded years won: 1 of 5.** Retention −9% to +3%. The decay
+   curve is flat at about −0.02 R for every year after the window (1-5
+   years) — there is nothing to decay, the edge is the tuning window's
+   own. Every one of the 250 passes the gate-2 floors on its own window
+   (an in-sample label passes everything) and every one reads as
+   "regime-dependent" on its window (the tuner optimises in-regime), while
+   on the unseen year routed and always-on land within ±0.04 R of each
+   other. Marks → route → walk → nulls running.
+
 0-prev. **BATCH 1 / BATCH 2 (14 Sep) — as run on the contaminated kernel; kept for the record.**
    Session context was cleared at ~14:15 with Batch 1 mid-run. Everything
    below is from files. The base book is the four-slice clean field routed on
