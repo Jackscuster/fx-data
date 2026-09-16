@@ -1,0 +1,286 @@
+import os,sys
+_R=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOTLIB=os.path.join(_R,'code'); ROOTDATA=os.path.join(_R,'data'); ROOTOUT=os.path.join(_R,'results')
+os.makedirs(ROOTOUT,exist_ok=True); sys.path.insert(0,ROOTLIB)
+"""THE CLEAN REBUILD FROM GATE 2 -- rolling five-year tuning (HANDOFF 0e, 16 Sep).
+
+For every candidate strategy and every window W = [y, y+4]:
+    tune on W with gate 2's grids (cap 6, full pass)        -> settings_W
+    label on W: gate-2 floors on W's own record under settings_W (audit 4)
+    score under settings_W, ROUTED and ALWAYS-ON (audit 15):  W itself,
+        the trade block y+5 (and y+5..2020 for the decay curve)
+Every number per strategy goes through l2tune.Scorer -- no Book. Then
+--stage marks writes, per step, the build block AND the trade block scored
+under settings_W as an always-on marks stream with a `step` column, which
+l2route routes and l2walkfwd walks with WF_STEPS set (per-step assertions,
+decisions log, retention, nulls -- audit 7-11).
+
+    --stage tune    --candidates <csv> --windows 2011-2015:2016,...  --jobs N  [--reuse <pilot csv>]
+    --stage marks   --candidates <csv> --windows ...  --jobs N  --suffix _refit_smoke
+    --stage report  --windows ...
+
+Resumable: one row per (sid, window) in results/refit_settings<suffix>_s<shard>.csv.
+Sharded by md5(sid) % jobs so a restart never duplicates work.
+"""
+import argparse, glob, hashlib, json, time
+import numpy as np, pandas as pd
+import l2sweep as S
+import l2tune as T
+
+CAP = 6
+
+
+def parse_windows(spec):
+    out = []
+    for part in spec.split(','):
+        b, t = part.split(':')
+        b0, b1 = (int(x) for x in b.split('-'))
+        t0, t1 = (int(x) for x in t.split('-')) if '-' in t else (int(t), int(t))
+        assert b1 < t0, 'window %s does not end before its trade block' % part      # audit 3 / 7
+        out.append(dict(name='%d-%d' % (b0, b1), build=(b0, b1), trade=(t0, t1)))
+    return out
+
+
+def windows_table(wins):
+    """The Scorer's window table: each build window, each trade block, every sealed year after the window."""
+    W = {}
+    for w in wins:
+        W['B' + w['name']] = ('%d-01-01' % w['build'][0], '%d-12-31' % w['build'][1])
+        W['T' + w['name']] = ('%d-01-01' % w['trade'][0], '%d-12-31' % w['trade'][1])
+        for y in range(w['build'][1] + 1, 2021):
+            W['Y%d' % y] = ('%d-01-01' % y, '%d-12-31' % y)
+    return W
+
+
+def shard_of(sid, n):
+    return int(hashlib.md5(str(sid).encode()).hexdigest(), 16) % n
+
+
+def bank_path(suffix, i):
+    return os.path.join(ROOTOUT, 'refit_settings%s_s%02d.csv' % (suffix, i))
+
+
+def _pick(a):
+    return dict(n=a['n'], expectancy_R=a['expectancy_R'], profit_factor=a['profit_factor'], total_R=a['total_R']) if a else dict(n=0, expectancy_R=np.nan, profit_factor=np.nan, total_R=np.nan)
+
+
+def combo_of(cfg):
+    return (cfg['c1'], cfg['c2'], cfg['vol'], cfg['base'], cfg['exit_ind'] if isinstance(cfg.get('exit_ind'), str) else S.slot_options()['exit_ind'][0])
+
+
+def slice_bits(cfg):
+    sn = cfg['slice']
+    return sn, dict((s_, c) for s_, _, c in S.SLICES)[sn], dict((s_, p_) for s_, p_, _ in S.SLICES)[sn]
+
+
+def tune_worker(args):
+    i, n, suffix, cand_path, wins, reuse_path = args
+    S.WINDOWS = dict(S.WINDOWS); S.WINDOWS.update(windows_table(wins))
+    S.load_costs(); T.ACCT_OBJECTIVE = True
+    D = pd.read_csv(cand_path, low_memory=False)
+    D = D[[shard_of(s, n) == i for s in D.sid]]
+    bank = bank_path(suffix, i)
+    done = set()
+    if os.path.exists(bank):
+        b = pd.read_csv(bank); done = set(zip(b.sid, b.window))
+    reuse = {}
+    if reuse_path and os.path.exists(reuse_path):
+        P = pd.read_csv(reuse_path, low_memory=False)
+        for r in P.itertuples():
+            for pw, wname in (('P1', '2011-2015'), ('P2', '2012-2016')):
+                if hasattr(r, 'tune_%s_ip' % pw):
+                    reuse[(r.sid, wname)] = (getattr(r, 'tune_%s_ip' % pw), getattr(r, 'tune_%s_risk' % pw), getattr(r, 'tune_%s_evals' % pw), getattr(r, 'tune_%s_seconds' % pw))
+    sc = T.Scorer()
+    t0 = time.time(); k = 0
+    todo = [(cfg, w) for cfg in D.to_dict('records') for w in wins if (cfg['sid'], w['name']) not in done]
+    print('  shard %d: %d (strategy, window) jobs, %d banked' % (i, len(todo), len(done)), flush=True)
+    for cfg, w in todo:
+        combo = combo_of(cfg); sn, code, plan = slice_bits(cfg); mode = cfg['mode']
+        bw, tw = 'B' + w['name'], 'T' + w['name']
+        t1 = time.time(); n0 = sc.n_eval
+        if (cfg['sid'], w['name']) in reuse:
+            ipj, rkj, ev, secs = reuse[(cfg['sid'], w['name'])]
+            ip, rk = json.loads(ipj), json.loads(rkj); stage = 'reused-pilot'
+        else:
+            try:
+                ip, rk, info = T._stage(sc, combo, mode, sn, code, plan, (bw,), CAP, False)
+            except Exception as e:
+                print('  shard %d: %s %s FAILED %s' % (i, cfg['sid'][:50], w['name'], str(e)[:80]), flush=True)
+                continue
+            ev = sc.n_eval - n0; secs = round(time.time() - t1, 1); stage = info.get('stage')
+        years = ['Y%d' % y for y in range(w['build'][1] + 1, 2021)]
+        # FIXED COLUMN SET per row: the bank is appended row by row, so every row
+        # must carry the same columns in the same order (a window-dependent year
+        # list misaligned the CSV on the first smoke run, 16 Sep)
+        all_years = ['Y%d' % y for y in range(2006, 2021)]
+        row = dict(sid=cfg['sid'], slice=cfg.get('lab', sn), mode=mode, window=w['name'], build_end=w['build'][1], trade_start=w['trade'][0],
+                   tune_evals=ev, tune_seconds=secs, tune_stage=stage, ip=json.dumps(ip, sort_keys=True), risk=json.dumps(rk, sort_keys=True))
+        assert row['build_end'] < row['trade_start']                                  # audit 3, per strategy per window
+        for routed in (True, False):
+            r = sc.score(combo, ip, rk, mode, sn, code, plan, (bw, tw) + tuple(years), routed=routed)
+            tag = 'routed' if routed else 'allon'
+            for wn, key in ((bw, 'build'), (tw, 'trade')):
+                for kk, v in _pick(r.get(wn)).items():
+                    row['%s_%s_%s' % (tag, key, kk)] = v
+            for yn in all_years:
+                a = r.get(yn) if yn in years else None
+                row['%s_%s_expectancy_R' % (tag, yn)] = a['expectancy_R'] if a else np.nan
+                row['%s_%s_n' % (tag, yn)] = a['n'] if a else 0
+        # the label, on the tuning window only, under the window's own settings (audit 4)
+        b = row['routed_build_n'], row['routed_build_expectancy_R'], row['routed_build_profit_factor']
+        row['label_basis'] = 'B%s_own' % w['name']
+        row['passes_gate2_on_window'] = bool(b[0] >= S.MIN_TRADES_BLIND and b[1] >= T.LABEL['expectancy_R'] and b[2] >= T.LABEL['profit_factor'])
+        row['regime_dependent_on_window'] = bool(np.nan_to_num(row['routed_build_expectancy_R'], nan=-9) > np.nan_to_num(row['allon_build_expectancy_R'], nan=-9))
+        pd.DataFrame([row]).to_csv(bank, mode='a', index=False, header=not os.path.exists(bank))
+        k += 1
+        if k <= 10 or k % 25 == 0:
+            print('  shard %d: %d/%d  %.0f s per job  window %s  tune %ss (%s)  trade %s routed %+.3f allon %+.3f'
+                  % (i, k, len(todo), (time.time() - t0) / k, w['name'], secs, stage, w['trade'], row['routed_trade_expectancy_R'], row['allon_trade_expectancy_R']), flush=True)
+    return i
+
+
+def marks_worker(args):
+    """Per strategy: for each step, the ALWAYS-ON trade stream under that step's settings over
+    [build start, trade end], marks truncated at the trade end, one tid per trade, `step` column."""
+    import l2trades as TR
+    i, n, suffix, cand_path, wins, settings_path = args
+    S.load_costs()
+    D = pd.read_csv(cand_path, low_memory=False)
+    D = D[[shard_of(s, n) == i for s in D.sid]]
+    SET = pd.read_csv(settings_path, low_memory=False).set_index(['sid', 'window'])
+    Tr, Mr = [], []
+    for cfg in D.to_dict('records'):
+        sn, code, plan = slice_bits(cfg)
+        for si, w in enumerate(wins):
+            if (cfg['sid'], w['name']) not in SET.index:
+                continue
+            st = SET.loc[(cfg['sid'], w['name'])]
+            ip = json.loads(st['ip']); rk = json.loads(st['risk'])
+            c = dict(cfg); c['ip2'] = json.dumps(ip)
+            for kk, v in rk.items():
+                c['risk_' + kk] = v
+            am = float(rk['atr_mult'])
+            a = pd.Timestamp('%d-01-01' % w['build'][0]); z = pd.Timestamp('%d-12-31' % w['trade'][1])
+            for p in S.all_pairs():
+                try:
+                    r = TR.run_pair(c, p)
+                except Exception as e:
+                    print('  marks: %s %s on %s FAILED %s' % (cfg['sid'][:50], w['name'], p, str(e)[:60]), flush=True)
+                    continue
+                d, tr, cl = r['dates'], r['trades'], r['c']
+                nt = len(tr['r'])
+                if nt == 0:
+                    continue
+                dv = d.values
+                wi = np.flatnonzero((d >= a) & (d <= z))
+                if not len(wi):
+                    continue
+                lo, hi = int(wi[0]), int(wi[-1]) + 1
+                for j in range(nt):
+                    eb, xb = int(tr['entry_bar'][j]), int(tr['exit_bar'][j])
+                    if xb < 0 or not (lo <= eb < hi):
+                        continue
+                    ent = float(tr['entry_px'][j]); u = float(tr['units'][j]); sgn = float(tr['dir'][j]); tot = float(tr['r'][j]) * am
+                    cst = float(S._cost_R(p, np.array([ent]), np.array([u]), np.array([dv[eb]]))[0])
+                    end = min(xb, hi - 1)
+                    tid = (si + 1) * 10 ** 10 + i * 10 ** 8 + len(Tr) + 1     # unique across steps and shards
+                    prev = 0.0
+                    for b in range(eb, end + 1):
+                        cum = tot if (b == xb and xb <= hi - 1) else sgn * (cl[b] - ent) * u / S.RISK * am
+                        Mr.append((cfg['sid'], p, dv[b], int(sgn), np.float32(cum - prev - (cst if b == eb else 0.0)), tid, si + 1))
+                        prev = cum
+                    Tr.append((cfg['sid'], tid, p, dv[eb], dv[end], float(prev - cst), w['name'], si + 1))
+    Tf = pd.DataFrame(Tr, columns=['sid', 'tid', 'pair', 'entry', 'exit', 'R', 'era', 'step'])
+    Mf = pd.DataFrame(Mr, columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid', 'step'])
+    if len(Mf):
+        Mf['dir'] = Mf['dir'].astype(np.int8); Mf['mark'] = Mf['mark'].astype(np.float32); Mf['day'] = pd.to_datetime(Mf.day)
+        Mf['step'] = Mf['step'].astype(np.int8); Tf['step'] = Tf['step'].astype(np.int8)
+    Tf.to_pickle(os.path.join(ROOTOUT, 'refit_marks%s_T_s%02d.pkl' % (suffix, i))); Mf.to_pickle(os.path.join(ROOTOUT, 'refit_marks%s_M_s%02d.pkl' % (suffix, i)))
+    print('  marks shard %d: %d trades, %d marks' % (i, len(Tf), len(Mf)), flush=True)
+    return i
+
+
+def merge_settings(suffix):
+    fs = sorted(glob.glob(os.path.join(ROOTOUT, 'refit_settings%s_s[0-9][0-9].csv' % suffix)))
+    if not fs:
+        raise SystemExit('no settings shards for %s' % suffix)
+    A = pd.concat([pd.read_csv(f, low_memory=False) for f in fs], ignore_index=True).drop_duplicates(['sid', 'window'])
+    out = os.path.join(ROOTOUT, 'refit_settings%s.csv' % suffix); A.to_csv(out, index=False)
+    return out, A
+
+
+def report(A, wins, suffix):
+    print('\n=== REFIT %s: %d strategies x %d windows = %d settings ===' % (suffix, A.sid.nunique(), len(wins), len(A)), flush=True)
+    rows = []
+    for w in wins:
+        g = A[A.window == w['name']]
+        for tag in ('routed', 'allon'):
+            e = g['%s_trade_expectancy_R' % tag]; ok = e.notna() & (g['%s_trade_n' % tag] > 0)
+            eb = g['%s_build_expectancy_R' % tag]
+            rows.append(dict(window=w['name'], trade=('%d' % w['trade'][0]) if w['trade'][0] == w['trade'][1] else '%d-%d' % w['trade'], stream=tag, n=int(ok.sum()),
+                             build_median_R=float(eb[ok].median()), trade_median_R=float(e[ok].median()), share_positive=float((e[ok] > 0).mean()),
+                             median_retention=float((e[ok] / eb[ok]).where(eb[ok] > 0).median()),
+                             passers_on_window=int(g.passes_gate2_on_window.sum()), regime_dependent=int(g.regime_dependent_on_window.sum())))
+    Rr = pd.DataFrame(rows); Rr.to_csv(os.path.join(ROOTOUT, 'refit_report%s.csv' % suffix), index=False)
+    print(Rr.to_string(index=False, float_format=lambda v: '%8.3f' % v), flush=True)
+    # decay: months after the window end, pooled -- year granularity here (the marks stage gives months)
+    dec = []
+    for w in wins:
+        g = A[A.window == w['name']]
+        for y in range(w['build'][1] + 1, 2021):
+            col = 'routed_Y%d_expectancy_R' % y
+            if col in g:
+                dec.append(dict(window=w['name'], years_after=y - w['build'][1], median_R=float(g[col].median()), share_positive=float((g[col] > 0).mean()), n=int(g[col].notna().sum())))
+    Dd = pd.DataFrame(dec); Dd.to_csv(os.path.join(ROOTOUT, 'refit_decay%s.csv' % suffix), index=False)
+    print('\ndecay by years after the tuning window (routed, median R/trade):'); print(Dd.pivot_table(index='years_after', values='median_R', aggfunc='median').round(3).to_string(), flush=True)
+    sec = A.tune_seconds[A.tune_stage != 'reused-pilot']
+    if len(sec):
+        print('\nseconds per tune (fresh): mean %.0f median %.0f p90 %.0f (n %d)' % (sec.mean(), sec.median(), sec.quantile(0.9), len(sec)), flush=True)
+    for sl, g in A.groupby('slice'):
+        e = g[g.window == wins[-1]['name']]['routed_trade_expectancy_R']
+        print('  %-8s last window trade median %+.3f  share positive %.2f  (n %d)' % (sl, e.median(), (e > 0).mean(), len(e)), flush=True)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--stage', required=True, choices=['tune', 'marks', 'report'])
+    ap.add_argument('--candidates', default=os.path.join(ROOTOUT, 'refit_pilot_sample.csv'))
+    ap.add_argument('--windows', default='2011-2015:2016,2012-2016:2017,2013-2017:2018,2014-2018:2019,2015-2019:2020')
+    ap.add_argument('--jobs', type=int, default=4)
+    ap.add_argument('--suffix', default='_refit_smoke')
+    ap.add_argument('--reuse', default='', help='pilot csv whose 2011-2015 / 2012-2016 tunes are reused')
+    a = ap.parse_args()
+    wins = parse_windows(a.windows)
+    t0 = time.time()
+    import multiprocessing as mp
+    if a.stage == 'tune':
+        D = pd.read_csv(a.candidates, low_memory=False)
+        print('candidates: %s (%d); windows %s; jobs %d' % (os.path.basename(a.candidates), len(D), [w['name'] for w in wins], a.jobs), flush=True)
+        args = [(i, a.jobs, a.suffix, a.candidates, wins, a.reuse) for i in range(a.jobs)]
+        with mp.get_context('spawn').Pool(a.jobs) as pool:
+            pool.map(tune_worker, args)
+        out, A = merge_settings(a.suffix)
+        print('tune done in %.1f min -> %s (%d rows)' % ((time.time() - t0) / 60, out, len(A)), flush=True)
+        report(A, wins, a.suffix)
+    elif a.stage == 'marks':
+        out, A = merge_settings(a.suffix)
+        args = [(i, a.jobs, a.suffix, a.candidates, wins, out) for i in range(a.jobs)]
+        with mp.get_context('spawn').Pool(a.jobs) as pool:
+            pool.map(marks_worker, args)
+        Tf = pd.concat([pd.read_pickle(f) for f in sorted(glob.glob(os.path.join(ROOTOUT, 'refit_marks%s_T_s*.pkl' % a.suffix)))], ignore_index=True)
+        Mf = pd.concat([pd.read_pickle(f) for f in sorted(glob.glob(os.path.join(ROOTOUT, 'refit_marks%s_M_s*.pkl' % a.suffix)))], ignore_index=True)
+        for c in ('sid', 'pair'):
+            Tf[c] = Tf[c].astype('category'); Mf[c] = Mf[c].astype('category')
+        import l2walkfwd as W
+        W.check_mark_convention(Mf, 'refit marks')
+        Tf.to_pickle(os.path.join(ROOTOUT, 'wf_trades%s.pkl' % a.suffix)); Mf.to_pickle(os.path.join(ROOTOUT, 'wf_marks%s.pkl' % a.suffix))
+        print('marks done in %.1f min: %d trades, %d marks, %d strategies, steps %s -> wf_trades%s.pkl / wf_marks%s.pkl'
+              % ((time.time() - t0) / 60, len(Tf), len(Mf), Tf.sid.nunique(), sorted(Tf.step.unique().tolist()), a.suffix, a.suffix), flush=True)
+    else:
+        out, A = merge_settings(a.suffix)
+        report(A, wins, a.suffix)
+    print('REFIT %s STAGE %s COMPLETE' % (a.suffix, a.stage.upper()), flush=True)
+
+
+if __name__ == '__main__':
+    main()

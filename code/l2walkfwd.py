@@ -50,8 +50,22 @@ import l2trades as TR
 
 RISK_KEYS = ('atr_len', 'atr_mult', 'tp_mult', 'trail_mult', 'trail_arm', 'be_pct')
 ERAS = {'ip1': ('2011-01-01', '2015-12-31'), 'ip2': ('2016-01-01', '2020-12-31')}
-YEARS = list(range(2011, 2021))
-STEPS = ({'build': (2011, 2015), 'trade': (2016, 2018)},
+YEARS = list(range(2005, 2021)) if os.environ.get('WF_STEPS') else list(range(2011, 2021))
+def _steps_from_env():
+    """WF_STEPS='2005-2009:2010,2006-2010:2011,...' -- the ROLLING design (rebuild, 16 Sep).
+    Unset: the two-step ip1/ip2 stitch below."""
+    v = os.environ.get('WF_STEPS', '')
+    if not v:
+        return None
+    out = []
+    for part in v.split(','):
+        b, t = part.split(':')
+        b0, b1 = (int(x) for x in b.split('-')); t0, t1 = (int(x) for x in t.split('-')) if '-' in t else (int(t), int(t))
+        out.append({'build': (b0, b1), 'trade': (t0, t1)})
+    return tuple(out)
+
+
+STEPS = _steps_from_env() or ({'build': (2011, 2015), 'trade': (2016, 2018)},
          {'build': (2011, 2018), 'trade': (2019, 2020)})
 SLICES3 = ('A-trend', 'A-chop', 'B-chop')
 SRC = {'A-trend': ('gate2_tuned_modeA_trend.csv', 'A', 'trend'),
@@ -64,7 +78,7 @@ SRC = {'A-trend': ('gate2_tuned_modeA_trend.csv', 'A', 'trend'),
 # on a stitch that breaks it.
 SETTINGS_TUNE_END = {'W2': 2010, 'W3': 2015}
 SETTINGS_SCORE_START = {'W2': 2011, 'W3': 2016}
-for _w in SETTINGS_TUNE_END:
+for _w in ({} if os.environ.get('WF_STEPS') else SETTINGS_TUNE_END):
     assert SETTINGS_TUNE_END[_w] < SETTINGS_SCORE_START[_w], 'settings for %s were tuned on years reaching %d, scoring starts %d' % (_w, SETTINGS_TUNE_END[_w], SETTINGS_SCORE_START[_w])
 for _st in STEPS:
     assert _st['build'][1] < _st['trade'][0], 'STEPS: build block must end before the trade block'
@@ -1062,11 +1076,18 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
         tsrc = [inv[y] for y in range(t0, t1 + 1)]
         if set(bsrc) & set(tsrc):
             raise RuntimeError('step %d: a played year is in both build and trade' % (si + 1))
-        P, fails = cut(T, TY, bsrc, perm=perm, apply_bars=not nocut)
+        # ROLLING DESIGN (16 Sep): a marks table with a `step` column carries, for
+        # each step, the build block AND the trade block scored under the settings
+        # tuned on that build block. Only that step's rows are visible here.
+        if 'step' in M.columns:
+            Ms = M[M.step == si + 1]; Ts = T[T.step == si + 1]; TYs = trade_year_sums(Ms)
+        else:
+            Ms, Ts, TYs = M, T, TY
+        P, fails = cut(Ts, TYs, bsrc, perm=perm, apply_bars=not nocut)
         if not len(P):
             raise RuntimeError('step %d: nothing passed the cut' % (si + 1))
         allp = list(P.sid)
-        B = Book(M[M.sid.isin(allp)], allp)
+        B = Book(Ms[Ms.sid.isin(allp)], allp)
         w_all = np.ones(len(B.members), np.float32)
         curve, C = fit_curve(B, w_all, bsrc)
         if verbose:
@@ -1075,7 +1096,7 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
         ybuild = np.isin(B.dyears, bsrc)
         ytrade = np.isin(B.dyears, tsrc)
         for s in structures:
-            mem = STRUCTURES[s](P, B=B, T=T, TY=TY, build=tuple(bsrc), curve=curve,
+            mem = STRUCTURES[s](P, B=B, T=Ts, TY=TYs, build=tuple(bsrc), curve=curve,
                                 dipb=dipb, dayb=dayb, perm=perm)
             # A structure returns a bare member list (equal weight) or a
             # (members, weights) pair. Weighting controls need the second form.
@@ -1865,7 +1886,7 @@ def recover_k(T, M, field):
     +0.097 against +0.062 and win rate 34.3% against 33.2%.
     """
     BR = _bars()
-    K = T[['sid', 'tid', 'pair', 'entry', 'exit', 'era']].copy()
+    K = T[['sid', 'tid', 'pair', 'entry', 'exit', 'era'] + (['step'] if 'step' in T.columns else [])].copy()
     K['sid'] = K.sid.astype(str); K['pair'] = K.pair.astype(str)
     parts = []
     for p_, g in K.groupby('pair', observed=True):
@@ -2082,10 +2103,20 @@ def _rand_one(args):
     try:
         rng = np.random.default_rng(seed)
         M = _RG['M']; T = _RG['T']; TY = _RG['TY']
-        parts = [M[M.day.dt.year <= 2015]]
-        for st in STEPS:
-            tsrc = list(range(st['trade'][0], st['trade'][1] + 1))
-            parts.append(random_entry_marks(_RG['K'], _RG['BR'], tsrc, rng, allowed=_RG.get('ALLOWED')))
+        if 'step' in M.columns:
+            # rolling: per step, the real build-block marks and random entries for the trade block
+            parts = []
+            for si, st in enumerate(STEPS):
+                Mk = M[M.step == si + 1]; Kk = _RG['K'][_RG['K'].step == si + 1]
+                parts.append(Mk[Mk.day.dt.year <= st['build'][1]])
+                tsrc = list(range(st['trade'][0], st['trade'][1] + 1))
+                rm = random_entry_marks(Kk, _RG['BR'], tsrc, rng, allowed=_RG.get('ALLOWED')); rm['step'] = si + 1
+                parts.append(rm)
+        else:
+            parts = [M[M.day.dt.year <= 2015]]
+            for st in STEPS:
+                tsrc = list(range(st['trade'][0], st['trade'][1] + 1))
+                parts.append(random_entry_marks(_RG['K'], _RG['BR'], tsrc, rng, allowed=_RG.get('ALLOWED')))
         MM = pd.concat(parts, ignore_index=True)
         MM['sid'] = MM.sid.astype(str); MM['pair'] = MM.pair.astype(str)
         MM['day'] = pd.to_datetime(MM.day)
