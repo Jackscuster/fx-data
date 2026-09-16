@@ -58,8 +58,44 @@
    (PF 0.84-0.88), monthly −0.22 to −0.43, quarterly −0.48 to −1.08. Not a
    member. `carry_routed_tirexcl_actweak.csv`.
 
-   *Audit.* `results/audit_2026-09.csv`: **25 of 26 PASS**; item 26 (repo
-   under the iCloud-synced ~/Documents) is the move, done next.
+   *Audit.* `results/audit_2026-09.csv`: **26 of 26 PASS — PRE-FLIGHT
+   CLEAR** (`python3 code/preflight.py`, 15 s, rerun before any rebuild).
+
+   **THE REPO HAS MOVED: `/Users/jackcuster/fx-data` (16 Sep 10:41).** Audit
+   item 26. rsync out of the iCloud-synced ~/Documents took 134 min at the
+   hydration rate (0.5-2 MB/s); 7,911 files verified, 0 dataless, checksums
+   on 6 sampled files, git HEAD intact. Left behind in
+   `~/Documents/fx-data_MOVED_2026-09-16` (Jack deletes it): the tuner disk
+   cache (305k evicted files), `wf_randk_*` (regenerable), the retired
+   routing variants (tirincl / actignore / repro / tg_notranging / legflip /
+   unsuffixed), `scores_h10_archive`, `superseded`, `_isonly`, `crisis_all`.
+   Every driver under `~/fx-data-logs` and every absolute path in `code/`
+   now says `/Users/jackcuster/fx-data`. **Start every session in
+   `~/fx-data`** — Claude's project memory is keyed by path, so the first
+   session there starts with an empty memory index; HANDOFF is the record.
+   `~/fx-data-logs/launch.sh` launches a driver and confirms it alive after
+   60 s; `~/fx-data-logs/gitsafe.sh` refuses pull/rebase/checkout/stash while
+   a chain runs (commit/push are always allowed).
+
+   **(d) THE REBUILD'S CODE IS BUILT AND ITS 250-STRATEGY SMOKE IS RUNNING**
+   (`~/fx-data-logs/refit_smoke.sh`, launched 10:50, markers "refit smoke
+   <stage> done" … "REFIT SMOKE COMPLETE"). `code/l2refit.py`: `--stage
+   tune` (per strategy per window: gate-2 grids cap 6, label on the window
+   under its own settings, scored routed AND always-on on the window, the
+   trade block and every sealed year to 2020; banked per (sid, window),
+   md5-sharded, resumable), `--stage marks` (per step, build block + trade
+   block under that step's settings as an always-on stream with a `step`
+   column, unique tids), `--stage report`. Kernel: `Scorer.score(...,
+   routed=False)`; `WF_STEPS="2011-2015:2016,..."` makes `l2walkfwd` roll
+   (per-step marks, per-step random-entry null, decisions log, retention).
+   A two-strategy end-to-end run passed (tune → marks → route → walk). The
+   smoke: the pilot's 250, windows 2011-15 … 2015-19 (trades 2016-2020),
+   the pilot's 2011-15 / 2012-16 tunes reused, everything scored on the
+   22:00 measured table, then route → walk → per-slice → random-entry null →
+   regime-shuffle null → report. Known approximation in the smoke: the
+   random-entry null takes stop/target multiples from the field file's ip2
+   risk columns, not the step's settings. **The full run is NOT started and
+   nothing is rented** (Jack's word, and the pilot's answer, first).
 
 0-prev. **BATCH 1 / BATCH 2 (14 Sep) — as run on the contaminated kernel; kept for the record.**
    Session context was cleared at ~14:15 with Batch 1 mid-run. Everything
@@ -298,8 +334,7 @@
    the 25-draw random-N control on each winner and both nulls
    (`~/fx-data-logs/l3nulls.sh <suffix> <route args>` for routing variants;
    for kernel settings set the global and rerun the walk), then item 10.
-   (4) Run the Layer 1 chain on 5pm in the main tree and commit the
-   regenerated `results/` (that finishes the swap). (5) Batch 2, one stage at
+   (4) DONE 15 Sep — the Layer 1 chain on 5pm ran in the main tree and is committed. (5) Batch 2, one stage at
    a time, smoke-tested on `_cleanfield` first. (6) One table, HANDOFF item 0,
    commit after each item.
    (7) After Batch 2: the REFIT PROGRAMME, item 0c below — scoped, queued,
