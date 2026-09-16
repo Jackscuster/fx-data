@@ -10,7 +10,7 @@
 PIDF=/tmp/.l2chain2.pid
 if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then exit 0; fi  # NOSILENCE-OK: the process may already be gone, which is the goal, not a failure
 echo $$ > "$PIDF"; trap 'rm -f "$PIDF"' EXIT
-cd /Users/jackcuster/Documents/fx-data
+cd /Users/jackcuster/fx-data
 LOG=logs/chain2.log
 say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
 # EVERY STAGE MUST PROVE IT PRODUCED SOMETHING. A stage that exits zero having

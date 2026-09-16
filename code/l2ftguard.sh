@@ -14,8 +14,8 @@
 # finished work is on disk and its in-flight strategy is the only loss; the
 # restart re-reads the bank and skips everything already done.
 LOW=${1:-400}; HIGH=${2:-700}
-LOG=/Users/jackcuster/Documents/fx-data/logs/ftguard.log
-cd /Users/jackcuster/Documents/fx-data
+LOG=/Users/jackcuster/fx-data/logs/ftguard.log
+cd /Users/jackcuster/fx-data
 # SINGLE INSTANCE via a pidfile. macOS ships no flock, and counting siblings by
 # name was worse than useless: pgrep -f also matches the nohup/setsid wrapper
 # that launched this very process, so the guard saw a "sibling", exited

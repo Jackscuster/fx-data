@@ -14,7 +14,7 @@
 # pressure does. Below CRIT with the additive pool already gone, it logs loudly
 # and keeps watching; deciding to kill hours of work is a human's call.
 MAIN=$1; ADD=$2; WARN=${3:-400}; CRIT=${4:-200}
-LOG=/Users/jackcuster/Documents/fx-data/logs/swapguard.log
+LOG=/Users/jackcuster/fx-data/logs/swapguard.log
 say(){ echo "$(date '+%F %T') $*" >> "$LOG"; }
 say "armed: main=$MAIN add=$ADD warn=${WARN}M crit=${CRIT}M"
 killed=0

@@ -2,7 +2,7 @@
 # Keeps the full crisis pass running on one core until it completes.
 # Same backstop as valwatch.sh and for the same reason: a seventeen-hour job
 # that dies quietly gets restarted from zero by whoever notices first.
-R=/Users/jackcuster/Documents/fx-data
+R=/Users/jackcuster/fx-data
 LOG=$R/logs/crisis_all.log
 while :; do
   if [ -s "$LOG" ] && grep -q "^DONE" "$LOG"; then exit 0; fi
