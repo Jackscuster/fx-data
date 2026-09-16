@@ -369,6 +369,54 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0e. **THE CLEAN REBUILD FROM GATE 2 — SCOPED 16 Sep. NOT STARTED. Does not
+   start until `python3 code/preflight.py` prints PRE-FLIGHT CLEAR (every row
+   of `results/audit_2026-09.csv` PASS) and Jack says go.**
+
+   **What it is.** Gate 2 re-run from the gate-1 survivor sets of modes A, B
+   and C on the 5pm states, with ROLLING FIVE-YEAR TUNING: tune on a closed
+   five-year window, trade the next year untouched, roll one year, repeat;
+   plus the two-block reading (2011-15 → 2016-18, 2014-18 → 2019-20, both
+   tunes already in the annual set). Every strategy scored alone through
+   `l2tune.Scorer` (no Book), BOTH always-on and routed to its slice's
+   regime, so regime dependence is measured per strategy; gate-1/2 labels
+   on the tuning window only; costs from the measured per-pair table at the
+   chosen entry hour (`cost_table_h22.csv`, 22:00 NY, majors 1.6 bp, crosses
+   2.5 bp); then the fixed Book walk exactly as audit items 7-11 (decision
+   assertions, decisions log, retention, three nulls on every winner).
+
+   **Candidates.** Mode A 17,822 (12,163 trend + 5,659 chop); mode B 19,845
+   (14,815 + 5,030); mode C: the 7,475 combinations in the 299 chunks tuned
+   before the pause (2,222 in the tuned table). **C in full is 554,422
+   combinations at ~4 engine-minutes each: ~58,000 core-hours (its own
+   progress file's projection), not a candidate for any budget — the
+   unfinished chunks stay unfinished.** Total 45,142.
+
+   **Windows.** Annual, five-year: minimal set 2011-15 … 2015-19 (5 tunes,
+   trades 2016-2020); full set 2005-09 … 2015-19 (11 tunes, trades
+   2010-2020 — eleven traded years for the count-of-years verdict instead
+   of five). Two-block reads come free from tunes 2011-15 and 2014-18.
+
+   **Time.** Per five-year tune, measured in the pilot (16 Sep, cap 6, A and
+   B mix): ~75 s (45-130). Scoring alone, always-on + routed, ~1 s per
+   strategy per window. Engine marks for the walk ~45 core-h; walks and
+   nulls ~150-300 core-h.
+
+   | set | tunes | tune core-h | all in | 3 × CPX62 (29 eff. cores, ~$0.30/h) | Mac (6.3 eff.) | 1 × CCX63 (38 eff., $1.60/h) |
+   |---|--:|--:|--:|---|---|---|
+   | 5 windows | 225,710 | ~4,700 (2,800-8,200) | ~5,100 | **7.3 days, ~$53** | ~34 days | 5.6 days, ~$215 |
+   | 11 windows | 496,562 | ~10,300 (6,200-17,900) | ~11,000 | **16 days, ~$114** | ~73 days | 12 days, ~$465 |
+
+   **To build first** (~3-4 days): `l2refit.py` at scale (the pilot's loop,
+   sharded by md5(sid) on `cloud_refit.sh` from `cloud_field.sh`, resumable
+   per (sid, window)); the Scorer's always-on scoring mode (today it scores
+   in-regime only); `l2walkfwd.STEPS` as a list with per-step settings;
+   the labels-on-tuning-window pass; the rolling walk driver. **Gate:** the
+   pilot's answer. If a fresh tune does not put the median unseen-year
+   R/trade above zero on 250 strategies, the rebuild would be re-tuning
+   45,000 of them to learn the same thing at 200× the cost — that decision
+   is Jack's, with the pilot table in front of him.
+
 0c. **REFIT PROGRAMME — rolling re-tune with rolling selection. SCOPED 14 Sep;
    BUILD APPROVED 14 Sep, TO START AFTER BATCH 2 LANDS; THE RUN WAITS FOR
    JACK'S WORD.** Decisions taken 14 Sep: second tuning window is **2014-18**
