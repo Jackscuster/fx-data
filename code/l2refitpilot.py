@@ -151,13 +151,58 @@ def report(P):
     print('\nseconds per tune: mean %.0f  median %.0f  p90 %.0f  (n %d);  evals per tune: median %.0f' % (sec.mean(), sec.median(), sec.quantile(0.9), len(sec), pd.concat([P['tune_P1_evals'], P['tune_P2_evals']]).median()), flush=True)
 
 
+def recost(tables):
+    """(b) of 16 Sep: the finished pilot re-scored, no tuning, under each cost
+    table -- the flat table as run, 17:00 NY measured, 22:00 NY measured (the
+    best hour). Settings are the banked ip1/risk1 and the banked fresh tunes."""
+    P = pd.read_csv(OUT, low_memory=False)
+    D = pd.read_csv(SAMPLE, low_memory=False).set_index('sid')
+    S.WINDOWS = dict(S.WINDOWS); S.WINDOWS.update(PILOT_WINDOWS)
+    T.ACCT_OBJECTIVE = True
+    rows = []
+    for tab in tables:
+        S.load_costs(tab)
+        sc = T.Scorer()
+        for r in P.itertuples():
+            cfg = D.loc[r.sid]
+            combo = (cfg['c1'], cfg['c2'], cfg['vol'], cfg['base'], cfg['exit_ind'] if isinstance(cfg['exit_ind'], str) else S.slot_options()['exit_ind'][0])
+            sn = cfg['slice']; mode = cfg['mode']
+            code = dict((s_, c) for s_, _, c in S.SLICES)[sn]; plan = dict((s_, p_) for s_, p_, _ in S.SLICES)[sn]
+            sets = {'ip1': (json.loads(cfg['ip1']), json.loads(cfg['risk1']))}
+            for pw, tw in STEPS:
+                sets['tuned_' + pw] = (json.loads(getattr(r, 'tune_%s_ip' % pw)), json.loads(getattr(r, 'tune_%s_risk' % pw)))
+            for name, (ip, rk) in sets.items():
+                wins = ('P1', 'T1', 'P2', 'T2') if name == 'ip1' else ((name[-2:],) + tuple(tw for pw, tw in STEPS if pw == name[-2:]))
+                sc_ = sc.score(combo, ip, rk, mode, sn, code, plan, wins)
+                for w in wins:
+                    a_ = _pick(sc_, w)
+                    rows.append(dict(cost_table=os.path.basename(tab), sid=r.sid, slice=r.slice, settings=name, window=w, n=a_['n'], expectancy_R=a_['expectancy_R'], profit_factor=a_['profit_factor']))
+        print('  recost %s done' % os.path.basename(tab), flush=True)
+    R = pd.DataFrame(rows); R.to_csv(os.path.join(ROOTOUT, 'refit_pilot_recost.csv'), index=False)
+    # the table Jack asked for: per trade year, per settings, per cost table: median R/trade, share positive, by slice and overall
+    out = []
+    for (tab, w, st), g in R[R.window.isin(['T1', 'T2'])].groupby(['cost_table', 'window', 'settings']):
+        if (st == 'ip1') or (st == 'tuned_P1' and w == 'T1') or (st == 'tuned_P2' and w == 'T2'):
+            ok = g.expectancy_R.notna() & (g.n > 0)
+            out.append(dict(cost_table=tab, trade_year={'T1': 2016, 'T2': 2017}[w], settings=st, slice='ALL', n=int(ok.sum()), median_R=float(g.expectancy_R[ok].median()), share_positive=float((g.expectancy_R[ok] > 0).mean())))
+            for sl, gg in g[ok].groupby('slice'):
+                out.append(dict(cost_table=tab, trade_year={'T1': 2016, 'T2': 2017}[w], settings=st, slice=sl, n=len(gg), median_R=float(gg.expectancy_R.median()), share_positive=float((gg.expectancy_R > 0).mean())))
+    O = pd.DataFrame(out).sort_values(['trade_year', 'slice', 'settings', 'cost_table'])
+    O.to_csv(os.path.join(ROOTOUT, 'refit_pilot_by_cost.csv'), index=False)
+    print(O.to_string(index=False, float_format=lambda v: '%8.3f' % v), flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--n', type=int, default=250)
     ap.add_argument('--jobs', type=int, default=4)
     ap.add_argument('--limit', type=int, default=0, help='smoke test: only this many strategies')
     ap.add_argument('--report-only', action='store_true')
+    ap.add_argument('--recost', default='', help='comma-separated cost tables: re-score the finished pilot under each, no tuning')
     a = ap.parse_args()
+    if a.recost:
+        recost([os.path.join(ROOTOUT, x.strip()) if not os.path.isabs(x.strip()) else x.strip() for x in a.recost.split(',')])
+        return
     if not a.report_only:
         D = draw_sample(a.n) if not os.path.exists(SAMPLE) else pd.read_csv(SAMPLE, low_memory=False)
         if a.limit:
