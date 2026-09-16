@@ -1165,7 +1165,10 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
                                ('NEGATIVE_BUILD' if not (bmed > 0) else 'ok'))
         res[s] = (k, out[s]['cuts'], x, dy)
     if decisions and all(k == v for k, v in ymap.items()) and perm is None and not os.environ.get('WF_NULL'):
-        pd.DataFrame(decisions).to_csv(OUT('decisions.csv'), index=False)   # the real walk only; null draws set WF_NULL
+        # the real walk only; null draws set WF_NULL. A per-slice or other side walk
+        # sets WF_DECISIONS_TAG so it never overwrites the book's own log.
+        dtag = os.environ.get('WF_DECISIONS_TAG', '')
+        pd.DataFrame(decisions).to_csv(OUT('decisions%s.csv' % dtag), index=False)
     return res
 
 

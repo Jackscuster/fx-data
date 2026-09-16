@@ -116,7 +116,24 @@
    (an in-sample label passes everything) and every one reads as
    "regime-dependent" on its window (the tuner optimises in-regime), while
    on the unseen year routed and always-on land within ±0.04 R of each
-   other. Marks → route → walk → nulls running.
+   other.
+
+   **REFIT SMOKE COMPLETE 14:45** (marks 6 min, route/walk/per-slice 25 s,
+   random-entry null 80 s, shuffle 2 min — the machinery runs end to end).
+   The rolling book of the 250, fixed kernel, 22:00 table, both budgets:
+   build blocks (in-sample under each step's fresh settings) **+16 to +24%
+   median year**; traded years 2016-2020 **−1.48 / −2.21**, worst −3.04 /
+   −4.57, max DD 5.7 / 8.6, DIP95 13.2 / 19.7 (out of budget), PF 0.97,
+   **retention −0.11, flagged FIT**. Per slice: A-chop +0.66, B-chop +1.12,
+   A-trend −1.35, B-trend −0.54 (team1). Nulls: random-entry real −1.48 vs
+   mean −2.39, max −1.04, p = 0.08; regime-shuffle vs mean −0.79, max
+   +0.49, **p = 0.92**. `walkforward_*_refit_smoke_routed.csv`,
+   `decisions_refit_smoke_routed.csv` (five steps, each with its window;
+   `l2cfperslice` now writes its own decisions file instead of overwriting
+   the book's). **The rebuild's answer on 250 is the pilot's answer: the
+   edge is the tuning window's own, and nothing of it reaches the next
+   year.** The full run (45,142 × 5 or 11 windows) is built, smoke-tested
+   and NOT started; nothing rented.
 
 0-prev. **BATCH 1 / BATCH 2 (14 Sep) — as run on the contaminated kernel; kept for the record.**
    Session context was cleared at ~14:15 with Batch 1 mid-run. Everything
