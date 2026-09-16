@@ -305,6 +305,26 @@
    Every fixed book is negative, out of budget, PF < 1. The whole Layer 2
    edge was the one-bar look-ahead in the vote.
 
+   **Fixed nulls (item 1 of 15 Sep, phase A done 23:30; shuffles in phase B).**
+   Direction-preserving (random-entry on the same permitted bars, 25 draws):
+
+   | book | real | null mean | null p95 | null max | p |
+   |---|---|---|---|---|---|
+   | BASE team1 / team2 | −1.00 / −1.50 | −0.52 / −0.78 | −0.25 / −0.38 | −0.02 / −0.02 | **1.000 / 1.000** |
+   | CHOP-CORE | −0.82 / −1.23 | −0.36 / −0.54 | −0.16 / −0.25 | −0.08 / −0.12 | **1.000 / 1.000** |
+   | CHOP-ONLY | −0.44 / −0.66 | 0.00 / 0.00 (flat: the random book sizes to zero) | 0.00 | 0.00 | 1.000 / 1.000 |
+
+   The strategies' own entries do WORSE than random entries on the same bars,
+   on every book and both budgets. The random-entry null itself was found to
+   have been built in a different convention from the real marks (no fill-day
+   row, cost folded into the first move day, tid 0 everywhere) — i.e. its
+   entrants already voted a day late, which is why the contaminated real
+   books beat it at p = 0.000 every time. It now writes the real convention
+   (fill-day cost row, one tid per trade) so `Book`'s shift and the same-day
+   check apply to real and null alike. Chop-only's regime-shuffle null is
+   not run (degenerate: no regime is read). Fixed files carry no header;
+   contaminated ones say VOTE-TIMING LEAK on line 1.
+
    **The fix, applied:** `l2walkfwd.VOTE_ON_ENTRY_DAY = False` (default). A
    position votes from the day AFTER its fill; its entry cost rides on its
    first voted day's mark (`vote_from_next_day`, inside `Book.__init__`, so

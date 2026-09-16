@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 level,position_days,share_pct,size
 1,3482,14.7249122510255,1.0
 2,3878,16.399543282445975,3.0

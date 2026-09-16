@@ -1,3 +1,4 @@
+# VOTE-TIMING LEAK (HANDOFF 0d, 15 Sep 2026): built with entry-day votes -- every number in this file is contaminated and may not be quoted. Readers pass comment='#'.
 book,budget,year,return_pct,max_dd_pct,realised_vol_pct
 ALWAYS_ON,team1,2016,2.6731206755464028,1.0161216679029619,1.9572108079043995
 ALWAYS_ON,team1,2017,3.380570618268876,0.7487697704448437,1.3524889634092285
