@@ -458,7 +458,7 @@ Traceback (most recent call last):
     raise ValueError(na_msg)
 ValueError: Cannot mask with non-boolean array containing NA / NaN values
 Traceback (most recent call last):
-  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 111, in <module>
+  File "/home/runner/work/fx-data/fx-data/code/pipeline.py", line 121, in <module>
     subprocess.run([sys.executable, os.path.join(C, 'horizon.py'),
   File "/opt/hostedtoolcache/Python/3.9.25/x64/lib/python3.9/subprocess.py", line 528, in run
     raise CalledProcessError(retcode, process.args,
