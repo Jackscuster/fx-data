@@ -31,32 +31,68 @@ CAP = 6
 
 
 def parse_windows(spec):
+    """'2011-2014:2015:2016' = tune on 2011-2014, GRADE on 2015 (never seen by the
+    tuner, reported never used), trade 2016 untouched -- the BLIND-LABEL design
+    (Jack, 21 Sep). '2011-2015:2016' = the older tune:trade form, no grade."""
     out = []
     for part in spec.split(','):
-        b, t = part.split(':')
-        b0, b1 = (int(x) for x in b.split('-'))
+        bits = part.split(':')
+        b0, b1 = (int(x) for x in bits[0].split('-'))
+        if len(bits) == 3:
+            g0, g1 = (int(x) for x in bits[1].split('-')) if '-' in bits[1] else (int(bits[1]), int(bits[1]))
+            t = bits[2]
+        else:
+            g0 = g1 = None; t = bits[1]
         t0, t1 = (int(x) for x in t.split('-')) if '-' in t else (int(t), int(t))
+        if g0 is not None:
+            assert b1 < g0 and g1 < t0, 'window %s: tune must end before the grade year and the grade year before the trade block' % part
         assert b1 < t0, 'window %s does not end before its trade block' % part      # audit 3 / 7
-        out.append(dict(name='%d-%d' % (b0, b1), build=(b0, b1), trade=(t0, t1)))
+        out.append(dict(name='%d-%d' % (b0, b1), build=(b0, b1), grade=((g0, g1) if g0 is not None else None), trade=(t0, t1),
+                        span=(b0, t1)))
     return out
 
 
 def windows_table(wins):
-    """The Scorer's window table: each build window, each trade block, every sealed year after the window."""
+    """The Scorer's window table: tune window, grade year, trade block, every sealed year after the tune window."""
     W = {}
     for w in wins:
         W['B' + w['name']] = ('%d-01-01' % w['build'][0], '%d-12-31' % w['build'][1])
+        if w['grade']:
+            W['G' + w['name']] = ('%d-01-01' % w['grade'][0], '%d-12-31' % w['grade'][1])
         W['T' + w['name']] = ('%d-01-01' % w['trade'][0], '%d-12-31' % w['trade'][1])
         for y in range(w['build'][1] + 1, 2021):
             W['Y%d' % y] = ('%d-01-01' % y, '%d-12-31' % y)
     return W
 
 
-def shard_of(sid, n):
-    return int(hashlib.md5(str(sid).encode()).hexdigest(), 16) % n
+KEEP = ('n', 'expectancy_R', 'total_R', 'profit_factor', 'sharpe', 'sortino', 'calmar', 'max_dd_R', 'win_rate', 'avg_win_R', 'avg_loss_R')
 
 
-def bank_path(suffix, i):
+def g3_composite(a):
+    """count of gate-3 bars cleared on a record (0-5); max_dd_frac = max DD / gross profit"""
+    import l2gate3 as G3
+    gp = a['avg_win_R'] * a['win_rate'] * a['n'] if np.isfinite(a['avg_win_R']) else np.nan
+    ddf = a['max_dd_R'] / gp if gp and gp > 0 else np.inf
+    return int(a['expectancy_R'] >= G3.BARS['expectancy_R']) + int(a['profit_factor'] >= G3.BARS['profit_factor']) + \
+        int(np.nan_to_num(a['sortino'], nan=-9) >= G3.BARS['sortino']) + int(a['calmar'] >= G3.BARS['calmar']) + int(ddf <= G3.BARS['max_dd_frac'])
+
+
+GRADE_MIN_TRADES = 10   # gate 2's 50-trade floor is for a five-year blind window; the grade is ONE year, so 50/5
+
+
+def pass2(a, min_n=None):
+    """gate 2's bars on one record (crosses_label): the trade floor and every ratio floor"""
+    min_n = S.MIN_TRADES_BLIND if min_n is None else min_n
+    return bool(a and a['n'] >= min_n and T.crosses_label(dict(a, n_w2=S.MIN_TRADES_BLIND, n_w3=S.MIN_TRADES_BLIND)))
+
+
+def shard_of(sid, n, salt=''):
+    return int(hashlib.md5((str(sid) + salt).encode()).hexdigest(), 16) % n
+
+
+def bank_path(suffix, i, box=None):
+    if box is not None:
+        return os.path.join(ROOTOUT, 'refit_settings%s_b%02d_s%02d.csv' % (suffix, box, i))
     return os.path.join(ROOTOUT, 'refit_settings%s_s%02d.csv' % (suffix, i))
 
 
@@ -74,12 +110,14 @@ def slice_bits(cfg):
 
 
 def tune_worker(args):
-    i, n, suffix, cand_path, wins, reuse_path = args
+    i, n, suffix, cand_path, wins, reuse_path, box, of = args
     S.WINDOWS = dict(S.WINDOWS); S.WINDOWS.update(windows_table(wins))
     S.load_costs(); T.ACCT_OBJECTIVE = True
     D = pd.read_csv(cand_path, low_memory=False)
-    D = D[[shard_of(s, n) == i for s in D.sid]]
-    bank = bank_path(suffix, i)
+    if of > 1:
+        D = D[[shard_of(s, of) == box for s in D.sid]]            # this box's share, fixed for all time
+    D = D[[shard_of(s, n, '|w') == i for s in D.sid]]             # this worker's share within the box
+    bank = bank_path(suffix, i, box if of > 1 else None)
     done = set()
     if os.path.exists(bank):
         b = pd.read_csv(bank); done = set(zip(b.sid, b.window))
@@ -113,29 +151,46 @@ def tune_worker(args):
         # must carry the same columns in the same order (a window-dependent year
         # list misaligned the CSV on the first smoke run, 16 Sep)
         all_years = ['Y%d' % y for y in range(2006, 2021)]
-        row = dict(sid=cfg['sid'], slice=cfg.get('lab', sn), mode=mode, window=w['name'], build_end=w['build'][1], trade_start=w['trade'][0],
+        gw = ('G' + w['name']) if w['grade'] else None
+        row = dict(sid=cfg['sid'], slice=cfg.get('lab', sn), mode=mode, window=w['name'], build_end=w['build'][1],
+                   grade_year=(w['grade'][0] if w['grade'] else -1), trade_start=w['trade'][0],
                    tune_evals=ev, tune_seconds=secs, tune_stage=stage, ip=json.dumps(ip, sort_keys=True), risk=json.dumps(rk, sort_keys=True))
         assert row['build_end'] < row['trade_start']                                  # audit 3, per strategy per window
+        if gw:
+            assert row['build_end'] < row['grade_year'] < row['trade_start']         # the grade year is blind to the tuner and before the trade block
+        keys = [(bw, 'build')] + ([(gw, 'grade')] if gw else []) + [(tw, 'trade')]
         for routed in (True, False):
-            r = sc.score(combo, ip, rk, mode, sn, code, plan, (bw, tw) + tuple(years), routed=routed)
+            r = sc.score(combo, ip, rk, mode, sn, code, plan, tuple(k for k, _ in keys) + tuple(years), routed=routed)
             tag = 'routed' if routed else 'allon'
-            for wn, key in ((bw, 'build'), (tw, 'trade')):
-                for kk, v in _pick(r.get(wn)).items():
-                    row['%s_%s_%s' % (tag, key, kk)] = v
+            for wn, key in keys:
+                a = r.get(wn)
+                for kk in KEEP:
+                    row['%s_%s_%s' % (tag, key, kk)] = (a[kk] if a else (0 if kk == 'n' else np.nan))
+                row['%s_%s_g3' % (tag, key)] = g3_composite(a) if a else 0
+                row['%s_%s_pass2' % (tag, key)] = pass2(a, GRADE_MIN_TRADES if key == 'grade' else None)
+            if not gw:
+                for kk in KEEP:
+                    row['%s_grade_%s' % (tag, kk)] = np.nan
+                row['%s_grade_g3' % tag] = np.nan; row['%s_grade_pass2' % tag] = False
             for yn in all_years:
                 a = r.get(yn) if yn in years else None
                 row['%s_%s_expectancy_R' % (tag, yn)] = a['expectancy_R'] if a else np.nan
                 row['%s_%s_n' % (tag, yn)] = a['n'] if a else 0
-        # the label, on the tuning window only, under the window's own settings (audit 4)
-        b = row['routed_build_n'], row['routed_build_expectancy_R'], row['routed_build_profit_factor']
-        row['label_basis'] = 'B%s_own' % w['name']
-        row['passes_gate2_on_window'] = bool(b[0] >= S.MIN_TRADES_BLIND and b[1] >= T.LABEL['expectancy_R'] and b[2] >= T.LABEL['profit_factor'])
+        # THE BLIND LABEL, REPORTED NEVER USED: gate 2's bars on the GRADE year
+        # (never seen by the tuner) under the window's own settings. The book
+        # takes everyone regardless; the report asks whether this grade predicts
+        # the trade year. label_basis names the year it was read on.
+        row['label_basis'] = ('G%d_blind' % w['grade'][0]) if gw else ('B%s_own' % w['name'])
+        row['graded_pass_routed'] = bool(row['routed_grade_pass2']) if gw else False
+        row['graded_pass_allon'] = bool(row['allon_grade_pass2']) if gw else False
+        row['passes_gate2_on_window'] = bool(row['routed_build_pass2'])
         row['regime_dependent_on_window'] = bool(np.nan_to_num(row['routed_build_expectancy_R'], nan=-9) > np.nan_to_num(row['allon_build_expectancy_R'], nan=-9))
         pd.DataFrame([row]).to_csv(bank, mode='a', index=False, header=not os.path.exists(bank))
         k += 1
         if k <= 10 or k % 25 == 0:
-            print('  shard %d: %d/%d  %.0f s per job  window %s  tune %ss (%s)  trade %s routed %+.3f allon %+.3f'
-                  % (i, k, len(todo), (time.time() - t0) / k, w['name'], secs, stage, w['trade'], row['routed_trade_expectancy_R'], row['allon_trade_expectancy_R']), flush=True)
+            print('  shard %d: %d/%d  %.0f s per job  window %s  tune %ss (%s)  grade %s routed %+.3f (pass %s)  trade %s routed %+.3f allon %+.3f'
+                  % (i, k, len(todo), (time.time() - t0) / k, w['name'], secs, stage, w['grade'], row['routed_grade_expectancy_R'], row['graded_pass_routed'],
+                     w['trade'], row['routed_trade_expectancy_R'], row['allon_trade_expectancy_R']), flush=True)
     return i
 
 
@@ -160,7 +215,7 @@ def marks_worker(args):
             for kk, v in rk.items():
                 c['risk_' + kk] = v
             am = float(rk['atr_mult'])
-            a = pd.Timestamp('%d-01-01' % w['build'][0]); z = pd.Timestamp('%d-12-31' % w['trade'][1])
+            a = pd.Timestamp('%d-01-01' % w['span'][0]); z = pd.Timestamp('%d-12-31' % w['span'][1])   # tune + grade + trade years under this step's settings
             for p in S.all_pairs():
                 try:
                     r = TR.run_pair(c, p)
@@ -201,12 +256,79 @@ def marks_worker(args):
 
 
 def merge_settings(suffix):
-    fs = sorted(glob.glob(os.path.join(ROOTOUT, 'refit_settings%s_s[0-9][0-9].csv' % suffix)))
+    fs = sorted(glob.glob(os.path.join(ROOTOUT, 'refit_settings%s_s[0-9][0-9].csv' % suffix)) + glob.glob(os.path.join(ROOTOUT, 'refit_settings%s_b[0-9][0-9]_s[0-9][0-9].csv' % suffix)))
     if not fs:
         raise SystemExit('no settings shards for %s' % suffix)
     A = pd.concat([pd.read_csv(f, low_memory=False) for f in fs], ignore_index=True).drop_duplicates(['sid', 'window'])
     out = os.path.join(ROOTOUT, 'refit_settings%s.csv' % suffix); A.to_csv(out, index=False)
     return out, A
+
+
+def candidates_full(out):
+    """All 45,142: modes A (trend + chop banks), B (both slices), C (the 299 chunks tuned before the pause).
+    Combos only -- every tune is fresh. sid = '<mode>|<slice>|c1|c2|vol|base' (+ '|exit' for C)."""
+    parts = []
+    for f, mode in (('gate2_tuned_modeA_trend.csv', 'A'), ('gate2_tuned_modeA_chop.csv', 'A'), ('gate2_tuned_modeB.csv', 'B')):
+        d = pd.read_csv(os.path.join(ROOTOUT, f), low_memory=False)[['c1', 'c2', 'vol', 'base', 'exit_ind', 'slice']]; d['mode'] = mode; parts.append(d)
+    cs = sorted(glob.glob(os.path.join(ROOTOUT, 'gate2', 'modeC_trend', 'chunk_*.csv')))
+    if cs:
+        d = pd.concat([pd.read_csv(f, low_memory=False)[['c1', 'c2', 'vol', 'base', 'exit_ind', 'slice']] for f in cs], ignore_index=True); d['mode'] = 'C'; parts.append(d)
+    D = pd.concat(parts, ignore_index=True)
+    D['lab'] = D['mode'] + '-' + D['slice']
+    D['sid'] = D.apply(lambda r: '|'.join([r['mode'], r['slice'], r.c1, r.c2, r.vol, r.base] + ([r.exit_ind] if r['mode'] == 'C' else [])), axis=1)
+    D = D.drop_duplicates('sid').reset_index(drop=True)
+    D.to_csv(out, index=False)
+    print('candidates: %d -> %s  %s' % (len(D), out, D.lab.value_counts().to_dict()), flush=True)
+    return D
+
+
+def blind_report(A, wins, suffix):
+    """THE QUESTION (Jack, 21 Sep): does the grade on the unseen year 5 predict year 6 --
+    reported, never used to select. Graded-pass vs graded-fail on the trade year; Spearman
+    of the grade-year record vs the trade-year record on five yardsticks; per window, pooled,
+    per slice; both streams."""
+    from scipy.stats import spearmanr
+    yards = ('sortino', 'expectancy_R', 'profit_factor', 'calmar', 'g3')
+    rows, corr = [], []
+    def pooled_pf(g, tag, key):
+        gp = (g['%s_%s_avg_win_R' % (tag, key)].fillna(0) * g['%s_%s_win_rate' % (tag, key)].fillna(0) * g['%s_%s_n' % (tag, key)]).sum()
+        gl = (-g['%s_%s_avg_loss_R' % (tag, key)].fillna(0) * (1 - g['%s_%s_win_rate' % (tag, key)].fillna(0)) * g['%s_%s_n' % (tag, key)]).sum()
+        return gp / gl if gl > 0 else np.nan
+    def groups(g, tag, wname, ty, sl):
+        ok = g['%s_trade_n' % tag] > 0; p = g['graded_pass_%s' % tag].astype(bool)
+        for lab, m in (('graded-pass', p & ok), ('graded-fail', ~p & ok), ('all', ok)):
+            gg = g[m]; e = gg['%s_trade_expectancy_R' % tag]
+            rows.append(dict(stream=tag, window=wname, trade_year=ty, slice=sl, group=lab, n=int(len(gg)),
+                             grade_median_R=float(gg['%s_grade_expectancy_R' % tag].median()) if len(gg) else np.nan,
+                             tune_median_R=float(gg['%s_build_expectancy_R' % tag].median()) if len(gg) else np.nan,
+                             trade_median_R=float(e.median()) if len(gg) else np.nan, share_positive=float((e > 0).mean()) if len(gg) else np.nan,
+                             pooled_PF=pooled_pf(gg, tag, 'trade') if len(gg) else np.nan))
+    def rank(g, tag, wname, sl):
+        ok = g['%s_trade_n' % tag] > 0
+        for y in yards:
+            a = g['%s_grade_%s' % (tag, y)].astype(float); b = g['%s_trade_%s' % (tag, y)].astype(float)
+            m = ok & np.isfinite(a) & np.isfinite(b)
+            rho, pv = spearmanr(a[m], b[m]) if m.sum() > 5 else (np.nan, np.nan)
+            corr.append(dict(stream=tag, window=wname, slice=sl, yardstick=y, n=int(m.sum()), spearman=float(rho), p=float(pv)))
+    for tag in ('routed', 'allon'):
+        for w in wins:
+            g = A[A.window == w['name']]
+            groups(g, tag, w['name'], w['trade'][0], 'ALL'); rank(g, tag, w['name'], 'ALL')
+        groups(A, tag, 'POOLED', 0, 'ALL'); rank(A, tag, 'POOLED', 'ALL')
+        for sl, g in A.groupby('slice'):
+            groups(g, tag, 'POOLED', 0, sl); rank(g, tag, 'POOLED', sl)
+    R = pd.DataFrame(rows); C = pd.DataFrame(corr)
+    R.to_csv(os.path.join(ROOTOUT, 'refit_blind_groups%s.csv' % suffix), index=False); C.to_csv(os.path.join(ROOTOUT, 'refit_blind_rankcorr%s.csv' % suffix), index=False)
+    print('\n=== BLIND GRADE (year 5, unseen by the tuner) -> TRADE YEAR (year 6): graded-pass vs graded-fail ===', flush=True)
+    print(R[R.slice == 'ALL'].to_string(index=False, float_format=lambda v: '%8.3f' % v), flush=True)
+    print('\n=== RANK CORRELATION grade year vs trade year (Spearman), ALL slices ===', flush=True)
+    print(C[C.slice == 'ALL'].pivot_table(index=['stream', 'window'], columns='yardstick', values='spearman').round(3).to_string(), flush=True)
+    print('\n=== per slice, POOLED ===', flush=True)
+    print(R[(R.window == 'POOLED') & (R.slice != 'ALL')].to_string(index=False, float_format=lambda v: '%8.3f' % v), flush=True)
+    print(C[(C.window == 'POOLED') & (C.slice != 'ALL')].pivot_table(index=['stream', 'slice'], columns='yardstick', values='spearman').round(3).to_string(), flush=True)
+    # graded-pass counts per window (power)
+    P = A.groupby('window').agg(graded_pass_routed=('graded_pass_routed', 'sum'), graded_pass_allon=('graded_pass_allon', 'sum'), n=('sid', 'size'))
+    print('\ngraded-pass counts per window:'); print(P.to_string(), flush=True)
 
 
 def report(A, wins, suffix):
@@ -243,9 +365,10 @@ def report(A, wins, suffix):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--stage', required=True, choices=['tune', 'marks', 'report'])
+    ap.add_argument('--stage', required=True, choices=['tune', 'marks', 'report', 'candidates', 'blind'])
+    ap.add_argument('--box', type=int, default=0); ap.add_argument('--of', type=int, default=1)
     ap.add_argument('--candidates', default=os.path.join(ROOTOUT, 'refit_pilot_sample.csv'))
-    ap.add_argument('--windows', default='2011-2015:2016,2012-2016:2017,2013-2017:2018,2014-2018:2019,2015-2019:2020')
+    ap.add_argument('--windows', default='2011-2014:2015:2016,2012-2015:2016:2017,2013-2016:2017:2018,2014-2017:2018:2019,2015-2018:2019:2020')
     ap.add_argument('--jobs', type=int, default=4)
     ap.add_argument('--suffix', default='_refit_smoke')
     ap.add_argument('--reuse', default='', help='pilot csv whose 2011-2015 / 2012-2016 tunes are reused')
@@ -256,12 +379,17 @@ def main():
     if a.stage == 'tune':
         D = pd.read_csv(a.candidates, low_memory=False)
         print('candidates: %s (%d); windows %s; jobs %d' % (os.path.basename(a.candidates), len(D), [w['name'] for w in wins], a.jobs), flush=True)
-        args = [(i, a.jobs, a.suffix, a.candidates, wins, a.reuse) for i in range(a.jobs)]
+        args = [(i, a.jobs, a.suffix, a.candidates, wins, a.reuse, a.box, a.of) for i in range(a.jobs)]
         with mp.get_context('spawn').Pool(a.jobs) as pool:
             pool.map(tune_worker, args)
-        out, A = merge_settings(a.suffix)
-        print('tune done in %.1f min -> %s (%d rows)' % ((time.time() - t0) / 60, out, len(A)), flush=True)
-        report(A, wins, a.suffix)
+        if a.of > 1:
+            print('box %d of %d: tunes banked in refit_settings%s_b%02d_s*.csv -- merge on the Mac with --stage report' % (a.box, a.of, a.suffix, a.box), flush=True)
+        else:
+            out, A = merge_settings(a.suffix)
+            print('tune done in %.1f min -> %s (%d rows)' % ((time.time() - t0) / 60, out, len(A)), flush=True)
+            report(A, wins, a.suffix)
+            if wins[0]['grade']:
+                blind_report(A, wins, a.suffix)
     elif a.stage == 'marks':
         out, A = merge_settings(a.suffix)
         args = [(i, a.jobs, a.suffix, a.candidates, wins, out) for i in range(a.jobs)]
@@ -276,9 +404,16 @@ def main():
         Tf.to_pickle(os.path.join(ROOTOUT, 'wf_trades%s.pkl' % a.suffix)); Mf.to_pickle(os.path.join(ROOTOUT, 'wf_marks%s.pkl' % a.suffix))
         print('marks done in %.1f min: %d trades, %d marks, %d strategies, steps %s -> wf_trades%s.pkl / wf_marks%s.pkl'
               % ((time.time() - t0) / 60, len(Tf), len(Mf), Tf.sid.nunique(), sorted(Tf.step.unique().tolist()), a.suffix, a.suffix), flush=True)
+    elif a.stage == 'candidates':
+        candidates_full(os.path.join(ROOTOUT, 'refit_candidates_full.csv'))
+    elif a.stage == 'blind':
+        out, A = merge_settings(a.suffix)
+        blind_report(A, wins, a.suffix)
     else:
         out, A = merge_settings(a.suffix)
         report(A, wins, a.suffix)
+        if wins[0]['grade']:
+            blind_report(A, wins, a.suffix)
     print('REFIT %s STAGE %s COMPLETE' % (a.suffix, a.stage.upper()), flush=True)
 
 
