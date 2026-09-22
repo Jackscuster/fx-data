@@ -135,6 +135,56 @@
    year.** The full run (45,142 × 5 or 11 windows) is built, smoke-tested
    and NOT started; nothing rented.
 
+   **FUNNEL TEST (Jack, 21 Sep; `code/l2funnel.py`, no new tunes, 12 min).**
+   Gate 2's bars (n ≥ 50, expectancy ≥ 0.08, PF ≥ 1.25, Sharpe ≥ 0.5,
+   Sortino ≥ 0.7, Calmar ≥ 0.6) applied to each of the 250 on its tuning-
+   window record under its fresh settings, then the next year untouched.
+   `funnel_groups_refit_smoke.csv`, `funnel_rankcorr_refit_smoke.csv`.
+
+   *Passer counts.* ROUTED record: **250 / 250 / 250 / 249 / 250** — one
+   non-passer in five windows. The funnel is degenerate: an in-sample record
+   after coordinate descent clears every gate-2 bar for every strategy. That
+   is not a sample-size problem and no sample size fixes it; only a BLIND
+   label (tune on four years, label on the fifth) or gate 3's bars could
+   make a funnel at all. ALWAYS-ON record: passers 227 / 210 / 218 / 215 /
+   202, non-passers 23-48 per window, 178 pooled — enough to see a 0.05 R
+   difference in next-year median (SE ≈ 0.02 R at the observed spread).
+
+   *Next year, always-on, passers vs non-passers (median R/trade, share
+   positive, pooled PF):* 2016 −0.083 / 24% / 0.75 vs −0.110 / 35% / 0.85;
+   2017 −0.003 / 50% / 0.97 vs −0.011 / 45% / 0.95; 2018 +0.025 / 61% /
+   1.12 vs +0.061 / 69% / 1.17; 2019 −0.078 / 23% / 0.78 vs −0.078 / 31% /
+   0.87; 2020 −0.016 / 46% / 0.99 vs −0.016 / 42% / 0.96. **Pooled: passers
+   −0.034 / 40% / 0.91, non-passers −0.016 / 44% / 0.96.** The label selects
+   nothing; if anything it selects the slightly worse group. Routed
+   passers = everyone: −0.045, −0.018, +0.041, −0.082, −0.005.
+
+   *Rank correlation, tuning window vs next year (Spearman), five
+   yardsticks (Sortino, expectancy, PF, Calmar, gate-3 composite).* Routed,
+   pooled 1,250: **−0.03 to −0.01 on every yardstick**; per window between
+   −0.10 and +0.04. Always-on, pooled: **−0.18 (Sortino), −0.10
+   (expectancy), −0.11 (PF), −0.09 (Calmar), −0.08 (composite)**; 23 of the
+   25 per-window values ≤ 0, the largest +0.08. The better a strategy looked
+   on its tuning window, the slightly worse it did next year.
+
+   *Passers pooled across the five windows as one rolling book, fixed
+   kernel, 22:00 table, both budgets.* Always-on (227-202 members per step):
+   build +4.6 to +8.6% median year; traded years **−0.05 / −0.08**, worst
+   −2.35 / −3.52, DIP95 7.6 / 11.4 (out of budget), PF 0.98, retention
+   −0.01 FIT; random-entry null mean −0.57 / −0.85, max −0.01 / −0.02,
+   p = 0.04 (better than random entries, still not positive). Routed
+   (= the whole 250): −1.48 / −2.21, worst −3.79 / −5.69, retention −0.11
+   FIT; random-entry p = 0.16; regime-shuffle mean −0.81 / −1.22, max
+   +0.32 / +0.47, p = 0.88.
+
+   **On the $53:** the tuning-window record carries no information about
+   the next year on any yardstick (rank correlation ≈ 0 routed, < 0
+   always-on), the gate-2 funnel cannot select because it passes everyone
+   in-sample, and the pooled passers book is at zero or below with the
+   drawdown budget broken. The full rebuild would produce these same tables
+   at 180× the size. Recommendation: do not spend it; if anything is spent,
+   it is on a BLIND-label design, which is a different programme.
+
 0-prev. **BATCH 1 / BATCH 2 (14 Sep) — as run on the contaminated kernel; kept for the record.**
    Session context was cleared at ~14:15 with Batch 1 mid-run. Everything
    below is from files. The base book is the four-slice clean field routed on
