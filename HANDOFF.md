@@ -536,6 +536,38 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0f. **THE BLIND-LABEL PROGRAMME (Jack, 21 Sep) — full library, no picking.
+   BUILT; 250 SMOKE RUNNING; NOTHING RENTED. Jack launches the boxes.**
+
+   **Design.** All 45,139 candidates (A 17,822 = 12,163 trend + 5,659 chop;
+   B 19,845 = 14,815 + 5,030; C 7,472, the 299 chunks tuned before the
+   pause — `results/refit_candidates_full.csv`, three C duplicates dropped).
+   Five rolling windows: **tune on years 1-4, grade on year 5 (never seen by
+   the tuner), trade year 6 untouched**, roll one year, stitch traded years
+   only: 2011-14 / 2015 / 2016 … 2015-18 / 2019 / 2020. Gate 2's grids, cap
+   6, 22:00 measured per-pair spreads, one-bar lag everywhere. Everyone
+   trades in the book — equal weight, netted, fixed kernel, both budgets,
+   always-on and routed; the walk's sizing/curve decisions read years 1-5
+   (all closed at decision time). **The year-5 grade is REPORTED, never
+   used**: gate 2's bars on the grade year (trade floor 10 = 50/5, one year
+   not five) → graded-pass vs graded-fail on year 6; Spearman of the
+   grade-year record vs the year-6 record on Sortino, expectancy, PF,
+   Calmar and the gate-3 composite; per window, pooled, per slice, both
+   streams. Nulls on the book (random-entry both streams, regime-shuffle
+   routed), retention, per year, per slice.
+
+   **Code.** `code/l2refit.py` (`--windows tune:grade:trade`, `--stage
+   candidates | tune --box k --of N | marks | report`), `code/cloud_refit.sh`
+   (three boxes, md5(sid) % 3, resumable bank per (sid, window), pushes the
+   shards, merge on the Mac with `--stage report`). Two-strategy end-to-end
+   passed (tune → marks → route → walk, per-step decisions log, retention).
+
+   **Smoke on the 250 (`~/fx-data-logs/blind_smoke.sh`, launched 21 Sep
+   23:03; marker "BLIND SMOKE COMPLETE")**: measured seconds per 4-year
+   tune, the blind report and the two books land there. Core-hours, wall
+   time on three CPX62s, cost and the exact launch line per box are written
+   below at that marker.
+
 0e. **THE CLEAN REBUILD FROM GATE 2 — SCOPED 16 Sep. NOT STARTED. Does not
    start until `python3 code/preflight.py` prints PRE-FLIGHT CLEAR (every row
    of `results/audit_2026-09.csv` PASS) and Jack says go.**
