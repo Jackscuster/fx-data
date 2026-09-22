@@ -562,11 +562,77 @@
    shards, merge on the Mac with `--stage report`). Two-strategy end-to-end
    passed (tune → marks → route → walk, per-step decisions log, retention).
 
-   **Smoke on the 250 (`~/fx-data-logs/blind_smoke.sh`, launched 21 Sep
-   23:03; marker "BLIND SMOKE COMPLETE")**: measured seconds per 4-year
-   tune, the blind report and the two books land there. Core-hours, wall
-   time on three CPX62s, cost and the exact launch line per box are written
-   below at that marker.
+   **SMOKE ON THE 250 — COMPLETE 22 Sep 07:30** (tune 489 min on 4 workers,
+   marks 6 min, each walk 10-35 s, each random-entry null 1.6-6.6 min,
+   shuffle 2.8 min). Every stage of the programme ran end to end.
+
+   *Measured, 1,250 fresh 4-year tunes:* **mean 71.8 s, median 51.2, p90
+   99.1, p99 484** (A-chop 55, A-trend 72, B-chop 66, B-trend 78; median 538
+   configurations tried). Per job including the routed + always-on scoring of
+   the tune window, the grade year, the trade year and every sealed year:
+   **72.8 s** (the Scorer's indicator cache makes the scoring nearly free).
+
+   *THE BLIND GRADE CARRIES SOME INFORMATION — first positive signal of the
+   month.* Gate 2's bars on the grade year (trade floor 10) pass 334 of
+   1,250 routed / 245 allon — a real funnel, unlike the in-sample one.
+   Pooled over the five windows, next year: routed graded-pass **−0.011 R,
+   48% positive, PF 0.985** vs graded-fail **−0.036 R, 43%, PF 0.961**;
+   allon graded-pass −0.034 vs graded-fail −0.028. Per window the routed
+   pass group beats the fail group in 3 of 5 (2018 +0.085 vs −0.038 and 68%
+   vs 47% positive; 2019 goes the other way, −0.105 vs −0.066). Rank
+   correlation grade year → trade year, five yardsticks: routed pooled
+   **+0.03 to +0.05**, allon pooled −0.04 to −0.01; one window is strongly
+   positive (2013-16 → 2018: **+0.21 to +0.36**), one negative (2012-15 →
+   2017: −0.10 to −0.14), three near zero. **Read: the blind grade is not
+   noise the way the in-sample record was (which ran −0.18 to 0), but the
+   effect is small, one-window-dominated, and still leaves the passers
+   negative.** `refit_blind_groups_blind_smoke.csv`,
+   `refit_blind_rankcorr_blind_smoke.csv`.
+
+   *The books (everyone trades, equal weight, fixed kernel, both budgets).*
+   Always-on: build blocks +3.4 / +5.1 median year → traded years **−0.50 /
+   −0.74**, worst −2.77 / −4.16, DIP95 8.0 / 12.0, PF 0.96, retention −0.15
+   FIT; random-entry null mean −0.22, max −0.005, **p = 0.96** (worse than
+   random). Routed: build +10.5 / +15.8 → **−0.53 / −0.80**, worst −2.27 /
+   −3.41, DIP95 10.8 / 16.1, PF 0.996, retention −0.05 FIT; random-entry
+   mean −2.31, max −0.48, **p = 0.04**; regime-shuffle mean −1.07, max
+   +0.51, **p = 0.16**. Per slice, routed: A-chop +0.13, B-chop +0.44,
+   B-trend −0.57, A-trend −1.17. Both books are still negative and both
+   break the drawdown budget, but the routed book is the first to beat its
+   random-entry null and to sit inside 0.2pp of zero on PF.
+
+   *Per-year and decay.* Routed trade-year medians −0.056, −0.021, +0.010,
+   −0.082, −0.009 (1 of 5 years positive); decay from the tune window is
+   flat at −0.02 R for years 1-4 and worsens to −0.06 / −0.07 at years 5-6.
+
+   **FULL-RUN COST, from these measurements.** 45,139 candidates × 5 windows
+   = **225,695 jobs at 72.8 s = 4,564 core-hours**. Three 16-vCPU boxes
+   (48 vCPU, shared at ~0.6× a Mac P-core ≈ 29 effective cores): **6.6 days,
+   ~$47** at $0.10/box-hour (one 48-vCPU dedicated box: 5.0 days, ~$190).
+   The Mac alone: ~30 days. Marks + walks + nulls afterwards: ~80 core-hours.
+
+   **THE EXACT LAUNCH LINE — one per box, k = 0, 1, 2:**
+
+   ```
+   export GH_TOKEN=<token with write access to Jackscuster/fx-data>
+   curl -sL https://raw.githubusercontent.com/Jackscuster/fx-data/main/code/cloud_refit.sh | bash -s -- --box k --of 3
+   ```
+
+   Each box provisions itself, clones, runs `l2refit.py --stage tune` on its
+   md5(sid) % 3 share with `nproc` workers, banks every (sid, window) as it
+   completes, and pushes `results/refit_settings_blind_full_b<k>_s*.csv`.
+   A box that dies is relaunched with the same `--box` and resumes. Merge on
+   the Mac: `python3 code/l2refit.py --stage report --suffix _blind_full
+   --windows "2011-2014:2015:2016,2012-2015:2016:2017,2013-2016:2017:2018,2014-2017:2018:2019,2015-2018:2019:2020"`.
+   A dry run of the same argument plumbing, no provisioning:
+   `bash code/cloud_refit.sh --local --box 0 --of 3` (JOBS=2).
+
+   **ONE KNOWN GAP, not on the launch path.** The always-on marks stream for
+   the full library is ~33 GB (the smoke's 185 MB × 181) and the per-step
+   Book ~8.5 GB, so the BOOK stage will not fit in the Mac's 16 GB. The fix
+   is a per-step marks split (five pickles, the walk loading one step at a
+   time → ~7 GB peak always-on, ~1.4 GB routed); I will build it while the
+   boxes run. The tunes, the blind report and the routed book are unaffected.
 
 0e. **THE CLEAN REBUILD FROM GATE 2 — SCOPED 16 Sep. NOT STARTED. Does not
    start until `python3 code/preflight.py` prints PRE-FLIGHT CLEAR (every row

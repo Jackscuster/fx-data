@@ -1,0 +1,6 @@
+structure,step,build,trade,cut_applied,passers,members,curve_bins,size_scale,scale_binds,cap_pct,cap_bound_days,net_min_votes,curve_mode,opposition,vote_on_entry_day,dip_budget,day_budget,build_median_year_pct
+ALLPASS,1,2011-2015,2016-2016,False,90,90,6,1.1469645130634885,DIP95,2.0,12,0.5,fitted,net,False,5.4,3.6,8.774729876666342
+ALLPASS,2,2012-2016,2017-2017,False,90,90,5,1.0079070069160254,DIP95,2.0,6,0.5,fitted,net,False,5.4,3.6,6.934268322469048
+ALLPASS,3,2013-2017,2018-2018,False,90,90,5,1.012825158022516,DIP95,2.0,11,0.5,fitted,net,False,5.4,3.6,12.372787911079007
+ALLPASS,4,2014-2018,2019-2019,False,90,90,5,1.1303301176945335,DIP95,2.0,28,0.5,fitted,net,False,5.4,3.6,7.577432473883263
+ALLPASS,5,2015-2019,2020-2020,False,90,90,6,1.3051539174072104,DIP95,2.0,13,0.5,fitted,net,False,5.4,3.6,9.009901135308052
