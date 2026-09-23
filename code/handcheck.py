@@ -36,7 +36,7 @@ def main():
     if a.per_mode:
         parts = []
         for m in ('A', 'B', 'C'):
-            g = T[T.sid.astype(str).str.startswith(m + '|')]
+            g = T[T.sid.astype(str).str[0] == m]
             if not len(g):
                 print('mode %s: no trades in %s' % (m, tag), flush=True); continue
             one = str(g.sid.astype(str).unique()[rng.integers(g.sid.nunique())])
@@ -88,8 +88,15 @@ def main():
                 cfg2['risk_' + kk] = vv
         rp = TR.run_pair(cfg2, p); trr = rp['trades']; ntr = len(trr['r']); dvv = rp['dates'].values
         cand = [j for j in range(ntr) if dvv[int(trr['entry_bar'][j])] == np.datetime64(t.entry) and int(trr['dir'][j]) == d]
-        u = float(trr['units'][cand[0]]) if cand else S.RISK / (amult * a0) / n_legs
-        cost_R = float(S._cost_R(p, np.array([ent_px]), np.array([u]), np.array([np.datetime64(t.entry)]))[0]) * amult
+        best, u, cost_R, resid = None, S.RISK / (amult * a0) / n_legs, np.nan, np.inf
+        for j in cand:
+            uj = float(trr['units'][j])
+            cj = float(S._cost_R(p, np.array([ent_px]), np.array([uj]), np.array([np.datetime64(t.entry)]))[0]) * amult
+            rj = abs(float(trr['r'][j]) * amult - cj - float(t.R))
+            if rj < resid:
+                best, u, cost_R, resid = j, uj, cj, rj
+        if best is None:
+            cost_R = float(S._cost_R(p, np.array([ent_px]), np.array([u]), np.array([np.datetime64(t.entry)]))[0]) * amult
         implied = abs(float(m.mark.iloc[0])) * S.RISK / (amult * abs(ent_px) * abs(u)) if u else float('nan')
         tab = float(S.COSTS.get(p, float('nan')))
         cost_ok = bool(np.isfinite(implied) and (abs(implied - tab) < 1e-4 * tab or abs(implied - 2 * tab) < 1e-4 * tab))
@@ -97,6 +104,7 @@ def main():
         checks = []
         checks.append(('fill-day mark = -cost (engine units)', marks[0], -cost_R))
         checks.append(('implied cost fraction == table (x2 crisis)', 1.0 if cost_ok else 0.0, 1.0))
+        checks.append(('engine leg matched: r x atr_mult - cost == R', 0.0 if resid < 2e-3 else 1.0, 0.0))
         for i in range(1, len(days) - 1):
             b = days[i]; prev = days[i - 1]
             exp = d * (float(c.loc[b]) - float(c.loc[prev])) * k
@@ -109,7 +117,7 @@ def main():
         bad = [(n, g, e) for n, g, e in checks if not (np.isfinite(g) and np.isfinite(e) and abs(g - e) <= 2e-3 * max(1.0, abs(e)))]
         ok = not bad; ok_all &= ok
         rows.append(dict(sid=sid[:60], pair=p, entry=t.entry.date(), exit=t.exit.date(), days=len(days), dir=d, legs=n_legs, atr_len=alen, atr_mult=amult,
-                         entry_px=ent_px, atr_entry=round(a0, 6), units=round(u, 2), implied_cost_frac=round(implied, 10), table_cost_frac=round(tab, 10), cost_R=round(cost_R, 4), fill_mark=round(marks[0], 4), R_engine=round(float(t.R), 4),
+                         entry_px=ent_px, atr_entry=round(a0, 6), units=round(u, 2), leg_match_resid=round(float(resid), 6), implied_cost_frac=round(implied, 10), table_cost_frac=round(tab, 10), cost_R=round(cost_R, 4), fill_mark=round(marks[0], 4), R_engine=round(float(t.R), 4),
                          R_from_marks=round(float(sum(marks)), 4), first_vote=first_vote.date(), fill_plus_1=days[1].date() if len(days) > 1 else None,
                          checks=len(checks), mismatches=len(bad), status='ok' if ok else 'MISMATCH: %s' % bad[:2]))
         print('%-8s %s %s->%s dir %+d  legs %d  %d days  fill mark %+.4f (cost %.4f)  R %+.4f = marks %+.4f  first vote %s = fill+1 %s  [%d checks, %d mismatches]'
