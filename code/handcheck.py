@@ -69,7 +69,10 @@ def main():
         # units = RISK / (atr_mult * ATR); account-normalised R multiplies by atr_mult -> k = 1/ATR_entry
         # a two-leg (trend) position is TWO trade records with the same (sid, pair, entry),
         # each carrying half the units; a chop position is one record with all of them
-        n_legs = int(((T.sid == t.sid) & (T.pair == t.pair) & (T.entry == t.entry)).sum())
+        m_leg = (T.sid == t.sid) & (T.pair == t.pair) & (T.entry == t.entry)
+        if 'step' in T.columns:
+            m_leg &= (T.step == t.step)        # overlapping windows repeat a trade per step
+        n_legs = int(m_leg.sum())
         k = 1.0 / a0 / n_legs
         cost_R = float(S._cost_R(p, np.array([ent_px]), np.array([S.RISK / (amult * a0) / n_legs]), np.array([np.datetime64(t.entry)]))[0]) * amult
         days = list(m.day); marks = list(m.mark.astype(float))

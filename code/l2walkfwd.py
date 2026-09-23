@@ -124,7 +124,10 @@ def field_label(sid):
     alone merges them and a per-slice assert built on it cannot see a whole
     slice go missing."""
     p = str(sid).split('|')
-    return p[0] if p[0] != 'B' else 'B-' + p[1]
+    # legacy sids carry the slice in field 0 for mode A ('A-trend|trend|...'); mode B
+    # and the BLIND pipeline's own sids ('A|trend|...', 'B|chop|...', 'C|trend|...')
+    # carry the bare mode, so the label is mode + slice from field 1.
+    return ('%s-%s' % (p[0], p[1])) if p[0] in ('A', 'B', 'C') else p[0]
 
 
 def field_counts(sids, slices):
@@ -198,6 +201,22 @@ def load_field(slices, field_file):
             'load_field: field file %s holds NO sids in slices %s'
             % (field_file, ','.join(slices)))
 
+    if 'ip2' not in pd.read_csv(field_file, nrows=1, low_memory=False).columns:
+        # THE BLIND PIPELINE'S FIELD (22 Sep): a candidate list, not a gate-2 bank. The
+        # marks already exist and carry the settings that produced them, so there is no
+        # ip1/ip2 to reconstruct -- the walk needs the sid list and the slice labels only.
+        D = pd.read_csv(field_file, low_memory=False)
+        D = D[D.sid.isin(field_sids)].copy()
+        D['src_label'] = [field_label(x) for x in D.sid]
+        D = D[D.src_label.isin(slices)].reset_index(drop=True)
+        if 'slice' not in D.columns:
+            D['slice'] = [str(x).split('|')[1] for x in D.sid]
+        if 'mode' not in D.columns:
+            D['mode'] = [str(x).split('|')[0][0] for x in D.sid]
+        D['src_mode'] = D['mode']
+        print('  field is a CANDIDATE LIST (no ip2): %d strategies, per slice %s'
+              % (len(D), D.src_label.value_counts().to_dict()), flush=True)
+        return D
     REC = recovered_ip1()
     F = []
     lost = {}
