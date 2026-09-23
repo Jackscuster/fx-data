@@ -154,7 +154,7 @@ def c7():
 
 def c8():
     s = src('l2walkfwd.py')
-    assert "decisions.append(dict(structure=s, step=si + 1, build=" in s and "OUT('decisions.csv')" in s
+    assert "decisions.append(dict(structure=s, step=si + 1, build=" in s and "OUT('decisions%s.csv' % dtag)" in s
     f = glob.glob(os.path.join(ROOTOUT, 'decisions_*.csv'))
     if not f:
         return False
