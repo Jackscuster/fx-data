@@ -194,6 +194,25 @@ def tune_worker(args):
     return i
 
 
+EXIT_OF_MODE = {'A': 'C1_FLIP', 'B': 'BASE_CROSS', 'C': 'EXIT_IND'}
+
+
+def check_mode_exits(mode, reasons, what):
+    """AUDIT 12 on the blind path (22 Sep): the exit rule that FIRED must be the
+    mode's own. Mode C had never run through this pipeline and run_pair was once
+    hardcoded to mode B, so this asserts per strategy rather than trusting the
+    label: a forbidden rule anywhere in a strategy's trades halts the run."""
+    import l2engine as E
+    own = getattr(E, EXIT_OF_MODE[mode])
+    forbidden = {m: getattr(E, EXIT_OF_MODE[m]) for m in ('A', 'B', 'C') if m != mode}
+    rs = set(int(x) for x in reasons)
+    bad = {m: c for m, c in forbidden.items() if c in rs}
+    if bad:
+        raise RuntimeError('MODE EXIT MISMATCH (%s, mode %s): fired %s -- the exit rules of mode(s) %s'
+                           % (what, mode, sorted(E.REASON[c] for c in bad.values()), sorted(bad)))
+    return own in rs
+
+
 def marks_worker(args):
     """Per strategy: for each step, the ALWAYS-ON trade stream under that step's settings over
     [build start, trade end], marks truncated at the trade end, one tid per trade, `step` column."""
@@ -204,6 +223,7 @@ def marks_worker(args):
     D = D[[shard_of(s, n) == i for s in D.sid]]
     SET = pd.read_csv(settings_path, low_memory=False).set_index(['sid', 'window'])
     Tr, Mr = [], []
+    own_fired, seen = {}, {}
     for cfg in D.to_dict('records'):
         sn, code, plan = slice_bits(cfg)
         for si, w in enumerate(wins):
@@ -226,6 +246,9 @@ def marks_worker(args):
                 nt = len(tr['r'])
                 if nt == 0:
                     continue
+                fired = check_mode_exits(cfg['mode'], tr['reason'][:nt], '%s %s %s' % (cfg['sid'][:50], w['name'], p))
+                own_fired[cfg['mode']] = own_fired.get(cfg['mode'], 0) + int(fired)
+                seen[cfg['mode']] = seen.get(cfg['mode'], 0) + 1
                 dv = d.values
                 wi = np.flatnonzero((d >= a) & (d <= z))
                 if not len(wi):
@@ -251,7 +274,8 @@ def marks_worker(args):
         Mf['dir'] = Mf['dir'].astype(np.int8); Mf['mark'] = Mf['mark'].astype(np.float32); Mf['day'] = pd.to_datetime(Mf.day)
         Mf['step'] = Mf['step'].astype(np.int8); Tf['step'] = Tf['step'].astype(np.int8)
     Tf.to_pickle(os.path.join(ROOTOUT, 'refit_marks%s_T_s%02d.pkl' % (suffix, i))); Mf.to_pickle(os.path.join(ROOTOUT, 'refit_marks%s_M_s%02d.pkl' % (suffix, i)))
-    print('  marks shard %d: %d trades, %d marks' % (i, len(Tf), len(Mf)), flush=True)
+    print('  marks shard %d: %d trades, %d marks; own-exit-rule fired on %s of %s (strategy, window, pair) runs per mode'
+          % (i, len(Tf), len(Mf), own_fired, seen), flush=True)
     return i
 
 

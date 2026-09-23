@@ -96,7 +96,9 @@ def permitted(shape, act, flags, tir, activity, chop_always=False, trend_gate='t
     'trending' = the trend axis says TRENDING (plus TIR if tir=incl);
     'not-ranging' = the chop axis does not say RANGING (so trending,
     trend-in-range and neither all admit); 'never' = trend slices never open
-    (CHOP-ONLY reference: chop slices always on, no trend strategies)."""
+    (CHOP-ONLY reference, 14 Sep); 'always' = trend slices UNGATED -- every bar,
+    crisis still applied, activity gate skipped (Jack, 22 Sep: 'trend strategies
+    ungated', everyone trades)."""
     out = {}
     ts = TREND_STATES[tir]
     for p in shape.columns:
@@ -106,7 +108,9 @@ def permitted(shape, act, flags, tir, activity, chop_always=False, trend_gate='t
         tr = (sh.isin(ts) if trend_gate == 'trending' else (sh.notna() & ~sh.isin(CHOP_STATES))) & ~cr
         if trend_gate == 'never':                  # CHOP-ONLY: no trend strategy ever opens
             tr = pd.Series(False, index=sh.index)
-        if activity == 'weak':
+        elif trend_gate == 'always':               # trend slices UNGATED: every bar, crisis still on,
+            tr = ~cr                               # and no activity gate (see below, which is skipped)
+        if activity == 'weak' and trend_gate != 'always':
             tr = tr & (ac != 'weak')
         ch = (sh.notna() if chop_always else sh.isin(CHOP_STATES)) & ~cr
         out[(p, 'trend')] = tr.fillna(False).astype(bool)
@@ -217,7 +221,7 @@ def main():
     ap.add_argument('--activity', choices=['ignore', 'weak'], required=True)
     ap.add_argument('--shuffle-null', type=int, default=0)
     ap.add_argument('--chop-always', action='store_true', help='chop-core: chop slices take every entry (their own rules), only trend slices are gated')
-    ap.add_argument('--trend-gate', choices=['trending', 'not-ranging', 'never'], default='trending', help='trend entries on TRENDING (trend axis) or on NOT RANGING (chop axis)')
+    ap.add_argument('--trend-gate', choices=['trending', 'not-ranging', 'never', 'always'], default='trending', help="trend entries on TRENDING (trend axis), on NOT RANGING (chop axis), 'always' = UNGATED (every bar, crisis only, no activity gate), 'never' = no trend entry at all (CHOP-ONLY)")
     ap.add_argument('--no-crisis', action='store_true', help='reproduction check only: the engine\'s own routing has no crisis flag')
     ap.add_argument('--jobs', type=int, default=3)
     a = ap.parse_args()
