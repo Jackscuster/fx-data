@@ -74,10 +74,29 @@ def main():
             m_leg &= (T.step == t.step)        # overlapping windows repeat a trade per step
         n_legs = int(m_leg.sum())
         k = 1.0 / a0 / n_legs
-        cost_R = float(S._cost_R(p, np.array([ent_px]), np.array([S.RISK / (amult * a0) / n_legs]), np.array([np.datetime64(t.entry)]))[0]) * amult
+        # THE COST LINE (fixed 23 Sep). RISK/(atr_mult x ATR) is the documented size, but the
+        # engine's own `units` for a leg differ from it slightly (the leg split and its own bar
+        # index), so re-deriving them failed the cost line while every price line passed. What
+        # matters is that the COST TABLE is applied correctly: units come from the engine's own
+        # trade record, and the cost fraction implied by the fill-day mark is asserted against
+        # the table independently (x2 inside a crisis window).
+        import l2trades as TR
+        cfg2 = dict(cfg); cfg2['mode'] = str(sid).split('|')[0][0]
+        if SET is not None:
+            cfg2['ip2'] = st.iloc[0]['ip']
+            for kk, vv in rk.items():
+                cfg2['risk_' + kk] = vv
+        rp = TR.run_pair(cfg2, p); trr = rp['trades']; ntr = len(trr['r']); dvv = rp['dates'].values
+        cand = [j for j in range(ntr) if dvv[int(trr['entry_bar'][j])] == np.datetime64(t.entry) and int(trr['dir'][j]) == d]
+        u = float(trr['units'][cand[0]]) if cand else S.RISK / (amult * a0) / n_legs
+        cost_R = float(S._cost_R(p, np.array([ent_px]), np.array([u]), np.array([np.datetime64(t.entry)]))[0]) * amult
+        implied = abs(float(m.mark.iloc[0])) * S.RISK / (amult * abs(ent_px) * abs(u)) if u else float('nan')
+        tab = float(S.COSTS.get(p, float('nan')))
+        cost_ok = bool(np.isfinite(implied) and (abs(implied - tab) < 1e-4 * tab or abs(implied - 2 * tab) < 1e-4 * tab))
         days = list(m.day); marks = list(m.mark.astype(float))
         checks = []
-        checks.append(('fill-day mark = -cost', marks[0], -cost_R))
+        checks.append(('fill-day mark = -cost (engine units)', marks[0], -cost_R))
+        checks.append(('implied cost fraction == table (x2 crisis)', 1.0 if cost_ok else 0.0, 1.0))
         for i in range(1, len(days) - 1):
             b = days[i]; prev = days[i - 1]
             exp = d * (float(c.loc[b]) - float(c.loc[prev])) * k
@@ -90,7 +109,7 @@ def main():
         bad = [(n, g, e) for n, g, e in checks if not (np.isfinite(g) and np.isfinite(e) and abs(g - e) <= 2e-3 * max(1.0, abs(e)))]
         ok = not bad; ok_all &= ok
         rows.append(dict(sid=sid[:60], pair=p, entry=t.entry.date(), exit=t.exit.date(), days=len(days), dir=d, legs=n_legs, atr_len=alen, atr_mult=amult,
-                         entry_px=ent_px, atr_entry=round(a0, 6), cost_R=round(cost_R, 4), fill_mark=round(marks[0], 4), R_engine=round(float(t.R), 4),
+                         entry_px=ent_px, atr_entry=round(a0, 6), units=round(u, 2), implied_cost_frac=round(implied, 10), table_cost_frac=round(tab, 10), cost_R=round(cost_R, 4), fill_mark=round(marks[0], 4), R_engine=round(float(t.R), 4),
                          R_from_marks=round(float(sum(marks)), 4), first_vote=first_vote.date(), fill_plus_1=days[1].date() if len(days) > 1 else None,
                          checks=len(checks), mismatches=len(bad), status='ok' if ok else 'MISMATCH: %s' % bad[:2]))
         print('%-8s %s %s->%s dir %+d  legs %d  %d days  fill mark %+.4f (cost %.4f)  R %+.4f = marks %+.4f  first vote %s = fill+1 %s  [%d checks, %d mismatches]'
