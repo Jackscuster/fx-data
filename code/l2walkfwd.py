@@ -1079,7 +1079,14 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
         # ROLLING DESIGN (16 Sep): a marks table with a `step` column carries, for
         # each step, the build block AND the trade block scored under the settings
         # tuned on that build block. Only that step's rows are visible here.
-        if 'step' in M.columns:
+        pre = os.environ.get('WF_STEP_PREFIX', '')
+        if pre:
+            # PER-STEP FILES (22 Sep): the full library's always-on stream is ~33 GB, so
+            # the walk holds ONE step at a time. wf_{trades,marks}<pre>_step<k>.pkl.
+            Ts = pd.read_pickle(os.path.join(ROOTOUT, 'wf_trades%s_step%d.pkl' % (pre, si + 1)))
+            Ms = pd.read_pickle(os.path.join(ROOTOUT, 'wf_marks%s_step%d.pkl' % (pre, si + 1)))
+            TYs = trade_year_sums(Ms)
+        elif 'step' in M.columns:
             Ms = M[M.step == si + 1]; Ts = T[T.step == si + 1]; TYs = trade_year_sums(Ms)
         else:
             Ms, Ts, TYs = M, T, TY
@@ -1136,6 +1143,7 @@ def walk(T, TY, M, ymap, dipb, dayb, structures=None, verbose=False,
                                   net_min_votes=NET_MIN_VOTES, curve_mode=CURVE_MODE, opposition=OPPOSITION,
                                   vote_on_entry_day=VOTE_ON_ENTRY_DAY, dip_budget=dipb, day_budget=dayb,
                                   build_median_year_pct=float(np.median([(d1[ybuild] * sc)[pd.DatetimeIndex(B.udays[ybuild]).year == y].sum() for y in sorted(set(pd.DatetimeIndex(B.udays[ybuild]).year))])) if ybuild.any() else np.nan))   # same units as kpis: the daily series is already in percent
+            _ = None   # (per-step frames are released when the loop rebinds them)
             out[s]['cuts'].append(dict(step=si + 1, passers=len(P), members=len(mem),
                                        build_daily=d1[ybuild] * sc, build_days=B.udays[ybuild],
                                        ccy_daily=pd.DataFrame(_cc, index=B.udays, columns=B.ccy),
@@ -1256,12 +1264,19 @@ def _null_one(args):
 
 
 def stage_walk(jobs, n_null, structures, nocut=False):
-    T = pd.read_pickle(TRADES_F); M = pd.read_pickle(MARKS_F)
-    print('  loaded %d trades, %d marks, %d strategies'
-          % (len(T), len(M), T.sid.nunique()), flush=True)
-    t = time.time()
-    TY = trade_year_sums(M)
-    print('  trade-year sums: %d rows, %.1f s' % (len(TY), time.time() - t), flush=True)
+    pre = os.environ.get('WF_STEP_PREFIX', '')
+    if pre:
+        cols_T = ['sid', 'tid', 'pair', 'entry', 'exit', 'R', 'era', 'step']; cols_M = ['sid', 'pair', 'day', 'dir', 'mark', 'tid', 'step']
+        T = pd.DataFrame(columns=cols_T); M = pd.DataFrame(columns=cols_M); TY = pd.DataFrame(columns=['sid', 'tid', 'yr', 'mark'])
+        n1 = len(pd.read_pickle(os.path.join(ROOTOUT, 'wf_marks%s_step1.pkl' % pre)))
+        print('  per-step files (WF_STEP_PREFIX=%s): step 1 holds %d marks; one step in memory at a time' % (pre, n1), flush=True)
+    else:
+        T = pd.read_pickle(TRADES_F); M = pd.read_pickle(MARKS_F)
+        print('  loaded %d trades, %d marks, %d strategies'
+              % (len(T), len(M), T.sid.nunique()), flush=True)
+        t = time.time()
+        TY = trade_year_sums(M)
+        print('  trade-year sums: %d rows, %.1f s' % (len(TY), time.time() - t), flush=True)
     ident = {y: y for y in YEARS}
     rows, rosters, curves, daily = [], [], [], {}
     for bt, dipb, dayb in BUDGETS:

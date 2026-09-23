@@ -36,7 +36,7 @@ the regime-dependence table (each slice's trades inside vs outside its regime).
       --out _routed_tirX_actI --tir excl --activity ignore
   python3 code/l2route.py ... --shuffle-null 25 --jobs 3   # regime-shuffled null
 """
-import argparse, time
+import argparse, glob, time
 import numpy as np, pandas as pd
 import l2walkfwd as W
 import l2sweep as S
@@ -224,12 +224,23 @@ def main():
     ap.add_argument('--trend-gate', choices=['trending', 'not-ranging', 'never', 'always'], default='trending', help="trend entries on TRENDING (trend axis), on NOT RANGING (chop axis), 'always' = UNGATED (every bar, crisis only, no activity gate), 'never' = no trend entry at all (CHOP-ONLY)")
     ap.add_argument('--no-crisis', action='store_true', help='reproduction check only: the engine\'s own routing has no crisis flag')
     ap.add_argument('--jobs', type=int, default=3)
+    ap.add_argument('--step-files', action='store_true', help='route wf_*<suffix>_step<k>.pkl one step at a time (the full library will not fit as one frame)')
     a = ap.parse_args()
     W.S.load_costs()
     os.environ['WF_TAG'] = a.suffix; W.TAG = a.suffix
     src_T = W.OUT('wf_trades.pkl'); src_M = W.OUT('wf_marks.pkl')
-    T = pd.read_pickle(src_T); M = pd.read_pickle(src_M)
-    print('SOURCE %s: %d trades, %d marks, %d strategies' % (src_T, len(T), len(M), T.sid.nunique()), flush=True)
+    if a.step_files:
+        # PER-STEP ROUTING (22 Sep): load, route and write one step at a time so the
+        # full library's always-on stream never sits in memory as one frame. The first
+        # step's trade table is enough for the state/coverage prints below.
+        steps = sorted(int(f.rsplit('_step', 1)[1].split('.')[0]) for f in glob.glob(os.path.join(ROOTOUT, 'wf_trades%s_step*.pkl' % a.suffix)))
+        assert steps, 'no wf_trades%s_step*.pkl' % a.suffix
+        T = pd.read_pickle(os.path.join(ROOTOUT, 'wf_trades%s_step%d.pkl' % (a.suffix, steps[0]))); M = pd.DataFrame(columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid', 'step'])
+        print('SOURCE per-step wf_trades%s_step*.pkl: steps %s, step %d holds %d trades' % (a.suffix, steps, steps[0], len(T)), flush=True)
+    else:
+        steps = None
+        T = pd.read_pickle(src_T); M = pd.read_pickle(src_M)
+        print('SOURCE %s: %d trades, %d marks, %d strategies' % (src_T, len(T), len(M), T.sid.nunique()), flush=True)
     print('STATES %s' % os.path.abspath(a.states), flush=True)
     shape, act = load_states(a.states)
     print('  states %s -> %s, %d pairs; shares %s'
@@ -283,6 +294,23 @@ def main():
         pd.DataFrame(summ).to_csv(W.OUT('walkforward_null_regimeshuffle_summary_3slice.csv'), index=False)
         return
 
+    if steps:
+        kept = tot = 0
+        for si in steps:
+            Ts = pd.read_pickle(os.path.join(ROOTOUT, 'wf_trades%s_step%d.pkl' % (a.suffix, si)))
+            Ms = pd.read_pickle(os.path.join(ROOTOUT, 'wf_marks%s_step%d.pkl' % (a.suffix, si)))
+            Trs, Mrs, okk = route(Ts, Ms, al)
+            pd.to_pickle(Trs, os.path.join(ROOTOUT, 'wf_trades%s_step%d.pkl' % (a.out, si)))
+            pd.to_pickle(Mrs, os.path.join(ROOTOUT, 'wf_marks%s_step%d.pkl' % (a.out, si)))
+            kept += len(Trs); tot += len(Ts)
+            print('  step %d routed: kept %d of %d trades (%.1f%%)' % (si, len(Trs), len(Ts), 100 * len(Trs) / max(len(Ts), 1)), flush=True)
+            del Ts, Ms, Trs, Mrs
+        pd.to_pickle(al, W.OUT('route_allowed.pkl'))
+        print('ROUTED per step: kept %d of %d trades (%.1f%%); wrote wf_*%s_step*.pkl and %s'
+              % (kept, tot, 100 * kept / max(tot, 1), a.out, W.OUT('route_allowed.pkl')), flush=True)
+        D = dependence(T, shape, act, flags, a.tir, a.activity, years=[2016, 2017, 2018, 2019, 2020], chop_always=a.chop_always, trend_gate=a.trend_gate)
+        D.to_csv(W.OUT('walkforward_regime_dependence.csv'), index=False)
+        return
     Tr, Mr, ok = route(T, M, al)
     K = T[['sid']].copy(); K['kind'] = K.sid.astype(str).map(kind_of); K['ok'] = ok
     K['yr'] = T.entry.dt.year
