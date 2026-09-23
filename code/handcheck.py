@@ -18,21 +18,49 @@ import json, numpy as np, pandas as pd
 import l2sweep as S, l2walkfwd as W, l2lib as L
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--suffix', default='_routed_tirexcl_actweak')
+    ap.add_argument('--settings', default='', help='refit settings csv: per (sid, window) ip/risk -- the BLIND pipeline\'s own settings')
+    ap.add_argument('--field', default=os.path.join(ROOTOUT, 'gate2_cleanfield_4slice.csv'))
+    ap.add_argument('--per-mode', type=int, default=0, help='n trades for EACH of modes A, B, C (0 = 10 trades overall)')
+    ap.add_argument('--n', type=int, default=10)
+    a = ap.parse_args()
     S.load_costs()
-    tag = '_routed_tirexcl_actweak'; W.TAG = tag; os.environ['WF_TAG'] = tag
+    tag = a.suffix; W.TAG = tag; os.environ['WF_TAG'] = tag
     T = pd.read_pickle(W.OUT('wf_trades.pkl')); M = pd.read_pickle(W.OUT('wf_marks.pkl'))
-    F = pd.read_csv(os.path.join(ROOTOUT, 'gate2_cleanfield_4slice.csv'), low_memory=False).set_index('sid')
+    F = pd.read_csv(a.field, low_memory=False).set_index('sid')
+    SET = pd.read_csv(a.settings, low_memory=False) if a.settings else None
     rng = np.random.default_rng(20260916)
     T = T[T.entry.dt.year >= 2016]
-    pick = T.iloc[rng.choice(len(T), size=10, replace=False)]
+    if a.per_mode:
+        parts = []
+        for m in ('A', 'B', 'C'):
+            g = T[T.sid.astype(str).str.startswith(m + '|')]
+            if not len(g):
+                print('mode %s: no trades in %s' % (m, tag), flush=True); continue
+            one = str(g.sid.astype(str).unique()[rng.integers(g.sid.nunique())])
+            gg = g[g.sid.astype(str) == one]
+            parts.append(gg.iloc[rng.choice(len(gg), size=min(a.per_mode, len(gg)), replace=False)])
+            print('mode %s: %s (%d trades available)' % (m, one[:70], len(gg)), flush=True)
+        pick = pd.concat(parts)
+    else:
+        pick = T.iloc[rng.choice(len(T), size=a.n, replace=False)]
     rows = []; ok_all = True
     for t in pick.itertuples():
         sid = str(t.sid); p = str(t.pair)
         m = M[(M.sid == t.sid) & (M.tid == t.tid)].sort_values('day')
         px = S.load_pair(p)
         cfg = F.loc[sid]
-        era = 'W3' if t.entry.year >= 2016 else 'W2'
-        rk = json.loads(cfg['risk1']) if era == 'W2' else {k[5:]: cfg[k] for k in cfg.index if k.startswith('risk_')}
+        if SET is not None:
+            # the blind pipeline: the settings that produced this trade are the step's own
+            st = SET[(SET.sid == sid) & (SET.window == str(getattr(t, 'era', '')))]
+            if not len(st):
+                st = SET[SET.sid == sid]
+            rk = json.loads(st.iloc[0]['risk'])
+        else:
+            era = 'W3' if t.entry.year >= 2016 else 'W2'
+            rk = json.loads(cfg['risk1']) if era == 'W2' else {k[5:]: cfg[k] for k in cfg.index if k.startswith('risk_')}
         alen, amult = int(rk['atr_len']), float(rk['atr_mult'])
         atr = pd.Series(L.P.atr(px.high.values, px.low.values, px.close.values, alen), index=px.index)
         c = px.close

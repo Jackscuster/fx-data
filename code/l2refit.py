@@ -270,6 +270,7 @@ def marks_worker(args):
                     Tr.append((cfg['sid'], tid, p, dv[eb], dv[end], float(prev - cst), w['name'], si + 1))
     Tf = pd.DataFrame(Tr, columns=['sid', 'tid', 'pair', 'entry', 'exit', 'R', 'era', 'step'])
     Mf = pd.DataFrame(Mr, columns=['sid', 'pair', 'day', 'dir', 'mark', 'tid', 'step'])
+    del Tr, Mr
     if len(Mf):
         Mf['dir'] = Mf['dir'].astype(np.int8); Mf['mark'] = Mf['mark'].astype(np.float32); Mf['day'] = pd.to_datetime(Mf.day)
         Mf['step'] = Mf['step'].astype(np.int8); Tf['step'] = Tf['step'].astype(np.int8)
@@ -277,6 +278,81 @@ def marks_worker(args):
     print('  marks shard %d: %d trades, %d marks; own-exit-rule fired on %s of %s (strategy, window, pair) runs per mode'
           % (i, len(Tf), len(Mf), own_fired, seen), flush=True)
     return i
+
+
+def step_path(suffix, kind, si):
+    return os.path.join(ROOTOUT, 'wf_%s%s_step%d.pkl' % ({'T': 'trades', 'M': 'marks'}[kind], suffix, si))
+
+
+BOOKS = (('', 'always-on (no routing)', []),
+         ('_routed', 'routed: chop RANGING + trend TRENDING', ['--trend-gate', 'trending']),
+         ('_tgalways', 'chop RANGING + trend UNGATED', ['--trend-gate', 'always']),
+         ('_tgnotrang', 'chop RANGING + trend NOT-RANGING', ['--trend-gate', 'not-ranging']))
+
+
+def book_table(suffix, slices):
+    """The four books of `suffix` as one per-slice table: median year, worst year,
+    DIP95, PF, retention and the two null p-values (book-level; the always-on book
+    has no regime-shuffle null by construction -- it reads no state)."""
+    rows = []
+    for sfx, lab, _ in BOOKS:
+        b = suffix + sfx
+        f = os.path.join(ROOTOUT, 'walkforward_structures_3slice%s.csv' % b)
+        if not os.path.exists(f):
+            print('  book_table: %s not built (%s)' % (lab, os.path.basename(f)), flush=True); continue
+        N = {}
+        for kind, nf in (('p_random_entry', 'walkforward_null_randomentry_nocut_summary_3slice%s_dirnull.csv' % b),
+                         ('p_regime_shuffle', 'walkforward_null_regimeshuffle_summary_3slice%s.csv' % b)):
+            pth = os.path.join(ROOTOUT, nf)
+            N[kind] = ({r.budget: r.p_value for r in pd.read_csv(pth, comment='#').query("structure == 'NO_CUT'").itertuples()} if os.path.exists(pth) else {})
+        for r in pd.read_csv(f, comment='#').itertuples():
+            rows.append(dict(book=lab, suffix=b, slice='ALL (book)', budget=r.budget, median_year_pct=r.median_year_pct, worst_year_pct=r.worst_year_pct,
+                             dip95_pct=r.dip95_pct, profit_factor=r.profit_factor, build_median_year_pct=getattr(r, 'build_median_year_pct', np.nan),
+                             retention=getattr(r, 'retention', np.nan), retention_flag=getattr(r, 'retention_flag', ''),
+                             p_random_entry=N['p_random_entry'].get(r.budget), p_regime_shuffle=N['p_regime_shuffle'].get(r.budget, 'n/a (no state read)' if sfx == '' else None)))
+        ps = os.path.join(ROOTOUT, 'walkforward_perslice_3slice%s.csv' % b)
+        if os.path.exists(ps):
+            for r in pd.read_csv(ps, comment='#').itertuples():
+                rows.append(dict(book=lab, suffix=b, slice=r.slice, budget=r.budget, median_year_pct=r.median_year_pct, worst_year_pct=r.worst_year_pct,
+                                 dip95_pct=r.dip95_pct, profit_factor=r.profit_factor, build_median_year_pct=np.nan, retention=np.nan, retention_flag='',
+                                 p_random_entry='book-level', p_regime_shuffle='book-level'))
+    if not rows:
+        print('  book_table: no books built yet', flush=True); return pd.DataFrame()
+    Tb = pd.DataFrame(rows)
+    out = os.path.join(ROOTOUT, 'refit_books%s.csv' % suffix); Tb.to_csv(out, index=False)
+    print('\n=== FOUR BOOKS, PER SLICE (team1; team2 is the 5.4%% budget) -> %s ===' % os.path.basename(out), flush=True)
+    print(Tb[Tb.budget == 'team1'][['book', 'slice', 'median_year_pct', 'worst_year_pct', 'dip95_pct', 'profit_factor', 'retention', 'p_random_entry', 'p_regime_shuffle']].to_string(index=False, float_format=lambda v: '%7.3f' % v), flush=True)
+    return Tb
+
+
+def run_books(suffix, cand, slices, jobs=3):
+    """The four books end to end on an existing marks stream: route -> walk -> per-slice
+    -> random-entry null -> regime-shuffle null. One command for the cloud merge."""
+    import subprocess
+    env = dict(os.environ)
+    for sfx, lab, args in BOOKS:
+        out = suffix + sfx
+        print('\n--- book: %s (%s) ---' % (lab, out), flush=True)
+        if sfx:
+            subprocess.run([sys.executable, os.path.join(ROOTLIB, 'l2route.py'), '--states', os.path.join(ROOTOUT, 'layer1_states.csv'),
+                            '--px', os.path.join(ROOTDATA, 'px28.csv'), '--suffix', suffix, '--out', out, '--tir', 'excl', '--activity', 'weak'] + args, check=True, env=env)
+        e = dict(env); e['WF_TAG'] = out
+        subprocess.run([sys.executable, os.path.join(ROOTLIB, 'l2walkfwd.py'), '--stage', 'walk', '--n-null', '0', '--structures', 'ALLPASS',
+                        '--nocut', '--jobs', '1', '--slices', slices, '--suffix', out, '--field-file', cand], check=True, env=e)
+        subprocess.run([sys.executable, os.path.join(ROOTLIB, 'l2cfperslice.py'), '--suffix', out, '--field-file', cand, '--slices', slices, '--nocut'], check=False, env=env)
+        subprocess.run([sys.executable, os.path.join(ROOTLIB, 'l2returns.py'), '--stage', 'dirnull', '--suffix', out], check=True, env=env)
+        for k in ('trades', 'marks'):
+            src = os.path.join(ROOTOUT, 'wf_%s%s.pkl' % (k, out)); dst = os.path.join(ROOTOUT, 'wf_%s%s_dirnull.pkl' % (k, out))
+            if os.path.exists(dst) or os.path.islink(dst):
+                os.remove(dst)
+            os.symlink(os.path.basename(src), dst)
+        e2 = dict(env); e2['WF_ALLOWED'] = os.path.join(ROOTOUT, 'route_allowed_dirnull%s.pkl' % out); e2['WF_TAG'] = out + '_dirnull'
+        subprocess.run([sys.executable, os.path.join(ROOTLIB, 'l2walkfwd.py'), '--stage', 'nullre', '--nocut', '--n-null', '25', '--jobs', str(jobs),
+                        '--slices', slices, '--suffix', out + '_dirnull', '--field-file', cand], check=False, env=e2)
+        if sfx:
+            subprocess.run([sys.executable, os.path.join(ROOTLIB, 'l2route.py'), '--states', os.path.join(ROOTOUT, 'layer1_states.csv'),
+                            '--px', os.path.join(ROOTDATA, 'px28.csv'), '--suffix', suffix, '--out', out, '--tir', 'excl', '--activity', 'weak'] + args +
+                           ['--shuffle-null', '25', '--jobs', '1'], check=False, env=env)
 
 
 def merge_settings(suffix):
@@ -389,7 +465,8 @@ def report(A, wins, suffix):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--stage', required=True, choices=['tune', 'marks', 'report', 'candidates', 'blind'])
+    ap.add_argument('--stage', required=True, choices=['tune', 'marks', 'report', 'candidates', 'blind', 'books'])
+    ap.add_argument('--slices', default='A-trend,A-chop,B-chop,B-trend')
     ap.add_argument('--box', type=int, default=0); ap.add_argument('--of', type=int, default=1)
     ap.add_argument('--candidates', default=os.path.join(ROOTOUT, 'refit_pilot_sample.csv'))
     ap.add_argument('--windows', default='2011-2014:2015:2016,2012-2015:2016:2017,2013-2016:2017:2018,2014-2017:2018:2019,2015-2018:2019:2020')
@@ -419,25 +496,46 @@ def main():
         args = [(i, a.jobs, a.suffix, a.candidates, wins, out) for i in range(a.jobs)]
         with mp.get_context('spawn').Pool(a.jobs) as pool:
             pool.map(marks_worker, args)
-        Tf = pd.concat([pd.read_pickle(f) for f in sorted(glob.glob(os.path.join(ROOTOUT, 'refit_marks%s_T_s*.pkl' % a.suffix)))], ignore_index=True)
-        Mf = pd.concat([pd.read_pickle(f) for f in sorted(glob.glob(os.path.join(ROOTOUT, 'refit_marks%s_M_s*.pkl' % a.suffix)))], ignore_index=True)
-        for c in ('sid', 'pair'):
-            Tf[c] = Tf[c].astype('category'); Mf[c] = Mf[c].astype('category')
+        # PER-STEP FILES (22 Sep). The always-on stream for the full library is ~33 GB;
+        # one frame per step is ~1/5 of that and the walk only ever needs one step at
+        # a time. Per-step pickles are ALWAYS written; the combined pair is written
+        # too unless FX_NO_COMBINED=1 (set it for the full run).
         import l2walkfwd as W
-        W.check_mark_convention(Mf, 'refit marks')
-        Tf.to_pickle(os.path.join(ROOTOUT, 'wf_trades%s.pkl' % a.suffix)); Mf.to_pickle(os.path.join(ROOTOUT, 'wf_marks%s.pkl' % a.suffix))
-        print('marks done in %.1f min: %d trades, %d marks, %d strategies, steps %s -> wf_trades%s.pkl / wf_marks%s.pkl'
-              % ((time.time() - t0) / 60, len(Tf), len(Mf), Tf.sid.nunique(), sorted(Tf.step.unique().tolist()), a.suffix, a.suffix), flush=True)
+        nT = nM = 0; sids = set(); steps = []
+        for si in range(1, len(wins) + 1):
+            Ts = pd.concat([pd.read_pickle(f).pipe(lambda d: d[d.step == si]) for f in sorted(glob.glob(os.path.join(ROOTOUT, 'refit_marks%s_T_s*.pkl' % a.suffix)))], ignore_index=True)
+            Ms = pd.concat([pd.read_pickle(f).pipe(lambda d: d[d.step == si]) for f in sorted(glob.glob(os.path.join(ROOTOUT, 'refit_marks%s_M_s*.pkl' % a.suffix)))], ignore_index=True)
+            if not len(Ts):
+                continue
+            for c in ('sid', 'pair'):
+                Ts[c] = Ts[c].astype(str).astype('category'); Ms[c] = Ms[c].astype(str).astype('category')
+            W.check_mark_convention(Ms, 'refit marks step %d' % si)
+            Ts.to_pickle(step_path(a.suffix, 'T', si)); Ms.to_pickle(step_path(a.suffix, 'M', si))
+            nT += len(Ts); nM += len(Ms); sids |= set(Ts.sid.astype(str).unique()); steps.append(si)
+            print('  step %d: %d trades, %d marks -> %s' % (si, len(Ts), len(Ms), os.path.basename(step_path(a.suffix, 'M', si))), flush=True)
+            del Ts, Ms
+        if os.environ.get('FX_NO_COMBINED') != '1':
+            Tf = pd.concat([pd.read_pickle(step_path(a.suffix, 'T', si)) for si in steps], ignore_index=True)
+            Mf = pd.concat([pd.read_pickle(step_path(a.suffix, 'M', si)) for si in steps], ignore_index=True)
+            for c in ('sid', 'pair'):
+                Tf[c] = Tf[c].astype(str).astype('category'); Mf[c] = Mf[c].astype(str).astype('category')
+            Tf.to_pickle(os.path.join(ROOTOUT, 'wf_trades%s.pkl' % a.suffix)); Mf.to_pickle(os.path.join(ROOTOUT, 'wf_marks%s.pkl' % a.suffix))
+        print('marks done in %.1f min: %d trades, %d marks, %d strategies, steps %s; per-step files written%s'
+              % ((time.time() - t0) / 60, nT, nM, len(sids), steps, '' if os.environ.get('FX_NO_COMBINED') == '1' else ' + the combined pair'), flush=True)
     elif a.stage == 'candidates':
         candidates_full(os.path.join(ROOTOUT, 'refit_candidates_full.csv'))
     elif a.stage == 'blind':
         out, A = merge_settings(a.suffix)
         blind_report(A, wins, a.suffix)
+    elif a.stage == 'books':
+        run_books(a.suffix, a.candidates, a.slices, jobs=min(a.jobs, 3))
+        book_table(a.suffix, a.slices)
     else:
         out, A = merge_settings(a.suffix)
         report(A, wins, a.suffix)
         if wins[0]['grade']:
             blind_report(A, wins, a.suffix)
+        book_table(a.suffix, a.slices)
     print('REFIT %s STAGE %s COMPLETE' % (a.suffix, a.stage.upper()), flush=True)
 
 

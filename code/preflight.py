@@ -21,6 +21,7 @@ import argparse, glob, json, re, subprocess, time
 import numpy as np, pandas as pd
 
 ROWS = []
+AUDIT_OUT = 'audit_2026-09.csv'
 
 
 def row(n, fault, fix, check, status, detail=''):
@@ -386,7 +387,10 @@ def c26():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
+    ap.add_argument('--out', default='audit_2026-09.csv', help='results/<name>; a dated name keeps every run (nothing is overwritten)')
     a = ap.parse_args()
+    global AUDIT_OUT
+    AUDIT_OUT = a.out
     t0 = time.time()
     guard(1, 'Vote-timing leak: a position voted on its fill day against that day\'s move', 'votes from the day after the fill; entry cost on the first voted day (l2walkfwd.vote_from_next_day)', 'any (pair, day) vote containing a same-day entrant halts the walk', c1)
     guard(2, 'Layer 1 one-bar lag: the state used on D must come from bars <= D-1', 'export.py shifts one bar; the interface header says so; regime_codes joins unshifted', 'header declares the lag; export.py shift(1); no second shift on the join', c2)
@@ -422,9 +426,9 @@ def main():
     guard(25, 'Silenced errors; git tree ops during a chain; logs in results/; launches not confirmed', 'l2nosilence.py; launch.sh confirms 60 s and refuses git ops while a chain runs; logs in ~/fx-data-logs', 'l2nosilence passes; no logs in results/ (CI failure log excepted); launch.sh exists', c25)
     guard(26, 'Repo on the iCloud-synced volume (dataless files, read timeouts)', 'move the repo out of ~/Documents (Jack)', 'repo path not under ~/Documents or ~/Desktop', c26)
     A = pd.DataFrame(ROWS)
-    A.to_csv(os.path.join(ROOTOUT, 'audit_2026-09.csv'), index=False)
+    A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
-    print('\n%d of %d PASS in %.0f s -> results/audit_2026-09.csv' % (n_pass, len(A), time.time() - t0), flush=True)
+    print('\n%d of %d PASS in %.0f s -> results/%s' % (n_pass, len(A), time.time() - t0, AUDIT_OUT), flush=True)
     if n_pass < len(A):
         print('NOT CLEAR: ' + ', '.join('%d (%s)' % (r.item, r.status) for r in A.itertuples() if r.status != 'PASS'), flush=True)
         sys.exit(1)
