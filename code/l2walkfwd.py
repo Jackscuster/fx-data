@@ -331,8 +331,13 @@ def engine_one(row):
                     continue
                 ent = float(tr['entry_px'][j]); u = float(tr['units'][j])
                 sgn = float(tr['dir'][j]); tot = float(tr['r'][j]) * am
+                # COST IS CHARGED IN THE SAME UNIT AS R (fault #27, 23 Sep): account-normalised R
+                # is the price move in 1.0xATR units, so the cost must be restated with it.
+                # _cost_R returns f x px x units / RISK = f x px / (atr_mult x ATR) -- the cost
+                # DIVIDED by atr_mult. Unscaled it under-charged every path by (atr_mult - 1):
+                # median 20%, p90 46% on the blind smoke's settings.
                 cst = float(S._cost_R(p, np.array([ent]), np.array([u]),
-                                      np.array([dv[eb]]))[0])
+                                      np.array([dv[eb]]))[0]) * am
                 end = min(xb, hi - 1)
                 tid += 1
                 prev = 0.0

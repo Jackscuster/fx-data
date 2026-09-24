@@ -259,7 +259,7 @@ def marks_worker(args):
                     if xb < 0 or not (lo <= eb < hi):
                         continue
                     ent = float(tr['entry_px'][j]); u = float(tr['units'][j]); sgn = float(tr['dir'][j]); tot = float(tr['r'][j]) * am
-                    cst = float(S._cost_R(p, np.array([ent]), np.array([u]), np.array([dv[eb]]))[0])
+                    cst = float(S._cost_R(p, np.array([ent]), np.array([u]), np.array([dv[eb]]))[0]) * am   # fault #27: same unit as R
                     end = min(xb, hi - 1)
                     tid = (si + 1) * 10 ** 10 + i * 10 ** 8 + len(Tr) + 1     # unique across steps and shards
                     prev = 0.0

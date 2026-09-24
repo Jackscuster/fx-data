@@ -376,8 +376,13 @@ class Scorer:
                 # than through score_combo, so costing has to be applied here as
                 # well -- patching only score_combo left every tuning decision
                 # gross while the audit path looked costed.
-                r = r - S._cost_R(p, b['entry_px'][:nt], b['units'][:nt],
-                                  self.dates[p][eb])
+                # FAULT #27 (23 Sep): when r has been restated against a 1.0xATR risk unit,
+                # the cost must be restated with it -- _cost_R is in raw-r units, i.e. the
+                # cost divided by atr_mult. Unscaled it under-charged the tuner's objective
+                # by (atr_mult - 1): median 20%, p90 46%.
+                _cm = float(risk.get('atr_mult', 1.0)) if ACCT_OBJECTIVE else 1.0
+                r = r - _cm * S._cost_R(p, b['entry_px'][:nt], b['units'][:nt],
+                                        self.dates[p][eb])
             # routed: only entries whose bar Layer 1 labelled with the slice's regime
             # (the field's own rule); always-on (routed=False): every entry the
             # strategy fired, so regime dependence is MEASURED per strategy (audit 15)
