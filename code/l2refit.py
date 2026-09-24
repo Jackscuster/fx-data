@@ -330,6 +330,9 @@ def run_books(suffix, cand, slices, jobs=3):
     -> random-entry null -> regime-shuffle null. One command for the cloud merge."""
     import subprocess
     env = dict(os.environ)
+    bank = os.path.join(ROOTOUT, 'refit_settings%s.csv' % suffix)
+    if os.path.exists(bank):
+        env['WF_RISK_SETTINGS'] = bank      # the random-entry null's stop/target per (sid, window)
     for sfx, lab, args in BOOKS:
         out = suffix + sfx
         print('\n--- book: %s (%s) ---' % (lab, out), flush=True)
