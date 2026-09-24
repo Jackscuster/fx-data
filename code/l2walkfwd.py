@@ -1944,9 +1944,25 @@ def recover_k(T, M, field):
     K['b0'] = K.b0.astype(int); K['b1'] = K.b1.astype(int)
     K['hold'] = (K.b1 - K.b0).clip(lower=1)
     F = field.set_index('sid')
-    for col, src in (('atr_len', 'risk_atr_len'), ('atr_mult', 'risk_atr_mult'),
-                     ('tp_mult', 'risk_tp_mult')):
-        K[col] = K.sid.map(F[src].astype(float))
+    if 'risk_atr_len' not in F.columns:
+        # THE BLIND PIPELINE (24 Sep): the candidate list carries no risk columns -- each
+        # strategy's stop/target live per (sid, window) in the refit settings bank, named by
+        # WF_RISK_SETTINGS. Without this the random-entry null died with KeyError
+        # 'risk_atr_len' and the book was reported with no random-entry p-value.
+        bank = os.environ.get('WF_RISK_SETTINGS', '')
+        if not bank or not os.path.exists(bank):
+            raise SystemExit('recover_k: the field has no risk_* columns; set WF_RISK_SETTINGS to the refit settings csv')
+        B = pd.read_csv(bank, low_memory=False)
+        rk = {(str(r.sid), str(r.window)): json.loads(r.risk) for r in B.itertuples()}
+        era = K.era.astype(str) if 'era' in K.columns else pd.Series([''] * len(K), index=K.index)
+        keys = list(zip(K.sid.astype(str), era))
+        print('  random-entry null: risk parameters from %s (%d (sid, window) settings)' % (os.path.basename(bank), len(rk)), flush=True)
+        for col in ('atr_len', 'atr_mult', 'tp_mult'):
+            K[col] = [float(rk[k][col]) if k in rk else np.nan for k in keys]
+    else:
+        for col, src in (('atr_len', 'risk_atr_len'), ('atr_mult', 'risk_atr_mult'),
+                         ('tp_mult', 'risk_tp_mult')):
+            K[col] = K.sid.map(F[src].astype(float))
     K = K[K.atr_mult.notna() & (K.atr_mult > 0)].reset_index(drop=True)
     return K, BR
 
