@@ -668,6 +668,42 @@
    now asserted as such) and the check must load the same cost table the marks
    were built with.
 
+   **MODE C THROUGH THE BLIND PIPELINE (24 Sep, `_modec2`, 104 C-trend x 5
+   windows, correct costs).** Tunes 328 min, marks 3.5, books 11. **The mode
+   exit assert held: zero MODE EXIT MISMATCH over 14,560 (strategy, window,
+   pair) runs, C's own exit indicator fired on 12,113 (83%)** — no C strategy
+   ran on A's C1 flip or B's baseline cross (the bug of 8 Sep cannot recur
+   silently). Hand check PASS, 10 trades, 0 mismatches.
+
+   | mode C book (team1) | median yr | worst yr | DIP95 | PF | retention | p rand | p shuffle |
+   |---|--:|--:|--:|--:|--:|--:|--:|
+   | always-on | −0.72 | −1.35 | 6.57 | 1.039 | −0.22 | 0.76 | n/a |
+   | **routed (trend TRENDING)** | **+1.33** | −4.00 | 6.91 | **1.087** | **+0.26** | 0.08 | **0.00** |
+   | trend UNGATED | −0.48 | −1.14 | 6.37 | 1.046 | −0.17 | 0.40 | 0.00 |
+   | trend NOT-RANGING | −1.50 | −2.01 | 8.01 | 1.005 | −0.44 | 1.00 | 1.00 |
+
+   **Mode C routed is the first positive book of the programme**: +1.33%
+   median year, PF 1.087, retention +0.26, **4 of 5 traded years positive**
+   (2016 +0.066, 2018 +0.197, 2020 +0.077 R/trade; 2017 −0.090, 2019
+   −0.047), beats its regime-shuffle null (p = 0.00) and is 2nd of 25 against
+   random entries (p = 0.08). Against it: worst year −4.00, DIP95 6.9 on a
+   3.6 budget, n = 104 strategies, and **C's blind grade predicts nothing**
+   (rank correlation −0.07 to +0.01; graded-fail beat graded-pass, +0.062 vs
+   +0.016 R/trade) — the opposite of A/B, where the grade carries the small
+   signal. `refit_books_modec2.csv`, `refit_blind_*_modec2.csv`.
+
+   **FAULT #28 (24 Sep, FIXED).** `recover_k` read each strategy's
+   stop/target from the FIELD file's `risk_*` columns. The blind candidate
+   list has none — the settings live per (sid, window) in the refit bank — so
+   the random-entry null died with `KeyError: 'risk_atr_len'` inside the pool
+   and **all four mode C books were reported with no random-entry p-value**.
+   The A/B books had theirs only because `refit_pilot_sample.csv` still
+   carries the old field's risk columns; `refit_candidates_full.csv` does
+   not, so **every random-entry null of the cloud run would have been
+   missing**. Fixed: `recover_k` takes the risk parameters per (sid, window)
+   from `WF_RISK_SETTINGS` (set by `run_books`), and all eight nulls were
+   re-run — the p-values in both tables above are from that run.
+
    **ONE KNOWN GAP, not on the launch path.** The always-on marks stream for
    the full library is ~33 GB (the smoke's 185 MB × 181) and the per-step
    Book ~8.5 GB, so the BOOK stage will not fit in the Mac's 16 GB. The fix
