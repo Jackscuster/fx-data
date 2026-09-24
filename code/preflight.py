@@ -384,6 +384,22 @@ def c26():
     return 'repo at %s, outside the iCloud-synced folders' % path
 
 
+def c27():
+    import l2sweep as S
+    for m, pat in (('l2walkfwd.py', "np.array([dv[eb]]))[0]) * am"), ('l2refit.py', "np.array([dv[eb]]))[0]) * am"),
+                   ('l2tune.py', "r = r - _cm * S._cost_R(")):
+        assert pat in src(m), '%s does not scale the cost by atr_mult' % m
+    # arithmetic identity: cost in account-normalised units is f x px / ATR, independent of atr_mult
+    S.load_costs(os.environ.get('FX_COST_TABLE') or os.path.join(ROOTOUT, 'cost_table.csv'))
+    f = S.COSTS['EURUSD']; px, atr = 1.1000, 0.0060
+    for am in (1.0, 1.2, 1.5):
+        u = S.RISK / (am * atr)
+        got = float(S._cost_R('EURUSD', np.array([px]), np.array([u]), np.array([np.datetime64('2017-06-15')]))[0]) * am
+        want = f * px / atr
+        assert abs(got - want) < 1e-12 * want, 'atr_mult %.1f: scaled cost %.8g != f*px/ATR %.8g' % (am, got, want)
+    return 'all three paths scale by atr_mult; scaled cost == f*px/ATR at atr_mult 1.0, 1.2, 1.5 (unscaled it is that / atr_mult)'
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -425,6 +441,7 @@ def main():
     guard(24, 'sc5 chop target never pooled by prep.py', 'prep.py pools qc*/nc*/vc* as cti/cto/cso/cao', 'signals.json records carry the chop-target fields', c24)
     guard(25, 'Silenced errors; git tree ops during a chain; logs in results/; launches not confirmed', 'l2nosilence.py; launch.sh confirms 60 s and refuses git ops while a chain runs; logs in ~/fx-data-logs', 'l2nosilence passes; no logs in results/ (CI failure log excepted); launch.sh exists', c25)
     guard(26, 'Repo on the iCloud-synced volume (dataless files, read timeouts)', 'move the repo out of ~/Documents (Jack)', 'repo path not under ~/Documents or ~/Desktop', c26)
+    guard(27, 'Costs under-charged by the account-normalisation factor: R restated by x atr_mult, cost subtracted unscaled (median 20%, p90 46% too cheap)', 'the cost is multiplied by atr_mult wherever R is -- engine marks, refit marks, the Scorer objective', 'code assert in all three paths + the arithmetic identity cost == f x px / ATR at several atr_mult', c27)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

@@ -627,6 +627,47 @@
    A dry run of the same argument plumbing, no provisioning:
    `bash code/cloud_refit.sh --local --box 0 --of 3` (JOBS=2).
 
+   **FAULT #27 (found 23 Sep by the three-mode hand check, FIXED) — COSTS
+   WERE UNDER-CHARGED EVERYWHERE BY THE ACCOUNT-NORMALISATION FACTOR.** The
+   engine restates R against a 1.0xATR risk unit (x atr_mult) and then
+   subtracted the cost UNSCALED, in raw-r units. Account-normalised R is the
+   price move in ATR units, so the cost in that unit is f x px / ATR, while
+   `_cost_R` returns f x px x units / RISK = f x px / (atr_mult x ATR) — the
+   cost DIVIDED by atr_mult. Understated by (atr_mult − 1): **median 20%,
+   mean 22%, p90 46%** on the 1,250 blind-smoke settings (mode C 26% mean).
+   Fixed on all three paths — `l2walkfwd.engine_one`, `l2refit.marks_worker`,
+   `l2tune.Scorer` (where it also entered the tuner's objective, so the
+   TUNES changed). **Audit item 27** asserts the scaling in all three files
+   and checks the identity `scaled cost == f x px / ATR` at atr_mult 1.0,
+   1.2 and 1.5; `results/audit_2026-09-23.csv` is **27 of 27 PASS**.
+
+   **Re-run under correct costs (`_blind2`, nothing overwritten).** 1,250
+   fresh tunes, 510 min. **83.4% of the settings are unchanged**; the 17%
+   that moved shifted the medians: tune-window +0.891 → +0.885, grade year
+   −0.030 → −0.035, trade year −0.027 → −0.029 R/trade. The blind grade's
+   signal survives: graded-pass (334, unchanged) **−0.011 R, 48% positive,
+   PF 0.983** vs graded-fail **−0.039 R, 43%, PF 0.957**; rank correlation
+   grade → trade routed pooled **+0.02 to +0.05**, allon −0.04 to 0.00. The
+   four books, team1, correctly costed:
+
+   | book | median yr | worst yr | DIP95 | PF | retention | p rand | p shuffle |
+   |---|--:|--:|--:|--:|--:|--:|--:|
+   | always-on | −0.51 | −2.91 | 8.29 | 0.958 | −0.15 | 1.00 | n/a |
+   | routed (chop RANGING + trend TRENDING) | −0.64 | −2.16 | 9.95 | **1.018** | −0.06 | **0.04** | 0.20 |
+   | chop RANGING + trend UNGATED | **−0.38** | −2.67 | 7.65 | 0.978 | −0.11 | 0.68 | 0.40 |
+   | chop RANGING + trend NOT-RANGING | −1.27 | −2.25 | 10.37 | 0.949 | −0.26 | **0.00** | 0.92 |
+
+   Per slice, routed: **A-chop +0.63, B-chop +0.52, B-trend +0.01,
+   A-trend −1.25** — the chop slices are positive under correct costs and
+   the routed book's PF is above 1 for the first time, but the book is still
+   negative and DIP95 is 2-3x the budget. `refit_books_blind2.csv`,
+   `refit_blind_groups_blind2.csv`, `refit_blind_rankcorr_blind2.csv`.
+   Hand check on the new marks: **PASS, 20 trades, one mode A and one mode B
+   strategy, 0 mismatches** (`audit_handcheck_blind2_AB.csv`); two hand-check
+   bugs fixed on the way — a single-day trade has no voted day (it is dropped,
+   now asserted as such) and the check must load the same cost table the marks
+   were built with.
+
    **ONE KNOWN GAP, not on the launch path.** The always-on marks stream for
    the full library is ~33 GB (the smoke's 185 MB × 181) and the per-step
    Book ~8.5 GB, so the BOOK stage will not fit in the Mac's 16 GB. The fix

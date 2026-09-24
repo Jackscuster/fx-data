@@ -26,7 +26,10 @@ def main():
     ap.add_argument('--per-mode', type=int, default=0, help='n trades for EACH of modes A, B, C (0 = 10 trades overall)')
     ap.add_argument('--n', type=int, default=10)
     a = ap.parse_args()
-    S.load_costs()
+    # THE SAME COST TABLE THE MARKS WERE BUILT WITH, or every implied-cost check fails
+    # (23 Sep: a manual run without FX_COST_TABLE compared h22 marks to the flat table).
+    S.load_costs(os.environ.get('FX_COST_TABLE') or None)
+    print('cost table: %s' % (os.environ.get('FX_COST_TABLE') or 'results/cost_table.csv (default)'), flush=True)
     tag = a.suffix; W.TAG = tag; os.environ['WF_TAG'] = tag
     T = pd.read_pickle(W.OUT('wf_trades.pkl')); M = pd.read_pickle(W.OUT('wf_marks.pkl'))
     F = pd.read_csv(a.field, low_memory=False).set_index('sid')
@@ -113,7 +116,12 @@ def main():
         # vote timing in the fixed Book
         B = W.Book(m.assign(sid=m.sid.astype(str), pair=m.pair.astype(str)), [sid])
         first_vote = pd.Timestamp(B.day.min())
-        checks.append(('first voted day = fill + 1 bar', first_vote.value, days[1].value if len(days) > 1 else np.nan))
+        if len(days) > 1:
+            checks.append(('first voted day = fill + 1 bar', first_vote.value, days[1].value))
+        else:
+            # a trade filled and closed on the same day has NO day of exposure, so the fixed
+            # Book drops it entirely and it never votes (the 1,608 such trades in the base book).
+            checks.append(('single-day trade: no voted day at all', 0.0 if (B.L.shape[0] == 0 or pd.isna(first_vote)) else 1.0, 0.0))
         bad = [(n, g, e) for n, g, e in checks if not (np.isfinite(g) and np.isfinite(e) and abs(g - e) <= 2e-3 * max(1.0, abs(e)))]
         ok = not bad; ok_all &= ok
         rows.append(dict(sid=sid[:60], pair=p, entry=t.entry.date(), exit=t.exit.date(), days=len(days), dir=d, legs=n_legs, atr_len=alen, atr_mult=amult,
