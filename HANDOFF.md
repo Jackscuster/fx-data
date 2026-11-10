@@ -536,6 +536,64 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0g. **LAYER 2 IS PARKED HERE, VERIFIED AND READY — NOT LAUNCHED (recorded
+   9 Nov, when the Layer 1 DC-axis round began). Nothing below is abandoned;
+   this is the whole state of it in one place.**
+
+   **What is verified.** `results/audit_2026-11-08.csv`: **pre-flight 27 of
+   27 PASS, PRE-FLIGHT CLEAR** on the current code (16 s; re-run any time
+   with `FX_COST_TABLE=results/cost_table_h22.csv python3 code/preflight.py
+   --out audit_<date>.csv`). Working tree clean. Both hand checks pass on the
+   blind path: `audit_handcheck_blind2_AB.csv` (20 trades, one mode A + one
+   mode B strategy, 0 mismatches) and `audit_handcheck_blind2_C.csv` (10
+   trades, 0 mismatches). The mode-exit assert held over 14,560 (strategy,
+   window, pair) runs with zero mismatches. The per-step marks split matches
+   the combined-frame walk to < 1e-9 on every KPI, so the always-on book
+   fits 16 GB at full scale.
+
+   **THE COMMIT THE CLOUD BOXES PULL: `da5eddf`** (`cloud_refit.sh` clones
+   `main`, so whatever is tip at launch; `da5eddf` is the verified state and
+   the DC-axis work below does not touch the tune path). Every input is
+   tracked there: `results/refit_candidates_full.csv` (45,139 — A 17,822,
+   B 19,845, C 7,472), `cost_table_h22.csv`, `layer1_states.csv`,
+   `requirements.lock`, `code/l2refit.py`, all 31 `data/oanda_ohlc` files.
+
+   **THE LAUNCH LINES — one per box, k = 0, 1, 2 (JACK'S CALL; NOT RUN):**
+
+   ```
+   export GH_TOKEN=<token with write access to Jackscuster/fx-data>
+   curl -sL https://raw.githubusercontent.com/Jackscuster/fx-data/main/code/cloud_refit.sh | bash -s -- --box k --of 3
+   ```
+
+   **THE MERGE, on the Mac once all three boxes have pushed:**
+
+   ```
+   python3 code/l2refit.py --stage report --suffix _blind_full \
+     --windows "2011-2014:2015:2016,2012-2015:2016:2017,2013-2016:2017:2018,2014-2017:2018:2019,2015-2018:2019:2020"
+   ```
+
+   That one command prints the blind report (graded-pass vs graded-fail on
+   the trade year, rank correlations) AND the four-book per-slice table — no
+   second pass. 225,695 jobs at 72.8 s = **4,564 core-hours ≈ 6.6 days on
+   three 16-vCPU boxes at $0.10 per box-hour ≈ $47**; marks, walks and nulls
+   afterwards ~80 core-hours on the Mac.
+
+   **Nothing is half-finished.** Every result, code change and audit of that
+   effort is committed and pushed (`11b94d5`, `c23fe98`, `da5eddf`). The two
+   untracked paths are not work product: `.claude/` is the editor's own
+   settings (gitignored), and `data/px28_5pm_to2020.csv` is a 2002-2020
+   truncation of the 5pm panel left over from the 13 Sep validation —
+   checked byte-equal to `data/px28.csv` on all 4,743 overlapping rows and 28
+   pairs, read by nothing, safe for Jack to delete.
+
+   **The open question it exists to answer, unchanged:** on modes A and B the
+   routed book is no better than one routed on shuffled regime labels
+   (p = 0.20-0.92); **mode C routed is the only positive book** (+1.33%
+   median year, PF 1.087, retention +0.26, 4 of 5 traded years, shuffle
+   p = 0.00) on 104 of 7,472 C candidates. The full run tunes all of them
+   and is the honest test. **Resuming needs nothing but the launch lines
+   above.**
+
 0f. **THE BLIND-LABEL PROGRAMME (Jack, 21 Sep) — full library, no picking.
    BUILT; 250 SMOKE RUNNING; NOTHING RENTED. Jack launches the boxes.**
 
