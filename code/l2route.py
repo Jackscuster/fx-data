@@ -57,6 +57,23 @@ def _seal(df):
     return df[df.index <= pd.Timestamp(S.SEAL_END)]
 
 
+def load_dc_states(path):
+    """The candidate DC trend axis as a wide trending/ranging frame. Its header must
+    declare the one-bar lag, exactly like the shipped interface."""
+    with open(path) as fh:
+        line = fh.readline()
+    if not line.startswith('#') or 'lagged one bar' not in line:
+        raise RuntimeError('DC STATES HEADER: %s does not declare the one-bar lag on line 1' % path)
+    d = pd.read_csv(path, comment='#', parse_dates=['date'], usecols=['date', 'pair', 'dc_shape'])
+    if os.environ.get('FX_ALLOW_W4') != '1':
+        d = d[d.date <= pd.Timestamp(S.SEAL_END)]
+    w = d.pivot(index='date', columns='pair', values='dc_shape')
+    print('  DC TREND AXIS %s: %s -> %s, %d pairs; label shares %s'
+          % (os.path.basename(path), w.index.min().date(), w.index.max().date(), w.shape[1],
+             w.stack().value_counts(normalize=True).round(3).to_dict()), flush=True)
+    return w
+
+
 def load_states(path):
     S.layer1_header_check(path)   # AUDIT 14: the 5pm header, or halt
     d = pd.read_csv(path, parse_dates=['date'], usecols=['date', 'pair', 'shape2', 'activity'], comment='#')
@@ -90,7 +107,7 @@ def crisis_flags(px_path, split='2016-01-01'):
     return F
 
 
-def permitted(shape, act, flags, tir, activity, chop_always=False, trend_gate='trending'):
+def permitted(shape, act, flags, tir, activity, chop_always=False, trend_gate='trending', shape_trend=None):
     """{(pair, kind): bool Series by date}: may a NEW entry open on this bar.
     chop_always: chop slices are never gated (chop-core). trend_gate:
     'trending' = the trend axis says TRENDING (plus TIR if tir=incl);
@@ -101,11 +118,15 @@ def permitted(shape, act, flags, tir, activity, chop_always=False, trend_gate='t
     ungated', everyone trades)."""
     out = {}
     ts = TREND_STATES[tir]
+    # shape_trend (9 Nov): a DIFFERENT axis may drive the TREND gate while the chop
+    # gate keeps the shipped chop axis -- the candidate DC trend axis replacing
+    # shape2 TRENDING, which is the only thing under test in that comparison.
     for p in shape.columns:
         cr = flags[p[:3]] | flags[p[3:]]
         cr = cr.reindex(shape.index).fillna(False)
         sh = shape[p]; ac = act[p]
-        tr = (sh.isin(ts) if trend_gate == 'trending' else (sh.notna() & ~sh.isin(CHOP_STATES))) & ~cr
+        sh_t = (shape_trend[p].reindex(shape.index) if (shape_trend is not None and p in shape_trend.columns) else sh)
+        tr = (sh_t.isin(ts) if trend_gate == 'trending' else (sh_t.notna() & ~sh_t.isin(CHOP_STATES))) & ~cr
         if trend_gate == 'never':                  # CHOP-ONLY: no trend strategy ever opens
             tr = pd.Series(False, index=sh.index)
         elif trend_gate == 'always':               # trend slices UNGATED: every bar, crisis still on,
@@ -189,6 +210,7 @@ def _init_shuf():
     _SG['TY'] = W.trade_year_sums(_SG['M'])
     _SG['shape'], _SG['act'] = load_states(os.environ['ROUTE_STATES'])
     _SG['flags'] = pd.read_pickle(os.environ['ROUTE_FLAGS'])
+    _SG['dc'] = load_dc_states(os.environ['ROUTE_DC_STATES']) if os.environ.get('ROUTE_DC_STATES') else None
 
 
 def _shuf_one(args):
@@ -198,7 +220,9 @@ def _shuf_one(args):
     try:
         rng = np.random.default_rng(seed)
         sh = shuffle_states(_SG['shape'], rng)
-        al = permitted(sh, _SG['act'], _SG['flags'], tir, activity, chop_always, trend_gate)
+        # the null shuffles EVERY axis that routes, including the candidate trend axis
+        dc = shuffle_states(_SG['dc'], rng) if _SG.get('dc') is not None else None
+        al = permitted(sh, _SG['act'], _SG['flags'], tir, activity, chop_always, trend_gate, shape_trend=dc)
         Tr, Mr, _ = route(_SG['T'], _SG['M'], al)
         TY = W.trade_year_sums(Mr)
         out = {}
@@ -224,6 +248,7 @@ def main():
     ap.add_argument('--trend-gate', choices=['trending', 'not-ranging', 'never', 'always'], default='trending', help="trend entries on TRENDING (trend axis), on NOT RANGING (chop axis), 'always' = UNGATED (every bar, crisis only, no activity gate), 'never' = no trend entry at all (CHOP-ONLY)")
     ap.add_argument('--no-crisis', action='store_true', help='reproduction check only: the engine\'s own routing has no crisis flag')
     ap.add_argument('--jobs', type=int, default=3)
+    ap.add_argument('--dc-states', default='', help='candidate trend axis csv (dc_shape): drives the TREND gate while the chop gate keeps the shipped chop axis')
     ap.add_argument('--step-files', action='store_true', help='route wf_*<suffix>_step<k>.pkl one step at a time (the full library will not fit as one frame)')
     a = ap.parse_args()
     W.S.load_costs()
@@ -250,7 +275,8 @@ def main():
     if a.no_crisis:
         flags[:] = False
         print('  crisis flag DISABLED (reproduction of the engine\'s own routing)', flush=True)
-    al = permitted(shape, act, flags, a.tir, a.activity, a.chop_always, a.trend_gate)
+    DC = load_dc_states(a.dc_states) if a.dc_states else None
+    al = permitted(shape, act, flags, a.tir, a.activity, a.chop_always, a.trend_gate, shape_trend=DC)
     cov = {k: float(v.loc['2011':'2020'].mean()) for k, v in al.items()}
     print('  permitted-bar share 2011-2020: trend %.3f  chop %.3f'
           % (np.mean([v for (p, k), v in cov.items() if k == 'trend']),
@@ -259,6 +285,10 @@ def main():
     W.TAG = a.out; os.environ['WF_TAG'] = a.out
     if a.shuffle_null:
         os.environ['ROUTE_STATES'] = os.path.abspath(a.states)
+        if a.dc_states:
+            os.environ['ROUTE_DC_STATES'] = os.path.abspath(a.dc_states)
+        else:
+            os.environ.pop('ROUTE_DC_STATES', None)
         fl = W.OUT('route_flags.pkl'); pd.to_pickle(flags, fl); os.environ['ROUTE_FLAGS'] = fl
         os.environ['WF_TAG'] = a.suffix          # workers load the UNROUTED source
         os.environ['WF_EXPECT_SIDS'] = str(int(T.sid.nunique()))

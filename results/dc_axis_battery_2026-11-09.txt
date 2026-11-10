@@ -1,0 +1,15 @@
+DC TREND AXIS -- PRESENT-TENSE BATTERY, six declared variants. 2026-11-09
+No money metric appears in this file. Tuning window < 2016-01-01; ONE holdout confirm on 2016-2020; 2021+ sealed.
+
+       m  K      cut  separation_tuning  separation_holdout  median_run  flip_rate  coverage  share_trending  corr_shipped_trend_score  corr_straightness  label_agreement_with_shipped
+  0.5000  5   1.8711             0.4622              0.4762     15.0000     0.0485    0.9959          0.4805                    0.0633             0.3442                        0.5346
+  0.5000 10   2.0014             0.4670              0.4591     18.7500     0.0326    0.9912          0.4710                    0.0865             0.3140                        0.5545
+  1.0000  5   1.3675             0.3966              0.3864     22.2500     0.0308    0.9915          0.4842                    0.0419             0.3492                        0.5335
+  1.0000 10   1.4483             0.2805              0.2539     26.5000     0.0211    0.9832          0.4734                    0.0862             0.2357                        0.5515
+  1.5000  5   1.2067             0.2484              0.1810     35.0000     0.0202    0.9755          0.4972                    0.0723             0.2410                        0.5418
+  1.5000 10   1.2841             0.1569              0.1428     44.5000     0.0136    0.9642          0.4972                    0.1272             0.1634                        0.5511
+
+shipped trend axis on the same battery: separation tuning 0.0651, holdout 0.1208, median run 31.0, flip rate 0.0170
+
+measured duration of real trending episodes in this panel (results/run_lengths.csv): median ~21 bars
+done in 0.4 min
