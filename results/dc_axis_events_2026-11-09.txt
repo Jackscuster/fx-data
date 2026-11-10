@@ -1,0 +1,26 @@
+DIRECTIONAL-CHANGE EVENTS, per (pair, m). 2026-11-09
+theta = m x the pair daily log-return stdev on the TUNING WINDOW ONLY (dates < 2016-01-01).
+Panel 2002-09-24 -> 2020-12-31, 28 pairs, sealed at 2020-12-31.
+
+Per m: events on the tuning window (the guard is 30).
+     min  median   max
+m                     
+0.5  648   987.0  1099
+1.0  366   603.5   717
+1.5  197   396.5   460
+
+theta in basis points of log price:
+       min  median     max
+m                         
+0.5  24.65   35.87   53.45
+1.0  49.31   71.74  106.90
+1.5  73.96  107.61  160.36
+
+mean overshoot / theta over all completed events:
+       min  median    max
+m                        
+0.5  1.893   2.214  2.556
+1.0  1.375   1.588  1.809
+1.5  1.301   1.402  1.609
+
+Guard: every (pair, m) clears 30 completed tuning-window events. No cell re-picked.

@@ -1,0 +1,19 @@
+DC TREND AXIS -- LAYER 3 MONEY TEST. 2026-11-09
+Money metrics appear here and nowhere else in this round. Same 104 mode C candidates, same walk,
+same budgets, same nulls as results/refit_books_modec2.csv. team1 shown; team2 is the 5.4%% budget.
+
+DECISION RULE, declared before any number: the DC axis earns a routing place only if the routed
+book BEATS THE BASELINE and BEATS ITS OWN SHUFFLE NULL. The correlation never decides this.
+
+   family      role                                        book  median_year_pct  worst_year_pct  dip95_pct  profit_factor  retention p_random_entry p_regime_shuffle
+   mode C  baseline mode C routed on shape2 TRENDING (BASELINE)            1.331          -3.997      6.911          1.087      0.258          0.080            0.000
+   mode C candidate          mode C routed on the DC trend axis           -1.126          -1.384      7.137          0.957     -0.395          0.960            0.920
+   mode C   control mode C trend UNGATED (no trend axis at all)           -0.484          -1.139      6.370          1.046     -0.168          0.400            0.000
+A/B trend  baseline         A/B trend slices on shape2 TRENDING           -0.324          -1.732      7.538          0.991     -0.062          0.320            0.600
+A/B trend candidate       A/B trend slices on the DC trend axis           -0.384          -1.460      7.161          0.921     -0.282          0.200            0.280
+A/B trend   control                    A/B trend slices UNGATED           -0.526          -2.028      6.671          0.990     -0.211          1.000            1.000
+
+VERDICT on the declared rule:
+  beats the baseline (-1.126% vs 1.331% median year, team1): NO
+  beats its own shuffle null (p = 0.920, bar p <= 0.05): NO
+  => the DC axis DOES NOT EARN a routing place on this evidence.

@@ -536,6 +536,94 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0h. **LAYER 1 RESEARCH ROUND 1 — A TREND AXIS FROM DIRECTIONAL CHANGE:
+   DONE, AND IT IS A CLEAN NEGATIVE. The axis does NOT earn a routing place.**
+   (10 Nov; source `results/research/RESEARCH_2026-11-09_part2_regime_
+   taxonomies_and_nnfx_catalog.md` family 7, commit 9926531. Code
+   `code/dcaxis.py` battery + `code/dcroute.py` Layer 3. Files
+   `results/dc_axis_*_2026-11-09.{csv,txt}` and `dc_axis_summary_2026-11-09.md`,
+   16 of them, dated, nothing overwritten.)
+
+   **The construction, declared before any result.** Per pair the running
+   extreme of log price; a reversal of theta is an event, the continuation to
+   the next reversal is the overshoot. **theta is a CONSTANT per pair** =
+   m x that pair's daily log-return stdev measured ONCE on the tuning window
+   (m = 0.5, 1.0, 1.5) — never trailing vol, which is what recreates the
+   relative-cut failure. Score at t from bars <= t-1: mean(overshoot/theta)
+   over the last K completed events (K = 5, 10). No label before K events;
+   cut learned on the tuning window; 2021+ sealed in the loader and absent.
+
+   **The guard passed.** Completed tuning-window events per pair: m=0.5
+   648-1,099, m=1.0 366-717, m=1.5 197-460, against a floor of 30. theta
+   25-160 bp. Nothing re-picked.
+
+   **The battery looked like a win and the NULL KILLED IT.** Separation on
+   the holdout ran 0.14-0.48 against the shipped trend axis's 0.12 — up to
+   3.9x. But the 200-draw surrogate null re-derives the construction, the
+   theta measurement AND the cut on each draw, and **every one of the six
+   variants scores BELOW its surrogate mean**: corrected separation −0.003 to
+   −0.095, **p = 0.60 to 1.00** on both the sign and permutation nulls. A
+   random-sign or reshuffled panel produces the same or better DC separation.
+   The apparent 4x advantage is an artefact of the construction, not an edge.
+   Had the battery been reported before the null it would have been wrong —
+   this is precisely what "nulls before findings" is for.
+
+   **Correlation, reported plainly:** Spearman vs the shipped trend score
+   0.04-0.13, vs straightness 0.16-0.35, label agreement 0.53-0.55. LOW, so
+   this is **not** a confirmation of the shipped axis; it measures something
+   else. Recorded as a fact; it decided nothing.
+
+   **The declared constraint set turned out EMPTY, and that is reported, not
+   worked around.** Measured standard: g4_twoscore4 trending states, IS
+   block, median 20.0 bars -> admissible 10-40. Every variant inside that
+   band flips MORE often than the shipped axis (0.020-0.049 vs 0.017); the
+   only variant that flips less (m=1.5, K=10) runs 44.5 bars, outside the
+   band. **No variant satisfies both constraints** — a finding about the
+   construction itself: at this panel's volatility an absolute threshold
+   either flips too often or runs too long. The fallback was declared in code
+   before any money number existed (primary = best tuning separation inside
+   the run band, carrying its flip violation in the open: **m = 0.5, K = 10**,
+   cut 2.0014; sensitivity = the only flip-rate passer). Neither was
+   re-chosen afterwards.
+
+   **LAYER 3, the money test (team1; `dc_axis_layer3_2026-11-09.csv`).**
+
+   | family | role | book | median yr | worst yr | DIP95 | PF | retention | p rand | p shuffle |
+   |---|---|---|--:|--:|--:|--:|--:|--:|--:|
+   | mode C | baseline | routed on shape2 TRENDING | **+1.331** | −4.00 | 6.91 | 1.087 | +0.26 | 0.08 | **0.00** |
+   | mode C | candidate | routed on the **DC axis** | **−1.126** | −1.38 | 7.14 | 0.957 | −0.40 | 0.96 | 0.92 |
+   | mode C | control | trend UNGATED | −0.484 | −1.14 | 6.37 | 1.046 | −0.17 | 0.40 | 0.00 |
+   | A/B trend | baseline | on shape2 TRENDING | −0.324 | −1.73 | 7.54 | 0.991 | −0.06 | 0.32 | 0.60 |
+   | A/B trend | candidate | on the **DC axis** | −0.384 | −1.46 | 7.16 | 0.921 | −0.28 | 0.20 | 0.28 |
+   | A/B trend | control | UNGATED | −0.526 | −2.03 | 6.67 | 0.990 | −0.21 | 1.00 | 1.00 |
+
+   **VERDICT on the rule declared before the first number: NO on both legs.**
+   The DC-routed mode C book does not beat the baseline (−1.13% vs +1.33%)
+   and does not beat its own shuffle null (p = 0.92). It is also worse than
+   having no trend axis at all (−0.48%). On the A/B trend slices it is
+   likewise no better than shape2. **The DC axis does not earn a routing
+   place.** The shipped trend axis keeps its place by default, not by merit —
+   its own separation null failure (HANDOFF_3 16.1b) is untouched by this
+   round.
+
+   **Wired like everything else:** `app_data.json` (both copies) carries a
+   `dc_axis` section (battery 6, null 12, sub-period, layer3 6) and
+   `app_ui.js` has a new **DC axis** tab — nav button, section, `TABS` entry,
+   `show()` hook and `dcFill()` — in the **Advanced** group only, never in
+   `DEFAULT_TABS`. `node --check app_ui.js` passes.
+
+   **Two faults of my own, both fixed and recorded.** (1) The first driver
+   died at 00:49 in the A/B trend random-entry null: the routed pickle held
+   all 250 blind-smoke strategies while the walk's field held only the 194
+   trend-slice ones, so `WF_EXPECT_SIDS` halted the worker by design and that
+   halt's SIGTERM took the shell driver with it; caffeinate released and the
+   Mac slept for nine hours before I noticed. Fixed with a trend-only field
+   (`results/dc_abtrend_field.csv`, 194 sids) and a filter step that trims the
+   routed pickles to the same sids. (2) `dcroute` read the Layer 3 CSV back
+   with pandas turning the empty `note` column into NaN, which silently
+   dropped every row from the summary and the app feed; fixed with an
+   explicit fillna and both rebuilt.
+
 0g. **LAYER 2 IS PARKED HERE, VERIFIED AND READY — NOT LAUNCHED (recorded
    9 Nov, when the Layer 1 DC-axis round began). Nothing below is abandoned;
    this is the whole state of it in one place.**

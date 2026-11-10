@@ -76,6 +76,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="gl">Explain</button>
 <button role="tab" aria-selected="false" data-t="ar">Archive</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
+<button role="tab" aria-selected="false" data-t="dc">DC axis</button>
 </nav>`;
 
 const PSTYLE=`<style>
@@ -575,6 +576,17 @@ windows. It predicts nothing measurable and no excursion table is shipped for it
 <th>Pair</th></tr></thead><tbody></tbody></table></div>
 </section>
 
+<section id="dc" hidden>
+<h3>Candidate trend axis: directional change</h3>
+<div class="note">A trend axis built on an ABSOLUTE reversal threshold in event time, aimed at the
+known weakness: the shipped trend axis fails its separation null in routing, and a relative cut cannot
+see a two-year trend. theta is a CONSTANT per pair &mdash; m &times; that pair's daily log-return stdev
+measured once on the tuning window, never trailing vol. Score = mean(overshoot/theta) over the last K
+completed events, lagged one bar. Six variants were declared before any result; 2021 onward is sealed.
+A candidate, not shipped: it earns a routing place only by beating the mode C baseline AND its own
+shuffle null, which is the Layer 3 table at the bottom.</div>
+<div id="dcbody"></div>
+</section>
 <section id="vd" hidden>
 <h3>Does the regime read predict what happens after entry?</h3>
 <div class="note">The bridge to Layer 2. Three deliberately dumb triggers &mdash; a 20-day
@@ -5414,7 +5426,7 @@ function boot(BUNDLE,root){
 
   const TABS=['today','chart','pairs2','how','evid','tv',
               'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
-              'ex','pt','hz','rd','xd','pc','gl','ar','vd'];
+              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc'];
   // The default view is the product: four tabs. Everything else -- the
   // sensitivity work, the driver detail, the shared-states matrix, the
   // validation tables and the whole archive of superseded generations -- is
@@ -5429,7 +5441,8 @@ function boot(BUNDLE,root){
    // the regime feed is ~9 MB, so it is fetched only when that tab is first opened
    if(t==='rd'&&!$('#rdpair'))initRegime();
    if(t==='chart')chartOpen();
-   if(t==='tv')initTrades();};
+   if(t==='tv')initTrades();
+   if(t==='dc')dcFill();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
     b.style.display=(ADV||DEFAULT_TABS.indexOf(b.dataset.t)>=0)?'':'none';});
@@ -5494,3 +5507,28 @@ function boot(BUNDLE,root){
     +'description only, never routed on.</td></tr>'
     +'</tbody></table></div>';})();
 };})();
+
+// ---- DC TREND AXIS (Layer 1 research round 1, 2026-11-09). Advanced only until it earns more.
+function dcFill(){
+  const d=(window.D&&D.dc_axis)||null, el=document.getElementById('dcbody');
+  if(!el) return;
+  if(!d){el.innerHTML='<p class="note">No dc_axis section in this app_data.json build.</p>';return;}
+  const num=v=>v===null||v===undefined||v===''?'':(typeof v==='number'
+      ?(Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)<0.0001&&v!==0?v.toExponential(1):v.toFixed(4)):String(v));
+  const tbl=(rows,cols,cap)=>{
+    if(!rows||!rows.length) return '<h4>'+cap+'</h4><p class="note">(not built in this run)</p>';
+    return '<h4>'+cap+'</h4><div class="tw"><table><thead><tr>'
+      +cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
+      +rows.map(r=>'<tr>'+cols.map(c=>'<td>'+num(r[c])+'</td>').join('')+'</tr>').join('')
+      +'</tbody></table></div>';};
+  el.innerHTML='<p class="note">'+(d.note||'')+' Built '+(d.stamp||'')+'.</p>'
+    +tbl(d.battery,['m','K','cut','separation_tuning','separation_holdout','median_run','flip_rate','coverage',
+                    'corr_shipped_trend_score','corr_straightness','label_agreement_with_shipped','eligible','selected'],
+         'Present-tense battery, six declared variants (no money metric)')
+    +tbl(d.null,['kind','m','K','real','null_mean','null_p95','null_max','corrected','p_value'],
+         '200-draw surrogate null (construction, theta and cut re-derived on every draw)')
+    +tbl(d.subperiod,['m','K','period','separation','median_run','flip_rate','share_trending'],
+         'Sub-period split: 2016-2019 vs 2020 only (2021+ sealed)')
+    +tbl(d.layer3,['family','role','book','median_year_pct','worst_year_pct','dip95_pct','profit_factor',
+                   'retention','p_random_entry','p_regime_shuffle'],
+         'Layer 3 money test, team1 — the only place money appears in this round');}
