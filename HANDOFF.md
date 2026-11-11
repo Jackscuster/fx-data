@@ -536,6 +536,85 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0i. **LAYER 1 TREND ROUND 2 (10 Nov) — THE FAILURE IS NOW DIAGNOSED, AND
+   BOTH NEW CONSTRUCTIONS FAILED THE SAME NULL GATE. Nothing new ships.**
+   Code `code/trendanat.py` (Part 1, measurement only), `code/trendt12.py`
+   (T1/T2 + battery, no money), `code/trendt12report.py` (Layer 3 +
+   delivery). 19 dated files `results/trend_anatomy_*_2026-11-10.*`,
+   `trend_t12_*_2026-11-10.*`, `trend_summary_2026-11-10.md`.
+
+   **PART 1 — WHY THE SHIPPED TREND AXIS FAILS. This is the keeper.**
+
+   1. **The routed trend edge is an ONSET edge.** Holdout, by third of the
+      episode: the A/B book earns **60% of its R in the first third** (19%
+      middle, 19% last); mode C is flat (29 / 45 / 26). Losses are spread
+      evenly across thirds (29-38%) in both — it is not that late trades
+      bleed, it is that **only the opening third pays**.
+   2. **Half the labelled trending episodes never went anywhere.** True-trend
+      share (net progress in tuning-window vol units, threshold 0.509 learned
+      IS): **50.1% IS, 44.3% holdout**. The false ones are not shorter (23-26
+      bars vs 20-23), just directionless: efficiency 0.07-0.10 against
+      0.27-0.31. **And the shipped trend score cannot tell them apart — on
+      the holdout the FALSE episodes score HIGHER (0.494) than the true ones
+      (0.329).**
+   3. **ONSET COST: the label confirms a median 24 bars late with 56-57% of
+      the leg's move already spent**, against a median 23-bar episode. A
+      dwell-5 confirmation on a 20-bar move cannot be anything else. This is
+      the mechanism behind 16.1b, measured rather than inferred.
+   4. **Mode C survives trend routing on HOLD TIME, not timing.** All three
+      modes enter at a median ~0.50 of the episode. C holds 10-11 days
+      against B's 6, exits inside the episode least often (0.70 vs 0.80) and
+      carries the best win share (0.43 holdout vs A 0.39, B 0.34).
+
+   **PARTS 2-3 — two motivated constructions, both declared before any
+   result.** T1 TREND AS BROKEN CHOP: built only from the existing chop
+   machinery (`structure.swings` at the shipped N=19) — a break is a close
+   outside the tracked boundary and either snaps back within R bars or holds;
+   score = share of breaks held over the shipped 106-bar window, R = 5 and 10
+   declared. T2 CURRENCY-LEG TREND: strength per currency against the
+   equal-weight basket of the other seven from the 7 USD legs, in that leg's
+   tuning-window vol; pair score = |strength X − strength Y|. **T2 has
+   nothing to sweep by construction.**
+
+   | variant | sep tuning | sep holdout | median run | flip rate | corr shipped trend | corr shipped chop |
+   |---|--:|--:|--:|--:|--:|--:|
+   | T1 R=5 | 0.086 | 0.109 | 70.0 | 0.0104 | +0.27 | **−0.32** |
+   | T1 R=10 | 0.079 | **0.132** | 71.0 | 0.0105 | +0.35 | **−0.38** |
+   | T2 | 0.061 | 0.037 | 32.5 | 0.0192 | **+0.73** | −0.20 |
+   | shipped | 0.065 | 0.121 | 31.0 | 0.0170 | — | — |
+
+   T1 is the chop axis read with the sign flipped — which is exactly what
+   "trend is the failure of snap-back" predicts, and it is the first
+   construction to match the shipped axis on holdout separation while
+   flipping LESS often. T2 largely restates the shipped axis (corr 0.73).
+
+   **THE NULL GATE KILLED BOTH — the same re-derive-everything 200-draw null
+   that killed the DC axis** (`trend_t12_null_2026-11-10.csv`):
+
+   | variant | real | sign null mean | sign p | perm null mean | perm p |
+   |---|--:|--:|--:|--:|--:|
+   | T1 R=5 | 0.109 | 0.115 | 0.56 | 0.107 | 0.47 |
+   | T1 R=10 | 0.132 | 0.118 | **0.29** | 0.112 | **0.22** |
+   | T2 | 0.037 | 0.049 | 0.72 | 0.041 | 0.56 |
+
+   T1 R=10 is the closest anything has come (corrected +0.013/+0.020, p 0.22
+   and 0.29) and it is still nowhere near the 0.05 bar. **Survivors: NONE.**
+   By the rule declared before the run, **no construction was given a money
+   test** — `trend_t12_layer3_2026-11-10.csv` carries the baseline and the
+   controls only, and says so.
+
+   **What this round changes.** Nothing ships. The shipped trend axis keeps
+   its place by default, not by merit. But the failure is no longer a
+   mystery: **the axis labels directionless episodes as trends half the time
+   and confirms a full median-trend-length after the move starts, while the
+   only edge in routed trend trading lives in the episode's first third.**
+   Any future candidate has to fix the onset lag or the false-positive rate;
+   three constructions (DC, T1, T2) have now failed the separation null, so
+   the null gate — not the idea supply — is the binding constraint.
+
+   Wired into `app_data.json` (both copies) and `app_ui.js` as the
+   **Trend round 2** tab, Advanced only; `node --check` passes.
+
 0h. **LAYER 1 RESEARCH ROUND 1 — A TREND AXIS FROM DIRECTIONAL CHANGE:
    DONE, AND IT IS A CLEAN NEGATIVE. The axis does NOT earn a routing place.**
    (10 Nov; source `results/research/RESEARCH_2026-11-09_part2_regime_
