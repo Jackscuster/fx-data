@@ -1,0 +1,13 @@
+LAYER 1 TREND ROUND 2 -- LAYER 3 MONEY TEST. 2026-11-10
+Money appears here and nowhere else in this round. Same candidates, walk, budgets and nulls as the baseline.
+Only constructions that cleared their 200-draw separation null are here at all.
+
+   family     role                                        book  median_year_pct  worst_year_pct  dip95_pct  profit_factor  retention  p_random_entry  p_regime_shuffle
+   mode C baseline mode C routed on shape2 TRENDING (BASELINE)            1.331          -3.997      6.911          1.087      0.258           0.080             0.000
+   mode C  control                        mode C trend UNGATED           -0.484          -1.139      6.370          1.046     -0.168           0.400             0.000
+A/B trend baseline         A/B trend slices on shape2 TRENDING           -0.324          -1.732      7.538          0.991     -0.062           0.320             0.600
+A/B trend  control                    A/B trend slices UNGATED           -0.526          -2.028      6.671          0.990     -0.211           1.000             1.000
+
+NO CANDIDATE REACHED THIS STAGE: every construction failed its 200-draw null, so by the declared
+rule none was given a money test. The round ends at the battery and the shipped trend axis is
+unchanged -- it keeps its place by default, not by merit.

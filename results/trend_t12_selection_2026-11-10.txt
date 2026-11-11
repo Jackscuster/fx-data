@@ -1,0 +1,15 @@
+T1 / T2 -- SELECTION AND NULL VERDICT. 2026-11-10
+
+Measured standard: g4_twoscore4 trending states run a median 20.0 bars IS, so the admissible band is 10.0-40.0; flip rate must be no worse than the shipped axis (0.0170).
+
+variant          family knob  separation_tuning  separation_holdout  median_run  flip_rate  run_ok  flip_ok  eligible  null_p_sign  null_p_perm  survives_null  t1_selected
+  T1_R5  T1 broken chop  R=5             0.0863              0.1086     70.0000     0.0104   False     True     False       0.5550       0.4700          False         True
+ T1_R10  T1 broken chop R=10             0.0794              0.1315     71.0000     0.0105   False     True     False       0.2850       0.2150          False        False
+     T2 T2 currency leg none             0.0610              0.0370     32.5000     0.0192    True    False     False       0.7200       0.5550          False        False
+
+T1 selection (its own two R values): T1_R5
+
+NULL GATE -- only a construction clearing BOTH nulls at p <= 0.05 reaches the Layer 3 money test:
+  T1_R5: FAILS (sign p 0.56, perm p 0.47), T1_R10: FAILS (sign p 0.28, perm p 0.21), T2: FAILS (sign p 0.72, perm p 0.56)
+
+Reaching the money test: NONE -- the round stops at the battery.

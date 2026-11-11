@@ -1,0 +1,11 @@
+TREND CONSTRUCTIONS T1 (broken chop) AND T2 (currency leg) -- PRESENT-TENSE BATTERY. 2026-11-10
+No money metric in this file. Cuts on the tuning window; ONE holdout confirm; 2021+ sealed.
+
+variant          family knob      cut  separation_tuning  separation_holdout  median_run  flip_rate  coverage  share_trending  corr_shipped_trend  corr_shipped_chop  corr_straightness  label_agreement_shipped
+  T1_R5  T1 broken chop  R=5   0.5000             0.0863              0.1086     70.0000     0.0104    0.9265          0.5382              0.2721            -0.3167             0.1188                   0.5758
+ T1_R10  T1 broken chop R=10   0.3333             0.0794              0.1315     71.0000     0.0105    0.9265          0.5806              0.3496            -0.3840             0.1250                   0.5769
+     T2 T2 currency leg none   0.5670             0.0610              0.0370     32.5000     0.0192    0.9764          0.4596              0.7306            -0.1977             0.0844                   0.6800
+
+shipped trend axis: separation 0.0651 tuning / 0.1208 holdout, median run 31.0, flip rate 0.0170
+
+done in 0.1 min

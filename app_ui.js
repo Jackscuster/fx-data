@@ -77,6 +77,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="ar">Archive</button>
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 <button role="tab" aria-selected="false" data-t="dc">DC axis</button>
+<button role="tab" aria-selected="false" data-t="tr2">Trend round 2</button>
 </nav>`;
 
 const PSTYLE=`<style>
@@ -576,6 +577,15 @@ windows. It predicts nothing measurable and no excursion table is shipped for it
 <th>Pair</th></tr></thead><tbody></tbody></table></div>
 </section>
 
+<section id="tr2" hidden>
+<h3>Trend round 2: failure anatomy, and two constructions</h3>
+<div class="note">Part 1 measures WHY the shipped trend axis fails -- where inside an episode the routed
+P&amp;L sits, how many labelled trending episodes actually went anywhere, how late the label confirms, and
+why mode C survives trend routing when A/B do not. Parts 2 and 3 are two motivated candidates: T1 reads
+trend as the failure of chop snap-back, T2 as a currency-leg story. Both face the same 200-draw
+re-derive-everything null that killed the DC axis; money appears only for a construction that clears it.</div>
+<div id="tr2body"></div>
+</section>
 <section id="dc" hidden>
 <h3>Candidate trend axis: directional change</h3>
 <div class="note">A trend axis built on an ABSOLUTE reversal threshold in event time, aimed at the
@@ -5426,7 +5436,7 @@ function boot(BUNDLE,root){
 
   const TABS=['today','chart','pairs2','how','evid','tv',
               'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
-              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc'];
+              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2'];
   // The default view is the product: four tabs. Everything else -- the
   // sensitivity work, the driver detail, the shared-states matrix, the
   // validation tables and the whole archive of superseded generations -- is
@@ -5442,7 +5452,8 @@ function boot(BUNDLE,root){
    if(t==='rd'&&!$('#rdpair'))initRegime();
    if(t==='chart')chartOpen();
    if(t==='tv')initTrades();
-   if(t==='dc')dcFill();};
+   if(t==='dc')dcFill();
+   if(t==='tr2')tr2Fill();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
     b.style.display=(ADV||DEFAULT_TABS.indexOf(b.dataset.t)>=0)?'':'none';});
@@ -5532,3 +5543,38 @@ function dcFill(){
     +tbl(d.layer3,['family','role','book','median_year_pct','worst_year_pct','dip95_pct','profit_factor',
                    'retention','p_random_entry','p_regime_shuffle'],
          'Layer 3 money test, team1 — the only place money appears in this round');}
+
+// ---- TREND ROUND 2 (Layer 1, 2026-11-10). Advanced only.
+function tr2Fill(){
+  const d=(window.D&&D.trend_round2)||null, el=document.getElementById('tr2body');
+  if(!el) return;
+  if(!d){el.innerHTML='<p class="note">No trend_round2 section in this app_data.json build.</p>';return;}
+  const num=v=>v===null||v===undefined||v===''?'':(typeof v==='number'
+      ?(Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)<0.0001&&v!==0?v.toExponential(1):v.toFixed(4)):String(v));
+  const tbl=(rows,cols,cap)=>{
+    if(!rows||!rows.length) return '<h4>'+cap+'</h4><p class="note">(not built in this run)</p>';
+    return '<h4>'+cap+'</h4><div class="tw"><table><thead><tr>'
+      +cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
+      +rows.map(r=>'<tr>'+cols.map(c=>'<td>'+num(r[c])+'</td>').join('')+'</tr>').join('')
+      +'</tbody></table></div>';};
+  const a=d.anatomy||{};
+  el.innerHTML='<p class="note">'+(d.note||'')+' Built '+(d.stamp||'')+'.</p>'
+    +'<h4>Part 1 &mdash; failure anatomy (measurement only)</h4>'
+    +tbl(a.pnl_by_position,['book','era','third','trades','total_R','mean_R','share_positive','share_of_book_R','share_of_book_loss'],
+         'Routed trend P&amp;L by position inside the episode')
+    +tbl(a.truth,['era','true_trend','episodes','median_bars','median_progress','median_efficiency'],
+         'Episode truth table: did the labelled trend actually go anywhere')
+    +tbl(a.onset,['era','episodes','median_bars_late','median_share_of_move_gone'],
+         'Onset cost: how late the label confirms, and how much of the move is already gone')
+    +tbl(a.mode_placement,['book','mode','era','trades','median_entry_position','median_hold_days','share_exit_inside_episode','mean_R','share_positive'],
+         'Trade placement inside trending episodes, by mode')
+    +'<h4>Parts 2-3 &mdash; the constructions</h4>'
+    +tbl(d.battery,['variant','family','knob','cut','separation_tuning','separation_holdout','median_run','flip_rate',
+                    'coverage','corr_shipped_trend','corr_shipped_chop','survives_null','t1_selected'],
+         'Present-tense battery and the null gate')
+    +tbl(d.null,['kind','variant','real','null_mean','null_p95','null_max','corrected','p_value'],
+         '200-draw surrogate null (construction, vol and cut re-derived on every draw)')
+    +tbl(d.subperiod,['variant','period','separation','median_run','flip_rate','share_trending'],
+         'Sub-period split: 2016-2019 vs 2020')
+    +tbl(d.layer3,['family','role','book','median_year_pct','worst_year_pct','dip95_pct','profit_factor','retention','p_random_entry','p_regime_shuffle'],
+         'Layer 3 money test &mdash; only for constructions that cleared the null');}
