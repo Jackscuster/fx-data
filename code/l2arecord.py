@@ -34,7 +34,7 @@ def a_rates():
 
 
 def c_population():
-    d = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_modeC.csv'),
+    d = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_modeC.csv'), comment='#',
                     low_memory=False, usecols=['slice'])
     return dict(d.groupby('slice').size())
 

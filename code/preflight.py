@@ -202,7 +202,7 @@ def c12_13(quick):
     rng = np.random.default_rng(20260916)
     out = []; legs_ok = True; leg_detail = []
     for mode, f in (('A', 'gate2_tuned_modeA_trend.csv'), ('A', 'gate2_tuned_modeA_chop.csv'), ('B', 'gate2_tuned_modeB.csv'), ('C', 'gate2_tuned_modeC.csv')):
-        D = pd.read_csv(os.path.join(ROOTOUT, f), low_memory=False)
+        D = pd.read_csv(os.path.join(ROOTOUT, f), comment='#', low_memory=False)
         D = D[D.ip2.notna()]
         D = D.iloc[rng.choice(len(D), size=min(10 if mode == 'A' else 20, len(D)), replace=False)]
         for cfg in D.to_dict('records'):

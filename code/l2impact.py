@@ -58,7 +58,7 @@ def _pool(mode='B'):
     for m in ('B', 'A', 'C'):
         f = os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % m)
         if os.path.exists(f):
-            d = pd.read_csv(f, usecols=['c1', 'c2', 'vol', 'base',
+            d = pd.read_csv(f, comment='#', usecols=['c1', 'c2', 'vol', 'base',
                                         'exit_ind', 'slice', 'mode'])
             fr.append(d)
     D = pd.concat(fr, ignore_index=True)

@@ -642,7 +642,7 @@ def run_chunk(args):
                     skipped=True)
     code = dict((s, c) for s, _, c in S.SLICES)[sname]
     plan = dict((s, p) for s, p, _ in S.SLICES)[sname]
-    D = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode),
+    D = pd.read_csv(os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode), comment='#',
                     usecols=['c1', 'c2', 'vol', 'base', 'exit_ind', 'slice'])
     D = D[D['slice'] == sname].reset_index(drop=True)
     if not S.MODES[mode]['uses_exit_slot']:
@@ -825,7 +825,7 @@ def load_bank(mode, sname):
 def plan_chunks(mode, sname, srt=False, cap=None, staged=False,
                 deepen=False, disk=False, seed_from=None):
     f = os.path.join(ROOTOUT, 'gate1_survivors_mode%s.csv' % mode)
-    n = len(pd.read_csv(f, usecols=['slice']).query('slice == @sname'))
+    n = len(pd.read_csv(f, comment='#', usecols=['slice']).query('slice == @sname'))
     d = os.path.join(CK, 'mode%s_%s%s' % (mode, sname, '_deep' if deepen else ''))
     todo = []
     ch = chunk_size(mode)

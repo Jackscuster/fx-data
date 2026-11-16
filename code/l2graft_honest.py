@@ -43,7 +43,7 @@ def ip1_map(sids):
         p = os.path.join(ROOTOUT, f)
         if not os.path.exists(p):
             continue
-        d = pd.read_csv(p, low_memory=False)
+        d = pd.read_csv(p, comment='#', low_memory=False)
         d['sid'] = lab + '|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|' + d.vol + '|' + d.base
         for r in d[d.sid.isin(sids)].to_dict('records'):
             if isinstance(r.get('ip1'), str) and isinstance(r.get('risk1'), str):

@@ -930,7 +930,7 @@ def collect(mode):
     fs = sorted(glob.glob(os.path.join(mode_dir(mode), 'shard_*.csv')))
     if not fs:
         return pd.DataFrame()
-    D = pd.concat([pd.read_csv(f) for f in fs], ignore_index=True)
+    D = pd.concat([pd.read_csv(f, comment='#') for f in fs], ignore_index=True)
     if not MODES[mode]['uses_exit_slot']:
         D['exit_ind'] = 'unused'
     D['mode'] = mode
