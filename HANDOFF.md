@@ -536,6 +536,82 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0k. **CRISIS WITNESSES 2 AND 3 (16 Nov) — PANEL TURBULENCE AND ROLL
+   ILLIQUIDITY. BOTH ARE KILLED BY THE INCREMENTAL TEST, NOT THE NULL:
+   neither catches a single event the acute detector misses.** Code
+   `code/witness.py`; dated files `results/witness_*_2026-11-15.*`,
+   `results/roll_perpair_{20,60}_2026-11-15.csv`,
+   `witness_summary_2026-11-15.md`. Committed and pushed inside the chain
+   (`0441489`) — nothing waited for a check-in.
+
+   **What they are.** Panel turbulence (Kritzman-Li): the Mahalanobis
+   distance of the day's return vector from its own trailing history under
+   the trailing covariance, so a day is turbulent when the moves are big OR
+   unusually combined; covariance windows 250 and 500, on the 7 USD legs and
+   on all 28 pairs. Roll illiquidity: the effective-spread proxy from the
+   negative autocovariance of daily closes, windows 20 and 60, per pair plus
+   the panel average. Both lagged one bar, percentiles learned on the tuning
+   window, 2021+ sealed.
+
+   **Validation (crisis.py's, unchanged: 39 news-dated events in the panel
+   window, forward-only event date to +15 days, 95th percentile on the
+   tuning window).**
+
+   | witness | caught | recall | base | lift | false alarm | lag |
+   |---|--:|--:|--:|--:|--:|--:|
+   | ACUTE maxabsmove | 31 | 0.795 | 0.053 | 15.0 | 0.044 | 0 |
+   | ACUTE breadth2sig | 27 | 0.692 | 0.049 | 14.2 | 0.038 | 0 |
+   | turbulence USD 250 | 25 | 0.641 | 0.046 | **14.0** | 0.034 | 1 |
+   | turbulence all-28 250 | 25 | 0.641 | 0.046 | 14.0 | 0.034 | 1 |
+   | turbulence 500 (both) | 24 | 0.615 | 0.044 | 14.0 | 0.031 | 1 |
+   | Roll panel 20 | 9 | 0.231 | 0.039 | **5.9** | 0.031 | 4 |
+   | MOVE (relative) | 8 | 0.205 | 0.042 | 4.9 | 0.035 | 1 |
+   | Roll panel 60 | 2 | 0.051 | 0.036 | 1.4 | 0.035 | 4 |
+
+   On lift alone both look like keepers: turbulence sits in the acute band
+   with a LOWER false-alarm rate, and Roll-20 beats MOVE. **The crosses add
+   nothing** — all-28 is identical to the 7 USD legs on every number, which
+   is triangulation doing exactly what it should; the secondary can be
+   dropped.
+
+   **The null is mixed and would not have settled it.** Permutation: every
+   turbulence variant p = 0.000 (real 13.96-13.98 against a null mean of
+   7.7-8.2), Roll-20 p = 0.015. Sign: turbulence USD 500 p = 0.015 but USD
+   250 **p = 0.980** (null mean 14.96 ABOVE the real 13.98) and all-28 250
+   p = 0.390; Roll-20 p = 0.450, Roll-60 p = 0.950. A sign-surrogate keeps
+   each day's |move| and only randomises direction, so it preserves exactly
+   the magnitude structure turbulence reads — the right reading is that
+   turbulence is a magnitude-and-combination statistic and the sign null is
+   the harder, more honest one for it.
+
+   **THE INCREMENTAL TEST KILLS BOTH, and it is unambiguous.** The acute
+   detector misses 7 of 39 events. **Neither new witness catches a single
+   one of them.** Overlap with the acute detector is **1.000 for every
+   variant** — every event turbulence or Roll catches is already caught.
+   They do catch events MOVE misses (turbulence 17, Roll-20 3), but MOVE is
+   the weakest existing witness and being better than it is not the bar.
+   Sub-period: 2020 is unanimous (every witness catches all 3 events, lift
+   20.0), and on 2016-2019 turbulence-250 exactly matches maxabsmove (5 of
+   7) while Roll catches 1 — again, no coverage added anywhere.
+
+   **VERDICT: neither witness earns a place.** A witness earns one by adding
+   coverage or an independent vote; these add neither — they are a slower,
+   more complicated re-reading of days the acute detector already flags
+   (median lag 1 day for turbulence, 4 for Roll, against 0 for acute). The
+   crisis witness set stays at the acute detector plus MOVE. Nothing ships.
+
+   **One finding worth keeping anyway:** Roll's estimator is **undefined on
+   40.5% of days at 20 bars and 43.6% at 60** (autocovariance positive),
+   stable across tuning (40.7 / 44.1) and holdout (40.0 / 42.1). On this
+   panel the bid-ask bounce the Roll measure depends on is absent or
+   positive-autocorrelated nearly half the time, which is itself a liquidity
+   reading and is the reason the 60-bar version is worthless (lift 1.4).
+
+   Wired into `app_data.json` (both copies) and `app_ui.js` as the **Crisis
+   witnesses** tab in the Advanced group, in the MOVE template and leading
+   with what each witness is NOT (confirmation, never prediction);
+   `node --check` passes.
+
 0j. **LAYER 1 TREND ROUND 3 (run 10 Nov, recorded 15 Nov) — THE FIRST THING
    IN THREE ROUNDS TO CLEAR THE NULL GATE. The currency-leg gap, read at
    label time, separates true from false trending episodes.** Code
