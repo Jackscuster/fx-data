@@ -58,7 +58,14 @@ def stage_quality():
     # seal are produced with the SAME tuning-window cut and tagged sample=sealed, never
     # measured. Building only to 2020 would make the join to layer1_states.csv lossy.
     px = pd.read_csv(os.path.join(ROOTDATA, 'px28.csv'), index_col=0, parse_dates=True).astype(float)
-    shape2, reads = TQ.build_all(px)
+    _, reads = TQ.build_all(px)
+    # THE LABEL COMES FROM THE INTERFACE FILE, NEVER FROM A REBUILD (16 Nov). Rebuilding
+    # shape2 here disagreed with results/layer1_states.csv on 26 AUDCAD rows at the
+    # panel's warm-up edge, and two files disagreeing about what state a bar is in is
+    # precisely the failure the interface contract exists to prevent. Only the READING
+    # is computed; the label is read.
+    _st = pd.read_csv(STATES, comment='#', parse_dates=['date'], usecols=['date', 'pair', 'shape2'])
+    shape2 = _st.pivot(index='date', columns='pair', values='shape2').reindex(px.index)
     E, thr = TQ.episodes_and_truth(px[px.index <= SEAL], shape2[shape2.index <= SEAL])
     E = TQ.attach(E, reads)
     q = reads['A3_currency_leg_gap']

@@ -1,6 +1,6 @@
 path,producer,what,exists,rows,pairs,date_min,date_max,build_date,md5,git_tracked
 results/layer1_states.csv,code/export.py,"THE interface: shape2, activity, both scores, scale, the four mechanism reads",True,171920,28.0,2002-12-19,2026-08-14,2026-11-16,0b48ed53b78a,True
-results/layer1_trend_quality_series.csv,code/layer1close.py --stage quality,the trend quality flag as a daily series (high/low confidence on trending bars),True,168692,28.0,2003-02-28,2026-08-14,2026-11-16,07653b111d70,True
+results/layer1_trend_quality_series.csv,code/layer1close.py --stage quality,the trend quality flag as a daily series (high/low confidence on trending bars),True,168712,28.0,2003-02-28,2026-08-14,2026-11-16,a8755566178f,True
 results/crisis_detectors.csv,code/crisis.py,"the acute detectors with calendar recall, lift and lag",True,5,,,,2026-11-16,b1f86c39f457,True
 results/crisis_events.csv,code/crisis.py,"per detector per event: caught and lag, the daily firing record",True,250,,2003-09-20,2026-07-31,2026-11-16,18a6ca47185d,True
 results/crisis_direction.csv,code/crisis.py,per event per pair behaviour during the crisis window,True,525,28.0,,,2026-08-29,34be14c2668a,True
