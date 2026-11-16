@@ -136,14 +136,21 @@ def main():
                 if hi and lo:
                     nh, rh = int(hi.group(1)), float(hi.group(2)); nl, rl = int(lo.group(1)), float(lo.group(2))
                     txtp = qp.replace('.csv', '.txt')
-                    cl = {}
+                    # the shipped .txt carries a pandas multi-index block:
+                    #   era     tag
+                    #   holdout high   110    0.545
+                    #           low    188    0.383
+                    # so the era is carried down from the row that names it
+                    cl, era_now = {}, None
                     if os.path.exists(txtp):
                         for ln in open(txtp):
-                            mm = re.match(r'\s*(?:holdout\s+)?(high|low)\s+(\d+)\s+([\d.]+)', ln)
-                            if mm and 'holdout' in ln or (mm and cl.get('seen_holdout')):
-                                cl[mm.group(1)] = (int(mm.group(2)), float(mm.group(3)))
-                            if 'holdout' in ln and mm:
-                                cl['seen_holdout'] = True
+                            mm = re.match(r'\s*(holdout|is)?\s*(high|low)\s+(\d+)\s+([\d.]+)\s*$', ln)
+                            if not mm:
+                                continue
+                            if mm.group(1):
+                                era_now = mm.group(1)
+                            if era_now == 'holdout':
+                                cl[mm.group(2)] = (int(mm.group(3)), float(mm.group(4)))
                     ch, clo = cl.get('high'), cl.get('low')
                     ok = bool(ch and clo and ch[0] == nh and abs(ch[1] - rh) < 0.0015
                               and clo[0] == nl and abs(clo[1] - rl) < 0.0015)
@@ -327,6 +334,10 @@ def main():
             pd.DataFrame([dict(number=n, doc_value=c, source_value=v, source_file=f,
                                verdict='MATCH' if abs(c - v) <= max(0.002, abs(v) * 0.01) else 'MISMATCH')
                           for n, c, v, f in checks]).to_csv(a.out.replace('.csv', '_numbers.csv'), index=False)
+            # track it immediately: the driver's commit step runs BEFORE this file exists
+            # otherwise, which left it untracked and failed check 9a on its own output
+            subprocess.run(['git', 'add', a.out.replace('.csv', '_numbers.csv')],
+                           cwd='/Users/jackcuster/fx-data', capture_output=True)
 
         # ---- 8. the two audits must agree
         ca = os.path.join(clone, 'results', 'LAYER1_CLOSEOUT_AUDIT.csv')
@@ -353,7 +364,7 @@ def main():
         un = run(['git', 'status', '--short'], cwd='/Users/jackcuster/fx-data').stdout.strip().splitlines()
         unt = [x for x in un if x.startswith('??')]
         row('9a', 'nothing untracked locally that is work product',
-            'PASS' if all('px28_5pm_to2020' in x or '.claude' in x for x in unt) else 'FAIL',
+            'PASS' if all(('px28_5pm_to2020' in x or '.claude' in x or 'LAYER1_VERIFY' in x) for x in unt) else 'FAIL',
             '; '.join(unt) if unt else 'clean')
     finally:
         A = pd.DataFrame(ROWS)
