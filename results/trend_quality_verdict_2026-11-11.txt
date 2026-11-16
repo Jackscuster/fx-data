@@ -1,0 +1,15 @@
+TREND ROUND 3 -- VERDICT. 2026-11-11
+
+             candidate  gap_tuning  gap_holdout  auc_holdout  sign_consistent  null_p_sign  null_p_perm  gap_2016_2019  gap_2020  survives
+     A1_activity_scale      0.1232       0.1326       0.4598            False       0.2850       0.2200         0.1150    0.2100     False
+         A2_chop_score      0.0191       0.0693       0.4827             True       0.6300       0.6300         0.0927    0.0412     False
+   A3_currency_leg_gap      0.2319       0.3944       0.6089             True       0.0100       0.0000         0.3581    0.5923      True
+A4_break_followthrough      0.0692       0.0628       0.4806             True       0.6400       0.5800         0.2485    0.4174     False
+A5_trend_score_CONTROL      0.0126       0.0151       0.4857             True       0.9250       0.8850         0.0509    0.0961     False
+
+A candidate survives only if it clears BOTH nulls at p <= 0.05, points the same way on the tuning window
+and the holdout, and moves AUC more than 0.05 off a coin flip.
+
+SURVIVORS: A3_currency_leg_gap
+Each becomes a reported QUALITY reading beside the trend label (high / low confidence trend).
+No state call changes; this flag never gates a trade on its own.

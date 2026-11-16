@@ -536,6 +536,70 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0j. **LAYER 1 TREND ROUND 3 (run 10 Nov, recorded 15 Nov) — THE FIRST THING
+   IN THREE ROUNDS TO CLEAR THE NULL GATE. The currency-leg gap, read at
+   label time, separates true from false trending episodes.** Code
+   `code/trendqual.py`; 9 dated files `results/trend_quality_*_2026-11-11.*`
+   plus `trend_quality_summary_2026-11-11.md`.
+
+   **The question, asked once.** Round 2 measured that ~50% of labelled
+   trending episodes are directionless and the shipped trend score cannot
+   tell them apart. Round 3 asked whether anything ALREADY COMMITTED can,
+   read at the episode's confirmation bar from bars <= t-1. A QUALITY FLAG on
+   the existing label: no new axis, no new state, no state call changes, no
+   money metric anywhere in the run. 996 episodes (725 tuning, 271 holdout),
+   episode-counted, truth threshold 0.503 learned on the tuning window.
+
+   **The menu was five existing series, declared before any result, with no
+   sweeps, no combinations and no interactions.** A5 (the trend score) was
+   the declared control.
+
+   | candidate | gap tuning | gap holdout | AUC holdout | sign consistent | sign p | perm p | survives |
+   |---|--:|--:|--:|---|--:|--:|---|
+   | A1 activity scale | 0.123 | 0.133 | 0.460 | **no** | 0.29 | 0.22 | no |
+   | A2 chop score | 0.019 | 0.069 | 0.483 | yes | 0.63 | 0.63 | no |
+   | **A3 currency-leg gap** | **0.232** | **0.394** | **0.609** | yes | **0.01** | **0.00** | **YES** |
+   | A4 break follow-through | 0.069 | 0.063 | 0.481 | yes | 0.64 | 0.58 | no |
+   | A5 trend score (CONTROL) | 0.013 | 0.015 | 0.486 | yes | 0.93 | 0.89 | no |
+
+   **A3 survives everything.** Holdout gap 0.394 against a null mean of
+   0.135 (corrected +0.260, null p95 0.299, max 0.467), p = 0.01 sign and
+   0.00 permutation on the same 200-draw re-derive null that killed the DC
+   axis, T1 and T2 — on each surrogate the two-score classifier, the episode
+   set, the truth threshold and all five readings are rebuilt. Sign
+   consistent, and the sub-period split holds in both halves: gap 0.358 on
+   2016-2019 and 0.592 on 2020. It also got STRONGER out of sample (0.232 ->
+   0.394), which is the opposite of the usual failure mode.
+
+   **What the flag actually buys, plainly.** Splitting holdout episodes at
+   the median reading: high-confidence episodes are true trends **55.1%** of
+   the time against **39.3%** for low-confidence (tuning: 53.7% vs 46.4%).
+   True episodes read 0.831 against 0.647 for false ones on the holdout. So
+   it is real, out-of-sample, and modest — AUC 0.609. It does not make the
+   trend label good; it says which half of the labels is worth less.
+
+   **The control is the proof the apparatus works.** A5, the trend score
+   itself, scored gap 0.015 and AUC 0.486 with p = 0.93/0.89 — no
+   information about whether its own label will be real, exactly as declared
+   in advance. A1 was disqualified before the null for pointing one way on
+   the tuning window and the other on the holdout.
+
+   **The declared decision, applied: A3 becomes a REPORTED QUALITY READING
+   beside the trend label (high / low confidence trend). It changes no state
+   call and never gates a trade on its own.** Note what it is: the round-2
+   T2 series, which FAILED as an axis (separation p 0.56/0.72). Failing as a
+   state and working as a conditional read are different questions, and this
+   is the one case where the second answer came back positive.
+
+   Wired into `app_data.json` (both copies) and `app_ui.js` as the **Trend
+   quality** tab, Advanced only; `node --check` passes.
+
+   **Process note, mine to own.** The run finished 10 Nov 22:25 and sat
+   uncommitted for five days because I did not check back after launching
+   it. The result was never at risk (every file was on disk) but it was not
+   recorded, which breaks the standing rule that nothing gets parked
+   silently. Committed at the first opportunity after that.
+
 0i. **LAYER 1 TREND ROUND 2 (10 Nov) — THE FAILURE IS NOW DIAGNOSED, AND
    BOTH NEW CONSTRUCTIONS FAILED THE SAME NULL GATE. Nothing new ships.**
    Code `code/trendanat.py` (Part 1, measurement only), `code/trendt12.py`
