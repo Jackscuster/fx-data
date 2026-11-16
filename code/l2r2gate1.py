@@ -96,7 +96,12 @@ def family_of(c1, c2):
 
 
 # ---------------------------------------------------------------- the kernel
-@njit(cache=True)
+# cache=False DELIBERATELY. numba's on-disk cache pickles the module environment
+# of whichever process compiled it first; a worker compiles it as `__mp_main__`,
+# and the next single-process run then dies on ModuleNotFoundError trying to
+# rebuild that environment. The function compiles in well under a second, so the
+# cache buys nothing and costs a dead chain.
+@njit(cache=False)
 def _accumulate(r, eb, nt, ybar, reg, code, acc, s_routed, s_allon):
     """Per-year accumulation for one pair, one plan, both routings.
 
