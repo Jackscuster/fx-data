@@ -1,0 +1,21 @@
+n,check,status,detail,clone_sha
+1,"fresh clone, this is what the world sees",PASS,6cf9b0d898a8  Layer 1 close-out: audit stage rerun after the close-out chain exited ,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+2,LAYER1_INTERFACE.md exists at the clone root,PASS,9203 bytes,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+2a,the contract names interface files,PASS,23 files named,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+2b,"every named file exists, loads and matches its claimed counts/spans",FAIL,results/paircharacter.csv MISSING,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+3,tuning-window cut re-derived independently (claim 0.913394),PASS,recomputed 0.913394,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+3a,holdout rates re-derived (claim 59.8% high n=92 / 40.8% low n=179),PASS,"recomputed high 59.8% n=92, low 40.8% n=179",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+3b,shipped CSV matches the independent recomputation row for row,PASS,"0 rows one-sided, 0 tag mismatches, 0 reading mismatches (of 168692)",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+4,l2sweep.load_pair refuses bars after 2020-12-31,PASS,max 2020-12-31,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+4a,l2route.load_states refuses bars after 2020-12-31,PASS,max 2020-12-31,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+4b,quality series rows after the seal are tagged sample=sealed,PASS,"40824 rows, all tagged",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+4c,states rows after the seal are tagged sample=sealed,PASS,"40824 rows, all tagged",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+5,EURUSD peak 1.6010 in the clone,FAIL,1.5991,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+5a,USDCHF low 0.7296 in the clone,FAIL,0.7209,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+6,node --check app_ui.js in the clone,PASS,,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+6a,"every Layer 1 tab has its data section, renderer, nav button and div in the clone",PASS,"dc, tr2, tq, cw all complete",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+6b,headless boot: all four renderers execute against clone app_data.json,FAIL,ran ; BOOTFAIL dcFill dcFill is not defined,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+7,every number in LAYER1_INTERFACE.md matches its named source file,PASS,"13 checked, 0 mismatched | quality null p sign MATCH (doc 0.01 vs trend_quality_verdict_2026-11-11.csv 0.01) | quality null p perm MATCH (doc 0 vs trend_quality_verdict_2026-11-11.csv 0) | quality AUC holdout MATCH (doc 0.609 vs trend_quality_verdict_2026-11-11.csv 0.6089) | acute caught MATCH (doc 31 vs witness_validation_2026-11-15.csv 31) | acute n_events MATCH (doc 39 vs witness_validation_202",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+8,chain audit and this independent audit agree,PASS,"chain 30/35 PASS, independent 13/17 PASS",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+9,local ~/fx-data HEAD == origin/main == clone HEAD,PASS,"local 6cf9b0d898, origin 6cf9b0d898, clone 6cf9b0d898",6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b
+9a,nothing untracked locally that is work product,FAIL,?? data/px28_5pm_to2020.csv; ?? results/LAYER1_VERIFY_2026-11-16_numbers.csv,6cf9b0d898a8c16ee3b26af4a27d55c2cf663f5b

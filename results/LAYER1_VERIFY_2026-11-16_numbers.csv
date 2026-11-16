@@ -1,0 +1,14 @@
+number,doc_value,source_value,source_file,verdict
+quality null p sign,0.01,0.01,results/trend_quality_verdict_2026-11-11.csv,MATCH
+quality null p perm,0.0,0.0,results/trend_quality_verdict_2026-11-11.csv,MATCH
+quality AUC holdout,0.609,0.6088833041958042,results/trend_quality_verdict_2026-11-11.csv,MATCH
+acute caught,31.0,31.0,results/witness_validation_2026-11-15.csv,MATCH
+acute n_events,39.0,39.0,results/witness_validation_2026-11-15.csv,MATCH
+acute recall,0.795,0.7948717948717948,results/witness_validation_2026-11-15.csv,MATCH
+acute lift,15.0,15.006410256410255,results/witness_validation_2026-11-15.csv,MATCH
+MOVE caught,8.0,8.0,results/witness_validation_2026-11-15.csv,MATCH
+MOVE lift,4.9,4.8641571194762685,results/witness_validation_2026-11-15.csv,MATCH
+quality high rate,0.598,0.598,results/layer1_trend_quality_series.txt,MATCH
+quality high n,92.0,92.0,results/layer1_trend_quality_series.txt,MATCH
+true-trend share is,0.501,0.5006305170239597,results/trend_anatomy_truth_table_2026-11-10.csv,MATCH
+true-trend share holdout,0.44299999999999995,0.4429530201342282,results/trend_anatomy_truth_table_2026-11-10.csv,MATCH
