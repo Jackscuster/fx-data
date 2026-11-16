@@ -1,0 +1,7 @@
+witness,caught,n_events,caught_that_acute_misses,acute_misses_total,overlap_with_acute,caught_that_move_misses,overlap_with_move,unique_to_this_witness
+turb_usd_250,25,39,0,7,1.0,17,0.32,0
+turb_all28_250,25,39,0,7,1.0,17,0.32,0
+turb_usd_500,24,39,0,7,1.0,17,0.2916666666666667,0
+turb_all28_500,24,39,0,7,1.0,17,0.2916666666666667,0
+roll_panel_20,9,39,0,7,1.0,3,0.6666666666666666,0
+roll_panel_60,2,39,0,7,1.0,0,1.0,0

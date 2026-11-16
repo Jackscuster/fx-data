@@ -79,6 +79,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="dc">DC axis</button>
 <button role="tab" aria-selected="false" data-t="tr2">Trend round 2</button>
 <button role="tab" aria-selected="false" data-t="tq">Trend quality</button>
+<button role="tab" aria-selected="false" data-t="cw">Crisis witnesses</button>
 </nav>`;
 
 const PSTYLE=`<style>
@@ -578,6 +579,20 @@ windows. It predicts nothing measurable and no excursion table is shipped for it
 <th>Pair</th></tr></thead><tbody></tbody></table></div>
 </section>
 
+<section id="cw" hidden>
+<h3>Crisis witnesses: panel turbulence and Roll illiquidity</h3>
+<div class="note">Two more witnesses beside the acute detector and MOVE. <b>Panel turbulence</b> asks whether
+today&rsquo;s move across the whole panel is far from its own history once you account for how the pairs
+normally move together &mdash; so a day counts as turbulent if the moves are big <i>or</i> unusually
+combined. <b>Roll illiquidity</b> estimates the effective spread from the bounce in successive daily
+closes; where the maths is undefined the value is zero and the share of undefined days is reported,
+because that share is itself a liquidity reading. <b>What these are NOT:</b> they are confirmation,
+never prediction. Both are lagged one bar and scored on a forward-only window from each news-dated
+event to +15 days that never opens before the event. Neither is a state, neither forecasts anything,
+and neither replaces the acute detector or MOVE &mdash; a witness earns its place only by catching an
+event the others miss or by voting independently on one they catch.</div>
+<div id="cwbody"></div>
+</section>
 <section id="tq" hidden>
 <h3>Trend round 3: is there a quality flag on the trend label?</h3>
 <div class="note">Half of all labelled trending episodes go nowhere, and the trend score cannot tell
@@ -5447,7 +5462,7 @@ function boot(BUNDLE,root){
 
   const TABS=['today','chart','pairs2','how','evid','tv',
               'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
-              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2','tq'];
+              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2','tq','cw'];
   // The default view is the product: four tabs. Everything else -- the
   // sensitivity work, the driver detail, the shared-states matrix, the
   // validation tables and the whole archive of superseded generations -- is
@@ -5465,7 +5480,8 @@ function boot(BUNDLE,root){
    if(t==='tv')initTrades();
    if(t==='dc')dcFill();
    if(t==='tr2')tr2Fill();
-   if(t==='tq')tqFill();};
+   if(t==='tq')tqFill();
+   if(t==='cw')cwFill();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
     b.style.display=(ADV||DEFAULT_TABS.indexOf(b.dataset.t)>=0)?'':'none';});
@@ -5612,3 +5628,28 @@ function tqFill(){
          '200-draw re-derive null')
     +tbl(d.subperiod,['candidate','period','gap','auc','n_episodes'],
          'Sub-period split: 2016-2019 vs 2020');}
+
+// ---- CRISIS WITNESSES 2 and 3 (Layer 1, 2026-11-15). Advanced only. Confirmation, never prediction.
+function cwFill(){
+  const d=(window.D&&D.crisis_witnesses)||null, el=document.getElementById('cwbody');
+  if(!el) return;
+  if(!d){el.innerHTML='<p class="note">No crisis_witnesses section in this app_data.json build.</p>';return;}
+  const num=v=>v===null||v===undefined||v===''?'':(typeof v==='number'
+      ?(Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)<0.001&&v!==0?v.toExponential(1):v.toFixed(3)):String(v));
+  const tbl=(rows,cols,cap)=>{
+    if(!rows||!rows.length) return '<h4>'+cap+'</h4><p class="note">(not built in this run)</p>';
+    return '<h4>'+cap+'</h4><div class="tw"><table><thead><tr>'
+      +cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
+      +rows.map(r=>'<tr>'+cols.map(c=>'<td>'+num(r[c])+'</td>').join('')+'</tr>').join('')
+      +'</tbody></table></div>';};
+  el.innerHTML='<p class="note"><b>What they are.</b> '+(d.what||'')+'</p>'
+    +'<p class="note"><b>What they are not.</b> '+(d.what_it_is_not||'')+'</p>'
+    +tbl(d.validation,['witness','caught','n_events','recall','base_rate','lift','false_alarm_rate_outside_windows','median_lag_days'],
+         'Calendar validation: forward-only, event date to +15 days')
+    +tbl(d.incremental,['witness','caught','caught_that_acute_misses','overlap_with_acute','caught_that_move_misses','overlap_with_move','unique_to_this_witness'],
+         'The incremental question - does it add coverage or duplicate an existing witness')
+    +tbl(d.null,['kind','witness','real_lift','null_mean','null_p95','null_max','p_value'],
+         '200-draw re-derive null on calendar lift')
+    +tbl(d.roll_undefined,['window','share_undefined_all','share_undefined_tuning','share_undefined_holdout'],
+         'Roll: share of days the estimator is undefined (itself a liquidity reading)')
+    +'<p class="note">Built '+(d.stamp||'')+'.</p>';}

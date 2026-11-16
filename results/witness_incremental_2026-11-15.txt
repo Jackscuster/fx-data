@@ -1,0 +1,14 @@
+CRISIS WITNESSES -- THE INCREMENTAL QUESTION (what decides keep or kill). 2026-11-15
+A witness earns a place by adding coverage or an independent vote, never by duplicating one that exists.
+
+       witness  caught  n_events  caught_that_acute_misses  acute_misses_total  overlap_with_acute  caught_that_move_misses  overlap_with_move  unique_to_this_witness
+  turb_usd_250      25        39                         0                   7               1.000                       17              0.320                       0
+turb_all28_250      25        39                         0                   7               1.000                       17              0.320                       0
+  turb_usd_500      24        39                         0                   7               1.000                       17              0.292                       0
+turb_all28_500      24        39                         0                   7               1.000                       17              0.292                       0
+ roll_panel_20       9        39                         0                   7               1.000                        3              0.667                       0
+ roll_panel_60       2        39                         0                   7               1.000                        0              1.000                       0
+
+The acute detector misses 7 of 39 events; the new witnesses catch these among them:
+
+  none -- neither new witness catches a single event the acute detector misses.

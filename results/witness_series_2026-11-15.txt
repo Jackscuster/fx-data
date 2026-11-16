@@ -1,0 +1,15 @@
+CRISIS WITNESSES -- SERIES BUILT. 2026-11-15
+Panel 2002-09-24 -> 2020-12-31, 2021+ sealed. All series lagged one bar.
+
+coverage (non-null bars):
+turb_usd_250      4491
+turb_all28_250    4491
+turb_usd_500      4241
+turb_all28_500    4241
+roll_panel_20     4721
+roll_panel_60     4681
+
+ROLL UNDEFINED SHARE (autocovariance positive -> estimator undefined, set to zero; the share is itself a reading):
+ window  share_undefined_all  share_undefined_tuning  share_undefined_holdout
+roll_20               0.4049                  0.4067                   0.4000
+roll_60               0.4359                  0.4414                   0.4212
