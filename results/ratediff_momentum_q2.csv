@@ -1,5 +1,5 @@
 block,W,kind,n,agree,excess
-is,5,transition into trending,708,0.4788135593220339,-0.023069679849340885
-is,5,matched non-transition bars,2124,0.5018832391713748,
-oos,5,transition into trending,468,0.49786324786324787,0.024216524216524205
-oos,5,matched non-transition bars,1404,0.47364672364672367,
+is,63,transition into trending,555,0.5027027027027027,-0.015615615615615641
+is,63,matched non-transition bars,1665,0.5183183183183183,
+oos,63,transition into trending,482,0.4149377593360996,-0.0456431535269709
+oos,63,matched non-transition bars,1446,0.4605809128630705,

@@ -12,4 +12,4 @@ base_all_states = the same share pooled over episodes of EVERY state,
          yields both drift
 excess = agree minus base
 
-W was chosen on IS only (W=5) and the holdout read once.
+W was chosen on IS only (W=63) and the holdout read once.
