@@ -1,3 +1,4 @@
+# SUPERSEDED BY HANDOFF 0l (16 Nov 2026) -- the gate 1 cut score was W2+W3 pooled = 2011-2020, the very years Layer 2 then called blind (faults #1 and #4), and it was charged no costs. Kept in full, nothing deleted; quote as history only. The replacement carries the suffix _r2.
 n_blind,expectancy_R,total_R,profit_factor,win_rate,sharpe,sortino,max_dd_R,calmar,c1,c2,vol,base,exit_ind,slice,plan,n_pick,n_w2,n_w3,n_unlabelled,mode
 411,0.1443756605673368,59.338396493175445,1.2683033381576307,0.4549878345498783,2.3564188889250883,30.693020051655843,17.45412658152743,3.399677217648703,adx_dmi_signals,donchian_breakout_signals,chaikin_volatility_volume_signals,alma_baseline,unused,chop,1,226,171,240,77,A
 224,0.1128955659797615,25.28860677946659,1.2052456848223687,0.4419642857142857,1.3625617408985564,14.97937712452251,7.5000000000000355,3.371814237262196,adx_dmi_signals,halftrend_signals,volatility_ratio_volume_signals,vidya,unused,chop,1,106,92,132,29,A
