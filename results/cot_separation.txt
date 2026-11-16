@@ -26,8 +26,8 @@ pass was reported.
 VERDICTS
   F1 |net share| (crowding)        chosen group ranging   DEAD -- sign flips
   F2 |4-week change| (turnover)    chosen group ranging   DEAD -- sign flips
-  F3 net share, signed             chosen group trending  DEAD -- sign flips
-  F4 4-week change, signed         chosen group ranging   DEAD -- sign flips
+  F3 net share, signed             chosen group ranging   DEAD -- sign flips
+  F4 4-week change, signed         chosen group crisis    DEAD -- sign flips
 
 OVERALL: DEAD
 

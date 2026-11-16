@@ -1,0 +1,36 @@
+kind,item,check,status,detail
+interface,results/layer1_states.csv,"present, readable, tracked",PASS,"171920 rows, 28 pairs, 2002-12-19..2026-08-14"
+interface,results/layer1_trend_quality_series.csv,"present, readable, tracked",PASS,"168692 rows, 28 pairs, 2003-02-28..2026-08-14"
+interface,results/crisis_detectors.csv,"present, readable, tracked",PASS,"5 rows, nan pairs, .."
+interface,results/crisis_events.csv,"present, readable, tracked",PASS,"250 rows, nan pairs, 2003-09-20..2026-07-31"
+interface,results/crisis_direction.csv,"present, readable, tracked",PASS,"525 rows, 28 pairs, .."
+interface,results/move_coverage.csv,"present, readable, tracked",PASS,"1 rows, nan pairs, .."
+interface,results/nine_tiers.csv,"present, readable, tracked",PASS,"6201 rows, nan pairs, .."
+interface,results/twoscores.csv,"present, readable, tracked",PASS,"8 rows, nan pairs, .."
+interface,results/measures_test1.csv,"present, readable, tracked",PASS,"8 rows, nan pairs, .."
+interface,results/pair_character.csv,"present, readable, tracked",PASS,"28 rows, 28 pairs, .."
+interface,results/pair_character_blocks.csv,"present, readable, tracked",PASS,"84 rows, 28 pairs, .."
+interface,results/run_lengths.csv,"present, readable, tracked",PASS,"3479 rows, 29 pairs, .."
+interface,results/duration_stats.csv,"present, readable, tracked",PASS,"4 rows, nan pairs, .."
+interface,results/state_correlation.csv,"present, readable, tracked",PASS,"756 rows, nan pairs, .."
+interface,results/state_correlation_summary.csv,"present, readable, tracked",PASS,"2 rows, nan pairs, .."
+interface,results/witness_validation_2026-11-15.csv,"present, readable, tracked",PASS,"9 rows, nan pairs, .."
+verify,layer1_states.csv regeneration,byte-identical to the committed file,PASS,md5 0b48ed53b78a -> 0b48ed53b78a
+verify,EURUSD peak 1.6010,panel sanity,FAIL,1.5991
+verify,USDCHF low 0.7296,panel sanity,FAIL,0.7209
+verify,l2sweep.load_pair,refuses bars after 2020-12-31 without FX_ALLOW_W4,PASS,max date 2020-12-31
+verify,l2route.load_states,refuses bars after 2020-12-31 without FX_ALLOW_W4,PASS,max date 2020-12-31
+verify,layer1_states.csv sealed rows,rows after 2020-12-31 are tagged sample=sealed,PASS,"40824 rows after the seal, all tagged"
+interface,results/layer1_trend_quality_series.csv,"built, 28 pairs, lag stated in header",FAIL,"168692 rows, 28 pairs, tags high 22171 / low 27231"
+interface,quality series alignment,"a row for every labelled (date, pair) of the states file",FAIL,168692 quality rows vs 168712 labelled state rows; 26 labelled state rows with no quality row
+contract,LAYER1_INTERFACE.md,"written, names every interface file",PASS,9219 bytes
+verify,preflight.py,all 27 invariant checks PASS,FAIL,"23 of 27 PASS in 9 s -> results/audit_2026-11-16.csv | NOT CLEAR: 6 (FAIL), 16 (FAIL), 18 (FAIL), 22 (FAIL)"
+verify,app_ui.js,node --check passes,PASS,
+verify,app_data.json: dc_axis,section present for its tab,PASS,6 keys
+verify,app_data.json: trend_round2,section present for its tab,PASS,7 keys
+verify,app_data.json: trend_quality,section present for its tab,PASS,5 keys
+verify,app_data.json: crisis_witnesses,section present for its tab,PASS,7 keys
+verify,app_ui.js: dcFill(),renderer present,PASS,
+verify,app_ui.js: tr2Fill(),renderer present,PASS,
+verify,app_ui.js: tqFill(),renderer present,PASS,
+verify,app_ui.js: cwFill(),renderer present,PASS,

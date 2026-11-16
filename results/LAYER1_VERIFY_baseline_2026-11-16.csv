@@ -1,0 +1,5 @@
+n,check,status,detail,clone_sha
+1,fresh clone of https://github.com/Jackscuster/fx-data.git,FAIL,"Cloning into '/var/folders/1l/yg2ys0yj75396jt65_js2xsw0000gn/T/l1verify_715j95fw/fx-data'...
+fatal: write error: No space left on device
+fatal: fetch-pack: invalid index-pack output
+",

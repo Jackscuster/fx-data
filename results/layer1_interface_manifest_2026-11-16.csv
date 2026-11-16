@@ -1,17 +1,17 @@
 path,producer,what,exists,rows,pairs,date_min,date_max,build_date,md5,git_tracked
-results/layer1_states.csv,code/export.py,"THE interface: shape2, activity, both scores, scale, the four mechanism reads",True,171920,28.0,2002-12-19,2026-08-14,2026-09-15,0b48ed53b78a,True
-results/layer1_trend_quality_series.csv,code/layer1close.py --stage quality,the trend quality flag as a daily series (high/low confidence on trending bars),True,168692,28.0,2003-02-28,2026-08-14,2026-11-16,07653b111d70,False
-results/crisis_detectors.csv,code/crisis.py,"the acute detectors with calendar recall, lift and lag",True,5,,,,2026-09-15,b1f86c39f457,True
-results/crisis_events.csv,code/crisis.py,"per detector per event: caught and lag, the daily firing record",True,250,,2003-09-20,2026-07-31,2026-09-15,18a6ca47185d,True
+results/layer1_states.csv,code/export.py,"THE interface: shape2, activity, both scores, scale, the four mechanism reads",True,171920,28.0,2002-12-19,2026-08-14,2026-11-16,0b48ed53b78a,True
+results/layer1_trend_quality_series.csv,code/layer1close.py --stage quality,the trend quality flag as a daily series (high/low confidence on trending bars),True,168692,28.0,2003-02-28,2026-08-14,2026-11-16,07653b111d70,True
+results/crisis_detectors.csv,code/crisis.py,"the acute detectors with calendar recall, lift and lag",True,5,,,,2026-11-16,b1f86c39f457,True
+results/crisis_events.csv,code/crisis.py,"per detector per event: caught and lag, the daily firing record",True,250,,2003-09-20,2026-07-31,2026-11-16,18a6ca47185d,True
 results/crisis_direction.csv,code/crisis.py,per event per pair behaviour during the crisis window,True,525,28.0,,,2026-08-29,34be14c2668a,True
-results/move_coverage.csv,code/move.py,the MOVE witness: coverage and overlap with the acute detector,True,1,,,,2026-08-29,a20e8b6deac6,True
-results/nine_tiers.csv,code/ninestate.py,activity tiers and the nine-state grid,True,6201,,,,2026-09-15,d90ea1653bf9,True
-results/twoscores.csv,code/twoscores.py,"the two axes, raw and continuous",True,8,,,,2026-09-15,c5b60bad8381,True
-results/measures_test1.csv,code/measures.py,"the measurement series: separation, surrogate, corrected, lead",True,8,,,,2026-09-15,3c76a030ae09,True
-results/pair_character.csv,code/paircharacter.py,per-pair character,True,28,28.0,,,2026-09-15,1d34f2600627,True
-results/pair_character_blocks.csv,code/paircharacter.py,per-pair character by block -- whether it is stable,True,84,28.0,,,2026-09-15,bc4ad60203aa,True
-results/run_lengths.csv,code/duration.py,state run lengths by generation and block,True,3479,29.0,,,2026-09-15,b218e68c2204,True
-results/duration_stats.csv,code/duration.py,"duration, hazard and excursion statistics",True,4,,,,2026-09-15,ab6844bc477c,True
-results/state_correlation.csv,code/statecorr.py,shared state across pairs -- the shared-bet / N_eff read,True,756,,,,2026-09-15,05766fa6f21f,True
-results/state_correlation_summary.csv,code/statecorr.py,"the same, summarised per pair",True,2,,,,2026-09-15,5da9d6326c3f,True
+results/move_coverage.csv,code/move.py,the MOVE witness: coverage and overlap with the acute detector,True,1,,,,2026-11-16,2fd2d294816a,True
+results/nine_tiers.csv,code/ninestate.py,activity tiers and the nine-state grid,True,6201,,,,2026-11-16,d90ea1653bf9,True
+results/twoscores.csv,code/twoscores.py,"the two axes, raw and continuous",True,8,,,,2026-11-16,c5b60bad8381,True
+results/measures_test1.csv,code/measures.py,"the measurement series: separation, surrogate, corrected, lead",True,8,,,,2026-11-16,3c76a030ae09,True
+results/pair_character.csv,code/paircharacter.py,per-pair character,True,28,28.0,,,2026-11-16,1d34f2600627,True
+results/pair_character_blocks.csv,code/paircharacter.py,per-pair character by block -- whether it is stable,True,84,28.0,,,2026-11-16,bc4ad60203aa,True
+results/run_lengths.csv,code/duration.py,state run lengths by generation and block,True,3479,29.0,,,2026-11-16,b218e68c2204,True
+results/duration_stats.csv,code/duration.py,"duration, hazard and excursion statistics",True,4,,,,2026-11-16,ab6844bc477c,True
+results/state_correlation.csv,code/statecorr.py,shared state across pairs -- the shared-bet / N_eff read,True,756,,,,2026-11-16,05766fa6f21f,True
+results/state_correlation_summary.csv,code/statecorr.py,"the same, summarised per pair",True,2,,,,2026-11-16,5da9d6326c3f,True
 results/witness_validation_2026-11-15.csv,code/witness.py,"witnesses 2 and 3 AS MEASURED -- REJECTED, not consumable: see HANDOFF 0k",True,9,,,,2026-11-15,4080be6d90b3,True
