@@ -126,12 +126,29 @@ def main():
             if not np.isfinite(cut):
                 row(3, 'quality series recomputed independently in the clone', 'FAIL', (r.stderr or o)[-220:])
             else:
-                row(3, 'tuning-window cut re-derived independently (claim 0.913394)',
-                    'PASS' if abs(cut - 0.913394) < 1e-6 else 'FAIL', 'recomputed %.6f' % cut)
+                # the claim is whatever the SHIPPED file states, never a literal in this
+                # script -- a hardcoded number here just re-asserts yesterday's answer
+                hdr = open(qp).readline()
+                m_cut = re.search(r'cut ([\d.]+)', hdr)
+                claim = float(m_cut.group(1)) if m_cut else float('nan')
+                row(3, 'tuning-window cut re-derived independently (shipped header claims %.6f)' % claim,
+                    'PASS' if (np.isfinite(claim) and abs(cut - claim) < 1e-6) else 'FAIL', 'recomputed %.6f' % cut)
                 if hi and lo:
                     nh, rh = int(hi.group(1)), float(hi.group(2)); nl, rl = int(lo.group(1)), float(lo.group(2))
-                    ok = (nh == 92 and abs(rh - 0.598) < 0.0015 and nl == 179 and abs(rl - 0.408) < 0.0015)
-                    row('3a', 'holdout rates re-derived (claim 59.8% high n=92 / 40.8% low n=179)',
+                    txtp = qp.replace('.csv', '.txt')
+                    cl = {}
+                    if os.path.exists(txtp):
+                        for ln in open(txtp):
+                            mm = re.match(r'\s*(?:holdout\s+)?(high|low)\s+(\d+)\s+([\d.]+)', ln)
+                            if mm and 'holdout' in ln or (mm and cl.get('seen_holdout')):
+                                cl[mm.group(1)] = (int(mm.group(2)), float(mm.group(3)))
+                            if 'holdout' in ln and mm:
+                                cl['seen_holdout'] = True
+                    ch, clo = cl.get('high'), cl.get('low')
+                    ok = bool(ch and clo and ch[0] == nh and abs(ch[1] - rh) < 0.0015
+                              and clo[0] == nl and abs(clo[1] - rl) < 0.0015)
+                    row('3a', 'holdout rates re-derived (shipped .txt claims high %s / low %s)'
+                        % (('%d@%.3f' % ch) if ch else '?', ('%d@%.3f' % clo) if clo else '?'),
                         'PASS' if ok else 'FAIL', 'recomputed high %.1f%% n=%d, low %.1f%% n=%d'
                         % (100 * rh, nh, 100 * rl, nl))
                 S = pd.read_csv(qp, comment='#', parse_dates=['date'])
