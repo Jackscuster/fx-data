@@ -95,7 +95,7 @@ Validated on the 39 news-dated events of `code/events.py` inside the panel windo
 - **No direction.** `trend_score` says how straight, never which way. There is no long/short content anywhere in Layer 1.
 - **No money metrics.** No returns, no PnL, no Sharpe, no sizing. Every money number in this repo belongs to Layer 2 and was produced by Layer 2 code.
 - **No entry or exit timing.** The label tells you the state, not when to act inside it — and per section 4 it is systematically late on trends.
-- **No tradeable universe opinion.** Pair character (`results/paircharacter.csv`) describes behaviour; it does not rank pairs for trading.
+- **No tradeable universe opinion.** Pair character (`results/pair_character.csv`) describes behaviour; it does not rank pairs for trading.
 
 ## 7. Reporting a defect
 

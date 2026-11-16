@@ -143,6 +143,21 @@ def run_null(keep, px, rng):
 def report(S, N, cand):
     tag = cand.set_index('s')
     S = S.join(tag[['surv_new', 'surv_old', 'fails']], on='signal')
+    # STALE INPUT IS REPORTED, NOT MASKED (16 Nov). horizon_signals.csv is a banked
+    # artefact; the candidate set is rebuilt from the CURRENT signals.json. When the
+    # pool is rebuilt on a different panel the join leaves NaN for signals that no
+    # longer exist, and `S[S.surv_old]` then dies with "Cannot mask with non-boolean
+    # array containing NA" -- which is what broke the 16 Nov cold regeneration. The
+    # flags are made boolean here and the unjoined count is printed, so a stale bank
+    # is visible in the log instead of crashing the run or silently shrinking it.
+    _un = int(S.surv_old.isna().sum())
+    if _un:
+        print('  horizon: %d of %d banked signals are not in the current candidate set '
+              '(horizon_signals.csv predates the current signals.json) -- treated as '
+              'non-survivors and reported' % (_un, len(S)), flush=True)
+    for _c in ('surv_new', 'surv_old'):
+        S[_c] = S[_c].fillna(False).astype(bool)
+    S['fails'] = S.fails.fillna('not-in-current-pool')
     S['held'] = np.sign(S.si) == np.sign(S.so)
     S['chop'] = S.so < 0
     S['pass'] = ((np.sign(S.ti) == np.sign(S.to)) & (S.to.abs() >= G_T)

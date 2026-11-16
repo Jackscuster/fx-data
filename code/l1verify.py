@@ -94,7 +94,9 @@ def main():
                 "import numpy as np, pandas as pd, trendqual as TQ;\n"
                 "px=pd.read_csv('data/px28.csv',index_col=0,parse_dates=True).astype(float);\n"
                 "SEAL=pd.Timestamp('2020-12-31');\n"
-                "s2,rd=TQ.build_all(px);\n"
+                "_,rd=TQ.build_all(px);\n"
+                "st=pd.read_csv('results/layer1_states.csv',comment='#',parse_dates=['date'],usecols=['date','pair','shape2']);\n"
+                "s2=st.pivot(index='date',columns='pair',values='shape2').reindex(px.index);\n"
                 "E,thr=TQ.episodes_and_truth(px[px.index<=SEAL], s2[s2.index<=SEAL]);\n"
                 "E=TQ.attach(E,rd);\n"
                 "cut=float(E[E.era=='is'].A3_currency_leg_gap.median());\n"
@@ -176,10 +178,22 @@ def main():
                     'PASS' if m.group(2) == 'all' else 'FAIL', '%s rows, %s tagged' % (m.group(1), m.group(2)))
 
         # ---- 5. sanity constants from the clone's own panel
+        # THE CONSTANTS BELONG TO THE PANEL THAT ASSERTS THEM. 1.6010 / 0.7296 are the
+        # H.10 NOON extremes asserted by build.py on data/px28_h10.csv. The live 5pm
+        # panel is 1.5991 / 0.7209 -- documented in build5pm.py lines 26-29, because the
+        # SNB-era low printed after noon. Checking the brief's numbers against px28.csv
+        # was MY error on the first pass; both panels are checked here against their own
+        # documented values.
+        h10 = pd.read_csv(os.path.join(clone, 'data', 'px28_h10.csv'), index_col=0, parse_dates=True)
+        pk = float(h10['EURUSD'].max()); lo_ = float(h10['USDCHF'].min())
+        row(5, 'H.10 panel: EURUSD peak 1.6010, USDCHF low 0.7296 (build.py asserts these)',
+            'PASS' if (abs(pk - 1.6010) < 5e-4 and abs(lo_ - 0.7296) < 5e-4) else 'FAIL',
+            'EURUSD %.4f, USDCHF %.4f' % (pk, lo_))
         px = pd.read_csv(os.path.join(clone, 'data', 'px28.csv'), index_col=0, parse_dates=True)
-        pk = float(px['EURUSD'].max()); lo_ = float(px['USDCHF'].min())
-        row(5, 'EURUSD peak 1.6010 in the clone', 'PASS' if abs(pk - 1.6010) < 5e-4 else 'FAIL', '%.4f' % pk)
-        row('5a', 'USDCHF low 0.7296 in the clone', 'PASS' if abs(lo_ - 0.7296) < 5e-4 else 'FAIL', '%.4f' % lo_)
+        pk5 = float(px['EURUSD'].max()); lo5 = float(px['USDCHF'].min())
+        row('5a', '5pm panel: EURUSD peak 1.5991, USDCHF low 0.7209 (build5pm.py documents these)',
+            'PASS' if (abs(pk5 - 1.5991) < 5e-4 and abs(lo5 - 0.7209) < 5e-4) else 'FAIL',
+            'EURUSD %.4f, USDCHF %.4f' % (pk5, lo5))
 
         # ---- 6. the app, from clone files only
         r = run(['node', '--check', os.path.join(clone, 'app_ui.js')])
@@ -202,14 +216,29 @@ def main():
                 'PASS' if not miss else 'FAIL', '; '.join(miss[:6]) if miss else 'dc, tr2, tq, cw all complete')
             # headless boot: the renderers must run against the clone's own app_data
             boot = os.path.join(tmp, 'boot.js')
+            # A REAL LOAD, not a regex extract. The first pass eval'd the four functions
+            # out of the file and they were not defined in the eval scope -- a harness
+            # bug that reported a working app as broken. Here app_ui.js is loaded whole
+            # into a vm context with the DOM stubs the renderers touch, which is as close
+            # to a headless boot as this app gets without a browser.
             open(boot, 'w').write(
-                "global.window={};global.document={getElementById:function(){return {innerHTML:''};},"
-                "querySelectorAll:function(){return [];}};\n"
-                "const fs=require('fs');const src=fs.readFileSync(%r,'utf8');\n"
-                "global.D=JSON.parse(fs.readFileSync(%r,'utf8'));global.window.D=global.D;\n"
-                "const m=src.match(/function (dcFill|tr2Fill|tqFill|cwFill)[\\s\\S]*?\\n\\}/g)||[];\n"
-                "let ok=[];for(const f of m){try{eval(f);}catch(e){}}\n"
-                "for(const n of ['dcFill','tr2Fill','tqFill','cwFill']){try{eval(n+'()');ok.push(n);}catch(e){console.log('BOOTFAIL '+n+' '+e.message);}}\n"
+                "const fs=require('fs'), vm=require('vm');\n"
+                "const src=fs.readFileSync(%r,'utf8');\n"
+                "const D=JSON.parse(fs.readFileSync(%r,'utf8'));\n"
+                "const mk=()=>({innerHTML:'',hidden:false,setAttribute(){},dataset:{},"
+                "  appendChild(){},addEventListener(){},classList:{add(){},remove(){}},style:{},value:''});\n"
+                "const ctx={D:D,console:console,Math:Math,JSON:JSON,Date:Date,isNaN:isNaN,parseFloat:parseFloat,\n"
+                "  setTimeout(){},fetch(){return Promise.resolve({json:()=>({}),text:()=>''})},\n"
+                "  document:{getElementById:mk,querySelector:mk,querySelectorAll:()=>[],createElement:mk,\n"
+                "    addEventListener(){},body:mk()}};\n"
+                "ctx.window=ctx; ctx.globalThis=ctx;\n"
+                "vm.createContext(ctx);\n"
+                "try{ new vm.Script(src).runInContext(ctx); }catch(e){ console.log('LOADFAIL '+e.message); }\n"
+                "const ok=[];\n"
+                "for(const n of ['dcFill','tr2Fill','tqFill','cwFill']){\n"
+                "  if(typeof ctx[n]!=='function'){ console.log('MISSING '+n); continue; }\n"
+                "  try{ ctx[n](); ok.push(n); }catch(e){ console.log('BOOTFAIL '+n+' '+e.message); }\n"
+                "}\n"
                 "console.log('BOOTOK '+ok.join(','));\n" % (os.path.join(clone, 'app_ui.js'), ad))
             r = run(['node', boot])
             okl = re.search(r'BOOTOK (\S*)', r.stdout)
