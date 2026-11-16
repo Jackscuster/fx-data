@@ -1,0 +1,14 @@
+TREND ROUND 3 -- CAN ANY COMMITTED SERIES SEPARATE TRUE FROM FALSE TRENDING EPISODES AT LABEL TIME? 2026-11-11
+A quality flag on the existing label: no new axis, no new state, no state call changes. No money metric here.
+Episode-counted: one labelled trending episode is one observation. Truth threshold 0.503 learned on the tuning window.
+Episodes: 725 tuning, 271 holdout; true-trend share 0.501 tuning, 0.472 holdout.
+
+             candidate  gap_tuning  auc_tuning  gap_holdout  auc_holdout  n_episodes_holdout  sign_consistent
+     A1_activity_scale      0.1232      0.5342       0.1326       0.4598                 271            False
+         A2_chop_score      0.0191      0.4980       0.0693       0.4827                 271             True
+   A3_currency_leg_gap      0.2319      0.5595       0.3944       0.6089                 271             True
+A4_break_followthrough      0.0692      0.5187       0.0628       0.4806                 261             True
+A5_trend_score_CONTROL      0.0126      0.4927       0.0151       0.4857                 271             True
+
+gap = |mean(true) - mean(false)| in sd units of the reading. AUC 0.5 is coin-flip.
+done in 0.0 min

@@ -78,6 +78,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="vd">Verdict</button>
 <button role="tab" aria-selected="false" data-t="dc">DC axis</button>
 <button role="tab" aria-selected="false" data-t="tr2">Trend round 2</button>
+<button role="tab" aria-selected="false" data-t="tq">Trend quality</button>
 </nav>`;
 
 const PSTYLE=`<style>
@@ -577,6 +578,16 @@ windows. It predicts nothing measurable and no excursion table is shipped for it
 <th>Pair</th></tr></thead><tbody></tbody></table></div>
 </section>
 
+<section id="tq" hidden>
+<h3>Trend round 3: is there a quality flag on the trend label?</h3>
+<div class="note">Half of all labelled trending episodes go nowhere, and the trend score cannot tell
+which. This asks whether any series already in the repo can, read at the confirmation bar: activity
+scale, chop score, the currency-leg gap, break follow-through, and the trend score itself as a
+control. One episode is one observation; the 200-draw null re-derives everything on each surrogate.
+A survivor would be reported as a high/low confidence reading beside the label and would change no
+state call.</div>
+<div id="tqbody"></div>
+</section>
 <section id="tr2" hidden>
 <h3>Trend round 2: failure anatomy, and two constructions</h3>
 <div class="note">Part 1 measures WHY the shipped trend axis fails -- where inside an episode the routed
@@ -5436,7 +5447,7 @@ function boot(BUNDLE,root){
 
   const TABS=['today','chart','pairs2','how','evid','tv',
               'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
-              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2'];
+              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2','tq'];
   // The default view is the product: four tabs. Everything else -- the
   // sensitivity work, the driver detail, the shared-states matrix, the
   // validation tables and the whole archive of superseded generations -- is
@@ -5453,7 +5464,8 @@ function boot(BUNDLE,root){
    if(t==='chart')chartOpen();
    if(t==='tv')initTrades();
    if(t==='dc')dcFill();
-   if(t==='tr2')tr2Fill();};
+   if(t==='tr2')tr2Fill();
+   if(t==='tq')tqFill();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
     b.style.display=(ADV||DEFAULT_TABS.indexOf(b.dataset.t)>=0)?'':'none';});
@@ -5578,3 +5590,25 @@ function tr2Fill(){
          'Sub-period split: 2016-2019 vs 2020')
     +tbl(d.layer3,['family','role','book','median_year_pct','worst_year_pct','dip95_pct','profit_factor','retention','p_random_entry','p_regime_shuffle'],
          'Layer 3 money test &mdash; only for constructions that cleared the null');}
+
+// ---- TREND ROUND 3, quality flag (Layer 1, 2026-11-11). Advanced only.
+function tqFill(){
+  const d=(window.D&&D.trend_quality)||null, el=document.getElementById('tqbody');
+  if(!el) return;
+  if(!d){el.innerHTML='<p class="note">No trend_quality section in this app_data.json build.</p>';return;}
+  const num=v=>v===null||v===undefined||v===''?'':(typeof v==='number'
+      ?(Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)<0.0001&&v!==0?v.toExponential(1):v.toFixed(4)):String(v));
+  const tbl=(rows,cols,cap)=>{
+    if(!rows||!rows.length) return '<h4>'+cap+'</h4><p class="note">(not built in this run)</p>';
+    return '<h4>'+cap+'</h4><div class="tw"><table><thead><tr>'
+      +cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'
+      +rows.map(r=>'<tr>'+cols.map(c=>'<td>'+num(r[c])+'</td>').join('')+'</tr>').join('')
+      +'</tbody></table></div>';};
+  el.innerHTML='<p class="note">'+(d.note||'')+' Built '+(d.stamp||'')+'.</p>'
+    +tbl(d.verdict,['candidate','gap_tuning','auc_tuning','gap_holdout','auc_holdout','sign_consistent',
+                    'null_p_sign','null_p_perm','survives'],
+         'Readings at the confirmation bar, and the verdict (A5 is the control)')
+    +tbl(d.null,['kind','candidate','real','null_mean','null_p95','null_max','corrected','p_value'],
+         '200-draw re-derive null')
+    +tbl(d.subperiod,['candidate','period','gap','auc','n_episodes'],
+         'Sub-period split: 2016-2019 vs 2020');}
