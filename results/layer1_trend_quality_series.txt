@@ -1,0 +1,22 @@
+LAYER 1 TREND QUALITY SERIES -- 2026-11-16
+Source: the round 3 reading (HANDOFF 0j, commit 21933e5), exported as a daily consumable.
+
+LAG CONVENTION: every value at date t is computable from bars through t-1. The currency-leg
+strength gap is built from trailing 106-bar cumulative log changes and shifted one bar at source;
+this export does not shift it again. The shape2 label carries the shipped dwell-5 confirmation.
+
+Rows 168692; pairs 28; 2003-02-28 -> 2026-08-14. Trending bars 49402 (29.3% of labelled bars).
+Tagged bars: high 22171, low 27231, untagged (non-trending or warm-up) 119290.
+
+CUT 0.913394 = the median reading at trending-episode confirmation bars on the TUNING WINDOW only.
+Round 3 reported 55.1%% / 39.3%% using the HOLDOUT median, which a live consumer cannot compute.
+Under this tuning-learned cut the episode true-trend rate is:
+
+              size     mean
+era     tag                
+holdout high    92    0.598
+        low    179    0.408
+is      high   363    0.537
+        low    362    0.464
+
+Truth threshold for "true trend" 0.5025 (learned on the tuning window; results/trend_quality_verdict_2026-11-11.csv).
