@@ -1,0 +1,21 @@
+n,check,status,detail,clone_sha
+1,"fresh clone, this is what the world sees",PASS,7eab618a43da  Layer 1 close-out fix 3: the contract generator still wrote results/pa,7eab618a43da7607674c07712bc593a72f847865
+2,LAYER1_INTERFACE.md exists at the clone root,PASS,9205 bytes,7eab618a43da7607674c07712bc593a72f847865
+2a,the contract names interface files,PASS,22 files named,7eab618a43da7607674c07712bc593a72f847865
+2b,"every named file exists, loads and matches its claimed counts/spans",PASS,22 files verified,7eab618a43da7607674c07712bc593a72f847865
+3,tuning-window cut re-derived independently (shipped header claims 0.856746),PASS,recomputed 0.856746,7eab618a43da7607674c07712bc593a72f847865
+3a,holdout rates re-derived (shipped .txt claims high 110@0.545 / low 188@0.383),PASS,"recomputed high 54.5% n=110, low 38.3% n=188",7eab618a43da7607674c07712bc593a72f847865
+3b,shipped CSV matches the independent recomputation row for row,PASS,"0 rows one-sided, 0 tag mismatches, 0 reading mismatches (of 168712)",7eab618a43da7607674c07712bc593a72f847865
+4,l2sweep.load_pair refuses bars after 2020-12-31,PASS,max 2020-12-31,7eab618a43da7607674c07712bc593a72f847865
+4a,l2route.load_states refuses bars after 2020-12-31,PASS,max 2020-12-31,7eab618a43da7607674c07712bc593a72f847865
+4b,quality series rows after the seal are tagged sample=sealed,PASS,"40824 rows, all tagged",7eab618a43da7607674c07712bc593a72f847865
+4c,states rows after the seal are tagged sample=sealed,PASS,"40824 rows, all tagged",7eab618a43da7607674c07712bc593a72f847865
+5,"H.10 panel: EURUSD peak 1.6010, USDCHF low 0.7296 (build.py asserts these)",PASS,"EURUSD 1.6010, USDCHF 0.7296",7eab618a43da7607674c07712bc593a72f847865
+5a,"5pm panel: EURUSD peak 1.5991, USDCHF low 0.7209 (build5pm.py documents these)",PASS,"EURUSD 1.5991, USDCHF 0.7209",7eab618a43da7607674c07712bc593a72f847865
+6,node --check app_ui.js in the clone,PASS,,7eab618a43da7607674c07712bc593a72f847865
+6a,"every Layer 1 tab has its data section, renderer, nav button and div in the clone",PASS,"dc, tr2, tq, cw all complete",7eab618a43da7607674c07712bc593a72f847865
+6b,headless boot: all four renderers execute against clone app_data.json,PASS,"ran dcFill,tr2Fill,tqFill,cwFill",7eab618a43da7607674c07712bc593a72f847865
+7,every number in LAYER1_INTERFACE.md matches its named source file,PASS,"13 checked, 0 mismatched | quality null p sign MATCH (doc 0.01 vs trend_quality_verdict_2026-11-11.csv 0.01) | quality null p perm MATCH (doc 0 vs trend_quality_verdict_2026-11-11.csv 0) | quality AUC holdout MATCH (doc 0.609 vs trend_quality_verdict_2026-11-11.csv 0.6089) | acute caught MATCH (doc 31 vs witness_validation_2026-11-15.csv 31) | acute n_events MATCH (doc 39 vs witness_validation_202",7eab618a43da7607674c07712bc593a72f847865
+8,chain audit and this independent audit agree,PASS,"chain 35/35 PASS, independent 17/17 PASS",7eab618a43da7607674c07712bc593a72f847865
+9,local ~/fx-data HEAD == origin/main == clone HEAD,PASS,"local 7eab618a43, origin 7eab618a43, clone 7eab618a43",7eab618a43da7607674c07712bc593a72f847865
+9a,nothing untracked locally that is work product,PASS,?? data/px28_5pm_to2020.csv,7eab618a43da7607674c07712bc593a72f847865
