@@ -1,11 +1,11 @@
-file,status,detail
-gate1_survivors_modeA.csv,headed,3 readers checked
-gate1_survivors_modeB.csv,headed,0 readers checked
-gate1_survivors_modeC.csv,headed,1 readers checked
-gate1_survivors.csv,headed,8 readers checked
-gate1_survivors_v1.csv,headed,0 readers checked
-gate1_mode_runs.csv,headed,3 readers checked
-gate2_tuned_modeA_trend.csv,headed,3 readers checked
-gate2_tuned_modeA_chop.csv,headed,3 readers checked
-gate2_tuned_modeB.csv,headed,4 readers checked
-refit_candidates_full.csv,headed,2 readers checked
+file,status
+gate1_survivors_modeA.csv,already headed
+gate1_survivors_modeB.csv,already headed
+gate1_survivors_modeC.csv,already headed
+gate1_survivors.csv,already headed
+gate1_survivors_v1.csv,already headed
+gate1_mode_runs.csv,already headed
+gate2_tuned_modeA_trend.csv,already headed
+gate2_tuned_modeA_chop.csv,already headed
+gate2_tuned_modeB.csv,already headed
+refit_candidates_full.csv,already headed
