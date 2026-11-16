@@ -79,6 +79,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="dc">DC axis</button>
 <button role="tab" aria-selected="false" data-t="tr2">Trend round 2</button>
 <button role="tab" aria-selected="false" data-t="tq">Trend quality</button>
+<button role="tab" aria-selected="false" data-t="r2">L2 restart</button>
 <button role="tab" aria-selected="false" data-t="cw">Crisis witnesses</button>
 </nav>`;
 
@@ -592,6 +593,17 @@ event to +15 days that never opens before the event. Neither is a state, neither
 and neither replaces the acute detector or MOVE &mdash; a witness earns its place only by catching an
 event the others miss or by voting independently on one they catch.</div>
 <div id="cwbody"></div>
+</section>
+<section id="r2" hidden>
+<h3>Layer 2 restart: the honest gate 1</h3>
+<div class="note">The gate 1 on disk took its score over 2011-2020 -- every year Layer 2
+afterwards called blind -- and charged no costs, so its survivors were chosen on the years
+their record was then quoted on. This is the rebuild. Every combination is scored at
+defaults with costs on; each trade is banked by the calendar year of its entry bar; the cut
+reads tune years only. Four streams are measured and none is selected on. The cut is swept
+over its whole range and reported as a curve, with the identity null beside it. Nothing from
+the old Layer 2 was deleted.</div>
+<div id="r2body"></div>
 </section>
 <section id="tq" hidden>
 <h3>Trend round 3: is there a quality flag on the trend label?</h3>
@@ -5462,7 +5474,7 @@ function boot(BUNDLE,root){
 
   const TABS=['today','chart','pairs2','how','evid','tv',
               'px','ns','g','iv','s','d','f','st','ld','nb','mt','cr','va','if',
-              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2','tq','cw'];
+              'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2','tq','r2','cw'];
   // The default view is the product: four tabs. Everything else -- the
   // sensitivity work, the driver detail, the shared-states matrix, the
   // validation tables and the whole archive of superseded generations -- is
@@ -5481,6 +5493,7 @@ function boot(BUNDLE,root){
    if(t==='dc')dcFill();
    if(t==='tr2')tr2Fill();
    if(t==='tq')tqFill();
+   if(t==='r2')r2Fill();
    if(t==='cw')cwFill();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
@@ -5653,3 +5666,20 @@ function cwFill(){
     +tbl(d.roll_undefined,['window','share_undefined_all','share_undefined_tuning','share_undefined_holdout'],
          'Roll: share of days the estimator is undefined (itself a liquidity reading)')
     +'<p class="note">Built '+(d.stamp||'')+'.</p>';}
+
+const r2Fill=()=>{const el=document.getElementById('r2body');if(!el||el.dataset.done)return;
+ const D=(window.DATA||{}).l2_restart;if(!D){el.innerHTML='<div class="note">no restart section in app_data.json</div>';return;}
+ const tbl=(rows,cols,title)=>{if(!rows||!rows.length)return '';
+  const c=cols||Object.keys(rows[0]);
+  return '<h4>'+title+'</h4><div style="overflow-x:auto"><table><thead><tr>'+c.map(k=>'<th>'+k+'</th>').join('')+'</tr></thead><tbody>'+
+   rows.map(r=>'<tr>'+c.map(k=>{let v=r[k];if(typeof v==='number')v=Math.abs(v)>=1000?v.toLocaleString():(Number.isInteger(v)?v:v.toFixed(4));return '<td>'+(v===null||v===undefined?'':v)+'</td>';}).join('')+'</tr>').join('')+
+   '</tbody></table></div>';};
+ let h='<div class="note">'+D.note+'</div>';
+ h+=tbl(D.modes,['mode','exit_rule','uses_exit_slot','c1','c2','vol','base','exit_ind','combinations'],'The three modes, exactly one active per test');
+ h+=tbl(D.contaminations,['n','name','touches_gate1'],'Which faults touched gate 1');
+ h+=tbl(D.parity,null,'The _r2 code path against the shipped Scorer (0 mismatches required)');
+ h+=tbl(D.timing,['mode','combinations','basis','per_combo_s','core_hours','mac_hours','bank_gb'],'Measured cost of a full honest gate 1');
+ Object.keys(D.curve||{}).forEach(m=>{h+=tbl(D.curve[m],['stream','cut_tune_R','n_pass','pct_pass','n_families','n_lone_survivor_families','grade_R_pass','trade_R_pass','trade_R_fail','null_trade_R_mean','null_p_one_sided'],'Mode '+m+' gate 1 curve, pooled over the five windows (cut reads tune years only)');});
+ Object.keys(D.rankcorr||{}).forEach(m=>{h+=tbl(D.rankcorr[m],['window','stream','n_eligible','spearman_tune_to_trade','p'],'Mode '+m+': does the tune-year rank survive to the trade year?');});
+ h+=tbl(D.superseded,null,'Superseded, headed, kept in full');
+ el.innerHTML=h;el.dataset.done='1';};

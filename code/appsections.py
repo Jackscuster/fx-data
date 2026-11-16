@@ -25,7 +25,8 @@ import json, subprocess, time
 OWNERS = (('dc_axis', 'dcroute', 'the directional-change trend axis (round 1, rejected)'),
           ('trend_round2', 'trendt12report', 'the trend failure anatomy and T1/T2 (round 2, rejected)'),
           ('trend_quality', 'trendqual', 'the label-time quality flag (round 3, SHIPPED)'),
-          ('crisis_witnesses', 'witness', 'panel turbulence and Roll illiquidity (rejected)'))
+          ('crisis_witnesses', 'witness', 'panel turbulence and Roll illiquidity (rejected)'),
+          ('l2_restart', 'r2app', 'the Layer 2 restart and the honest gate 1 (HANDOFF 0l)'))
 
 
 def main():
