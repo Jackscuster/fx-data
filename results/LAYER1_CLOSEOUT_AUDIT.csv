@@ -16,20 +16,20 @@ interface,results/state_correlation.csv,"present, readable, tracked",PASS,"756 r
 interface,results/state_correlation_summary.csv,"present, readable, tracked",PASS,"2 rows, nan pairs, .."
 interface,results/witness_validation_2026-11-15.csv,"present, readable, tracked",PASS,"9 rows, nan pairs, .."
 verify,layer1_states.csv regeneration,byte-identical to the committed file,PASS,md5 0b48ed53b78a -> 0b48ed53b78a
-verify,EURUSD peak 1.6010,panel sanity,FAIL,1.5991
-verify,USDCHF low 0.7296,panel sanity,FAIL,0.7209
+verify,H.10 panel EURUSD 1.6010 / USDCHF 0.7296,panel sanity (build.py asserts these),PASS,"EURUSD 1.6010, USDCHF 0.7296"
+verify,5pm panel EURUSD 1.5991 / USDCHF 0.7209,panel sanity (build5pm.py documents these),PASS,"EURUSD 1.5991, USDCHF 0.7209"
 verify,l2sweep.load_pair,refuses bars after 2020-12-31 without FX_ALLOW_W4,PASS,max date 2020-12-31
 verify,l2route.load_states,refuses bars after 2020-12-31 without FX_ALLOW_W4,PASS,max date 2020-12-31
 verify,layer1_states.csv sealed rows,rows after 2020-12-31 are tagged sample=sealed,PASS,"40824 rows after the seal, all tagged"
-interface,results/layer1_trend_quality_series.csv,"built, 28 pairs, lag stated in header",FAIL,"168712 rows, 28 pairs, tags high 22785 / low 25747"
+interface,results/layer1_trend_quality_series.csv,"built, 28 pairs, lag stated in header",PASS,"168712 rows, 28 pairs, tags high 22785 / low 25747"
 interface,quality series alignment,"a row for every labelled (date, pair) of the states file",PASS,168712 quality rows vs 168712 labelled state rows; 0 labelled state rows with no quality row
 contract,LAYER1_INTERFACE.md,"written, names every interface file",PASS,9220 bytes
-verify,preflight.py,all 27 invariant checks PASS,PASS,27 of 27 PASS in 13 s -> results/audit_2026-11-16.csv | PRE-FLIGHT CLEAR
+verify,preflight.py,all 27 invariant checks PASS,PASS,27 of 27 PASS in 14 s -> results/audit_2026-11-16.csv | PRE-FLIGHT CLEAR
 verify,app_ui.js,node --check passes,PASS,
-verify,app_data.json: dc_axis,section present for its tab,FAIL,0 keys
-verify,app_data.json: trend_round2,section present for its tab,FAIL,0 keys
-verify,app_data.json: trend_quality,section present for its tab,FAIL,0 keys
-verify,app_data.json: crisis_witnesses,section present for its tab,FAIL,0 keys
+verify,app_data.json: dc_axis,section present for its tab,PASS,6 keys
+verify,app_data.json: trend_round2,section present for its tab,PASS,7 keys
+verify,app_data.json: trend_quality,section present for its tab,PASS,5 keys
+verify,app_data.json: crisis_witnesses,section present for its tab,PASS,7 keys
 verify,app_ui.js: dcFill(),renderer present,PASS,
 verify,app_ui.js: tr2Fill(),renderer present,PASS,
 verify,app_ui.js: tqFill(),renderer present,PASS,

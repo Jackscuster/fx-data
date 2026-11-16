@@ -349,10 +349,18 @@ def stage_audit():
         row('verify', 'layer1_states.csv regeneration', 'byte-identical to the committed file',
             'PASS' if same else 'FAIL', 'md5 %s -> %s' % (h0[:12], h1[:12]))
     # 3. sanity constants
+    # EACH PANEL AGAINST ITS OWN DOCUMENTED EXTREMES. 1.6010 / 0.7296 are the H.10 NOON
+    # values build.py asserts; the 5pm panel is 1.5991 / 0.7209 because the SNB-era low
+    # printed after noon (build5pm.py lines 26-29). Checking the noon numbers against the
+    # 5pm panel was my own error on the first audit pass.
+    h10 = pd.read_csv(os.path.join(ROOTDATA, 'px28_h10.csv'), index_col=0, parse_dates=True)
+    row('verify', 'H.10 panel EURUSD 1.6010 / USDCHF 0.7296', 'panel sanity (build.py asserts these)',
+        'PASS' if (abs(float(h10['EURUSD'].max()) - 1.6010) < 5e-4 and abs(float(h10['USDCHF'].min()) - 0.7296) < 5e-4) else 'FAIL',
+        'EURUSD %.4f, USDCHF %.4f' % (h10['EURUSD'].max(), h10['USDCHF'].min()))
     px = pd.read_csv(os.path.join(ROOTDATA, 'px28.csv'), index_col=0, parse_dates=True)
-    pk = float(px['EURUSD'].max()); lo = float(px['USDCHF'].min())
-    row('verify', 'EURUSD peak 1.6010', 'panel sanity', 'PASS' if abs(pk - 1.6010) < 5e-4 else 'FAIL', '%.4f' % pk)
-    row('verify', 'USDCHF low 0.7296', 'panel sanity', 'PASS' if abs(lo - 0.7296) < 5e-4 else 'FAIL', '%.4f' % lo)
+    row('verify', '5pm panel EURUSD 1.5991 / USDCHF 0.7209', 'panel sanity (build5pm.py documents these)',
+        'PASS' if (abs(float(px['EURUSD'].max()) - 1.5991) < 5e-4 and abs(float(px['USDCHF'].min()) - 0.7209) < 5e-4) else 'FAIL',
+        'EURUSD %.4f, USDCHF %.4f' % (px['EURUSD'].max(), px['USDCHF'].min()))
     # 4. the sealing is unreachable through the public loaders
     import importlib
     for mod, fn, desc in (('l2sweep', 'load_pair', 'l2sweep.load_pair'),):
@@ -375,7 +383,7 @@ def stage_audit():
     if os.path.exists(QSER):
         Q = pd.read_csv(QSER, comment='#', parse_dates=['date'])
         hdr = open(QSER).readline()
-        ok = ('computable from bars <= t-1' in hdr) and Q.pair.nunique() == 28
+        ok = ('computable from bars <= t-1' in hdr.lower()) and Q.pair.nunique() == 28
         row('interface', 'results/layer1_trend_quality_series.csv', 'built, 28 pairs, lag stated in header',
             'PASS' if ok else 'FAIL', '%d rows, %d pairs, tags high %d / low %d'
             % (len(Q), Q.pair.nunique(), int((Q.quality_tag == 'high').sum()), int((Q.quality_tag == 'low').sum())))

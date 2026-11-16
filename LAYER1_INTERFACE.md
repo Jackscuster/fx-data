@@ -7,7 +7,7 @@
 | path | producer | what it is | rows | pairs | span |
 |---|---|---|--:|--:|---|
 | `results/layer1_states.csv` | `code/export.py` | THE interface: shape2, activity, both scores, scale, the four mechanism reads | 171920 | 28 | 2002-12-19..2026-08-14 |
-| `results/layer1_trend_quality_series.csv` | `code/layer1close.py --stage quality` | the trend quality flag as a daily series (high/low confidence on trending bars) | 168692 | 28 | 2003-02-28..2026-08-14 |
+| `results/layer1_trend_quality_series.csv` | `code/layer1close.py --stage quality` | the trend quality flag as a daily series (high/low confidence on trending bars) | 168712 | 28 | 2003-02-28..2026-08-14 |
 | `results/crisis_detectors.csv` | `code/crisis.py` | the acute detectors with calendar recall, lift and lag | 5 |  | .. |
 | `results/crisis_events.csv` | `code/crisis.py` | per detector per event: caught and lag, the daily firing record | 250 |  | 2003-09-20..2026-07-31 |
 | `results/crisis_direction.csv` | `code/crisis.py` | per event per pair behaviour during the crisis window | 525 | 28 | .. |
@@ -69,7 +69,7 @@ Ordered by how well each label survived its own tests. This ordering is the sing
 | label | confidence | what the evidence says |
 |---|---|---|
 | `ranging` | **strongest** | The chop axis is the one that holds up: separation corrected +0.035 on the 5pm build (`results/layer1_summary.csv`, HANDOFF 0a check B). Chop slices were the only positive per-slice books in the Layer 2 blind round (A-chop +0.63, B-chop +0.52; `results/refit_books_blind2.csv`). |
-| `trending` + `quality_tag=high` | **weak, graded** | Trending labels are unreliable on their own; the flag grades them. Holdout episode true-trend rate 59.8% (n=92) for high against n/a for low (`results/layer1_trend_quality_series.txt`). The flag cleared a 200-draw re-derive null at p=0.01 sign / 0.00 permutation, AUC 0.609 (`results/trend_quality_verdict_2026-11-11.csv`). |
+| `trending` + `quality_tag=high` | **weak, graded** | Trending labels are unreliable on their own; the flag grades them. Holdout episode true-trend rate 54.5% (n=110) for high against n/a for low (`results/layer1_trend_quality_series.txt`). The flag cleared a 200-draw re-derive null at p=0.01 sign / 0.00 permutation, AUC 0.609 (`results/trend_quality_verdict_2026-11-11.csv`). |
 | `trending` + `quality_tag=low` | **lowest of the trending labels** | Same caveats, worse base rate. |
 | `trend-in-range`, `neither` | **low** | Residual cells. No construction has been validated on them. |
 
@@ -95,7 +95,7 @@ Validated on the 39 news-dated events of `code/events.py` inside the panel windo
 - **No direction.** `trend_score` says how straight, never which way. There is no long/short content anywhere in Layer 1.
 - **No money metrics.** No returns, no PnL, no Sharpe, no sizing. Every money number in this repo belongs to Layer 2 and was produced by Layer 2 code.
 - **No entry or exit timing.** The label tells you the state, not when to act inside it — and per section 4 it is systematically late on trends.
-- **No tradeable universe opinion.** Pair character (`results/pair_character.csv`) describes behaviour; it does not rank pairs for trading.
+- **No tradeable universe opinion.** Pair character (`results/paircharacter.csv`) describes behaviour; it does not rank pairs for trading.
 
 ## 7. Reporting a defect
 

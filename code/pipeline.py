@@ -159,6 +159,10 @@ else:
     subprocess.run([sys.executable, os.path.join(C, 'validate.py'),
                     '--no-synth', '--no-refit'], check=True)
 run('bundle.py'); run('appstamp.py')  # keep app_ui.js's build id and app_version.json in step
+# THE THIRD WIRING PLACE (16 Nov). bundle.py rebuilds app_data.json from results/ and
+# knows nothing about the November research sections, so every cold run silently deleted
+# dc_axis / trend_round2 / trend_quality / crisis_witnesses and took their tabs with them.
+run('appsections.py')    # re-inject the research sections bundle.py does not know about
 for _f in ('app_data.json','app_signals.json','app_explorer.json','app_regime.json'):
     shutil.copy(os.path.join(R,'results',_f),os.path.join(R,_f))
 run('freshness.py')          # FAIL LOUDLY if anything published is stale
