@@ -75,7 +75,7 @@ def targets(which, all_candidates=False):
     the crossers preserves exactly the contamination the rebuild removes -- the
     crosser list IS the thing being rebuilt. ip2 is not required either: the
     clean field scores W2 under ip1 and never touches ip2."""
-    d = pd.read_csv(os.path.join(ROOTOUT, 'gate2_tuned_modeB.csv'), low_memory=False)
+    d = pd.read_csv(os.path.join(ROOTOUT, 'gate2_tuned_modeB.csv'), comment='#', low_memory=False)
     d['sid'] = 'B|' + d.slice + '|' + d.c1 + '|' + d.c2 + '|' + d.vol + '|' + d.base
     if all_candidates:
         d = d[d.slice == 'trend']

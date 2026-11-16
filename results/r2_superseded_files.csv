@@ -1,0 +1,11 @@
+file,status,detail
+gate1_survivors_modeA.csv,would head,3 readers checked
+gate1_survivors_modeB.csv,would head,0 readers checked
+gate1_survivors_modeC.csv,would head,1 readers checked
+gate1_survivors.csv,would head,8 readers checked
+gate1_survivors_v1.csv,would head,0 readers checked
+gate1_mode_runs.csv,would head,3 readers checked
+gate2_tuned_modeA_trend.csv,would head,3 readers checked
+gate2_tuned_modeA_chop.csv,would head,3 readers checked
+gate2_tuned_modeB.csv,would head,4 readers checked
+refit_candidates_full.csv,would head,2 readers checked

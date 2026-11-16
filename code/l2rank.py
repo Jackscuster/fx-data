@@ -82,7 +82,7 @@ def verify_B():
     """Rebuild mode B's committed leaderboard and compare, column by column."""
     ref = pd.read_csv(os.path.join(ROOTOUT, 'gate2_modeB_leaderboard.csv'),
                       low_memory=False)
-    D = pd.read_csv(os.path.join(ROOTOUT, 'gate2_crisis_split_modeB_all.csv'),
+    D = pd.read_csv(os.path.join(ROOTOUT, 'gate2_crisis_split_modeB_all.csv'), comment='#',
                     low_memory=False)
     D = attach_tuning(D, os.path.join(ROOTOUT, 'gate2_tuned_modeB.csv'))
     D = rank(D, 'B')

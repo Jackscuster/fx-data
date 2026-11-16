@@ -372,7 +372,7 @@ def candidates_full(out):
     Combos only -- every tune is fresh. sid = '<mode>|<slice>|c1|c2|vol|base' (+ '|exit' for C)."""
     parts = []
     for f, mode in (('gate2_tuned_modeA_trend.csv', 'A'), ('gate2_tuned_modeA_chop.csv', 'A'), ('gate2_tuned_modeB.csv', 'B')):
-        d = pd.read_csv(os.path.join(ROOTOUT, f), low_memory=False)[['c1', 'c2', 'vol', 'base', 'exit_ind', 'slice']]; d['mode'] = mode; parts.append(d)
+        d = pd.read_csv(os.path.join(ROOTOUT, f), comment='#', low_memory=False)[['c1', 'c2', 'vol', 'base', 'exit_ind', 'slice']]; d['mode'] = mode; parts.append(d)
     cs = sorted(glob.glob(os.path.join(ROOTOUT, 'gate2', 'modeC_trend', 'chunk_*.csv')))
     if cs:
         d = pd.concat([pd.read_csv(f, low_memory=False)[['c1', 'c2', 'vol', 'base', 'exit_ind', 'slice']] for f in cs], ignore_index=True); d['mode'] = 'C'; parts.append(d)

@@ -536,6 +536,169 @@
    NOT been rerun — when it is, diff its output against
    `~/fx-data-logs/layer1_states_5pm_interface_backup.csv` (md5 4e9857cf…).
 
+0l. **LAYER 2 RESTART — COMPLETE, FROM MODE A UP (Jack, 16 Nov). THIS ITEM
+   SUPERSEDES EVERY LAYER 2 SELECTION ON DISK. The parked cloud run in 0g is
+   CANCELLED. NOTHING IS DELETED.**
+
+   **Jack's words.** *"completely restart Layer 2, starting with mode A then B
+   and C. Restarting does NOT mean deleting anything. Use the cached memory and
+   save everything. We need to find all new combinations and all new settings."*
+
+   **WHY A RESTART AND NOT A PATCH.** The gate 1 on disk is not a gate. Its
+   score was taken over `W2 + W3` pooled — `2011-01-01` to `2020-12-31`
+   (`l2sweep.score_combo`) — which is every year Layer 2 afterwards called
+   blind. The 17,922 mode A survivors were therefore chosen on the same years
+   their record was then reported on, and so was the candidate field handed to
+   gates 2 and 3. That is faults #1 and #4, and it cannot be repaired by
+   rerunning anything downstream of it: the field itself is the contamination.
+   Everything built on that field is kept, headed `SUPERSEDED BY 0l`, and
+   quoted only as history.
+
+   **WHICH CONTAMINATIONS ACTUALLY TOUCHED GATE 1** (`results/r2_step1_contaminations.csv`):
+
+   | fault | touches gate 1 | why |
+   |---|---|---|
+   | #1 W2 leak | **YES, fatal** | the cut score *is* 2011-2020, the blind years |
+   | #4 field sight of 2016-2020 | **YES** | same defect from the field's side |
+   | #2 two exits on at once | the FIRST sweep only (`gate1_survivors_v1.csv`); the three-mode rerun fixed it |
+   | #27 costs under-charged by `atr_mult` | **NO at gate 1** — every combination runs at `atr_mult=1.0`, so the restatement factor is exactly 1.0. Fatal everywhere downstream that moved the stop |
+   | vote timing (0d) | **NO** — gate 1 never nets, so `VOTE_ON_ENTRY_DAY` has nothing to act on. It enters at the `Book` |
+   | costs off entirely | **YES** — `S.COSTS` is `None` unless `load_costs()` is called, and the shipped gate 1 files are **gross**. The honest gate 1 charges `cost_table_h22` on every trade |
+
+   **THE 17,822 vs 17,922 DISCREPANCY, RESOLVED.** `gate1_survivors_modeA.csv`
+   holds **17,922**; `refit_candidates_full.csv` holds **17,822** for mode A.
+   The 100 missing rows are all A-**trend** and every one of them has
+   `c1=waddah_attar_explosion_signals`. Cause: `candidates_full()` builds the
+   field from `gate2_tuned_modeA_trend.csv`, not from the gate 1 survivor file,
+   so a tuning shard that never finished silently dropped 100 combinations gate
+   1 had passed — and nothing compared the two counts. **The parked cloud run
+   would have searched a field 100 short of its own gate 1, and no check would
+   have caught it.** Moot under the restart; recorded because the class of
+   defect is not.
+
+   ---
+
+   ## THE RULES OF THE RESTART — every step, no exceptions
+
+   1. **Nothing deleted, nothing overwritten.** Superseded results keep their
+      filenames and get a `SUPERSEDED BY 0l` header note. Every new result
+      carries the suffix **`_r2`** and is written to `results/`, **never
+      `/tmp`**.
+   2. 5pm panel `data/px28.csv`. Fixed `Book` kernel. One-bar lag everywhere.
+      Vote the day **after** the fill (`VOTE_ON_ENTRY_DAY=False`). Correct costs
+      (`cost_table_h22`), charged in R units per fault #27. Each mode runs its
+      **own** exits (`check_mode_exits` asserts on every marks build). Stop,
+      target, breakeven and trail multiples are tuned per strategy, never fixed.
+      Leg 2 always runs to its own exit.
+   3. Windows as in **0f**: five rolling windows, **tune years 1-4, grade year 5
+      reported never used, trade year 6**. 2021 onward sealed; the loader
+      refuses it without the flag.
+   4. **Everyone who enters tuning trades.** No picking by past record, no
+      weighting by past record. Equal weight, netted, both budgets (3.6/3.6 and
+      5.4/3.6).
+   5. **No arbitrary thresholds.** Every cut is swept over its full range and
+      reported as a curve. Jack picks from the curve.
+   6. Episode-based significance. Null-test anything strong: random-entry,
+      regime-shuffle, identity null wherever a selection exists.
+   7. Every stage banked per `(sid, window)`, resumable, committed at each
+      marker. One prompt, one chained driver, launched via `launch.sh`, confirmed
+      alive 60 s. No step ends with nothing running. No result sits uncommitted.
+   8. **Nothing rented. Mac only until Jack says otherwise.**
+   9. Every new result wired into `app_data.json` and `app_ui.js` through
+      `code/appsections.py`; `node --check` must pass.
+
+   ## HOW LAYER 1 IS CONSUMED (and it is never touched)
+
+   `results/layer1_states.csv`, md5 `0b48ed53b78a`, **asserted at every load**
+   (`l2r2gate1.manifest_check`). Routing reads `shape2` and `activity` exactly
+   as shipped; the label is already lagged one bar at source and is never
+   shifted again. `results/layer1_trend_quality_series.csv`, md5 `a8755566178f`
+   — `quality_tag` high/low is **REPORTED as a split of every routed trend
+   slice and never gates a trade**. Crisis = the acute detector plus MOVE only;
+   flat on the affected currency's pairs while on, self-clearing. **Turbulence
+   and Roll are rejected and must not be consumed.** Layer 2 never modifies,
+   refits or retunes anything in Layer 1 — a defect is reported against the
+   producer script and the column stops being used.
+
+   ---
+
+   ## STEP 2 — THE HONEST GATE 1. DECLARED HERE BEFORE IT RAN.
+
+   Code: **`code/l2r2gate1.py`**. Bank:
+   `results/r2gate1/mode<M>_<tag>/shard_XXXX.npz`.
+
+   **What is scored.** Every combination in the mode, at **defaults**
+   (`atr_len=31, atr_mult=1.0, tp_mult=1.5, trail_mult=1.5, trail_arm=2.0,
+   be_pct=0.05`, each indicator at its registry default), costs **on**, one-bar
+   lag, 28 pairs, sealed at `2020-12-31`.
+
+   **What is banked.** One row per combination, array `stat` of shape
+   `(n_combo, 4, 16, 5)`:
+   * axis 1 — the four streams, every one measured, none selected on:
+     `0` trend-routed, `1` trend-always-on, `2` chop-routed, `3` chop-always-on.
+     "trend" is the two-leg plan, "chop" the one-leg plan; routing is a **mask**
+     on the same engine pass, so always-on costs nothing extra and regime
+     dependence is *measured* per combination rather than assumed.
+   * axis 2 — **calendar year of the ENTRY bar**, 2005…2020.
+   * axis 3 — `n, sum_r, gain, loss, n_win`.
+
+   Expectancy, PF and win rate are composable from those sums, so **tune, grade
+   and trade years are kept separately by construction and cannot be pooled by
+   accident**, and every window/role split in the rest of the programme is
+   derivable without rerunning the engine. **The five rolling windows are masks
+   over one pass, not five passes.**
+
+   **THE CUT READS TUNE-YEAR SCORES ONLY.** Grade-year and trade-year scores are
+   computed and banked at the same time; they take no part in the selection.
+
+   **The cut.** One number: **tune-year expectancy in R**, swept over its full
+   observed range in 120 steps, per stream, per window and pooled. No PF floor,
+   no second hard threshold — PF is reported, not imposed.
+
+   **Eligibility, declared.** A combination is scored in a window only if that
+   window's stream has **≥ 40 tune-year trades** (10 per year × 4 tune years).
+   Below it the combination is **UNTESTED, which is not the same thing as
+   failed**, and it is reported in its own count.
+
+   **THE FAMILY RULE, DECLARED BEFORE THE RUN.** A **family** is the **ordered**
+   confirmation pair `(c1, c2)` within one mode and one slice — 39 × 39 =
+   **1,521 families**. Ordered and not unordered: in mode A the C1 flip *is* the
+   exit, so `c1` and `c2` are not interchangeable and folding them together
+   would merge two different machines. `vol` and `base` are filters over that
+   pair, not the signal. A family **passes** a cut if at least one of its
+   combinations passes. A **lone survivor** is a family passing with exactly one
+   combination — **flagged, never killed**: whether one is luck is a question
+   for the nulls, not a question the cut gets to answer by fiat.
+
+   **Reported at every cut on the curve** (`results/r2gate1_curve_mode<M>_<tag>.csv`):
+   combinations passing, % passing, families passing out of 1,521, lone-survivor
+   families, and the **grade-year and trade-year record of passers vs
+   non-passers** (trade-weighted expectancy, trade count, combination count) for
+   every stream — routed and always-on. Separately
+   (`results/r2gate1_rankcorr_mode<M>_<tag>.csv`): **Spearman rank correlation
+   tune-year → trade-year** per window and stream, with the eligible n and the
+   observed tune-R range.
+
+   **Proof the `_r2` path is the shipped path.** `--stage parity` runs the same
+   combinations through `l2r2gate1.score_r2` and through the shipped
+   `l2tune.Scorer`, all four streams × all five tune windows, and asserts trade
+   counts equal and expectancy equal to 1e-9. **16 Nov: 60 comparisons, 0
+   mismatches.** The one thing `score_r2` does differently is hoist the crisis
+   cost multiplier from a per-trade Python loop over 50 calendar windows to a
+   per-bar array computed once per pair — a 15× speedup (44.3 → 2.9
+   ms/combination) with the cost *convention* unchanged, which is exactly what
+   the parity check proves.
+
+   ## STEPS 3 AND 4
+
+   **Step 3** — gate 2 for the mode A passers, on the 0f blind-label machine:
+   four books (always-on; chop RANGING + trend TRENDING; chop RANGING + trend
+   ungated; chop RANGING + trend NOT-RANGING), per slice, per year, retention,
+   DIP95, PF, both nulls, the `quality_tag` split of every routed trend slice,
+   and **R by episode third** (first/middle/last third of each
+   `trend_episode_id`). Blind grade reported, never used.
+   **Step 4** — modes B then C through the identical pipeline, after A reports.
+
 0k. **CRISIS WITNESSES 2 AND 3 (16 Nov) — PANEL TURBULENCE AND ROLL
    ILLIQUIDITY. BOTH ARE KILLED BY THE INCREMENTAL TEST, NOT THE NULL:
    neither catches a single event the acute detector misses.** Code
@@ -846,6 +1009,15 @@
 0g. **LAYER 2 IS PARKED HERE, VERIFIED AND READY — NOT LAUNCHED (recorded
    9 Nov, when the Layer 1 DC-axis round began). Nothing below is abandoned;
    this is the whole state of it in one place.**
+
+   > **CANCELLED 16 Nov BY ITEM 0l — THE 45,139-STRATEGY CLOUD RUN IS NOT TO BE
+   > LAUNCHED.** Its candidate field was selected by a gate 1 whose score was
+   > taken over 2011-2020, i.e. over the very years the run would have called
+   > blind (faults #1 and #4). Separately, that field was 100 mode-A-trend
+   > combinations short of its own gate 1 — see 0l. **Nothing here is deleted:**
+   > every file, every launch line and every verified number below stays exactly
+   > as it is, as the record of what was built and why it was stood down. Jack's
+   > words: *"Restarting does NOT mean deleting anything."*
 
    **What is verified.** `results/audit_2026-11-08.csv`: **pre-flight 27 of
    27 PASS, PRE-FLIGHT CLEAR** on the current code (16 s; re-run any time
