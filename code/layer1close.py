@@ -318,7 +318,7 @@ def stage_contract():
              ' repo belongs to Layer 2 and was produced by Layer 2 code.')
     L.append('- **No entry or exit timing.** The label tells you the state, not when to act inside it — and'
              ' per section 4 it is systematically late on trends.')
-    L.append('- **No tradeable universe opinion.** Pair character (`results/paircharacter.csv`) describes'
+    L.append('- **No tradeable universe opinion.** Pair character (`results/pair_character.csv`) describes'
              ' behaviour; it does not rank pairs for trading.')
     L.append('')
     L.append('## 7. Reporting a defect')
