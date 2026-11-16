@@ -1,0 +1,17 @@
+CRISIS WITNESSES -- 200-DRAW RE-DERIVE NULL on calendar LIFT. 2026-11-15
+
+kind        witness  real_lift  n_draws  null_mean  null_p95  null_max   p_value
+sign   turb_usd_250     13.975      200     14.959    15.962    16.532     0.980
+sign turb_all28_250     13.975      200     13.736    14.676    15.468     0.390
+sign   turb_usd_500     13.956      200     12.738    13.664    14.616     0.015
+sign turb_all28_500     13.956      200     13.572    14.461    15.039     0.255
+sign  roll_panel_20      5.921      200      5.729     7.895     8.227     0.450
+sign  roll_panel_60      1.412      200      2.562     3.831     4.885     0.950
+perm   turb_usd_250     13.975      200      8.243    11.064    13.026     0.000
+perm turb_all28_250     13.975      200      8.165    10.521    12.229     0.000
+perm   turb_usd_500     13.956      200      7.751    10.493    11.317     0.000
+perm turb_all28_500     13.956      200      7.703     9.888    10.974     0.000
+perm  roll_panel_20      5.921      200      2.669     4.751     6.852     0.015
+perm  roll_panel_60      1.412      200      1.855     3.769     6.354     0.625
+
+done in 16.0 min

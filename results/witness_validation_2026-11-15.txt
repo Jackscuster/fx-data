@@ -1,0 +1,15 @@
+CRISIS WITNESSES -- CALENDAR VALIDATION (forward-only, event date to +15 days, never before). 2026-11-15
+39 news-dated events inside the panel window. Firing threshold = the 95th percentile learned on the tuning window.
+
+          witness  caught  n_events   recall  base_rate     lift  false_alarm_rate_outside_windows  median_lag_days
+ ACUTE_maxabsmove      31        39    0.795      0.053   15.006                             0.044            0.000
+ACUTE_breadth2sig      27        39    0.692      0.049   14.215                             0.038            0.000
+     turb_usd_250      25        39    0.641      0.046   13.975                             0.034            1.000
+   turb_all28_250      25        39    0.641      0.046   13.975                             0.034            1.000
+     turb_usd_500      24        39    0.615      0.044   13.956                             0.031            1.000
+   turb_all28_500      24        39    0.615      0.044   13.956                             0.031            1.000
+    roll_panel_20       9        39    0.231      0.039    5.921                             0.031            4.000
+         MOVE_rel       8        39    0.205      0.042    4.864                             0.035            1.000
+    roll_panel_60       2        39    0.051      0.036    1.412                             0.035            4.000
+
+A witness CONFIRMS: lag is measured from the event, and a negative lag is impossible by construction.
