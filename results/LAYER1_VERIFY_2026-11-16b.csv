@@ -1,0 +1,21 @@
+n,check,status,detail,clone_sha
+1,"fresh clone, this is what the world sees",PASS,97e57e5d3fc8  Layer 1 close-out fix list: horizon.py NaN-safe join (what killed the ,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+2,LAYER1_INTERFACE.md exists at the clone root,PASS,9204 bytes,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+2a,the contract names interface files,PASS,22 files named,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+2b,"every named file exists, loads and matches its claimed counts/spans",PASS,22 files verified,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+3,tuning-window cut re-derived independently (claim 0.913394),FAIL,recomputed 0.856746,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+3a,holdout rates re-derived (claim 59.8% high n=92 / 40.8% low n=179),FAIL,"recomputed high 54.5% n=110, low 38.3% n=188",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+3b,shipped CSV matches the independent recomputation row for row,PASS,"0 rows one-sided, 0 tag mismatches, 0 reading mismatches (of 168712)",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+4,l2sweep.load_pair refuses bars after 2020-12-31,PASS,max 2020-12-31,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+4a,l2route.load_states refuses bars after 2020-12-31,PASS,max 2020-12-31,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+4b,quality series rows after the seal are tagged sample=sealed,PASS,"40824 rows, all tagged",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+4c,states rows after the seal are tagged sample=sealed,PASS,"40824 rows, all tagged",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+5,"H.10 panel: EURUSD peak 1.6010, USDCHF low 0.7296 (build.py asserts these)",PASS,"EURUSD 1.6010, USDCHF 0.7296",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+5a,"5pm panel: EURUSD peak 1.5991, USDCHF low 0.7209 (build5pm.py documents these)",PASS,"EURUSD 1.5991, USDCHF 0.7209",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+6,node --check app_ui.js in the clone,PASS,,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+6a,"every Layer 1 tab has its data section, renderer, nav button and div in the clone",FAIL,dc_axis section; trend_round2 section; trend_quality section; crisis_witnesses section,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+6b,headless boot: all four renderers execute against clone app_data.json,PASS,"ran dcFill,tr2Fill,tqFill,cwFill",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+7,every number in LAYER1_INTERFACE.md matches its named source file,FAIL,"13 checked, 2 mismatched | quality null p sign MATCH (doc 0.01 vs trend_quality_verdict_2026-11-11.csv 0.01) | quality null p perm MATCH (doc 0 vs trend_quality_verdict_2026-11-11.csv 0) | quality AUC holdout MATCH (doc 0.609 vs trend_quality_verdict_2026-11-11.csv 0.6089) | acute caught MATCH (doc 31 vs witness_validation_2026-11-15.csv 31) | acute n_events MATCH (doc 39 vs witness_validation_202",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+8,chain audit and this independent audit agree,PASS,"chain 28/35 PASS, independent 13/17 PASS",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+9,local ~/fx-data HEAD == origin/main == clone HEAD,PASS,"local 97e57e5d3f, origin 97e57e5d3f, clone 97e57e5d3f",97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
+9a,nothing untracked locally that is work product,FAIL,?? data/px28_5pm_to2020.csv; ?? results/LAYER1_VERIFY_2026-11-16b_numbers.csv,97e57e5d3fc8a91bb7ef71e8f925ae0e56b296ce
