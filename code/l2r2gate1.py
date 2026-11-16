@@ -391,8 +391,13 @@ def stage_curve(mode, tag, out=None):
             for x in cuts:
                 m = ee > x
                 npass = int(m.sum())
-                fp = np.unique(ff[m]) if npass else np.array([], int)
-                lone = int(sum(1 for f_ in fp if (ff[m] == f_).sum() == 1))
+                # bincount, not a per-family scan: the obvious
+                #   sum(1 for f in fp if (ff[m]==f).sum()==1)
+                # is O(families x passers) and at 1,521 families against 240,000
+                # passers it is 365M operations PER CUT -- it ran fine on the
+                # smoke and stalled the full bank.
+                fc = np.bincount(ff[m], minlength=nfam_all) if npass else np.zeros(nfam_all, int)
+                nfam_pass = int((fc > 0).sum()); lone = int((fc == 1).sum())
                 def _rec(vals, ns, mask):
                     v = vals[mask]; n = ns[mask]
                     g = np.isfinite(v) & (n > 0)
@@ -405,7 +410,7 @@ def stage_curve(mode, tag, out=None):
                 rows.append(dict(mode=mode, window=w['name'], stream=sname, cut_tune_R=float(x),
                                  n_eligible=int(elig.sum()), n_pass=npass,
                                  pct_pass=100.0 * npass / max(elig.sum(), 1),
-                                 n_families=len(fp), n_families_possible=int(nfam_all),
+                                 n_families=nfam_pass, n_families_possible=int(nfam_all),
                                  n_lone_survivor_families=lone,
                                  grade_R_pass=ge_p, grade_trades_pass=gn_p, grade_n_pass=gc_p,
                                  grade_R_fail=ge_f, grade_trades_fail=gn_f, grade_n_fail=gc_f,
@@ -432,17 +437,37 @@ def stage_curve(mode, tag, out=None):
         grv = GR['expectancy_R'][elig, si]; grn = GR['n'][elig, si]
         good = np.isfinite(trv) & (trn > 0)
         cuts = np.linspace(np.nanmin(e), np.nanmax(e), NCUT)
+        # ---- THE IDENTITY NULL, 200 draws, computed once for the whole curve.
+        # A cut of size k selects k combinations. The null asks what a RANDOM k
+        # from the same eligible pool would have scored on the trade years. One
+        # shuffle of the pool answers it for EVERY k at once through a prefix
+        # sum, so 200 draws cost 200 shuffles rather than 200 per cut.
+        null_ks, null_at = [], {}
+        gi = np.flatnonzero(good)
+        if len(gi) > 10:
+            vn = (trv[gi] * trn[gi]).astype(np.float64); nn = trn[gi].astype(np.float64)
+            ks = sorted({int(min((e > x).sum(), len(gi))) for ci, x in enumerate(cuts) if ci % 10 == 0}
+                        - {0})
+            if ks:
+                mat = np.empty((NULL_DRAWS, len(ks)))
+                kk = np.array(ks) - 1
+                for d_ in range(NULL_DRAWS):
+                    o = rng.permutation(len(gi))
+                    cv = np.cumsum(vn[o]); cn = np.cumsum(nn[o])
+                    mat[d_] = cv[kk] / cn[kk]
+                null_at = {k: mat[:, j] for j, k in enumerate(ks)}
+            null_ks = ks
         for ci, x in enumerate(cuts):
             m = e > x
             npass = int(m.sum())
-            fp = np.unique(ff[m]) if npass else np.array([], int)
-            lone = int(sum(1 for f_ in fp if (ff[m] == f_).sum() == 1))
+            fc = np.bincount(ff[m], minlength=famcode.max() + 1) if npass else np.zeros(1, int)
+            nfam_pass = int((fc > 0).sum()); lone = int((fc == 1).sum())
             def wavg(v, n, msk):
                 g = msk & np.isfinite(v) & (n > 0)
                 return float(np.average(v[g], weights=n[g])) if g.any() else np.nan
             row = dict(mode=mode, stream=sname, cut_tune_R=float(x), n_eligible=int(elig.sum()),
                        n_pass=npass, pct_pass=100.0 * npass / max(elig.sum(), 1),
-                       n_families=len(fp), n_lone_survivor_families=lone,
+                       n_families=nfam_pass, n_lone_survivor_families=lone,
                        grade_R_pass=wavg(grv, grn, m), grade_R_fail=wavg(grv, grn, ~m),
                        trade_R_pass=wavg(trv, trn, m), trade_R_fail=wavg(trv, trn, ~m),
                        trade_trades_pass=int(trn[m & good].sum()))
@@ -450,13 +475,9 @@ def stage_curve(mode, tag, out=None):
             # the SAME NUMBER of combinations uniformly at random from the same
             # eligible pool and read the same trade-year number.  If the cut's
             # passers sit inside this band the cut has selected nothing.
-            if npass and ci % 10 == 0 and good.sum() > 10:
-                idx = np.flatnonzero(good)
-                k = min(npass, len(idx))
-                draws = np.empty(NULL_DRAWS)
-                for d_ in range(NULL_DRAWS):
-                    pick = rng.choice(idx, size=k, replace=False)
-                    draws[d_] = float(np.average(trv[pick], weights=trn[pick]))
+            k = min(npass, len(gi))
+            if k in null_at:
+                draws = null_at[k]
                 row.update(null_draws=NULL_DRAWS, null_trade_R_mean=float(draws.mean()),
                            null_trade_R_p5=float(np.percentile(draws, 5)),
                            null_trade_R_p95=float(np.percentile(draws, 95)),
