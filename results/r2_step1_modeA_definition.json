@@ -1,0 +1,22 @@
+{
+ "mode_a": {
+  "mode": "A",
+  "entry": "C1 cross (the c1 confirmation flipping to a side), confirmed by c2 and by the volume slot, on the correct side of the baseline. Continuation and one-candle entry routes per GAUNTLET; reversal entries allowed, and a C1 flip that reverses is both the exit and the new entry.",
+  "signal_exit": "C1 flip, and nothing else",
+  "exit_on_c1_flip": true,
+  "exit_on_base_cross": false,
+  "exit_on_exit_ind": false,
+  "risk_plan": "ALWAYS ACTIVE in every mode and not a signal exit: stop at atr_mult x ATR(atr_len), target tp_mult, breakeven after be_pct beyond TP1, trail trail_mult armed at trail_arm x ATR. Leg 2 always runs to its own exit.",
+  "defaults": "atr_len=31 atr_mult=1.0 tp_mult=1.5 trail_mult=1.5 trail_arm=2.0 be_pct=0.05",
+  "exit_slot": "UNUSED -- with exit_on_exit_ind False the x_el/x_es arrays are never read, so the enumeration collapses by a factor of 39",
+  "trend_slice": "two-leg plan, entries whose Layer 1 shape2 label at the entry bar is \"trending\"",
+  "chop_slice": "one-leg plan, entries labelled \"ranging\""
+ },
+ "discrepancy": {
+  "gate1_survivors_modeA": 17922,
+  "refit_candidates_modeA": 17822,
+  "difference": 100,
+  "where": "all 100 are A-TREND rows and every one of them has c1=waddah_attar_explosion_signals",
+  "cause": "refit_candidates_full.csv is built from gate2_tuned_modeA_trend.csv, not from the gate 1 survivor file -- so a tuning shard that never finished silently removed 100 combinations gate 1 had passed, and nothing checked the two counts against each other. The parked cloud run would have searched 17,822, not the 17,922 gate 1 chose."
+ }
+}

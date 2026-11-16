@@ -1,0 +1,5 @@
+slot,total,available,unavailable,why_unavailable
+confirmation,41,39,2,needs a volume series spot FX does not have
+volume,16,12,4,needs a volume series spot FX does not have
+baseline,16,15,1,needs a volume series spot FX does not have
+exit,41,39,2,needs a volume series spot FX does not have

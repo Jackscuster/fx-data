@@ -1,0 +1,4 @@
+mode,exit_rule,uses_exit_slot,c1,c2,vol,base,exit_ind,combinations,evaluations_both_slices
+A,C1-flip exit,False,39,39,12,15,1,273780,547560
+B,baseline-cross exit,False,39,39,12,15,1,273780,547560
+C,exit-indicator exit,True,39,39,12,15,39,10677420,21354840
