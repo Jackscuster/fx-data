@@ -1,3 +1,4 @@
+# SUPERSEDED BY HANDOFF 0l (16 Nov 2026) -- the parked 45,139-strategy field: selected on 2011-2020, and 100 mode-A-trend combinations short of its own gate 1 (all c1=waddah_attar_explosion_signals, lost with an unfinished tuning shard). Kept in full, nothing deleted; quote as history only. The replacement carries the suffix _r2.
 c1,c2,vol,base,exit_ind,slice,mode,lab,sid
 adx_dmi_signals,center_of_gravity_signals,damiani_volatmeter_volume_signals,t3_baseline,adx_dmi_exit,trend,A,A-trend,A|trend|adx_dmi_signals|center_of_gravity_signals|damiani_volatmeter_volume_signals|t3_baseline
 adx_dmi_signals,center_of_gravity_signals,efficiency_ratio_volume_signals,frama_baseline,adx_dmi_exit,trend,A,A-trend,A|trend|adx_dmi_signals|center_of_gravity_signals|efficiency_ratio_volume_signals|frama_baseline
