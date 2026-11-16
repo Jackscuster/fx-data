@@ -67,7 +67,13 @@ def manifest_check(paths=L1_FILES):
 # HANDOFF 0f, unchanged: tune years 1-4, grade year 5 REPORTED NEVER USED,
 # trade year 6.  Five of them, rolling one year.
 WINDOWS_SPEC = '2011-2014:2015:2016,2012-2015:2016:2017,2013-2016:2017:2018,2014-2017:2018:2019,2015-2018:2019:2020'
-YEAR0, NYEAR = 2005, 16          # 2005..2020, the whole sealed panel
+# 2005..2020, the whole sealed panel.  `--years 2011-2020` narrows the bank to
+# exactly the years the five windows use; it is a STORAGE choice and nothing
+# else, because no window in 0f touches a year before 2011.  Mode C needs it:
+# the full 16-year bank measures 6.4 GB compressed against 5.3 GB of free disk,
+# and 10 years measures 4.0 GB.  Every bank records its own range, so a curve
+# read from one can never silently use the wrong years.
+YEAR0, NYEAR = 2005, 16
 STREAMS = ('trend-routed', 'trend-allon', 'chop-routed', 'chop-allon')
 NSTAT = 5                        # n, sum_r, gain, loss, n_win
 
@@ -285,7 +291,8 @@ def stage_probe(mode, n=200, jobs=1):
 
 
 def _shard_worker(args):
-    shard, nshard, mode, combos, outdir = args
+    shard, nshard, mode, combos, outdir, years = args
+    set_years(years)
     f = os.path.join(outdir, 'shard_%04d.npz' % shard)
     if os.path.exists(f):
         return dict(shard=shard, n=0, skipped=True, seconds=0.0)
@@ -303,10 +310,26 @@ def _shard_worker(args):
             print('    shard %03d: %6d/%6d  %.1f ms/combo  %.0f min left'
                   % (shard, j + 1, len(mine), 1000 * el / (j + 1),
                      (el / (j + 1)) * (len(mine) - j - 1) / 60), flush=True)
-    np.savez_compressed(f, stat=stat,
+    if free_gb() < DISK_FLOOR_GB:
+        print('    shard %03d: HALTING, %.1f GB free (floor %.1f) -- the bank is resumable, rerun when there is room'
+              % (shard, free_gb(), DISK_FLOOR_GB), flush=True)
+        raise SystemExit('disk floor hit at shard %d' % shard)
+    np.savez_compressed(f, stat=stat, year0=YEAR0, nyear=NYEAR,
                         combo=np.array([['%s' % x for x in cb] for cb in mine], dtype=object),
                         idx=np.array([i for i, _ in enumerate(combos) if i % nshard == shard]))
     return dict(shard=shard, n=len(mine), skipped=False, seconds=time.time() - t0)
+
+
+def set_years(spec):
+    global YEAR0, NYEAR
+    a, z = (int(x) for x in spec.split('-'))
+    YEAR0, NYEAR = a, z - a + 1
+    print('  bank years: %d..%d (%d)' % (YEAR0, YEAR0 + NYEAR - 1, NYEAR), flush=True)
+
+
+def free_gb():
+    st = os.statvfs(ROOTOUT)
+    return st.f_bavail * st.f_frsize / 1024 ** 3
 
 
 def stage_run(mode, combos, tag, jobs=None, nshard=None):
@@ -320,7 +343,12 @@ def stage_run(mode, combos, tag, jobs=None, nshard=None):
     nshard = nshard or jobs
     with open(os.path.join(outdir, 'combos.json'), 'w') as fh:
         json.dump([list(c) for c in combos], fh)
-    args = [(k, nshard, mode, combos, outdir) for k in range(nshard)]
+    years = '%d-%d' % (YEAR0, YEAR0 + NYEAR - 1)
+    with open(os.path.join(outdir, 'years.txt'), 'w') as fh:
+        fh.write(years)
+    if free_gb() < DISK_FLOOR_GB:
+        raise SystemExit('refusing to start: %.1f GB free, floor is %.1f GB' % (free_gb(), DISK_FLOOR_GB))
+    args = [(k, nshard, mode, combos, outdir, years) for k in range(nshard)]
     t0 = time.time()
     if jobs == 1:
         res = [_shard_worker(a) for a in args]
@@ -335,6 +363,9 @@ def stage_run(mode, combos, tag, jobs=None, nshard=None):
 
 def load_bank(mode, tag):
     outdir = os.path.join(ROOTOUT, 'r2gate1', 'mode%s_%s' % (mode, tag))
+    yf = os.path.join(outdir, 'years.txt')
+    if os.path.exists(yf):
+        set_years(open(yf).read().strip())
     fs = sorted(__import__('glob').glob(os.path.join(outdir, 'shard_*.npz')))
     assert fs, 'no bank at %s' % outdir
     stats, combos, idx = [], [], []
@@ -352,6 +383,7 @@ MIN_TUNE_TRADES = 40     # DECLARED: 10 per year x 4 tune years, per stream, per
                          # same thing as failed, and it is reported as such.
 NCUT = 120
 NULL_DRAWS = 200         # the identity null at every 10th cut
+DISK_FLOOR_GB = 1.0      # halt rather than fill the volume; the bank is resumable
 
 
 def stage_curve(mode, tag, out=None):
@@ -563,6 +595,8 @@ if __name__ == '__main__':
     stage = opt('--stage', str, 'probe')
     mode = opt('--mode', str, 'A')
     tag = opt('--tag', str, 'smoke10k')
+    if '--years' in sys.argv:
+        set_years(opt('--years', str))
     if stage == 'probe':
         r = stage_probe(mode, n=opt('--n', int, 200))
         pd.DataFrame([r]).to_csv(os.path.join(ROOTOUT, 'r2gate1_probe_mode%s.csv' % mode), index=False)
