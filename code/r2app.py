@@ -1,0 +1,134 @@
+import os,sys
+_R=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOTLIB=os.path.join(_R,'code'); ROOTDATA=os.path.join(_R,'data'); ROOTOUT=os.path.join(_R,'results')
+os.makedirs(ROOTOUT,exist_ok=True); sys.path.insert(0,ROOTLIB)
+"""THE LAYER 2 RESTART TAB (HANDOFF 0l).  The third wiring place.
+
+Owns the `l2_restart` section of app_data.json and the "L2 restart" tab in
+app_ui.js, so a cold pipeline run rebuilds both instead of deleting them --
+which is exactly what bundle.py did to the four November research sections
+before code/appsections.py existed.
+
+    python3 code/r2app.py --stage app
+"""
+import json, glob
+import numpy as np, pandas as pd
+
+NL = '\n'
+STAMP = '2026-11-16'
+
+
+def _recs(path, cols=None, head=None):
+    if not os.path.exists(path):
+        return []
+    d = pd.read_csv(path)
+    if cols:
+        d = d[[c for c in cols if c in d.columns]]
+    if head:
+        d = d.head(head)
+    return json.loads(d.replace({np.nan: None}).to_json(orient='records'))
+
+
+def curve_digest(mode, tag, per=14):
+    """A readable slice of the curve: `per` cuts evenly spaced across the full
+    swept range, pooled over the five windows, per stream."""
+    p = os.path.join(ROOTOUT, 'r2gate1_pooled_mode%s_%s.csv' % (mode, tag))
+    if not os.path.exists(p):
+        return []
+    d = pd.read_csv(p)
+    out = []
+    for s, g in d.groupby('stream', sort=False):
+        g = g.reset_index(drop=True)
+        idx = np.unique(np.linspace(0, len(g) - 1, per).astype(int))
+        out.append(g.loc[idx])
+    D = pd.concat(out, ignore_index=True)
+    return json.loads(D.replace({np.nan: None}).to_json(orient='records'))
+
+
+def stage_app():
+    sec = dict(
+        stamp=STAMP,
+        note=('Layer 2 restarted from mode A up (HANDOFF 0l). The gate 1 on disk cut on '
+              'W2+W3 pooled = 2011-2020, i.e. on every year Layer 2 then called blind, and '
+              'charged no costs. The honest gate 1 scores every combination at defaults with '
+              'costs on, banks each trade by the calendar year of its ENTRY bar, and CUTS ON '
+              'TUNE YEARS ONLY -- grade and trade years are measured at the same time and take '
+              'no part in the selection. Four streams, none selected on: trend and chop, each '
+              'routed and always-on. The cut is swept over its whole range; Jack picks from the '
+              'curve. Nothing from the old Layer 2 is deleted.'),
+        library=_recs(os.path.join(ROOTOUT, 'r2_step1_library.csv')),
+        modes=_recs(os.path.join(ROOTOUT, 'r2_step1_modes.csv')),
+        timing=_recs(os.path.join(ROOTOUT, 'r2_step1_timing.csv')),
+        gate1_original=_recs(os.path.join(ROOTOUT, 'r2_step1_gate1_original.csv')),
+        contaminations=_recs(os.path.join(ROOTOUT, 'r2_step1_contaminations.csv')),
+        superseded=_recs(os.path.join(ROOTOUT, 'r2_superseded_files.csv')),
+        parity=[{'mode': m, 'comparisons': len(d), 'mismatches': int(d.mismatch.sum())}
+                for m in 'ABC'
+                for d in [pd.read_csv(os.path.join(ROOTOUT, 'r2gate1_parity_mode%s.csv' % m))]
+                if os.path.exists(os.path.join(ROOTOUT, 'r2gate1_parity_mode%s.csv' % m))],
+        rankcorr={m: _recs(os.path.join(ROOTOUT, 'r2gate1_rankcorr_mode%s_full.csv' % m)) for m in 'ABC'},
+        curve={m: curve_digest(m, 'full') for m in 'ABC'},
+    )
+    sec['curve'] = {k: v for k, v in sec['curve'].items() if v}
+    sec['rankcorr'] = {k: v for k, v in sec['rankcorr'].items() if v}
+    for root in (os.path.join(_R, 'app_data.json'), os.path.join(ROOTOUT, 'app_data.json')):
+        if not os.path.exists(root):
+            continue
+        D = json.load(open(root))
+        D['l2_restart'] = sec
+        json.dump(D, open(root, 'w'))
+        print('wired into %s' % root, flush=True)
+
+    ui = os.path.join(_R, 'app_ui.js')
+    s = open(ui).read()
+    # NOT `'r2Fill' in s` -- tr2Fill contains it as a substring and the guard
+    # silently skipped the whole wiring on the first run.
+    if 'const r2Fill=' in s:
+        print('app_ui.js already carries the L2 restart tab', flush=True)
+        return
+    anchor = '<button role="tab" aria-selected="false" data-t="tq">Trend quality</button>'
+    assert s.count(anchor) == 1, 'app_ui.js: nav anchor not found'
+    s = s.replace(anchor, anchor + NL + '<button role="tab" aria-selected="false" data-t="r2">L2 restart</button>')
+    body = ('<section id="r2" hidden>' + NL +
+            '<h3>Layer 2 restart: the honest gate 1</h3>' + NL +
+            '<div class="note">The gate 1 on disk took its score over 2011-2020 -- every year Layer 2' + NL +
+            'afterwards called blind -- and charged no costs, so its survivors were chosen on the years' + NL +
+            'their record was then quoted on. This is the rebuild. Every combination is scored at' + NL +
+            'defaults with costs on; each trade is banked by the calendar year of its entry bar; the cut' + NL +
+            'reads tune years only. Four streams are measured and none is selected on. The cut is swept' + NL +
+            'over its whole range and reported as a curve, with the identity null beside it. Nothing from' + NL +
+            'the old Layer 2 was deleted.</div>' + NL + '<div id="r2body"></div>' + NL + '</section>' + NL)
+    s = s.replace('<section id="tq" hidden>', body + '<section id="tq" hidden>', 1)
+    old_t = "'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2','tq','cw'];"
+    assert s.count(old_t) == 1, 'app_ui.js: TABS list not found'
+    s = s.replace(old_t, "'ex','pt','hz','rd','xd','pc','gl','ar','vd','dc','tr2','tq','r2','cw'];")
+    old_s = "   if(t==='tq')tqFill();"
+    assert s.count(old_s) == 1, 'app_ui.js: show() hook not found'
+    s = s.replace(old_s, old_s + NL + "   if(t==='r2')r2Fill();")
+    s = s.rstrip() + NL + TAB_JS
+    open(ui, 'w').write(s)
+    print('app_ui.js: L2 restart tab added', flush=True)
+
+
+TAB_JS = """
+const r2Fill=()=>{const el=document.getElementById('r2body');if(!el||el.dataset.done)return;
+ const D=(window.DATA||{}).l2_restart;if(!D){el.innerHTML='<div class="note">no restart section in app_data.json</div>';return;}
+ const tbl=(rows,cols,title)=>{if(!rows||!rows.length)return '';
+  const c=cols||Object.keys(rows[0]);
+  return '<h4>'+title+'</h4><div style="overflow-x:auto"><table><thead><tr>'+c.map(k=>'<th>'+k+'</th>').join('')+'</tr></thead><tbody>'+
+   rows.map(r=>'<tr>'+c.map(k=>{let v=r[k];if(typeof v==='number')v=Math.abs(v)>=1000?v.toLocaleString():(Number.isInteger(v)?v:v.toFixed(4));return '<td>'+(v===null||v===undefined?'':v)+'</td>';}).join('')+'</tr>').join('')+
+   '</tbody></table></div>';};
+ let h='<div class="note">'+D.note+'</div>';
+ h+=tbl(D.modes,['mode','exit_rule','uses_exit_slot','c1','c2','vol','base','exit_ind','combinations'],'The three modes, exactly one active per test');
+ h+=tbl(D.contaminations,['n','name','touches_gate1'],'Which faults touched gate 1');
+ h+=tbl(D.parity,null,'The _r2 code path against the shipped Scorer (0 mismatches required)');
+ h+=tbl(D.timing,['mode','combinations','basis','per_combo_s','core_hours','mac_hours','bank_gb'],'Measured cost of a full honest gate 1');
+ Object.keys(D.curve||{}).forEach(m=>{h+=tbl(D.curve[m],['stream','cut_tune_R','n_pass','pct_pass','n_families','n_lone_survivor_families','grade_R_pass','trade_R_pass','trade_R_fail','null_trade_R_mean','null_p_one_sided'],'Mode '+m+' gate 1 curve, pooled over the five windows (cut reads tune years only)');});
+ Object.keys(D.rankcorr||{}).forEach(m=>{h+=tbl(D.rankcorr[m],['window','stream','n_eligible','spearman_tune_to_trade','p'],'Mode '+m+': does the tune-year rank survive to the trade year?');});
+ h+=tbl(D.superseded,null,'Superseded, headed, kept in full');
+ el.innerHTML=h;el.dataset.done='1';};
+"""
+
+
+if __name__ == '__main__':
+    stage_app()

@@ -351,6 +351,7 @@ MIN_TUNE_TRADES = 40     # DECLARED: 10 per year x 4 tune years, per stream, per
                          # Below it the combination is UNTESTED, which is not the
                          # same thing as failed, and it is reported as such.
 NCUT = 120
+NULL_DRAWS = 200         # the identity null at every 10th cut
 
 
 def stage_curve(mode, tag, out=None):
@@ -410,6 +411,70 @@ def stage_curve(mode, tag, out=None):
                                  grade_R_fail=ge_f, grade_trades_fail=gn_f, grade_n_fail=gc_f,
                                  trade_R_pass=te_p, trade_trades_pass=tn_p, trade_n_pass=tc_p,
                                  trade_R_fail=te_f, trade_trades_fail=tn_f, trade_n_fail=tc_f))
+    # ---- POOLED OVER THE FIVE WINDOWS, and the IDENTITY NULL -------------
+    # The pooled view sums each combination's tune years across all five
+    # windows and its trade years across all five, so the curve is read on the
+    # whole programme rather than on one window at a time.  Overlapping tune
+    # windows mean a trade can be counted more than once on the tune side; the
+    # trade side cannot, because the five trade years are disjoint.
+    tu_p = np.zeros((stat.shape[0], 4, NSTAT)); tr_p = np.zeros_like(tu_p); gr_p = np.zeros_like(tu_p)
+    for w in wins:
+        tu_p += role_slice(stat, *w['tune']); gr_p += role_slice(stat, *w['grade']); tr_p += role_slice(stat, *w['trade'])
+    TU, GR, TR = agg(tu_p), agg(gr_p), agg(tr_p)
+    prows, nrows = [], []
+    rng = np.random.default_rng(20261116)
+    for si, sname in enumerate(STREAMS):
+        elig = TU['n'][:, si] >= MIN_TUNE_TRADES * len(wins)
+        if elig.sum() < 2:
+            continue
+        e = TU['expectancy_R'][elig, si]; ff = famcode[elig]
+        trv = TR['expectancy_R'][elig, si]; trn = TR['n'][elig, si]
+        grv = GR['expectancy_R'][elig, si]; grn = GR['n'][elig, si]
+        good = np.isfinite(trv) & (trn > 0)
+        cuts = np.linspace(np.nanmin(e), np.nanmax(e), NCUT)
+        for ci, x in enumerate(cuts):
+            m = e > x
+            npass = int(m.sum())
+            fp = np.unique(ff[m]) if npass else np.array([], int)
+            lone = int(sum(1 for f_ in fp if (ff[m] == f_).sum() == 1))
+            def wavg(v, n, msk):
+                g = msk & np.isfinite(v) & (n > 0)
+                return float(np.average(v[g], weights=n[g])) if g.any() else np.nan
+            row = dict(mode=mode, stream=sname, cut_tune_R=float(x), n_eligible=int(elig.sum()),
+                       n_pass=npass, pct_pass=100.0 * npass / max(elig.sum(), 1),
+                       n_families=len(fp), n_lone_survivor_families=lone,
+                       grade_R_pass=wavg(grv, grn, m), grade_R_fail=wavg(grv, grn, ~m),
+                       trade_R_pass=wavg(trv, trn, m), trade_R_fail=wavg(trv, trn, ~m),
+                       trade_trades_pass=int(trn[m & good].sum()))
+            # THE IDENTITY NULL.  A cut is a selection, so it gets a null: draw
+            # the SAME NUMBER of combinations uniformly at random from the same
+            # eligible pool and read the same trade-year number.  If the cut's
+            # passers sit inside this band the cut has selected nothing.
+            if npass and ci % 10 == 0 and good.sum() > 10:
+                idx = np.flatnonzero(good)
+                k = min(npass, len(idx))
+                draws = np.empty(NULL_DRAWS)
+                for d_ in range(NULL_DRAWS):
+                    pick = rng.choice(idx, size=k, replace=False)
+                    draws[d_] = float(np.average(trv[pick], weights=trn[pick]))
+                row.update(null_draws=NULL_DRAWS, null_trade_R_mean=float(draws.mean()),
+                           null_trade_R_p5=float(np.percentile(draws, 5)),
+                           null_trade_R_p95=float(np.percentile(draws, 95)),
+                           null_p_one_sided=float((draws >= row['trade_R_pass']).mean()))
+            prows.append(row)
+    P = pd.DataFrame(prows)
+    pout = (out or os.path.join(ROOTOUT, 'r2gate1_curve_mode%s_%s.csv' % (mode, tag))).replace('_curve_', '_pooled_')
+    P.to_csv(pout, index=False)
+    print('  pooled curve + identity null: %d rows -> %s' % (len(P), os.path.basename(pout)), flush=True)
+    for sname in STREAMS:
+        g = P[(P.stream == sname) & P.null_trade_R_mean.notna()] if 'null_trade_R_mean' in P else P.iloc[:0]
+        if len(g):
+            r = g.iloc[len(g) // 2]
+            print('    %-13s cut %+.3f -> %6d pass (%.2f%%), trade R %+.4f vs non-passers %+.4f; '
+                  'identity null %+.4f [%+.4f, %+.4f], p=%.3f'
+                  % (sname, r.cut_tune_R, r.n_pass, r.pct_pass, r.trade_R_pass, r.trade_R_fail,
+                     r.null_trade_R_mean, r.null_trade_R_p5, r.null_trade_R_p95, r.null_p_one_sided), flush=True)
+
     D = pd.DataFrame(rows); C = pd.DataFrame(corr)
     out = out or os.path.join(ROOTOUT, 'r2gate1_curve_mode%s_%s.csv' % (mode, tag))
     D.to_csv(out, index=False)
