@@ -94,3 +94,10 @@ results/wf_*_dirnull.pkl
 # H.10 score batches archived at the 14 Sep swap; regenerable
 results/scores_h10_archive/
 code/__pycache__/
+
+# THE _r2 GATE 1 BANKS (HANDOFF 0l). Engine output, rebuilt from code in
+# minutes for A and B and 77 min for C, and mode C's is 4 GB -- exactly the
+# kind of thing results/gate1/ is already ignored for. On 16 Nov a chain
+# committed the mode C bank (6.5 GB) and GitHub rejected the push; the repo
+# carries the CURVES and the rank correlations, which is what anyone reads.
+results/r2gate1/

@@ -341,8 +341,16 @@ def stage_run(mode, combos, tag, jobs=None, nshard=None):
     os.makedirs(outdir, exist_ok=True)
     jobs = jobs or max(1, (os.cpu_count() or 2) - 2)
     nshard = nshard or jobs
-    with open(os.path.join(outdir, 'combos.json'), 'w') as fh:
-        json.dump([list(c) for c in combos], fh)
+    # The combination list is NOT written out: every shard already carries its
+    # own `combo` and `idx` arrays, so the json was pure duplication -- and for
+    # mode C it was 1.37 GB of it on a volume with 5 GB free. What is written is
+    # the spec needed to reproduce the enumeration.
+    with open(os.path.join(outdir, 'spec.json'), 'w') as fh:
+        json.dump(dict(mode=mode, n=len(combos), years='%d-%d' % (YEAR0, YEAR0 + NYEAR - 1),
+                       enumeration=('full deterministic l2sweep.combo_iter order'
+                                    if len(combos) == S.n_combos(S.mode_opts(S.slot_options(), mode))
+                                    else 'stratified, l2r2gate1.stratified seed 20261116'),
+                       nshard=nshard, stamp=time.strftime('%F %T')), fh, indent=1)
     years = '%d-%d' % (YEAR0, YEAR0 + NYEAR - 1)
     with open(os.path.join(outdir, 'years.txt'), 'w') as fh:
         fh.write(years)
@@ -361,20 +369,105 @@ def stage_run(mode, combos, tag, jobs=None, nshard=None):
     return outdir
 
 
-def load_bank(mode, tag):
+def bank_dir(mode, tag):
     outdir = os.path.join(ROOTOUT, 'r2gate1', 'mode%s_%s' % (mode, tag))
     yf = os.path.join(outdir, 'years.txt')
     if os.path.exists(yf):
         set_years(open(yf).read().strip())
     fs = sorted(__import__('glob').glob(os.path.join(outdir, 'shard_*.npz')))
     assert fs, 'no bank at %s' % outdir
-    stats, combos, idx = [], [], []
+    return outdir, fs
+
+
+def bank_index(mode, tag):
+    """Total rows and the FAMILY of every combination, in bank order.
+
+    Reads only the `combo` and `idx` arrays, never `stat`. Families are int16 --
+    1,521 of them -- so the whole index is ~21 MB even for mode C's 10.7M rows.
+    """
+    outdir, fs = bank_dir(mode, tag)
+    # Families WITHOUT building 10.7 million python strings: factorise the two
+    # confirmation columns against a fixed menu and combine the codes, so the
+    # family id is arithmetic on int16 and the whole index is ~21 MB.
+    menu = S.slot_options()
+    ix1 = {n: i for i, n in enumerate(menu['c1'])}
+    ix2 = {n: i for i, n in enumerate(menu['c2'])}
+    m2 = len(menu['c2'])
+    codes, idx = [], []
     for f in fs:
         z = np.load(f, allow_pickle=True)
-        stats.append(z['stat']); combos.append(z['combo']); idx.append(z['idx'])
-    stat = np.concatenate(stats); cb = np.concatenate(combos); ix = np.concatenate(idx)
-    o = np.argsort(ix)
-    return stat[o].astype(np.float64), cb[o], outdir
+        cb = z['combo']
+        a = np.array([ix1[x] for x in cb[:, 0]], np.int32)
+        b = np.array([ix2[x] for x in cb[:, 1]], np.int32)
+        codes.append((a * m2 + b).astype(np.int16))
+        idx.append(z['idx'])
+        del z, cb
+    code = np.concatenate(codes); ix = np.concatenate(idx)
+    out = np.empty(len(code), np.int16)
+    out[ix] = code
+    return outdir, fs, len(out), out
+
+
+def reduce_bank(mode, tag, n_total, roles):
+    """ONE STREAMING PASS over the shards for the given year roles.
+
+    `roles` is {name: (y0, y1)} or {name: weights-by-year array}. Returns
+    {name: (expectancy (n,4) f32, n_trades (n,4) f32)} and nothing else -- the
+    raw bank is never held.
+
+    WHY. load_bank concatenated every shard and cast to float64: for mode C
+    that is 15.9 GB, doubled to 31.8 GB by the concatenate itself, on a 16 GB
+    machine. It banked all 10,677,420 combinations in 77 minutes and then died
+    reading them back. One pass per role-set, float32, is 0.95 GB.
+    """
+    outdir, fs = bank_dir(mode, tag)
+    # expectancy in float64, trade counts in float32. The counts are exact
+    # integers well inside float32; the expectancy is not, and rounding it to
+    # float32 moved a combination across a cut boundary in the regression check
+    # against the old loaded-bank path.
+    out = {k: (np.full((n_total, 4), np.nan, np.float64), np.zeros((n_total, 4), np.float32))
+           for k in roles}
+    for f in fs:
+        z = np.load(f, allow_pickle=True)
+        st = z['stat']; ix = z['idx']
+        for k, spec in roles.items():
+            # ACCUMULATE IN float64. The bank is float32; summing years in
+            # float32 and promoting afterwards shifted an expectancy by ~1e-7,
+            # which moved one combination of 240,000 across a cut boundary in
+            # the regression check. dtype= on the reduction costs nothing and
+            # makes the streamed path bit-identical to the loaded one.
+            if isinstance(spec, tuple):
+                a, b = spec[0] - YEAR0, spec[1] - YEAR0 + 1
+                blk = st[..., max(a, 0):min(b, NYEAR), :].sum(axis=-2, dtype=np.float64)
+            else:
+                w = np.asarray(spec, np.float64)
+                blk = np.zeros(st.shape[:2] + st.shape[3:], np.float64)
+                for j in range(NYEAR):
+                    if w[j]:
+                        blk += w[j] * st[:, :, j, :]
+            n = blk[..., 0]
+            with np.errstate(divide='ignore', invalid='ignore'):
+                e = np.where(n > 0, blk[..., 1] / np.maximum(n, 1), np.nan)
+            out[k][0][ix] = e.astype(np.float64)
+            out[k][1][ix] = n.astype(np.float32)
+        del z, st
+    return outdir, out
+
+
+def tune_weights(wins):
+    """The POOLED tune years as a weight per banked year.
+
+    The five tune windows overlap, so a year belongs to more than one of them
+    and the pooled tune score weights it by how many -- 2011 once, 2014 and
+    2015 four times each, 2018 once. Written as weights rather than as five
+    separate slices so the pooled view costs one pass instead of five.
+    """
+    w = np.zeros(NYEAR, np.float32)
+    for win in wins:
+        for y in range(win['tune'][0], win['tune'][1] + 1):
+            if YEAR0 <= y < YEAR0 + NYEAR:
+                w[y - YEAR0] += 1.0
+    return w
 
 
 # ---------------------------------------------------------------- the curve
@@ -386,148 +479,120 @@ NULL_DRAWS = 200         # the identity null at every 10th cut
 DISK_FLOOR_GB = 1.0      # halt rather than fill the volume; the bank is resumable
 
 
-def stage_curve(mode, tag, out=None):
-    """GATE 1 CURVE.  The cut is tune-year expectancy in R, swept over its full
-    observed range.  Reported at every cut, per stream, per window and pooled:
-    combinations passing, families passing, lone-survivor families, the GRADE
-    and TRADE year record of passers vs non-passers, and the rank correlation
-    tune -> trade.  Nothing here selects; it is the curve Jack picks from."""
-    from scipy.stats import spearmanr
-    stat, cb, outdir = load_bank(mode, tag)
-    wins = windows()
-    rows, corr = [], []
-    c1 = np.array([c[0] for c in cb]); c2 = np.array([c[1] for c in cb])
-    fam = np.array([family_of(a, b) for a, b in zip(c1, c2)])
-    famcode, _ = pd.factorize(fam)
-    nfam_all = famcode.max() + 1
-    for w in wins:
-        tu = agg(role_slice(stat, *w['tune']))
-        gr = agg(role_slice(stat, *w['grade']))
-        tr = agg(role_slice(stat, *w['trade']))
-        for si, sname in enumerate(STREAMS):
-            elig = tu['n'][:, si] >= MIN_TUNE_TRADES
-            e = tu['expectancy_R'][:, si]
-            if elig.sum() < 2:
-                continue
-            lo, hi = np.nanmin(e[elig]), np.nanmax(e[elig])
-            cuts = np.linspace(lo, hi, NCUT)
-            ee = e[elig]; ff = famcode[elig]
-            gte = gr['expectancy_R'][elig, si]; gtn = gr['n'][elig, si]
-            tte = tr['expectancy_R'][elig, si]; ttn = tr['n'][elig, si]
-            ok = np.isfinite(ee) & np.isfinite(tte) & (ttn > 0)
-            rho, p = (spearmanr(ee[ok], tte[ok]) if ok.sum() > 3 else (np.nan, np.nan))
-            corr.append(dict(mode=mode, window=w['name'], stream=sname,
-                             n_eligible=int(elig.sum()), n_with_trade_trades=int(ok.sum()),
-                             spearman_tune_to_trade=float(rho), p=float(p),
-                             tune_min=float(lo), tune_max=float(hi)))
-            for x in cuts:
-                m = ee > x
-                npass = int(m.sum())
-                # bincount, not a per-family scan: the obvious
-                #   sum(1 for f in fp if (ff[m]==f).sum()==1)
-                # is O(families x passers) and at 1,521 families against 240,000
-                # passers it is 365M operations PER CUT -- it ran fine on the
-                # smoke and stalled the full bank.
-                fc = np.bincount(ff[m], minlength=nfam_all) if npass else np.zeros(nfam_all, int)
-                nfam_pass = int((fc > 0).sum()); lone = int((fc == 1).sum())
-                def _rec(vals, ns, mask):
-                    v = vals[mask]; n = ns[mask]
-                    g = np.isfinite(v) & (n > 0)
-                    return (float(np.average(v[g], weights=n[g])) if g.any() else np.nan,
-                            int(n[g].sum()), int(g.sum()))
-                ge_p, gn_p, gc_p = _rec(gte, gtn, m)
-                ge_f, gn_f, gc_f = _rec(gte, gtn, ~m)
-                te_p, tn_p, tc_p = _rec(tte, ttn, m)
-                te_f, tn_f, tc_f = _rec(tte, ttn, ~m)
-                rows.append(dict(mode=mode, window=w['name'], stream=sname, cut_tune_R=float(x),
-                                 n_eligible=int(elig.sum()), n_pass=npass,
-                                 pct_pass=100.0 * npass / max(elig.sum(), 1),
-                                 n_families=nfam_pass, n_families_possible=int(nfam_all),
-                                 n_lone_survivor_families=lone,
-                                 grade_R_pass=ge_p, grade_trades_pass=gn_p, grade_n_pass=gc_p,
-                                 grade_R_fail=ge_f, grade_trades_fail=gn_f, grade_n_fail=gc_f,
-                                 trade_R_pass=te_p, trade_trades_pass=tn_p, trade_n_pass=tc_p,
-                                 trade_R_fail=te_f, trade_trades_fail=tn_f, trade_n_fail=tc_f))
-    # ---- POOLED OVER THE FIVE WINDOWS, and the IDENTITY NULL -------------
-    # The pooled view sums each combination's tune years across all five
-    # windows and its trade years across all five, so the curve is read on the
-    # whole programme rather than on one window at a time.  Overlapping tune
-    # windows mean a trade can be counted more than once on the tune side; the
-    # trade side cannot, because the five trade years are disjoint.
-    tu_p = np.zeros((stat.shape[0], 4, NSTAT)); tr_p = np.zeros_like(tu_p); gr_p = np.zeros_like(tu_p)
-    for w in wins:
-        tu_p += role_slice(stat, *w['tune']); gr_p += role_slice(stat, *w['grade']); tr_p += role_slice(stat, *w['trade'])
-    TU, GR, TR = agg(tu_p), agg(gr_p), agg(tr_p)
-    prows, nrows = [], []
-    rng = np.random.default_rng(20261116)
-    for si, sname in enumerate(STREAMS):
-        elig = TU['n'][:, si] >= MIN_TUNE_TRADES * len(wins)
-        if elig.sum() < 2:
-            continue
-        e = TU['expectancy_R'][elig, si]; ff = famcode[elig]
-        trv = TR['expectancy_R'][elig, si]; trn = TR['n'][elig, si]
-        grv = GR['expectancy_R'][elig, si]; grn = GR['n'][elig, si]
-        good = np.isfinite(trv) & (trn > 0)
-        cuts = np.linspace(np.nanmin(e), np.nanmax(e), NCUT)
-        # ---- THE IDENTITY NULL, 200 draws, computed once for the whole curve.
-        # A cut of size k selects k combinations. The null asks what a RANDOM k
-        # from the same eligible pool would have scored on the trade years. One
-        # shuffle of the pool answers it for EVERY k at once through a prefix
-        # sum, so 200 draws cost 200 shuffles rather than 200 per cut.
-        null_ks, null_at = [], {}
-        gi = np.flatnonzero(good)
-        if len(gi) > 10:
-            vn = (trv[gi] * trn[gi]).astype(np.float64); nn = trn[gi].astype(np.float64)
-            ks = sorted({int(min((e > x).sum(), len(gi))) for ci, x in enumerate(cuts) if ci % 10 == 0}
-                        - {0})
-            if ks:
-                mat = np.empty((NULL_DRAWS, len(ks)))
-                kk = np.array(ks) - 1
-                for d_ in range(NULL_DRAWS):
-                    o = rng.permutation(len(gi))
-                    cv = np.cumsum(vn[o]); cn = np.cumsum(nn[o])
-                    mat[d_] = cv[kk] / cn[kk]
-                null_at = {k: mat[:, j] for j, k in enumerate(ks)}
-            null_ks = ks
-        for ci, x in enumerate(cuts):
-            m = e > x
-            npass = int(m.sum())
-            fc = np.bincount(ff[m], minlength=famcode.max() + 1) if npass else np.zeros(1, int)
-            nfam_pass = int((fc > 0).sum()); lone = int((fc == 1).sum())
-            def wavg(v, n, msk):
-                g = msk & np.isfinite(v) & (n > 0)
-                return float(np.average(v[g], weights=n[g])) if g.any() else np.nan
-            row = dict(mode=mode, stream=sname, cut_tune_R=float(x), n_eligible=int(elig.sum()),
-                       n_pass=npass, pct_pass=100.0 * npass / max(elig.sum(), 1),
-                       n_families=nfam_pass, n_lone_survivor_families=lone,
-                       grade_R_pass=wavg(grv, grn, m), grade_R_fail=wavg(grv, grn, ~m),
-                       trade_R_pass=wavg(trv, trn, m), trade_R_fail=wavg(trv, trn, ~m),
-                       trade_trades_pass=int(trn[m & good].sum()))
-            # THE IDENTITY NULL.  A cut is a selection, so it gets a null: draw
-            # the SAME NUMBER of combinations uniformly at random from the same
-            # eligible pool and read the same trade-year number.  If the cut's
-            # passers sit inside this band the cut has selected nothing.
-            k = min(npass, len(gi))
-            if k in null_at:
-                draws = null_at[k]
-                row.update(null_draws=NULL_DRAWS, null_trade_R_mean=float(draws.mean()),
-                           null_trade_R_p5=float(np.percentile(draws, 5)),
-                           null_trade_R_p95=float(np.percentile(draws, 95)),
-                           null_p_one_sided=float((draws >= row['trade_R_pass']).mean()))
-            prows.append(row)
-    P = pd.DataFrame(prows)
-    pout = (out or os.path.join(ROOTOUT, 'r2gate1_curve_mode%s_%s.csv' % (mode, tag))).replace('_curve_', '_pooled_')
-    P.to_csv(pout, index=False)
-    print('  pooled curve + identity null: %d rows -> %s' % (len(P), os.path.basename(pout)), flush=True)
-    for sname in STREAMS:
-        g = P[(P.stream == sname) & P.null_trade_R_mean.notna()] if 'null_trade_R_mean' in P else P.iloc[:0]
-        if len(g):
-            r = g.iloc[len(g) // 2]
-            print('    %-13s cut %+.3f -> %6d pass (%.2f%%), trade R %+.4f vs non-passers %+.4f; '
-                  'identity null %+.4f [%+.4f, %+.4f], p=%.3f'
-                  % (sname, r.cut_tune_R, r.n_pass, r.pct_pass, r.trade_R_pass, r.trade_R_fail,
-                     r.null_trade_R_mean, r.null_trade_R_p5, r.null_trade_R_p95, r.null_p_one_sided), flush=True)
+def _rec(v, n, mask):
+    """Trade-weighted mean of `v` over `mask`, plus the trade and combination
+    counts behind it. NaN when nothing qualifies -- never a silent zero."""
+    g = mask & np.isfinite(v) & (n > 0)
+    if not g.any():
+        return np.nan, 0, 0
+    # float64 on the aggregation: the per-combination trade counts are exact in
+    # float32, their SUM is not -- 17 million trades is past a float32 mantissa
+    # and the totals came out 20-66 short of the float64 path.
+    w = n[g].astype(np.float64)
+    return float(np.average(v[g], weights=w)), int(w.sum()), int(g.sum())
 
+
+def _one_curve(e, trv, trn, grv, grn, fam, nfam_all, elig, min_trades, label):
+    """The curve for one (window-or-pooled, stream): cut swept over its full
+    observed range, with the identity null. Nothing here selects."""
+    from scipy.stats import spearmanr
+    if elig.sum() < 2:
+        return [], None
+    ee = e[elig]; ff = fam[elig].astype(np.int64)
+    gte = grv[elig]; gtn = grn[elig]
+    tte = trv[elig]; ttn = trn[elig]
+    good = np.isfinite(tte) & (ttn > 0)
+    lo, hi = float(np.nanmin(ee)), float(np.nanmax(ee))
+    cuts = np.linspace(lo, hi, NCUT)
+    rho, pv = (spearmanr(ee[good], tte[good]) if good.sum() > 3 else (np.nan, np.nan))
+    # ---- THE IDENTITY NULL, 200 draws, one shuffle answering every k.
+    # A cut of size k selects k combinations; the null asks what a RANDOM k from
+    # the same eligible pool scored on the trade years. One permutation plus a
+    # prefix sum gives every k at once, so the cost is 200 shuffles for the
+    # whole curve instead of 200 per cut.
+    null_at = {}
+    gi = np.flatnonzero(good)
+    if len(gi) > 10:
+        rng = np.random.default_rng(20261116)
+        vn = (tte[gi] * ttn[gi]).astype(np.float64); nn = ttn[gi].astype(np.float64)
+        ks = sorted({int(min((ee > x).sum(), len(gi))) for ci, x in enumerate(cuts)
+                     if ci % 10 == 0} - {0})
+        if ks:
+            kk = np.array(ks) - 1
+            mat = np.empty((NULL_DRAWS, len(ks)))
+            for d_ in range(NULL_DRAWS):
+                o = rng.permutation(len(gi))
+                mat[d_] = np.cumsum(vn[o])[kk] / np.cumsum(nn[o])[kk]
+            null_at = {k: mat[:, j] for j, k in enumerate(ks)}
+    rows = []
+    for x in cuts:
+        m = ee > x
+        npass = int(m.sum())
+        fc = np.bincount(ff[m], minlength=nfam_all) if npass else np.zeros(nfam_all, np.int64)
+        ge_p, gn_p, gc_p = _rec(gte, gtn, m)
+        ge_f, gn_f, gc_f = _rec(gte, gtn, ~m)
+        te_p, tn_p, tc_p = _rec(tte, ttn, m)
+        te_f, tn_f, tc_f = _rec(tte, ttn, ~m)
+        row = dict(cut_tune_R=float(x), n_eligible=int(elig.sum()), n_pass=npass,
+                   pct_pass=100.0 * npass / max(int(elig.sum()), 1),
+                   n_families=int((fc > 0).sum()), n_families_possible=int(nfam_all),
+                   n_lone_survivor_families=int((fc == 1).sum()),
+                   grade_R_pass=ge_p, grade_trades_pass=gn_p, grade_n_pass=gc_p,
+                   grade_R_fail=ge_f, grade_trades_fail=gn_f, grade_n_fail=gc_f,
+                   trade_R_pass=te_p, trade_trades_pass=tn_p, trade_n_pass=tc_p,
+                   trade_R_fail=te_f, trade_trades_fail=tn_f, trade_n_fail=tc_f)
+        k = min(npass, len(gi))
+        if k in null_at:
+            d = null_at[k]
+            row.update(null_draws=NULL_DRAWS, null_trade_R_mean=float(d.mean()),
+                       null_trade_R_p5=float(np.percentile(d, 5)),
+                       null_trade_R_p95=float(np.percentile(d, 95)),
+                       null_p_one_sided=float((d >= (te_p if np.isfinite(te_p) else -np.inf)).mean()))
+        rows.append(row)
+    corr = dict(n_eligible=int(elig.sum()), n_with_trade_trades=int(good.sum()),
+                spearman_tune_to_trade=float(rho), p=float(pv),
+                tune_min=lo, tune_max=hi)
+    return rows, corr
+
+
+def stage_curve(mode, tag, out=None):
+    """GATE 1 CURVE. The cut is tune-year expectancy in R, swept over its full
+    observed range. Reported at every cut, per stream, per window and pooled:
+    combinations passing, families passing, lone-survivor families, the GRADE
+    and TRADE year record of passers vs non-passers, the identity null, and the
+    rank correlation tune -> trade. Nothing here selects; it is the curve Jack
+    picks from.
+
+    STREAMED. One pass over the shards per role-set, float32, so mode C's
+    10,677,420 combinations cost under 1 GB of RAM instead of the 31.8 GB the
+    concatenate-everything version needed.
+    """
+    wins = windows()
+    outdir, fs, ntot, fam = bank_index(mode, tag)
+    _m = S.slot_options()
+    nfam_all = len(_m['c1']) * len(_m['c2'])      # the DECLARED 39 x 39 = 1,521
+    print('  bank %s: %d combinations in %d shards, %d families'
+          % (os.path.basename(outdir), ntot, len(fs), nfam_all), flush=True)
+
+    # ---- per window -------------------------------------------------------
+    rows, corr = [], []
+    for w in wins:
+        _, R = reduce_bank(mode, tag, ntot, {'tune': w['tune'], 'grade': w['grade'],
+                                             'trade': w['trade']})
+        for si, sname in enumerate(STREAMS):
+            e, en = R['tune'][0][:, si], R['tune'][1][:, si]
+            elig = en >= MIN_TUNE_TRADES
+            rr, cc = _one_curve(e, R['trade'][0][:, si], R['trade'][1][:, si],
+                                R['grade'][0][:, si], R['grade'][1][:, si],
+                                fam, nfam_all, elig, MIN_TUNE_TRADES,
+                                '%s %s' % (w['name'], sname))
+            for r in rr:
+                r.update(mode=mode, window=w['name'], stream=sname)
+            rows += rr
+            if cc:
+                cc.update(mode=mode, window=w['name'], stream=sname)
+                corr.append(cc)
+        del R
     D = pd.DataFrame(rows); C = pd.DataFrame(corr)
     out = out or os.path.join(ROOTOUT, 'r2gate1_curve_mode%s_%s.csv' % (mode, tag))
     D.to_csv(out, index=False)
@@ -535,8 +600,39 @@ def stage_curve(mode, tag, out=None):
     print('  curve: %d rows -> %s' % (len(D), os.path.basename(out)), flush=True)
     print('  rank correlation tune -> trade, per window and stream:', flush=True)
     for _, r in C.iterrows():
-        print('    %-9s %-12s n=%5d  rho=%+.4f (p=%.3g)  tune R range %+.4f .. %+.4f'
-              % (r.window, r.stream, r.n_eligible, r.spearman_tune_to_trade, r.p, r.tune_min, r.tune_max), flush=True)
+        print('    %-9s %-12s n=%7d  rho=%+.4f (p=%.3g)  tune R range %+.4f .. %+.4f'
+              % (r.window, r.stream, r.n_eligible, r.spearman_tune_to_trade, r.p,
+                 r.tune_min, r.tune_max), flush=True)
+
+    # ---- pooled over the five windows -------------------------------------
+    # The pooled tune score weights each year by how many tune windows contain
+    # it; the five trade years are disjoint so the trade side is a plain sum.
+    _, P_ = reduce_bank(mode, tag, ntot, {'tune': tune_weights(wins),
+                                          'grade': (wins[0]['grade'][0], wins[-1]['grade'][1]),
+                                          'trade': (wins[0]['trade'][0], wins[-1]['trade'][1])})
+    prows = []
+    for si, sname in enumerate(STREAMS):
+        elig = P_['tune'][1][:, si] >= MIN_TUNE_TRADES * len(wins)
+        rr, _c = _one_curve(P_['tune'][0][:, si], P_['trade'][0][:, si], P_['trade'][1][:, si],
+                            P_['grade'][0][:, si], P_['grade'][1][:, si],
+                            fam, nfam_all, elig, MIN_TUNE_TRADES * len(wins), sname)
+        for r in rr:
+            r.update(mode=mode, stream=sname)
+        prows += rr
+    P = pd.DataFrame(prows)
+    pout = out.replace('_curve_', '_pooled_')
+    P.to_csv(pout, index=False)
+    print('  pooled curve + identity null: %d rows -> %s' % (len(P), os.path.basename(pout)), flush=True)
+    if 'null_trade_R_mean' in P:
+        for sname in STREAMS:
+            g = P[(P.stream == sname) & P.null_trade_R_mean.notna()]
+            if len(g):
+                r = g.iloc[len(g) // 2]
+                print('    %-13s cut %+.3f -> %7d pass (%.2f%%), trade R %+.4f vs non-passers %+.4f; '
+                      'identity null %+.4f [%+.4f, %+.4f], p=%.3f'
+                      % (sname, r.cut_tune_R, r.n_pass, r.pct_pass, r.trade_R_pass,
+                         r.trade_R_fail, r.null_trade_R_mean, r.null_trade_R_p5,
+                         r.null_trade_R_p95, r.null_p_one_sided), flush=True)
     return D, C
 
 
