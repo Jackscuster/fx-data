@@ -798,15 +798,37 @@
    = 1.6 years on eight Mac cores.** That is the reason the axial set is the
    design and not a shortcut.
 
-   ### PARAMETERS THE LIBRARY EXPOSES THAT THE DECLARED GRID DOES NOT MOVE
-   **Reported, not added.** `CAP_N = 6` freezes everything past each
+   ### THE 29 FROZEN PARAMETERS — **ADDED, on Jack's word, 16 Nov**
+
+   **Reported first, then added.** `CAP_N = 6` — the GAUNTLET.md mode C shape,
+   declared before any mode C tuning existed — froze everything past each
    indicator's six highest-impact parameters. Across all 105 available options
-   that is **4 options with 29 frozen parameters**: three confirmation
-   indicators (28 parameters, 233 axial deviations between them) and one exit
-   indicator (1 parameter, 12 deviations). Averaged over the enumeration it is
-   **+12 configurations per strategy, 96 → 108 on the indicator side, +4.8% on
-   the whole run** — about **half an hour of Mac time on mode A**. Not added
-   unilaterally; Jack's call.
+   that was **4 options with 29 frozen parameters**: `hieken_ashi_smoothed_signals`
+   (16 params, 10 frozen, 76 axial deviations), `rex_oscillator_signals` (22
+   params, 16 frozen, 133 deviations), `schaff_trend_cycle_signals` (8 params,
+   2 frozen, 24 deviations) and one exit indicator (1 frozen, 12 deviations).
+
+   **Jack, 16 Nov: *"add the 29 frozen parameters to the grid (raise CAP_N),
+   record the change in 0l, and include them from the start of the full mode A
+   run, not as a second pass."*** `l2tune.CAP_N` is now **`None`**, which
+   `tuned_params` reads as *move every parameter the registry exposes*. The
+   impact ORDER still comes from `l2impact`'s measurement; only the cut is gone.
+   Nothing else in `code/` reads `CAP_N` — the superseded modules take their cap
+   from their own `--cap` flag — so no other path changed behaviour.
+
+   **Measured after the change** (300 stratified mode A strategies): the axial
+   set goes **498.4 → 521.2 configurations per strategy** (trend 227-512, mean
+   295.1; chop 158-443, mean 226.1), **+22.8 per strategy, +4.57%**. Indicators
+   with any exposed parameter still outside the grid: **none.** The full mode A
+   estimate moves from 8.3 h to **8.7 h on eight cores**, mode B the same, mode
+   C from 14.7 to **15.4 days**.
+
+   **The run was stopped and restarted to honour "not a second pass."** Chain 6
+   was 50 strategies into the capped 2,000 smoke when the word came; it was
+   killed and its partial output kept as
+   `results/r2gate2/modeA_smoke2k_cap6_superseded/` (nothing deleted). Every
+   stage — grid, condition 1, the smoke, condition 2 and the full mode A —
+   re-runs under the uncapped grid, so no bank anywhere mixes the two.
 
    ### CONDITION 1 — no year's record contains another year's price
    Every trade is **marked to market daily** and each daily increment is
