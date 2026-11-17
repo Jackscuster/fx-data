@@ -149,33 +149,58 @@ class Checkpointer:
 # the declaration a chain must carry, and its parser
 # ==========================================================================
 DECL = re.compile(r'^#\s*ckpt\s+(.+?)\s*=\s*(\d+)\s*(?:#\s*(.*))?$')
+NEEDS = re.compile(r'^#\s*needs\s+(.+?)\s*=\s*(.*?)\s*(?:#.*)?$')
 STAGE = re.compile(r'^\s*g\s+"([^"]+)"')
 
 
 def parse_driver(path):
-    """-> (stages in call order, {stage: (seconds, reason)}).
+    """-> (stages in call order, {stage: (seconds, reason)}, {stage: [deps]}).
 
-    A stage is a `g "<name>"` call. A declaration is a line
-        # ckpt <name> = <seconds>   <reason>
-    at the top of the driver.
+    A stage is a `g "<name>"` call. Each one must carry two declarations:
+        # ckpt  <name> = <seconds>   <reason>
+        # needs <name> = <dep>[,<dep>...]   or   none
+    Dependencies are COMMA separated because stage names contain spaces.
     """
-    stages, decls = [], {}
+    stages, decls, needs = [], {}, {}
     for line in open(path):
         m = STAGE.match(line)
         if m:
             stages.append(m.group(1))
             continue
-        d = DECL.match(line.rstrip('\n'))
+        line = line.rstrip('\n')
+        d = DECL.match(line)
         if d:
             decls[d.group(1).strip()] = (int(d.group(2)), (d.group(3) or '').strip())
-    return stages, decls
+            continue
+        nd = NEEDS.match(line)
+        if nd:
+            raw = nd.group(2).strip()
+            needs[nd.group(1).strip()] = ([] if raw.lower() in ('', 'none')
+                                          else [x.strip() for x in raw.split(',') if x.strip()])
+    return stages, decls, needs
 
 
 def check_driver(path):
     """-> (ok, list of problems). The refusal logic, in one place so the guard
     and any caller see the same verdict."""
-    stages, decls = parse_driver(path)
+    stages, decls, needs = parse_driver(path)
     bad = []
+    # EVERY STAGE DECLARES ITS DEPENDENCIES (Jack, 17 Nov). A failed stage no
+    # longer stops the chain -- only its declared dependents are skipped -- so
+    # an undeclared dependency would let a stage run on output that was never
+    # produced, which is worse than halting. The declaration is therefore
+    # mandatory, and `none` is a legitimate answer that has to be written down.
+    nmissing = [s for s in stages if s not in needs]
+    if nmissing:
+        bad.append('stages with NO declared dependencies (use "= none" if there are none): %s'
+                   % nmissing)
+    order = {s: i for i, s in enumerate(stages)}
+    for s in stages:
+        for d in needs.get(s, []):
+            if d not in order:
+                bad.append('stage "%s" depends on "%s", which is not a stage in this driver' % (s, d))
+            elif order[d] >= order[s]:
+                bad.append('stage "%s" depends on "%s", which does not run before it' % (s, d))
     if not stages:
         bad.append('no stages found: a chain must call its stages through g "<name>"')
     missing = [s for s in stages if s not in decls]

@@ -80,18 +80,20 @@ def chain_guard(driver):
     import l2ckpt
     ok, bad = l2ckpt.check_driver(driver)
     if ok:
-        stages, decls = l2ckpt.parse_driver(driver)
-        print('  chain guard OK: %s, %d stages, every one declares its checkpoint interval'
-              % (os.path.basename(driver), len(stages)), flush=True)
+        stages, decls, needs = l2ckpt.parse_driver(driver)
+        print('  chain guard OK: %s, %d stages; every one declares its checkpoint interval '
+              'and its dependencies' % (os.path.basename(driver), len(stages)), flush=True)
         for st in stages:
             sec, why = decls[st]
-            print('     %-22s %4d s  %s' % (st, sec, why or ''), flush=True)
+            dep = ', '.join(needs.get(st, [])) or 'none'
+            print('     %-22s %4d s  needs: %-24s %s' % (st, sec, dep, why or ''), flush=True)
         return True
     halt('chain:' + os.path.basename(driver),
          'THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:\n  - '
          + '\n  - '.join(bad)
          + '\n\nDeclare one line per stage at the top of the driver:\n'
            '    # ckpt <stage name> = <seconds, max 300>   <why>\n'
+           '    # needs <stage name> = <dep>[,<dep>...]   or   none\n'
            'and begin the chain with a one-minute end-to-end test of its own '
            'save and read path.')
 
