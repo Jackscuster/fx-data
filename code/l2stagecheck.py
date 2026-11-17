@@ -67,7 +67,38 @@ def halt(stage, reason):
     raise SystemExit(1)
 
 
+def chain_guard(driver):
+    """REFUSE TO LAUNCH A CHAIN WHOSE STAGES DO NOT DECLARE THEIR CHECKPOINT
+    INTERVAL (Jack, 16 Nov -- HANDOFF section 3, the five-minute rule).
+
+    An undeclared stage is a stage nobody has thought about, and twice in one
+    week an unthought-about stage lost hours: 77 minutes of mode C banking that
+    died reading itself back, and 2 h 19 min of gate 2 tuning that died in its
+    save path with nothing on disk. The declaration is one line per stage in the
+    driver and the guard is called by launch.sh, so neither can be skipped.
+    """
+    import l2ckpt
+    ok, bad = l2ckpt.check_driver(driver)
+    if ok:
+        stages, decls = l2ckpt.parse_driver(driver)
+        print('  chain guard OK: %s, %d stages, every one declares its checkpoint interval'
+              % (os.path.basename(driver), len(stages)), flush=True)
+        for st in stages:
+            sec, why = decls[st]
+            print('     %-22s %4d s  %s' % (st, sec, why or ''), flush=True)
+        return True
+    halt('chain:' + os.path.basename(driver),
+         'THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:\n  - '
+         + '\n  - '.join(bad)
+         + '\n\nDeclare one line per stage at the top of the driver:\n'
+           '    # ckpt <stage name> = <seconds, max 300>   <why>\n'
+           'and begin the chain with a one-minute end-to-end test of its own '
+           'save and read path.')
+
+
 def main():
+    if len(sys.argv) > 2 and sys.argv[1] == 'chain':
+        return chain_guard(sys.argv[2])
     ap = argparse.ArgumentParser()
     ap.add_argument('stage')
     ap.add_argument('--label', default='')

@@ -45,6 +45,7 @@ import numpy as np, pandas as pd
 from numba import njit
 import l2sweep as S
 import l2lib as L
+import l2ckpt as L2CK
 
 # ---------------------------------------------------------------- the contract
 # Layer 1 is consumed exactly as shipped.  The md5 of every file read is
@@ -291,33 +292,47 @@ def stage_probe(mode, n=200, jobs=1):
 
 
 def _shard_worker(args):
+    """THE FIVE-MINUTE RULE (HANDOFF section 3). This worker used to hold its
+    whole shard in memory and write once at the end -- on mode C that was 77
+    minutes of unsaved compute per shard, and the stage after it then died
+    reading the bank back. It now checkpoints on a clock and resumes by set
+    difference on the combination index.
+    """
     shard, nshard, mode, combos, outdir, years = args
     set_years(years)
-    f = os.path.join(outdir, 'shard_%04d.npz' % shard)
-    if os.path.exists(f):
-        return dict(shard=shard, n=0, skipped=True, seconds=0.0)
     S.load_costs()
     opts = S.mode_opts(S.slot_options(), mode)
     kwm = S.mode_kw(mode)
+
+    def _save(path, ids, rows):
+        if free_gb() < DISK_FLOOR_GB:
+            raise SystemExit('disk floor hit: %.1f GB free (floor %.1f); the bank is '
+                             'resumable, rerun when there is room' % (free_gb(), DISK_FLOOR_GB))
+        np.savez_compressed(path, stat=np.stack([r[0] for r in rows]).astype(np.float32),
+                            year0=YEAR0, nyear=NYEAR,
+                            combo=np.array([['%s' % x for x in r[1]] for r in rows], dtype=object),
+                            idx=ids)
+
+    ck = L2CK.Checkpointer(outdir, 'shard_%04d' % shard, save=_save)
+    done = ck.completed()
+    mine = [(i, combos[i]) for i in range(shard * len(combos) // nshard,
+                                          (shard + 1) * len(combos) // nshard)]
+    todo = [(i, cb) for i, cb in mine if i not in done]
+    if not todo:
+        return dict(shard=shard, n=0, skipped=True, seconds=0.0)
+    if done:
+        print('    shard %03d: resuming, %d of %d already on disk'
+              % (shard, len(mine) - len(todo), len(mine)), flush=True)
     PD, BUF = build_pairdata(opts)
-    mine = [cb for i, cb in enumerate(combos) if i % nshard == shard]
     t0 = time.time()
-    stat = np.zeros((len(mine), 4, NYEAR, NSTAT), np.float32)
-    for j, cb in enumerate(mine):
-        stat[j] = score_r2(PD, cb, BUF, kwm)
-        if (j + 1) % 500 == 0:
+    for j, (i, cb) in enumerate(todo, 1):
+        ck.add(i, (score_r2(PD, cb, BUF, kwm), cb))
+        if j % 500 == 0:
             el = time.time() - t0
             print('    shard %03d: %6d/%6d  %.1f ms/combo  %.0f min left'
-                  % (shard, j + 1, len(mine), 1000 * el / (j + 1),
-                     (el / (j + 1)) * (len(mine) - j - 1) / 60), flush=True)
-    if free_gb() < DISK_FLOOR_GB:
-        print('    shard %03d: HALTING, %.1f GB free (floor %.1f) -- the bank is resumable, rerun when there is room'
-              % (shard, free_gb(), DISK_FLOOR_GB), flush=True)
-        raise SystemExit('disk floor hit at shard %d' % shard)
-    np.savez_compressed(f, stat=stat, year0=YEAR0, nyear=NYEAR,
-                        combo=np.array([['%s' % x for x in cb] for cb in mine], dtype=object),
-                        idx=np.array([i for i, _ in enumerate(combos) if i % nshard == shard]))
-    return dict(shard=shard, n=len(mine), skipped=False, seconds=time.time() - t0)
+                  % (shard, j, len(todo), 1000 * el / j, (el / j) * (len(todo) - j) / 60), flush=True)
+    ck.flush()
+    return dict(shard=shard, n=len(todo), skipped=False, seconds=time.time() - t0)
 
 
 def set_years(spec):

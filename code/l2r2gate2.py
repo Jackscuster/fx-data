@@ -354,7 +354,10 @@ def tune_one_strategy(Y, mode, combo):
     return win, tag, curve, ncfg, bestscore, bestpf
 
 
-PART_EVERY = 50          # strategies per part file; a crash costs at most this many
+# THE FIVE-MINUTE RULE (HANDOFF section 3). The cadence is TIME, not a count:
+# a count is wrong the moment the per-item cost changes, and it changed by 30x
+# between the contiguous and stratified draws on this very stage.
+import l2ckpt
 
 
 def _save_part(f, rows, idx, combos, worst, hits, misses):
@@ -397,35 +400,40 @@ def _worker(args):
     lo = shard * len(combos) // nshard
     hi = (shard + 1) * len(combos) // nshard
     mine = [(i, combos[i]) for i in range(lo, hi)]
-    nparts = (len(mine) + PART_EVERY - 1) // PART_EVERY
-    # RESUME PER PART. A part on disk is never recomputed, so a kill costs at
-    # most PART_EVERY strategies rather than a whole shard.
-    todo = [q for q in range(nparts)
-            if not os.path.exists(os.path.join(outdir, 'shard_%04d_part%04d.npz' % (shard, q)))]
+    state = dict(Y=None, worst=0.0, hits=0, misses=0)
+
+    def _save(path, ids, rows):
+        _save_part(path, [r[0] for r in rows], ids, [r[1] for r in rows],
+                   state['worst'], state['hits'], state['misses'])
+
+    ck = l2ckpt.Checkpointer(outdir, 'shard_%04d' % shard, save=_save)
+    done = ck.completed()
+    todo = [(i, cb) for i, cb in mine if i not in done]
     if not todo:
         return dict(shard=shard, n=0, skipped=True, seconds=0.0, worst_cond1=0.0,
-                    evals=0, hits=0, misses=0)
+                    evals=0, hits=0, misses=0, resumed=len(mine))
+    if done:
+        print('    g2 shard %02d: resuming, %d of %d strategies already on disk'
+              % (shard, len(mine) - len(todo), len(mine)), flush=True)
     Y = Years(cap=cap)
+    state['Y'] = Y
     t0 = time.time()
-    ndone = 0
-    for q in todo:
-        a, b = q * PART_EVERY, min((q + 1) * PART_EVERY, len(mine))
-        rows, idx, cbs = [], [], []
-        for i, cb in mine[a:b]:
-            rows.append(tune_one_strategy(Y, mode, cb))
-            idx.append(i); cbs.append(cb)
-            ndone += 1
-            if ndone % 25 == 0:
-                el = time.time() - t0
-                left = sum(min((z + 1) * PART_EVERY, len(mine)) - z * PART_EVERY for z in todo) - ndone
-                print('    g2 shard %02d: %6d/%6d  %.2f s/strategy  %.0f evals  %.0f min left'
-                      % (shard, ndone, len(mine), el / ndone, Y.n_eval / ndone,
-                         (el / ndone) * left / 60), flush=True)
-        _save_part(os.path.join(outdir, 'shard_%04d_part%04d.npz' % (shard, q)),
-                   rows, idx, cbs, Y.worst_cond1, Y.sc.cache.hits, Y.sc.cache.misses)
-    return dict(shard=shard, n=ndone, skipped=False, seconds=time.time() - t0,
+    for ndone, (i, cb) in enumerate(todo, 1):
+        res = tune_one_strategy(Y, mode, cb)
+        state['worst'] = Y.worst_cond1
+        state['hits'] = Y.sc.cache.hits
+        state['misses'] = Y.sc.cache.misses
+        ck.add(i, (res, cb))
+        if ndone % 25 == 0:
+            el = time.time() - t0
+            print('    g2 shard %02d: %6d/%6d  %.2f s/strategy  %.0f evals  %.0f min left'
+                  % (shard, ndone, len(todo), el / ndone, Y.n_eval / ndone,
+                     (el / ndone) * (len(todo) - ndone) / 60), flush=True)
+    ck.flush()
+    return dict(shard=shard, n=len(todo), skipped=False, seconds=time.time() - t0,
                 worst_cond1=float(Y.worst_cond1), evals=Y.n_eval,
-                hits=Y.sc.cache.hits, misses=Y.sc.cache.misses)
+                hits=Y.sc.cache.hits, misses=Y.sc.cache.misses,
+                parts=ck.n_parts_written)
 
 
 def out_dir(mode, tag):
@@ -466,9 +474,10 @@ def run(mode, combos, tag, jobs=6, cap=900):
     print('  CONDITION 1: worst |sum of a trade per-year marks - its R| = %.3g' % worst, flush=True)
     assert worst < 1e-9, 'CONDITION 1 FAILED: year-split marks do not reconstruct trade R (%.3g)' % worst
     sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
+    nb = len(load(mode, tag)[1]) if done == 0 else done     # a resumed run did 0; size against what IS banked
     print('  bank: %.1f MB compressed for %d strategies = %.2f kB each -> %.2f GB for all %s of mode %s'
-          % (sz / 1024 ** 2, done, sz / max(done, 1) / 1024,
-             sz / max(done, 1) * S.n_combos(S.mode_opts(S.slot_options(), mode)) / 1024 ** 3,
+          % (sz / 1024 ** 2, nb, sz / max(nb, 1) / 1024,
+             sz / max(nb, 1) * S.n_combos(S.mode_opts(S.slot_options(), mode)) / 1024 ** 3,
              f'{S.n_combos(S.mode_opts(S.slot_options(), mode)):,}', mode), flush=True)
     return outdir, res
 
@@ -698,6 +707,14 @@ def stage_endtoend(mode='A', n=12, jobs=2):
         shutil.move(d, keep)           # moved, never deleted
         print('  previous end-to-end bank kept at %s' % os.path.basename(keep), flush=True)
     run(mode, combos, tag, jobs=jobs, cap=8000)
+    # HALF THE RULE IS RESTART. Run it again on the same tag: every shard must
+    # skip, nothing may be recomputed, and the reader must still get all n.
+    _od2, res2 = run(mode, combos, tag, jobs=jobs, cap=8000)
+    redone = sum(r['n'] for r in res2)
+    assert redone == 0, ('RESUME BROKEN: a second run recomputed %d strategies that were '
+                         'already on disk' % redone)
+    print('  RESUME: second run recomputed 0 of %d strategies -- every part on disk was skipped'
+          % n, flush=True)
     W, TG, CB, TS, _od, CV = load(mode, tag, with_curve=True)
     assert W.shape == (n, 4, NSTEP, NYEAR, NSTAT), 'win shape %s' % (W.shape,)
     assert TG.shape == (n, 4, NSTEP), 'tag shape %s' % (TG.shape,)
