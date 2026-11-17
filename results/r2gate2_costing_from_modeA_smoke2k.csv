@@ -1,3 +1,7 @@
+# MEASURED ON A STRATIFIED DRAW, WHICH HAS NO BLOCK LOCALITY -- every strategy pays to recompute
+# indicator variants that a contiguous block reuses. It is the right number for the smoke and the
+# WRONG number for the full run. The contiguous rate measured on the live full mode A run is
+# 1.09 core-s/strategy against the 2.686 here, 2.5x lower. Read r2gate2_costing_from_modeA_full.csv.
 mode,strategies,sec_per_strategy,core_hours,mac_hours,mac_days,cloud3_hours,cloud3_cost_usd,cloud6_hours,cloud6_cost_usd,bank_gb
 A,273780,2.6858396807920584,204.25810772423603,25.532263465529503,1.0638443110637292,4.255377244254917,1.2766131732764754,2.1276886221274585,1.2766131732764754,4.014115234005075
 B,273780,2.6858396807920584,204.25810772423603,25.532263465529503,1.0638443110637292,4.255377244254917,1.2766131732764754,2.1276886221274585,1.2766131732764754,4.014115234005075
