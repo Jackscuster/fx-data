@@ -33,6 +33,7 @@ import numpy as np, pandas as pd
 from numba import njit
 import l2sweep as S
 import l2r2gate1 as G
+import l2ckpt as L2CK
 
 QS = (0.1, 1.0, 10.0, 50.0)       # DECLARED selection sizes, per cent
 NSTAT = G.NSTAT
@@ -105,17 +106,25 @@ def offsets(pairs, ndraw, seed=20261116):
 
 def _worker(args):
     shard, nshard, mode, combos, ndraw, outdir = args
-    f = os.path.join(outdir, 'shuf_%04d.npz' % shard)
-    if os.path.exists(f):
-        return dict(shard=shard, n=0, skipped=True)
     S.load_costs()
     opts = S.mode_opts(S.slot_options(), mode)
     kwm = S.mode_kw(mode)
     PD, BUF = G.build_pairdata(opts)
     wt = role_weights(G.windows())
     off = offsets(sorted(PD), ndraw)
-    mine = [cb for i, cb in enumerate(combos) if i % nshard == shard]
-    # per combination: (ndraw, slice, stream, role, stat).  slice 0 trend, 1 chop
+    # THE FIVE-MINUTE RULE (HANDOFF section 3): checkpoint on a clock, resume
+    # by set difference on the combination index.
+    def _save(path, ids, rows):
+        np.savez_compressed(path, acc=np.stack(rows).astype(np.float32), idx=ids)
+
+    ck = L2CK.Checkpointer(outdir, 'shuf_%04d' % shard, save=_save)
+    done = ck.completed()
+    allmine = [(i, combos[i]) for i in range(shard * len(combos) // nshard,
+                                             (shard + 1) * len(combos) // nshard)]
+    todo = [(i, cb) for i, cb in allmine if i not in done]
+    if not todo:
+        return dict(shard=shard, n=0, skipped=True)
+    mine = [cb for _i, cb in todo]
     out = np.zeros((len(mine), ndraw, 2, 2, 3, NSTAT), np.float32)
     t0 = time.time()
     for j, cb in enumerate(mine):
@@ -141,7 +150,8 @@ def _worker(args):
             print('    shuffle shard %02d: %5d/%5d  %.0f ms/combo  %.0f min left'
                   % (shard, j + 1, len(mine), 1000 * el / (j + 1),
                      (el / (j + 1)) * (len(mine) - j - 1) / 60), flush=True)
-    np.savez_compressed(f, acc=out, idx=np.array([i for i, _ in enumerate(combos) if i % nshard == shard]))
+        ck.add(todo[j][0], out[j])
+    ck.flush()
     return dict(shard=shard, n=len(mine), skipped=False, seconds=time.time() - t0)
 
 
