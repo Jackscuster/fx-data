@@ -354,13 +354,39 @@ def tune_one_strategy(Y, mode, combo):
     return win, tag, curve, ncfg, bestscore, bestpf
 
 
+PART_EVERY = 50          # strategies per part file; a crash costs at most this many
+
+
+def _save_part(f, rows, idx, combos, worst, hits, misses):
+    """One part file. The CURVE IS RAGGED and is stored flat with per-strategy
+    lengths, never stacked.
+
+    np.stack(curve) is what cost 2.3 hours on 16 Nov: the axial set is 227-512
+    configurations depending on which indicators the strategy uses, so the
+    per-strategy curve arrays have different shapes and the stack threw
+    'all input arrays must have the same shape' AFTER every strategy in the
+    shard had been scored and before anything was written. Flat plus offsets is
+    exact and cannot be ragged-by-surprise; padding would have wasted 2 GB.
+    """
+    W = np.stack([r[0] for r in rows]).astype(np.float32)
+    TG = np.stack([r[1] for r in rows])
+    cflat = np.concatenate([r[2].reshape(-1) for r in rows]).astype(np.float32)
+    cn = np.array([r[2].shape[0] for r in rows], np.int64)
+    NC = np.stack([r[3] for r in rows])
+    BS = np.stack([r[4] for r in rows]).astype(np.float32)
+    BP = np.stack([r[5] for r in rows]).astype(np.float32)
+    np.savez_compressed(
+        f, win=W, tag=TG, curve_flat=cflat, curve_n=cn, ncfg=NC,
+        tune_score=BS, tune_pf=BP,
+        idx=np.array(idx, np.int64),
+        combo=np.array([['%s' % x for x in cb] for cb in combos], dtype=object),
+        year0=YEAR0, nyear=NYEAR, nstream=4, worst_cond1=worst,
+        cache_hits=hits, cache_misses=misses)
+
+
 def _worker(args):
     shard, nshard, mode, combos, outdir, cap = args
-    f = os.path.join(outdir, 'shard_%04d.npz' % shard)
-    if os.path.exists(f):
-        return dict(shard=shard, n=0, skipped=True, seconds=0.0, worst_cond1=0.0)
     S.load_costs()
-    Y = Years(cap=cap)
     # CONTIGUOUS shards, not strided. The enumeration order is
     # product(c1, c2, vol, base) with base fastest, so a contiguous block holds
     # c1 and c2 nearly constant and the indicator variants of the inner slots
@@ -371,25 +397,33 @@ def _worker(args):
     lo = shard * len(combos) // nshard
     hi = (shard + 1) * len(combos) // nshard
     mine = [(i, combos[i]) for i in range(lo, hi)]
-    W, TG, CV, NC, BS, BP = [], [], [], [], [], []
+    nparts = (len(mine) + PART_EVERY - 1) // PART_EVERY
+    # RESUME PER PART. A part on disk is never recomputed, so a kill costs at
+    # most PART_EVERY strategies rather than a whole shard.
+    todo = [q for q in range(nparts)
+            if not os.path.exists(os.path.join(outdir, 'shard_%04d_part%04d.npz' % (shard, q)))]
+    if not todo:
+        return dict(shard=shard, n=0, skipped=True, seconds=0.0, worst_cond1=0.0,
+                    evals=0, hits=0, misses=0)
+    Y = Years(cap=cap)
     t0 = time.time()
-    for k, (i, cb) in enumerate(mine):
-        w, tg, cv, nc, bs, bp = tune_one_strategy(Y, mode, cb)
-        W.append(w.astype(np.float32)); TG.append(tg); CV.append(cv.astype(np.float32))
-        NC.append(nc); BS.append(bs.astype(np.float32)); BP.append(bp.astype(np.float32))
-        if (k + 1) % 25 == 0:
-            el = time.time() - t0
-            print('    g2 shard %02d: %6d/%6d  %.2f s/strategy  %.0f evals  %.0f min left'
-                  % (shard, k + 1, len(mine), el / (k + 1), Y.n_eval / (k + 1),
-                     (el / (k + 1)) * (len(mine) - k - 1) / 60), flush=True)
-    np.savez_compressed(
-        f, win=np.stack(W), tag=np.stack(TG), curve=np.stack(CV), ncfg=np.stack(NC),
-        tune_score=np.stack(BS), tune_pf=np.stack(BP),
-        idx=np.array([i for i, _ in mine], np.int64),
-        combo=np.array([['%s' % x for x in cb] for _, cb in mine], dtype=object),
-        year0=YEAR0, nyear=NYEAR, worst_cond1=Y.worst_cond1,
-        cache_hits=Y.sc.cache.hits, cache_misses=Y.sc.cache.misses)
-    return dict(shard=shard, n=len(mine), skipped=False, seconds=time.time() - t0,
+    ndone = 0
+    for q in todo:
+        a, b = q * PART_EVERY, min((q + 1) * PART_EVERY, len(mine))
+        rows, idx, cbs = [], [], []
+        for i, cb in mine[a:b]:
+            rows.append(tune_one_strategy(Y, mode, cb))
+            idx.append(i); cbs.append(cb)
+            ndone += 1
+            if ndone % 25 == 0:
+                el = time.time() - t0
+                left = sum(min((z + 1) * PART_EVERY, len(mine)) - z * PART_EVERY for z in todo) - ndone
+                print('    g2 shard %02d: %6d/%6d  %.2f s/strategy  %.0f evals  %.0f min left'
+                      % (shard, ndone, len(mine), el / ndone, Y.n_eval / ndone,
+                         (el / ndone) * left / 60), flush=True)
+        _save_part(os.path.join(outdir, 'shard_%04d_part%04d.npz' % (shard, q)),
+                   rows, idx, cbs, Y.worst_cond1, Y.sc.cache.hits, Y.sc.cache.misses)
+    return dict(shard=shard, n=ndone, skipped=False, seconds=time.time() - t0,
                 worst_cond1=float(Y.worst_cond1), evals=Y.n_eval,
                 hits=Y.sc.cache.hits, misses=Y.sc.cache.misses)
 
@@ -431,25 +465,40 @@ def run(mode, combos, tag, jobs=6, cap=900):
           % (done, el / 60, sum(r['skipped'] for r in res), el / max(done, 1)), flush=True)
     print('  CONDITION 1: worst |sum of a trade per-year marks - its R| = %.3g' % worst, flush=True)
     assert worst < 1e-9, 'CONDITION 1 FAILED: year-split marks do not reconstruct trade R (%.3g)' % worst
-    sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*.npz')))
-    print('  bank: %.1f MB compressed for %d strategies -> %.2f GB for the full mode'
-          % (sz / 1024 ** 2, done, sz / max(done, 1) * len(combos) / 1024 ** 3), flush=True)
+    sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
+    print('  bank: %.1f MB compressed for %d strategies = %.2f kB each -> %.2f GB for all %s of mode %s'
+          % (sz / 1024 ** 2, done, sz / max(done, 1) / 1024,
+             sz / max(done, 1) * S.n_combos(S.mode_opts(S.slot_options(), mode)) / 1024 ** 3,
+             f'{S.n_combos(S.mode_opts(S.slot_options(), mode)):,}', mode), flush=True)
     return outdir, res
 
 
-def load(mode, tag):
+def bank_files(mode, tag):
     outdir = out_dir(mode, tag)
-    fs = sorted(glob.glob(os.path.join(outdir, 'shard_*.npz')))
+    fs = sorted(glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
     assert fs, 'no gate 2 bank at %s' % outdir
-    W, TG, CV, IX, CB, TS = [], [], [], [], [], []
+    return outdir, fs
+
+
+def load(mode, tag, with_curve=False):
+    """The bank, in enumeration order. The curve stays ragged -- a list of
+    (nconf, 4) arrays -- because that is what it is."""
+    outdir, fs = bank_files(mode, tag)
+    W, TG, IX, CB, TS, CV = [], [], [], [], [], []
     for f in fs:
         z = np.load(f, allow_pickle=True)
-        W.append(z['win']); TG.append(z['tag']); CV.append(z['curve'])
+        W.append(z['win']); TG.append(z['tag'])
         IX.append(z['idx']); CB.append(z['combo']); TS.append(z['tune_score'])
+        if with_curve:
+            flat = z['curve_flat']; cn = z['curve_n']; off = 0
+            for m in cn:
+                CV.append(flat[off:off + m * 4].reshape(int(m), 4)); off += m * 4
     ix = np.concatenate(IX); o = np.argsort(ix)
-    return (np.concatenate(W)[o].astype(np.float64), np.concatenate(TG)[o],
-            np.concatenate(CV)[o].astype(np.float64), np.concatenate(CB)[o],
-            np.concatenate(TS)[o].astype(np.float64), outdir)
+    out = (np.concatenate(W)[o].astype(np.float64), np.concatenate(TG)[o],
+           np.concatenate(CB)[o], np.concatenate(TS)[o].astype(np.float64), outdir)
+    if with_curve:
+        return out + ([CV[i] for i in o],)
+    return out
 
 
 # ==========================================================================
@@ -626,12 +675,51 @@ def costing(sec_per_strategy, bank_bytes_per_strategy):
     return pd.DataFrame(rows)
 
 
+def stage_endtoend(mode='A', n=12, jobs=2):
+    """THE CHEAP END-TO-END CHECK, and it goes FIRST in every chain.
+
+    On 16 Nov the 2,000-strategy smoke scored every strategy and then died in
+    np.stack on a ragged curve -- 2.3 hours of compute lost to a bug in the
+    SAVE path, which single-strategy timing had never touched because it called
+    tune_one_strategy directly and never went through the pool, the part files
+    or the reader. Twelve strategies through run() and load() exercise all
+    three in under a minute, so the save path can never again be first
+    exercised by the expensive run.
+    """
+    G.manifest_check()
+    S.load_costs()
+    opts = S.mode_opts(S.slot_options(), mode)
+    combos = G.stratified(opts, n)[:n]
+    tag = 'endtoend'
+    d = out_dir(mode, tag)
+    if os.path.isdir(d):
+        import shutil, datetime
+        keep = d + '_prev_' + datetime.datetime.now().strftime('%H%M%S')
+        shutil.move(d, keep)           # moved, never deleted
+        print('  previous end-to-end bank kept at %s' % os.path.basename(keep), flush=True)
+    run(mode, combos, tag, jobs=jobs, cap=8000)
+    W, TG, CB, TS, _od, CV = load(mode, tag, with_curve=True)
+    assert W.shape == (n, 4, NSTEP, NYEAR, NSTAT), 'win shape %s' % (W.shape,)
+    assert TG.shape == (n, 4, NSTEP), 'tag shape %s' % (TG.shape,)
+    assert len(CV) == n and all(c.shape[1] == 4 for c in CV), 'ragged curve round-trip'
+    widths = sorted({int(c.shape[0]) for c in CV})
+    picked = int((TG >= 0).sum()); tot = TG.size
+    print('  END TO END: %d strategies, win %s, tag %s, curve widths %s (THE ragged axis), '
+          '%d of %d (stream, step) picks cleared MIN_TRADES_PICK=%d'
+          % (n, W.shape, TG.shape, widths, picked, tot, MIN_TUNE_TRADES), flush=True)
+    assert picked > 0, 'no pick anywhere cleared the trade floor -- the bank would be empty'
+    print('END TO END COMPLETE', flush=True)
+    return True
+
+
 if __name__ == '__main__':
     stage = G.opt('--stage', str, 'grid')
     mode = G.opt('--mode', str, 'A')
     tag = G.opt('--tag', str, 'smoke2k')
     jobs = G.opt('--jobs', int, 6)
-    if stage == 'grid':
+    if stage == 'endtoend':
+        stage_endtoend(mode, n=G.opt('--n', int, 12), jobs=G.opt('--jobs', int, 2))
+    elif stage == 'grid':
         stage_grid(mode)
     elif stage == 'cond1':
         stage_cond1(mode, n=G.opt('--n', int, 40))
@@ -650,7 +738,7 @@ if __name__ == '__main__':
             combos = G.stratified(opts, n)
             print('  stratified %d of %s mode %s strategies' % (len(combos), f'{total:,}', mode), flush=True)
         outdir, res = run(mode, combos, tag, jobs=jobs, cap=G.opt('--cap', int, 900))
-        sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*.npz')))
+        sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
         done = sum(r['n'] for r in res) or len(combos)
         wall = max(r['seconds'] for r in res)
         secs = wall * jobs / done           # core-seconds per strategy
