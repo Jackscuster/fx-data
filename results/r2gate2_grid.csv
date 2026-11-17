@@ -1,0 +1,7 @@
+knob,n_values,lo,hi,in_trend,in_chop
+atr_len,49,2.0,50.0,True,True
+atr_mult (stop),31,1.0,1.5,True,True
+tp_mult,41,1.0,3.0,True,True
+be_pct,20,0.01,0.2,True,False
+trail_arm,21,1.0,2.0,True,False
+trail_mult,31,0.5,2.0,True,False
