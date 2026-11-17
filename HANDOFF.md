@@ -689,6 +689,166 @@
    ms/combination) with the cost *convention* unchanged, which is exactly what
    the parity check proves.
 
+
+   ---
+
+   ## JACK'S DECISION ON GATE 1: **NO CUT** (16 Nov)
+
+   *"We shouldn't be cutting anything in gate 1, we've done this before."*
+
+   **Every combination enumerated in gate 1 goes to gate 2 tuning.** Mode A
+   first (**273,780**), then B (**273,780**), then C (**10,677,420**). The gate
+   1 curves stay on disk as the record of what a cut would have done and are
+   quoted as that, never as a selection. Nothing is deleted. The 583 MB of
+   gate 1 banks already pushed to GitHub **stay in history — no rewrite**; the
+   banks are gitignored going forward.
+
+   **What the curves say, and why no-cut is the right reading.** Pooled over
+   the five windows, the trade-year expectancy of the *entire eligible
+   population* is negative in every stream of every mode (A trend-routed
+   −0.0400, chop-routed −0.0496; B −0.0420 / −0.0574; C −0.0408 / −0.0506), and
+   the best point on each curve sits at **4 to 316 combinations out of 200,000
+   to 9.5 million** — 0.002% to 0.003% pass rates. A cut there is curve-fitting
+   the curve. Tune→trade Spearman is +0.04 to +0.14 median and goes **negative**
+   (−0.12) in the 2013-16 chop-routed window in all three modes.
+
+   **THE REGIME-SHUFFLE NULL ON GATE 1** (`results/r2gate1_shufflenull_mode*.csv`,
+   `code/l2r2null.py`): each pair's `shape2` series circularly rotated, which
+   preserves the episode-length distribution and the regime mix exactly and
+   destroys only the alignment with price; 10,000 stratified combinations x 200
+   draws; compared at a fixed **selection size** (top 0.1 / 1 / 10 / 50% by
+   pooled tune expectancy) rather than a fixed cut, because the cut's own
+   distribution moves under the surrogate. Draw 0 is the real label.
+   **Result: routing on the real Layer 1 label is indistinguishable from
+   routing on a rotated one at every selection size — p 0.45 to 0.89 — and the
+   real reading is usually WORSE than the surrogate mean.** The always-on
+   streams are the control: they never read the label and came out identical on
+   every one of the 200 draws (spread 0.0), so the harness is sound and the
+   routed result is not an artefact. At gate 1 defaults, routing adds nothing.
+
+   ---
+
+   ## GATE 2, MODE A, ALL 273,780 — DECLARED HERE BEFORE IT RAN
+
+   Code: **`code/l2r2gate2.py`**. Bank: `results/r2gate2/mode<M>_<tag>/`.
+
+   ### The walk
+   Five steps, 0f unchanged: **tune years 1-4, grade year 5 (reported, never
+   used for anything), trade year 6** — `2011-2014:2015:2016` through
+   `2015-2018:2019:2020`. 2021 onward sealed; the loader refuses it without the
+   flag. **Everyone trades.** Equal weight, netted, both budgets (3.6/3.6 and
+   5.4/3.6); the agreement curve and the sizing are fitted on years 1-5 only.
+   No picking and no weighting by past record.
+
+   ### The objective the tuner reads — identical across all three modes
+   **Account-normalised R** (`l2tune.ACCT_OBJECTIVE = True`, which is what
+   `l2refit.py:115`, the 0f machine, sets; the module-level `False` is only an
+   import-time default). Every trade's R is restated against a fixed 1.0xATR
+   risk unit and **the cost is restated with it** (fault #27). Without the
+   restatement, maximising raw R pays the tuner to shrink the stop, and it did:
+   median stop fell 1.00 → 0.17xATR and win rates fell to 16%. The score is the
+   **trade-weighted expectancy over the step's four tune years**, profit factor
+   as tiebreak, **`MIN_TRADES_PICK = 100`** enforced. Tune picks are made
+   **separately for the routed stream and the always-on stream**, so each book
+   runs on settings tuned on its own stream — four (slice, stream) picks per
+   step, twenty per strategy. Routing is a mask on the same engine pass, so the
+   second stream costs no engine time.
+
+   ### THE DECLARED GRID — `l2tune` as it stands, no mid-run changes
+
+   | knob | grid | values |
+   |---|---|--:|
+   | `atr_len` | `range(2, 51)` | 49 |
+   | `atr_mult` (stop) | 1.00–1.25 by 0.05, then 1.26–1.50 by 0.01 | 31 |
+   | `tp_mult` | 1.00–3.00 by 0.05 | 41 |
+   | `be_pct` | 0.01–0.20 by 0.01 (% of price beyond TP1) | 20 |
+   | `trail_arm` | 1.00–2.00 by 0.05 | 21 |
+   | `trail_mult` | 0.50–2.00 by 0.05 | 31 |
+   | indicator params | `ind_param_grid`: 1/10x to 10x the default, 12 log-spaced points, integers floored at 2, default always present | ~12 each |
+
+   Trend slice moves all six risk knobs (`RISK_KNOBS_TREND`); chop moves
+   `atr_len`, `atr_mult`, `tp_mult` only (`RISK_KNOBS_CHOP`). Indicator
+   parameters are capped at **`CAP_N = 6`** per indicator, the six highest-impact
+   by `l2impact`'s measured ranking.
+
+   ### WHAT "EVERY GRID CONFIGURATION" HAS TO MEAN, stated before the run
+
+   The **joint product** of the trend risk grid alone is 49 x 31 x 41 x 20 x 21
+   x 31 = **810,872,580 configurations per strategy**. It was never on the
+   table and is not what is run.
+
+   `l2tune`'s machine is **coordinate descent**: one knob at a time in declared
+   priority order, adopting each winner before moving to the next knob, then a
+   second pass to settle interactions. **That is window-dependent at every
+   step** — the point knob *k+1* is explored from is the argmax of knob *k* on
+   *that step's* tune years. So "`l2tune`'s coordinate descent" and "no
+   re-running the engine per step" are mutually exclusive, and the one-pass
+   condition decides it.
+
+   **WHAT IS RUN: the AXIAL set — the default point plus every single-knob
+   deviation over each declared grid, every knob measured from the same
+   default.** It is window-independent by construction, so one engine pass
+   serves all five steps, and it contains every value of every declared grid.
+   Per strategy, mode A: trend `1 + 187 risk + ~96 indicator = ~284`, chop
+   `1 + 118 + ~96 = ~215`, **~499 configurations**.
+
+   **The cost of the thing that was excluded.** True two-pass coordinate descent
+   per step, at 0f's measured 71.8 s mean per four-year tune, is 1,436 s per
+   strategy (2 slices x 2 streams x 5 steps) = **109,500 core-hours for mode A
+   = 1.6 years on eight Mac cores.** That is the reason the axial set is the
+   design and not a shortcut.
+
+   ### PARAMETERS THE LIBRARY EXPOSES THAT THE DECLARED GRID DOES NOT MOVE
+   **Reported, not added.** `CAP_N = 6` freezes everything past each
+   indicator's six highest-impact parameters. Across all 105 available options
+   that is **4 options with 29 frozen parameters**: three confirmation
+   indicators (28 parameters, 233 axial deviations between them) and one exit
+   indicator (1 parameter, 12 deviations). Averaged over the enumeration it is
+   **+12 configurations per strategy, 96 → 108 on the indicator side, +4.8% on
+   the whole run** — about **half an hour of Mac time on mode A**. Not added
+   unilaterally; Jack's call.
+
+   ### CONDITION 1 — no year's record contains another year's price
+   Every trade is **marked to market daily** and each daily increment is
+   attributed to the calendar year of its own bar, using the exact convention
+   `l2walkfwd.engine_one` already uses and audit item 18 already guards: the
+   increment at bar *b* is `cum(b) - cum(b-1)`, with `cum = dir x (close[b] -
+   entry_px) x units / RISK x atr_mult` and `cum = R x atr_mult` on the exit
+   bar, less the entry cost on the entry bar. A trade open across a year
+   boundary therefore contributes its **truncated** mark-to-market R to each
+   year and counts once in each year it was open. A tune score on years 1-4 is
+   computable from years 1-4 alone. **Asserted in code**: a trade's per-year
+   marks must sum to its full R to 1e-9 or the stage halts.
+
+   ### CONDITION 2 — the banked path equals the per-step path
+   The one-pass bank is compared against the naive implementation that re-runs
+   the engine separately for each of the five steps, on the **same axial
+   configuration set**: same tune picks, same grade-year and trade-year records,
+   all four streams, all five steps, to 1e-9. This proves **the banking**, which
+   is what the condition is about; it is not a claim of equivalence with
+   coordinate descent, whose cost is quoted above. **If either condition fails
+   the full mode A does not run.**
+
+   ### WHAT CAN AND CANNOT BE BANKED — measured, not assumed
+
+   | what | size | verdict |
+   |---|--:|---|
+   | every configuration's full per-year record, both streams | 273,780 x 499 x 2 x 10 x 5 x 4 B = **51 TB** | impossible |
+   | fallback (a): every configuration's tune score per step | 273,780 x 499 x 2 x 5 x 2 x 4 B = **10.9 TB** | impossible |
+   | **(b) every step's winner's full per-year record, all four streams** | 273,780 x 4 x 5 x 10 x 5 x 4 B = **1.10 GB** | banked |
+   | **the pooled-tune axial curve for every configuration** | 273,780 x 499 x 2 x 4 B = **1.09 GB** | banked |
+   | the winning configuration's identity and tune score per (stream, step) | ~60 MB | banked |
+
+   So **(b) is what is banked, plus the full axial tuning curve pooled over the
+   five tune windows and every pick's identity** — about 2.3 GB. Banking every
+   configuration per step is impossible by four orders of magnitude, and the
+   honest consequence is worth stating: **re-deriving a pick is cheaper than
+   storing it.** One engine pass over all of mode A is ~72 core-hours; storing
+   what would make the picks re-derivable without it is 10.9 TB.
+
+   Resumable per `(sid, step)` — a shard file that exists is never recomputed.
+   Nothing to `/tmp`. Commit at every marker.
+
    ## STEPS 3 AND 4
 
    **Step 3** — gate 2 for the mode A passers, on the 0f blind-label machine:
