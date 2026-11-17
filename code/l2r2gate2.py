@@ -58,6 +58,11 @@ NSTAT = 5                          # n, sum_r, gain, loss, n_win
 STREAMS = ('trend-routed', 'trend-allon', 'chop-routed', 'chop-allon')
 NSTEP = 5
 MIN_TUNE_TRADES = S.MIN_TRADES_PICK   # 100, l2tune's own rule
+# The shared disk series cache's budget FOR THIS STAGE. l2cache's own default is
+# 10 GB, which is more than this volume can spare beside a 1.4 GB bank; mode A's
+# axial set needs ~1.2 GB so 4 GB does not bind, and mode C can be raised when
+# the disk allows it.
+CACHE_BUDGET_GB = 4.0
 
 
 def steps():
@@ -193,7 +198,12 @@ class Years:
 
     def __init__(self, cap=900):
         T.ACCT_OBJECTIVE = True      # the 0f objective; see HANDOFF 0l
-        self.sc = T.Scorer(cache=T.SeriesCache(cap=cap))
+        # DISK-BACKED SERIES CACHE. A disk hit is ~0.1 ms against an ~11.6 ms
+        # recompute, and the axial set needs ~2,184 distinct variant series x 28
+        # pairs at ~20 kB -- about 1.2 GB, paid ONCE and then shared by every
+        # worker and every restart. Without it each cold worker recomputed the
+        # lot, which is why one strategy took 481 s.
+        self.sc = T.Scorer(cache=T.SeriesCache(cap=cap, disk=True))
         self.pairs = self.sc.pairs
         self.yb, self.cl = {}, {}
         for p in self.pairs:
@@ -300,7 +310,31 @@ def pick(scores, ns, pfs):
 # ==========================================================================
 # the one-pass worker
 # ==========================================================================
-def tune_one_strategy(Y, mode, combo):
+def strategy_jobs(mode, combo):
+    """The deterministic (slice, configuration) job list for one strategy.
+
+    Flat and ordered, so a strategy interrupted halfway can be resumed from a
+    position index rather than from the beginning -- which is what the
+    five-minute rule needs when ONE item is longer than the interval. A cold
+    worker's first strategy took 481 s on 16 Nov: ~500 indicator variant series
+    across 28 pairs, computed from nothing.
+    """
+    cfgs = {sn: axial(mode, combo, sn) for sn, _, _ in S.SLICES}
+    jobs = [(sl, ci) for sl, (sn, _, _) in enumerate(S.SLICES)
+            for ci in range(len(cfgs[sn]))]
+    return cfgs, jobs
+
+
+def new_state(nmax):
+    return dict(pos=0,
+                win=np.zeros((4, NSTEP, NYEAR, NSTAT), np.float64),
+                tag=np.full((4, NSTEP), -1, np.int64),
+                bestscore=np.full((4, NSTEP), -np.inf),
+                bestpf=np.full((4, NSTEP), -np.inf),
+                curve=np.full((nmax, 4), np.nan))
+
+
+def tune_one_strategy(Y, mode, combo, state=None, on_tick=None, tick_every=None):
     """ONE PASS over the axial set for one strategy. All four streams, all five
     steps, out of a single engine pass per configuration.
 
@@ -322,34 +356,41 @@ def tune_one_strategy(Y, mode, combo):
         for y in range(s['tune'][0], s['tune'][1] + 1):
             wt[y - YEAR0] += 1.0
 
-    cfgs = {sn: axial(mode, combo, sn) for sn, _, _ in slices}
+    cfgs, jobs = strategy_jobs(mode, combo)
     nmax = max(len(v) for v in cfgs.values())
-    win = np.zeros((4, NSTEP, NYEAR, NSTAT), np.float64)
-    tag = np.full((4, NSTEP), -1, np.int64)
-    bestscore = np.full((4, NSTEP), -np.inf)
-    bestpf = np.full((4, NSTEP), -np.inf)
-    curve = np.full((nmax, 4), np.nan)
-
-    for sl, (sname, plan, code) in enumerate(slices):
-        for ci, (_tagname, ip, risk) in enumerate(cfgs[sname]):
-            acc = Y.score(combo, ip, risk, mode, sname, code, plan)   # (2, NYEAR, NSTAT)
-            for rt in (0, 1):                      # 0 routed, 1 always-on
-                stream = 2 * sl + rt               # 0 t-routed 1 t-allon 2 c-routed 3 c-allon
-                a = acc[rt]
-                pooled = (a * wt[:, None]).sum(axis=0, dtype=np.float64)
-                pn, pe, _ = objective(pooled)
-                curve[ci, stream] = pe if pn >= MIN_TUNE_TRADES * len(ST) else np.nan
-                for si, s in enumerate(ST):
-                    blk = role_sum(a, *s['tune'])
-                    n, e, pf = objective(blk)
-                    if n < MIN_TUNE_TRADES:
-                        continue
-                    if e > bestscore[stream, si] + 1e-12 or (
-                            abs(e - bestscore[stream, si]) <= 1e-12 and pf > bestpf[stream, si]):
-                        bestscore[stream, si] = e
-                        bestpf[stream, si] = pf
-                        tag[stream, si] = ci
-                        win[stream, si] = a
+    st = state if state is not None else new_state(nmax)
+    win, tag = st['win'], st['tag']
+    bestscore, bestpf, curve = st['bestscore'], st['bestpf'], st['curve']
+    tnow = time.time()
+    while st['pos'] < len(jobs):
+        sl, ci = jobs[st['pos']]
+        sname, plan, code = slices[sl]
+        _tagname, ip, risk = cfgs[sname][ci]
+        acc = Y.score(combo, ip, risk, mode, sname, code, plan)   # (2, NYEAR, NSTAT)
+        for rt in (0, 1):                      # 0 routed, 1 always-on
+            stream = 2 * sl + rt               # 0 t-routed 1 t-allon 2 c-routed 3 c-allon
+            a = acc[rt]
+            pooled = (a * wt[:, None]).sum(axis=0, dtype=np.float64)
+            pn, pe, _ = objective(pooled)
+            curve[ci, stream] = pe if pn >= MIN_TUNE_TRADES * len(ST) else np.nan
+            for si, sp in enumerate(ST):
+                blk = role_sum(a, *sp['tune'])
+                n, e, pf = objective(blk)
+                if n < MIN_TUNE_TRADES:
+                    continue
+                if e > bestscore[stream, si] + 1e-12 or (
+                        abs(e - bestscore[stream, si]) <= 1e-12 and pf > bestpf[stream, si]):
+                    bestscore[stream, si] = e
+                    bestpf[stream, si] = pf
+                    tag[stream, si] = ci
+                    win[stream, si] = a
+        st['pos'] += 1
+        # CHECKPOINT INSIDE THE ITEM. The state is ~16 kB, so saving it costs
+        # nothing and the five-minute rule holds even when one strategy is
+        # longer than the interval.
+        if on_tick is not None and tick_every and (time.time() - tnow) >= tick_every:
+            on_tick(st)
+            tnow = time.time()
     ncfg = np.array([len(cfgs['trend']), len(cfgs['chop'])], np.int64)
     return win, tag, curve, ncfg, bestscore, bestpf
 
@@ -405,8 +446,43 @@ def _worker(args):
     def _save(path, ids, rows):
         _save_part(path, [r[0] for r in rows], ids, [r[1] for r in rows],
                    state['worst'], state['hits'], state['misses'])
+        # Keep the shared disk series cache inside its budget. Nothing else
+        # calls evict(), and an uncapped cache on a volume with 14 GB free is a
+        # disk-full waiting to happen -- which already blocked this project once.
+        if shard == 0:
+            import l2cache as DCC
+            freed = DCC.evict(budget_gb=CACHE_BUDGET_GB)
+            if freed:
+                print('    disk series cache: evicted %.2f GB to stay inside budget'
+                      % (freed / 1024 ** 3), flush=True)
 
     ck = l2ckpt.Checkpointer(outdir, 'shard_%04d' % shard, save=_save)
+    pf = os.path.join(outdir, 'shard_%04d_inflight.npz' % shard)
+
+    def _save_partial(idx, cb, stt):
+        tmp = pf + '.tmp.npz'
+        np.savez(tmp, idx=np.int64(idx), combo=np.array(['%s' % x for x in cb], dtype=object),
+                 pos=np.int64(stt['pos']), win=stt['win'], tag=stt['tag'],
+                 bestscore=stt['bestscore'], bestpf=stt['bestpf'], curve=stt['curve'])
+        os.replace(tmp, pf)
+        ck.tick()
+
+    def _load_partial(idx):
+        if not os.path.exists(pf):
+            return None
+        try:
+            z = np.load(pf, allow_pickle=True)
+        except Exception as e:
+            print('  ckpt: in-flight state unreadable (%s) -- that strategy restarts'
+                  % type(e).__name__, flush=True)
+            return None
+        if int(z['idx']) != int(idx):
+            return None
+        return dict(pos=int(z['pos']), win=z['win'].astype(np.float64), tag=z['tag'],
+                    bestscore=z['bestscore'].astype(np.float64),
+                    bestpf=z['bestpf'].astype(np.float64),
+                    curve=z['curve'].astype(np.float64))
+
     done = ck.completed()
     todo = [(i, cb) for i, cb in mine if i not in done]
     if not todo:
@@ -418,8 +494,15 @@ def _worker(args):
     Y = Years(cap=cap)
     state['Y'] = Y
     t0 = time.time()
+    every = l2ckpt.CKPT_SECONDS
     for ndone, (i, cb) in enumerate(todo, 1):
-        res = tune_one_strategy(Y, mode, cb)
+        st0 = _load_partial(i)
+        if st0 is not None:
+            print('    g2 shard %02d: resuming strategy %d from configuration %d'
+                  % (shard, i, st0['pos']), flush=True)
+        res = tune_one_strategy(Y, mode, cb, state=st0,
+                                on_tick=lambda stt, _i=i, _cb=cb: _save_partial(_i, _cb, stt),
+                                tick_every=every)
         state['worst'] = Y.worst_cond1
         state['hits'] = Y.sc.cache.hits
         state['misses'] = Y.sc.cache.misses
@@ -721,6 +804,35 @@ def stage_endtoend(mode='A', n=12, jobs=2):
     assert len(CV) == n and all(c.shape[1] == 4 for c in CV), 'ragged curve round-trip'
     widths = sorted({int(c.shape[0]) for c in CV})
     picked = int((TG >= 0).sum()); tot = TG.size
+    # INTRA-ITEM RESUME, proven rather than assumed: interrupt one strategy
+    # partway through its axial set, carry the state across, and require the
+    # finished answer to be bit-identical to the uninterrupted one.
+    Y = Years(cap=8000)
+    cb = combos[min(1, n - 1)]
+    w1, t1, c1, _n1, b1, _p1 = tune_one_strategy(Y, mode, cb)
+    _cf, jobs = strategy_jobs(mode, cb)
+    snap = {}
+
+    def _tick(stt):
+        if stt['pos'] >= len(jobs) // 3 and not snap:
+            snap.update(pos=stt['pos'], win=stt['win'].copy(), tag=stt['tag'].copy(),
+                        bestscore=stt['bestscore'].copy(), bestpf=stt['bestpf'].copy(),
+                        curve=stt['curve'].copy())
+            raise KeyboardInterrupt
+    try:
+        tune_one_strategy(Y, mode, cb, state=new_state(c1.shape[0]),
+                          on_tick=_tick, tick_every=0.001)
+    except KeyboardInterrupt:
+        pass
+    w2, t2, c2, _n2, b2, _p2 = tune_one_strategy(Y, mode, cb, state=dict(snap))
+    same = (np.array_equal(w1, w2) and np.array_equal(t1, t2)
+            and np.allclose(c1, c2, equal_nan=True) and np.allclose(b1, b2, equal_nan=True))
+    print('  INTRA-ITEM RESUME: interrupted at configuration %d of %d and carried the state '
+          'across -- records, picks, curve and tune scores %s (max |diff| %.3g)'
+          % (snap['pos'], len(jobs), 'IDENTICAL' if same else 'DIFFER',
+             float(np.abs(w1 - w2).max())), flush=True)
+    assert same, 'INTRA-ITEM RESUME BROKEN: a resumed strategy does not match the uninterrupted one'
+
     print('  END TO END: %d strategies, win %s, tag %s, curve widths %s (THE ragged axis), '
           '%d of %d (stream, step) picks cleared MIN_TRADES_PICK=%d'
           % (n, W.shape, TG.shape, widths, picked, tot, MIN_TUNE_TRADES), flush=True)

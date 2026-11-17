@@ -63,9 +63,18 @@ class Checkpointer:
         self.id_key = id_key
         os.makedirs(outdir, exist_ok=True)
         self.ids, self.rows = [], []
+        # TWO CLOCKS, and the distinction is the rule itself.
+        #   t_part   -- when to write the next part file
+        #   t_unsaved -- when ANYTHING was last written, part or in-flight state
+        # The rule bounds UNSAVED COMPUTE, so the assert reads t_unsaved. An
+        # item longer than the interval is legal only if the owner checkpoints
+        # inside it and calls tick(); otherwise the assert fires, which is what
+        # it did on 16 Nov when a cold worker's first strategy took 481 s.
         self.t = time.time()
+        self.t_unsaved = self.t
         self.n_saved = 0
         self.n_parts_written = 0
+        self.n_ticks = 0
 
     def parts(self):
         return sorted(glob.glob(os.path.join(self.outdir, self.prefix + '_part*.npz')))
@@ -95,6 +104,16 @@ class Checkpointer:
     def due(self):
         return (time.time() - self.t) >= self.every
 
+    def tick(self):
+        """The owner has just written in-flight state for the item it is inside.
+        Nothing is unsaved past this moment, so the unsaved clock resets; the
+        part clock does not, because a part is still owed."""
+        self.t_unsaved = time.time()
+        self.n_ticks += 1
+
+    def tick_due(self):
+        return (time.time() - self.t_unsaved) >= self.every
+
     def add(self, item_id, row):
         self.ids.append(int(item_id))
         self.rows.append(row)
@@ -110,14 +129,19 @@ class Checkpointer:
         self.n_saved += len(self.rows)
         self.n_parts_written += 1
         held = time.time() - self.t
-        print('    ckpt %s: %d items -> %s (%.0f s of compute held, cap %d)'
-              % (self.prefix, len(self.rows), os.path.basename(p), held, self.every), flush=True)
-        assert held < self.every + 120, (
-            'a single item took %.0f s, longer than the %d s checkpoint interval -- '
-            'the interval cannot bound it and the stage must checkpoint inside the item'
-            % (held, self.every))
+        unsaved = time.time() - self.t_unsaved
+        print('    ckpt %s: %d items -> %s (%.0f s since the last part, %.0f s unsaved, '
+              '%d intra-item ticks, cap %d)'
+              % (self.prefix, len(self.rows), os.path.basename(p), held, unsaved,
+                 self.n_ticks, self.every), flush=True)
+        assert unsaved < self.every + 120, (
+            'a single item ran %.0f s with nothing saved, past the %d s interval -- '
+            'the interval cannot bound it and the stage must checkpoint INSIDE the item '
+            'and call Checkpointer.tick()' % (unsaved, self.every))
         self.ids, self.rows = [], []
         self.t = time.time()
+        self.t_unsaved = self.t
+        self.n_ticks = 0
         return p
 
 
