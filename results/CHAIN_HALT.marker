@@ -1,9 +1,10 @@
 CHAIN HALTED at stage "chain:l2r2f.sh"
-2026-11-16 22:41:27
+2026-11-17 09:56:09
 
 THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:
-  - stages with NO declared checkpoint interval: ['g2 endtoend', 'g2 grid', 'g2 cond1', 'g2 smoke 2k', 'g2 cond2', 'g2 preflight', 'g2 full A', 'g2 app', 'g2 node']
+  - stages with NO declared dependencies (use "= none" if there are none): ['g2 endtoend', 'g2 grid', 'g2 cond1', 'g2 smoke 2k', 'g2 cond2', 'g2 preflight', 'g2 full A', 'g2 app', 'g2 node']
 
 Declare one line per stage at the top of the driver:
     # ckpt <stage name> = <seconds, max 300>   <why>
+    # needs <stage name> = <dep>[,<dep>...]   or   none
 and begin the chain with a one-minute end-to-end test of its own save and read path.
