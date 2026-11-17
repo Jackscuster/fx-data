@@ -89,7 +89,16 @@ SLOT_ORDER = ('vol', 'base', 'c1', 'c2', 'exit_ind')     # spec priority
 N_IND_PTS = 12
 
 # GAUNTLET.md mode C shape, declared before any C tuning existed.
-CAP_N = 6                 # tune only each indicator's 6 highest-impact params
+# CAP_N = 6 UNTIL 16 Nov -- "tune only each indicator's 6 highest-impact params",
+# the GAUNTLET.md mode C shape, declared before any C tuning existed. It froze
+# 29 parameters across four of the 105 available options: hieken_ashi_smoothed
+# (10), rex_oscillator (16), schaff_trend_cycle (2) and one exit indicator (1).
+# JACK, 16 Nov: ADD THEM. Raised to None, which `tuned_params` reads as "move
+# every parameter the registry exposes". Measured cost: +12 configurations per
+# strategy on average, +2.4% on the mode A axial set, about half an hour of Mac
+# time on the full run. In from the START of the mode A run, not a second pass.
+# The impact ORDER still comes from l2impact's measurement; only the cut is gone.
+CAP_N = None
 CHEAP_RISK = ('atr_len', 'atr_mult', 'tp_mult')
 DEEPEN_THRESHOLD_R = 0.02  # cheap-pass improvement that buys the deep pass
 

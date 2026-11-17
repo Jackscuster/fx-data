@@ -603,8 +603,10 @@ def stage_grid(mode='A'):
                                extra_axial=sum(max(0, len(T.ind_param_grid(reg[name][p])) - 1)
                                                for p in frozen)))
     F = pd.DataFrame(fr)
-    print('\n-- parameters the library exposes that the declared grid does NOT move (CAP_N=%d) --' % T.CAP_N, flush=True)
-    print((F.to_string(index=False) if len(F) else '   none'), flush=True)
+    print('\n-- parameters the library exposes that the declared grid does NOT move (CAP_N=%s) --'
+          % ('None, uncapped' if T.CAP_N is None else T.CAP_N), flush=True)
+    print((F.to_string(index=False) if len(F) else
+           '   NONE -- every parameter the registry exposes is moved (Jack, 16 Nov)'), flush=True)
     Gd.to_csv(os.path.join(ROOTOUT, 'r2gate2_grid.csv'), index=False)
     F.to_csv(os.path.join(ROOTOUT, 'r2gate2_frozen_params.csv'), index=False)
     return Gd, F, float(tot.mean())
