@@ -48,7 +48,11 @@ BOOKS = (('allon',        'always-on: every entry the strategy fired'),
          ('chop_trend',   'chop RANGING + trend TRENDING'),
          ('chop_ungated', 'chop RANGING + trend ungated'),
          ('chop_notrange', 'chop RANGING + trend NOT-RANGING'))
-BUDGETS = ((3.6, 3.6), (5.4, 3.6))
+# THE TWO NUMBERS ARE (dip_budget, day_budget), as l2walkfwd.BUDGETS declares
+# them, and they enter through scale_of -- NOT as the currency cap, which is the
+# separate constant l2walkfwd.CAP_PCT = 2.0. Passing a budget as cap_pct made
+# both budgets produce identical numbers, which is what gave the mistake away.
+BUDGETS = (('team1', 3.6, 3.6), ('team2', 5.4, 3.6))
 
 
 class NetAccumulator:
@@ -512,6 +516,134 @@ def winner_config(mode, combo, sname, ci):
     return cfg[ci][1], cfg[ci][2]
 
 
+def year_dayidx(Y, years):
+    """{pair: per-bar index into the sorted trading days of `years`, else -1},
+    plus the day list. Arithmetic indices, never string keys."""
+    allday = set()
+    for p in Y.sc.pairs:
+        d = pd.DatetimeIndex(Y.sc.dates[p])
+        allday.update(d[d.year.isin(years)].values.tolist())
+    days = np.array(sorted(allday), dtype='datetime64[ns]')
+    pos = {d: i for i, d in enumerate(days)}
+    out = {}
+    for p in Y.sc.pairs:
+        d = pd.DatetimeIndex(Y.sc.dates[p]).values
+        out[p] = np.array([pos.get(x, -1) for x in d], np.int64)
+    return out, days
+
+
+def split_keeptabs(sname):
+    """Two keep tables off one: the ALWAYS-ON book takes the always-on tuned
+    settings, the three gated books take the routed tuned settings -- "each
+    book runs on settings tuned on its own stream" (HANDOFF 0l)."""
+    tab = keep_table(sname)
+    allon = tab.copy(); allon[1:, :] = 0
+    gated = tab.copy(); gated[0, :] = 0
+    return allon, gated
+
+
+def stage_books(mode='A', tag='full', n=None, jobs=1, out_tag=None):
+    """THE FOUR BOOKS, STREAMED, over the five stitched trade years.
+
+    One engine pass per (strategy, slice, stream, step); the bars are walked
+    twice per pass, once into the step's BUILD years (2011..year 5, where the
+    agreement curve and the sizing are fitted) and once into its TRADE year
+    (year 6, which is what the book earns). No mark rows exist at any point.
+    """
+    G.manifest_check()
+    S.load_costs()
+    Wn, TG, CB, TS, bankdir = G2.load(mode, tag)
+    if n:
+        Wn, TG, CB, TS = Wn[:n], TG[:n], CB[:n], TS[:n]
+    nstrat = len(TG)
+    print('  books: %s strategies from %s' % (f'{nstrat:,}', os.path.basename(bankdir)), flush=True)
+    Y = G2.Years(cap=30000)
+    ST = G2.steps()
+    rows = []
+    for si, stp in enumerate(ST):
+        build_years = set(range(stp['tune'][0], stp['grade'][1] + 1))   # years 1-5
+        trade_years = set(range(stp['trade'][0], stp['trade'][1] + 1))  # year 6
+        # ONE book over build + trade, masked by year. l2walkfwd builds exactly
+        # one Book per step and masks it with ybuild / ytrade; the size is
+        # decided on the build years and not touched again, so the two must be
+        # the same book or the scale would be fitted to a different object.
+        aidx, adays = year_dayidx(Y, build_years | trade_years)
+        BA = BookArrays(Y.sc.pairs, adays)
+        t0 = time.time()
+        for k in range(nstrat):
+            combo = tuple(CB[k])
+            for sl, (sname, plan, _code) in enumerate(S.SLICES):
+                allon_tab, gated_tab = split_keeptabs(sname)
+                for rt, tabv in ((1, allon_tab), (0, gated_tab)):
+                    stream = 2 * sl + rt
+                    ci = int(TG[k, stream, si])
+                    if ci < 0:
+                        continue      # nothing cleared the trade floor on this step
+                    ip, risk = winner_config(mode, combo, sname, ci)
+                    accumulate_strategy(Y, mode, combo, ip, risk, sname, plan, aidx, BA, tabv)
+            for bi in range(len(BOOKS)):
+                BA.n_members[bi] += 1
+            if (k + 1) % 50 == 0:
+                el = time.time() - t0
+                print('    books step %s: %d/%d  %.2f s/strategy  %.0f min left'
+                      % (stp['name'], k + 1, nstrat, el / (k + 1),
+                         (el / (k + 1)) * (nstrat - k - 1) / 60), flush=True)
+        # --- score each book with the SHIPPED code
+        for bi, (bk, desc) in enumerate(BOOKS):
+            acc = BA.as_accumulator(bi)
+            if acc.nl.sum() + acc.ns.sum() == 0:
+                rows.append(dict(mode=mode, step=stp['name'], book=bk, description=desc,
+                                 members=nstrat, book_empty=1))
+                continue
+            SB = StreamedBook(acc, nstrat)
+            wb = np.ones(nstrat, np.float32)
+            yrs = pd.DatetimeIndex(SB.udays).year.values
+            ybuild = np.isin(yrs, sorted(build_years))
+            ytrade = np.isin(yrs, sorted(trade_years))
+            # the curve is fitted on the BUILD years only
+            curve, _Ctab = W.fit_curve(SB, wb, build_years)
+            d0, den, _b0, _w0, _s0, _f0 = SB.series(wb, curve)
+            for (bname, dipb, dayb) in BUDGETS:
+                # SIZE IS DECIDED ON THE BUILD YEARS AND NOT TOUCHED AGAIN, and
+                # it binds on the WORSE of actual max drawdown and DIP95, then
+                # the worst-day budget (HANDOFF section 3, 9 Sep).
+                sc_, bD, badj, bwd, binds_term = W.scale_of(d0[ybuild], dipb, dayb)
+                per_unit = sc_ / den
+                d1, _den2, capbinds, worst, _sz, _f = SB.series(
+                    wb, curve, cap_pct=W.CAP_PCT, per_unit=per_unit, den=den)
+                xb = d1[ybuild] * sc_
+                xt = d1[ytrade] * sc_
+                kb = W.kpis(xb, yrs[ybuild])
+                kt = W.kpis(xt, yrs[ytrade])
+                ret = (kt['median_year_pct'] / kb['median_year_pct']
+                       if kb['median_year_pct'] else np.nan)
+                rows.append(dict(
+                    mode=mode, step=stp['name'], book=bk, description=desc,
+                    budget=bname, dip_budget=dipb, day_budget=dayb, members=nstrat,
+                    size_scale=sc_, scale_binds=binds_term, cap_pct=W.CAP_PCT,
+                    build_dip95_pct=bD * sc_, build_max_dd_pct=badj * sc_,
+                    build_worst_day_pct=bwd * sc_,
+                    build_median_year_pct=kb['median_year_pct'],
+                    trade_median_year_pct=kt['median_year_pct'],
+                    trade_worst_year_pct=kt['worst_year_pct'],
+                    trade_total_pct=kt['total_return_pct'],
+                    trade_max_dd_pct=kt['max_dd_pct'], trade_dip95_pct=kt['dip95_pct'],
+                    trade_profit_factor=kt['profit_factor'], trade_sortino=kt['sortino'],
+                    trade_calmar=kt['calmar'], trade_win_rate_pct=kt['win_rate_pct'],
+                    trading_days=kt['trading_days'], den=den,
+                    cap_bound_days=capbinds, worst_ccy_exposure=worst,
+                    retention=ret, FIT=int(np.isfinite(ret) and ret < 0.20), book_empty=0))
+        del BA
+    D = pd.DataFrame(rows)
+    ot = out_tag or ('n%d' % nstrat if n else 'full')
+    outp = os.path.join(ROOTOUT, 'r2gate2', 'modeA_books_%s.csv' % ot) if mode == 'A' \
+        else os.path.join(ROOTOUT, 'r2gate2', 'mode%s_books_%s.csv' % (mode, ot))
+    os.makedirs(os.path.dirname(outp), exist_ok=True)
+    D.to_csv(outp, index=False)
+    print('  books: %d rows -> %s' % (len(D), outp.replace(_R + '/', '')), flush=True)
+    return D, outp
+
+
 def stage_prove(mode='A', n=6, seed=11):
     """THE STREAMED BOOK EQUALS THE LOADED BOOK.
 
@@ -652,5 +784,8 @@ if __name__ == '__main__':
         stage_prove(mode, n=G.opt('--n', int, 6))
     elif stage == 'prove_series':
         stage_prove_series(mode, n=G.opt('--n', int, 5))
+    elif stage == 'books':
+        stage_books(mode, G.opt('--tag', str, 'full'), n=G.opt('--n', int, None),
+                    out_tag=G.opt('--out-tag', str, None))
     else:
         raise SystemExit('unknown stage %s' % stage)
