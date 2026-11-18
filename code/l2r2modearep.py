@@ -70,7 +70,7 @@ def build(mode='A', out=None, tag='full'):
     P = {k: src(v) for k, v in F.items()}
     L = []
     A = L.append
-    A('# MODE A — THE HONEST GATE 2, ALL 273,780 STRATEGIES\n')
+    A('# MODE %s — THE HONEST GATE 2, ALL 273,780 STRATEGIES\n' % mode)
     A('Generated %s by `code/l2r2modearep.py`. **Every number below was read out of a '
       'file in this run and the file is named beside it.** A section whose source is '
       'missing says so and is left empty.\n' % time.strftime('%F %H:%M'))
@@ -134,7 +134,7 @@ def build(mode='A', out=None, tag='full'):
                'trade_median_year_pct', 'trade_dip95_pct', 'trade_max_dd_pct',
                'trade_profit_factor', 'retention', 'FIT']))
     else:
-        A('_`modeA_books_full.csv` is absent; this section is empty._\n')
+        A('_`mode%s_books_full.csv` is absent; this section is empty._\n' % mode)
 
     A('\n## THE THREE NULLS\n')
     if P['nulls']:
@@ -153,7 +153,7 @@ def build(mode='A', out=None, tag='full'):
                 values='p_one_sided').reset_index()
             A(tbl(sp, list(sp.columns)))
     else:
-        A('_`modeA_books_nulls.csv` is absent; this section is empty._\n')
+        A('_`mode%s_books_nulls.csv` is absent; this section is empty._\n' % mode)
 
     A('\n## THE BLIND GRADE — reported, never used\n')
     if P['grade']:
@@ -164,7 +164,7 @@ def build(mode='A', out=None, tag='full'):
                    'trade_R_graded_pass', 'trade_R_graded_fail',
                    'spearman_grade_to_trade', 'p']))
     else:
-        A('_`modeA_books_blindgrade.csv` is absent; this section is empty._\n')
+        A('_`mode%s_books_blindgrade.csv` is absent; this section is empty._\n' % mode)
 
     A('\n## THE TWO LAYER 1 SPLITS — reported, gate nothing\n')
     if P['splits']:
@@ -176,7 +176,7 @@ def build(mode='A', out=None, tag='full'):
                 + ['total_R', 'mean_R_per_mark', 'mark_rows']
             A(tbl(g, cols))
     else:
-        A('_`modeA_books_layer1splits.csv` is absent; this section is empty._\n')
+        A('_`mode%s_books_layer1splits.csv` is absent; this section is empty._\n' % mode)
 
     A('\n## WHAT GATE 1 SAID, for context\n')
     if P['gate1']:
@@ -199,7 +199,7 @@ def build(mode='A', out=None, tag='full'):
       'from memory.\n')
 
     txt = '\n'.join(L)
-    out = out or os.path.join(RD, 'MODEA_REPORT.md')
+    out = out or os.path.join(RD, 'MODE%s_REPORT.md' % mode)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     open(out, 'w').write(txt)
     print('  report: %d lines, %d sources present, %d missing -> %s'

@@ -134,15 +134,101 @@ def layer1_splits(mode='A', tag='full', nsample=4000, seed=20261118):
     return qt, et
 
 
+def episode_splits(mode='A', tag='full', nsample=4000, seed=20261118):
+    """ONE EPISODE, ONE OBSERVATION -- both splits, done properly.
+
+    THE DEFECT THIS FIXES IS MINE. The first version counted MARK ROWS: 2,464,696
+    high against 4,320,044 low, which weights a long episode more than a short
+    one and is not comparable to LAYER1_INTERFACE.md section 4's episode rates
+    (54.5% high, n=110; 38.3% low, n=188). Section 4 is a claim about EPISODES,
+    so the test has to be too.
+
+    Each trend_episode_id contributes exactly one observation: the sum of the
+    routed-trend marks that fall inside it, and its own quality_tag. The
+    episode-third split is then computed INSIDE each episode and averaged across
+    episodes, so a 60-bar episode and a 6-bar episode count the same.
+    """
+    import l2r2book as BK
+    S.load_costs()
+    q = _quality()
+    qk = q.set_index(['pair', 'date'])
+    opts = S.mode_opts(S.slot_options(), mode)
+    rng = np.random.default_rng(seed)
+    idxs = sorted(rng.choice(S.n_combos(opts), size=min(nsample, S.n_combos(opts)),
+                             replace=False).tolist())
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    TG = z['tag']; CB = z['combo']
+    Y = G2.Years(cap=30000)
+    ST = G2.steps()
+    ep_rows, th_rows = [], []
+    for si, stp in enumerate(ST):
+        years = set(range(stp['trade'][0], stp['trade'][1] + 1))
+        for k in idxs:
+            ci = int(TG[k, 0, si])              # trend-routed
+            if ci < 0:
+                continue
+            combo = tuple(CB[k])
+            ip, risk = BK.winner_config(mode, combo, 'trend', ci)
+            pr, dy, dr, mk, lab, tid = BK.marks_of(
+                Y, mode, combo, ip, risk, 'trend', 2, S.REGIME_CODE['trending'], years)
+            if not len(pr):
+                continue
+            d = pd.DataFrame(dict(pair=pr, day=pd.to_datetime(dy), mark=mk, lab=lab))
+            d = d[d.lab == S.REGIME_CODE['trending']]
+            if not len(d):
+                continue
+            j = d.join(qk[['quality_tag', 'trend_episode_id']], on=['pair', 'day'])
+            j = j[j.trend_episode_id.notna()]
+            if not len(j):
+                continue
+            # ONE ROW PER EPISODE for this strategy-step
+            g = j.groupby('trend_episode_id')
+            ep = g.mark.sum().rename('episode_R').to_frame()
+            ep['quality_tag'] = g.quality_tag.first()
+            ep['bars'] = g.size()
+            ep['step'] = stp['name']
+            ep_rows.append(ep.reset_index())
+            # thirds WITHIN each episode, then one row per (episode, third)
+            jj = j.sort_values(['trend_episode_id', 'day']).copy()
+            jj['r'] = jj.groupby('trend_episode_id').cumcount()
+            jj['n'] = jj.groupby('trend_episode_id').trend_episode_id.transform('size')
+            jj['third'] = np.where(jj.r < jj.n / 3, 'first',
+                                   np.where(jj.r < 2 * jj.n / 3, 'middle', 'last'))
+            t = jj.groupby(['trend_episode_id', 'third']).mark.sum().rename('third_R').reset_index()
+            t['step'] = stp['name']
+            th_rows.append(t)
+    if not ep_rows:
+        return pd.DataFrame(), pd.DataFrame()
+    E = pd.concat(ep_rows, ignore_index=True)
+    T = pd.concat(th_rows, ignore_index=True)
+    # ---- the episode table: one episode one observation
+    qt = (E.groupby(['step', 'quality_tag'], dropna=False)
+          .agg(episodes=('episode_R', 'size'), mean_R_per_episode=('episode_R', 'mean'),
+               median_R_per_episode=('episode_R', 'median'),
+               share_positive_pct=('episode_R', lambda x: 100.0 * float((x > 0).mean())),
+               total_R=('episode_R', 'sum'), mean_bars=('bars', 'mean')).reset_index())
+    qt['split'] = 'quality_tag_by_episode'
+    qt['scope'] = 'routed trend, mode %s, sample %d strategies' % (mode, nsample)
+    # ---- the thirds table: each episode contributes equally
+    th = (T.groupby(['step', 'third'])
+          .agg(episode_thirds=('third_R', 'size'), mean_R_per_episode_third=('third_R', 'mean'),
+               share_positive_pct=('third_R', lambda x: 100.0 * float((x > 0).mean())),
+               total_R=('third_R', 'sum')).reset_index())
+    th['split'] = 'episode_third_by_episode'
+    th['scope'] = 'routed trend, mode %s, sample %d strategies' % (mode, nsample)
+    return qt, th
+
+
 def stage_grade(mode='A', tag='full', nsample=4000):
     B = blind_grade(mode, tag)
     bo = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_books_blindgrade.csv' % mode)
     B.to_csv(bo, index=False)
     print('  blind grade: %d rows -> %s' % (len(B), bo.replace(_R + '/', '')), flush=True)
     qt, et = layer1_splits(mode, tag, nsample=nsample)
+    eq, eth = episode_splits(mode, tag, nsample=nsample)
     so = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_books_layer1splits.csv' % mode)
-    Sp = pd.concat([x for x in (qt, et) if len(x)], ignore_index=True) if (len(qt) or len(et)) \
-        else pd.DataFrame()
+    parts = [x for x in (qt, et, eq, eth) if len(x)]
+    Sp = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
     Sp.to_csv(so, index=False)
     print('  layer 1 splits: %d rows -> %s' % (len(Sp), so.replace(_R + '/', '')), flush=True)
     return B, Sp, bo, so

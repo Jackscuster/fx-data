@@ -655,7 +655,11 @@ def run(mode, combos, tag, jobs=6, cap=900, nshard=None):
     print('  CONDITION 1: worst |sum of a trade per-year marks - its R| = %.3g' % worst, flush=True)
     assert worst < 1e-9, 'CONDITION 1 FAILED: year-split marks do not reconstruct trade R (%.3g)' % worst
     sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
-    nb = len(load(mode, tag)[1]) if done == 0 else done     # a resumed run did 0; size against what IS banked
+    # SIZE AGAINST WHAT IS BANKED, NOT WHAT THIS RUN COMPUTED. A resumed run that
+    # computed 3,070 of 273,780 divided the whole 1,252.9 MB directory by 3,070 and
+    # printed "417.92 kB each -> 109.12 GB for all of mode B", which is 89x the
+    # truth and exactly the kind of number that gets quoted later.
+    nb = len(load(mode, tag)[1])
     print('  bank: %.1f MB compressed for %d strategies = %.2f kB each -> %.2f GB for all %s of mode %s'
           % (sz / 1024 ** 2, nb, sz / max(nb, 1) / 1024,
              sz / max(nb, 1) * S.n_combos(S.mode_opts(S.slot_options(), mode)) / 1024 ** 3,
