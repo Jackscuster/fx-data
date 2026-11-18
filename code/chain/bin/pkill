@@ -1,0 +1,14 @@
+#!/bin/bash
+# GUARD 2 -- pkill REFUSES TO TOUCH CHAIN PROCESSES.
+# Put code/chain/bin first in PATH. Killing a chain by pattern is what
+# orphaned six pool workers on 17 Nov; the group kill in stop_chain.sh cannot.
+for a in "$@"; do
+  case "$a" in
+    *l2r2*|*chainlib*|*l2r2gate2*|*l2r2book*|*l2r2null*|*l2walkfwd*|*l2refit*)
+      echo "pkill: REFUSED -- '$a' matches a chain process." >&2
+      echo "       Use: bash code/chain/stop_chain.sh   (kills the process GROUP and" >&2
+      echo "       verifies zero survivors). pkill by pattern leaves pool workers orphaned." >&2
+      exit 3;;
+  esac
+done
+exec /usr/bin/pkill "$@"
