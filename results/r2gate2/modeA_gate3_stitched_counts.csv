@@ -1,5 +1,5 @@
 mode,stream,n_field,n_clears_stitched,pct_of_field
-A,trend-routed,200,0,0.0
-A,trend-allon,200,0,0.0
-A,chop-routed,200,0,0.0
-A,chop-allon,200,0,0.0
+A,trend-routed,8,0,0.0
+A,trend-allon,8,0,0.0
+A,chop-routed,8,0,0.0
+A,chop-allon,8,0,0.0
