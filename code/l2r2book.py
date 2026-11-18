@@ -160,7 +160,10 @@ def marks_of(Y, mode, combo, ip, risk, sname, plan, code, years):
             d = float(b['dir'][j]); u = float(b['units'][j]); px = float(b['entry_px'][j])
             tot = float(b['r'][j]) * am
             prev = 0.0
-            rt = int(reg[e] == code)
+            # THE ENTRY BAR'S LAYER 1 LABEL CODE, not a slice-specific boolean.
+            # All four book variants are masks on this one number, so one engine
+            # pass serves every book instead of four.
+            lab = int(reg[e])
             for bar in range(e, x + 1):
                 if yb[bar] < 0 or (G2.YEAR0 + yb[bar]) not in years:
                     prev = tot if bar == x else d * (cl[bar] - px) * u / S.RISK * am
@@ -169,10 +172,38 @@ def marks_of(Y, mode, combo, ip, risk, sname, plan, code, years):
                 inc = cum - prev - (cst[j] if bar == e else 0.0)
                 prev = cum
                 out_p.append(p); out_d.append(dates[bar]); out_dir.append(d)
-                out_mk.append(inc); out_rt.append(rt); out_tid.append(tid)
+                out_mk.append(inc); out_rt.append(lab); out_tid.append(tid)
     return (np.array(out_p), np.array(out_d), np.array(out_dir, np.float64),
             np.array(out_mk, np.float64), np.array(out_rt, np.int64),
             np.array(out_tid, np.int64))
+
+
+# ==========================================================================
+# THE FOUR BOOKS AS MASKS ON THE ENTRY BAR'S LABEL (HANDOFF 0f)
+# ==========================================================================
+RANGING = S.REGIME_CODE['ranging']
+TRENDING = S.REGIME_CODE['trending']
+
+
+def book_mask(book, sname, lab):
+    """Which mark rows this book keeps, from the entry bar's label code.
+
+    Unlabelled bars carry -1 and are never invented into a regime: 96.3% of
+    OANDA bars carry a Layer 1 label and the rest are calendar mismatches
+    against the H.10 panel the labels were built on (LAYER1_INTERFACE.md 2).
+    They are kept only by the always-on book, which is what always-on means.
+    """
+    if book == 'allon':
+        return np.ones(len(lab), bool)
+    if sname == 'chop':
+        return lab == RANGING                     # every gated book: chop is RANGING
+    if book == 'chop_trend':
+        return lab == TRENDING
+    if book == 'chop_ungated':
+        return np.ones(len(lab), bool)            # trend ungated
+    if book == 'chop_notrange':
+        return lab != RANGING                     # NOT-RANGING, which admits the residual cells
+    raise SystemExit('unknown book %r' % book)
 
 
 class _Vec:
