@@ -542,7 +542,116 @@ def split_keeptabs(sname):
     return allon, gated
 
 
-def stage_books(mode='A', tag='full', n=None, jobs=1, out_tag=None):
+def _bank_slice_file(mode, tag):
+    """One compact file the book workers read instead of each loading the whole
+    gate 2 bank: strategy index, the 20 winning configuration indices, and the
+    five slot names. ~50 MB against a ~900 MB pickle per worker."""
+    f = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_%s_bookinput.npz' % (mode, tag))
+    if not os.path.exists(f):
+        Wn, TG, CB, TS, bankdir = G2.load(mode, tag)
+        np.savez(f, tag=TG, combo=np.array([[str(x) for x in r] for r in CB], dtype=object),
+                 n=np.int64(len(TG)))
+        print('  book input written: %s strategies -> %s'
+              % (f'{len(TG):,}', os.path.basename(f)), flush=True)
+    return f
+
+
+def _books_worker(args):
+    """Accumulate one contiguous block of strategies into one step's books.
+
+    Checkpointed on the five-minute clock: the part file holds the four sums of
+    every book plus the strategy indices already folded in, so a restart
+    resumes by set difference and never double-counts a strategy.
+    """
+    shard, nshard, mode, tag, si, outdir, cap, nmax = args
+    S.load_costs()
+    z = np.load(_bank_slice_file(mode, tag), allow_pickle=True)
+    TG = z['tag']; CB = z['combo']
+    nstrat = int(z['n']) if nmax is None else min(int(z['n']), nmax)
+    lo = shard * nstrat // nshard
+    hi = (shard + 1) * nstrat // nshard
+    stp = G2.steps()[si]
+    build_years = set(range(stp['tune'][0], stp['grade'][1] + 1))
+    trade_years = set(range(stp['trade'][0], stp['trade'][1] + 1))
+    Y = G2.Years(cap=cap)
+    aidx, adays = year_dayidx(Y, build_years | trade_years)
+    BA = BookArrays(Y.sc.pairs, adays)
+    pf = os.path.join(outdir, 'books_s%d_%04d.npz' % (si, shard))
+    done = set()
+    if os.path.exists(pf):
+        try:
+            zz = np.load(pf, allow_pickle=True)
+            BA.NL, BA.NS, BA.SL, BA.SS = zz['NL'], zz['NS'], zz['SL'], zz['SS']
+            BA.n_members = zz['nm']
+            done = set(int(x) for x in zz['idx'])
+            print('    books s%d shard %02d: resuming, %d of %d already folded in'
+                  % (si, shard, len(done), hi - lo), flush=True)
+        except Exception as e:
+            print('    books s%d shard %02d: part unreadable (%s), restarting it'
+                  % (si, shard, type(e).__name__), flush=True)
+            done = set()
+
+    def _flush(ids):
+        tmp = pf + '.tmp.npz'
+        np.savez(tmp, NL=BA.NL, NS=BA.NS, SL=BA.SL, SS=BA.SS,
+                 nm=BA.n_members, idx=np.array(sorted(ids), np.int64),
+                 si=np.int64(si), shard=np.int64(shard))
+        os.replace(tmp, pf)
+
+    todo = [k for k in range(lo, hi) if k not in done]
+    if not todo:
+        # NOTHING TO ADD, SO NOTHING TO WRITE. The first version flushed
+        # unconditionally, which rewrote an identical file with a new mtime --
+        # harmless to the numbers, but it made "did the resume skip the work?"
+        # unanswerable from outside, and the end-to-end test could not tell a
+        # real recomputation from a no-op rewrite.
+        print('    books s%d shard %02d: complete on disk, nothing recomputed' % (si, shard), flush=True)
+        return (pf, 0)
+    t0 = time.time(); last = time.time()
+    every = l2ckpt.CKPT_SECONDS
+    for j, k in enumerate(todo, 1):
+        combo = tuple(CB[k])
+        for sl, (sname, plan, _code) in enumerate(S.SLICES):
+            allon_tab, gated_tab = split_keeptabs(sname)
+            for rt, tabv in ((1, allon_tab), (0, gated_tab)):
+                ci = int(TG[k, 2 * sl + rt, si])
+                if ci < 0:
+                    continue
+                ip, risk = winner_config(mode, combo, sname, ci)
+                accumulate_strategy(Y, mode, combo, ip, risk, sname, plan, aidx, BA, tabv)
+        for bi in range(len(BOOKS)):
+            BA.n_members[bi] += 1
+        done.add(k)
+        if time.time() - last >= every:
+            _flush(done); last = time.time()
+            print('    ckpt books s%d shard %02d: %d folded in (%.0f s held, cap %d)'
+                  % (si, shard, len(done), every, every), flush=True)
+        if j % 50 == 0:
+            el = time.time() - t0
+            print('    books s%d shard %02d: %d/%d  %.2f s/strategy  %.0f min left'
+                  % (si, shard, j, len(todo), el / j, (el / j) * (len(todo) - j) / 60), flush=True)
+    _flush(done)
+    return (pf, len(todo))
+
+
+def _sum_parts(outdir, si, nshard, pairs, days):
+    """Sum the shards' partial books. The member count is summed too, because
+    equal weight means w.sum() is the member count and the vote fraction is
+    |net| / members."""
+    BA = BookArrays(pairs, days)
+    seen = set()
+    for shard in range(nshard):
+        f = os.path.join(outdir, 'books_s%d_%04d.npz' % (si, shard))
+        z = np.load(f, allow_pickle=True)
+        BA.NL += z['NL']; BA.NS += z['NS']; BA.SL += z['SL']; BA.SS += z['SS']
+        BA.n_members += z['nm']
+        ids = set(int(x) for x in z['idx'])
+        assert not (ids & seen), 'shard %d overlaps an earlier shard -- a strategy would be double-counted' % shard
+        seen |= ids
+    return BA, seen
+
+
+def stage_books(mode='A', tag='full', n=None, jobs=8, out_tag=None):
     """THE FOUR BOOKS, STREAMED, over the five stitched trade years.
 
     One engine pass per (strategy, slice, stream, step); the bars are walked
@@ -552,14 +661,17 @@ def stage_books(mode='A', tag='full', n=None, jobs=1, out_tag=None):
     """
     G.manifest_check()
     S.load_costs()
-    Wn, TG, CB, TS, bankdir = G2.load(mode, tag)
-    if n:
-        Wn, TG, CB, TS = Wn[:n], TG[:n], CB[:n], TS[:n]
-    nstrat = len(TG)
-    print('  books: %s strategies from %s' % (f'{nstrat:,}', os.path.basename(bankdir)), flush=True)
+    z = np.load(_bank_slice_file(mode, tag), allow_pickle=True)
+    nstrat = int(z['n']) if not n else min(int(z['n']), n)
+    print('  books: %s strategies from mode%s_%s' % (f'{nstrat:,}', mode, tag), flush=True)
+    del z
     Y = G2.Years(cap=30000)
     ST = G2.steps()
+    partdir = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_bookparts_%s' % (mode, out_tag or 'full'))
+    os.makedirs(partdir, exist_ok=True)
+    _bank_slice_file(mode, tag)
     rows = []
+    stage_books.last_computed = 0
     for si, stp in enumerate(ST):
         build_years = set(range(stp['tune'][0], stp['grade'][1] + 1))   # years 1-5
         trade_years = set(range(stp['trade'][0], stp['trade'][1] + 1))  # year 6
@@ -568,26 +680,26 @@ def stage_books(mode='A', tag='full', n=None, jobs=1, out_tag=None):
         # decided on the build years and not touched again, so the two must be
         # the same book or the scale would be fitted to a different object.
         aidx, adays = year_dayidx(Y, build_years | trade_years)
-        BA = BookArrays(Y.sc.pairs, adays)
+        # EIGHT WORKERS, contiguous blocks, checkpointed. The sums are additive,
+        # so the shards are summed in the parent and the result is identical to
+        # one process -- _sum_parts asserts no strategy appears in two shards,
+        # because a double-counted member would change every vote fraction.
+        import multiprocessing as mp
         t0 = time.time()
-        for k in range(nstrat):
-            combo = tuple(CB[k])
-            for sl, (sname, plan, _code) in enumerate(S.SLICES):
-                allon_tab, gated_tab = split_keeptabs(sname)
-                for rt, tabv in ((1, allon_tab), (0, gated_tab)):
-                    stream = 2 * sl + rt
-                    ci = int(TG[k, stream, si])
-                    if ci < 0:
-                        continue      # nothing cleared the trade floor on this step
-                    ip, risk = winner_config(mode, combo, sname, ci)
-                    accumulate_strategy(Y, mode, combo, ip, risk, sname, plan, aidx, BA, tabv)
-            for bi in range(len(BOOKS)):
-                BA.n_members[bi] += 1
-            if (k + 1) % 50 == 0:
-                el = time.time() - t0
-                print('    books step %s: %d/%d  %.2f s/strategy  %.0f min left'
-                      % (stp['name'], k + 1, nstrat, el / (k + 1),
-                         (el / (k + 1)) * (nstrat - k - 1) / 60), flush=True)
+        args = [(k, jobs, mode, tag, si, partdir, 30000, n) for k in range(jobs)]
+        if jobs == 1:
+            res = [_books_worker(a) for a in args]
+        else:
+            with mp.Pool(jobs) as pool:
+                res = pool.map(_books_worker, args)
+        ncomp = sum(r[1] for r in res)
+        stage_books.last_computed = getattr(stage_books, 'last_computed', 0) + ncomp
+        BA, folded = _sum_parts(partdir, si, jobs, Y.sc.pairs, adays)
+        print('    books step %s: %s folded in by %d workers in %.1f min (%s newly computed)'
+              % (stp['name'], f'{len(folded):,}', jobs, (time.time() - t0) / 60,
+                 f'{ncomp:,}'), flush=True)
+        assert len(folded) == nstrat, ('step %s folded %d strategies, expected %d'
+                                       % (stp['name'], len(folded), nstrat))
         # --- score each book with the SHIPPED code
         for bi, (bk, desc) in enumerate(BOOKS):
             acc = BA.as_accumulator(bi)
@@ -777,15 +889,56 @@ def stage_prove(mode='A', n=6, seed=11):
     return D
 
 
+def stage_endtoend(mode='A', tag='full', n=16, jobs=2):
+    """THE ONE-MINUTE END-TO-END TEST FOR THE BOOK CHAIN (HANDOFF section 3).
+
+    Exercises the save and read path before anything expensive runs: the pooled
+    accumulation, the part files, the resume-by-set-difference, the read-back,
+    and the scoring. The gate 2 chain's equivalent found a ragged-save bug that
+    had already cost 2 h 19 min; this one exists so the book chain cannot repeat
+    that.
+    """
+    import shutil, datetime
+    G.manifest_check()
+    S.load_costs()
+    pd1 = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_bookparts_e2e' % mode)
+    if os.path.isdir(pd1):
+        shutil.move(pd1, pd1 + '_prev_' + datetime.datetime.now().strftime('%H%M%S'))
+    t0 = time.time()
+    D1, p1 = stage_books(mode, tag, n=n, jobs=jobs, out_tag='e2e')
+    # --- RESUME: run it again; every part is on disk, nothing may be recomputed
+    D2, _p2 = stage_books(mode, tag, n=n, jobs=jobs, out_tag='e2e')
+    recomputed = int(getattr(stage_books, 'last_computed', -1))
+    num = [c for c in D1.columns if D1[c].dtype.kind in 'if' and c in D2.columns]
+    worst = max((float(np.nanmax(np.abs(D1[c].values - D2[c].values))) for c in num),
+                default=0.0)
+    nb = int((D1.book_empty == 0).sum())
+    print('  BOOK END TO END: %d strategies, %d rows, %d scored books, %d steps x %d books x %d budgets'
+          % (n, len(D1), nb, len(G2.steps()), len(BOOKS), len(BUDGETS)), flush=True)
+    print('  RESUME: second run recomputed %d of %d strategy-steps; the two runs agree to %.3g'
+          % (recomputed, n * len(G2.steps()), worst), flush=True)
+    print('  took %.0f s' % (time.time() - t0), flush=True)
+    assert len(D1) == len(G2.steps()) * len(BOOKS) * len(BUDGETS), 'wrong row count'
+    assert nb > 0, 'every book came out empty -- the accumulation wrote nothing'
+    assert worst < 1e-12, 'the resumed run does not match the first'
+    assert recomputed == 0, ('the resumed run recomputed %d strategy-steps that were already '
+                             'on disk' % recomputed)
+    print('BOOK END TO END COMPLETE', flush=True)
+    return True
+
+
 if __name__ == '__main__':
     stage = G.opt('--stage', str, 'prove')
     mode = G.opt('--mode', str, 'A')
-    if stage == 'prove':
+    if stage == 'endtoend':
+        stage_endtoend(mode, G.opt('--tag', str, 'full'), n=G.opt('--n', int, 16),
+                       jobs=G.opt('--jobs', int, 2))
+    elif stage == 'prove':
         stage_prove(mode, n=G.opt('--n', int, 6))
     elif stage == 'prove_series':
         stage_prove_series(mode, n=G.opt('--n', int, 5))
     elif stage == 'books':
         stage_books(mode, G.opt('--tag', str, 'full'), n=G.opt('--n', int, None),
-                    out_tag=G.opt('--out-tag', str, None))
+                    jobs=G.opt('--jobs', int, 8), out_tag=G.opt('--out-tag', str, None))
     else:
         raise SystemExit('unknown stage %s' % stage)
