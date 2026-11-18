@@ -200,9 +200,19 @@ def book_mask(book, sname, lab):
     if book == 'chop_trend':
         return lab == TRENDING
     if book == 'chop_ungated':
-        return np.ones(len(lab), bool)            # trend ungated
+        # UNGATED means no regime gate on the trend leg at all, unlabelled bars
+        # included -- that is what "ungated" says, and it is the point of having
+        # this book beside the gated one.
+        return np.ones(len(lab), bool)
     if book == 'chop_notrange':
-        return lab != RANGING                     # NOT-RANGING, which admits the residual cells
+        # NOT-RANGING is a POSITIVE claim about the label, so it cannot be
+        # asserted of a bar that has no label. Unlabelled bars (-1) are excluded
+        # here and kept only by the always-on book: LAYER1_INTERFACE.md 2 says
+        # the 3.7% of OANDA bars with no label are calendar mismatches, and
+        # inventing a regime for them would put trades in a state nobody
+        # measured. The residual cells trend-in-range and neither ARE admitted,
+        # because they are measured labels that merely are not "ranging".
+        return (lab >= 0) & (lab != RANGING)
     raise SystemExit('unknown book %r' % book)
 
 
@@ -342,6 +352,155 @@ def stage_prove_series(mode='A', n=5):
           % (float(D.max_abs_daily_diff.max()), os.path.basename(out)), flush=True)
     assert len(D) and bool(D.within_float32.all()), 'THE STREAMED BOOK SCORES DIFFERENTLY'
     return D
+
+
+from numba import njit
+
+
+@njit(cache=False)
+def _book_acc(nt, eb, xb, dirv, epx, units, rtot, cst, am, risk,
+              cl, dayidx, lab_arr, pair_off, keeptab, NL, NS, SL, SS):
+    """Accumulate one (pair, configuration) straight into the book arrays.
+
+    No mark rows are ever materialised: at 273,780 strategies x 20 picks a
+    python mark table is hundreds of millions of rows, and that is the whole
+    reason the book stage could not be run the way 0f ran it at 45,139.
+
+    THE VOTE-TIMING RULE IS INSIDE THE KERNEL (HANDOFF section 3, 15 Sep).
+    A position may not vote on its fill day: the voted rows are e+1..x, the
+    fill day's increment is CARRIED into the first voted row, and a trade that
+    fills and closes on the same day has no day of exposure, no vote, and its
+    cost is dropped -- exactly what l2walkfwd.vote_from_next_day does to a
+    mark table, done here without building one.
+
+    `keeptab[book, label+1]` is the routing mask of each book; a trade is kept
+    or skipped per book on its ENTRY bar's label, and the bars are walked once
+    for all books that keep it.
+    """
+    nbook = keeptab.shape[0]
+    for j in range(nt):
+        e = eb[j]
+        x = xb[j]
+        if x < 0 or x <= e:          # x == e: filled and closed same day, no vote
+            continue
+        lab = lab_arr[e] + 1
+        any_book = False
+        for b in range(nbook):
+            if keeptab[b, lab] != 0:
+                any_book = True
+                break
+        if not any_book:
+            continue
+        d = dirv[j]
+        u = units[j]
+        px = epx[j]
+        tot = rtot[j] * am
+        prev = 0.0
+        carry = 0.0
+        for bar in range(e, x + 1):
+            if bar == x:
+                cum = tot
+            else:
+                cum = d * (cl[bar] - px) * u / risk * am
+            inc = cum - prev
+            if bar == e:
+                inc -= cst[j]
+            prev = cum
+            if bar == e:
+                carry = inc          # the fill day does not vote; its mark rides forward
+                continue
+            v = inc + carry
+            carry = 0.0
+            di = dayidx[bar]
+            if di < 0:
+                continue             # outside this step's trade year
+            row = pair_off + di
+            for b in range(nbook):
+                if keeptab[b, lab] == 0:
+                    continue
+                if d > 0.0:
+                    NL[b, row] += 1.0
+                    SL[b, row] += v
+                else:
+                    NS[b, row] += 1.0
+                    SS[b, row] += v
+
+
+def keep_table(sname):
+    """(n_books, 5) mask indexed by label+1: -1 unlabelled, 0 trending,
+    1 ranging, 2 trend-in-range, 3 neither."""
+    tab = np.zeros((len(BOOKS), 5), np.int8)
+    for bi, (bk, _d) in enumerate(BOOKS):
+        for lab in (-1, 0, 1, 2, 3):
+            m = book_mask(bk, sname, np.array([lab]))
+            tab[bi, lab + 1] = 1 if bool(m[0]) else 0
+    return tab
+
+
+class BookArrays:
+    """The four per-(pair, day) sums for every book, over one step's trade year."""
+
+    def __init__(self, pairs, days):
+        self.pairs = list(pairs)
+        self.poff = {p: i * len(days) for i, p in enumerate(self.pairs)}
+        self.days = pd.DatetimeIndex(days)
+        n = len(self.pairs) * len(self.days)
+        self.NL = np.zeros((len(BOOKS), n), np.float64)
+        self.NS = np.zeros((len(BOOKS), n), np.float64)
+        self.SL = np.zeros((len(BOOKS), n), np.float64)
+        self.SS = np.zeros((len(BOOKS), n), np.float64)
+        self.n_members = np.zeros(len(BOOKS), np.int64)
+
+    def as_accumulator(self, bi):
+        a = NetAccumulator(self.pairs, self.days.values)
+        a.nl = self.NL[bi]; a.ns = self.NS[bi]
+        a.sl = self.SL[bi]; a.ss = self.SS[bi]
+        a.n_members = int(self.n_members[bi])
+        return a
+
+
+def accumulate_strategy(Y, mode, combo, ip, risk, sname, plan, years_idx, BA, keeptab):
+    """One tuned configuration into BookArrays, for the bars in `years_idx`.
+
+    `years_idx` maps a bar to its day index inside the step's trade year, or -1.
+    """
+    sc = Y.sc
+    c1, c2, vol, base, ex = combo
+    kwm = S.mode_kw(mode)
+    am = float(risk['atr_mult']); alen = int(risk['atr_len'])
+    import l2lib as L, l2engine as E
+    t1 = L.KIND[c1] == 'TERNARY'; t2 = L.KIND[c2] == 'TERNARY'
+    for p in sc.pairs:
+        o, h, l, c = sc.arr[p]
+        atr = sc._atr.get((alen, p))
+        if atr is None:
+            atr = L.P.atr(h, l, c, alen); sc._atr[(alen, p)] = atr
+        g = sc.cache.get
+        lt, st, lc, scr = g(c1, ip['c1'], p, sc.arr[p])[:4]
+        _, _, c2lc, c2sc = g(c2, ip['c2'], p, sc.arr[p])[:4]
+        vl, vs = g(vol, ip['vol'], p, sc.arr[p])[:2]
+        bl = g(base, ip['base'], p, sc.arr[p])
+        bl = bl[0] if isinstance(bl, tuple) else bl
+        el, es = g(ex, ip['exit_ind'], p, sc.arr[p])[:2]
+        b = sc.buf[p]
+        nt, _, _, _ = E.run_bars(
+            o, h, l, c, atr, bl, lt, st, lc, scr, c2lc, c2sc, vl, vs, el, es,
+            sc._nosus[p], t1, t2, True, True, True,
+            kwm['exit_on_c1_flip'], kwm['exit_on_base_cross'], kwm['exit_on_exit_ind'],
+            False, int(plan), S.RISK, am, float(risk['tp_mult']),
+            float(risk['trail_mult']), float(risk['trail_arm']), float(risk['be_pct']),
+            1.5, 7, True, True,
+            b['entry_bar'], b['exit_bar'], b['dir'], b['leg'], b['entry_px'],
+            b['exit_px'], b['units'], b['r'], b['reason'], b['route'])
+        if nt == 0:
+            continue
+        eb = b['entry_bar'][:nt]
+        cst = (Y.cfrac[p] * Y.cmult[p][eb] * np.abs(b['entry_px'][:nt])
+               * np.abs(b['units'][:nt]) / S.RISK) * am
+        _book_acc(nt, eb, b['exit_bar'][:nt], b['dir'][:nt].astype(np.float64),
+                  b['entry_px'][:nt], b['units'][:nt], b['r'][:nt], cst, am, S.RISK,
+                  Y.cl[p], years_idx[p], sc.reg[p].astype(np.int64),
+                  BA.poff[p], keeptab, BA.NL, BA.NS, BA.SL, BA.SS)
 
 
 def winner_config(mode, combo, sname, ci):
