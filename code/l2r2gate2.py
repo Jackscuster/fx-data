@@ -974,7 +974,8 @@ if __name__ == '__main__':
         else:
             combos = G.stratified(opts, n)
             print('  stratified %d of %s mode %s strategies' % (len(combos), f'{total:,}', mode), flush=True)
-        outdir, res = run(mode, combos, tag, jobs=jobs, cap=G.opt('--cap', int, 900))
+        outdir, res = run(mode, combos, tag, jobs=jobs, cap=G.opt('--cap', int, 900),
+                          nshard=G.opt('--nshard', int, None))
         sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
         done = sum(r['n'] for r in res) or len(combos)
         wall = max(r['seconds'] for r in res)
