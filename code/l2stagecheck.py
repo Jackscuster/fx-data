@@ -80,13 +80,20 @@ def chain_guard(driver):
     import l2ckpt
     ok, bad = l2ckpt.check_driver(driver)
     if ok:
-        stages, decls, needs = l2ckpt.parse_driver(driver)
-        print('  chain guard OK: %s, %d stages; every one declares its checkpoint interval '
-              'and its dependencies' % (os.path.basename(driver), len(stages)), flush=True)
+        stages, decls, needs, disk, eta, deliv = l2ckpt.parse_driver(driver)
+        import subprocess
+        h = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=_R,
+                           capture_output=True, text=True).stdout.strip()[:12]
+        print('  chain guard OK: %s, %d stages; checkpoint interval, dependencies and disk '
+              'declared for every one' % (os.path.basename(driver), len(stages)), flush=True)
+        print('  COMMIT %s   deliverable %s   eta %d min'
+              % (h, deliv, eta), flush=True)
+        print('     %-22s %6s %7s  %-26s %s' % ('stage', 'ckpt', 'disk', 'needs', 'why'), flush=True)
         for st in stages:
             sec, why = decls[st]
             dep = ', '.join(needs.get(st, [])) or 'none'
-            print('     %-22s %4d s  needs: %-24s %s' % (st, sec, dep, why or ''), flush=True)
+            print('     %-22s %4d s %5.1f GB  %-26s %s'
+                  % (st, sec, disk.get(st, 0.0), dep, why or ''), flush=True)
         return True
     halt('chain:' + os.path.basename(driver),
          'THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:\n  - '
