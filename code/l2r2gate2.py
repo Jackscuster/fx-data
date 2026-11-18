@@ -519,11 +519,102 @@ def _worker(args):
                 parts=ck.n_parts_written)
 
 
+def banked_idx(mode, tag):
+    """Every strategy index already on disk for this tag."""
+    d = out_dir(mode, tag)
+    done = set()
+    for f in glob.glob(os.path.join(d, 'shard_*_part*.npz')):
+        try:
+            done.update(int(x) for x in np.load(f, allow_pickle=True)['idx'])
+        except Exception as e:
+            print('  bank: %s unreadable (%s)' % (os.path.basename(f), type(e).__name__), flush=True)
+    return done
+
+
+def _fill_worker(args):
+    """Bank an explicit list of strategy indices. Used to fill a straggling
+    shard's tail from the other end with the cores that would otherwise idle."""
+    wid, njobs, mode, combos, idxs, outdir, cap, prefix = args
+    S.load_costs()
+    mine = [i for n, i in enumerate(idxs) if n % njobs == wid]
+    state = dict(worst=0.0, hits=0, misses=0)
+
+    def _save(path, ids, rows):
+        _save_part(path, [r[0] for r in rows], ids, [r[1] for r in rows],
+                   state['worst'], state['hits'], state['misses'])
+
+    ck = l2ckpt.Checkpointer(outdir, '%s_%04d' % (prefix, wid), save=_save)
+    done = ck.completed()
+    todo = [i for i in mine if i not in done]
+    if not todo:
+        return dict(worker=wid, n=0, skipped=True)
+    Y = Years(cap=cap)
+    t0 = time.time()
+    every = l2ckpt.CKPT_SECONDS
+    for k, i in enumerate(todo, 1):
+        cb = combos[i]
+        res = tune_one_strategy(
+            Y, mode, cb,
+            on_tick=lambda stt: ck.tick(), tick_every=every)
+        state['worst'] = Y.worst_cond1
+        state['hits'] = Y.sc.cache.hits
+        state['misses'] = Y.sc.cache.misses
+        ck.add(i, (res, cb))
+        if k % 25 == 0:
+            el = time.time() - t0
+            print('    fill %02d: %5d/%5d  %.2f s/strategy  %.0f min left'
+                  % (wid, k, len(todo), el / k, (el / k) * (len(todo) - k) / 60), flush=True)
+    ck.flush()
+    return dict(worker=wid, n=len(todo), skipped=False, seconds=time.time() - t0)
+
+
+def stage_fill(mode, tag, jobs=6, cap=30000, wait_for_free=0):
+    """FILL WHATEVER IS MISSING FROM A TAG, from the end backwards.
+
+    A straggling shard cannot be sped up from outside -- its worker fixed its
+    own to-do list when it started -- but the BANK can be completed by someone
+    else, and the bank is what the next stage waits on. Working backwards means
+    the overlap with the straggler is bounded by where they meet.
+    """
+    G.manifest_check()
+    S.load_costs()
+    opts = S.mode_opts(S.slot_options(), mode)
+    combos = list(S.combo_iter(opts))
+    if wait_for_free:
+        # do not oversubscribe: wait until the running pool has shrunk
+        import subprocess
+        while True:
+            n = len(subprocess.run(['pgrep', '-f', 'l2r2gate2.py --stage run'],
+                                   capture_output=True, text=True).stdout.split())
+            if n <= wait_for_free:
+                break
+            print('    fill: waiting, %d tuning processes still up (want <= %d)'
+                  % (n, wait_for_free), flush=True)
+            time.sleep(120)
+    missing = sorted(set(range(len(combos))) - banked_idx(mode, tag), reverse=True)
+    print('  fill: %s of %s strategies missing from mode%s_%s; %d workers, from the END backwards'
+          % (f'{len(missing):,}', f'{len(combos):,}', mode, tag, jobs), flush=True)
+    if not missing:
+        print('  fill: nothing missing', flush=True)
+        return 0
+    import multiprocessing as mp
+    outdir = out_dir(mode, tag)
+    args = [(k, jobs, mode, combos, missing, outdir, cap, 'shard_fill') for k in range(jobs)]
+    t0 = time.time()
+    with mp.Pool(jobs) as pool:
+        res = pool.map(_fill_worker, args)
+    n = sum(r['n'] for r in res)
+    left = len(set(range(len(combos))) - banked_idx(mode, tag))
+    print('  fill: banked %s in %.1f min; %s still missing'
+          % (f'{n:,}', (time.time() - t0) / 60, f'{left:,}'), flush=True)
+    return left
+
+
 def out_dir(mode, tag):
     return os.path.join(ROOTOUT, 'r2gate2', 'mode%s_%s' % (mode, tag))
 
 
-def run(mode, combos, tag, jobs=6, cap=900):
+def run(mode, combos, tag, jobs=6, cap=900, nshard=None):
     """Banked, sharded, RESUMABLE. A shard present is never recomputed.
 
     JOBS ARE CAPPED BY RAM, not by cores (HANDOFF section 3, 12 Sep). Each
@@ -542,7 +633,14 @@ def run(mode, combos, tag, jobs=6, cap=900):
                                  'MIN_TRADES_PICK=%d' % MIN_TUNE_TRADES,
                        config_set='axial: default + every single-knob deviation over each declared grid',
                        stamp=time.strftime('%F %T')), fh, indent=1)
-    args = [(k, jobs, mode, combos, outdir, cap) for k in range(jobs)]
+    # MORE SHARDS THAN WORKERS. With nshard == jobs, one slow shard holds the
+    # whole stage: on 17 Nov mode A's shard 06 drew strategies with 629
+    # configurations against the field's 494 average and ran 2 hours past the
+    # other seven, leaving 7 of 8 cores idle. Finer shards let the pool hand a
+    # free worker the next piece instead.
+    nshard = int(nshard or jobs)
+    assert nshard >= jobs, 'nshard must be at least jobs'
+    args = [(k, nshard, mode, combos, outdir, cap) for k in range(nshard)]
     t0 = time.time()
     if jobs == 1:
         res = [_worker(a) for a in args]
@@ -552,8 +650,8 @@ def run(mode, combos, tag, jobs=6, cap=900):
     done = sum(r['n'] for r in res)
     worst = max(r['worst_cond1'] for r in res)
     el = time.time() - t0
-    print('  gate 2: %d strategies in %.1f min (%d shards skipped), %.3f s/strategy wall'
-          % (done, el / 60, sum(r['skipped'] for r in res), el / max(done, 1)), flush=True)
+    print('  gate 2: %d strategies in %.1f min (%d of %d shards skipped), %.3f s/strategy wall'
+          % (done, el / 60, sum(r['skipped'] for r in res), nshard, el / max(done, 1)), flush=True)
     print('  CONDITION 1: worst |sum of a trade per-year marks - its R| = %.3g' % worst, flush=True)
     assert worst < 1e-9, 'CONDITION 1 FAILED: year-split marks do not reconstruct trade R (%.3g)' % worst
     sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
@@ -585,7 +683,13 @@ def load(mode, tag, with_curve=False):
             flat = z['curve_flat']; cn = z['curve_n']; off = 0
             for m in cn:
                 CV.append(flat[off:off + m * 4].reshape(int(m), 4)); off += m * 4
-    ix = np.concatenate(IX); o = np.argsort(ix)
+    ix = np.concatenate(IX)
+    # DEDUPE BY idx. Two processes filling the same tag from different ends can
+    # legitimately bank the same strategy twice; without this the duplicate
+    # rows would both survive the sort and be counted as two strategies.
+    o = np.argsort(ix, kind='stable')
+    uniq = np.concatenate(([True], ix[o][1:] != ix[o][:-1]))
+    o = o[uniq]
     out = (np.concatenate(W)[o].astype(np.float64), np.concatenate(TG)[o],
            np.concatenate(CB)[o], np.concatenate(TS)[o].astype(np.float64), outdir)
     if with_curve:
@@ -850,6 +954,10 @@ if __name__ == '__main__':
         stage_endtoend(mode, n=G.opt('--n', int, 12), jobs=G.opt('--jobs', int, 2))
     elif stage == 'grid':
         stage_grid(mode)
+    elif stage == 'fill':
+        stage_fill(mode, G.opt('--tag', str, 'full'), jobs=G.opt('--jobs', int, 6),
+                   cap=G.opt('--cap', int, 30000),
+                   wait_for_free=G.opt('--wait-free', int, 0))
     elif stage == 'cond1':
         stage_cond1(mode, n=G.opt('--n', int, 40))
     elif stage == 'cond2':
