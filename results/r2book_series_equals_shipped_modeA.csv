@@ -1,0 +1,3 @@
+mode,slice,members,positions_shipped,positions_streamed,days_shipped,days_streamed,den_shipped,den_streamed,cap_binds_shipped,cap_binds_streamed,max_abs_daily_diff,median_year_shipped,median_year_streamed,dip95_shipped,dip95_streamed,pf_shipped,pf_streamed,within_float32
+A,trend,4,22620,22620,1295,1295,1.0,1.0,0,0,0.0,0.0,0.0,0.0,0.0,inf,inf,1
+A,chop,4,15715,15715,1294,1294,9.804817561019886,9.804817561019886,942,942,1.2158236362136421e-08,-3.8517326253841313,-3.8517326253841313,17.420327896297056,17.420327897224123,0.9502111574451019,0.9502111574476849,1

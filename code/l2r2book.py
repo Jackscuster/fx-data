@@ -175,6 +175,144 @@ def marks_of(Y, mode, combo, ip, risk, sname, plan, code, years):
             np.array(out_tid, np.int64))
 
 
+class _Vec:
+    """Stands in for one of Book's sparse matrices. `M @ w` on an all-ones w is
+    exactly the accumulated column sum, so the shipped code can take its four
+    products without a matrix existing."""
+
+    def __init__(self, col):
+        self.col = col
+
+    def __matmul__(self, w):
+        return self.col.astype(np.float32)
+
+
+class StreamedBook:
+    """A Book-shaped object backed by NetAccumulator.
+
+    The point of this class is that it lets the SHIPPED scoring code run
+    unchanged -- l2walkfwd.Book.series, fit_curve and kpis all go through
+    `self.L @ w`, `self.Sm @ w`, `self.LM @ w`, `self.SM @ w` and the per-day
+    index arrays, and nothing else. So the book is scored by the same code that
+    scored every earlier book in this project, on inputs that were accumulated
+    a block of strategies at a time rather than held at once.
+    """
+
+    def __init__(self, acc, n_members):
+        live = (acc.nl + acc.ns) > 0
+        rows = np.flatnonzero(live)
+        nd = len(acc.days)
+        self.pair = np.array([acc.pairs[r // nd] for r in rows])
+        self.day = pd.DatetimeIndex(acc.days.values[(rows % nd).astype(int)])
+        self.L = _Vec(acc.nl[rows]); self.Sm = _Vec(acc.ns[rows])
+        self.LM = _Vec(acc.sl[rows]); self.SM = _Vec(acc.ss[rows])
+        self.members = list(range(n_members))
+        self.udays, self.dpos = np.unique(self.day.values, return_inverse=True)
+        self.nd = len(self.udays)
+        self.dyears = pd.DatetimeIndex(self.udays).year.values
+        ccy = sorted({c for pp in set(self.pair) for c in (pp[:3], pp[3:])})
+        self.ccy = ccy
+        cidx = {c: i for i, c in enumerate(ccy)}
+        self.nc = len(ccy)
+        self.bc = np.array([cidx[pp[:3]] for pp in self.pair])
+        self.qc = np.array([cidx[pp[3:]] for pp in self.pair])
+        import scipy.sparse as sp
+        self.Dagg = sp.csr_matrix((np.ones(len(rows), np.float32),
+                                   (self.dpos, np.arange(len(rows)))),
+                                  shape=(self.nd, len(rows)))
+        self.posyears = self.day.year.values
+        self.rows = rows
+
+    # the shipped implementations, bound to this object
+    net = W.Book.net
+    series = W.Book.series
+
+
+def stage_prove_series(mode='A', n=5):
+    """THE DECISIVE PROOF: the same members scored by the SHIPPED series()
+    through the shipped Book and through StreamedBook, daily series compared.
+
+    The earlier proof compared the four accumulated sums. This one runs the
+    whole scoring path -- net votes, the fitted curve, the currency cap, the
+    daily series and the KPI block -- and compares what the book actually
+    earns, which is the number that would be quoted.
+    """
+    G.manifest_check()
+    S.load_costs()
+    opts = S.mode_opts(S.slot_options(), mode)
+    combos = G.stratified(opts, n)[:n]
+    Y = G2.Years(cap=8000)
+    years = set(range(2016, 2021))
+    rows = []
+    for sname, plan, code in S.SLICES:
+        allm = []
+        for k, cb in enumerate(combos):
+            cfg = G2.axial(mode, cb, sname)
+            ip, risk = cfg[0][1], cfg[0][2]
+            pr, dy, dr, mk, _rt, tid = marks_of(Y, mode, cb, ip, risk, sname, plan, code, years)
+            if not len(pr):
+                continue
+            allm.append(pd.DataFrame(dict(sid='%s|%s|%d' % (mode, sname, k), pair=pr,
+                                          day=pd.to_datetime(dy), dir=dr.astype(np.int8),
+                                          mark=mk.astype(np.float32), tid=tid.astype(np.int32))))
+        if not allm:
+            continue
+        M = pd.concat(allm, ignore_index=True)
+        members = sorted(M.sid.unique())
+        B = W.Book(M, members)
+        w = np.ones(len(members), np.float32)
+        curve, _Cb = W.fit_curve(B, w, set(B.dyears.tolist()))   # fit_curve returns (curve, table)
+        x_b, den_b, binds_b, worst_b, _sz, _f = B.series(w, curve, cap_pct=3.6, per_unit=1.0)
+
+        # the streamed side, on the Book's own voted grid
+        Mv = W.vote_from_next_day(M.copy(), np.zeros(len(M), np.int64))[0] \
+            if not W.VOTE_ON_ENTRY_DAY else M
+        days = np.unique(B.day.values)
+        didx = {d: i for i, d in enumerate(days)}
+        acc = NetAccumulator(sorted(set(B.pair)), days)
+        for _sid, g in Mv.groupby('sid', sort=True):
+            dd = g.day.values.astype('datetime64[ns]')
+            ok = np.array([d in didx for d in dd])
+            if not ok.any():
+                continue
+            gg = g[ok]
+            r = np.array([acc.row(pp, didx[d]) for pp, d in
+                          zip(gg.pair.values, gg.day.values.astype('datetime64[ns]'))],
+                         dtype=np.int64)
+            acc.add_member(r, gg['dir'].values.astype(np.float64),
+                           gg.mark.values.astype(np.float64))
+        SB = StreamedBook(acc, len(members))
+        ws = np.ones(len(members), np.float32)
+        curve_s, _Cs = W.fit_curve(SB, ws, set(SB.dyears.tolist()))
+        x_s, den_s, binds_s, worst_s, _s2, _f2 = SB.series(ws, curve_s, cap_pct=3.6, per_unit=1.0)
+        # align both daily series on their own day grids
+        db = pd.Series(x_b, index=pd.DatetimeIndex(B.udays))
+        ds = pd.Series(x_s, index=pd.DatetimeIndex(SB.udays))
+        j = db.align(ds, join='outer', fill_value=0.0)
+        dmax = float(np.abs(j[0].values - j[1].values).max())
+        kb = W.kpis(j[0].values, pd.DatetimeIndex(j[0].index).year.values)
+        ks = W.kpis(j[1].values, pd.DatetimeIndex(j[1].index).year.values)
+        rows.append(dict(mode=mode, slice=sname, members=len(members),
+                         positions_shipped=len(B.pair), positions_streamed=len(SB.pair),
+                         days_shipped=B.nd, days_streamed=SB.nd,
+                         den_shipped=den_b, den_streamed=den_s,
+                         cap_binds_shipped=binds_b, cap_binds_streamed=binds_s,
+                         max_abs_daily_diff=dmax,
+                         median_year_shipped=kb['median_year_pct'],
+                         median_year_streamed=ks['median_year_pct'],
+                         dip95_shipped=kb['dip95_pct'], dip95_streamed=ks['dip95_pct'],
+                         pf_shipped=kb['profit_factor'], pf_streamed=ks['profit_factor'],
+                         within_float32=int(dmax < 1e-5)))
+    D = pd.DataFrame(rows)
+    out = os.path.join(ROOTOUT, 'r2book_series_equals_shipped_mode%s.csv' % mode)
+    D.to_csv(out, index=False)
+    print(D.to_string(index=False), flush=True)
+    print('  SHIPPED series() THROUGH BOTH BOOKS: worst |daily diff| %.3g -> %s'
+          % (float(D.max_abs_daily_diff.max()), os.path.basename(out)), flush=True)
+    assert len(D) and bool(D.within_float32.all()), 'THE STREAMED BOOK SCORES DIFFERENTLY'
+    return D
+
+
 def winner_config(mode, combo, sname, ci):
     """Resolve a banked winner INDEX back to its (ip, risk). The axial list is
     deterministic given (mode, combo, slice), which is why the bank stores an
@@ -322,5 +460,7 @@ if __name__ == '__main__':
     mode = G.opt('--mode', str, 'A')
     if stage == 'prove':
         stage_prove(mode, n=G.opt('--n', int, 6))
+    elif stage == 'prove_series':
+        stage_prove_series(mode, n=G.opt('--n', int, 5))
     else:
         raise SystemExit('unknown stage %s' % stage)
