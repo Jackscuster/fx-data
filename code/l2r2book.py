@@ -576,7 +576,14 @@ def _books_worker(args):
     Y = G2.Years(cap=cap)
     aidx, adays = year_dayidx(Y, build_years | trade_years)
     BA = BookArrays(Y.sc.pairs, adays)
-    pf = os.path.join(outdir, 'books_s%d_%04d.npz' % (si, shard))
+    # THE SHARD COUNT IS IN THE FILENAME. Without it a 2-worker run and an
+    # 8-worker run on the same out-tag share part names for different strategy
+    # ranges: on 18 Nov a 16-strategy test wrote its strategies 8..15 into the
+    # live full-field run's shard-1 part, which covered 34,223..68,445, leaving
+    # that part with 34,231 ids instead of 34,223. _sum_parts' overlap assert
+    # would have caught it at scoring time, but the file had to be quarantined
+    # and recomputed. Encoding nshard makes the collision impossible.
+    pf = os.path.join(outdir, 'books_s%d_of%d_%04d.npz' % (si, nshard, shard))
     done = set()
     if os.path.exists(pf):
         try:
@@ -641,7 +648,7 @@ def _sum_parts(outdir, si, nshard, pairs, days):
     BA = BookArrays(pairs, days)
     seen = set()
     for shard in range(nshard):
-        f = os.path.join(outdir, 'books_s%d_%04d.npz' % (si, shard))
+        f = os.path.join(outdir, 'books_s%d_of%d_%04d.npz' % (si, nshard, shard))
         z = np.load(f, allow_pickle=True)
         BA.NL += z['NL']; BA.NS += z['NS']; BA.SL += z['SL']; BA.SS += z['SS']
         BA.n_members += z['nm']
@@ -667,7 +674,8 @@ def stage_books(mode='A', tag='full', n=None, jobs=8, out_tag=None):
     del z
     Y = G2.Years(cap=30000)
     ST = G2.steps()
-    partdir = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_bookparts_%s' % (mode, out_tag or 'full'))
+    out_tag = out_tag or 'full'
+    partdir = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_bookparts_%s' % (mode, out_tag))
     os.makedirs(partdir, exist_ok=True)
     _bank_slice_file(mode, tag)
     rows = []
@@ -729,6 +737,15 @@ def stage_books(mode='A', tag='full', n=None, jobs=8, out_tag=None):
                 kt = W.kpis(xt, yrs[ytrade])
                 ret = (kt['median_year_pct'] / kb['median_year_pct']
                        if kb['median_year_pct'] else np.nan)
+                # SAVE THE DAILY SERIES. The identity null reassigns which year
+                # plays the trade year, so it needs the series rather than the
+                # KPI block; writing it here means the null never rebuilds a book.
+                # THE OUT-TAG IS IN THE NAME, for the same reason the shard count
+                # is in the part name: a test run and the live run must not write
+                # the same file.
+                np.savez(os.path.join(ROOTOUT, 'r2gate2', 'mode%s_daily_%s_%s_%s_%s.npz'
+                                      % (mode, out_tag or 'full', stp['name'], bk, bname)),
+                         daily=d1 * sc_, years=yrs, build=ybuild, trade=ytrade)
                 rows.append(dict(
                     mode=mode, step=stp['name'], book=bk, description=desc,
                     budget=bname, dip_budget=dipb, day_budget=dayb, members=nstrat,
@@ -747,7 +764,7 @@ def stage_books(mode='A', tag='full', n=None, jobs=8, out_tag=None):
                     retention=ret, FIT=int(np.isfinite(ret) and ret < 0.20), book_empty=0))
         del BA
     D = pd.DataFrame(rows)
-    ot = out_tag or ('n%d' % nstrat if n else 'full')
+    ot = out_tag
     outp = os.path.join(ROOTOUT, 'r2gate2', 'modeA_books_%s.csv' % ot) if mode == 'A' \
         else os.path.join(ROOTOUT, 'r2gate2', 'mode%s_books_%s.csv' % (mode, ot))
     os.makedirs(os.path.dirname(outp), exist_ok=True)
