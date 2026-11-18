@@ -320,6 +320,154 @@ def opt(f, c=str, d=None):
     return G.opt(f, c, d)
 
 
+
+
+def write_md(mode='A', out=None):
+    """results/r2gate2/MODEA_GATE3.md -- every number read back out of a CSV."""
+    import hashlib
+    RD = os.path.join(ROOTOUT, 'r2gate2')
+    F = {k: os.path.join(RD, 'mode%s_gate3_%s.csv' % (mode, k))
+         for k in ('counts', 'passers', 'null', 'stitched', 'stitched_counts')}
+    F['book'] = os.path.join(RD, 'mode%s_gate3_passersbook.csv' % mode)
+    F['booknull'] = os.path.join(RD, 'mode%s_gate3_passersbook_nulls.csv' % mode)
+    L = []; A = L.append
+    A('# MODE %s — GATE 3\n' % mode)
+    A('Generated %s by `code/l2r2gate3.py`. **No new tuning**: every configuration '
+      'here was already chosen by gate 2 and is re-scored, nothing is searched. '
+      'Every number below is read back out of the CSV named beside it.\n'
+      % time.strftime('%F %H:%M'))
+    A('\n## The bars, unchanged\n')
+    A('| bar | value | binds |\n|---|---|---|\n'
+      '| expectancy | >= %.2f R | yes |\n| profit factor | >= %.1f | yes |\n'
+      '| Sortino | >= %.1f | yes |\n| Calmar | >= %.1f | yes |\n'
+      '| max DD | <= %.0f%% of the strategy\'s OWN gross profit | yes |\n'
+      '| Sharpe | reported | **no — binds nowhere** |\n'
+      % (BARS['expectancy_R'], BARS['profit_factor'], BARS['sortino'],
+         BARS['calmar'], 100 * BARS['max_dd_frac_of_gross']))
+    A('\nCosts are charged throughout (`cost_table_h22`, restated per fault #27).\n')
+    A('\n**Why this cost an engine pass.** The gate 2 bank stores `n, sum_r, gain, '
+      'loss, n_win` per (strategy, stream, step, year), which gives expectancy, PF, '
+      'win rate and trade count — but Sortino needs the downside deviation of '
+      'per-trade R, and max DD and Calmar need the ordered equity curve. Neither is '
+      'banked, so each winner was re-scored through the shipped `l2tune.Scorer` with '
+      'one window per calendar year; the KPIs come from `_agg`, the same aggregator '
+      'every other result in this project used.\n')
+    A('\n## Sources\n')
+    rows = []
+    for k, p in F.items():
+        if os.path.exists(p):
+            try:
+                nr = len(pd.read_csv(p))
+            except Exception:
+                nr = 0          # an empty file IS the result when nobody passes
+            rows.append(dict(section=k, file=os.path.relpath(p, _R), rows=nr,
+                             md5=hashlib.md5(open(p, 'rb').read()).hexdigest()[:12]))
+    A(BK_tbl(pd.DataFrame(rows), ['section', 'file', 'rows', 'md5']))
+    miss = [k for k, p in F.items() if not os.path.exists(p)]
+    if miss:
+        A('\n**Missing sources, left empty rather than filled in:** %s\n' % ', '.join(miss))
+
+    A('\n## 1. The bars on the GRADE year (year 5, unseen by the tuner)\n')
+    if os.path.exists(F['counts']):
+        C = pd.read_csv(F['counts'])
+        A(BK_tbl(C.sort_values(['stream', 'step']),
+                 ['stream', 'step', 'n_field', 'n_clears_grade',
+                  'n_also_clears_trade', 'pct_of_field']))
+        A('\nTotals by stream:\n')
+        A(BK_tbl(C.groupby('stream', as_index=False)[
+            ['n_clears_grade', 'n_also_clears_trade']].sum(),
+            ['stream', 'n_clears_grade', 'n_also_clears_trade']))
+        if os.path.exists(F['passers']):
+            P = pd.read_csv(F['passers'])
+            A('\nEvery passer is listed in `%s` with its settings, its grade-year KPIs '
+              'and its trade-year KPIs. The first 20:\n' % os.path.relpath(F['passers'], _R))
+            A(BK_tbl(P.head(20), ['step', 'stream', 'sid', 'grade_expectancy_R',
+                                  'grade_profit_factor', 'grade_sortino', 'grade_calmar',
+                                  'grade_max_dd_R', 'grade_n', 'grade_sharpe',
+                                  'trade_expectancy_R', 'trade_profit_factor',
+                                  'trade_sortino', 'trade_calmar', 'trade_max_dd_R',
+                                  'trade_win_rate', 'trade_n', 'trade_sharpe',
+                                  'clears_trade_year']))
+    else:
+        A('_counts CSV absent; this section is empty._\n')
+
+    A('\n## 2. Chance level — the identity null on the year roles\n')
+    if os.path.exists(F['null']):
+        N = pd.read_csv(F['null'])
+        A('Each draw calls a randomly chosen year of the step the "grade" year and '
+          'another the "trade" year, and applies the identical bars. **A caveat that '
+          'belongs in the reading**: those draws can land on TUNE years, on which the '
+          'settings were fitted, so the null is not a neutral yardstick — it is '
+          'biased toward clearing. A real count BELOW the null mean is therefore the '
+          'striking direction, not the reassuring one.\n')
+        A(BK_tbl(N.sort_values(['stream', 'step']),
+                 ['stream', 'step', 'real_clears_grade', 'null_mean_clears',
+                  'null_p95_clears', 'p_grade', 'real_also_clears_trade',
+                  'null_mean_also_trade', 'p_also_trade']))
+    else:
+        A('_null CSV absent; this section is empty._\n')
+
+    A('\n## 3. The stitched trade years 2016-2020, all unseen\n')
+    if os.path.exists(F['stitched_counts']):
+        SC = pd.read_csv(F['stitched_counts'])
+        A(BK_tbl(SC, ['stream', 'n_field', 'n_clears_stitched', 'pct_of_field']))
+        try:
+            Sx = pd.read_csv(F['stitched'])
+        except Exception:
+            Sx = pd.DataFrame()
+        if len(Sx):
+            A('\nEveryone who passes on the stitched record, with per-year R:\n')
+            cols = ['stream', 'sid', 'stitched_expectancy_R', 'stitched_profit_factor',
+                    'stitched_sortino', 'stitched_calmar', 'stitched_max_dd_R',
+                    'stitched_n'] + [c for c in Sx.columns if c.startswith('R_')]
+            A(BK_tbl(Sx, cols))
+        else:
+            A('\n**Nobody passes on the stitched record.**\n')
+    else:
+        A('_stitched CSVs absent; this section is empty._\n')
+
+    A('\n## 4. The passers\' book\n')
+    def _safe(p):
+        try:
+            return pd.read_csv(p)
+        except Exception:
+            return pd.DataFrame()
+    if os.path.exists(F['book']):
+        A(BK_tbl(_safe(F['book']), None))
+        if os.path.exists(F['booknull']):
+            A('\nIts three nulls:\n')
+            A(BK_tbl(_safe(F['booknull']), None))
+    else:
+        A('_The passers\' book has not been built; this section is empty rather than '
+          'filled in from anywhere else._\n')
+
+    txt = '\n'.join(L)
+    out = out or os.path.join(RD, 'MODE%s_GATE3.md' % mode)
+    open(out, 'w').write(txt)
+    print('  MODE%s_GATE3.md: %d lines -> %s'
+          % (mode, len(txt.splitlines()), os.path.relpath(out, _R)), flush=True)
+    return out
+
+
+def BK_tbl(d, cols):
+    if d is None or not len(d):
+        return '_no rows_\n'
+    cols = [c for c in (cols or list(d.columns)) if c in d.columns]
+    o = ['| ' + ' | '.join(cols) + ' |', '|' + '---|' * len(cols)]
+    for _, r in d[cols].iterrows():
+        cs = []
+        for c in cols:
+            v = r[c]
+            if isinstance(v, (int, np.integer)):
+                cs.append(f'{v:,}')
+            elif isinstance(v, (float, np.floating)):
+                cs.append('' if not np.isfinite(v) else ('%.4g' % v))
+            else:
+                cs.append(str(v))
+        o.append('| ' + ' | '.join(cs) + ' |')
+    return '\n'.join(o) + '\n'
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'score')
     md = G.opt('--mode', str, 'A')
@@ -328,5 +476,8 @@ if __name__ == '__main__':
                     cap=G.opt('--cap', int, 30000), n=G.opt('--n', int, None))
     elif st == 'report':
         stage_report(md, G.opt('--tag', str, 'full'), ndraw=G.opt('--draws', int, 200))
+        write_md(md)
+    elif st == 'md':
+        write_md(md)
     else:
         raise SystemExit('unknown stage %s' % st)
