@@ -24,7 +24,7 @@
 # disk  b1 books B   = 1.2   # five steps of per-shard book parts, float64 sums
 # disk  b1 app       = 0.1   # rewrites app_data.json
 # disk  b1 node      = 0     # node --check
-. "${FX_CHAIN_LIB:-/Users/jackcuster/fx-data/code/chain/chainlib.sh}"
+. "${FX_CHAIN_LIB:-/Users/jackcuster/fx-data/code/chain/chainlib.sh}" "$0" "L2 RESTART CHAIN 13 COMPLETE"
 cd /Users/jackcuster/fx-data
 export FX_COST_TABLE=results/cost_table_h22.csv
 export FX_CKPT_SECONDS=300

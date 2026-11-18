@@ -191,8 +191,8 @@ def write_md(mode='A', out=None):
          for k in ('top30', 'fieldshare', 'persistence', 'all5', 'all5_rank')}
     L = []
     A = L.append
-    A('# MODE A — TOP 30, PERSISTENCE AND WHAT WAS KNOWN IN ADVANCE\n')
-    A('Generated %s by `code/l2r2top30.py`, read-only off the mode A gate 2 bank. '
+    A('# MODE %s — TOP 30, PERSISTENCE AND WHAT WAS KNOWN IN ADVANCE\n' % mode)
+    A('Generated %s by `code/l2r2top30.py`, read-only off the mode ' + mode + ' gate 2 bank. '
       '**No tuning and no engine pass.** Every number below is read back out of the '
       'CSV named beside it. **Everything here is reported; nothing is selected for a '
       'book** — HANDOFF 0l\'s rule stands that everyone who enters tuning trades, at '
@@ -263,7 +263,7 @@ def write_md(mode='A', out=None):
       'and 50%% in "top 50%%". Compare those against the table above.\n')
 
     txt = '\n'.join(L)
-    out = out or os.path.join(RD, 'MODEA_TOP30.md')
+    out = out or os.path.join(RD, 'MODE%s_TOP30.md' % mode)
     open(out, 'w').write(txt)
     print('  MODEA_TOP30.md: %d lines -> %s' % (len(txt.splitlines()),
                                                 os.path.relpath(out, _R)), flush=True)
