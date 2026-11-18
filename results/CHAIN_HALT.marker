@@ -1,8 +1,9 @@
-CHAIN HALTED at stage "chain:l2r2f.sh"
-2026-11-17 09:56:09
+CHAIN HALTED at stage "chain:l2r2k.sh"
+2026-11-18 12:43:11
 
 THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:
-  - stages with NO declared dependencies (use "= none" if there are none): ['g2 endtoend', 'g2 grid', 'g2 cond1', 'g2 smoke 2k', 'g2 cond2', 'g2 preflight', 'g2 full A', 'g2 app', 'g2 node']
+  - stages with NO declared disk need (use "# disk <stage> = 0" if none): ['aB endtoend', 'aB stop B', 'aB books chk', 'aB nulls', 'aB report', 'aB app', 'aB node', 'aB resume B']
+  - no "# eta = <minutes>" declared: the watchdog pushes when the ETA passes without the deliverable, and it cannot do that without one
 
 Declare one line per stage at the top of the driver:
     # ckpt <stage name> = <seconds, max 300>   <why>

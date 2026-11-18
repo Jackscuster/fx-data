@@ -149,6 +149,10 @@ class Checkpointer:
 # the declaration a chain must carry, and its parser
 # ==========================================================================
 DECL = re.compile(r'^#\s*ckpt\s+(.+?)\s*=\s*(\d+)\s*(?:#\s*(.*))?$')
+DISK = re.compile(r'^#\s*disk\s+(.+?)\s*=\s*([0-9.]+)\s*(?:#.*)?$')
+ETA = re.compile(r'^#\s*eta\s*=\s*([0-9]+)\s*(?:#.*)?$')
+DELIV = re.compile(r'^#\s*deliverable\s*=\s*(.+?)\s*(?:#.*)?$')
+DISK_HEADROOM_GB = 2.0
 NEEDS = re.compile(r'^#\s*needs\s+(.+?)\s*=\s*(.*?)\s*(?:#.*)?$')
 STAGE = re.compile(r'^\s*g\s+"([^"]+)"')
 
@@ -161,7 +165,8 @@ def parse_driver(path):
         # needs <name> = <dep>[,<dep>...]   or   none
     Dependencies are COMMA separated because stage names contain spaces.
     """
-    stages, decls, needs = [], {}, {}
+    stages, decls, needs, disk = [], {}, {}, {}
+    eta = [None]; deliv = [None]
     for line in open(path):
         m = STAGE.match(line)
         if m:
@@ -177,14 +182,48 @@ def parse_driver(path):
             raw = nd.group(2).strip()
             needs[nd.group(1).strip()] = ([] if raw.lower() in ('', 'none')
                                           else [x.strip() for x in raw.split(',') if x.strip()])
-    return stages, decls, needs
+            continue
+        dk = DISK.match(line)
+        if dk:
+            disk[dk.group(1).strip()] = float(dk.group(2))
+            continue
+        em = ETA.match(line)
+        if em:
+            eta[0] = int(em.group(1))
+            continue
+        dv = DELIV.match(line)
+        if dv:
+            deliv[0] = dv.group(1).strip()
+    return stages, decls, needs, disk, eta[0], deliv[0]
 
 
 def check_driver(path):
     """-> (ok, list of problems). The refusal logic, in one place so the guard
     and any caller see the same verdict."""
-    stages, decls, needs = parse_driver(path)
+    stages, decls, needs, disk, eta, deliv = parse_driver(path)
     bad = []
+    # GUARD 3 -- DISK. Every stage declares what it needs and the volume must
+    # hold the sum plus headroom. On 18 Nov the nulls wrote 17 GB of per-shard
+    # scratch into a volume with 9 GB free and took themselves, the app wiring
+    # and the mode B resume down with OSError 28 -- and the watchdog could not
+    # even report it, because its own writes failed too.
+    dmissing = [x for x in stages if x not in disk]
+    if dmissing:
+        bad.append('stages with NO declared disk need (use "# disk <stage> = 0" if none): %s'
+                   % dmissing)
+    else:
+        need = sum(disk.values()) + DISK_HEADROOM_GB
+        st = os.statvfs(_R)
+        free = st.f_bavail * st.f_frsize / 1024 ** 3
+        if free < need:
+            bad.append('declared disk need %.1f GB + %.1f GB headroom = %.1f GB, but only '
+                       '%.1f GB is free' % (sum(disk.values()), DISK_HEADROOM_GB, need, free))
+    # GUARD 4 -- DELIVERABLE AND ETA, both declared or the chain does not launch.
+    if not deliv:
+        bad.append('no "# deliverable = <path>" declared: a chain must say what it exists to produce')
+    if not eta:
+        bad.append('no "# eta = <minutes>" declared: the watchdog pushes when the ETA passes '
+                   'without the deliverable, and it cannot do that without one')
     # EVERY STAGE DECLARES ITS DEPENDENCIES (Jack, 17 Nov). A failed stage no
     # longer stops the chain -- only its declared dependents are skipped -- so
     # an undeclared dependency would let a stage run on output that was never
