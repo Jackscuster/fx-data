@@ -1,6 +1,6 @@
 # MODE A — GATE 3
 
-Generated 2026-11-18 14:16 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
+Generated 2026-11-18 14:40 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
 
 
 ## The bars, unchanged
@@ -27,7 +27,7 @@ Costs are charged throughout (`cost_table_h22`, restated per fault #27).
 |---|---|---|---|
 | counts | results/r2gate2/modeA_gate3_counts.csv | 20 | 8a4cd6deb003 |
 | passers | results/r2gate2/modeA_gate3_passers.csv | 21 | fd76d88fa244 |
-| null | results/r2gate2/modeA_gate3_null.csv | 20 | 829d4ae88ba7 |
+| null | results/r2gate2/modeA_gate3_null.csv | 20 | 3c309fcc6313 |
 | stitched | results/r2gate2/modeA_gate3_stitched.csv | 0 | 68b329da9893 |
 | stitched_counts | results/r2gate2/modeA_gate3_stitched_counts.csv | 4 | 9025eb474a13 |
 
@@ -103,26 +103,26 @@ Each draw calls a randomly chosen year of the step the "grade" year and another 
 
 | stream | step | real_clears_grade | null_mean_clears | null_p95_clears | p_grade | real_also_clears_trade | null_mean_also_trade | p_also_trade |
 |---|---|---|---|---|---|---|---|---|
-| chop-allon | 2011-2014 | 0 | 3.75 | 15 | 1 | 0 | 0 | 1 |
-| chop-allon | 2012-2015 | 0 | 1.6 | 5.1 | 1 | 0 | 0 | 1 |
-| chop-allon | 2013-2016 | 0 | 1.8 | 5 | 1 | 0 | 0 | 1 |
-| chop-allon | 2014-2017 | 2 | 1.5 | 3 | 0.3 | 0 | 0 | 1 |
-| chop-allon | 2015-2018 | 1 | 0.95 | 3 | 0.65 | 0 | 0 | 1 |
-| chop-routed | 2011-2014 | 8 | 2.4 | 6.1 | 0.05 | 0 | 0 | 1 |
+| chop-allon | 2011-2014 | 0 | 5.1 | 15 | 1 | 0 | 0 | 1 |
+| chop-allon | 2012-2015 | 0 | 2.1 | 6.1 | 1 | 0 | 0 | 1 |
+| chop-allon | 2013-2016 | 0 | 2.2 | 5 | 1 | 0 | 0 | 1 |
+| chop-allon | 2014-2017 | 2 | 1.1 | 1.55 | 0.1 | 0 | 0 | 1 |
+| chop-allon | 2015-2018 | 1 | 1 | 3 | 0.6 | 0 | 0 | 1 |
+| chop-routed | 2011-2014 | 8 | 3.8 | 7.1 | 0.1 | 0 | 0 | 1 |
 | chop-routed | 2012-2015 | 0 | 3 | 10 | 1 | 0 | 0 | 1 |
-| chop-routed | 2013-2016 | 0 | 4.05 | 11 | 1 | 0 | 0 | 1 |
-| chop-routed | 2014-2017 | 1 | 2.65 | 14 | 0.7 | 0 | 0 | 1 |
-| chop-routed | 2015-2018 | 0 | 3.4 | 19 | 1 | 0 | 0 | 1 |
-| trend-allon | 2011-2014 | 0 | 4.15 | 11 | 1 | 0 | 0 | 1 |
-| trend-allon | 2012-2015 | 0 | 2.75 | 11 | 1 | 0 | 0 | 1 |
-| trend-allon | 2013-2016 | 1 | 2.45 | 5 | 0.9 | 0 | 0 | 1 |
-| trend-allon | 2014-2017 | 1 | 1.65 | 3.05 | 0.65 | 0 | 0.05 | 1 |
-| trend-allon | 2015-2018 | 2 | 2.85 | 6 | 0.55 | 1 | 0 | 0 |
-| trend-routed | 2011-2014 | 1 | 7.75 | 14 | 1 | 0 | 0.1 | 1 |
-| trend-routed | 2012-2015 | 1 | 3.95 | 12 | 0.75 | 0 | 0 | 1 |
-| trend-routed | 2013-2016 | 2 | 3.15 | 7 | 0.9 | 0 | 0.15 | 1 |
-| trend-routed | 2014-2017 | 0 | 1.5 | 5 | 1 | 0 | 0 | 1 |
-| trend-routed | 2015-2018 | 1 | 1.8 | 5 | 0.9 | 0 | 0 | 1 |
+| chop-routed | 2013-2016 | 0 | 3.4 | 11 | 1 | 0 | 0 | 1 |
+| chop-routed | 2014-2017 | 1 | 4.6 | 14 | 0.7 | 0 | 0 | 1 |
+| chop-routed | 2015-2018 | 0 | 6.8 | 19 | 1 | 0 | 0 | 1 |
+| trend-allon | 2011-2014 | 0 | 5 | 11 | 1 | 0 | 0 | 1 |
+| trend-allon | 2012-2015 | 0 | 2 | 5 | 1 | 0 | 0 | 1 |
+| trend-allon | 2013-2016 | 1 | 2.6 | 5 | 0.9 | 0 | 0 | 1 |
+| trend-allon | 2014-2017 | 1 | 1.3 | 4 | 0.4 | 0 | 0 | 1 |
+| trend-allon | 2015-2018 | 2 | 2.7 | 5.1 | 0.9 | 1 | 0.1 | 0.1 |
+| trend-routed | 2011-2014 | 1 | 8.1 | 14 | 1 | 0 | 0 | 1 |
+| trend-routed | 2012-2015 | 1 | 4.4 | 12 | 0.8 | 0 | 0 | 1 |
+| trend-routed | 2013-2016 | 2 | 2.4 | 6.55 | 0.6 | 0 | 0.2 | 1 |
+| trend-routed | 2014-2017 | 0 | 3.2 | 5 | 1 | 0 | 0 | 1 |
+| trend-routed | 2015-2018 | 1 | 1.6 | 4.1 | 0.8 | 0 | 0 | 1 |
 
 
 ## 3. The stitched trade years 2016-2020, all unseen
