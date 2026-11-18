@@ -183,6 +183,10 @@ def _null_worker(args):
     aidx, adays = BK.year_dayidx(Y, build_years | trade_years)
     nrow = len(Y.sc.pairs) * len(adays)
     nb = len(BK.BOOKS)
+    # float64 for the accumulation, float32 ON DISK. The first version wrote
+    # four float64 arrays of (20 draws x 4 books x 54,180 rows) per shard = 106 MB,
+    # and 8 shards x 5 steps x 4 (null kind, sample size) directories filled the
+    # volume to 362 MB free and took the stage down with OSError 28.
     NL = np.zeros((ndraw, nb, nrow)); NS = np.zeros((ndraw, nb, nrow))
     SL = np.zeros((ndraw, nb, nrow)); SS = np.zeros((ndraw, nb, nrow))
     rng = np.random.default_rng(seed + shard)
@@ -248,7 +252,8 @@ def _null_worker(args):
                   % (kind, si, shard, q, len(mine), el / q,
                      (el / q) * (len(mine) - q) / 60), flush=True)
     f = os.path.join(outdir, 'null_%s_s%d_of%d_%04d.npz' % (kind, si, nshard, shard))
-    np.savez(f, NL=NL, NS=NS, SL=SL, SS=SS, nmem=nmem,
+    np.savez(f, NL=NL.astype(np.float32), NS=NS.astype(np.float32),
+             SL=SL.astype(np.float32), SS=SS.astype(np.float32), nmem=nmem,
              idx=np.array(mine, np.int64), ndraw=np.int64(ndraw))
     return f
 
@@ -288,6 +293,11 @@ def sampled_null(mode, tag, kind, nsample, ndraw=NDRAW_SAMPLED, jobs=8, cap=3000
         for f in fs:
             z = np.load(f)
             NL += z['NL']; NS += z['NS']; SL += z['SL']; SS += z['SS']; nmem += z['nmem']
+            del z
+        # A STEP'S SCRATCH IS DEAD ONCE IT IS SUMMED. Keeping every step's parts
+        # is what filled the volume; the bound is now one step's worth, ~400 MB.
+        for f in fs:
+            os.remove(f)
         print('    null %s step %s: %d workers in %.1f min'
               % (kind, stp['name'], jobs, (time.time() - t0) / 60), flush=True)
         for bi, (bk, _desc) in enumerate(BK.BOOKS):
