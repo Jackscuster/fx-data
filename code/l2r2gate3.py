@@ -328,6 +328,17 @@ def opt(f, c=str, d=None):
 
 
 
+def _safe_csv(path):
+    """A result file can legitimately be EMPTY -- 'nobody passes' writes no
+    header at all and pandas raises EmptyDataError. Every read in the report
+    generator goes through here so an empty result renders as an empty table
+    instead of killing the stage."""
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
 def write_md(mode='A', out=None):
     """results/r2gate2/MODEA_GATE3.md -- every number read back out of a CSV."""
     import hashlib
@@ -362,10 +373,7 @@ def write_md(mode='A', out=None):
     rows = []
     for k, p in F.items():
         if os.path.exists(p):
-            try:
-                nr = len(pd.read_csv(p))
-            except Exception:
-                nr = 0          # an empty file IS the result when nobody passes
+            nr = len(_safe_csv(p))
             rows.append(dict(section=k, file=os.path.relpath(p, _R), rows=nr,
                              md5=hashlib.md5(open(p, 'rb').read()).hexdigest()[:12]))
     A(BK_tbl(pd.DataFrame(rows), ['section', 'file', 'rows', 'md5']))
@@ -375,7 +383,7 @@ def write_md(mode='A', out=None):
 
     A('\n## 1. The bars on the GRADE year (year 5, unseen by the tuner)\n')
     if os.path.exists(F['counts']):
-        C = pd.read_csv(F['counts'])
+        C = _safe_csv(F['counts'])
         A(BK_tbl(C.sort_values(['stream', 'step']),
                  ['stream', 'step', 'n_field', 'n_clears_grade',
                   'n_also_clears_trade', 'pct_of_field']))
@@ -384,7 +392,7 @@ def write_md(mode='A', out=None):
             ['n_clears_grade', 'n_also_clears_trade']].sum(),
             ['stream', 'n_clears_grade', 'n_also_clears_trade']))
         if os.path.exists(F['passers']):
-            P = pd.read_csv(F['passers'])
+            P = _safe_csv(F['passers'])
             A('\nEvery passer is listed in `%s` with its settings, its grade-year KPIs '
               'and its trade-year KPIs. The first 20:\n' % os.path.relpath(F['passers'], _R))
             A(BK_tbl(P.head(20), ['step', 'stream', 'sid', 'grade_expectancy_R',
@@ -399,7 +407,7 @@ def write_md(mode='A', out=None):
 
     A('\n## 2. Chance level — the identity null on the year roles\n')
     if os.path.exists(F['null']):
-        N = pd.read_csv(F['null'])
+        N = _safe_csv(F['null'])
         A('Each draw calls a randomly chosen year of the step the "grade" year and '
           'another the "trade" year, and applies the identical bars. **A caveat that '
           'belongs in the reading**: those draws can land on TUNE years, on which the '
@@ -415,12 +423,9 @@ def write_md(mode='A', out=None):
 
     A('\n## 3. The stitched trade years 2016-2020, all unseen\n')
     if os.path.exists(F['stitched_counts']):
-        SC = pd.read_csv(F['stitched_counts'])
+        SC = _safe_csv(F['stitched_counts'])
         A(BK_tbl(SC, ['stream', 'n_field', 'n_clears_stitched', 'pct_of_field']))
-        try:
-            Sx = pd.read_csv(F['stitched'])
-        except Exception:
-            Sx = pd.DataFrame()
+        Sx = _safe_csv(F['stitched'])
         if len(Sx):
             A('\nEveryone who passes on the stitched record, with per-year R:\n')
             cols = ['stream', 'sid', 'stitched_expectancy_R', 'stitched_profit_factor',
@@ -433,16 +438,11 @@ def write_md(mode='A', out=None):
         A('_stitched CSVs absent; this section is empty._\n')
 
     A('\n## 4. The passers\' book\n')
-    def _safe(p):
-        try:
-            return pd.read_csv(p)
-        except Exception:
-            return pd.DataFrame()
     if os.path.exists(F['book']):
-        A(BK_tbl(_safe(F['book']), None))
+        A(BK_tbl(_safe_csv(F['book']), None))
         if os.path.exists(F['booknull']):
             A('\nIts three nulls:\n')
-            A(BK_tbl(_safe(F['booknull']), None))
+            A(BK_tbl(_safe_csv(F['booknull']), None))
     else:
         A('_The passers\' book has not been built; this section is empty rather than '
           'filled in from anywhere else._\n')
