@@ -1,5 +1,5 @@
 CHAIN HALTED at stage "chain:l2r2k.sh"
-2026-11-18 12:43:11
+2026-11-18 12:44:58
 
 THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:
   - stages with NO declared disk need (use "# disk <stage> = 0" if none): ['aB endtoend', 'aB stop B', 'aB books chk', 'aB nulls', 'aB report', 'aB app', 'aB node', 'aB resume B']
