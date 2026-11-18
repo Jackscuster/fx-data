@@ -155,14 +155,20 @@ def _worker(args):
     return (f, len(todo))
 
 
-def stage_score(mode='A', tag='full', jobs=8, cap=30000, n=None):
+def stage_score(mode='A', tag='full', jobs=8, cap=30000, n=None, nshard=None):
     import multiprocessing as mp
     G.manifest_check()
     S.load_costs()
     BK._bank_slice_file(mode, tag)
     outdir = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_gate3parts' % mode)
     os.makedirs(outdir, exist_ok=True)
-    args = [(k, jobs, mode, tag, outdir, cap, n) for k in range(jobs)]
+    # MORE SHARDS THAN WORKERS, for the reason gate 2 already learned: with
+    # nshard == jobs one slow shard holds the stage. Measured on the first 125
+    # strategies of each shard the rates spread 1.00-1.89 s/strategy, and the
+    # slowest shard projected 1,385 min against the fastest's 568 -- so the
+    # stage would have run 23 h for 8 h of work.
+    nshard = int(nshard or max(jobs * 4, jobs))
+    args = [(k, nshard, mode, tag, outdir, cap, n) for k in range(nshard)]
     t0 = time.time()
     if jobs == 1:
         res = [_worker(a) for a in args]
@@ -473,7 +479,8 @@ if __name__ == '__main__':
     md = G.opt('--mode', str, 'A')
     if st == 'score':
         stage_score(md, G.opt('--tag', str, 'full'), jobs=G.opt('--jobs', int, 8),
-                    cap=G.opt('--cap', int, 30000), n=G.opt('--n', int, None))
+                    cap=G.opt('--cap', int, 30000), n=G.opt('--n', int, None),
+                    nshard=G.opt('--nshard', int, None))
     elif st == 'report':
         stage_report(md, G.opt('--tag', str, 'full'), ndraw=G.opt('--draws', int, 200))
         write_md(md)
