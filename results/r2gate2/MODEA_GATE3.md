@@ -1,6 +1,6 @@
 # MODE A — GATE 3
 
-Generated 2026-11-19 10:00 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
+Generated 2026-11-19 18:13 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
 
 
 ## The bars, unchanged
@@ -25,11 +25,11 @@ Costs are charged throughout (`cost_table_h22`, restated per fault #27).
 
 | section | file | rows | md5 |
 |---|---|---|---|
-| counts | results/r2gate2/modeA_gate3_counts.csv | 20 | 7d8ef94bd5a5 |
-| passers | results/r2gate2/modeA_gate3_passers.csv | 33,892 | 80ba745eb886 |
-| null | results/r2gate2/modeA_gate3_null.csv | 20 | 92255ad512f6 |
+| counts | results/r2gate2/modeA_gate3_counts.csv | 20 | 0e9de5a7dc41 |
+| passers | results/r2gate2/modeA_gate3_passers.csv | 59,268 | 85422926296a |
+| null | results/r2gate2/modeA_gate3_null.csv | 20 | dd9d7d439433 |
 | stitched | results/r2gate2/modeA_gate3_stitched.csv | 0 | 68b329da9893 |
-| stitched_counts | results/r2gate2/modeA_gate3_stitched_counts.csv | 4 | 7c1ea5246872 |
+| stitched_counts | results/r2gate2/modeA_gate3_stitched_counts.csv | 4 | 18313dcc9133 |
 
 
 **Missing sources, left empty rather than filled in:** book, booknull
@@ -39,36 +39,36 @@ Costs are charged throughout (`cost_table_h22`, restated per fault #27).
 
 | stream | step | n_field | n_clears_grade | n_also_clears_trade | pct_of_field |
 |---|---|---|---|---|---|
-| chop-allon | 2011-2014 | 156,647 | 1,854 | 44 | 1.184 |
-| chop-allon | 2012-2015 | 156,647 | 1,321 | 5 | 0.8433 |
-| chop-allon | 2013-2016 | 156,647 | 1,344 | 53 | 0.858 |
-| chop-allon | 2014-2017 | 156,647 | 3,213 | 13 | 2.051 |
-| chop-allon | 2015-2018 | 156,647 | 238 | 1 | 0.1519 |
-| chop-routed | 2011-2014 | 156,647 | 2,615 | 5 | 1.669 |
-| chop-routed | 2012-2015 | 156,647 | 527 | 4 | 0.3364 |
-| chop-routed | 2013-2016 | 156,647 | 716 | 4 | 0.4571 |
-| chop-routed | 2014-2017 | 156,647 | 1,548 | 1 | 0.9882 |
-| chop-routed | 2015-2018 | 156,647 | 122 | 0 | 0.07788 |
-| trend-allon | 2011-2014 | 156,647 | 4,068 | 20 | 2.597 |
-| trend-allon | 2012-2015 | 156,647 | 631 | 6 | 0.4028 |
-| trend-allon | 2013-2016 | 156,647 | 855 | 26 | 0.5458 |
-| trend-allon | 2014-2017 | 156,647 | 1,646 | 5 | 1.051 |
-| trend-allon | 2015-2018 | 156,647 | 263 | 3 | 0.1679 |
-| trend-routed | 2011-2014 | 156,647 | 6,872 | 50 | 4.387 |
-| trend-routed | 2012-2015 | 156,647 | 1,094 | 20 | 0.6984 |
-| trend-routed | 2013-2016 | 156,647 | 835 | 22 | 0.533 |
-| trend-routed | 2014-2017 | 156,647 | 3,501 | 27 | 2.235 |
-| trend-routed | 2015-2018 | 156,647 | 629 | 7 | 0.4015 |
+| chop-allon | 2011-2014 | 273,780 | 3,164 | 58 | 1.156 |
+| chop-allon | 2012-2015 | 273,780 | 2,008 | 7 | 0.7334 |
+| chop-allon | 2013-2016 | 273,780 | 2,531 | 86 | 0.9245 |
+| chop-allon | 2014-2017 | 273,780 | 5,311 | 19 | 1.94 |
+| chop-allon | 2015-2018 | 273,780 | 445 | 2 | 0.1625 |
+| chop-routed | 2011-2014 | 273,780 | 4,736 | 10 | 1.73 |
+| chop-routed | 2012-2015 | 273,780 | 899 | 5 | 0.3284 |
+| chop-routed | 2013-2016 | 273,780 | 1,200 | 5 | 0.4383 |
+| chop-routed | 2014-2017 | 273,780 | 2,560 | 1 | 0.9351 |
+| chop-routed | 2015-2018 | 273,780 | 231 | 0 | 0.08437 |
+| trend-allon | 2011-2014 | 273,780 | 7,031 | 38 | 2.568 |
+| trend-allon | 2012-2015 | 273,780 | 945 | 7 | 0.3452 |
+| trend-allon | 2013-2016 | 273,780 | 1,634 | 50 | 0.5968 |
+| trend-allon | 2014-2017 | 273,780 | 2,886 | 8 | 1.054 |
+| trend-allon | 2015-2018 | 273,780 | 492 | 5 | 0.1797 |
+| trend-routed | 2011-2014 | 273,780 | 12,450 | 76 | 4.547 |
+| trend-routed | 2012-2015 | 273,780 | 1,618 | 21 | 0.591 |
+| trend-routed | 2013-2016 | 273,780 | 1,396 | 29 | 0.5099 |
+| trend-routed | 2014-2017 | 273,780 | 6,638 | 53 | 2.425 |
+| trend-routed | 2015-2018 | 273,780 | 1,093 | 12 | 0.3992 |
 
 
 Totals by stream:
 
 | stream | n_clears_grade | n_also_clears_trade |
 |---|---|---|
-| chop-allon | 7,970 | 116 |
-| chop-routed | 5,528 | 14 |
-| trend-allon | 7,463 | 60 |
-| trend-routed | 12,931 | 126 |
+| chop-allon | 13,459 | 172 |
+| chop-routed | 9,626 | 21 |
+| trend-allon | 12,988 | 108 |
+| trend-routed | 23,195 | 191 |
 
 
 Every passer is listed in `results/r2gate2/modeA_gate3_passers.csv` with its settings, its grade-year KPIs and its trade-year KPIs. The first 20:
@@ -103,36 +103,36 @@ Each draw calls a randomly chosen year of the step the "grade" year and another 
 
 | stream | step | real_clears_grade | null_mean_clears | null_p95_clears | p_grade | real_also_clears_trade | null_mean_also_trade | p_also_trade |
 |---|---|---|---|---|---|---|---|---|
-| chop-allon | 2011-2014 | 1,854 | 3718 | 7487 | 0.6 | 44 | 92.4 | 0.9 |
-| chop-allon | 2012-2015 | 1,321 | 3932 | 9256 | 1 | 5 | 102.6 | 1 |
-| chop-allon | 2013-2016 | 1,344 | 4589 | 9716 | 1 | 53 | 145.5 | 0.9 |
-| chop-allon | 2014-2017 | 3,213 | 3752 | 5270 | 0.7 | 13 | 60.8 | 0.7 |
-| chop-allon | 2015-2018 | 238 | 5388 | 1.017e+04 | 1 | 1 | 168.7 | 1 |
-| chop-routed | 2011-2014 | 2,615 | 5751 | 1.068e+04 | 0.7 | 5 | 129.9 | 1 |
-| chop-routed | 2012-2015 | 527 | 4376 | 9646 | 1 | 4 | 191.2 | 1 |
-| chop-routed | 2013-2016 | 716 | 3004 | 7261 | 1 | 4 | 109.1 | 1 |
-| chop-routed | 2014-2017 | 1,548 | 3261 | 6781 | 0.8 | 1 | 27.2 | 1 |
-| chop-routed | 2015-2018 | 122 | 3658 | 7589 | 1 | 0 | 28.3 | 1 |
-| trend-allon | 2011-2014 | 4,068 | 6109 | 6985 | 1 | 20 | 245.6 | 1 |
-| trend-allon | 2012-2015 | 631 | 8038 | 2.285e+04 | 1 | 6 | 287.1 | 1 |
-| trend-allon | 2013-2016 | 855 | 7199 | 1.702e+04 | 1 | 26 | 294.8 | 1 |
-| trend-allon | 2014-2017 | 1,646 | 7644 | 2.368e+04 | 0.5 | 5 | 117.4 | 1 |
-| trend-allon | 2015-2018 | 263 | 4052 | 1.639e+04 | 1 | 3 | 40.1 | 1 |
-| trend-routed | 2011-2014 | 6,872 | 5352 | 6487 | 0.1 | 50 | 157.1 | 0.5 |
-| trend-routed | 2012-2015 | 1,094 | 9043 | 3.194e+04 | 0.8 | 20 | 148.6 | 0.8 |
-| trend-routed | 2013-2016 | 835 | 1.143e+04 | 3.187e+04 | 1 | 22 | 124.2 | 0.6 |
-| trend-routed | 2014-2017 | 3,501 | 7904 | 3.255e+04 | 0.2 | 27 | 108.6 | 0.9 |
-| trend-routed | 2015-2018 | 629 | 5157 | 2.166e+04 | 0.8 | 7 | 112 | 1 |
+| chop-allon | 2011-2014 | 3,164 | 9066 | 1.639e+04 | 0.84 | 58 | 209.8 | 0.945 |
+| chop-allon | 2012-2015 | 2,008 | 9120 | 1.879e+04 | 1 | 7 | 193.8 | 1 |
+| chop-allon | 2013-2016 | 2,531 | 8343 | 1.769e+04 | 1 | 86 | 283.7 | 0.905 |
+| chop-allon | 2014-2017 | 5,311 | 6905 | 1.238e+04 | 0.68 | 19 | 172.9 | 0.855 |
+| chop-allon | 2015-2018 | 445 | 1.009e+04 | 1.998e+04 | 1 | 2 | 308.5 | 1 |
+| chop-routed | 2011-2014 | 4,736 | 8945 | 1.886e+04 | 0.665 | 10 | 228.5 | 1 |
+| chop-routed | 2012-2015 | 899 | 9139 | 1.911e+04 | 1 | 5 | 193 | 1 |
+| chop-routed | 2013-2016 | 1,200 | 7765 | 2.064e+04 | 1 | 5 | 152.6 | 1 |
+| chop-routed | 2014-2017 | 2,560 | 4370 | 1.209e+04 | 0.81 | 1 | 40.07 | 1 |
+| chop-routed | 2015-2018 | 231 | 5775 | 1.357e+04 | 1 | 0 | 64.84 | 1 |
+| trend-allon | 2011-2014 | 7,031 | 1.132e+04 | 2.353e+04 | 0.875 | 38 | 361 | 0.975 |
+| trend-allon | 2012-2015 | 945 | 1.527e+04 | 3.993e+04 | 1 | 7 | 418.6 | 1 |
+| trend-allon | 2013-2016 | 1,634 | 1.304e+04 | 3.838e+04 | 1 | 50 | 334.2 | 0.885 |
+| trend-allon | 2014-2017 | 2,886 | 1.158e+04 | 4.202e+04 | 0.805 | 8 | 211.7 | 1 |
+| trend-allon | 2015-2018 | 492 | 9534 | 4.422e+04 | 1 | 5 | 183.3 | 1 |
+| trend-routed | 2011-2014 | 12,450 | 7966 | 1.245e+04 | 0.145 | 76 | 247.5 | 0.64 |
+| trend-routed | 2012-2015 | 1,618 | 1.419e+04 | 5.874e+04 | 1 | 21 | 272.9 | 0.91 |
+| trend-routed | 2013-2016 | 1,396 | 1.266e+04 | 5.884e+04 | 1 | 29 | 261 | 0.805 |
+| trend-routed | 2014-2017 | 6,638 | 1.473e+04 | 5.972e+04 | 0.48 | 53 | 252 | 0.795 |
+| trend-routed | 2015-2018 | 1,093 | 1.528e+04 | 5.898e+04 | 0.855 | 12 | 344.8 | 1 |
 
 
 ## 3. The stitched trade years 2016-2020, all unseen
 
 | stream | n_field | n_clears_stitched | pct_of_field |
 |---|---|---|---|
-| trend-routed | 156,647 | 0 | 0 |
-| trend-allon | 156,647 | 0 | 0 |
-| chop-routed | 156,647 | 0 | 0 |
-| chop-allon | 156,647 | 0 | 0 |
+| trend-routed | 273,780 | 0 | 0 |
+| trend-allon | 273,780 | 0 | 0 |
+| chop-routed | 273,780 | 0 | 0 |
+| chop-allon | 273,780 | 0 | 0 |
 
 
 **Nobody passes on the stitched record.**
