@@ -26,7 +26,17 @@
 #
 # 4 DELIVERABLE AND ETA. Both declared in the driver or no launch.
 #
-# 6 REVIEW. --approved <hash> must equal HEAD. No hash, no launch.
+# 6 REVIEW, AS AMENDED BY JACK ON 20 NOV. Approval is needed only for code
+#   that changes WHAT is computed. Re-running an already-approved pipeline on
+#   another mode, sharding, scheduling, KPI tables and report generation launch
+#   without approval. A driver DECLARES which it is, in its own header:
+#       # approval = required           <why>
+#       # approval = none               <why it computes nothing new>
+#   The declaration sits in the diff next to the ckpt/needs/disk lines for the
+#   same reason those do: the claim and the behaviour cannot drift apart, and
+#   "this computes nothing new" is a statement Jack can check against the diff.
+#   A driver with NO approval line still needs --approved <hash> == HEAD, so
+#   every driver written before the amendment behaves exactly as it did.
 set -u
 L="$HOME/fx-data-logs"
 R="/Users/jackcuster/fx-data"
@@ -53,19 +63,38 @@ if [ -n "$DIRTY" ]; then
   exit 4
 fi
 
-# ---- GUARD 6: Jack must have approved this exact commit
-if [ -z "$APPROVED" ]; then
-  echo "launch: REFUSED -- no --approved <hash>."
-  echo "        HEAD is $HEAD"
-  echo "        Guard 6: no chain launches until Jack has pasted the commit hash and the"
-  echo "        diff and driver have been read. Print the stage table with:"
-  echo "            python3 $R/code/l2stagecheck.py chain $D"
-  exit 5
+# ---- GUARD 6 (amended 20 Nov): approval only for code that changes WHAT is
+# computed. The driver declares which it is; absent a declaration, a hash is
+# still required, so nothing written before the amendment changes behaviour.
+APPROVAL_DECL=$(grep -oE '^#[[:space:]]*approval[[:space:]]*=[[:space:]]*[a-zA-Z-]+' "$D"   | head -1 | sed 's/.*=[[:space:]]*//' | tr '[:upper:]' '[:lower:]')
+APPROVAL_WHY=$(grep -E '^#[[:space:]]*approval[[:space:]]*=' "$D" | head -1   | sed 's/^#[[:space:]]*approval[[:space:]]*=[[:space:]]*[a-zA-Z-]*[[:space:]]*//')
+if [ "$APPROVAL_DECL" = "none" ]; then
+  echo "launch: guard 6 waived by the driver's own declaration -- "approval = none""
+  [ -n "$APPROVAL_WHY" ] && echo "        reason: $APPROVAL_WHY"
+  echo "        commit $HEAD (the tree is still committed and snapshotted; guard 1a stands)"
+  if [ -n "$APPROVED" ]; then
+    case "$HEAD" in
+      "$APPROVED"*) : ;;
+      *) echo "launch: REFUSED -- a hash was passed ($APPROVED) and it is not HEAD ($HEAD)."; exit 6;;
+    esac
+  fi
+else
+  if [ -z "$APPROVED" ]; then
+    echo "launch: REFUSED -- no --approved <hash>, and this driver does not declare"
+    echo "        "# approval = none". HEAD is $HEAD"
+    echo "        Guard 6: code that changes WHAT is computed needs Jack's hash. If this"
+    echo "        driver only re-runs an approved pipeline on another mode, or is sharding,"
+    echo "        scheduling, a KPI table or report generation, declare it in the driver:"
+    echo "            # approval = none    <why it computes nothing new>"
+    echo "        Print the stage table with:"
+    echo "            python3 $R/code/l2stagecheck.py chain $D"
+    exit 5
+  fi
+  case "$HEAD" in
+    "$APPROVED"*) : ;;
+    *) echo "launch: REFUSED -- approved hash $APPROVED is not HEAD ($HEAD)."; exit 6;;
+  esac
 fi
-case "$HEAD" in
-  "$APPROVED"*) : ;;
-  *) echo "launch: REFUSED -- approved hash $APPROVED is not HEAD ($HEAD)."; exit 6;;
-esac
 
 # ---- GUARDS 3 and 4 (and the five-minute rule, and the dependency graph)
 if ! python3 "$R/code/l2stagecheck.py" chain "$D"; then

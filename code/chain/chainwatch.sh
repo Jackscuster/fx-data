@@ -40,6 +40,12 @@ push(){   # push <title> <priority> <tags> <body>
   [ "$code" = "200" ]
 }
 
+# "WAITING ON JACK" RE-PUSH, BEFORE THE NO-CHAIN EXIT. A wait is most likely
+# and least visible exactly when no chain is registered -- on 19 Nov a built,
+# guard-passing chain sat unlaunched for fourteen hours. waiting.sh itself
+# decides whether 2 hours have passed, so this is cheap on every 300 s tick.
+bash /Users/jackcuster/fx-data/code/chain/waiting.sh repush 2>/dev/null
+
 [ -f "$STATE" ] || exit 0
 # shellcheck disable=SC1090
 . "$STATE"                       # CHAIN_PID CHAIN_DRIVER CHAIN_LOG CHAIN_MARKER CHAIN_START

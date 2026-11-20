@@ -28,6 +28,12 @@ LEDGER="$HOME/fx-data-logs/.chain_ledger_$$"
 
 say(){ echo "$(date '+%F %T') $*" | tee -a "$L"; }
 
+# FREE SPACE AT EVERY MARKER (Jack, 20 Nov). An external drive is coming; until
+# it does, the volume is the binding constraint and the number has to be in the
+# log beside each stage rather than reconstructed afterwards. A stage that dies
+# on OSError 28 is otherwise indistinguishable from one that died on its own.
+freegb(){ df -g /System/Volumes/Data 2>/dev/null | tail -1 | awk '{print $4}'; }
+
 # STAGE NAMES CONTAIN SPACES ("g2 full A"), so the dependency list is split on
 # COMMAS, never on whitespace. Splitting on whitespace turned "t bad" into "t"
 # and "bad" and silently matched neither, so a dependent stage ran after its
@@ -69,12 +75,12 @@ g(){
     echo "FAILED $n" >> "$LEDGER"
     # NON-FATAL BY DESIGN. The ledger carries the failure; independent stages
     # keep running; dependents are skipped above with their reason named.
-    say "!!! $n FAILED after $(( ($(date +%s)-t0)/60 )) min $(( ($(date +%s)-t0)%60 )) s -- recorded; independent stages continue"
+    say "!!! $n FAILED after $(( ($(date +%s)-t0)/60 )) min $(( ($(date +%s)-t0)%60 )) s -- recorded; independent stages continue [$(freegb) GB free]"
     return 0
   fi
   wait $gd
   echo "OK $n" >> "$LEDGER"
-  say "$n done in $(( ($(date +%s)-t0)/60 )) min $(( ($(date +%s)-t0)%60 )) s"
+  say "$n done in $(( ($(date +%s)-t0)/60 )) min $(( ($(date +%s)-t0)%60 )) s [$(freegb) GB free]"
   return 0
 }
 
@@ -87,7 +93,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_016fb2CjHx3RvfiWm6g7bVgc" >/dev/null 2>&1 || echo 'nothing to commit' >> "$L"
   git pull -q --rebase origin main >> "$L" 2>&1
   git push -q origin main 2>&1 | grep -v 'GH001\|warning:' >> "$L"
-  say "committed: $(git log --oneline -1)"
+  say "committed: $(git log --oneline -1) [$(freegb) GB free]"
 }
 
 stage_failed(){ ledger_has "FAILED $1"; }
@@ -100,7 +106,7 @@ chain_summary(){
   ok=$(grep -c "^OK " "$LEDGER" 2>/dev/null | head -1); ok=${ok:-0}
   fa=$(grep -c "^FAILED " "$LEDGER" 2>/dev/null | head -1); fa=${fa:-0}
   sk=$(grep -c "^SKIPPED " "$LEDGER" 2>/dev/null | head -1); sk=${sk:-0}
-  say "STAGE LEDGER: $ok succeeded, $fa failed, $sk skipped"
+  say "STAGE LEDGER: $ok succeeded, $fa failed, $sk skipped [$(freegb) GB free]"
   grep -E "^(FAILED|SKIPPED) " "$LEDGER" 2>/dev/null | while read -r line; do say "   $line"; done
   cp "$LEDGER" "$HOME/fx-data-logs/chain_ledger_last.txt" 2>/dev/null
 }
