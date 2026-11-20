@@ -1,6 +1,6 @@
 # MODE A KPIs — all 273,780 strategies, tuned honestly, traded years 2016–2020 stitched
 
-Source: `results/r2gate2/modeA_daily_full_*_*_*.npz` (daily series, trade-year days only, one year per walk-forward step, stitched 2016→2020) and `results/r2gate2/modeA_books_full.csv` (trade-level PF, win rate, DIP95, retention, FIT). Generated 2026-11-20 10:16 by `code/l2r2kpis.py` — every number read back out of those files, nothing typed in by hand. Numbers CSV beside this file: `modeA_kpis_stitched_2016-2020.csv`.
+Source: `results/r2gate2/modeA_daily_full_*_*_*.npz` (daily series, trade-year days only, one year per walk-forward step, stitched 2016→2020) and `results/r2gate2/modeA_books_full.csv` (trade-level PF, win rate, DIP95, retention, FIT). Generated 2026-11-20 10:51 by `code/l2r2kpis.py` — every number read back out of those files, nothing typed in by hand. Numbers CSV beside this file: `modeA_kpis_stitched_2016-2020.csv`.
 
 Team 1 = 3.6% dip / 3.6% day budget (day zero). Team 2 = 5.4% dip / 3.6% day (after the +6% cushion). Scale set on the build years only. Everyone trades, equal weight, netted, costs charged (cost_table_h22.csv, R units), one-bar lag, 2021+ sealed.
 
@@ -8,7 +8,7 @@ Team 1 = 3.6% dip / 3.6% day budget (day zero). Team 2 = 5.4% dip / 3.6% day (af
 **Scale-invariant rows** — Sharpe, Sortino, Calmar, profit factor, win rate, retention and FIT — are equal in both tables by construction: team 2 is team 1 times a constant.
 
 
-### TEAM 1
+## TEAM 1
 
 | KPI | ALWAYS-ON | ROUTED (chop RANGING + trend TRENDING) | CHOP ROUTED + TREND UNGATED | CHOP ROUTED + TREND NOT-RANGING |
 |---|---|---|---|---|
@@ -38,7 +38,7 @@ Per year:
 - CHOP ROUTED + TREND UNGATED: 2016: -0.54% | 2017: -0.65% | 2018: +0.24% | 2019: -1.76% | 2020: -0.10%
 - CHOP ROUTED + TREND NOT-RANGING: 2016: -0.59% | 2017: -2.10% | 2018: -0.39% | 2019: -2.10% | 2020: -0.15%
 
-### TEAM 2
+## TEAM 2
 
 | KPI | ALWAYS-ON | ROUTED (chop RANGING + trend TRENDING) | CHOP ROUTED + TREND UNGATED | CHOP ROUTED + TREND NOT-RANGING |
 |---|---|---|---|---|

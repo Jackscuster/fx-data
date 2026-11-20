@@ -1,6 +1,6 @@
 # MODE A — THE PASSERS' BOOKS, THREE MEMBERSHIP RULES
 
-Generated 2026-11-20 10:38 by `code/l2r2gate3.py`. **No new tuning anywhere**: every configuration was already chosen by gate 2, and a rule only decides which of them are members. Equal weight, no picking, no weighting by past record. Sized on the build years and not touched again; the traded year is what is reported.
+Generated 2026-11-20 10:51 by `code/l2r2gate3.py`. **No new tuning anywhere**: every configuration was already chosen by gate 2, and a rule only decides which of them are members. Equal weight, no picking, no weighting by past record. Sized on the build years and not touched again; the traded year is what is reported.
 
 
 ## The rules, and how many pass
@@ -243,7 +243,7 @@ Membership: cleared the bars on the GRADE year (5) AND the TRADE year (6), both 
 | average year | 0.16% | -1.17% |
 | worst year | -1.73% | -4.07% |
 | best year | 2.38% | 0.86% |
-| total 2016-2020 | 0.63% | -4.69% |
+| total 2017-2020 | 0.63% | -4.69% |
 | CAGR | 0.16% | -1.17% |
 | worst day | -0.70% | -0.86% |
 | max drawdown | -3.14% | -7.02% |
@@ -254,9 +254,9 @@ Membership: cleared the bars on the GRADE year (5) AND the TRADE year (6), both 
 | Calmar (CAGR / max DD) | 0.05 | -0.17 |
 | profit factor (trades, median step) | 1.00 | 0.94 |
 | win rate (trades, median step) | 49.71% | 48.44% |
-| positive years of 5 | 2 | 2 |
+| positive years of 4 | 2 | 2 |
 | retention (median step) | 0.01 | -0.13 |
-| steps flagged FIT of 5 | 3 | 4 |
+| steps flagged FIT of 4 | 3 | 4 |
 
 Per year:
 
@@ -271,7 +271,7 @@ Per year:
 | average year | 0.24% | -1.76% |
 | worst year | -2.59% | -6.11% |
 | best year | 3.56% | 1.29% |
-| total 2016-2020 | 0.95% | -7.04% |
+| total 2017-2020 | 0.95% | -7.04% |
 | CAGR | 0.24% | -1.76% |
 | worst day | -1.05% | -1.29% |
 | max drawdown | -4.71% | -10.54% |
@@ -282,9 +282,9 @@ Per year:
 | Calmar (CAGR / max DD) | 0.05 | -0.17 |
 | profit factor (trades, median step) | 1.00 | 0.94 |
 | win rate (trades, median step) | 49.71% | 48.44% |
-| positive years of 5 | 2 | 2 |
+| positive years of 4 | 2 | 2 |
 | retention (median step) | 0.01 | -0.13 |
-| steps flagged FIT of 5 | 3 | 4 |
+| steps flagged FIT of 4 | 3 | 4 |
 
 Per year:
 
