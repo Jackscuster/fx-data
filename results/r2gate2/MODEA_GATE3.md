@@ -1,6 +1,6 @@
 # MODE A — GATE 3
 
-Generated 2026-11-19 22:19 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
+Generated 2026-11-20 10:16 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
 
 
 ## The bars, unchanged
@@ -31,7 +31,7 @@ Costs are charged throughout (`cost_table_h22`, restated per fault #27).
 | stitched | results/r2gate2/modeA_gate3_stitched.csv | 0 | 68b329da9893 |
 | stitched_counts | results/r2gate2/modeA_gate3_stitched_counts.csv | 4 | 18313dcc9133 |
 | book | results/r2gate2/modeA_gate3_passersbook.csv | 20 | 913e3f4f358a |
-| booknull | results/r2gate2/modeA_gate3_passersbook_nulls.csv | 60 | f6d64efd0d72 |
+| booknull | results/r2gate2/modeA_gate3_passersbook_nulls.csv | 60 | 6131572191d2 |
 
 
 ## 1. The bars on the GRADE year (year 5, unseen by the tuner)
@@ -230,66 +230,66 @@ Per year:
 
 | null | scope | step | book | budget | members | real | n_draws | null_mean | null_p5 | null_p95 | p_one_sided |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| identity | full field | 2011-2014 | allon | team1 |  | 2.939 | 200 | 5.414 | 2.122 | 13.9 | 0.84 |
-| identity | full field | 2011-2014 | allon | team2 |  | 4.409 | 200 | 8.074 | 3.182 | 20.85 | 0.85 |
-| identity | full field | 2011-2014 | chop_trend | team1 |  | -1.034 | 200 | 2.753 | -1.034 | 8.264 | 0.825 |
-| identity | full field | 2011-2014 | chop_trend | team2 |  | -1.552 | 200 | 4.149 | -1.552 | 12.4 | 1 |
-| identity | full field | 2012-2015 | allon | team1 |  | 0.03109 | 200 | 8.382 | 0.03109 | 20.01 | 0.855 |
-| identity | full field | 2012-2015 | allon | team2 |  | 0.04663 | 200 | 11.61 | 0.04663 | 30.01 | 1 |
-| identity | full field | 2012-2015 | chop_trend | team1 |  | -2.38 | 200 | 3.809 | -2.38 | 13.63 | 1 |
-| identity | full field | 2012-2015 | chop_trend | team2 |  | -3.57 | 200 | 7.178 | -3.57 | 20.45 | 1 |
-| identity | full field | 2013-2016 | allon | team1 |  | 3.432 | 200 | 5.223 | 1.423 | 11.5 | 0.485 |
-| identity | full field | 2013-2016 | allon | team2 |  | 5.148 | 200 | 7.437 | 2.134 | 17.25 | 0.705 |
-| identity | full field | 2013-2016 | chop_trend | team1 |  | -1.055 | 200 | 3.152 | -1.055 | 10.91 | 1 |
-| identity | full field | 2013-2016 | chop_trend | team2 |  | -1.582 | 200 | 6.283 | -1.582 | 16.36 | 1 |
-| identity | full field | 2014-2017 | allon | team1 |  | -3.043 | 200 | 4.248 | -3.043 | 13.95 | 1 |
-| identity | full field | 2014-2017 | allon | team2 |  | -4.565 | 200 | 5.617 | -4.565 | 20.93 | 1 |
-| identity | full field | 2014-2017 | chop_trend | team1 |  | -2.902 | 200 | 2.482 | -2.902 | 9.365 | 1 |
-| identity | full field | 2014-2017 | chop_trend | team2 |  | -4.353 | 200 | 3.157 | -4.353 | 14.05 | 1 |
-| identity | full field | 2015-2018 | allon | team1 |  | -2.873 | 200 | 10.16 | -2.873 | 19.5 | 1 |
-| identity | full field | 2015-2018 | allon | team2 |  | -4.31 | 200 | 13.4 | -4.31 | 29.24 | 1 |
-| identity | full field | 2015-2018 | chop_trend | team1 |  | 0.02627 | 200 | 5.66 | 0.02627 | 14.14 | 1 |
-| identity | full field | 2015-2018 | chop_trend | team2 |  | 0.03941 | 200 | 8.39 | 0.03941 | 21.21 | 0.86 |
-| shuffle | passers, full | 2011-2014 | allon | team1 | 9303 | 2.939 | 19 | 2.939 | 2.939 | 2.939 | 1 |
-| shuffle | passers, full | 2011-2014 | allon | team2 | 9303 | 4.409 | 19 | 4.409 | 4.409 | 4.409 | 1 |
-| shuffle | passers, full | 2011-2014 | chop_trend | team1 | 1.696e+04 | -1.034 | 19 | -0.574 | -1.434 | 0.435 | 0.7368 |
-| shuffle | passers, full | 2011-2014 | chop_trend | team2 | 1.696e+04 | -1.552 | 19 | -0.861 | -2.151 | 0.6526 | 0.7368 |
-| shuffle | passers, full | 2012-2015 | allon | team1 | 2661 | 0.03109 | 19 | 0.03109 | 0.03109 | 0.03109 | 1 |
-| shuffle | passers, full | 2012-2015 | allon | team2 | 2661 | 0.04663 | 19 | 0.04663 | 0.04663 | 0.04663 | 1 |
-| shuffle | passers, full | 2012-2015 | chop_trend | team1 | 2505 | -2.38 | 19 | -1.311 | -2.138 | -0.2544 | 0.9474 |
-| shuffle | passers, full | 2012-2015 | chop_trend | team2 | 2505 | -3.57 | 19 | -1.966 | -3.207 | -0.3816 | 0.9474 |
-| shuffle | passers, full | 2013-2016 | allon | team1 | 3826 | 3.432 | 19 | 3.432 | 3.432 | 3.432 | 1 |
-| shuffle | passers, full | 2013-2016 | allon | team2 | 3826 | 5.148 | 19 | 5.148 | 5.148 | 5.148 | 1 |
-| shuffle | passers, full | 2013-2016 | chop_trend | team1 | 2590 | -1.055 | 19 | -0.1977 | -0.9235 | 0.5382 | 0.9474 |
-| shuffle | passers, full | 2013-2016 | chop_trend | team2 | 2590 | -1.582 | 19 | -0.2966 | -1.385 | 0.8073 | 0.9474 |
-| shuffle | passers, full | 2014-2017 | allon | team1 | 7233 | -3.043 | 19 | -3.043 | -3.043 | -3.043 | 1 |
-| shuffle | passers, full | 2014-2017 | allon | team2 | 7233 | -4.565 | 19 | -4.565 | -4.565 | -4.565 | 1 |
-| shuffle | passers, full | 2014-2017 | chop_trend | team1 | 9135 | -2.902 | 19 | -1.593 | -2.059 | -0.7896 | 1 |
-| shuffle | passers, full | 2014-2017 | chop_trend | team2 | 9135 | -4.353 | 19 | -2.39 | -3.088 | -1.184 | 1 |
-| shuffle | passers, full | 2015-2018 | allon | team1 | 877 | -2.873 | 19 | -2.873 | -2.873 | -2.873 | 1 |
-| shuffle | passers, full | 2015-2018 | allon | team2 | 877 | -4.31 | 19 | -4.31 | -4.31 | -4.31 | 1 |
-| shuffle | passers, full | 2015-2018 | chop_trend | team1 | 1322 | 0.02627 | 19 | -0.3649 | -1.348 | 0.7179 | 0.2632 |
-| shuffle | passers, full | 2015-2018 | chop_trend | team2 | 1322 | 0.03941 | 19 | -0.5474 | -2.022 | 1.077 | 0.2632 |
-| random-entry | passers, full | 2011-2014 | allon | team1 | 9303 | 2.939 | 19 | -0.4052 | -2.858 | 1.666 | 0.05263 |
-| random-entry | passers, full | 2011-2014 | allon | team2 | 9303 | 4.409 | 19 | -0.6078 | -4.287 | 2.5 | 0.05263 |
-| random-entry | passers, full | 2011-2014 | chop_trend | team1 | 1.696e+04 | -1.034 | 19 | -0.6634 | -3.07 | 0.8188 | 0.7368 |
-| random-entry | passers, full | 2011-2014 | chop_trend | team2 | 1.696e+04 | -1.552 | 19 | -0.9951 | -4.605 | 1.228 | 0.7368 |
-| random-entry | passers, full | 2012-2015 | allon | team1 | 2661 | 0.03109 | 19 | -0.6741 | -2.388 | 1.112 | 0.1579 |
-| random-entry | passers, full | 2012-2015 | allon | team2 | 2661 | 0.04663 | 19 | -1.011 | -3.583 | 1.668 | 0.1579 |
-| random-entry | passers, full | 2012-2015 | chop_trend | team1 | 2505 | -2.38 | 19 | -0.4141 | -1.869 | 0.8462 | 0.9474 |
-| random-entry | passers, full | 2012-2015 | chop_trend | team2 | 2505 | -3.57 | 19 | -0.6211 | -2.804 | 1.269 | 0.9474 |
-| random-entry | passers, full | 2013-2016 | allon | team1 | 3826 | 3.432 | 19 | -0.5759 | -2.94 | 0.3066 | 0 |
-| random-entry | passers, full | 2013-2016 | allon | team2 | 3826 | 5.148 | 19 | -0.8639 | -4.409 | 0.46 | 0 |
-| random-entry | passers, full | 2013-2016 | chop_trend | team1 | 2590 | -1.055 | 19 | -0.2081 | -1.231 | 0.8404 | 0.8421 |
-| random-entry | passers, full | 2013-2016 | chop_trend | team2 | 2590 | -1.582 | 19 | -0.3121 | -1.846 | 1.261 | 0.8421 |
-| random-entry | passers, full | 2014-2017 | allon | team1 | 7233 | -3.043 | 19 | -0.7293 | -2.722 | 0.4267 | 0.9474 |
-| random-entry | passers, full | 2014-2017 | allon | team2 | 7233 | -4.565 | 19 | -1.094 | -4.083 | 0.6401 | 0.9474 |
-| random-entry | passers, full | 2014-2017 | chop_trend | team1 | 9135 | -2.902 | 19 | -0.3073 | -2.149 | 1.398 | 1 |
-| random-entry | passers, full | 2014-2017 | chop_trend | team2 | 9135 | -4.353 | 19 | -0.4609 | -3.223 | 2.096 | 1 |
-| random-entry | passers, full | 2015-2018 | allon | team1 | 877 | -2.873 | 19 | -0.4573 | -2.031 | 0.9661 | 1 |
-| random-entry | passers, full | 2015-2018 | allon | team2 | 877 | -4.31 | 19 | -0.686 | -3.047 | 1.449 | 1 |
-| random-entry | passers, full | 2015-2018 | chop_trend | team1 | 1322 | 0.02627 | 19 | -0.8546 | -2.256 | 0.1255 | 0.1053 |
-| random-entry | passers, full | 2015-2018 | chop_trend | team2 | 1322 | 0.03941 | 19 | -1.282 | -3.385 | 0.1882 | 0.1053 |
+| identity | full field | 2011-2014 | allon | team1 |  | 2.939 | 200 | 5.847 | 2.122 | 13.9 | 0.835 |
+| identity | full field | 2011-2014 | allon | team2 |  | 4.409 | 200 | 8.552 | 3.182 | 20.85 | 0.83 |
+| identity | full field | 2011-2014 | chop_trend | team1 |  | -1.034 | 200 | 2.532 | -1.034 | 8.264 | 0.805 |
+| identity | full field | 2011-2014 | chop_trend | team2 |  | -1.552 | 200 | 3.927 | -1.552 | 12.4 | 1 |
+| identity | full field | 2012-2015 | allon | team1 |  | 0.03109 | 200 | 7.426 | 0.03109 | 20.01 | 0.835 |
+| identity | full field | 2012-2015 | allon | team2 |  | 0.04663 | 200 | 12.2 | 0.04663 | 30.01 | 1 |
+| identity | full field | 2012-2015 | chop_trend | team1 |  | -2.38 | 200 | 4.395 | -2.38 | 13.63 | 1 |
+| identity | full field | 2012-2015 | chop_trend | team2 |  | -3.57 | 200 | 7.656 | -3.57 | 20.45 | 1 |
+| identity | full field | 2013-2016 | allon | team1 |  | 3.432 | 200 | 4.909 | 1.423 | 11.5 | 0.435 |
+| identity | full field | 2013-2016 | allon | team2 |  | 5.148 | 200 | 8.007 | 2.134 | 17.25 | 0.675 |
+| identity | full field | 2013-2016 | chop_trend | team1 |  | -1.055 | 200 | 3.866 | -1.055 | 10.91 | 1 |
+| identity | full field | 2013-2016 | chop_trend | team2 |  | -1.582 | 200 | 5.882 | -1.582 | 16.36 | 1 |
+| identity | full field | 2014-2017 | allon | team1 |  | -3.043 | 200 | 4.473 | -3.043 | 13.95 | 1 |
+| identity | full field | 2014-2017 | allon | team2 |  | -4.565 | 200 | 6.29 | -4.565 | 20.93 | 1 |
+| identity | full field | 2014-2017 | chop_trend | team1 |  | -2.902 | 200 | 2.014 | -2.902 | 9.365 | 1 |
+| identity | full field | 2014-2017 | chop_trend | team2 |  | -4.353 | 200 | 3.574 | -4.353 | 14.05 | 1 |
+| identity | full field | 2015-2018 | allon | team1 |  | -2.873 | 200 | 9.055 | -2.873 | 19.5 | 1 |
+| identity | full field | 2015-2018 | allon | team2 |  | -4.31 | 200 | 14.25 | -4.31 | 29.24 | 1 |
+| identity | full field | 2015-2018 | chop_trend | team1 |  | 0.02627 | 200 | 5.563 | 0.02627 | 14.14 | 1 |
+| identity | full field | 2015-2018 | chop_trend | team2 |  | 0.03941 | 200 | 8.856 | 0.03941 | 21.21 | 0.795 |
+| shuffle | passers, full | 2011-2014 | allon | team1 | 9303 | 3.099 | 19 | 3.099 | 3.099 | 3.099 | 1 |
+| shuffle | passers, full | 2011-2014 | allon | team2 | 9303 | 4.649 | 19 | 4.649 | 4.649 | 4.649 | 1 |
+| shuffle | passers, full | 2011-2014 | chop_trend | team1 | 1.696e+04 | -1.092 | 19 | -0.5542 | -1.424 | 0.4501 | 0.7895 |
+| shuffle | passers, full | 2011-2014 | chop_trend | team2 | 1.696e+04 | -1.638 | 19 | -0.8313 | -2.136 | 0.6752 | 0.7895 |
+| shuffle | passers, full | 2012-2015 | allon | team1 | 2661 | 0.1503 | 19 | 0.1503 | 0.1503 | 0.1503 | 1 |
+| shuffle | passers, full | 2012-2015 | allon | team2 | 2661 | 0.2255 | 19 | 0.2255 | 0.2255 | 0.2255 | 1 |
+| shuffle | passers, full | 2012-2015 | chop_trend | team1 | 2505 | -2.169 | 19 | -1.178 | -1.969 | -0.1146 | 0.9474 |
+| shuffle | passers, full | 2012-2015 | chop_trend | team2 | 2505 | -3.253 | 19 | -1.767 | -2.953 | -0.1719 | 0.9474 |
+| shuffle | passers, full | 2013-2016 | allon | team1 | 3826 | 3.734 | 19 | 3.734 | 3.734 | 3.734 | 1 |
+| shuffle | passers, full | 2013-2016 | allon | team2 | 3826 | 5.601 | 19 | 5.601 | 5.601 | 5.601 | 1 |
+| shuffle | passers, full | 2013-2016 | chop_trend | team1 | 2590 | -0.7956 | 19 | -0.04376 | -0.8641 | 0.7145 | 0.8947 |
+| shuffle | passers, full | 2013-2016 | chop_trend | team2 | 2590 | -1.193 | 19 | -0.06564 | -1.296 | 1.072 | 0.8947 |
+| shuffle | passers, full | 2014-2017 | allon | team1 | 7233 | -2.838 | 19 | -2.838 | -2.838 | -2.838 | 1 |
+| shuffle | passers, full | 2014-2017 | allon | team2 | 7233 | -4.258 | 19 | -4.258 | -4.258 | -4.258 | 1 |
+| shuffle | passers, full | 2014-2017 | chop_trend | team1 | 9135 | -2.914 | 19 | -1.512 | -1.967 | -0.663 | 1 |
+| shuffle | passers, full | 2014-2017 | chop_trend | team2 | 9135 | -4.371 | 19 | -2.268 | -2.95 | -0.9944 | 1 |
+| shuffle | passers, full | 2015-2018 | allon | team1 | 877 | -2.494 | 19 | -2.494 | -2.494 | -2.494 | 1 |
+| shuffle | passers, full | 2015-2018 | allon | team2 | 877 | -3.741 | 19 | -3.741 | -3.741 | -3.741 | 1 |
+| shuffle | passers, full | 2015-2018 | chop_trend | team1 | 1322 | 0.3245 | 19 | -0.2011 | -1.231 | 0.9162 | 0.2632 |
+| shuffle | passers, full | 2015-2018 | chop_trend | team2 | 1322 | 0.4867 | 19 | -0.3016 | -1.847 | 1.374 | 0.2632 |
+| random-entry | passers, full | 2011-2014 | allon | team1 | 9303 | 3.099 | 19 | -0.3896 | -2.969 | 1.835 | 0.05263 |
+| random-entry | passers, full | 2011-2014 | allon | team2 | 9303 | 4.649 | 19 | -0.5844 | -4.453 | 2.753 | 0.05263 |
+| random-entry | passers, full | 2011-2014 | chop_trend | team1 | 1.696e+04 | -1.092 | 19 | -0.5724 | -3.094 | 1.016 | 0.7368 |
+| random-entry | passers, full | 2011-2014 | chop_trend | team2 | 1.696e+04 | -1.638 | 19 | -0.8586 | -4.641 | 1.523 | 0.7368 |
+| random-entry | passers, full | 2012-2015 | allon | team1 | 2661 | 0.1503 | 19 | -0.6076 | -2.355 | 1.256 | 0.1579 |
+| random-entry | passers, full | 2012-2015 | allon | team2 | 2661 | 0.2255 | 19 | -0.9114 | -3.532 | 1.885 | 0.1579 |
+| random-entry | passers, full | 2012-2015 | chop_trend | team1 | 2505 | -2.169 | 19 | -0.3051 | -1.924 | 1.066 | 0.9474 |
+| random-entry | passers, full | 2012-2015 | chop_trend | team2 | 2505 | -3.253 | 19 | -0.4576 | -2.887 | 1.599 | 0.9474 |
+| random-entry | passers, full | 2013-2016 | allon | team1 | 3826 | 3.734 | 19 | -0.5851 | -2.99 | 0.4533 | 0 |
+| random-entry | passers, full | 2013-2016 | allon | team2 | 3826 | 5.601 | 19 | -0.8777 | -4.484 | 0.6799 | 0 |
+| random-entry | passers, full | 2013-2016 | chop_trend | team1 | 2590 | -0.7956 | 19 | -0.134 | -1.443 | 0.9239 | 0.7368 |
+| random-entry | passers, full | 2013-2016 | chop_trend | team2 | 2590 | -1.193 | 19 | -0.201 | -2.164 | 1.386 | 0.7368 |
+| random-entry | passers, full | 2014-2017 | allon | team1 | 7233 | -2.838 | 19 | -0.6666 | -2.667 | 0.5745 | 0.9474 |
+| random-entry | passers, full | 2014-2017 | allon | team2 | 7233 | -4.258 | 19 | -0.9999 | -4 | 0.8618 | 0.9474 |
+| random-entry | passers, full | 2014-2017 | chop_trend | team1 | 9135 | -2.914 | 19 | -0.3097 | -2.088 | 1.593 | 1 |
+| random-entry | passers, full | 2014-2017 | chop_trend | team2 | 9135 | -4.371 | 19 | -0.4645 | -3.132 | 2.389 | 1 |
+| random-entry | passers, full | 2015-2018 | allon | team1 | 877 | -2.494 | 19 | -0.371 | -2.13 | 1.256 | 1 |
+| random-entry | passers, full | 2015-2018 | allon | team2 | 877 | -3.741 | 19 | -0.5565 | -3.195 | 1.884 | 1 |
+| random-entry | passers, full | 2015-2018 | chop_trend | team1 | 1322 | 0.3245 | 19 | -0.9234 | -2.261 | 0.2495 | 0.05263 |
+| random-entry | passers, full | 2015-2018 | chop_trend | team2 | 1322 | 0.4867 | 19 | -1.385 | -3.392 | 0.3743 | 0.05263 |
 
 
-The real book clears its null's 95th percentile in **4 of 60** cells.
+The real book clears its null's 95th percentile in **6 of 60** cells.
