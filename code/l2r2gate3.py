@@ -354,8 +354,15 @@ def stage_report(mode='A', tag='full', nullseed=20261118, ndraw=200):
 RULES = ('grade', 'strict', 'fiveyr')
 
 
+def _base(rule):
+    """'strict#rnd3' -> 'strict'. A random-membership draw trades exactly the
+    years and steps its real rule does, or the comparison is not a comparison."""
+    return rule.split('#')[0]
+
+
 def rule_steps(rule):
     """Which step indices a rule can trade, and why one is excluded."""
+    rule = _base(rule)
     ST = G2.steps()
     if rule == 'strict':
         # year 7 = trade year + 1; it must be inside the bank AND unsealed
@@ -365,6 +372,7 @@ def rule_steps(rule):
 
 def rule_windows(rule, stp):
     """(build_years, trade_years) for one rule and one step."""
+    rule = _base(rule)
     if rule == 'strict':
         # sized on years 1-6, the years membership was decided on; trades year 7
         return (set(range(stp['tune'][0], stp['trade'][1] + 1)),
@@ -742,6 +750,274 @@ def stage_booknulls(mode='A', tag='full', jobs=8, ndraw=20, nid=200, rule='grade
     return A, outp
 
 
+def stage_members(mode='A', tag='full', rule='grade'):
+    """Every member of every book, with its settings and its per-year R.
+
+    THE SETTINGS ARE RESOLVED, NOT NAMED. The bank stores a winner INDEX; this
+    resolves it back through BK.winner_config to the actual indicator inputs
+    and risk parameters, so the row is enough to reproduce the member without
+    the bank. Per-year R is the expectancy in R for each calendar year the bank
+    covers, which is what makes a member's record readable without a second
+    file.
+    """
+    G.manifest_check()
+    ix, K = load_kpis(mode)
+    pos = {int(v): i for i, v in enumerate(ix)}
+    PM = np.load(passmask_file(mode, rule), allow_pickle=True)['pm']
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    TG = z['tag']; CB = z['combo']
+    ST = G2.steps()
+    ki = {kn: i for i, kn in enumerate(KPIS)}
+    rows = []
+    for si in rule_steps(rule):
+        stp = ST[si]
+        bt, bd = rule_windows(rule, stp)
+        for st in range(4):
+            sname = S.SLICES[st // 2][0]
+            for k in np.flatnonzero(PM[:, st, si]):
+                k = int(k)
+                ci = int(TG[k, st, si])
+                if ci < 0:
+                    continue
+                combo = tuple(CB[k])
+                ip, risk = BK.winner_config(mode, combo, sname, ci)
+                r = dict(mode=mode, rule=rule, step=stp['name'],
+                         stream=G2.STREAMS[st], slice=sname,
+                         routed=int(st % 2 == 0),
+                         size_years='%d-%d' % (min(bt), max(bt)),
+                         trade_year=','.join(str(y) for y in sorted(bd)),
+                         bank_row=k, sid='|'.join(combo), winner_index=ci)
+                for slot, nm in zip(('c1', 'c2', 'vol', 'base', 'exit_ind'), combo):
+                    r['slot_' + slot] = nm
+                    v = ip.get(slot)
+                    r['param_' + slot] = (json.dumps(v, sort_keys=True)
+                                          if isinstance(v, (dict, list)) else v)
+                for rk in sorted(risk):
+                    r['risk_' + rk] = risk[rk]
+                i = pos.get(k)
+                if i is not None:
+                    for y in YEARS:
+                        b = _blk(K, i, st, si, YEARS.index(y))
+                        r['R_%d' % y] = (b['expectancy_R'] if b else np.nan)
+                        r['n_%d' % y] = (b['n'] if b else np.nan)
+                rows.append(r)
+    D = pd.DataFrame(rows)
+    outp = os.path.join(ROOTOUT, 'r2gate2',
+                        'mode%s_gate3_members%s.csv' % (mode, _suffix(rule)))
+    D.to_csv(outp, index=False)
+    print('  members [%s]: %s rows -> %s'
+          % (rule, f'{len(D):,}', os.path.relpath(outp, _R)), flush=True)
+    return D, outp
+
+
+def stage_randompick(mode='A', tag='full', rule='grade', jobs=8, nshard=None, draws=3,
+                     seed=20261120):
+    """What a RANDOM pick of the same size does, book for book.
+
+    THE SIZE IS MATCHED PER (STEP, STREAM), not in total. A book's reading
+    depends on how many members vote on each day, so a null that matched only
+    the grand total would be comparing books of different widths and the
+    difference would not be attributable to the filter.
+
+    The random members are drawn from the strategies that HAVE a banked winner
+    for that (step, stream) -- the same population the real rule chose from.
+    Drawing from all 273,780 regardless would let the null include strategies
+    the rule could never have picked, which flatters the rule.
+    """
+    rng = np.random.default_rng(seed)
+    PM = np.load(passmask_file(mode, rule), allow_pickle=True)['pm']
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    TG = z['tag']; nstrat = int(z['n']); del z
+    steps = rule_steps(rule)
+    parts = []
+    for d in range(draws):
+        RM = np.zeros_like(PM)
+        for si in steps:
+            for st in range(4):
+                want = int(PM[:, st, si].sum())
+                if want == 0:
+                    continue
+                pool = np.flatnonzero(TG[:, st, si] >= 0)
+                if len(pool) < want:
+                    pool = np.arange(nstrat)
+                pick = rng.choice(pool, size=want, replace=False)
+                RM[pick, st, si] = True
+        rrule = '%s#rnd%d' % (rule, d)
+        f = passmask_file(mode, rrule)
+        np.savez(f, pm=RM, n=np.int64(nstrat), rule=np.array(rrule, dtype=object),
+                 steps_used=np.array(steps, np.int64))
+        print('  random pick %d of %d [%s]: %s member cells, sizes matched per (step, stream)'
+              % (d + 1, draws, rule, f'{int(RM.sum()):,}'), flush=True)
+        D, _p = stage_book(mode, tag, jobs=jobs, nshard=nshard, rule=rrule)
+        D['draw'] = d
+        parts.append(D)
+        # the draw's part files are scratch: they are a null, not a deliverable,
+        # and keeping draws x 32 x 5 of them is what fills the volume
+        pd_ = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_gate3bookparts' % mode)
+        gone = 0
+        for g in glob.glob(os.path.join(pd_, 'pbook%s_s*.npz' % _suffix(rrule))):
+            os.remove(g); gone += 1
+        os.remove(f)
+        # the draw's own book csv is scratch as well -- its rows are already in
+        # the concatenated randompick csv, and leaving it on disk would put a
+        # file that looks like a deliverable next to the real ones
+        dcsv = os.path.join(ROOTOUT, 'r2gate2',
+                            'mode%s_gate3_passersbook%s.csv' % (mode, _suffix(rrule)))
+        if os.path.exists(dcsv):
+            os.remove(dcsv); gone += 1
+        print('    draw %d scratch removed: %d files and its pass mask'
+              % (d + 1, gone), flush=True)
+    A = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+    outp = os.path.join(ROOTOUT, 'r2gate2',
+                        'mode%s_gate3_randompick%s.csv' % (mode, _suffix(rule)))
+    A.to_csv(outp, index=False)
+    print('  random pick [%s]: %d rows over %d draws -> %s'
+          % (rule, len(A), draws, os.path.relpath(outp, _R)), flush=True)
+    return A, outp
+def write_passerbooks_md(mode='A', out=None):
+    """MODE<M>_PASSERBOOKS.md -- the three membership rules side by side.
+
+    Every number is read back out of a named CSV. The rules differ only in
+    WHICH unseen years decide membership and which year the book then trades,
+    so they belong in one document: the comparison is the result.
+    """
+    import hashlib
+    import l2r2kpis as KP
+    RD = os.path.join(ROOTOUT, 'r2gate2')
+    DESC = {
+        'grade': ('cleared the bars on the GRADE year (year 5)', 'year 6', 'all five steps'),
+        'strict': ('cleared the bars on the GRADE year (5) AND the TRADE year (6), '
+                   'both unseen by the tuner', 'year 7',
+                   'steps 1-4; step 5\'s year 7 is 2021 and 2021+ is sealed'),
+        'fiveyr': ('cleared the bars on the FULL tune-plus-grade record, years 1-5 '
+                   'stitched into one block', 'year 6', 'all five steps'),
+    }
+    L = []; A = L.append
+    A('# MODE %s — THE PASSERS\' BOOKS, THREE MEMBERSHIP RULES\n' % mode)
+    A('Generated %s by `code/l2r2gate3.py`. **No new tuning anywhere**: every '
+      'configuration was already chosen by gate 2, and a rule only decides which of '
+      'them are members. Equal weight, no picking, no weighting by past record. '
+      'Sized on the build years and not touched again; the traded year is what is '
+      'reported.\n' % time.strftime('%F %H:%M'))
+
+    A('\n## The rules, and how many pass\n')
+    A('| rule | membership | trades | steps |\n|---|---|---|---|')
+    for r in RULES:
+        d = DESC[r]
+        A('| `%s` | %s | %s | %s |' % (r, d[0], d[1], d[2]))
+
+    cnt = []
+    for r in RULES:
+        f = passmask_file(mode, r)
+        if not os.path.exists(f):
+            continue
+        PM = np.load(f, allow_pickle=True)['pm']
+        ST = G2.steps()
+        for si in rule_steps(r):
+            cnt.append(dict(rule=r, step=ST[si]['name'],
+                            routed=int((PM[:, 0, si] | PM[:, 2, si]).sum()),
+                            always_on=int((PM[:, 1, si] | PM[:, 3, si]).sum()),
+                            any_stream=int(PM[:, :, si].any(axis=1).sum()),
+                            member_cells=int(PM[:, :, si].sum())))
+    if cnt:
+        A('\n### Members per step\n')
+        A(BK_tbl(pd.DataFrame(cnt), ['rule', 'step', 'routed', 'always_on',
+                                     'any_stream', 'member_cells']))
+        C = pd.DataFrame(cnt).groupby('rule', as_index=False)[
+            ['routed', 'always_on', 'any_stream', 'member_cells']].sum()
+        A('\nSummed over the steps each rule trades (so `strict` sums four, the '
+          'others five):\n')
+        A(BK_tbl(C, ['rule', 'routed', 'always_on', 'any_stream', 'member_cells']))
+    else:
+        A('\n_No pass masks on disk yet._\n')
+
+    for r in RULES:
+        bf = os.path.join(RD, 'mode%s_gate3_passersbook%s.csv' % (mode, _suffix(r)))
+        nf = os.path.join(RD, 'mode%s_gate3_passersbook%s_nulls.csv' % (mode, _suffix(r)))
+        rf = os.path.join(RD, 'mode%s_gate3_randompick%s.csv' % (mode, _suffix(r)))
+        mf = os.path.join(RD, 'mode%s_gate3_members%s.csv' % (mode, _suffix(r)))
+        A('\n## Rule `%s`\n' % r)
+        if not os.path.exists(bf):
+            A('_Not built; this section is empty rather than filled in from another rule._\n')
+            continue
+        B = _safe_csv(bf)
+        A('Membership: %s. Trades %s, %s.\n' % DESC[r])
+        otag = 'g3pass' + _suffix(r).replace('_', '')
+        tl, _rec = KP.kpi_tables(mode, tag=otag, books_csv=bf, Bk=B)
+        if tl:
+            A('\n### Full KPI table\n')
+            for ln in tl:
+                A(ln)
+        A('\n### Per step, as traded\n')
+        A(BK_tbl(B, ['step', 'book', 'budget', 'size_years', 'trade_year', 'members',
+                     'size_scale', 'scale_binds', 'trade_total_pct', 'trade_max_dd_pct',
+                     'trade_dip95_pct', 'trade_profit_factor', 'trade_sortino',
+                     'trade_calmar', 'trade_win_rate_pct', 'retention', 'FIT']))
+        if os.path.exists(rf):
+            R = _safe_csv(rf)
+            A('\n### Against a RANDOM pick of the same size\n')
+            A('Sizes matched per (step, stream), drawn from the strategies that have a '
+              'banked winner for that cell -- the same population the rule chose from.\n')
+            if len(R) and 'trade_total_pct' in R.columns:
+                g = (R[R.get('book_empty', 0) == 0]
+                     .groupby(['step', 'book', 'budget'], as_index=False)
+                     .agg(random_mean=('trade_total_pct', 'mean'),
+                          random_min=('trade_total_pct', 'min'),
+                          random_max=('trade_total_pct', 'max'),
+                          draws=('trade_total_pct', 'size')))
+                m = B[B.get('book_empty', 0) == 0][['step', 'book', 'budget',
+                                                    'trade_total_pct']].rename(
+                    columns={'trade_total_pct': 'real'})
+                J = m.merge(g, on=['step', 'book', 'budget'], how='left')
+                J['real_beats_random_mean'] = (J.real > J.random_mean).astype('Int64')
+                A(BK_tbl(J, ['step', 'book', 'budget', 'real', 'random_mean',
+                             'random_min', 'random_max', 'draws',
+                             'real_beats_random_mean']))
+                nb = int(J.real_beats_random_mean.fillna(0).sum()); nt = int(len(J))
+                A('\nThe real book beats the random pick\'s mean in **%d of %d** '
+                  '(step, book, budget) cells.\n' % (nb, nt))
+        if os.path.exists(nf):
+            N = _safe_csv(nf)
+            A('\n### Its three nulls\n')
+            A(BK_tbl(N, ['null', 'scope', 'step', 'book', 'budget', 'members', 'real',
+                         'n_draws', 'null_mean', 'null_p5', 'null_p95', 'p_one_sided']))
+            if len(N) and 'null_p95' in N.columns:
+                beat = int((pd.to_numeric(N.real, errors='coerce')
+                            > pd.to_numeric(N.null_p95, errors='coerce')).sum())
+                A('\nThe real book clears its null\'s 95th percentile in **%d of %d** '
+                  'cells.\n' % (beat, len(N)))
+        if os.path.exists(mf):
+            M = _safe_csv(mf)
+            A('\n### Every member, with its settings and per-year R\n')
+            A('All %s rows are in `%s`. The first 20:\n'
+              % (f'{len(M):,}', os.path.relpath(mf, _R)))
+            cols = [c for c in ['step', 'stream', 'sid', 'winner_index'] if c in M.columns]
+            cols += [c for c in M.columns if c.startswith('risk_')][:3]
+            cols += ['R_%d' % y for y in YEARS if 'R_%d' % y in M.columns]
+            A(BK_tbl(M.head(20), cols))
+
+    A('\n## Provenance\n')
+    A('| file | rows | md5 |\n|---|---|---|')
+    for r in RULES:
+        for nm in ('passersbook', 'passersbook_nulls', 'randompick', 'members'):
+            if nm == 'passersbook_nulls':
+                f = os.path.join(RD, 'mode%s_gate3_passersbook%s_nulls.csv'
+                                 % (mode, _suffix(r)))
+            else:
+                f = os.path.join(RD, 'mode%s_gate3_%s%s.csv' % (mode, nm, _suffix(r)))
+            if os.path.exists(f) and os.path.getsize(f) > 1:
+                A('| `%s` | %s | %s |'
+                  % (os.path.relpath(f, _R), f'{len(_safe_csv(f)):,}',
+                     hashlib.md5(open(f, 'rb').read()).hexdigest()[:12]))
+
+    txt = '\n'.join(L) + '\n'
+    out = out or os.path.join(RD, 'MODE%s_PASSERBOOKS.md' % mode)
+    open(out, 'w').write(txt)
+    print('  MODE%s_PASSERBOOKS.md: %d lines -> %s'
+          % (mode, len(txt.splitlines()), os.path.relpath(out, _R)), flush=True)
+    return out
+
+
 def opt(f, c=str, d=None):
     return G.opt(f, c, d)
 
@@ -938,14 +1214,26 @@ if __name__ == '__main__':
         stage_report(md, G.opt('--tag', str, 'full'), ndraw=G.opt('--draws', int, 200))
         write_md(md)
     elif st == 'passmask':
-        stage_passmask(md)
+        stage_passmask(md, G.opt('--rule', str, 'grade'))
     elif st == 'book':
         stage_book(md, G.opt('--tag', str, 'full'), jobs=G.opt('--jobs', int, 8),
-                   nshard=G.opt('--nshard', int, None))
+                   nshard=G.opt('--nshard', int, None),
+                   rule=G.opt('--rule', str, 'grade'))
     elif st == 'booknulls':
         stage_booknulls(md, G.opt('--tag', str, 'full'), jobs=G.opt('--jobs', int, 8),
                         ndraw=G.opt('--draws', int, 20),
-                        nid=G.opt('--id-draws', int, 200))
+                        nid=G.opt('--id-draws', int, 200),
+                        rule=G.opt('--rule', str, 'grade'))
+    elif st == 'members':
+        stage_members(md, G.opt('--tag', str, 'full'), rule=G.opt('--rule', str, 'grade'))
+    elif st == 'randompick':
+        stage_randompick(md, G.opt('--tag', str, 'full'),
+                         rule=G.opt('--rule', str, 'grade'),
+                         jobs=G.opt('--jobs', int, 8),
+                         nshard=G.opt('--nshard', int, None),
+                         draws=G.opt('--pick-draws', int, 3))
+    elif st == 'passerbooks':
+        write_passerbooks_md(md)
     elif st == 'md':
         write_md(md)
     else:

@@ -258,7 +258,9 @@ def write_md(mode='B', tag='full', out=None):
     tl, recs = kpi_tables(mode, tag, bf, Bk)
     # the shared builder writes '### TEAM n'; the top-level document wants '##'
     for ln in tl:
-        A(ln.replace('### TEAM ', '## TEAM ') if ln.startswith('### TEAM ') else ln)
+        # the shared builder emits '\n### TEAM n\n', so the line does not START
+        # with the heading -- test for containment, not prefix
+        A(ln.replace('### TEAM ', '## TEAM '))
 
     lines, nf = nulls_summary(mode)
     A('\n## Nulls (from `%s`)\n' % os.path.relpath(nf, _R))
