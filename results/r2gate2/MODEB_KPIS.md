@@ -1,6 +1,6 @@
 # MODE B KPIs — all 273,780 strategies, tuned honestly, traded years 2016–2020 stitched
 
-Source: `results/r2gate2/modeB_daily_full_*_*_*.npz` (daily series, trade-year days only, one year per walk-forward step, stitched 2016→2020) and `results/r2gate2/modeB_books_full.csv` (trade-level PF, win rate, DIP95, retention, FIT). Generated 2026-11-19 22:21 by `code/l2r2kpis.py` — every number read back out of those files, nothing typed in by hand. Numbers CSV beside this file: `modeB_kpis_stitched_2016-2020.csv`.
+Source: `results/r2gate2/modeB_daily_full_*_*_*.npz` (daily series, trade-year days only, one year per walk-forward step, stitched 2016→2020) and `results/r2gate2/modeB_books_full.csv` (trade-level PF, win rate, DIP95, retention, FIT). Generated 2026-11-20 10:16 by `code/l2r2kpis.py` — every number read back out of those files, nothing typed in by hand. Numbers CSV beside this file: `modeB_kpis_stitched_2016-2020.csv`.
 
 Team 1 = 3.6% dip / 3.6% day budget (day zero). Team 2 = 5.4% dip / 3.6% day (after the +6% cushion). Scale set on the build years only. Everyone trades, equal weight, netted, costs charged (cost_table_h22.csv, R units), one-bar lag, 2021+ sealed.
 
