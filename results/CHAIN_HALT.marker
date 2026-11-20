@@ -1,8 +1,8 @@
-CHAIN HALTED at stage "chain:l2r2r.sh"
-2026-11-18 17:12:06
+CHAIN HALTED at stage "chain:l2r2t.sh"
+2026-11-19 22:21:02
 
 THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:
-  - declared disk need 6.4 GB + 2.0 GB headroom = 8.4 GB, but only 6.1 GB is free
+  - the FIRST stage is "g3b e2e"; every chain must begin with a one-minute end-to-end test of its own save and read path
 
 Declare one line per stage at the top of the driver:
     # ckpt <stage name> = <seconds, max 300>   <why>

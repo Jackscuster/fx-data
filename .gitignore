@@ -101,3 +101,16 @@ code/__pycache__/
 # committed the mode C bank (6.5 GB) and GitHub rejected the push; the repo
 # carries the CURVES and the rank correlations, which is what anyone reads.
 results/r2gate1/
+
+# Gate 3's passers'-book part files and the sampled nulls' scratch: both are
+# RESUME STATE, not feeds. The book parts hold the four per-(pair, day) sums
+# plus the ids already folded in, and the whole mode A book rebuilds from the
+# bank in 1.5 min measured; the null parts are deleted by the stage itself once
+# a step is summed. Committing them put 851 MB per mode into a .git that is
+# already 5.9 GB, on a volume with 8 GB free -- the chain would have filled the
+# disk before it finished. What IS committed is what they produce:
+# mode<M>_gate3_passersbook.csv, its _nulls.csv, the g3pass daily series and
+# the pass mask. The KPI bank (mode<M>_gate3parts) stays tracked: that one is a
+# feed, 6.7 h of scoring that nothing else can reproduce cheaply.
+results/r2gate2/*_gate3bookparts/
+results/r2gate2/*_nullparts_*/

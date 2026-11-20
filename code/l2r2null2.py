@@ -171,10 +171,15 @@ def _acc_draws_book(nt, eb, xb, dirv, epx, units, rtot, cst, am, risk,
 
 def _null_worker(args):
     """One shard of the sampled null: every draw, in one bar walk per config."""
-    shard, nshard, mode, tag, si, idxs, kind, ndraw, outdir, cap, seed = args
+    (shard, nshard, mode, tag, si, idxs, kind, ndraw, outdir, cap, seed,
+     pmfile) = args
     S.load_costs()
     z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
     TG = z['tag']; CB = z['combo']
+    # A PASS MASK NARROWS MEMBERSHIP PER (STRATEGY, STREAM, STEP). Passed only
+    # by the passers'-book nulls; None here is the full-field behaviour this
+    # function has always had, unchanged.
+    PM = np.load(pmfile, allow_pickle=True)['pm'] if pmfile else None
     mine = [i for n, i in enumerate(idxs) if n % nshard == shard]
     stp = G2.steps()[si]
     build_years = set(range(stp['tune'][0], stp['grade'][1] + 1))
@@ -203,12 +208,16 @@ def _null_worker(args):
     t0 = time.time()
     for q, k in enumerate(mine, 1):
         combo = tuple(CB[k])
+        added = np.zeros(nb, np.int64)
         for sl, (sname, plan, _code) in enumerate(S.SLICES):
             allon_tab, gated_tab = BK.split_keeptabs(sname)
             for rt, tabv in ((1, allon_tab), (0, gated_tab)):
+                if PM is not None and not PM[k, 2 * sl + rt, si]:
+                    continue
                 ci = int(TG[k, 2 * sl + rt, si])
                 if ci < 0:
                     continue
+                added[0 if rt == 1 else 1] = 1
                 ip, risk = BK.winner_config(mode, combo, sname, ci)
                 am = float(risk['atr_mult']); alen = int(risk['atr_len'])
                 t1 = L.KIND[combo[0]] == 'TERNARY'; t2 = L.KIND[combo[1]] == 'TERNARY'
@@ -245,7 +254,16 @@ def _null_worker(args):
                                     Y.cl[p], aidx[p], Y.sc.reg[p].astype(np.int64),
                                     len(adays) * Y.sc.pairs.index(p), tabv,
                                     roff, eshift, NL, NS, SL, SS)
-        nmem += 1
+        if PM is None:
+            nmem += 1
+        else:
+            # the routed and always-on books have DIFFERENT membership here, so
+            # each book counts only its own members -- the vote fraction is
+            # |net| / members and a wrong denominator moves every book day
+            if added[0]:
+                nmem[0] += 1
+            if added[1]:
+                nmem[1:] += 1
         if q % 25 == 0:
             el = time.time() - t0
             print('    null %s s%d shard %02d: %d/%d  %.2f s/strategy  %.0f min left'
@@ -258,14 +276,26 @@ def _null_worker(args):
     return f
 
 
-def sampled_null(mode, tag, kind, nsample, ndraw=NDRAW_SAMPLED, jobs=8, cap=30000, seed=20261118):
-    """One sampled null at one sample size. Draw 0 is the real reading."""
+def sampled_null(mode, tag, kind, nsample, ndraw=NDRAW_SAMPLED, jobs=8, cap=30000,
+                 seed=20261118, idxs=None, pmfile=None, scope=None, partsuffix=''):
+    """One sampled null at one sample size. Draw 0 is the real reading.
+
+    `idxs` names the members explicitly instead of drawing a stratified sample
+    -- the passers' book passes its own membership, which is smaller than the
+    sample sizes this function was written for, so it runs on ALL of it. With
+    `idxs` None the behaviour is the stratified sample it has always been.
+    """
     import multiprocessing as mp
-    opts = S.mode_opts(S.slot_options(), mode)
-    ntot = S.n_combos(opts)
-    rng = np.random.default_rng(seed)
-    idxs = sorted(rng.choice(ntot, size=min(nsample, ntot), replace=False).tolist())
-    outdir = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_nullparts_%s_%d' % (mode, kind, nsample))
+    if idxs is None:
+        opts = S.mode_opts(S.slot_options(), mode)
+        ntot = S.n_combos(opts)
+        rng = np.random.default_rng(seed)
+        idxs = sorted(rng.choice(ntot, size=min(nsample, ntot), replace=False).tolist())
+    else:
+        idxs = sorted(int(x) for x in idxs)
+    scope = scope or 'sample %d' % nsample
+    outdir = os.path.join(ROOTOUT, 'r2gate2',
+                          'mode%s_nullparts_%s_%d%s' % (mode, kind, nsample, partsuffix))
     os.makedirs(outdir, exist_ok=True)
     print('  null %s, sample %s, %d draws (draw 0 = real), %d workers'
           % (kind, f'{len(idxs):,}', ndraw, jobs), flush=True)
@@ -277,7 +307,7 @@ def sampled_null(mode, tag, kind, nsample, ndraw=NDRAW_SAMPLED, jobs=8, cap=3000
         _ai, adays = BK.year_dayidx(Y, build_years | trade_years)
         pairs = Y.sc.pairs
         del Y
-        args = [(k, jobs, mode, tag, si, idxs, kind, ndraw, outdir, cap, seed)
+        args = [(k, jobs, mode, tag, si, idxs, kind, ndraw, outdir, cap, seed, pmfile)
                 for k in range(jobs)]
         t0 = time.time()
         if jobs == 1:
@@ -329,7 +359,7 @@ def sampled_null(mode, tag, kind, nsample, ndraw=NDRAW_SAMPLED, jobs=8, cap=3000
                 sur = np.array([v for d_, v in lst if d_ != 0])
                 if not real or not len(sur):
                     continue
-                rows.append(dict(null=kind, scope='sample %d' % nsample, step=stp['name'],
+                rows.append(dict(null=kind, scope=scope, step=stp['name'],
                                  book=bk, budget=bname, members=int(nmem[bi]),
                                  real=float(real[0]), n_draws=int(len(sur)),
                                  null_mean=float(sur.mean()),
