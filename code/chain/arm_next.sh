@@ -39,21 +39,22 @@ push(){
 }
 
 [ -f "$R/$DRIVER" ] || [ -f "$DRIVER" ] || { say "no such driver $DRIVER"; exit 2; }
-PREV=$(grep -cF "$MARKER" "$L/batch1.log" 2>/dev/null || echo 0)
+count_marker(){ local c; c=$(grep -cF "$MARKER" "$L/batch1.log" 2>/dev/null | head -1); echo "${c:-0}"; }
+PREV=$(count_marker)
 WATCH_PID=$(grep CHAIN_PID "$L/chain_current" 2>/dev/null | cut -d= -f2)
 say "waiting for \"$MARKER\" (seen $PREV times already; only a NEW one counts), then launching $DRIVER"
 say "watching chain pid ${WATCH_PID:-unknown}"
 
 T0=$(date +%s)
 while :; do
-  NOW=$(grep -cF "$MARKER" "$L/batch1.log" 2>/dev/null || echo 0)
+  NOW=$(count_marker)
   if [ "$NOW" -gt "$PREV" ]; then
     say "marker seen; the chain ahead has finished"
     break
   fi
   if [ -n "$WATCH_PID" ] && ! kill -0 "$WATCH_PID" 2>/dev/null; then
     sleep 20                                  # let a final marker land
-    NOW=$(grep -cF "$MARKER" "$L/batch1.log" 2>/dev/null || echo 0)
+    NOW=$(count_marker)
     if [ "$NOW" -gt "$PREV" ]; then say "marker landed as the chain exited"; break; fi
     say "the chain ahead DIED without its marker -- not launching $DRIVER"
     push "fx-data: chain died, next chain NOT launched" \
