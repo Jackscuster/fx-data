@@ -351,37 +351,111 @@ def stage_report(mode='A', tag='full', nullseed=20261118, ndraw=200):
 # accumulated on its own. That is cheap here: 59,268 member-slots against the
 # field's 1,368,900, ~2 min of engine work against 30.
 # ---------------------------------------------------------------------------
-def passmask_file(mode='A'):
-    return os.path.join(ROOTOUT, 'r2gate2', 'mode%s_gate3_passmask.npz' % mode)
+RULES = ('grade', 'strict', 'fiveyr')
 
 
-def stage_passmask(mode='A'):
-    """(n_bank, 4 streams, 5 steps) bool: did this strategy clear the bars on
-    this step's GRADE year on this stream. Read straight off the KPI bank, so
-    it is the same arithmetic part 1 of the report prints and cannot drift."""
+def rule_steps(rule):
+    """Which step indices a rule can trade, and why one is excluded."""
+    ST = G2.steps()
+    if rule == 'strict':
+        # year 7 = trade year + 1; it must be inside the bank AND unsealed
+        return [si for si, s in enumerate(ST) if (s['trade'][0] + 1) in YEARS]
+    return list(range(len(ST)))
+
+
+def rule_windows(rule, stp):
+    """(build_years, trade_years) for one rule and one step."""
+    if rule == 'strict':
+        # sized on years 1-6, the years membership was decided on; trades year 7
+        return (set(range(stp['tune'][0], stp['trade'][1] + 1)),
+                {stp['trade'][0] + 1})
+    # grade and fiveyr both size on years 1-5 and trade year 6
+    return (set(range(stp['tune'][0], stp['grade'][1] + 1)),
+            set(range(stp['trade'][0], stp['trade'][1] + 1)))
+
+
+def _suffix(rule):
+    """`grade` keeps the original filenames; the new rules are suffixed."""
+    return '' if rule == 'grade' else '_' + rule
+
+
+def passmask_file(mode='A', rule='grade'):
+    return os.path.join(ROOTOUT, 'r2gate2',
+                        'mode%s_gate3_passmask%s.npz' % (mode, _suffix(rule)))
+
+
+def _stitch_block(K, i, stream, si, year_idxs):
+    """One KPI block over several years, by stage_report part 3's arithmetic."""
+    tot = gross = loss = nn = 0.0
+    dds, sor = [], []
+    seen = 0
+    for yi in year_idxs:
+        b = _blk(K, i, stream, si, yi)
+        if b is None:
+            continue
+        seen += 1
+        nn += b['n']; tot += b['total_R']
+        g = _gross(b)
+        if np.isfinite(g):
+            gross += g; loss += g - b['total_R']
+        dds.append(b['max_dd_R']); sor.append(b['sortino'])
+    if not seen or nn <= 0:
+        return None, np.nan
+    sdd = float(np.nansum(dds))
+    return dict(n=nn, expectancy_R=tot / nn, total_R=tot,
+                profit_factor=(gross / loss if loss > 0 else np.inf),
+                win_rate=np.nan, sharpe=np.nan,
+                sortino=float(np.nanmean(sor)), max_dd_R=sdd,
+                calmar=(tot / sdd if sdd > 0 else np.nan)), gross
+
+
+def stage_passmask(mode='A', rule='grade'):
+    """(n_bank, 4 streams, n_steps) bool: is this strategy a member, per rule.
+
+    Read straight off the KPI bank, so every rule is the same `clears()` on the
+    same numbers the report prints -- the rules differ in WHICH years they look
+    at, and nothing else.
+    """
     G.manifest_check()
     ix, K = load_kpis(mode)
     z = np.load(BK._bank_slice_file(mode, tag_of(mode)), allow_pickle=True)
     nbank = int(z['n']); del z
     ST = G2.steps()
     yi = {y: i for i, y in enumerate(YEARS)}
+    steps = rule_steps(rule)
     PM = np.zeros((nbank, 4, len(ST)), bool)
-    for si, stp in enumerate(ST):
+    for si in steps:
+        stp = ST[si]
         gy = yi[stp['grade'][0]]
+        ty = yi[stp['trade'][0]]
+        tune_grade = [yi[y] for y in range(stp['tune'][0], stp['grade'][1] + 1)]
         for st in range(4):
             for i in range(len(ix)):
-                gk = _blk(K, i, st, si, gy)
-                if gk is not None and clears(gk):
+                if rule == 'grade':
+                    gk = _blk(K, i, st, si, gy)
+                    ok = gk is not None and clears(gk)
+                elif rule == 'strict':
+                    gk = _blk(K, i, st, si, gy)
+                    if gk is None or not clears(gk):
+                        continue
+                    tk = _blk(K, i, st, si, ty)
+                    ok = tk is not None and clears(tk)
+                else:                                   # fiveyr
+                    blk, gross = _stitch_block(K, i, st, si, tune_grade)
+                    ok = blk is not None and clears(blk, gross=gross)
+                if ok:
                     PM[int(ix[i]), st, si] = True
-    f = passmask_file(mode)
-    np.savez(f, pm=PM, n=np.int64(nbank),
+    f = passmask_file(mode, rule)
+    np.savez(f, pm=PM, n=np.int64(nbank), rule=np.array(rule, dtype=object),
+             steps_used=np.array(steps, np.int64),
              streams=np.array(G2.STREAMS, dtype=object),
-             steps=np.array([s['name'] for s in ST], dtype=object))
-    print('  pass mask: %s of %s (strategy, stream, step) cells clear the grade year -> %s'
-          % (f'{int(PM.sum()):,}', f'{PM.size:,}', os.path.relpath(f, _R)), flush=True)
-    for si, stp in enumerate(ST):
-        print('    %s: routed %s members, always-on %s members'
-              % (stp['name'],
+             stepnames=np.array([s['name'] for s in ST], dtype=object))
+    print('  pass mask [%s]: %s of %s (strategy, stream, step) cells are members -> %s'
+          % (rule, f'{int(PM.sum()):,}', f'{PM.size:,}', os.path.relpath(f, _R)), flush=True)
+    for si in steps:
+        bt, bd = rule_windows(rule, ST[si])
+        print('    %s (size on %d-%d, trade %s): routed %s, always-on %s'
+              % (ST[si]['name'], min(bt), max(bt), ','.join(str(y) for y in sorted(bd)),
                  f'{int((PM[:, 0, si] | PM[:, 2, si]).sum()):,}',
                  f'{int((PM[:, 1, si] | PM[:, 3, si]).sum()):,}'), flush=True)
     return f
@@ -400,22 +474,25 @@ def _passbook_worker(args):
     l2r2book._books_worker, with two differences: a (strategy, stream, step)
     pass mask gates every accumulate, and n_members is counted PER BOOK because
     the routed and always-on books have different membership."""
-    shard, nshard, mode, tag, si, outdir, cap = args
+    shard, nshard, mode, tag, si, outdir, cap, rule = args
     S.load_costs()
     z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
     TG = z['tag']; CB = z['combo']; nstrat = int(z['n'])
-    PM = np.load(passmask_file(mode), allow_pickle=True)['pm']
+    PM = np.load(passmask_file(mode, rule), allow_pickle=True)['pm']
     assert PM.shape[0] == nstrat, ('pass mask covers %d strategies, the bank has %d'
                                    % (PM.shape[0], nstrat))
     lo = shard * nstrat // nshard
     hi = (shard + 1) * nstrat // nshard
     stp = G2.steps()[si]
-    build_years = set(range(stp['tune'][0], stp['grade'][1] + 1))
-    trade_years = set(range(stp['trade'][0], stp['trade'][1] + 1))
+    build_years, trade_years = rule_windows(rule, stp)
     Y = G2.Years(cap=cap)
     aidx, adays = BK.year_dayidx(Y, build_years | trade_years)
     BA = BK.BookArrays(Y.sc.pairs, adays)
-    pf = os.path.join(outdir, 'pbook_s%d_of%d_%04d.npz' % (si, nshard, shard))
+    # THE RULE IS IN THE PART NAME, for the reason the shard count is: three
+    # rules over the same step would otherwise share a filename for different
+    # membership, and _sum_pbook_parts' overlap assert would not catch it
+    # because the ids are legitimately different sets.
+    pf = os.path.join(outdir, 'pbook%s_s%d_of%d_%04d.npz' % (_suffix(rule), si, nshard, shard))
     done = set()
     if os.path.exists(pf):
         try:
@@ -486,11 +563,11 @@ def _passbook_worker(args):
     return (pf, len(todo))
 
 
-def _sum_pbook_parts(outdir, si, nshard, pairs, days):
+def _sum_pbook_parts(outdir, si, nshard, pairs, days, rule='grade'):
     BA = BK.BookArrays(pairs, days)
     seen = set()
     for shard in range(nshard):
-        f = os.path.join(outdir, 'pbook_s%d_of%d_%04d.npz' % (si, nshard, shard))
+        f = os.path.join(outdir, 'pbook%s_s%d_of%d_%04d.npz' % (_suffix(rule), si, nshard, shard))
         if not os.path.exists(f):
             continue
         z = np.load(f, allow_pickle=True)
@@ -503,7 +580,7 @@ def _sum_pbook_parts(outdir, si, nshard, pairs, days):
     return BA, seen
 
 
-def stage_book(mode='A', tag='full', jobs=8, nshard=None, out_tag=None):
+def stage_book(mode='A', tag='full', jobs=8, nshard=None, out_tag=None, rule='grade'):
     """Part 4: the passers' book, routed and always-on, on the trade year.
 
     Scored by the SHIPPED path -- l2walkfwd.fit_curve, scale_of, Book.series and
@@ -516,32 +593,39 @@ def stage_book(mode='A', tag='full', jobs=8, nshard=None, out_tag=None):
     import l2walkfwd as W
     G.manifest_check()
     S.load_costs()
-    if not os.path.exists(passmask_file(mode)):
-        stage_passmask(mode)
-    PM = np.load(passmask_file(mode), allow_pickle=True)['pm']
-    out_tag = out_tag or 'g3pass'
+    if not os.path.exists(passmask_file(mode, rule)):
+        stage_passmask(mode, rule)
+    PM = np.load(passmask_file(mode, rule), allow_pickle=True)['pm']
+    out_tag = out_tag or ('g3pass' + _suffix(rule).replace('_', ''))
     nshard = int(nshard or max(jobs * 4, jobs))
     partdir = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_gate3bookparts' % mode)
     os.makedirs(partdir, exist_ok=True)
     BK._bank_slice_file(mode, tag)
     ST = G2.steps()
     rows = []
-    for si, stp in enumerate(ST):
-        build_years = set(range(stp['tune'][0], stp['grade'][1] + 1))
-        trade_years = set(range(stp['trade'][0], stp['trade'][1] + 1))
+    steps = rule_steps(rule)
+    print('  passers book [%s]: %d of %d steps in play%s'
+          % (rule, len(steps), len(ST),
+             '' if len(steps) == len(ST)
+             else ' -- %s excluded, its year 7 is sealed'
+                  % ', '.join(ST[k]['name'] for k in range(len(ST)) if k not in steps)),
+          flush=True)
+    for si in steps:
+        stp = ST[si]
+        build_years, trade_years = rule_windows(rule, stp)
         Y = G2.Years(cap=2000)
         _ai, adays = BK.year_dayidx(Y, build_years | trade_years)
         pairs = Y.sc.pairs
         del Y
         nmem_expect = int((PM[:, :, si].any(axis=1)).sum())
         t0 = time.time()
-        args = [(k, nshard, mode, tag, si, partdir, 30000) for k in range(nshard)]
+        args = [(k, nshard, mode, tag, si, partdir, 30000, rule) for k in range(nshard)]
         if jobs == 1:
             res = [_passbook_worker(a) for a in args]
         else:
             with mp.Pool(jobs) as pool:
                 res = pool.map(_passbook_worker, args)
-        BA, folded = _sum_pbook_parts(partdir, si, nshard, pairs, adays)
+        BA, folded = _sum_pbook_parts(partdir, si, nshard, pairs, adays, rule)
         print('    pbook step %s: %s members folded in by %d workers in %.1f min '
               '(%s newly computed)'
               % (stp['name'], f'{len(folded):,}', jobs, (time.time() - t0) / 60,
@@ -554,8 +638,8 @@ def stage_book(mode='A', tag='full', jobs=8, nshard=None, out_tag=None):
             acc = BA.as_accumulator(bi)
             nm = int(BA.n_members[bi])
             if nm == 0 or acc.nl.sum() + acc.ns.sum() == 0:
-                rows.append(dict(mode=mode, step=stp['name'], book=bk, description=desc,
-                                 members=nm, book_empty=1))
+                rows.append(dict(mode=mode, rule=rule, step=stp['name'], book=bk,
+                                 description=desc, members=nm, book_empty=1))
                 print('      %s / %-11s: EMPTY (%d members)' % (stp['name'], bk, nm), flush=True)
                 continue
             SB = BK.StreamedBook(acc, nm)
@@ -579,7 +663,9 @@ def stage_book(mode='A', tag='full', jobs=8, nshard=None, out_tag=None):
                                       % (mode, out_tag, stp['name'], bk, bname)),
                          daily=d1 * sc_, years=yrs, build=ybuild, trade=ytrade)
                 rows.append(dict(
-                    mode=mode, step=stp['name'], book=bk, description=desc,
+                    mode=mode, rule=rule, step=stp['name'], book=bk, description=desc,
+                    trade_year=','.join(str(y) for y in sorted(trade_years)),
+                    size_years='%d-%d' % (min(build_years), max(build_years)),
                     budget=bname, dip_budget=dipb, day_budget=dayb, members=nm,
                     size_scale=sc_, scale_binds=binds, cap_pct=W.CAP_PCT,
                     build_dip95_pct=bD * sc_, build_max_dd_pct=badj * sc_,
@@ -600,13 +686,15 @@ def stage_book(mode='A', tag='full', jobs=8, nshard=None, out_tag=None):
                     book_empty=0))
         del BA
     D = pd.DataFrame(rows)
-    outp = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_gate3_passersbook.csv' % mode)
+    outp = os.path.join(ROOTOUT, 'r2gate2',
+                        'mode%s_gate3_passersbook%s.csv' % (mode, _suffix(rule)))
     D.to_csv(outp, index=False)
-    print('  passers book: %d rows -> %s' % (len(D), os.path.relpath(outp, _R)), flush=True)
+    print('  passers book [%s]: %d rows -> %s'
+          % (rule, len(D), os.path.relpath(outp, _R)), flush=True)
     return D, outp
 
 
-def stage_booknulls(mode='A', tag='full', jobs=8, ndraw=20, nid=200):
+def stage_booknulls(mode='A', tag='full', jobs=8, ndraw=20, nid=200, rule='grade'):
     """The three nulls on the passers' book.
 
     IDENTITY runs unchanged off the daily series this stage saved -- it
@@ -624,29 +712,30 @@ def stage_booknulls(mode='A', tag='full', jobs=8, ndraw=20, nid=200):
     G.manifest_check()
     S.load_costs()
     RD = os.path.join(ROOTOUT, 'r2gate2')
-    books_csv = os.path.join(RD, 'mode%s_gate3_passersbook.csv' % mode)
+    books_csv = os.path.join(RD, 'mode%s_gate3_passersbook%s.csv' % (mode, _suffix(rule)))
     assert os.path.exists(books_csv), books_csv + ' is missing -- run --stage book first'
-    PM = np.load(passmask_file(mode), allow_pickle=True)['pm']
+    PM = np.load(passmask_file(mode, rule), allow_pickle=True)['pm']
     members = sorted(np.flatnonzero(PM.any(axis=(1, 2))).tolist())
     print('  passers book nulls: %s distinct members across all steps' % f'{len(members):,}',
           flush=True)
     parts = []
-    I = N2.identity_null(books_csv, ndraw=nid, out_tag='g3pass', mode=mode)
+    otag = 'g3pass' + _suffix(rule).replace('_', '')
+    I = N2.identity_null(books_csv, ndraw=nid, out_tag=otag, mode=mode)
     if len(I):
         parts.append(I)
         print('  identity null on the passers book: %d cells, %d draws each' % (len(I), nid),
               flush=True)
     for kind in ('shuffle', 'random-entry'):
         D = N2.sampled_null(mode, tag, kind, len(members), ndraw=ndraw, jobs=jobs,
-                            idxs=members, pmfile=passmask_file(mode),
-                            scope='passers, full', partsuffix='_g3pass')
+                            idxs=members, pmfile=passmask_file(mode, rule),
+                            scope='passers, full', partsuffix='_' + otag)
         if len(D):
             # the passers' book builds only these two; the other gated variants
             # are not part of this request and are dropped rather than reported
             D = D[D.book.isin([bk for _bi, bk, _rt in PASSBOOKS])]
             parts.append(D)
     A = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
-    outp = os.path.join(RD, 'mode%s_gate3_passersbook_nulls.csv' % mode)
+    outp = os.path.join(RD, 'mode%s_gate3_passersbook%s_nulls.csv' % (mode, _suffix(rule)))
     A.to_csv(outp, index=False)
     print('  passers book nulls: %d rows -> %s' % (len(A), os.path.relpath(outp, _R)),
           flush=True)
