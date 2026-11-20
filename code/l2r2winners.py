@@ -358,6 +358,339 @@ def stage_sweep(mode='A', npts=60):
     return f
 
 
+# ==========================================================================
+# THE LUCK FLOOR, WAY (b): EMPIRICAL, A PER-STRATEGY RANDOM-ENTRY NULL
+# ==========================================================================
+# WHY THE PROJECT'S EXISTING RANDOM-ENTRY NULL CANNOT BE REUSED. l2r2null2's
+# null shifts WHEN a trade lands in the book and keeps the trade's R. For a
+# BOOK that is the right question -- it destroys the alignment between the
+# members' timing and the market. For ONE STRATEGY's expectancy it is
+# degenerate: the same R values in a different order have the same mean.
+#
+# WHAT THIS NULL DOES INSTEAD, and it is exactly "same costs and holds":
+# every real trade keeps its direction, its unit size, its cost and its HOLD
+# in bars; its entry moves to a uniformly random bar inside the same trade
+# year on the same pair; and R is recomputed from the price path over that
+# hold. It asks: had this strategy traded the same instruments, the same number
+# of times, in the same sizes, for the same durations, but at random moments,
+# what expectancy would it have earned?
+#
+# THE ONE WAY IT IS NOT LIKE-FOR-LIKE, stated here and in the md: a null trade
+# is held to the end of its hold with no stop, while the real trade may have
+# exited early on one. The reconstruction error is MEASURED rather than
+# asserted -- the stage recomputes R for the REAL entries by the same formula
+# and reports how far that lands from the engine's own R, so the reader can see
+# the size of the approximation instead of taking it on faith.
+def _trade_lists(Y, mode, combo, ip, risk, sname, plan, aidx):
+    """Every trade of one tuned configuration inside one window, per pair."""
+    import l2lib as L, l2engine as E
+    sc = Y.sc
+    c1, c2, vol, base, ex = combo
+    kwm = S.mode_kw(mode)
+    am = float(risk['atr_mult']); alen = int(risk['atr_len'])
+    t1 = L.KIND[c1] == 'TERNARY'; t2 = L.KIND[c2] == 'TERNARY'
+    out = {}
+    for p in sc.pairs:
+        o, h, l, c = sc.arr[p]
+        atr = sc._atr.get((alen, p))
+        if atr is None:
+            atr = L.P.atr(h, l, c, alen); sc._atr[(alen, p)] = atr
+        g = sc.cache.get
+        lt, st, lc, scr = g(c1, ip['c1'], p, sc.arr[p])[:4]
+        _, _, c2lc, c2sc = g(c2, ip['c2'], p, sc.arr[p])[:4]
+        vl, vs = g(vol, ip['vol'], p, sc.arr[p])[:2]
+        bl = g(base, ip['base'], p, sc.arr[p])
+        bl = bl[0] if isinstance(bl, tuple) else bl
+        el, es = g(ex, ip['exit_ind'], p, sc.arr[p])[:2]
+        b = sc.buf[p]
+        nt, _, _, _ = E.run_bars(
+            o, h, l, c, atr, bl, lt, st, lc, scr, c2lc, c2sc, vl, vs, el, es,
+            sc._nosus[p], t1, t2, True, True, True,
+            kwm['exit_on_c1_flip'], kwm['exit_on_base_cross'], kwm['exit_on_exit_ind'],
+            False, int(plan), S.RISK, am, float(risk['tp_mult']),
+            float(risk['trail_mult']), float(risk['trail_arm']), float(risk['be_pct']),
+            1.5, 7, True, True,
+            b['entry_bar'], b['exit_bar'], b['dir'], b['leg'], b['entry_px'],
+            b['exit_px'], b['units'], b['r'], b['reason'], b['route'])
+        if nt == 0:
+            continue
+        eb = np.array(b['entry_bar'][:nt], np.int64)
+        xb = np.array(b['exit_bar'][:nt], np.int64)
+        keep = aidx[p][eb] >= 0                     # entered inside the window
+        if not keep.any():
+            continue
+        cst = (Y.cfrac[p] * Y.cmult[p][eb] * np.abs(b['entry_px'][:nt])
+               * np.abs(b['units'][:nt]) / S.RISK) * am
+        out[p] = dict(eb=eb[keep], xb=xb[keep],
+                      dirv=np.array(b['dir'][:nt], np.float64)[keep],
+                      units=np.array(b['units'][:nt], np.float64)[keep],
+                      r=np.array(b['r'][:nt], np.float64)[keep],
+                      cst=np.asarray(cst, np.float64)[keep])
+    return out
+
+
+def _null_draws(Y, tl, ndraw, rng):
+    """(ndraw+1, ) summed R and trade count; row 0 is the RECONSTRUCTED real.
+
+    Row 0 uses the REAL entry bars through the same formula, so the caller can
+    compare it against the engine's own R and report the approximation.
+    """
+    tot = np.zeros(ndraw + 1); ss = np.zeros(ndraw + 1); nn = 0
+    eng = 0.0
+    for p, d in tl.items():
+        cl = np.asarray(Y.cl[p], np.float64)
+        nb = len(cl)
+        eb, xb = d['eb'], d['xb']
+        hold = np.maximum(xb - eb, 1)
+        ok = (eb + hold) < nb
+        if not ok.any():
+            continue
+        eb, hold = eb[ok], hold[ok]
+        dirv, units, cst = d['dirv'][ok], d['units'][ok], d['cst'][ok]
+        eng += float(d['r'][ok].sum()); nn += int(ok.sum())
+        # row 0: the real entries, same formula
+        r0 = dirv * (cl[eb + hold] - cl[eb]) * units / S.RISK - cst
+        tot[0] += float(r0.sum()); ss[0] += float((r0 ** 2).sum())
+        # the draws: a uniformly random entry that leaves room for the hold
+        hi = nb - hold - 1
+        for dd in range(1, ndraw + 1):
+            e2 = (rng.random(len(eb)) * np.maximum(hi, 1)).astype(np.int64)
+            rr = dirv * (cl[e2 + hold] - cl[e2]) * units / S.RISK - cst
+            tot[dd] += float(rr.sum()); ss[dd] += float((rr ** 2).sum())
+    return tot, ss, nn, eng
+
+
+def _nullstrat_worker(args):
+    shard, nshard, mode, tag, idxs, ndraw, seed, cap = args
+    S.load_costs()
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    TG = z['tag']; CB = z['combo']
+    mine = [i for k, i in enumerate(idxs) if k % nshard == shard]
+    ST = G2.steps()
+    Y = G2.Years(cap=cap)
+    aidx = {}
+    for si, stp in enumerate(ST):
+        a, _d = BK.year_dayidx(Y, {stp['trade'][0]})
+        aidx[si] = a
+    rng = np.random.default_rng(seed + shard)
+    rows = []
+    t0 = time.time()
+    for q, k in enumerate(mine, 1):
+        combo = tuple(CB[k])
+        for stream in range(4):
+            sl, rt = stream // 2, stream % 2
+            sname, plan, _code = S.SLICES[sl]
+            tot = np.zeros(ndraw + 1); ssq = np.zeros(ndraw + 1); nn = 0; eng = 0.0
+            for si, stp in enumerate(ST):
+                ci = int(TG[k, stream, si])
+                if ci < 0:
+                    continue
+                ip, risk = BK.winner_config(mode, combo, sname, ci)
+                tl = _trade_lists(Y, mode, combo, ip, risk, sname, plan, aidx[si])
+                if not tl:
+                    continue
+                t_, s_, n_, e_ = _null_draws(Y, tl, ndraw, rng)
+                tot += t_; ssq += s_; nn += n_; eng += e_
+            if nn <= 0:
+                continue
+            # t per draw, from the same pooled identity the universe uses:
+            # sd^2 = (sum r^2 - n mean^2) / (n - 1), t = mean sqrt(n) / sd
+            def _t(i):
+                m = tot[i] / nn
+                v = (ssq[i] - nn * m * m) / max(nn - 1, 1)
+                return (m * np.sqrt(nn) / np.sqrt(v)) if v > 0 else np.nan
+            rows.append(dict(bank_row=k, stream=G2.STREAMS[stream], n_trades=nn,
+                             engine_total_R=eng,
+                             recon_real_total_R=float(tot[0]),
+                             recon_real_expectancy_R=float(tot[0] / nn),
+                             recon_real_t=float(_t(0)),
+                             **{'null_total_R_%02d' % d: float(tot[d])
+                                for d in range(1, ndraw + 1)},
+                             **{'null_expectancy_R_%02d' % d: float(tot[d] / nn)
+                                for d in range(1, ndraw + 1)},
+                             **{'null_t_%02d' % d: float(_t(d))
+                                for d in range(1, ndraw + 1)}))
+        if q % 10 == 0:
+            el = time.time() - t0
+            print('    nullstrat shard %02d: %d/%d  %.2f s/strategy  %.0f min left'
+                  % (shard, q, len(mine), el / q, (el / q) * (len(mine) - q) / 60),
+                  flush=True)
+    f = os.path.join(RD, 'mode%s_winners_nullparts' % mode,
+                     'ns_%04d_of%d.npz' % (shard, nshard))
+    os.makedirs(os.path.dirname(f), exist_ok=True)
+    D = pd.DataFrame(rows)
+    D.to_csv(f.replace('.npz', '.csv'), index=False)
+    return f.replace('.npz', '.csv'), len(rows)
+
+
+def stage_nullstrat(mode='A', tag='full', nsample=2000, ndraw=20, jobs=4,
+                    seed=20261120, cap=4000):
+    """The empirical luck floor: a per-strategy random-entry null.
+
+    STRATIFIED BY c1, the first condition slot, so the sample spans the grid's
+    families rather than landing wherever a uniform draw puts it. Within a
+    family the pick is uniform.
+    """
+    import multiprocessing as mp
+    G.manifest_check()
+    S.load_costs()
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    CB = z['combo']; ntot = int(z['n']); del z
+    c1 = np.array([r[0] for r in CB])
+    fam = sorted(set(c1.tolist()))
+    rng = np.random.default_rng(seed)
+    per = max(1, nsample // len(fam))
+    pick = []
+    for f_ in fam:
+        cand = np.flatnonzero(c1 == f_)
+        if not len(cand):
+            continue
+        pick.extend(rng.choice(cand, size=min(per, len(cand)), replace=False).tolist())
+    if len(pick) < nsample:
+        rest = np.setdiff1d(np.arange(ntot), np.array(pick))
+        pick.extend(rng.choice(rest, size=min(nsample - len(pick), len(rest)),
+                               replace=False).tolist())
+    idxs = sorted(int(x) for x in pick[:nsample])
+    print('  nullstrat [mode %s]: %s strategies stratified over %d c1 families, '
+          '%d draws each, %d workers'
+          % (mode, f'{len(idxs):,}', len(fam), ndraw, jobs), flush=True)
+    args = [(k, jobs, mode, tag, idxs, ndraw, seed, cap) for k in range(jobs)]
+    t0 = time.time()
+    if jobs == 1:
+        res = [_nullstrat_worker(a) for a in args]
+    else:
+        with mp.Pool(jobs) as pool:
+            res = pool.map(_nullstrat_worker, args)
+    D = pd.concat([pd.read_csv(f) for f, _n in res], ignore_index=True)
+    out = os.path.join(RD, 'mode%s_winners_nullstrat.csv' % mode)
+    D.to_csv(out, index=False)
+    print('  nullstrat: %s (strategy, stream) records in %.1f min -> %s'
+          % (f'{len(D):,}', (time.time() - t0) / 60, os.path.relpath(out, _R)),
+          flush=True)
+    # THE APPROXIMATION, MEASURED. How close does the same formula on the REAL
+    # entries land to the engine's own R?
+    if len(D):
+        a = D.engine_total_R.to_numpy(float); b = D.recon_real_total_R.to_numpy(float)
+        ok = np.isfinite(a) & np.isfinite(b)
+        if ok.sum() > 2:
+            cc = float(np.corrcoef(a[ok], b[ok])[0, 1])
+            print('    reconstruction of the REAL trades by the null formula: '
+                  'correlation %.4f, mean engine %.3f R vs reconstructed %.3f R '
+                  'over %s records' % (cc, a[ok].mean(), b[ok].mean(), f'{int(ok.sum()):,}'),
+                  flush=True)
+    return out
+
+
+# ==========================================================================
+# THE EXTREME-VALUE EXTRAPOLATION: BEST-OF-273,780 UNDER THE NULL
+# ==========================================================================
+EULER = 0.5772156649015329
+
+
+def _gumbel_mom(x):
+    """Gumbel (mu, sigma) by method of moments on block maxima.
+
+    Method of moments rather than MLE on purpose: with 20 block maxima per
+    stream an MLE's extra precision is not real, and the moment estimator
+    cannot fail to converge and leave the report with a blank where a floor
+    should be.
+    """
+    x = np.asarray(x, float); x = x[np.isfinite(x)]
+    if len(x) < 3:
+        return np.nan, np.nan
+    sd = float(x.std(ddof=1))
+    sig = sd * np.sqrt(6.0) / np.pi
+    return float(x.mean() - sig * EULER), sig
+
+
+def _ev_floor(block_max, block_size, M, q=0.95):
+    """Scale a Gumbel fitted on maxima of `block_size` up to maxima of M.
+
+    If the max of B tries is Gumbel(mu, sigma), the max of M is
+    Gumbel(mu + sigma ln(M/B), sigma). The EXPECTED best-of-M is its mean,
+    mu_M + sigma * EULER; the q-th percentile is mu_M - sigma ln(-ln q).
+    """
+    mu, sig = _gumbel_mom(block_max)
+    if not np.isfinite(mu):
+        return dict(mu=np.nan, sigma=np.nan, mu_M=np.nan, expected_best=np.nan,
+                    pct=np.nan, block_size=int(block_size), M=int(M), q=q,
+                    n_blocks=0)
+    mu_M = mu + sig * np.log(max(M, 1) / max(block_size, 1))
+    return dict(mu=mu, sigma=sig, mu_M=mu_M,
+                expected_best=mu_M + sig * EULER,
+                pct=mu_M - sig * np.log(-np.log(q)),
+                block_size=int(block_size), M=int(M), q=q,
+                n_blocks=int(np.isfinite(np.asarray(block_max, float)).sum()))
+
+
+def stage_floorb(mode='A'):
+    """The empirical floor, in t-space and in expectancy-space, both reported.
+
+    WHY t-SPACE IS THE BINDING ONE. The null reconstructs a trade as "held the
+    same number of bars, no stop", because re-simulating a shifted entry
+    through the engine is a 15-hour pass. Measured on this sample that
+    reconstruction is systematically more negative than the engine
+    (correlation is high, the LEVEL is not), so an expectancy floor built in
+    that space sits too LOW and would flatter every strategy. The t-statistic
+    divides by the spread, which absorbs most of the distortion -- so the
+    t-floor is used for selection and the expectancy floor is reported beside
+    it with its bias measured, not asserted.
+    """
+    nsf = os.path.join(RD, 'mode%s_winners_nullstrat.csv' % mode)
+    assert os.path.exists(nsf), nsf + ' is missing -- run --stage nullstrat first'
+    N = pd.read_csv(nsf)
+    z = load_universe(mode)
+    streams = list(z['streams']); nstrat = int(z['n'])
+    tcols = [c for c in N.columns if c.startswith('null_t_')]
+    ecols = [c for c in N.columns if c.startswith('null_expectancy_R_')]
+    rows = []
+    for space, cols in (('t', tcols), ('expectancy_R', ecols)):
+        for sname in streams + ['ALL']:
+            g = N if sname == 'ALL' else N[N.stream == sname]
+            if not len(g):
+                continue
+            V = g[cols].to_numpy(float)
+            # ONE BLOCK PER DRAW: the maximum over the sampled strategies in
+            # that draw IS the best of `block_size` no-edge tries.
+            bm = np.nanmax(V, axis=0)
+            B = int(np.isfinite(V).sum(axis=0).max())
+            M = nstrat if sname != 'ALL' else nstrat * len(streams)
+            r = _ev_floor(bm, B, M)
+            r.update(space=space, stream=sname,
+                     null_mean=float(np.nanmean(V)), null_sd=float(np.nanstd(V, ddof=1)),
+                     null_max_observed=float(np.nanmax(V)),
+                     n_records=int(len(g)), n_draws=len(cols))
+            rows.append(r)
+    F = pd.DataFrame(rows)
+    f = os.path.join(RD, 'mode%s_winners_floor_empirical.csv' % mode)
+    F.to_csv(f, index=False)
+    print('  empirical floor -> %s' % os.path.relpath(f, _R), flush=True)
+    for _i, r in F[F.stream == 'ALL'].iterrows():
+        print('    %-14s null mean %+.4f sd %.4f | Gumbel mu %+.4f sigma %.4f on %d blocks '
+              'of %s | expected best-of-%s %+.4f, its %.0fth pct %+.4f'
+              % (r.space, r.null_mean, r.null_sd, r.mu, r.sigma, r.n_blocks,
+                 f'{r.block_size:,}', f'{r.M:,}', r.expected_best, r.q * 100, r.pct),
+              flush=True)
+    # --- THE DISTORTION, MEASURED: engine-space t against reconstruction-space t
+    ut = np.asarray(z['trade__t_stat'], np.float64)
+    si = {sname: i for i, sname in enumerate(streams)}
+    N2 = N.dropna(subset=['recon_real_t']).copy()
+    N2['engine_t'] = [ut[int(r.bank_row), si[r.stream]] for _k, r in N2.iterrows()]
+    ok = np.isfinite(N2.engine_t.to_numpy(float)) & np.isfinite(N2.recon_real_t.to_numpy(float))
+    D = N2[ok]
+    dd = os.path.join(RD, 'mode%s_winners_recon_distortion.csv' % mode)
+    D[['bank_row', 'stream', 'n_trades', 'engine_total_R', 'recon_real_total_R',
+       'engine_t', 'recon_real_t']].to_csv(dd, index=False)
+    if len(D) > 2:
+        a = D.engine_t.to_numpy(float); b = D.recon_real_t.to_numpy(float)
+        print('    reconstruction distortion on t, over %s records: engine mean %+.3f, '
+              'reconstruction mean %+.3f, correlation %.4f, median ratio %.3f -> %s'
+              % (f'{len(D):,}', a.mean(), b.mean(), float(np.corrcoef(a, b)[0, 1]),
+                 float(np.nanmedian(np.where(b != 0, a / b, np.nan))),
+                 os.path.relpath(dd, _R)), flush=True)
+    return f, dd
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'universe')
     md = G.opt('--mode', str, 'A')
@@ -367,5 +700,12 @@ if __name__ == '__main__':
         stage_floors(md)
     elif st == 'sweep':
         stage_sweep(md, npts=G.opt('--sweep-points', int, 60))
+    elif st == 'floorb':
+        stage_floorb(md)
+    elif st == 'nullstrat':
+        stage_nullstrat(md, G.opt('--tag', str, 'full'),
+                        nsample=G.opt('--nsample', int, 2000),
+                        ndraw=G.opt('--draws', int, 20),
+                        jobs=G.opt('--jobs', int, 4))
     else:
         raise SystemExit('unknown stage %s' % st)
