@@ -53,7 +53,7 @@ ROWS = (
     ('average year',                     '%.2f%%', 'mean_year_pct'),
     ('worst year',                       '%.2f%%', 'worst_year_pct'),
     ('best year',                        '%.2f%%', 'best_year_pct'),
-    ('total %d-%d' % (TRADE_YEARS[0], TRADE_YEARS[-1]), '%.2f%%', 'total_return_pct'),
+    ('total {span}',                     '%.2f%%', 'total_return_pct'),
     ('CAGR',                             '%.2f%%', 'cagr_pct'),
     ('worst day',                        '%.2f%%', 'worst_day_neg_pct'),
     ('max drawdown',                     '%.2f%%', 'max_dd_neg_pct'),
@@ -64,9 +64,9 @@ ROWS = (
     ('Calmar (CAGR / max DD)',            '%.2f',   'calmar_cagr'),
     ('profit factor (trades, median step)', '%.2f', 'pf_trades_median_step'),
     ('win rate (trades, median step)',   '%.2f%%', 'win_rate_trades_median_step'),
-    ('positive years of %d' % len(TRADE_YEARS), '%d', 'positive_years'),
+    ('positive years of {ny}',           '%d',     'positive_years'),
     ('retention (median step)',          '%.2f',   'retention_median_step'),
-    ('steps flagged FIT of %d' % len(TRADE_YEARS), '%d', 'steps_fit'),
+    ('steps flagged FIT of {nsteps}',     '%d',     'steps_fit'),
 )
 
 
@@ -196,6 +196,14 @@ def kpi_tables(mode, tag='full', books_csv=None, Bk=None):
         A('\n### TEAM %d\n' % (bi + 1))
         A('| KPI | ' + ' | '.join(COLHEAD.get(c, c) for c in cols) + ' |')
         A('|' + '---|' * (len(cols) + 1))
+        # THE YEAR SPAN AND THE STEP COUNT COME FROM THE DATA, NOT A CONSTANT.
+        # The strict rule trades year 7, so it covers 2017-2020 over four
+        # steps, not 2016-2020 over five -- a hardcoded label said "total
+        # 2016-2020" and "of 5" above a column of four years.
+        yrs = sorted({y for bk in cols for y in cells[(bname, bk)]['per_year']})
+        nst = max(int(cells[(bname, bk)].get('n_steps_found') or 0) for bk in cols)
+        sub = {'span': ('%d-%d' % (yrs[0], yrs[-1])) if yrs else '?',
+               'ny': len(yrs), 'nsteps': nst}
         for label, fmt, key in ROWS:
             vals = []
             for bk in cols:
@@ -206,7 +214,7 @@ def kpi_tables(mode, tag='full', books_csv=None, Bk=None):
                     vals.append('%d' % int(v))
                 else:
                     vals.append(fmt % v)
-            A('| ' + label + ' | ' + ' | '.join(vals) + ' |')
+            A('| ' + label.format(**sub) + ' | ' + ' | '.join(vals) + ' |')
         A('\nPer year:\n')
         for bk in cols:
             py = cells[(bname, bk)]['per_year']
