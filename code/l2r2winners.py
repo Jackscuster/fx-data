@@ -691,6 +691,332 @@ def stage_floorb(mode='A'):
     return f, dd
 
 
+# ==========================================================================
+# THE NON-LUCK WINNERS
+# ==========================================================================
+MIN_TRADES_PER_YEAR = 50
+MIN_YEARS_POSITIVE = 4
+
+
+# THE FOUR ANALYTIC LINES, AND WHICH ONE IS THE DEFAULT.
+#   stated      max-of-M at M = 273,780 STRATEGIES. This is the line Jack
+#               specified -- "the t-statistic threshold for the maximum of
+#               273,780 independent tries under no edge" -- and it is the
+#               default here for that reason.
+#   bonf        Bonferroni at M = 273,780.
+#   cell        max-of-M at M = 1,095,120 strategy x stream cells, which is
+#               what is actually compared.
+#   cellbonf    Bonferroni on the cell basis; the strictest of the four.
+# The winner count moves with the choice, so the md reports all four and says
+# which one produced the set it lists. A floor is an argument, not a constant,
+# and hiding the ladder would hide the argument.
+FLOOR_BASES = ('stated', 'bonf', 'cell', 'cellbonf')
+
+
+def binding_floors(mode, basis='stated'):
+    """(analytic, empirical, binding) t floors. BOTH must be cleared."""
+    A = pd.read_csv(os.path.join(RD, 'mode%s_winners_floor_analytic.csv' % mode))
+    E = pd.read_csv(os.path.join(RD, 'mode%s_winners_floor_empirical.csv' % mode))
+    strat = A[A.basis.str.contains('strategies')].iloc[0]
+    cell = A[A.basis.str.contains('cells')].iloc[0]
+    an = {'stated': float(strat.t_max_of_M), 'bonf': float(strat.t_bonferroni),
+          'cell': float(cell.t_max_of_M), 'cellbonf': float(cell.t_bonferroni)}[basis]
+    er = E[(E.space == 't') & (E.stream == 'ALL')].iloc[0]
+    em = float(er.pct)
+    return an, em, max(an, em)
+
+
+def stage_winners(mode='A', tag='full', basis='stated'):
+    """Above BOTH floors, >= 50 trades in every unseen year, >= 4 of 5 positive."""
+    G.manifest_check()
+    z = load_universe(mode)
+    streams = list(z['streams']); sid = np.asarray(z['sid'])
+    an, em, binding = binding_floors(mode, basis)
+    t = np.asarray(z['trade__t_stat'], np.float64)
+    yp = np.asarray(z['trade__years_positive'], np.float64)
+    nyr = [c for c in z.files if c.startswith('trade__n_')]
+    NY = np.stack([np.asarray(z[c], np.float64) for c in sorted(nyr)], axis=-1)
+    minn = np.nanmin(np.where(np.isfinite(NY), NY, np.inf), axis=-1)
+    keep = (np.isfinite(t) & (t >= binding) & (minn >= MIN_TRADES_PER_YEAR)
+            & (yp >= MIN_YEARS_POSITIVE))
+    print('  floors [mode %s, %s basis]: analytic t %.3f, empirical t %.3f -> binding %.3f'
+          % (mode, basis, an, em, binding), flush=True)
+    stepcut = [('above the binding floor', np.isfinite(t) & (t >= binding)),
+               ('    and >= %d trades in every unseen year' % MIN_TRADES_PER_YEAR,
+                np.isfinite(t) & (t >= binding) & (minn >= MIN_TRADES_PER_YEAR)),
+               ('    and positive in >= %d of 5 trade years' % MIN_YEARS_POSITIVE, keep)]
+    for lbl, m in stepcut:
+        print('    %-46s %6d cells, %6d distinct strategies'
+              % (lbl, int(m.sum()), int(np.unique(np.flatnonzero(m.any(axis=1))).size)),
+              flush=True)
+    rows = []
+    bank, st_i = np.nonzero(keep)
+    for k, si in zip(bank, st_i):
+        r = dict(mode=mode, bank_row=int(k), stream=streams[si], sid=sid[k],
+                 t_stat=float(t[k, si]),
+                 floor_analytic=an, floor_empirical=em, floor_binding=binding,
+                 min_trades_in_a_year=float(minn[k, si]),
+                 years_positive=float(yp[k, si]))
+        for rec in RECORDS:
+            for f_ in ('n_trades', 'expectancy_R', 'total_R', 'profit_factor', 'win_rate',
+                       'sortino_meanyr', 'calmar', 'max_dd_R_sumyr', 'gross_R',
+                       'dd_pct_of_gross', 'worst_year_R', 'years_positive', 't_stat'):
+                r['%s_%s' % (rec, f_)] = float(np.asarray(z['%s__%s' % (rec, f_)])[k, si])
+            r['%s_return_per_dd' % rec] = (
+                r['%s_total_R' % rec] / r['%s_max_dd_R_sumyr' % rec]
+                if r['%s_max_dd_R_sumyr' % rec] > 0 else np.nan)
+        for c in sorted(z.files):
+            if c.startswith('trade__R_') or c.startswith('trade__n_'):
+                r[c.replace('trade__', '')] = float(np.asarray(z[c])[k, si])
+        rows.append(r)
+    W = pd.DataFrame(rows)
+    if len(W):
+        W = W.sort_values('t_stat', ascending=False).reset_index(drop=True)
+    f = os.path.join(RD, 'mode%s_winners.csv' % mode)
+    W.to_csv(f, index=False)
+    print('  NON-LUCK WINNERS [mode %s, %s floor]: %d -> %s'
+          % (mode, basis, len(W), os.path.relpath(f, _R)), flush=True)
+    # THE LADDER, so the choice of line is visible rather than buried
+    lad = []
+    for b in FLOOR_BASES:
+        a2, e2, bd = binding_floors(mode, b)
+        m2 = (np.isfinite(t) & (t >= bd) & (minn >= MIN_TRADES_PER_YEAR)
+              & (yp >= MIN_YEARS_POSITIVE))
+        lad.append(dict(basis=b, t_analytic=a2, t_empirical=e2, t_binding=bd,
+                        n_winners=int(m2.sum()), is_default=int(b == basis)))
+    L = pd.DataFrame(lad)
+    lf = os.path.join(RD, 'mode%s_winners_floor_ladder.csv' % mode)
+    L.to_csv(lf, index=False)
+    print('    floor ladder -> %s' % os.path.relpath(lf, _R), flush=True)
+    for _i, r in L.iterrows():
+        print('      %-9s binding t %.3f -> %2d winners%s'
+              % (r.basis, r.t_binding, r.n_winners, '   <- default' if r.is_default else ''),
+              flush=True)
+    if len(W):
+        print('    t %.3f..%.3f | total R %.1f..%.1f | return/DD %.2f..%.2f'
+              % (W.t_stat.min(), W.t_stat.max(),
+                 W.trade_total_R.min(), W.trade_total_R.max(),
+                 np.nanmin(W.trade_return_per_dd), np.nanmax(W.trade_return_per_dd)),
+              flush=True)
+    return f, W
+
+
+def stage_family(mode='A', tag='full'):
+    """For each winner, how its nearest cousins did. Lone survivors flagged.
+
+    COUSINS ARE SAME (c1, c2) -- the two condition slots, which is what Jack
+    called nearest. A winner whose cousins are all poor is a lone survivor and
+    is flagged: one strategy standing alone in its family is the shape a lucky
+    draw takes, while a winner surrounded by near-winners is the shape a real
+    effect takes.
+    """
+    z = load_universe(mode)
+    streams = list(z['streams']); sid = np.asarray(z['sid'])
+    W = pd.read_csv(os.path.join(RD, 'mode%s_winners.csv' % mode))
+    if not len(W):
+        f = os.path.join(RD, 'mode%s_winners_family.csv' % mode)
+        pd.DataFrame().to_csv(f, index=False)
+        print('  family support: no winners, nothing to support', flush=True)
+        return f
+    t = np.asarray(z['trade__t_stat'], np.float64)
+    TR = np.asarray(z['trade__total_R'], np.float64)
+    fam_key = np.array(['|'.join(s.split('|')[:2]) for s in sid])
+    rows = []
+    for _i, w in W.iterrows():
+        si = streams.index(w.stream)
+        key = '|'.join(str(w.sid).split('|')[:2])
+        m = (fam_key == key)
+        m[int(w.bank_row)] = False                    # the winner is not its own cousin
+        tt = t[m, si]; rr = TR[m, si]
+        fin = np.isfinite(tt)
+        n = int(fin.sum())
+        rows.append(dict(
+            mode=mode, bank_row=int(w.bank_row), stream=w.stream, sid=w.sid,
+            family_c1_c2=key, winner_t=float(w.t_stat),
+            n_cousins=n,
+            cousin_t_median=float(np.nanmedian(tt[fin])) if n else np.nan,
+            cousin_t_p90=float(np.nanpercentile(tt[fin], 90)) if n else np.nan,
+            cousin_t_max=float(np.nanmax(tt[fin])) if n else np.nan,
+            cousins_t_over_2=int((tt[fin] >= 2.0).sum()) if n else 0,
+            cousins_t_over_3=int((tt[fin] >= 3.0).sum()) if n else 0,
+            cousin_total_R_median=float(np.nanmedian(rr[fin])) if n else np.nan,
+            cousins_positive_pct=(float(100.0 * (rr[fin] > 0).mean()) if n else np.nan),
+            lone_survivor=int(n > 0 and float(np.nanmax(tt[fin])) < 2.0)))
+    F = pd.DataFrame(rows)
+    f = os.path.join(RD, 'mode%s_winners_family.csv' % mode)
+    F.to_csv(f, index=False)
+    print('  family support: %d winners, %d flagged LONE SURVIVORS (no cousin reaches t=2) -> %s'
+          % (len(F), int(F.lone_survivor.sum()), os.path.relpath(f, _R)), flush=True)
+    return f
+
+
+# ==========================================================================
+# THE WINNERS' BOOK, AND THE OVERLAY SWEEPS
+# ==========================================================================
+# THE BOOK'S RETURN IS DESCRIPTIVE, NOT EVIDENCE, and the md says so in those
+# words. Its membership was chosen by looking at the same 2016-2020 trade
+# years it then reports, so the book cannot be a test of anything -- the luck
+# floor is the evidence. The book answers a different and still useful
+# question: if you had held exactly these, equally weighted, what would the
+# drawdown have looked like.
+def stage_winbook(mode='A', tag='full', jobs=4, nshard=16, ndraw=20, nid=200):
+    """Equal-weight book of the non-luck winners, routed and always-on."""
+    import l2r2gate3 as G3x
+    G.manifest_check()
+    W = pd.read_csv(os.path.join(RD, 'mode%s_winners.csv' % mode))
+    assert len(W), 'no winners to book'
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    nstrat = int(z['n']); del z
+    streams = list(np.load(universe_file(mode), allow_pickle=True)['streams'])
+    PM = np.zeros((nstrat, 4, len(G2.steps())), bool)
+    for _i, w in W.iterrows():
+        PM[int(w.bank_row), streams.index(w.stream), :] = True
+    rule = 'winners'
+    f = G3x.passmask_file(mode, rule)
+    np.savez(f, pm=PM, n=np.int64(nstrat), rule=np.array(rule, dtype=object),
+             steps_used=np.arange(len(G2.steps())))
+    print('  winners book [mode %s]: %d winners -> %s member cells over %d steps'
+          % (mode, len(W), f'{int(PM.sum()):,}', len(G2.steps())), flush=True)
+    D, outp = G3x.stage_book(mode, tag, jobs=jobs, nshard=nshard, rule=rule)
+    N, nout = G3x.stage_booknulls(mode, tag, jobs=jobs, ndraw=ndraw, nid=nid, rule=rule)
+    return outp, nout
+
+
+# --- the three overlays, each a pure function of a daily series -------------
+def _ov_daily_stop(d, x):
+    """Stop for the day once the day's loss reaches x%: the day ends at -x."""
+    return np.maximum(d, -abs(x))
+
+
+def _ov_pause(d, n_dd, m_rec):
+    """Flat after an n_dd drawdown from peak; back in after m_rec recovery.
+
+    THE RECOVERY IS MEASURED ON THE SHADOW CURVE, not on the paused one. While
+    flat you earn nothing, so a paused equity curve can never recover on its
+    own and the rule would latch forever -- which is a kill switch, not a
+    pause. The shadow curve is what the strategies did while you sat out, and
+    it is what you would have seen on the screen.
+    """
+    out = np.zeros_like(d)
+    shadow = np.cumsum(d)
+    speak = np.maximum.accumulate(shadow)
+    paused = False
+    trough = 0.0
+    for i in range(len(d)):
+        ddi = speak[i] - shadow[i]
+        if not paused:
+            out[i] = d[i]
+            if ddi >= n_dd:
+                paused = True
+                trough = shadow[i]
+        else:
+            out[i] = 0.0
+            if shadow[i] - trough >= m_rec:
+                paused = False
+            trough = min(trough, shadow[i])
+    return out
+
+
+def _ov_kill(d, k):
+    """Flat for good once drawdown from peak reaches k."""
+    out = np.array(d, float)
+    eq = np.cumsum(d); peak = np.maximum.accumulate(eq)
+    hit = np.flatnonzero((peak - eq) >= k)
+    if len(hit):
+        out[hit[0] + 1:] = 0.0
+    return out
+
+
+def _curve_point(d, years):
+    import l2walkfwd as W_
+    k = W_.kpis(np.asarray(d, float), years)
+    return dict(total_pct=k['total_return_pct'], max_dd_pct=k['max_dd_pct'],
+                median_year_pct=k['median_year_pct'],
+                worst_year_pct=k['worst_year_pct'],
+                sortino=k['sortino'], calmar=k['calmar'],
+                worst_day_pct=k['worst_day_pct'],
+                dip95_pct=k['dip95_pct'],
+                return_per_dd=(k['total_return_pct'] / k['max_dd_pct']
+                               if k['max_dd_pct'] > 0 else np.nan))
+
+
+def stage_overlays(mode='A', src_tag='g3passwinners', label='winners',
+                   books=('allon', 'chop_trend'), npts=24):
+    """Return-vs-max-DD curves for the three overlays, over their full range.
+
+    NO FIXED VALUES ARE CHOSEN. Each overlay is swept and every point is a row;
+    the md plots return against max drawdown and Jack reads the knee. The
+    baseline (no overlay) is row 0 of every sweep so the curves all start from
+    the same point.
+    """
+    import l2r2kpis as KP
+    rows = []
+    for bk in books:
+        for (bname, _dip, _day) in BK.BUDGETS:
+            d, y, steps = KP.stitched(mode, bk, bname, src_tag)
+            if d is None or not len(d):
+                continue
+            base = _curve_point(d, y)
+            rng_dd = float(base['max_dd_pct'])
+            rows.append(dict(mode=mode, source=label, book=bk, budget=bname,
+                             overlay='none', p1=np.nan, p2=np.nan, **base))
+            # 1. DAILY LOSS STOP, from a tenth of the worst day to past it
+            wd = abs(float(base['worst_day_pct'])) or 1.0
+            for x in np.linspace(wd / 10.0, wd * 1.5, npts):
+                rows.append(dict(mode=mode, source=label, book=bk, budget=bname,
+                                 overlay='daily_loss_stop', p1=float(x), p2=np.nan,
+                                 **_curve_point(_ov_daily_stop(d, x), y)))
+            # 2. EQUITY-CURVE PAUSE, a grid of (drawdown to pause, recovery to resume)
+            for n_dd in np.linspace(rng_dd / 8.0, rng_dd * 1.25, 8):
+                for m_rec in np.linspace(rng_dd / 16.0, rng_dd * 0.75, 6):
+                    rows.append(dict(mode=mode, source=label, book=bk, budget=bname,
+                                     overlay='equity_pause', p1=float(n_dd),
+                                     p2=float(m_rec),
+                                     **_curve_point(_ov_pause(d, n_dd, m_rec), y)))
+            # 3. KILL SWITCH
+            for k in np.linspace(rng_dd / 8.0, rng_dd * 1.5, npts):
+                rows.append(dict(mode=mode, source=label, book=bk, budget=bname,
+                                 overlay='kill_switch', p1=float(k), p2=np.nan,
+                                 **_curve_point(_ov_kill(d, k), y)))
+    D = pd.DataFrame(rows)
+    # WHETHER THE CURVE IS IMPLEMENTABLE TRAVELS WITH THE DATA, not just the
+    # prose. The pause and the kill switch decide at DAY BOUNDARIES and a daily
+    # series is enough to evaluate them honestly. The daily loss stop does not:
+    # clipping a day at -x assumes the breach is caught exactly at -x, costs
+    # nothing to exit, and forfeits no intraday recovery. On a daily series
+    # that is a free lunch and the curve is an UPPER BOUND, not an estimate.
+    IMPL = {'none': 'baseline',
+            'daily_loss_stop': 'UPPER BOUND -- needs intraday data to evaluate',
+            'equity_pause': 'yes -- decided at day boundaries',
+            'kill_switch': 'yes -- decided at day boundaries'}
+    if len(D):
+        D['implementable_on_daily_data'] = D.overlay.map(IMPL)
+    f = os.path.join(RD, 'mode%s_overlay_curves_%s.csv' % (mode, label))
+    D.to_csv(f, index=False)
+    print('  overlay curves [%s]: %d points over %d (book, budget) series -> %s'
+          % (label, len(D), D.groupby(['book', 'budget']).ngroups if len(D) else 0,
+             os.path.relpath(f, _R)), flush=True)
+    if len(D):
+        for (bk, bd), g in D.groupby(['book', 'budget']):
+            b = g[g.overlay == 'none'].iloc[0]
+            print('    %-11s %-6s baseline total %+6.2f%% maxDD %5.2f%% (ret/DD %5.2f)'
+                  % (bk, bd, b.total_pct, b.max_dd_pct, b.return_per_dd), flush=True)
+            for ov in ('equity_pause', 'kill_switch', 'daily_loss_stop'):
+                h = g[g.overlay == ov]
+                if not len(h):
+                    continue
+                best = h.loc[h.return_per_dd.idxmax()]
+                if ov == 'daily_loss_stop':
+                    print('      %-16s UPPER BOUND ONLY (clipping a daily series costs '
+                          'nothing and forfeits nothing; needs intraday data)' % ov,
+                          flush=True)
+                print('      %-16s best ret/DD %5.2f at p1=%.3f%s  (total %+6.2f%%, maxDD %5.2f%%)'
+                      % (ov, best.return_per_dd, best.p1,
+                         '' if not np.isfinite(best.p2) else ' p2=%.3f' % best.p2,
+                         best.total_pct, best.max_dd_pct), flush=True)
+    return f
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'universe')
     md = G.opt('--mode', str, 'A')
@@ -700,6 +1026,17 @@ if __name__ == '__main__':
         stage_floors(md)
     elif st == 'sweep':
         stage_sweep(md, npts=G.opt('--sweep-points', int, 60))
+    elif st == 'winbook':
+        stage_winbook(md, G.opt('--tag', str, 'full'), jobs=G.opt('--jobs', int, 4),
+                      nshard=G.opt('--nshard', int, 16))
+    elif st == 'overlays':
+        stage_overlays(md, src_tag=G.opt('--src-tag', str, 'g3passwinners'),
+                       label=G.opt('--label', str, 'winners'),
+                       npts=G.opt('--points', int, 24))
+    elif st == 'winners':
+        stage_winners(md, G.opt('--tag', str, 'full'), basis=G.opt('--basis', str, 'stated'))
+    elif st == 'family':
+        stage_family(md, G.opt('--tag', str, 'full'))
     elif st == 'floorb':
         stage_floorb(md)
     elif st == 'nullstrat':
