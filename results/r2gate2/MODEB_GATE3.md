@@ -1,6 +1,6 @@
 # MODE B — GATE 3
 
-Generated 2026-11-21 18:20 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
+Generated 2026-11-21 18:39 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
 
 
 ## The bars, unchanged
@@ -30,9 +30,8 @@ Costs are charged throughout (`cost_table_h22`, restated per fault #27).
 | null | results/r2gate2/modeB_gate3_null.csv | 20 | 17b716396b2e |
 | stitched | results/r2gate2/modeB_gate3_stitched.csv | 0 | 68b329da9893 |
 | stitched_counts | results/r2gate2/modeB_gate3_stitched_counts.csv | 4 | 138d3e93516b |
-
-
-**Missing sources, left empty rather than filled in:** book, booknull
+| book | results/r2gate2/modeB_gate3_passersbook.csv | 20 | 292d1372ad09 |
+| booknull | results/r2gate2/modeB_gate3_passersbook_nulls.csv | 60 | 00aad9f58c6a |
 
 
 ## 1. The bars on the GRADE year (year 5, unseen by the tuner)
@@ -140,4 +139,157 @@ Each draw calls a randomly chosen year of the step the "grade" year and another 
 
 ## 4. The passers' book
 
-_The passers' book has not been built; this section is empty rather than filled in from anywhere else._
+Everyone who cleared the bars on the step's GRADE year, equal weight, no picking -- membership is per (step, stream), so a strategy that cleared on `trend-routed` is in that step's ROUTED book through its trend routed settings and nothing else. Two books, as asked: ROUTED and ALWAYS-ON. Sized on the BUILD years, reported on the TRADE year. Members at the widest step: allon 9,628, chop_trend 17,286.
+
+Per-step rows with every field are in `results/r2gate2/modeB_gate3_passersbook.csv`.
+
+
+### TEAM 1
+
+| KPI | ALWAYS-ON | ROUTED (chop RANGING + trend TRENDING) |
+|---|---|---|
+| median year | -1.43% | -2.11% |
+| average year | -0.36% | -1.55% |
+| worst year | -2.91% | -2.58% |
+| best year | 3.15% | 0.17% |
+| total 2016-2020 | -1.80% | -7.76% |
+| CAGR | -0.36% | -1.55% |
+| worst day | -0.98% | -0.60% |
+| max drawdown | -5.84% | -8.63% |
+| DIP95 (worst step) | 7.35% | 4.79% |
+| Sharpe | -0.12 | -0.68 |
+| Sortino | -0.17 | -0.95 |
+| Calmar (total / max DD, the shipped bar) | -0.31 | -0.90 |
+| Calmar (CAGR / max DD) | -0.06 | -0.18 |
+| profit factor (trades, median step) | 0.92 | 0.85 |
+| win rate (trades, median step) | 49.22% | 48.65% |
+| positive years of 5 | 2 | 1 |
+| retention (median step) | -0.21 | -0.49 |
+| steps flagged FIT of 5 | 4 | 5 |
+
+Per year:
+
+- ALWAYS-ON: 2016: +1.19% | 2017: -1.43% | 2018: +3.15% | 2019: -1.79% | 2020: -2.91%
+- ROUTED (chop RANGING + trend TRENDING): 2016: -2.11% | 2017: -2.16% | 2018: -1.08% | 2019: -2.58% | 2020: +0.17%
+
+### TEAM 2
+
+| KPI | ALWAYS-ON | ROUTED (chop RANGING + trend TRENDING) |
+|---|---|---|
+| median year | -2.15% | -3.16% |
+| average year | -0.54% | -2.33% |
+| worst year | -4.36% | -3.87% |
+| best year | 4.72% | 0.26% |
+| total 2016-2020 | -2.70% | -11.64% |
+| CAGR | -0.54% | -2.33% |
+| worst day | -1.47% | -0.90% |
+| max drawdown | -8.75% | -12.95% |
+| DIP95 (worst step) | 11.03% | 7.18% |
+| Sharpe | -0.12 | -0.68 |
+| Sortino | -0.17 | -0.95 |
+| Calmar (total / max DD, the shipped bar) | -0.31 | -0.90 |
+| Calmar (CAGR / max DD) | -0.06 | -0.18 |
+| profit factor (trades, median step) | 0.92 | 0.85 |
+| win rate (trades, median step) | 49.22% | 48.65% |
+| positive years of 5 | 2 | 1 |
+| retention (median step) | -0.21 | -0.49 |
+| steps flagged FIT of 5 | 4 | 5 |
+
+Per year:
+
+- ALWAYS-ON: 2016: +1.79% | 2017: -2.15% | 2018: +4.72% | 2019: -2.69% | 2020: -4.36%
+- ROUTED (chop RANGING + trend TRENDING): 2016: -3.16% | 2017: -3.24% | 2018: -1.62% | 2019: -3.87% | 2020: +0.26%
+
+### Per step, as traded
+
+| step | book | budget | members | size_scale | scale_binds | trade_total_pct | trade_max_dd_pct | trade_dip95_pct | trade_profit_factor | trade_sortino | trade_calmar | trade_win_rate_pct | retention | FIT |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2011-2014 | allon | team1 | 9,628 | 0.9053 | DIP95 | 1.192 | 1.691 | 3.88 | 1.08 | 0.5748 | 0.7045 | 48.65 | 0.1927 | 1 |
+| 2011-2014 | allon | team2 | 9,628 | 1.358 | DIP95 | 1.787 | 2.537 | 5.821 | 1.08 | 0.5748 | 0.7045 | 48.65 | 0.1927 | 1 |
+| 2011-2014 | chop_trend | team1 | 17,286 | 0.5572 | DIP95 | -2.11 | 3.003 | 3.69 | 0.8046 | -1.741 | -0.7024 | 47.88 | -0.8521 | 1 |
+| 2011-2014 | chop_trend | team2 | 17,286 | 0.8358 | DIP95 | -3.164 | 4.505 | 5.535 | 0.8046 | -1.741 | -0.7024 | 47.88 | -0.8521 | 1 |
+| 2012-2015 | allon | team1 | 2,876 | 0.6799 | DIP95 | -1.433 | 3.478 | 4.816 | 0.9153 | -0.8152 | -0.4121 | 49.22 | -0.2087 | 1 |
+| 2012-2015 | allon | team2 | 2,876 | 1.02 | DIP95 | -2.15 | 5.217 | 7.224 | 0.9153 | -0.8152 | -0.4121 | 49.22 | -0.2087 | 1 |
+| 2012-2015 | chop_trend | team1 | 2,528 | 0.7954 | DIP95 | -2.163 | 3.065 | 4.567 | 0.8485 | -1.404 | -0.7058 | 49.61 | -0.4901 | 1 |
+| 2012-2015 | chop_trend | team2 | 2,528 | 1.193 | DIP95 | -3.245 | 4.598 | 6.85 | 0.8485 | -1.404 | -0.7058 | 49.61 | -0.4901 | 1 |
+| 2013-2016 | allon | team1 | 3,071 | 0.7056 | DIP95 | 3.146 | 1.936 | 2.734 | 1.239 | 1.867 | 1.625 | 50.19 | 0.4102 | 0 |
+| 2013-2016 | allon | team2 | 3,071 | 1.058 | DIP95 | 4.719 | 2.904 | 4.101 | 1.239 | 1.867 | 1.625 | 50.19 | 0.4102 | 0 |
+| 2013-2016 | chop_trend | team1 | 2,228 | 0.567 | DIP95 | -1.08 | 2.728 | 3.813 | 0.9132 | -0.7006 | -0.3959 | 45.56 | -0.2104 | 1 |
+| 2013-2016 | chop_trend | team2 | 2,228 | 0.8505 | DIP95 | -1.62 | 4.092 | 5.72 | 0.9132 | -0.7006 | -0.3959 | 45.56 | -0.2104 | 1 |
+| 2014-2017 | allon | team1 | 6,918 | 0.6042 | DIP95 | -1.793 | 3.021 | 4.992 | 0.8867 | -0.9388 | -0.5934 | 46.72 | -0.4035 | 1 |
+| 2014-2017 | allon | team2 | 6,918 | 0.9063 | DIP95 | -2.689 | 4.531 | 7.489 | 0.8867 | -0.9388 | -0.5934 | 46.72 | -0.4035 | 1 |
+| 2014-2017 | chop_trend | team1 | 8,015 | 0.6541 | DIP95 | -2.578 | 2.953 | 4.621 | 0.8037 | -1.914 | -0.8729 | 48.65 | -6.183 | 1 |
+| 2014-2017 | chop_trend | team2 | 8,015 | 0.9811 | DIP95 | -3.867 | 4.43 | 6.932 | 0.8037 | -1.914 | -0.8729 | 48.65 | -6.183 | 1 |
+| 2015-2018 | allon | team1 | 707 | 1.012 | DIP95 | -2.91 | 4.362 | 7.351 | 0.8717 | -1.021 | -0.667 | 51.34 | -0.2208 | 1 |
+| 2015-2018 | allon | team2 | 707 | 1.518 | DIP95 | -4.364 | 6.543 | 11.03 | 0.8717 | -1.021 | -0.667 | 51.34 | -0.2208 | 1 |
+| 2015-2018 | chop_trend | team1 | 930 | 0.9049 | DIP95 | 0.1724 | 3.523 | 4.786 | 1.01 | 0.07812 | 0.04894 | 51.72 | 0.02151 | 1 |
+| 2015-2018 | chop_trend | team2 | 930 | 1.357 | DIP95 | 0.2586 | 5.284 | 7.179 | 1.01 | 0.07812 | 0.04894 | 51.72 | 0.02151 | 1 |
+
+
+### Its three nulls
+
+| null | scope | step | book | budget | members | real | n_draws | null_mean | null_p5 | null_p95 | p_one_sided |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| identity | full field | 2011-2014 | allon | team1 |  | 1.192 | 200 | 5.729 | 1.192 | 14.07 | 0.84 |
+| identity | full field | 2011-2014 | allon | team2 |  | 1.787 | 200 | 8.23 | 1.787 | 21.1 | 0.83 |
+| identity | full field | 2011-2014 | chop_trend | team1 |  | -2.11 | 200 | 1.854 | -2.11 | 6.655 | 0.79 |
+| identity | full field | 2011-2014 | chop_trend | team2 |  | -3.164 | 200 | 3.297 | -3.164 | 9.983 | 1 |
+| identity | full field | 2012-2015 | allon | team1 |  | -1.433 | 200 | 6.695 | -1.433 | 17.97 | 1 |
+| identity | full field | 2012-2015 | allon | team2 |  | -2.15 | 200 | 10.34 | -2.15 | 26.96 | 1 |
+| identity | full field | 2012-2015 | chop_trend | team1 |  | -2.163 | 200 | 4.841 | -2.163 | 12.79 | 1 |
+| identity | full field | 2012-2015 | chop_trend | team2 |  | -3.245 | 200 | 8.059 | -3.245 | 19.19 | 1 |
+| identity | full field | 2013-2016 | allon | team1 |  | 3.146 | 200 | 6.649 | 2.088 | 14.56 | 0.65 |
+| identity | full field | 2013-2016 | allon | team2 |  | 4.719 | 200 | 9.679 | 3.132 | 21.84 | 0.5 |
+| identity | full field | 2013-2016 | chop_trend | team1 |  | -1.08 | 200 | 4.875 | -1.08 | 13.5 | 1 |
+| identity | full field | 2013-2016 | chop_trend | team2 |  | -1.62 | 200 | 8.215 | -1.62 | 20.25 | 0.84 |
+| identity | full field | 2014-2017 | allon | team1 |  | -1.793 | 200 | 4.766 | -1.793 | 14.9 | 1 |
+| identity | full field | 2014-2017 | allon | team2 |  | -2.689 | 200 | 7.496 | -2.689 | 22.35 | 1 |
+| identity | full field | 2014-2017 | chop_trend | team1 |  | -2.578 | 200 | 2.728 | -2.578 | 11.21 | 0.825 |
+| identity | full field | 2014-2017 | chop_trend | team2 |  | -3.867 | 200 | 5.273 | -3.867 | 16.82 | 1 |
+| identity | full field | 2015-2018 | allon | team1 |  | -2.91 | 200 | 9.84 | -2.91 | 20.6 | 1 |
+| identity | full field | 2015-2018 | allon | team2 |  | -4.364 | 200 | 14.16 | -4.364 | 30.89 | 1 |
+| identity | full field | 2015-2018 | chop_trend | team1 |  | 0.1724 | 200 | 7.579 | 0.1724 | 19.44 | 1 |
+| identity | full field | 2015-2018 | chop_trend | team2 |  | 0.2586 | 200 | 11.47 | 0.2586 | 29.15 | 1 |
+| shuffle | passers, full | 2011-2014 | allon | team1 | 9628 | 1.192 | 19 | 1.192 | 1.192 | 1.192 | 1 |
+| shuffle | passers, full | 2011-2014 | allon | team2 | 9628 | 1.787 | 19 | 1.787 | 1.787 | 1.787 | 1 |
+| shuffle | passers, full | 2011-2014 | chop_trend | team1 | 1.729e+04 | -2.11 | 19 | -0.4691 | -1.061 | 0.3447 | 1 |
+| shuffle | passers, full | 2011-2014 | chop_trend | team2 | 1.729e+04 | -3.164 | 19 | -0.7036 | -1.591 | 0.5171 | 1 |
+| shuffle | passers, full | 2012-2015 | allon | team1 | 2876 | -1.433 | 19 | -1.433 | -1.433 | -1.433 | 1 |
+| shuffle | passers, full | 2012-2015 | allon | team2 | 2876 | -2.15 | 19 | -2.15 | -2.15 | -2.15 | 1 |
+| shuffle | passers, full | 2012-2015 | chop_trend | team1 | 2528 | -2.163 | 19 | -1.175 | -1.946 | -0.2815 | 1 |
+| shuffle | passers, full | 2012-2015 | chop_trend | team2 | 2528 | -3.245 | 19 | -1.763 | -2.918 | -0.4223 | 1 |
+| shuffle | passers, full | 2013-2016 | allon | team1 | 3071 | 3.146 | 19 | 3.146 | 3.146 | 3.146 | 1 |
+| shuffle | passers, full | 2013-2016 | allon | team2 | 3071 | 4.719 | 19 | 4.719 | 4.719 | 4.719 | 1 |
+| shuffle | passers, full | 2013-2016 | chop_trend | team1 | 2228 | -1.08 | 19 | 0.06445 | -0.991 | 0.7646 | 0.9474 |
+| shuffle | passers, full | 2013-2016 | chop_trend | team2 | 2228 | -1.62 | 19 | 0.09667 | -1.486 | 1.147 | 0.9474 |
+| shuffle | passers, full | 2014-2017 | allon | team1 | 6918 | -1.793 | 19 | -1.793 | -1.793 | -1.793 | 1 |
+| shuffle | passers, full | 2014-2017 | allon | team2 | 6918 | -2.689 | 19 | -2.689 | -2.689 | -2.689 | 1 |
+| shuffle | passers, full | 2014-2017 | chop_trend | team1 | 8015 | -2.578 | 19 | -1.612 | -2.26 | -1.218 | 1 |
+| shuffle | passers, full | 2014-2017 | chop_trend | team2 | 8015 | -3.867 | 19 | -2.417 | -3.391 | -1.827 | 1 |
+| shuffle | passers, full | 2015-2018 | allon | team1 | 707 | -2.91 | 19 | -2.91 | -2.91 | -2.91 | 1 |
+| shuffle | passers, full | 2015-2018 | allon | team2 | 707 | -4.364 | 19 | -4.364 | -4.364 | -4.364 | 1 |
+| shuffle | passers, full | 2015-2018 | chop_trend | team1 | 930 | 0.1724 | 19 | -1.284 | -2.831 | -0.3053 | 0.05263 |
+| shuffle | passers, full | 2015-2018 | chop_trend | team2 | 930 | 0.2586 | 19 | -1.927 | -4.247 | -0.4579 | 0.05263 |
+| random-entry | passers, full | 2011-2014 | allon | team1 | 9628 | 1.192 | 19 | -0.5229 | -2.396 | 0.892 | 0.05263 |
+| random-entry | passers, full | 2011-2014 | allon | team2 | 9628 | 1.787 | 19 | -0.7843 | -3.594 | 1.338 | 0.05263 |
+| random-entry | passers, full | 2011-2014 | chop_trend | team1 | 1.729e+04 | -2.11 | 19 | -0.5279 | -2.993 | 1.71 | 0.7895 |
+| random-entry | passers, full | 2011-2014 | chop_trend | team2 | 1.729e+04 | -3.164 | 19 | -0.7918 | -4.49 | 2.565 | 0.7895 |
+| random-entry | passers, full | 2012-2015 | allon | team1 | 2876 | -1.433 | 19 | -0.8569 | -2.289 | 0.1778 | 0.6316 |
+| random-entry | passers, full | 2012-2015 | allon | team2 | 2876 | -2.15 | 19 | -1.285 | -3.433 | 0.2667 | 0.6316 |
+| random-entry | passers, full | 2012-2015 | chop_trend | team1 | 2528 | -2.163 | 19 | -0.2937 | -0.9314 | 0.2921 | 1 |
+| random-entry | passers, full | 2012-2015 | chop_trend | team2 | 2528 | -3.245 | 19 | -0.4405 | -1.397 | 0.4382 | 1 |
+| random-entry | passers, full | 2013-2016 | allon | team1 | 3071 | 3.146 | 19 | -0.6522 | -1.936 | 0.6749 | 0 |
+| random-entry | passers, full | 2013-2016 | allon | team2 | 3071 | 4.719 | 19 | -0.9783 | -2.903 | 1.012 | 0 |
+| random-entry | passers, full | 2013-2016 | chop_trend | team1 | 2228 | -1.08 | 19 | -0.2831 | -2.098 | 1.585 | 0.7895 |
+| random-entry | passers, full | 2013-2016 | chop_trend | team2 | 2228 | -1.62 | 19 | -0.4246 | -3.147 | 2.378 | 0.7895 |
+| random-entry | passers, full | 2014-2017 | allon | team1 | 6918 | -1.793 | 19 | -0.6427 | -2.68 | 0.5463 | 0.8421 |
+| random-entry | passers, full | 2014-2017 | allon | team2 | 6918 | -2.689 | 19 | -0.964 | -4.02 | 0.8195 | 0.8421 |
+| random-entry | passers, full | 2014-2017 | chop_trend | team1 | 8015 | -2.578 | 19 | -0.3952 | -1.897 | 0.9989 | 0.9474 |
+| random-entry | passers, full | 2014-2017 | chop_trend | team2 | 8015 | -3.867 | 19 | -0.5928 | -2.846 | 1.498 | 0.9474 |
+| random-entry | passers, full | 2015-2018 | allon | team1 | 707 | -2.91 | 19 | -0.7761 | -2.362 | 1.058 | 0.9474 |
+| random-entry | passers, full | 2015-2018 | allon | team2 | 707 | -4.364 | 19 | -1.164 | -3.544 | 1.587 | 0.9474 |
+| random-entry | passers, full | 2015-2018 | chop_trend | team1 | 930 | 0.1724 | 19 | -0.9898 | -4.604 | 0.4479 | 0.1053 |
+| random-entry | passers, full | 2015-2018 | chop_trend | team2 | 930 | 0.2586 | 19 | -1.485 | -6.906 | 0.6718 | 0.1053 |
+
+
+The real book clears its null's 95th percentile in **6 of 60** cells.
