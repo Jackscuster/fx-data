@@ -47,7 +47,17 @@ push(){
 [ -f "$R/$DRIVER" ] || [ -f "$DRIVER" ] || { say "no such driver $DRIVER"; exit 2; }
 count_marker(){ local c; c=$(grep -cF "$MARKER" "$L/batch1.log" 2>/dev/null | head -1); echo "${c:-0}"; }
 PREV=$(count_marker)
-WATCH_PID=$(grep CHAIN_PID "$L/chain_current" 2>/dev/null | cut -d= -f2)
+# CHAINING TWO DEEP NEEDS THE PID CHECK OFF. An arm_next started now to wait
+# for chain 20's marker would read chain 18's pid out of chain_current, see it
+# exit when chain 18 finishes, find no chain-20 marker, and refuse to launch --
+# concluding "the chain ahead died" about a chain that had not started yet.
+# FX_ARM_NOPID=1 waits on the marker alone, which is the right test when the
+# chain ahead does not exist yet.
+if [ "${FX_ARM_NOPID:-0}" = "1" ]; then
+  WATCH_PID=""
+else
+  WATCH_PID=$(grep CHAIN_PID "$L/chain_current" 2>/dev/null | cut -d= -f2)
+fi
 say "waiting for \"$MARKER\" (seen $PREV times already; only a NEW one counts), then launching $DRIVER"
 say "watching chain pid ${WATCH_PID:-unknown}"
 

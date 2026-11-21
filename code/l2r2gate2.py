@@ -189,6 +189,86 @@ def _year_marks(nt, eb, xb, dirv, epx, units, rtot, cst, am, risk,
     return worst
 
 
+@njit(cache=False)
+def _year_marks_dd(nt, eb, xb, dirv, epx, units, rtot, cst, am, risk,
+                   cl, ybar, dayi, reg, code, acc, accd, s_routed, s_allon,
+                   tmp, touch):
+    """_year_marks, plus a PER-DAY increment vector so drawdown is reachable.
+
+    WHY A SECOND FUNCTION RATHER THAN A FLAG. _year_marks is the hot path of a
+    13-hour stage that has already produced both shipped banks. It is left
+    byte-identical so the expectancy-tuned banks stay reproducible, and the
+    r2dd objective gets its own copy. The two are checked against each other
+    by condition 1b below: on the same strategy they must return identical
+    `acc` to 1e-12, or the copy has drifted.
+
+    accd is (2, ndays) in GLOBAL day order, netted across pairs. That is what
+    makes the drawdown a real one: increments from all 28 pairs land on the
+    same calendar day before any cumulative sum is taken, so the curve is the
+    strategy's own equity curve and not a per-pair artefact. `dayi` maps a
+    pair's bar to its global day, -1 outside the banked window.
+    """
+    ny = acc.shape[1]
+    worst = 0.0
+    for j in range(nt):
+        e = eb[j]
+        x = xb[j]
+        if x < 0 or x < e:
+            continue
+        rt = reg[e] == code
+        for y in range(ny):
+            tmp[y] = 0.0
+            touch[y] = 0
+        prev = 0.0
+        tot_in = 0.0
+        for b in range(e, x + 1):
+            if b == x:
+                cum = rtot[j] * am
+            else:
+                cum = dirv[j] * (cl[b] - epx[j]) * units[j] / risk * am
+            inc = cum - prev
+            if b == e:
+                inc -= cst[j]
+            prev = cum
+            y = ybar[b]
+            if y >= 0:
+                tmp[y] += inc
+                touch[y] = 1
+                tot_in += inc
+                di = dayi[b]
+                if di >= 0:
+                    if rt:
+                        accd[s_routed, di] += inc
+                    accd[s_allon, di] += inc
+        got = 0.0
+        for y in range(ny):
+            got += tmp[y]
+        d = got - tot_in
+        if d < 0.0:
+            d = -d
+        if d > worst:
+            worst = d
+        for k in range(2):
+            if k == 0:
+                if not rt:
+                    continue
+                s = s_routed
+            else:
+                s = s_allon
+            for y in range(ny):
+                if touch[y] == 0:
+                    continue
+                v = tmp[y]
+                acc[s, y, 0] += 1.0
+                acc[s, y, 1] += v
+                if v > 0.0:
+                    acc[s, y, 2] += v
+                    acc[s, y, 4] += 1.0
+                else:
+                    acc[s, y, 3] -= v
+    return worst
+
+
 class Years:
     """The Scorer's tables plus a per-year, condition-1 scoring pass.
 
@@ -219,14 +299,38 @@ class Years:
         self.touch = np.zeros(NYEAR, np.int64)
         self.worst_cond1 = 0.0
         self.n_eval = 0
+        # THE GLOBAL DAY INDEX, for the r2dd objective only. Bars are per-pair
+        # positions, so accumulating increments by bar would add Monday on one
+        # pair to Tuesday on another. The union of every pair's trading days
+        # inside the banked window is the common axis; dayi maps a pair's bar
+        # onto it and -1 outside.
+        alld = set()
+        for p in self.pairs:
+            d = pd.DatetimeIndex(self.sc.dates[p])
+            alld.update(d[(d.year >= YEAR0) & (d.year < YEAR0 + NYEAR)].values.tolist())
+        self.days = np.array(sorted(alld))
+        self.ndays = len(self.days)
+        pos = {v: k for k, v in enumerate(self.days.tolist())}
+        self.dayi = {}
+        for p in self.pairs:
+            d = pd.DatetimeIndex(self.sc.dates[p]).values
+            self.dayi[p] = np.array([pos.get(v, -1) for v in d.tolist()], np.int64)
+        dy = pd.DatetimeIndex(self.days).year.values.astype(np.int64) - YEAR0
+        self.dayyear = dy
 
-    def score(self, combo, ip, risk, mode, sname, code, plan):
-        """-> (2, NYEAR, NSTAT) float64: routed, always-on."""
+    def score(self, combo, ip, risk, mode, sname, code, plan, want_dd=False):
+        """-> (2, NYEAR, NSTAT) float64: routed, always-on.
+
+        With want_dd the return is (acc, accd) and accd is (2, ndays) of
+        per-day increments netted across pairs -- what the r2dd objective
+        needs and the expectancy objective does not pay for.
+        """
         self.n_eval += 1
         sc = self.sc
         c1, c2, vol, base, ex = combo
         kwm = S.mode_kw(mode)
         acc = np.zeros((2, NYEAR, NSTAT), np.float64)
+        accd = np.zeros((2, self.ndays), np.float64) if want_dd else None
         alen = int(risk['atr_len'])
         am = float(risk['atr_mult'])
         t1 = L.KIND[c1] == 'TERNARY'
@@ -263,13 +367,21 @@ class Years:
             # the move in 1.0xATR units, so the cost is restated with it.
             cst = (self.cfrac[p] * self.cmult[p][eb] * np.abs(b['entry_px'][:nt])
                    * np.abs(b['units'][:nt]) / S.RISK) * am
-            w = _year_marks(nt, eb, b['exit_bar'][:nt], b['dir'][:nt].astype(np.float64),
-                            b['entry_px'][:nt], b['units'][:nt], b['r'][:nt], cst,
-                            am, S.RISK, self.cl[p], self.yb[p], sc.reg[p], code,
-                            acc, 0, 1, self.tmp, self.touch)
+            if want_dd:
+                w = _year_marks_dd(nt, eb, b['exit_bar'][:nt],
+                                   b['dir'][:nt].astype(np.float64),
+                                   b['entry_px'][:nt], b['units'][:nt], b['r'][:nt],
+                                   cst, am, S.RISK, self.cl[p], self.yb[p],
+                                   self.dayi[p], sc.reg[p], code,
+                                   acc, accd, 0, 1, self.tmp, self.touch)
+            else:
+                w = _year_marks(nt, eb, b['exit_bar'][:nt], b['dir'][:nt].astype(np.float64),
+                                b['entry_px'][:nt], b['units'][:nt], b['r'][:nt], cst,
+                                am, S.RISK, self.cl[p], self.yb[p], sc.reg[p], code,
+                                acc, 0, 1, self.tmp, self.touch)
             if w > self.worst_cond1:
                 self.worst_cond1 = w
-        return acc
+        return (acc, accd) if want_dd else acc
 
 
 # ==========================================================================
@@ -279,6 +391,58 @@ def role_sum(acc, y0, y1):
     """Sum the per-year record over calendar years [y0, y1]. float64."""
     a, b = y0 - YEAR0, y1 - YEAR0 + 1
     return acc[..., max(a, 0):min(b, NYEAR), :].sum(axis=-2, dtype=np.float64)
+
+
+def role_dd(accd, dayyear, y0, y1):
+    """True chronological max drawdown in R over calendar years [y0, y1].
+
+    THE CURVE IS CUT TO THE ROLE'S YEARS AND THE DRAWDOWN RESTARTS THERE. A
+    drawdown carried in from a year the tuner may not look at would make the
+    objective depend on an unseen year, which is the fault this whole restart
+    exists to remove.
+    """
+    a, b = y0 - YEAR0, y1 - YEAR0
+    m = (dayyear >= a) & (dayyear <= b)
+    out = np.zeros(accd.shape[0], np.float64)
+    for s in range(accd.shape[0]):
+        x = accd[s][m]
+        if not len(x):
+            out[s] = np.nan
+            continue
+        eq = np.cumsum(x)
+        out[s] = float((np.maximum.accumulate(eq) - eq).max())
+    return out
+
+
+def pick_r2dd(totals, dds, ns, tot_tiebreak=True):
+    """argmax of total R / max DD R, with MIN_TUNE_TRADES enforced.
+
+    A ZERO DRAWDOWN DOES NOT WIN BY DIVISION. A configuration whose tune block
+    never drew down has an infinite ratio and would beat every real one on a
+    rounding artefact, so it is ranked by total R among the zero-DD set and
+    only ahead of the rest if its total is positive. Nothing is divided by
+    zero anywhere.
+    """
+    ok = np.asarray(ns) >= MIN_TUNE_TRADES
+    if not ok.any():
+        return -1
+    t = np.asarray(totals, np.float64); d = np.asarray(dds, np.float64)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        r = np.where(ok & np.isfinite(d) & (d > 0), t / np.where(d > 0, d, 1.0), -np.inf)
+    # zero-drawdown blocks: rank them by total R, above everything finite only
+    # if that total is positive
+    zed = ok & np.isfinite(d) & (d <= 0) & (t > 0)
+    if zed.any():
+        r = np.where(zed, np.nanmax(r[np.isfinite(r)], initial=0.0) + t, r)
+    if not np.isfinite(r).any():
+        return -1
+    best = float(np.nanmax(r))
+    cand = np.flatnonzero(r >= best - 1e-12)
+    if len(cand) == 1 or not tot_tiebreak:
+        return int(cand[0])
+    # TIEBREAK ON TOTAL R, not expectancy: expectancy is reported beside this
+    # objective and never used, and a tiebreak is a use.
+    return int(cand[int(np.argmax(t[cand]))])
 
 
 def objective(block):
