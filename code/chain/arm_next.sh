@@ -26,7 +26,13 @@ MARKER="${1:?arm_next: pass the marker of the chain to wait for}"
 DRIVER="${2:?arm_next: pass the next driver}"
 APPROVED="${3:-}"
 POLL=60
-MAXWAIT="${MAXWAIT:-72000}"          # 20 h, then give up and say so
+MAXWAIT="${MAXWAIT:-259200}"         # 72 h, then give up and say so
+# 20 h WAS NOT ENOUGH AND IT COST A LAUNCH. On 21 Nov this gave up at 13:59
+# while the chain ahead still had 80 minutes to run, because the 20 h default
+# was set from an estimate of chain 18 that proved 2x short. A queue-arming
+# timeout should be long enough to be wrong about the chain ahead; the thing it
+# protects against is a chain that died silently, and the pid check already
+# catches that in seconds.
 LOG="$L/arm_next.log"
 
 say(){ echo "$(date '+%F %T') arm_next: $*" | tee -a "$LOG"; }
