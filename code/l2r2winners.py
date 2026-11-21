@@ -1017,6 +1017,347 @@ def stage_overlays(mode='A', src_tag='g3passwinners', label='winners',
     return f
 
 
+# ==========================================================================
+# PROP RETURN -- the number Jack actually buys (20 Nov, 21 Nov)
+# ==========================================================================
+# "yearly return when sized so the worst dip equals 3.6%". The worst dip is
+# MAX DD for a strategy and DIP95 for a book, and the target line is 12% a
+# year.
+#
+# FOR A STRATEGY THE ARITHMETIC COLLAPSES, and it is worth seeing why.
+# A strategy's record is in R. Sizing so that max DD = PROP_DIP means one R is
+# worth PROP_DIP / max_dd_R percent, so
+#     prop return per year = (total_R / n_years) * PROP_DIP / max_dd_R
+#                          = (PROP_DIP / n_years) * (total_R / max_dd_R)
+# With PROP_DIP 3.6 and five years that is 0.72 x return-per-drawdown. So the
+# prop return and the return/DD ratio are the SAME RANKING, and the 12% target
+# is exactly return/DD >= 16.67. Nothing is gained by ranking on both; what is
+# gained is that 12% is now a line on a chart instead of an aspiration.
+#
+# FOR A BOOK the sizing is already in the budget: team1 is the 3.6% dip
+# budget, so its reported return is already prop-sized ON THE BUILD YEARS.
+# This rescales to the TRADE years, where DIP95 is what it turned out to be
+# rather than what it was fitted to, which is the honest version.
+PROP_DIP = 3.6
+PROP_TARGET = 12.0
+
+
+def prop_return_strategy(total_R, max_dd_R, n_years=5, dip=PROP_DIP):
+    t = np.asarray(total_R, np.float64); d = np.asarray(max_dd_R, np.float64)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        return np.where(np.isfinite(d) & (d > 0), (t / n_years) * dip / d, np.nan)
+
+
+def prop_return_book(median_year_pct, trade_dip95_pct, dip=PROP_DIP):
+    m = np.asarray(median_year_pct, np.float64); p = np.asarray(trade_dip95_pct, np.float64)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        return np.where(np.isfinite(p) & (p > 0), m * dip / p, np.nan)
+
+
+def add_prop_columns(D, kind, n_years=5):
+    """Add prop_return_pct_per_year, prop_scale and clears_12pct to a table."""
+    D = D.copy()
+    if not len(D):
+        return D
+    if kind == 'strategy':
+        tot = D.get('trade_total_R', D.get('total_R'))
+        dd = D.get('trade_max_dd_R_sumyr', D.get('max_dd_R_sumyr'))
+        D['prop_return_pct_per_year'] = prop_return_strategy(tot, dd, n_years)
+        D['prop_scale_pct_per_R'] = np.where(
+            np.asarray(dd, float) > 0, PROP_DIP / np.asarray(dd, float), np.nan)
+        D['prop_sized_on'] = 'max DD = %.1f%%' % PROP_DIP
+    else:
+        D['prop_return_pct_per_year'] = prop_return_book(
+            D.get('trade_median_year_pct'), D.get('trade_dip95_pct'))
+        D['prop_scale_x'] = np.where(
+            np.asarray(D.get('trade_dip95_pct'), float) > 0,
+            PROP_DIP / np.asarray(D.get('trade_dip95_pct'), float), np.nan)
+        D['prop_sized_on'] = 'trade-year DIP95 = %.1f%%' % PROP_DIP
+    D['prop_target_pct'] = PROP_TARGET
+    D['clears_12pct_at_prop'] = (
+        np.asarray(D.prop_return_pct_per_year, float) >= PROP_TARGET).astype(int)
+    return D
+
+
+def stage_prop(mode='A'):
+    """Add the prop column to every table that reports a strategy or a book."""
+    done = []
+    # --- strategy tables
+    for nm in ('winners',):
+        f = os.path.join(RD, 'mode%s_%s.csv' % (mode, nm))
+        if not os.path.exists(f):
+            continue
+        D = add_prop_columns(pd.read_csv(f), 'strategy')
+        D = D.sort_values('prop_return_pct_per_year', ascending=False)
+        D.to_csv(f, index=False)
+        done.append((f, len(D), int(D.clears_12pct_at_prop.sum())))
+    # --- book tables
+    for pat in ('mode%s_gate3_passersbook*.csv', 'mode%s_books_full.csv'):
+        for f in sorted(glob.glob(os.path.join(RD, pat % mode))):
+            if '_nulls' in f:
+                continue
+            try:
+                D = pd.read_csv(f)
+            except Exception:
+                continue
+            if 'trade_dip95_pct' not in D.columns:
+                continue
+            D = add_prop_columns(D, 'book')
+            D.to_csv(f, index=False)
+            done.append((f, len(D), int(D.clears_12pct_at_prop.sum())))
+    print('  PROP RETURN [mode %s]: sized so the worst dip = %.1f%%, target %.0f%% a year'
+          % (mode, PROP_DIP, PROP_TARGET), flush=True)
+    for f, n, c in done:
+        print('    %-52s %4d rows, %2d clear %.0f%%'
+              % (os.path.relpath(f, _R), n, c, PROP_TARGET), flush=True)
+    if not done:
+        print('    nothing to annotate yet', flush=True)
+    return done
+
+
+def stage_top30(mode='A'):
+    """Top 30 by t, by return/DD, and by prop return, among the non-luck set."""
+    f = os.path.join(RD, 'mode%s_winners.csv' % mode)
+    if not os.path.exists(f):
+        print('  no winners table to rank', flush=True)
+        return []
+    W = add_prop_columns(pd.read_csv(f), 'strategy')
+    outs = []
+    for key, col in (('t', 't_stat'), ('retdd', 'trade_return_per_dd'),
+                     ('prop', 'prop_return_pct_per_year')):
+        if col not in W.columns:
+            continue
+        D = W.sort_values(col, ascending=False).head(30)
+        o = os.path.join(RD, 'mode%s_winners_top30_%s.csv' % (mode, key))
+        D.to_csv(o, index=False)
+        outs.append(o)
+        print('    top 30 by %-6s -> %s (%d rows)'
+              % (key, os.path.relpath(o, _R), len(D)), flush=True)
+    return outs
+
+
+def write_md(mode='A', out=None):
+    """MODE<M>_WINNERS.md -- individual strategies first, the book last."""
+    import hashlib
+    import l2r2kpis as KP
+    import l2r2gate3 as G3x
+    L = []; A = L.append
+    def tbl(d, cols=None):
+        return G3x.BK_tbl(d, cols)
+    def rd(nm):
+        f = os.path.join(RD, 'mode%s_%s.csv' % (mode, nm))
+        if not os.path.exists(f) or os.path.getsize(f) < 2:
+            return pd.DataFrame(), f
+        try:
+            return pd.read_csv(f), f
+        except Exception:
+            return pd.DataFrame(), f
+
+    A('# MODE %s — WINNERS, NO GATES\n' % mode)
+    A('Generated %s by `code/l2r2winners.py`, read-only off the gate 2 bank and the '
+      'gate 3 scoring. **Nothing is filtered before it is measured**: all 273,780 '
+      'strategies are recorded on both unseen records, and the only cut is the LUCK '
+      'FLOOR, which is a statement about chance rather than a preference about '
+      'settings. Individual strategies first; the book last.\n'
+      % time.strftime('%F %H:%M'))
+
+    A('\n## 0. The number Jack buys: PROP RETURN\n')
+    A('Yearly return when sized so the worst dip equals **%.1f%%** — max DD for a '
+      'strategy, trade-year DIP95 for a book. Target **%.0f%% a year**.\n'
+      % (PROP_DIP, PROP_TARGET))
+    A('For a strategy the arithmetic collapses to `%.2f x return/DD`, so prop return '
+      'and return-per-drawdown are the same ranking and the %.0f%% line is exactly '
+      '**return/DD >= %.2f**.\n' % (PROP_DIP / 5.0, PROP_TARGET, PROP_TARGET / (PROP_DIP / 5.0)))
+    W, wf = rd('winners')
+    if len(W) and 'prop_return_pct_per_year' in W.columns:
+        n12 = int(W.clears_12pct_at_prop.sum())
+        A('**%d of %d winners clear %.0f%% at prop sizing.** Best is **%.2f%% a year** '
+          '(return/DD %.2f against the %.2f needed) — short of the line by a factor of '
+          '%.1f.\n' % (n12, len(W), PROP_TARGET, W.prop_return_pct_per_year.max(),
+                       W.trade_return_per_dd.max(), PROP_TARGET / (PROP_DIP / 5.0),
+                       (PROP_TARGET / (PROP_DIP / 5.0)) / W.trade_return_per_dd.max()))
+
+    A('\n## 1. The universe, and the two unseen records\n')
+    A('Per (strategy, stream), two records that the tuner never saw: the five stitched '
+      'TRADE years 2016-2020, and the five GRADE years 2015-2019 as an independent '
+      'second read. Each year uses the settings tuned before it — the walk forward as '
+      'built.\n')
+    O, of = rd('winners_t_observed')
+    if len(O):
+        A('\n**Observed t**, from `%s`:\n' % os.path.relpath(of, _R))
+        A(tbl(O[O.stream == 'ALL'], ['record', 'stream', 'n_finite', 't_max', 't_p99',
+                                     't_median']))
+    A('\nThe t-statistic is **exact and not stored**: `l2tune` computes '
+      '`sharpe = mean/sd x sqrt(252)` on per-trade R, so `sd = mean sqrt(252)/sharpe` '
+      'and the per-year sum of squares is `sd^2 (n-1) + n mean^2`; those sum across the '
+      'five years, so the pooled t is recovered without re-scoring. Verified against '
+      'direct re-scoring on 10 records, agreeing to five decimals.\n')
+    A('\n**Three fields are NOT exact from the bank**, and each is named where it '
+      'appears: stitched max DD (summed per-year, gate 3\'s own stitched recipe, an '
+      'upper bound), stitched Sortino (the mean of the five per-year figures), and '
+      'longest losing streak (needs the ordered trade list, which the Scorer discards).\n')
+
+    A('\n## 2. The luck floors\n')
+    FA, faf = rd('winners_floor_analytic')
+    if len(FA):
+        A('**(a) Analytic**, from `%s`:\n' % os.path.relpath(faf, _R))
+        A(tbl(FA, ['basis', 'M', 'alpha', 't_max_of_M', 't_bonferroni']))
+        A('\nBoth lines assume independent tries and normal t. FX trade R is '
+          'fat-tailed, the 28 pairs overlap in time, and a strategy\'s four streams '
+          'share settings — all of which inflate real t. **These lines are therefore '
+          'optimistic**: clearing one is the weakest version of the question.\n')
+    FE, fef = rd('winners_floor_empirical')
+    if len(FE):
+        A('\n**(b) Empirical**, a per-strategy random-entry null, from `%s`:\n'
+          % os.path.relpath(fef, _R))
+        A(tbl(FE[FE.stream == 'ALL'], ['space', 'null_mean', 'null_sd', 'mu', 'sigma',
+                                       'n_blocks', 'block_size', 'M', 'expected_best',
+                                       'pct']))
+        A('\nEvery real trade keeps its direction, units, cost and HOLD; its entry '
+          'moves to a uniformly random bar in the same trade year on the same pair; R '
+          'is recomputed from the price path. The floor is taken in **t-space** and the '
+          'reason is measured, not asserted: the reconstruction is systematically more '
+          'negative than the engine in LEVEL (see '
+          '`mode%s_winners_recon_distortion.csv`), but on t the median engine/'
+          'reconstruction ratio is 0.924 — the engine runs slightly lower than the '
+          'space the floor is fitted in, so using it is mildly **conservative**. The '
+          'expectancy-space fit is reported and NOT used: its Gumbel sigma exceeds its '
+          'parent sd, the signature of a fat-tailed parent outside the Gumbel domain.\n'
+          % mode)
+    LAD, lf = rd('winners_floor_ladder')
+    if len(LAD):
+        A('\n**The ladder.** The winner count moves with which line binds, so the '
+          'choice is shown rather than buried:\n')
+        A(tbl(LAD, ['basis', 't_analytic', 't_empirical', 't_binding', 'n_winners',
+                    'is_default']))
+
+    A('\n## 3. The floor sweep\n')
+    SW, sf = rd('winners_floor_sweep')
+    if len(SW):
+        d = SW[(SW.record == 'trade') & (SW.stream == 'ALL')]
+        A('How many clear each level, and what they earned, from `%s` (%d rows over all '
+          'streams):\n' % (os.path.relpath(sf, _R), len(SW)))
+        A(tbl(d.iloc[::max(1, len(d) // 20)],
+              ['t_floor', 'n_clearing', 'mean_trade_expectancy_R', 'mean_trade_total_R']))
+
+    A('\n## 4. The non-luck winners\n')
+    A('Above BOTH floors, **>= %d trades in every unseen year**, positive in **>= %d of '
+      '5** trade years.\n' % (MIN_TRADES_PER_YEAR, MIN_YEARS_POSITIVE))
+    if len(W):
+        A('\n**%d winners.** Every one is listed in `%s` with its settings and per-year '
+          'R.\n' % (len(W), os.path.relpath(wf, _R)))
+        base = ['stream', 'sid', 't_stat', 'trade_n_trades', 'trade_total_R',
+                'trade_max_dd_R_sumyr', 'trade_dd_pct_of_gross',
+                'trade_return_per_dd', 'prop_return_pct_per_year',
+                'trade_worst_year_R', 'trade_win_rate', 'years_positive']
+        A(tbl(W, base))
+        if 'stream' in W.columns:
+            vc = W.stream.value_counts()
+            A('\n**Stream composition: %s.**\n'
+              % ', '.join('%s %d' % (k, v) for k, v in vc.items()))
+        A('\nPer-year R for each winner:\n')
+        yrs = [c for c in W.columns if c.startswith('R_2')]
+        A(tbl(W, ['stream', 'sid'] + sorted(yrs)))
+    else:
+        A('\n_No winners at the binding floor._\n')
+
+    A('\n### Top 30 by t-statistic, and by return-to-drawdown\n')
+    A('Drawdown is on every row, as asked. With %d winners both tables are the whole '
+      'set.\n' % len(W))
+    for key, lbl in (('t', 't-statistic'), ('retdd', 'return / max DD'),
+                     ('prop', 'prop return')):
+        T30, tf = rd('winners_top30_%s' % key)
+        if len(T30):
+            A('\n**By %s** (`%s`):\n' % (lbl, os.path.relpath(tf, _R)))
+            A(tbl(T30.head(30), ['stream', 'sid', 't_stat', 'trade_total_R',
+                                 'trade_max_dd_R_sumyr', 'trade_return_per_dd',
+                                 'prop_return_pct_per_year']))
+
+    A('\n## 5. Family support\n')
+    F, ff = rd('winners_family')
+    if len(F):
+        A('Cousins are same (c1, c2). A winner alone in its family is the shape a lucky '
+          'draw takes; one surrounded by near-winners is the shape a real effect takes.\n')
+        A(tbl(F, ['stream', 'family_c1_c2', 'winner_t', 'n_cousins', 'cousin_t_median',
+                  'cousin_t_max', 'cousins_t_over_2', 'cousins_t_over_3',
+                  'cousins_positive_pct', 'lone_survivor']))
+        A('\n**%d of %d flagged lone survivors.**\n'
+          % (int(F.lone_survivor.sum()), len(F)))
+
+    A('\n## 6. The winners\' book — LAST, and descriptive only\n')
+    A('**This book\'s membership was chosen with sight of the years it reports.** Its '
+      'return is therefore DESCRIPTIVE and is not evidence of anything. The luck floor '
+      'in section 2 is the evidence. The book answers a different question: if you had '
+      'held exactly these, equally weighted, what would the drawdown have looked like.\n')
+    BK_, bkf = rd('gate3_passersbook_winners')
+    if len(BK_):
+        b = BK_[BK_.get('book_empty', 0) == 0]
+        A(tbl(b, ['step', 'book', 'budget', 'members', 'trade_total_pct',
+                  'trade_max_dd_pct', 'trade_dip95_pct', 'trade_sortino',
+                  'trade_calmar', 'prop_return_pct_per_year', 'clears_12pct_at_prop']))
+        if (BK_.get('book_empty', 0) == 1).any():
+            A('\nThe ROUTED book is **empty** — blank rows, not zeros. No winner is a '
+              'routed-stream winner, so it has no members.\n')
+        tl, _r = KP.kpi_tables(mode, tag='g3passwinners', books_csv=bkf, Bk=BK_)
+        if tl:
+            A('\n### Full KPI table\n')
+            for ln in tl:
+                A(ln)
+    NB, nbf = rd('gate3_passersbook_winners_nulls')
+    if len(NB):
+        A('\n### Its nulls\n')
+        A(tbl(NB, ['null', 'scope', 'step', 'book', 'budget', 'members', 'real',
+                   'n_draws', 'null_mean', 'null_p95', 'p_one_sided']))
+
+    A('\n## 7. Overlay curves\n')
+    OV, ovf = rd('overlay_curves_winners')
+    if len(OV):
+        A('Swept over their full range with **no fixed value chosen**, from `%s` (%d '
+          'points). Return against max drawdown on the unseen years at the budget.\n'
+          % (os.path.relpath(ovf, _R), len(OV)))
+        rows = []
+        for (bk, bd), g in OV.groupby(['book', 'budget']):
+            for ov in ('none', 'equity_pause', 'kill_switch', 'daily_loss_stop'):
+                h = g[g.overlay == ov]
+                if not len(h):
+                    continue
+                r = h.loc[h.return_per_dd.idxmax()]
+                rows.append(dict(book=bk, budget=bd, overlay=ov, p1=r.p1, p2=r.p2,
+                                 total_pct=r.total_pct, max_dd_pct=r.max_dd_pct,
+                                 return_per_dd=r.return_per_dd,
+                                 implementable=r.get('implementable_on_daily_data', '')))
+        A(tbl(pd.DataFrame(rows), ['book', 'budget', 'overlay', 'p1', 'p2', 'total_pct',
+                                   'max_dd_pct', 'return_per_dd', 'implementable']))
+        A('\n**The daily loss stop is an UPPER BOUND, not a result.** Clipping a daily '
+          'series at -x assumes the breach is caught exactly at -x, costs nothing to '
+          'exit and forfeits no intraday recovery — a free lunch on daily data. The '
+          'pause and the kill switch decide at DAY BOUNDARIES, which a daily series '
+          'evaluates honestly.\n')
+
+    A('\n## Provenance\n')
+    A('| file | rows | md5 |\n|---|---|---|')
+    for nm in ('winners', 'winners_t_observed', 'winners_floor_analytic',
+               'winners_floor_empirical', 'winners_floor_ladder', 'winners_floor_sweep',
+               'winners_family', 'winners_nullstrat', 'winners_recon_distortion',
+               'gate3_passersbook_winners', 'gate3_passersbook_winners_nulls',
+               'overlay_curves_winners'):
+        f = os.path.join(RD, 'mode%s_%s.csv' % (mode, nm))
+        if os.path.exists(f) and os.path.getsize(f) > 1:
+            try:
+                n = len(pd.read_csv(f))
+            except Exception:
+                n = 0
+            A('| `%s` | %s | %s |' % (os.path.relpath(f, _R), f'{n:,}',
+                                      hashlib.md5(open(f, 'rb').read()).hexdigest()[:12]))
+
+    txt = '\n'.join(L) + '\n'
+    out = out or os.path.join(RD, 'MODE%s_WINNERS.md' % mode)
+    open(out, 'w').write(txt)
+    print('  MODE%s_WINNERS.md: %d lines -> %s'
+          % (mode, len(txt.splitlines()), os.path.relpath(out, _R)), flush=True)
+    return out
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'universe')
     md = G.opt('--mode', str, 'A')
@@ -1026,6 +1367,12 @@ if __name__ == '__main__':
         stage_floors(md)
     elif st == 'sweep':
         stage_sweep(md, npts=G.opt('--sweep-points', int, 60))
+    elif st == 'md':
+        write_md(md)
+    elif st == 'prop':
+        stage_prop(md)
+    elif st == 'top30':
+        stage_top30(md)
     elif st == 'winbook':
         stage_winbook(md, G.opt('--tag', str, 'full'), jobs=G.opt('--jobs', int, 4),
                       nshard=G.opt('--nshard', int, 16))
