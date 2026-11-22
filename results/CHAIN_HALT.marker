@@ -1,8 +1,8 @@
-CHAIN HALTED at stage "chain:l2r2w.sh"
-2026-11-20 10:30:54
+CHAIN HALTED at stage "chain:l2r2y.sh"
+2026-11-21 20:44:21
 
 THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:
-  - the FIRST stage is "pb bank chk"; every chain must begin with a one-minute end-to-end test of its own save and read path
+  - declared disk need 7.7 GB + 2.0 GB headroom = 9.7 GB, but only 5.3 GB is free
 
 Declare one line per stage at the top of the driver:
     # ckpt <stage name> = <seconds, max 300>   <why>
