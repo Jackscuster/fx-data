@@ -38,7 +38,45 @@ import glob, hashlib, shutil, time
 import numpy as np
 
 DIR = os.path.join(ROOTOUT, 'gate2_cache')
-BUDGET_GB = 10.0
+
+# THE BUDGET IS A SHARE OF THE FREE SPACE, MEASURED AT IMPORT, NOT A CONSTANT
+# (Jack, 22 Nov). A fixed 10 GB budget is a promise about a disk, and on
+# 22 Nov the disk could not keep it: the volume had ~6 GB free when the _r2dd
+# tune launched and 1 GB by the time it was stopped, because the cache grows
+# toward its budget and only evicts when it EXCEEDS it. A budget larger than
+# the free space can never be exceeded, so eviction never fires and the cache
+# fills the volume instead. 25% of free space leaves room for the banks the
+# tune is simultaneously writing, and is measured at launch so the figure
+# follows the disk rather than an assumption about it.
+#
+# FLOORED AND CAPPED. Below ~0.5 GB a cache is not worth having and the floor
+# stops a nearly-full disk disabling it by arithmetic; the 10 GB cap keeps the
+# old behaviour on a roomy volume, because nothing is gained by letting it
+# sprawl further.
+BUDGET_MIN_GB = 0.5
+BUDGET_MAX_GB = 10.0
+BUDGET_SHARE_OF_FREE = 0.25
+
+
+def _free_gb(path=None):
+    try:
+        st = os.statvfs(path or ROOTOUT)
+        return st.f_bavail * st.f_frsize / 1024 ** 3
+    except Exception:
+        return float('nan')
+
+
+def budget_gb_now():
+    """25% of free space, floored and capped. NaN free space falls back to the
+    floor rather than to the old constant: if the disk cannot be measured, the
+    safe assumption is that it is small."""
+    f = _free_gb()
+    if not (f == f):                                  # NaN
+        return BUDGET_MIN_GB
+    return max(BUDGET_MIN_GB, min(BUDGET_MAX_GB, f * BUDGET_SHARE_OF_FREE))
+
+
+BUDGET_GB = budget_gb_now()
 # A SIZE CHECK IS NOT CHEAP. size_bytes() walks every file in the store, which
 # at ~300k entries measures 24 SECONDS. Calling it every 400 writes per worker
 # put seven workers into a state where they spent essentially all of their time
@@ -122,7 +160,10 @@ def evict(budget_gb=None):
     """LRU by mtime, down to 90% of budget. Approximate on purpose: an exact
     global LRU across eight processes would need a lock on every read, which
     would cost more than the evictions save."""
-    budget = (budget_gb or BUDGET_GB) * 1024 ** 3
+    # RE-MEASURED ON EVERY EVICTION. A tune runs for a day; the free space it
+    # started with is not the free space it has now, and the whole point of a
+    # proportional budget is that it tracks the disk.
+    budget = (budget_gb or budget_gb_now()) * 1024 ** 3
     tot = size_bytes()
     if tot <= budget:
         return 0
