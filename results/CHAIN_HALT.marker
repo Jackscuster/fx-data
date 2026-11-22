@@ -1,8 +1,8 @@
-CHAIN HALTED at stage "chain:l2r2y.sh"
-2026-11-21 20:44:21
+CHAIN HALTED at stage "chain:l2r2y2.sh"
+2026-11-22 09:54:46
 
 THE FIVE-MINUTE RULE (HANDOFF section 3). This chain may not launch:
-  - declared disk need 7.7 GB + 2.0 GB headroom = 9.7 GB, but only 5.3 GB is free
+  - declared disk need 3.8 GB + 2.0 GB headroom = 5.8 GB, but only 5.7 GB is free
 
 Declare one line per stage at the top of the driver:
     # ckpt <stage name> = <seconds, max 300>   <why>
