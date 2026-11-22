@@ -383,6 +383,15 @@ class Years:
             self.dayi[p] = np.array([pos.get(v, -1) for v in d.tolist()], np.int64)
         dy = pd.DatetimeIndex(self.days).year.values.astype(np.int64) - YEAR0
         self.dayyear = dy
+        # A TUNE WINDOW IS A CONTIGUOUS SLICE, because the day axis is sorted
+        # and the window is a run of whole calendar years. Precomputed once so
+        # the inner loop never builds a mask.
+        self.winslice = {}
+        for _s in steps():
+            _y0, _y1 = _s['tune']
+            _m = np.flatnonzero((dy >= _y0 - YEAR0) & (dy <= _y1 - YEAR0))
+            self.winslice[(_y0, _y1)] = ((int(_m[0]), int(_m[-1]) + 1) if len(_m)
+                                         else (0, 0))
 
     def score(self, combo, ip, risk, mode, sname, code, plan, want_dd=False):
         """-> (2, NYEAR, NSTAT) float64: routed, always-on.
@@ -457,6 +466,42 @@ def role_sum(acc, y0, y1):
     """Sum the per-year record over calendar years [y0, y1]. float64."""
     a, b = y0 - YEAR0, y1 - YEAR0 + 1
     return acc[..., max(a, 0):min(b, NYEAR), :].sum(axis=-2, dtype=np.float64)
+
+
+@njit(cache=False)
+def _dd_slice(x, lo, hi):
+    """Max drawdown of cumsum(x[lo:hi]), no allocation."""
+    # PEAK STARTS AT THE FIRST POINT, NOT AT ZERO. np.maximum.accumulate --
+    # which l2tune and l2walkfwd both use -- makes eq[0] the first peak, so a
+    # curve that opens by falling has no drawdown until it recovers above its
+    # own first point. Starting the peak at 0.0 instead counted that opening
+    # fall and disagreed with the reference by 9.38 R on the first check.
+    peak = -1.7976931348623157e308
+    eq = 0.0
+    dd = 0.0
+    for i in range(lo, hi):
+        eq += x[i]
+        if eq > peak:
+            peak = eq
+        d = peak - eq
+        if d > dd:
+            dd = d
+    return dd
+
+
+def role_dd_fast(accd, lo, hi):
+    """role_dd over a PRECOMPUTED contiguous slice, for the inner loop.
+
+    WHY THIS EXISTS. role_dd below builds a boolean mask over ~2,600 days and
+    takes a cumsum, and the tuner calls it once per (configuration, step,
+    stream) -- 727 x 5 x 2 = 7,270 times per strategy. Measured on condition 2
+    that cost 7.28 s per strategy, which over 273,780 strategies is ~69 h
+    against ~20 h for the pick itself. The day axis is sorted, so a tune
+    window is a CONTIGUOUS slice and needs no mask at all; the drawdown is
+    then one allocation-free pass. role_dd is kept as the readable reference
+    and condition 1b asserts the two agree exactly.
+    """
+    return np.array([_dd_slice(accd[0], lo, hi), _dd_slice(accd[1], lo, hi)])
 
 
 def role_dd(accd, dayyear, y0, y1):
@@ -618,7 +663,8 @@ def tune_one_strategy(Y, mode, combo, state=None, on_tick=None, tick_every=None)
                     # per-day increments netted across all 28 pairs, cut to
                     # the tune years so no unseen year can move the pick.
                     tot = float(blk[1])
-                    dd = float(role_dd(accd, Y.dayyear, *sp['tune'])[rt])
+                    _lo, _hi = Y.winslice[tuple(sp['tune'])]
+                    dd = float(role_dd_fast(accd, _lo, _hi)[rt])
                     if not np.isfinite(dd) or dd <= 0.0:
                         # a tune block with no drawdown does not win by
                         # division; it ranks by total R and only if positive
@@ -995,7 +1041,8 @@ def per_step_reference(Y, mode, combo):
                         continue
                     if OBJECTIVE == 'r2dd':
                         tot = float(blk[1])
-                        dd = float(role_dd(accd, Y.dayyear, *s['tune'])[rt])
+                        _lo, _hi = Y.winslice[tuple(s['tune'])]
+                        dd = float(role_dd_fast(accd, _lo, _hi)[rt])
                         sc_ = (tot / dd if (np.isfinite(dd) and dd > 0)
                                else ((1e9 + tot) if tot > 0 else -np.inf))
                         if sc_ > best[rt] + 1e-12 or (abs(sc_ - best[rt]) <= 1e-12
@@ -1083,6 +1130,7 @@ def stage_cond1b(mode='A', n=8, nconf=12):
     rows = []
     worst_acc = 0.0
     worst_sum = 0.0
+    worst_dd = 0.0
     for cb in combos:
         for sl, (sname, plan, code) in enumerate(S.SLICES):
             cfg = axial(mode, tuple(cb), sname)
@@ -1097,6 +1145,10 @@ def stage_cond1b(mode='A', n=8, nconf=12):
                     blk = role_sum(a2, *sp['tune'])
                     y0, y1 = sp['tune']
                     m = (Y.dayyear >= y0 - YEAR0) & (Y.dayyear <= y1 - YEAR0)
+                    ref = role_dd(accd, Y.dayyear, y0, y1)
+                    lo, hi = Y.winslice[(y0, y1)]
+                    fast = role_dd_fast(accd, lo, hi)
+                    worst_dd = max(worst_dd, float(np.abs(ref - fast).max()))
                     for rt in (0, 1):
                         ds = float(accd[rt][m].sum())
                         tt = float(blk[rt][1])
@@ -1107,15 +1159,18 @@ def stage_cond1b(mode='A', n=8, nconf=12):
     out = os.path.join(ROOTOUT, 'r2gate2_cond1b_mode%s.csv' % mode)
     D.to_csv(out, index=False)
     print('  CONDITION 1b: %d (strategy, slice, config) pairs scored both ways; '
-          'worst |acc diff| %.3g, worst |day-vector sum - role total R| %.3g -> %s'
-          % (len(D), worst_acc, worst_sum, os.path.basename(out)), flush=True)
+          'worst |acc diff| %.3g, worst |day-vector sum - role total R| %.3g, '
+          'worst |role_dd - role_dd_fast| %.3g -> %s'
+          % (len(D), worst_acc, worst_sum, worst_dd, os.path.basename(out)), flush=True)
     assert worst_acc == 0.0, ('CONDITION 1b FAILED: the DD accumulator returns a '
                               'different per-year record, worst |diff| %.6g' % worst_acc)
     assert worst_sum < 1e-9, ('CONDITION 1b FAILED: the per-day vector does not sum to '
                               'the role total R, worst |diff| %.6g -- an increment was '
                               'dropped or double counted' % worst_sum)
-    print('  condition 1b PASSED: the copy is identical and the day vector is complete',
-          flush=True)
+    assert worst_dd < 1e-12, ('CONDITION 1b FAILED: the fast drawdown disagrees with '
+                              'the reference by %.6g' % worst_dd)
+    print('  condition 1b PASSED: the copy is identical, the day vector is complete, '
+          'and the fast drawdown matches the reference', flush=True)
     return D
 
 
@@ -1313,6 +1368,12 @@ if __name__ == '__main__':
         else:
             combos = G.stratified(opts, n)
             print('  stratified %d of %s mode %s strategies' % (len(combos), f'{total:,}', mode), flush=True)
+        # THE SUFFIX IS APPLIED HERE, NOT LEFT TO THE CALLER. A --tag full under
+        # the r2dd objective would otherwise write a differently-tuned bank over
+        # the shipped one, and the two are not interchangeable: same filenames,
+        # different objective, no way to tell them apart afterwards.
+        tag = bank_tag(tag)
+        print('  bank tag: %s (objective %s)' % (tag, OBJECTIVE), flush=True)
         outdir, res = run(mode, combos, tag, jobs=jobs, cap=G.opt('--cap', int, 900),
                           nshard=G.opt('--nshard', int, None))
         sz = sum(os.path.getsize(x) for x in glob.glob(os.path.join(outdir, 'shard_*_part*.npz')))
