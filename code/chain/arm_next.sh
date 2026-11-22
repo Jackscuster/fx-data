@@ -37,6 +37,20 @@ LOG="$L/arm_next.log"
 
 say(){ echo "$(date '+%F %T') arm_next: $*" | tee -a "$LOG"; }
 
+# AN EXIT MUST LEAVE A LINE. On 21 Nov this process logged "marker seen" at
+# 18:53:38 and then vanished -- no refusal, no launch, no error -- and the
+# machine sat idle for an hour with a clean tree and a chain that would have
+# passed its guard. Whatever killed it, the absence of any line made it
+# undiagnosable. This trap guarantees the last thing in the log is why.
+on_exit(){
+  local rc=$?
+  if [ "$rc" != 0 ] || [ "${ARM_LAUNCHED:-0}" != 1 ]; then
+    echo "$(date '+%F %T') arm_next: EXITING rc=$rc at line ${BASH_LINENO[0]:-?} (launched=${ARM_LAUNCHED:-0})" >> "$LOG"
+  fi
+}
+trap on_exit EXIT
+trap 'echo "$(date '"'"'+%F %T'"'"') arm_next: KILLED by a signal" >> "$LOG"; exit 143' TERM HUP INT
+
 push(){
   [ -f "$L/ntfy_topic" ] || return 0
   printf '%s' "$2" | curl -s -o /dev/null -w '' --max-time 20 \
@@ -86,7 +100,7 @@ while :; do
 done
 
 cd "$R"
-DIRTY=$(git status --porcelain | head -3)
+DIRTY=$(git status --porcelain 2>/dev/null | head -3 || true)
 if [ -n "$DIRTY" ]; then
   say "REFUSING: the tree is dirty, so the snapshot would not match a commit"
   push "fx-data: next chain NOT launched, dirty tree" \
@@ -102,6 +116,7 @@ else
   bash code/chain/launch.sh "$DRIVER" >> "$LOG" 2>&1
 fi
 RC=$?
+ARM_LAUNCHED=1
 say "launch.sh exited $RC"
 if [ "$RC" != 0 ]; then
   push "fx-data: next chain FAILED to launch" "$DRIVER did not launch; launch.sh exited $RC. See $LOG."
