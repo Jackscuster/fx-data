@@ -1,6 +1,6 @@
 # MODE A — THE PASSERS' BOOKS, THREE MEMBERSHIP RULES
 
-Generated 2026-11-20 10:51 by `code/l2r2gate3.py`. **No new tuning anywhere**: every configuration was already chosen by gate 2, and a rule only decides which of them are members. Equal weight, no picking, no weighting by past record. Sized on the build years and not touched again; the traded year is what is reported.
+Generated 2026-11-21 21:05 by `code/l2r2gate3.py`. **No new tuning anywhere**: every configuration was already chosen by gate 2, and a rule only decides which of them are members. Equal weight, no picking, no weighting by past record. Sized on the build years and not touched again; the traded year is what is reported.
 
 
 ## The rules, and how many pass
@@ -128,6 +128,37 @@ Per year:
 | 2015-2018 | allon | team2 | 877 | 1.616 | DIP95 | -4.31 | 6.561 | 11.21 | 0.8741 | -0.9622 | -0.6569 | 51.34 | -0.2323 | 1 |
 | 2015-2018 | chop_trend | team1 | 1,322 | 1.01 | DIP95 | 0.02627 | 3.011 | 4.332 | 1.002 | 0.0135 | 0.008727 | 49.04 | 0.004368 | 1 |
 | 2015-2018 | chop_trend | team2 | 1,322 | 1.514 | DIP95 | 0.03941 | 4.516 | 6.497 | 1.002 | 0.0135 | 0.008727 | 49.04 | 0.004368 | 1 |
+
+
+### Against a RANDOM pick of the same size
+
+Sizes matched per (step, stream), drawn from the strategies that have a banked winner for that cell -- the same population the rule chose from.
+
+| step | book | budget | real | random_mean | random_min | random_max | draws | real_beats_random_mean |
+|---|---|---|---|---|---|---|---|---|
+| 2011-2014 | allon | team1 | 2.939 | 0.8391 | 0.5233 | 1.204 | 5 | 1 |
+| 2011-2014 | allon | team2 | 4.409 | 1.259 | 0.7849 | 1.806 | 5 | 1 |
+| 2011-2014 | chop_trend | team1 | -1.034 | -0.9874 | -1.334 | -0.4798 | 5 | 0 |
+| 2011-2014 | chop_trend | team2 | -1.552 | -1.481 | -2.001 | -0.7198 | 5 | 0 |
+| 2012-2015 | allon | team1 | 0.03109 | -0.9239 | -1.217 | -0.5785 | 5 | 1 |
+| 2012-2015 | allon | team2 | 0.04663 | -1.386 | -1.826 | -0.8678 | 5 | 1 |
+| 2012-2015 | chop_trend | team1 | -2.38 | -1.299 | -1.632 | -1.068 | 5 | 0 |
+| 2012-2015 | chop_trend | team2 | -3.57 | -1.948 | -2.449 | -1.601 | 5 | 0 |
+| 2013-2016 | allon | team1 | 3.432 | -0.3043 | -0.7646 | -0.115 | 5 | 1 |
+| 2013-2016 | allon | team2 | 5.148 | -0.4564 | -1.147 | -0.1726 | 5 | 1 |
+| 2013-2016 | chop_trend | team1 | -1.055 | 0.4982 | 0.1919 | 0.8333 | 5 | 0 |
+| 2013-2016 | chop_trend | team2 | -1.582 | 0.7473 | 0.2879 | 1.25 | 5 | 0 |
+| 2014-2017 | allon | team1 | -3.043 | -2.592 | -2.788 | -2.215 | 5 | 0 |
+| 2014-2017 | allon | team2 | -4.565 | -3.888 | -4.183 | -3.323 | 5 | 0 |
+| 2014-2017 | chop_trend | team1 | -2.902 | -1.979 | -2.507 | -1.449 | 5 | 0 |
+| 2014-2017 | chop_trend | team2 | -4.353 | -2.968 | -3.76 | -2.174 | 5 | 0 |
+| 2015-2018 | allon | team1 | -2.873 | -1.044 | -1.474 | -0.443 | 5 | 0 |
+| 2015-2018 | allon | team2 | -4.31 | -1.566 | -2.211 | -0.6645 | 5 | 0 |
+| 2015-2018 | chop_trend | team1 | 0.02627 | -0.8096 | -1.755 | -0.09746 | 5 | 1 |
+| 2015-2018 | chop_trend | team2 | 0.03941 | -1.214 | -2.633 | -0.1462 | 5 | 1 |
+
+
+The real book beats the random pick's mean in **8 of 20** (step, book, budget) cells.
 
 
 ### Its three nulls
@@ -647,14 +678,15 @@ All 1,211 rows are in `results/r2gate2/modeA_gate3_members_fiveyr.csv`. The firs
 
 | file | rows | md5 |
 |---|---|---|
-| `results/r2gate2/modeA_gate3_passersbook.csv` | 20 | 913e3f4f358a |
+| `results/r2gate2/modeA_gate3_passersbook.csv` | 20 | 68cecaa61ede |
 | `results/r2gate2/modeA_gate3_passersbook_nulls.csv` | 60 | 6131572191d2 |
+| `results/r2gate2/modeA_gate3_randompick.csv` | 100 | f0159435ea69 |
 | `results/r2gate2/modeA_gate3_members.csv` | 59,268 | 8339720b134a |
-| `results/r2gate2/modeA_gate3_passersbook_strict.csv` | 16 | 2e8a1a18e674 |
+| `results/r2gate2/modeA_gate3_passersbook_strict.csv` | 16 | 9f2ab7429fcf |
 | `results/r2gate2/modeA_gate3_passersbook_strict_nulls.csv` | 48 | 0957b45fb14e |
 | `results/r2gate2/modeA_gate3_randompick_strict.csv` | 80 | a7d6b5124749 |
 | `results/r2gate2/modeA_gate3_members_strict.csv` | 473 | 4cfc48f800b2 |
-| `results/r2gate2/modeA_gate3_passersbook_fiveyr.csv` | 20 | 53d38d4b5747 |
+| `results/r2gate2/modeA_gate3_passersbook_fiveyr.csv` | 20 | 30b863f395d1 |
 | `results/r2gate2/modeA_gate3_passersbook_fiveyr_nulls.csv` | 60 | 2695dfa81ceb |
 | `results/r2gate2/modeA_gate3_randompick_fiveyr.csv` | 100 | 499e85dfb072 |
 | `results/r2gate2/modeA_gate3_members_fiveyr.csv` | 1,211 | b44ed6814d39 |
