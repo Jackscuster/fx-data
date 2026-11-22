@@ -58,6 +58,72 @@ NSTAT = 5                          # n, sum_r, gain, loss, n_win
 STREAMS = ('trend-routed', 'trend-allon', 'chop-routed', 'chop-allon')
 NSTEP = 5
 MIN_TUNE_TRADES = S.MIN_TRADES_PICK   # 100, l2tune's own rule
+
+# ==========================================================================
+# THE OBJECTIVE, AND THE WIDENED GRID (Jack, 20-21 Nov)
+# ==========================================================================
+# DRIVEN BY AN ENVIRONMENT VARIABLE, NOT AN ARGUMENT, and that is deliberate:
+# macOS multiprocessing SPAWNS, so a pool worker re-imports this module and
+# gets its MODULE GLOBALS fresh. An objective threaded as a function argument
+# would be correct in the parent and default in every child -- which is fault
+# "A POOL WORKER MUST PROVE IT LOADED THE PARENT'S FIELD" from 11 Sep, in a
+# new place. An env var is inherited by the fork/spawn, so parent and children
+# cannot disagree.
+#
+#   FX_G2_OBJECTIVE=expectancy   trade-weighted expectancy, PF tiebreak.
+#                                The shipped objective; both banks on disk
+#                                were tuned with it and it is the default.
+#   FX_G2_OBJECTIVE=r2dd         total R / max DD R on the step's four tune
+#                                years, MIN_TUNE_TRADES enforced, tiebreak on
+#                                total R. Sortino and expectancy are recorded
+#                                in the winner's per-year block exactly as
+#                                before and are NEVER read while picking.
+#
+# THE WIDENED GRID RIDES WITH r2dd, because the point of the wider stop and
+# target range is to let a drawdown objective find a shape the expectancy
+# objective had no reason to look for. Widening it for the expectancy tune
+# would invalidate both banks on disk for no gain.
+OBJECTIVE = os.environ.get('FX_G2_OBJECTIVE', 'expectancy').strip().lower()
+assert OBJECTIVE in ('expectancy', 'r2dd'), \
+    'FX_G2_OBJECTIVE must be expectancy or r2dd, got %r' % OBJECTIVE
+
+# Jack, 20 Nov: "widen the stop grid to 0.5-3.0 ATR and the target grid to
+# 0.5-5.0 ATR at the same step sizes; keep every other grid." The stop grid
+# has TWO step sizes -- 0.05 coarse plus a 0.01 fine band at 1.26-1.50 -- so
+# "the same step sizes" keeps the fine band where it is and extends the coarse
+# one over the new range. Recorded in HANDOFF 0l-NOW.
+WIDE_STOP = (0.50, 3.00, 0.05)
+WIDE_TP = (0.50, 5.00, 0.05)
+
+
+def widen_grids():
+    """Point l2tune's risk knobs at the wider stop and target ranges."""
+    stop = sorted(set([round(v, 4) for v in T._rng(*WIDE_STOP)]
+                      + [round(v, 4) for v in T._rng(1.26, 1.50, 0.01)]))
+    tp = sorted(set(round(v, 4) for v in T._rng(*WIDE_TP)))
+    T.GRID_STOP = stop
+    T.GRID_TP = tp
+    T.RISK_KNOBS_TREND = (('atr_len', T.GRID_ATR), ('atr_mult', stop),
+                          ('tp_mult', tp), ('be_pct', T.GRID_BE),
+                          ('trail_arm', T.GRID_ARM), ('trail_mult', T.GRID_TRAIL))
+    T.RISK_KNOBS_CHOP = (('atr_len', T.GRID_ATR), ('atr_mult', stop),
+                         ('tp_mult', tp))
+    return stop, tp
+
+
+if OBJECTIVE == 'r2dd':
+    _ws, _wtp = widen_grids()
+    print('  OBJECTIVE r2dd: total R / max DD R, min %d tune trades; stop grid %d values '
+          '%.2f-%.2f, target grid %d values %.2f-%.2f'
+          % (MIN_TUNE_TRADES, len(_ws), min(_ws), max(_ws), len(_wtp), min(_wtp),
+             max(_wtp)), flush=True)
+
+
+def bank_tag(tag):
+    """The r2dd bank never shares a name with the expectancy bank."""
+    if OBJECTIVE == 'r2dd' and not str(tag).endswith('_r2dd'):
+        return '%s_r2dd' % tag
+    return tag
 # The shared disk series cache's budget FOR THIS STAGE. l2cache's own default is
 # 10 GB, which is more than this volume can spare beside a 1.4 GB bank; mode A's
 # axial set needs ~1.2 GB so 4 GB does not bind, and mode C can be raised when
@@ -530,7 +596,11 @@ def tune_one_strategy(Y, mode, combo, state=None, on_tick=None, tick_every=None)
         sl, ci = jobs[st['pos']]
         sname, plan, code = slices[sl]
         _tagname, ip, risk = cfgs[sname][ci]
-        acc = Y.score(combo, ip, risk, mode, sname, code, plan)   # (2, NYEAR, NSTAT)
+        if OBJECTIVE == 'r2dd':
+            acc, accd = Y.score(combo, ip, risk, mode, sname, code, plan, want_dd=True)
+        else:
+            acc = Y.score(combo, ip, risk, mode, sname, code, plan)  # (2, NYEAR, NSTAT)
+            accd = None
         for rt in (0, 1):                      # 0 routed, 1 always-on
             stream = 2 * sl + rt               # 0 t-routed 1 t-allon 2 c-routed 3 c-allon
             a = acc[rt]
@@ -541,6 +611,30 @@ def tune_one_strategy(Y, mode, combo, state=None, on_tick=None, tick_every=None)
                 blk = role_sum(a, *sp['tune'])
                 n, e, pf = objective(blk)
                 if n < MIN_TUNE_TRADES:
+                    continue
+                if OBJECTIVE == 'r2dd':
+                    # SCORE = total R / max DD R on THIS step's tune years.
+                    # The drawdown is the real chronological one, from the
+                    # per-day increments netted across all 28 pairs, cut to
+                    # the tune years so no unseen year can move the pick.
+                    tot = float(blk[1])
+                    dd = float(role_dd(accd, Y.dayyear, *sp['tune'])[rt])
+                    if not np.isfinite(dd) or dd <= 0.0:
+                        # a tune block with no drawdown does not win by
+                        # division; it ranks by total R and only if positive
+                        sc_ = (1e9 + tot) if tot > 0 else -np.inf
+                    else:
+                        sc_ = tot / dd
+                    # TIEBREAK ON TOTAL R, never on expectancy: expectancy is
+                    # reported beside this objective and a tiebreak is a use.
+                    better = (sc_ > bestscore[stream, si] + 1e-12
+                              or (abs(sc_ - bestscore[stream, si]) <= 1e-12
+                                  and tot > bestpf[stream, si]))
+                    if better:
+                        bestscore[stream, si] = sc_
+                        bestpf[stream, si] = tot
+                        tag[stream, si] = ci
+                        win[stream, si] = a
                     continue
                 if e > bestscore[stream, si] + 1e-12 or (
                         abs(e - bestscore[stream, si]) <= 1e-12 and pf > bestpf[stream, si]):
@@ -887,12 +981,28 @@ def per_step_reference(Y, mode, combo):
             cfg = axial(mode, combo, sname)
             best = np.full(2, -np.inf); bpf = np.full(2, -np.inf)
             for ci, (_t, ip, risk) in enumerate(cfg):
-                acc = Y.score(combo, ip, risk, mode, sname, code, plan)
+                if OBJECTIVE == 'r2dd':
+                    acc, accd = Y.score(combo, ip, risk, mode, sname, code, plan,
+                                        want_dd=True)
+                else:
+                    acc = Y.score(combo, ip, risk, mode, sname, code, plan)
+                    accd = None
                 for rt in (0, 1):
                     stream = 2 * sl + rt
                     blk = role_sum(acc[rt], *s['tune'])
                     n, e, pf = objective(blk)
                     if n < MIN_TUNE_TRADES:
+                        continue
+                    if OBJECTIVE == 'r2dd':
+                        tot = float(blk[1])
+                        dd = float(role_dd(accd, Y.dayyear, *s['tune'])[rt])
+                        sc_ = (tot / dd if (np.isfinite(dd) and dd > 0)
+                               else ((1e9 + tot) if tot > 0 else -np.inf))
+                        if sc_ > best[rt] + 1e-12 or (abs(sc_ - best[rt]) <= 1e-12
+                                                      and tot > bpf[rt]):
+                            best[rt] = sc_; bpf[rt] = tot
+                            tag[stream, si] = ci
+                            win[stream, si] = acc[rt]
                         continue
                     if e > best[rt] + 1e-12 or (abs(e - best[rt]) <= 1e-12 and pf > bpf[rt]):
                         best[rt] = e; bpf[rt] = pf
@@ -948,6 +1058,64 @@ def stage_cond2(mode, n, out=None, max_minutes=120):
     print('  subset coverage: %s options per slot; streams %s'
           % (cov, sorted(D.stream.unique())), flush=True)
     assert nb == 0 and nr == 0, 'CONDITION 2 FAILED: %d pick and %d record mismatches' % (nb, nr)
+    return D
+
+
+def stage_cond1b(mode='A', n=8, nconf=12):
+    """CONDITION 1b: the DD-carrying accumulator has not drifted from the
+    shipped one.
+
+    _year_marks_dd is a COPY of _year_marks with a per-day vector added. A copy
+    can drift, and if it drifts the r2dd bank is tuned on numbers that no other
+    stage would reproduce. So on the same strategies and the same
+    configurations both are run and their `acc` must be IDENTICAL -- not close,
+    identical, because the added code does not touch any term of it.
+
+    It also checks the drawdown is a real one: the per-day vector summed over a
+    role's years must equal that role's total R from `acc`, which is only true
+    if every increment landed on exactly one day and none was dropped.
+    """
+    G.manifest_check()
+    S.load_costs()
+    opts = S.mode_opts(S.slot_options(), mode)
+    combos = G.stratified(opts, n)
+    Y = Years()
+    rows = []
+    worst_acc = 0.0
+    worst_sum = 0.0
+    for cb in combos:
+        for sl, (sname, plan, code) in enumerate(S.SLICES):
+            cfg = axial(mode, tuple(cb), sname)
+            for ci, (_t, ip, risk) in enumerate(cfg[:nconf]):
+                a1 = Y.score(tuple(cb), ip, risk, mode, sname, code, plan)
+                a2, accd = Y.score(tuple(cb), ip, risk, mode, sname, code, plan,
+                                   want_dd=True)
+                da = float(np.abs(a1 - a2).max())
+                worst_acc = max(worst_acc, da)
+                # the day vector must reproduce each role's total R
+                for sp in steps():
+                    blk = role_sum(a2, *sp['tune'])
+                    y0, y1 = sp['tune']
+                    m = (Y.dayyear >= y0 - YEAR0) & (Y.dayyear <= y1 - YEAR0)
+                    for rt in (0, 1):
+                        ds = float(accd[rt][m].sum())
+                        tt = float(blk[rt][1])
+                        worst_sum = max(worst_sum, abs(ds - tt))
+                rows.append(dict(combo='|'.join(cb), slice=sname, config=ci,
+                                 max_abs_acc_diff=da))
+    D = pd.DataFrame(rows)
+    out = os.path.join(ROOTOUT, 'r2gate2_cond1b_mode%s.csv' % mode)
+    D.to_csv(out, index=False)
+    print('  CONDITION 1b: %d (strategy, slice, config) pairs scored both ways; '
+          'worst |acc diff| %.3g, worst |day-vector sum - role total R| %.3g -> %s'
+          % (len(D), worst_acc, worst_sum, os.path.basename(out)), flush=True)
+    assert worst_acc == 0.0, ('CONDITION 1b FAILED: the DD accumulator returns a '
+                              'different per-year record, worst |diff| %.6g' % worst_acc)
+    assert worst_sum < 1e-9, ('CONDITION 1b FAILED: the per-day vector does not sum to '
+                              'the role total R, worst |diff| %.6g -- an increment was '
+                              'dropped or double counted' % worst_sum)
+    print('  condition 1b PASSED: the copy is identical and the day vector is complete',
+          flush=True)
     return D
 
 
@@ -1126,6 +1294,9 @@ if __name__ == '__main__':
         stage_fill(mode, G.opt('--tag', str, 'full'), jobs=G.opt('--jobs', int, 6),
                    cap=G.opt('--cap', int, 30000),
                    wait_for_free=G.opt('--wait-free', int, 0))
+    elif stage == 'cond1b':
+        stage_cond1b(G.opt('--mode', str, 'A'), n=G.opt('--n', int, 8),
+                     nconf=G.opt('--nconf', int, 12))
     elif stage == 'cond1':
         stage_cond1(mode, n=G.opt('--n', int, 40))
     elif stage == 'cond2':
