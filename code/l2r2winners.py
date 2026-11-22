@@ -1309,6 +1309,52 @@ def write_md(mode='A', out=None):
         A(tbl(NB, ['null', 'scope', 'step', 'book', 'budget', 'members', 'real',
                    'n_draws', 'null_mean', 'null_p95', 'p_one_sided']))
 
+    A('\n## 6b. Pair routing — a STANDING test\n')
+    A('Jack, 22 Nov: *"Pair routing is a standing test, not a one-off: every mode, '
+      'every re-tune, every winners pipeline from now on reports the pair-routing '
+      'sweep."* Chosen on tuning years, traded on unseen years, against a random-pair '
+      'null of the same size.\n')
+    PR = os.path.join(RD, 'mode%s_winners_pairrouted.csv' % mode)
+    if os.path.exists(PR) and os.path.getsize(PR) > 1:
+        R = pd.read_csv(PR)
+        base = float(R[R.rule == 'all28'].return_per_dd.mean())
+        tk = R[R.rule == 'topk'].groupby('K').return_per_dd.mean()
+        nl = R[R.rule == 'random_null'].groupby('K').return_per_dd.mean()
+        rows = []
+        for K in tk.index:
+            rows.append(dict(rule='topk', K=int(K), real_return_per_dd=float(tk[K]),
+                             random_null=float(nl.get(K, np.nan)),
+                             real_beats_null=int(tk[K] > nl.get(K, np.inf)),
+                             prop_return_pct=float(tk[K]) * PROP_DIP / 5.0,
+                             clears_12pct=int(float(tk[K]) * PROP_DIP / 5.0
+                                              >= PROP_TARGET)))
+        for rl in ('threshold', 'topk_dir', 'threshold_dir'):
+            g = R[R.rule == rl]
+            if len(g):
+                v = float(g.return_per_dd.mean())
+                rows.append(dict(rule=rl, K=np.nan, real_return_per_dd=v,
+                                 random_null=np.nan, real_beats_null=np.nan,
+                                 prop_return_pct=v * PROP_DIP / 5.0,
+                                 clears_12pct=int(v * PROP_DIP / 5.0 >= PROP_TARGET)))
+        T_ = pd.DataFrame(rows)
+        A(G3x.BK_tbl(T_, ['rule', 'K', 'real_return_per_dd', 'random_null',
+                          'real_beats_null', 'prop_return_pct', 'clears_12pct']))
+        nb = int(T_.real_beats_null.fillna(0).sum())
+        A('\nAll-28 baseline return/DD **%.3f** (prop return %.2f%%). The real rule '
+          'beats the random-pair null at **%d of %d** values of K, and **%d** rows '
+          'clear %.0f%% at prop sizing.\n'
+          % (base, base * PROP_DIP / 5.0, nb, int(T_.K.notna().sum()),
+             int(T_.clears_12pct.sum()), PROP_TARGET))
+        A('\n**The drawdown basis in this section sums per (pair, direction, year) '
+          'drawdowns** and is a looser bound than the strategy-level figure used '
+          'elsewhere in this document, so its level is not comparable to section 4 and '
+          'its prop return is a floor. Real and null share the basis, so the comparison '
+          'within the section is sound. Full detail in `%s` and `WINNERS_BY_PAIR.md`.\n'
+          % os.path.relpath(PR, _R))
+    else:
+        A('_No pair-routing sweep on disk for mode %s yet; run '
+          '`code/l2r2pairs.py --stage winners` then `--stage routed`._\n' % mode)
+
     A('\n## 7. Overlay curves\n')
     OV, ovf = rd('overlay_curves_winners')
     if len(OV):

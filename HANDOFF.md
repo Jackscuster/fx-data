@@ -465,6 +465,25 @@
       `modeA_winners_floor_ladder.csv`: 8 winners on the max-of-273,780 line
       Jack specified, 6 on Bonferroni, 5 per strategy x stream cell.
 
+   **STANDING STAGES — every mode, every re-tune, every winners pipeline.**
+   Jack, 22 Nov: *"Pair routing is a standing test, not a one-off."* These are
+   not optional sections; a report without them is incomplete:
+
+   | standing stage | what it must report | code |
+   |---|---|---|
+   | PAIR ROUTING | the sweep K=1..28 and the threshold rule, chosen on tuning years and traded on unseen years, against a random-pair null of the same size, on the FULL FIELD and on the winners | `code/l2r2pairs.py` |
+   | PROP RETURN | yearly return at a 3.6% worst dip, and the count clearing 12% a year | `code/l2r2winners.py` |
+   | TOP 30 | by t-statistic, by return/drawdown, and by prop return | `code/l2r2winners.py` |
+
+   The first result, on the 10 non-luck winners only, is that pair routing is
+   **no better than a random pair pick** — the real rule beats the null at 1 of
+   28 values of K in mode A and 7 of 28 in mode B. That is a 10-strategy
+   sample and it does NOT settle the question for 273,780, which is why the
+   full-field sweep is a standing stage rather than a closed finding.
+   Note its drawdown basis sums per (pair, direction, year) drawdowns and is a
+   looser bound than the strategy-level figure; the level is not comparable
+   across the two and the prop return from it is a floor.
+
    **KEEP THIS ENTRY CURRENT.** It is the first thing a new session reads about
    Layer 2, and on 21 Nov it was four days stale — 0l still said "complete"
    while two full gates had been run since. Any chain that writes a new

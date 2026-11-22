@@ -1,6 +1,6 @@
 # MODE A — WINNERS, NO GATES
 
-Generated 2026-11-21 22:19 by `code/l2r2winners.py`, read-only off the gate 2 bank and the gate 3 scoring. **Nothing is filtered before it is measured**: all 273,780 strategies are recorded on both unseen records, and the only cut is the LUCK FLOOR, which is a statement about chance rather than a preference about settings. Individual strategies first; the book last.
+Generated 2026-11-22 14:35 by `code/l2r2winners.py`, read-only off the gate 2 bank and the gate 3 scoring. **Nothing is filtered before it is measured**: all 273,780 strategies are recorded on both unseen records, and the only cut is the LUCK FLOOR, which is a statement about chance rather than a preference about settings. Individual strategies first; the book last.
 
 
 ## 0. The number Jack buys: PROP RETURN
@@ -307,6 +307,51 @@ Per year:
 | random-entry | passers, full | 2014-2017 | allon | team2 | 8 | 3.917 | 19 | -0.4045 | 0.8425 | 0 |
 | random-entry | passers, full | 2015-2018 | allon | team1 | 8 | 2.278 | 19 | -0.1223 | 0.8936 | 0 |
 | random-entry | passers, full | 2015-2018 | allon | team2 | 8 | 3.417 | 19 | -0.1835 | 1.34 | 0 |
+
+
+## 6b. Pair routing — a STANDING test
+
+Jack, 22 Nov: *"Pair routing is a standing test, not a one-off: every mode, every re-tune, every winners pipeline from now on reports the pair-routing sweep."* Chosen on tuning years, traded on unseen years, against a random-pair null of the same size.
+
+| rule | K | real_return_per_dd | random_null | real_beats_null | prop_return_pct | clears_12pct |
+|---|---|---|---|---|---|---|
+| topk | 1 | 0.8229 | 1.252 | 0 | 0.5925 | 0 |
+| topk | 2 | 0.8475 | 1.061 | 0 | 0.6102 | 0 |
+| topk | 3 | 0.5726 | 0.9628 | 0 | 0.4123 | 0 |
+| topk | 4 | 0.6386 | 0.862 | 0 | 0.4598 | 0 |
+| topk | 5 | 0.7301 | 0.9021 | 0 | 0.5256 | 0 |
+| topk | 6 | 0.766 | 0.9159 | 0 | 0.5515 | 0 |
+| topk | 7 | 0.7551 | 0.8625 | 0 | 0.5437 | 0 |
+| topk | 8 | 0.6912 | 0.8687 | 0 | 0.4976 | 0 |
+| topk | 9 | 0.7511 | 0.8986 | 0 | 0.5408 | 0 |
+| topk | 10 | 0.6879 | 0.844 | 0 | 0.4953 | 0 |
+| topk | 11 | 0.6908 | 0.8885 | 0 | 0.4974 | 0 |
+| topk | 12 | 0.7284 | 0.8291 | 0 | 0.5244 | 0 |
+| topk | 13 | 0.7279 | 0.8967 | 0 | 0.5241 | 0 |
+| topk | 14 | 0.7182 | 0.835 | 0 | 0.5171 | 0 |
+| topk | 15 | 0.7217 | 0.8492 | 0 | 0.5196 | 0 |
+| topk | 16 | 0.7214 | 0.8488 | 0 | 0.5194 | 0 |
+| topk | 17 | 0.7371 | 0.8334 | 0 | 0.5307 | 0 |
+| topk | 18 | 0.7392 | 0.838 | 0 | 0.5322 | 0 |
+| topk | 19 | 0.7611 | 0.8422 | 0 | 0.548 | 0 |
+| topk | 20 | 0.7699 | 0.8271 | 0 | 0.5544 | 0 |
+| topk | 21 | 0.7778 | 0.8369 | 0 | 0.56 | 0 |
+| topk | 22 | 0.7892 | 0.8247 | 0 | 0.5682 | 0 |
+| topk | 23 | 0.7855 | 0.8293 | 0 | 0.5656 | 0 |
+| topk | 24 | 0.7933 | 0.8334 | 0 | 0.5712 | 0 |
+| topk | 25 | 0.7997 | 0.8291 | 0 | 0.5758 | 0 |
+| topk | 26 | 0.8227 | 0.8304 | 0 | 0.5924 | 0 |
+| topk | 27 | 0.8074 | 0.8356 | 0 | 0.5813 | 0 |
+| topk | 28 | 0.8339 | 0.8339 | 1 | 0.6004 | 0 |
+| threshold |  | 0.7726 |  |  | 0.5563 | 0 |
+| topk_dir |  | 0.8636 |  |  | 0.6218 | 0 |
+| threshold_dir |  | 0.9253 |  |  | 0.6662 | 0 |
+
+
+All-28 baseline return/DD **0.834** (prop return 0.60%). The real rule beats the random-pair null at **1 of 28** values of K, and **0** rows clear 12% at prop sizing.
+
+
+**The drawdown basis in this section sums per (pair, direction, year) drawdowns** and is a looser bound than the strategy-level figure used elsewhere in this document, so its level is not comparable to section 4 and its prop return is a floor. Real and null share the basis, so the comparison within the section is sound. Full detail in `results/r2gate2/modeA_winners_pairrouted.csv` and `WINNERS_BY_PAIR.md`.
 
 
 ## 7. Overlay curves
