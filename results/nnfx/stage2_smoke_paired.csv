@@ -1,0 +1,2 @@
+c1,base,variant,ruleset,days,years,R_with,R_without,delta_R,delta_R_per_year,delta_t_block_boot,delta_boot_sd,delta_t_yearly,years_delta_positive,days_with_only,days_without_only
+ichimoku_signals,sma_baseline,jack,full_nnfx,1550,6,103.93218528141318,31.535281982068827,72.39690329934439,12.06615054989073,1.4860054752170302,0.031431700842920844,4.952610341543462,6,13,20

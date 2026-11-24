@@ -1,0 +1,2 @@
+variant,base,ruleset,K,years,R_per_year_mean,R_total_build,years_positive,worst_year,worst_dip_R,t_yearly,turnover_mean,null_mean,null_p95,null_p,ndraw
+jack,sma_baseline,full_nnfx,1,6,17.32203088023553,103.93218528141318,4,-5.049042232601397,5.049042232601397,1.5921400641867722,0.0,17.32203088023553,17.32203088023553,1.0,50

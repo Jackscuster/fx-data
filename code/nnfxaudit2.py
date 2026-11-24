@@ -313,8 +313,12 @@ def tick_volume(pairs=None, verbose=True):
 def md_audit2(out=None):
     out = out or os.path.join(OUT, 'ENGINE_AUDIT_2.md')
     def rd(n):
-        p = os.path.join(OUT, n)
-        return pd.read_csv(p) if os.path.exists(p) else pd.DataFrame()
+        # an empty result file is a legitimate result and pandas raises on one
+        try:
+            q = os.path.join(OUT, n)
+            return pd.read_csv(q) if os.path.exists(q) else pd.DataFrame()
+        except Exception:
+            return pd.DataFrame()
     FP, FI = rd('audit2_fillprice.csv'), rd('audit2_financing.csv')
     CP, CY = rd('audit2_cost_by_pair.csv'), rd('audit2_cost_by_year.csv')
     TV = rd('audit2_tickvolume.csv')

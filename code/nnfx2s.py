@@ -96,6 +96,35 @@ SETTINGS = N.SETTINGS
 RISK_UNIT_ATR = N.RISK_UNIT_ATR
 
 
+def _safe_csv(path):
+    """An empty result file is a legitimate result, and pandas raises on one.
+
+    THIS IS THE FOURTH REPORT GENERATOR IN THIS PROJECT TO NEED THIS.
+    l2r2gate3 carries it, b1narrow carries it, and stage 2's rolling stage
+    tripped it on the first run: when K=3 is not in the swept range nothing is
+    written to stage2_rolling_picks.csv, and reading a zero-column file raises
+    EmptyDataError. Every read in this module goes through here.
+    """
+    try:
+        if not os.path.exists(path):
+            return pd.DataFrame()
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
+def _write_csv(D, path, cols=None):
+    """Write a frame, giving an EMPTY one its header row anyway.
+
+    A zero-byte csv is unreadable; a header-only csv reads back as an empty
+    frame with the right columns, which is what every consumer expects.
+    """
+    if (D is None or not len(D)) and cols:
+        D = pd.DataFrame(columns=list(cols))
+    (D if D is not None else pd.DataFrame()).to_csv(path, index=False)
+    return path
+
+
 def run_combo(c1, c1_set, base, base_set, variant, ruleset,
               pairs=None, atr_len=14, use_hourly=True, amb_out=None):
     """One C1 + one baseline, one ruleset, across the pairs. -> trade frame.
@@ -421,10 +450,14 @@ def stage_paired(tag='picks', c1_names=None, bases=None, variants=PLANS_USED,
                     M = M.sort_values('date').reset_index(drop=True)
                     diff = (M.R_with - M.R_without).to_numpy(float)
                     t_d, sd_d = N._block_t(diff, ndraw=nboot)
-                    ys = (M.assign(y=pd.DatetimeIndex(M.date).year)
-                            .groupby('y').apply(
-                                lambda g: g.R_with.sum() - g.R_without.sum()))
-                    ysv = ys.to_numpy(float)
+                    # NOT groupby().apply() -- pandas 2.2 warns that it
+                    # operates on the grouping column and will change
+                    # behaviour. Aggregate the two columns and subtract.
+                    _g = (M.assign(y=pd.DatetimeIndex(M.date).year)
+                           .groupby('y', as_index=False)
+                           .agg(w=('R_with', 'sum'), o=('R_without', 'sum'))
+                           .sort_values('y'))
+                    ysv = (_g.w - _g.o).to_numpy(float)
                     rows.append(dict(
                         c1=c1, base=base, variant=v, ruleset=rs,
                         days=len(M), years=len(ysv),
@@ -597,8 +630,10 @@ def stage_rolling(tag='pool', ksweep=range(1, 11), ruleset='full_nnfx',
     f = os.path.join(OUT, 'stage2_rolling_sweep.csv')
     D.to_csv(f, index=False)
     f2 = os.path.join(OUT, 'stage2_rolling_picks.csv')
-    (pd.concat(picks, ignore_index=True) if picks else pd.DataFrame()
-     ).to_csv(f2, index=False)
+    _write_csv(pd.concat(picks, ignore_index=True) if picks else None, f2,
+               cols=['step', 'trade_year', 'K', 'picked', 'picked_bases',
+                     'tune_R_mean', 'trade_R_net', 'trade_R_net_sum',
+                     'trade_n', 'mean_bars', 'variant', 'base'])
     if verbose and len(D):
         b = D.loc[D.R_per_year_mean.idxmax()]
         print('  2f rolling [%s]: K 1-%d x %d bases x %d plans. Best %+.3f R/yr '
@@ -971,8 +1006,7 @@ def md_stage2(out=None):
     a = L_.append
 
     def rd(n):
-        p = os.path.join(OUT, n)
-        return pd.read_csv(p) if os.path.exists(p) else pd.DataFrame()
+        return _safe_csv(os.path.join(OUT, n))
 
     R = rd('stage2_picks_report.csv')
     RP = rd('stage2_pool_report.csv')
@@ -1188,12 +1222,14 @@ def md_stage2(out=None):
 
     # ---------------- prop ----------------
     a('\n## Through the prop simulator\n')
+    # NO % FORMATTING ON PROSE THAT CONTAINS A LITERAL PER-CENT SIGN. This
+    # project has broken three report writes that way; concatenation cannot.
     a('The daily series is in R, where 1 R is one 1.5 ATR risk unit. Turning it '
       'into the percent-of-equity series the simulator consumes needs a '
       'declared risk per unit, and since the firm\'s limits are 4% daily and 6% '
       'trailing the answer depends entirely on that number. So it is **swept**, '
-      'not assumed: %s%% of equity per R.\n'
-      % ', '.join('%.2f' % x for x in RISK_PCTS))
+      'not assumed: ' + ', '.join('{:.2f}'.format(x) for x in RISK_PCTS)
+      + '% of equity per R.\n')
     if len(PR):
         qc = ['c1', 'base', 'ruleset', 'risk_pct_per_R', 'phase', 'days',
               'breached', 'return_pct_per_year', 'worst_dip_pct',
