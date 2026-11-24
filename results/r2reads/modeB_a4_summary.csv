@@ -1,0 +1,6 @@
+mode,rule,step,book,members,n_currencies,trade_days,largest_leg_share_mean,largest_leg_share_max
+B,winners,2011-2014,allon,2,8,228,0.4159302503052503,0.5
+B,winners,2012-2015,allon,2,8,234,0.37475680919447035,0.5
+B,winners,2013-2016,allon,2,8,252,0.37668254681958196,0.5
+B,winners,2014-2017,allon,2,8,229,0.42925299900443437,0.5
+B,winners,2015-2018,allon,2,8,174,0.4248387096774193,0.5
