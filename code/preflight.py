@@ -421,6 +421,40 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def c30():
+    """CONDITION 3 — CROSS-WALK REPRODUCTION, for any extended-walk job.
+
+    Trade years 2016-2020 use the same tuning years in the five-step and the
+    eleven-step walk -- tune 2011-2014 / grade 2015 / trade 2016, and so on --
+    so the eleven-step walk must reproduce the five-step record on them exactly.
+    If it does not, nothing from the six earlier years may be quoted.
+
+    This guard is a no-op when no ext11 winner bank exists, so it does not fail
+    a machine that has never run an extended walk.
+    """
+    import importlib
+    try:
+        B = importlib.import_module('b1narrow')
+    except Exception as e:
+        return 'b1narrow not importable (%s); no extended walk on this machine' % type(e).__name__
+    import l2r2gate2 as _G2
+    if _G2.WALK != 'ext11':
+        # the comparison reads both banks directly and needs ext11's YEAR0
+        return ('skipped: FX_WALK=%s, not ext11. Run '
+                'FX_WALK=ext11 python3 code/b1narrow.py --stage cond3 '
+                'before quoting any extended-walk result' % _G2.WALK)
+    D, ok = B.condition3(verbose=False)
+    if not len(D):
+        return 'no ext11 winner bank on disk; nothing to reproduce yet'
+    assert ok, ('cross-walk reproduction FAILED: %d of %d winner-years differ '
+                '(worst R %.3e, worst n %.3e, %d config mismatches)'
+                % (int((D.dR > 1e-6).sum() + (D.dn > 1e-6).sum()), len(D),
+                   D.dR.max(), D.dn.max(), int((D.cfg_same == 0).sum())))
+    return ('%d winner-years reproduce the five-step record exactly '
+            '(worst |dR| %.3e, worst |dn| %.3e, %d/%d config indices identical)'
+            % (len(D), D.dR.max(), D.dn.max(), int(D.cfg_same.sum()), len(D)))
+
+
 def c29():
     """EVERY MODULE'S __main__ BLOCK IS THE LAST THING IN THE FILE.
 
@@ -507,6 +541,9 @@ def main():
     guard(29, 'A stage function appended AFTER the __main__ dispatch: the dispatch calls a name that does not exist yet and python only finds out at run time (chunk 2 died on NameError six seconds into chain 24, 24 Nov; r2hourly.py did the same an hour earlier and b1narrow.py would have been the third)',
           'the __main__ block is the LAST thing in every module under code/, and this guard asserts it',
           'no function, class or assignment is defined after a __main__ dispatch in any code/*.py', c29)
+    guard(30, 'An extended-walk run that does not reproduce the five-step record on the years both walks share: on 24 Nov B1_WINNERS.md reported 120.8 R for 2018 where the record says 51.399, and ~1,886 trades over 2016-2020 where the record says 826',
+          'condition 3 compares the ext11 bank against the base5 bank per winner, per shared year, on the winner OWN stream: per-year R, trade count and selected config index',
+          'all 50 winner-years equal to 1e-6 with identical config indices; nothing from 2010-2015 is quoted until it passes', c30)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

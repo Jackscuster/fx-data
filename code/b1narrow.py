@@ -150,7 +150,7 @@ def winners_frame(mode='A'):
     return W
 
 
-def stage_winners(mode='A', jobs=4):
+def stage_winners(mode='A', jobs=4, costtag=''):
     """THE 10 WINNERS ALONE on the eleven-step walk, with the TRUE drawdown.
 
     Jack, 24 Nov: run the winners as their own stage and report at once. Ten
@@ -198,16 +198,44 @@ def stage_winners(mode='A', jobs=4):
                                  want_dd=True)
             y = stp['trade'][0]
             yi = y - G2.YEAR0
-            n = float(np.nansum(bank[k][:, si, yi, 0]))
-            r = float(np.nansum(bank[k][:, si, yi, 1]))
-            per[y] = dict(n=n, R=r, R_per_trade=(r / n) if n > 0 else np.nan,
+            # R FROM THE RE-SCORED DAILY SERIES, NOT FROM THE BANK, WHENEVER
+            # THE COST TABLE IS OVERRIDDEN. The bank was built under the
+            # 2016-2020 cost table, so reading R out of it ignores the override
+            # completely: the first era run returned R identical to 0.000 while
+            # only the drawdown moved, which is how the mistake showed. accd is
+            # the engine's own per-day R for the role under the table actually
+            # loaded, and summing it over the trade year reproduces the bank's
+            # sum_r exactly when the tables match -- asserted below.
+            #
+            # THE WINNER'S OWN STREAM, NOT THE SUM OVER ALL FOUR.
+            # The first version of this line read bank[k][:, si, yi, ...], which
+            # sums trend-routed, trend-allon, chop-routed and chop-allon
+            # together. That is what made the superseded B1_WINNERS.md report
+            # 120.8 R for 2018 where the record says 51.399, and ~1,886 trades
+            # over 2016-2020 where the record says 826. The tune was never
+            # wrong: the ext11 and base5 banks agree exactly on the shared
+            # years, same config index, same R, same trade count.
+            n = float(bank[k][stream, si, yi, 0])
+            r_bank = float(bank[k][stream, si, yi, 1])
+            m_y = (Y.dayyear == y - G2.YEAR0)
+            r_resc = float(accd[rt][m_y].sum())
+            if costtag:
+                r = r_resc
+            else:
+                r = r_bank
+                # the same identity condition 1 tests, asserted per winner-year
+                assert abs(r_resc - r_bank) < 1e-3, (
+                    'the re-scored trade year disagrees with the bank: '
+                    'winner %d stream %d year %d, %.6f vs %.6f'
+                    % (k, stream, y, r_resc, r_bank))
+            per[y] = dict(n=n, R=r, R_bank=r_bank, R_rescored=r_resc,
+                          R_per_trade=(r / n) if n > 0 else np.nan,
                           dd=float(G2.role_dd(accd, Y.dayyear, y, y)[rt]))
             # the trade year's own day-increments, stitched into one series so
             # the multi-year drawdown is CHRONOLOGICAL and not a sum of parts.
             # Y.dayyear holds year INDICES, not calendar years -- role_dd does
             # the y - YEAR0 conversion internally, a manual mask must not.
-            m = (Y.dayyear == y - G2.YEAR0)
-            dd_day[:, m] = accd[:, m]
+            dd_day[:, m_y] = accd[:, m_y]
         def span(years):
             ys = [y for y in years if y in per]
             if not ys:
@@ -243,10 +271,10 @@ def stage_winners(mode='A', jobs=4):
         rows.append(r)
     del Y
     D = pd.DataFrame(rows)
-    f = os.path.join(OUT, 'mode%s_b1winners.csv' % mode)
+    f = os.path.join(OUT, 'mode%s_b1winners%s.csv' % (mode, costtag))
     D.to_csv(f, index=False)
-    print('  B1-winners [mode %s]: %d rows -> %s'
-          % (mode, len(D), os.path.relpath(f, _R)), flush=True)
+    print('  B1-winners [mode %s%s]: %d rows -> %s'
+          % (mode, costtag or '', len(D), os.path.relpath(f, _R)), flush=True)
     return D
 
 
@@ -292,85 +320,172 @@ def bank_tags(mode, tag):
 
 
 def stage_md_winners(out=None):
-    """results/r2reads/B1_WINNERS.md -- the winners alone, reported at once."""
+    """results/r2reads/B1_WINNERS.md -- re-issued 24 Nov after a bug of mine."""
     import l2r2gate3 as G3x
     L = []; a = L.append
     a('# B1-WINNERS — THE 10 WINNERS ON SIX YEARS THEY WERE NEVER SELECTED ON\n')
     a('Generated %s by `code/b1narrow.py --stage winners` with `FX_WALK=ext11`.\n'
       % time.strftime('%F %H:%M'))
-    a('Eleven rolling steps: tune 2005-2008 / grade 2009 / trade 2010 through '
-      'tune 2015-2018 / grade 2019 / trade 2020. **2021 onward stays sealed.** '
-      'One-bar lag; costs from `cost_table_h22.csv`.\n')
+    a('\n> ## THE VERSION OF THIS FILE ISSUED AT 10:21 ON 24 NOV IS SUPERSEDED '
+      'AND WRONG\n'
+      '>\n'
+      '> It reported winner 1 as 16.68 / 6.63 / 120.8 / 85.14 / 12.14 R over '
+      '2016-2020 against a record of 13.812 / 17.462 / 51.399 / 29.295 / '
+      '13.121, and about 1,886 trades over those five years against 826. Jack '
+      'caught it by checking the years the two walks share.\n'
+      '>\n'
+      '> **THE CAUSE, IN TWO LINES.** I read the banked record as '
+      '`bank[k][:, step, year, ...]`, which SUMS the four streams — '
+      'trend-routed, trend-allon, chop-routed and chop-allon — into one number '
+      'that belongs to no strategy, instead of selecting the winner\'s own '
+      'stream. The eleven-step tune was never wrong: it used the same gate 2 '
+      'grid, the same objective and the same scoring, and it reproduces the '
+      'five-step record on the shared years exactly.\n'
+      '>\n'
+      '> **Nothing else changed.** The direction of the finding is the same and '
+      'slightly worse once era-correct costs are charged.\n')
+    a('\n## Condition 3 — cross-walk reproduction\n')
+    try:
+        D3, ok3 = condition3(verbose=False)
+    except Exception as e:
+        D3, ok3 = pd.DataFrame(), False
+        a('_Condition 3 could not run: %s_\n' % type(e).__name__)
+    if len(D3):
+        a('Trade years 2016-2020 use the same tuning years in both walks — tune '
+          '2011-2014 / grade 2015 / trade 2016, and so on — so the eleven-step '
+          'walk must reproduce the five-step record on them exactly.\n')
+        a('')
+        a('| check | worst difference | over tolerance |')
+        a('|---|---:|---:|')
+        a('| per-year total R | %.3e | %d of %d |'
+          % (D3.dR.max(), int((D3.dR > 1e-6).sum()), len(D3)))
+        a('| per-year trade count | %.3e | %d of %d |'
+          % (D3.dn.max(), int((D3.dn > 1e-6).sum()), len(D3)))
+        a('| selected config index | — | %d of %d identical |'
+          % (int(D3.cfg_same.sum()), len(D3)))
+        a('')
+        a('**CONDITION 3: %s** — %d winner-years, %d winners x %d shared years. '
+          'It is registered as preflight guard 30 and runs on any '
+          'extended-walk job. Nothing from 2010-2015 is quoted below unless it '
+          'passes.\n'
+          % ('PASS' if ok3 else 'FAIL', len(D3), len(D3) // 5, 5))
+        if not ok3:
+            a('\n**It did not pass, so the six-year table is withheld.**\n')
+            open(out or os.path.join(OUT, 'B1_WINNERS.md'), 'w').write(
+                '\n'.join(L) + '\n')
+            return out
+    a('\n## A SECOND DIVERGENCE, FOUND WHILE CHASING THE FIRST — NOT MINE\n')
+    a('Jack\'s reference numbers came from `mode?_winners.csv`, whose '
+      '`R_<year>` is written from the **gate 3 KPI bank**, not from gate 2\'s '
+      '`win` array. The two disagree for the **same strategy, the same config '
+      'index and the same year**:\n')
+    g23 = _safe_csv(os.path.join(ROOTOUT, 'r2gate2', 'gate2_vs_gate3_peryear.csv'))
+    if len(g23):
+        a('')
+        a('| | |')
+        a('|---|---|')
+        a('| winner-years compared | %d |' % len(g23))
+        a('| per-year R differing by more than 1e-6 | **%d of %d** |'
+          % (int((g23.dR.abs() > 1e-6).sum()), len(g23)))
+        a('| trade counts differing | **%d of %d** |'
+          % (int((g23.dn.abs() > 1e-6).sum()), len(g23)))
+        a('| median \\|ΔR\\| | %.4f R |' % g23.dR.abs().median())
+        a('| largest \\|ΔR\\| | %.4f R |' % g23.dR.abs().max())
+        a('| largest \\|Δn\\| | %.0f trades |' % g23.dn.abs().max())
+        a('')
+    a('**Gate 2 is the faithful record.** A direct re-score of winner 1\'s '
+      'config 289 over 2016 returns **13.812019**, which is gate 2\'s banked '
+      '`sum_r` to six decimals. The gate 3 KPI bank says 16.5096. Gate 3 reads '
+      'the *same* config index out of gate 2\'s tag and then scores it through '
+      'a different scorer (`sc.score`), and that is where the two part.\n')
+    a('\nSo this report compares against the **gate 2 bank**, which is the '
+      'cross-walk property being tested. **The gate 2 / gate 3 divergence is a '
+      'separate, pre-existing defect that affects `mode?_winners.csv` and '
+      'everything built on it, including `MODEA_WINNERS.md`.** It is filed in '
+      '`results/r2gate2/gate2_vs_gate3_peryear.csv` and is not fixed here, '
+      'because fixing it means deciding which engine is right about trade-year '
+      'attribution and that is a change to what is computed.\n')
     a('\n## What makes this a test\n')
     a('The winners were selected on the FIVE-step walk, whose earliest tuning '
-      'year is 2011 and whose trade years are 2016-2020. **Trade years 2010, '
-      '2011, 2012, 2013, 2014 and 2015 were touched by no part of that '
-      'selection** — not by tuning, not by grading, not by the luck floors. '
-      'They are marked `never_seen = 1` below. 2016-2020 are the years the '
-      'winners were chosen on and are shown only for contrast; they are not '
-      'evidence.\n')
-    a('\n**Both conditions pass on this walk**: condition 1 worst '
-      '|per-year marks − trade R| = 8.88e-16 over 48 evaluations; condition 2 '
-      '264 comparisons over 11 steps, zero tune-pick and zero record '
-      'mismatches.\n')
-    a('\n**Prop return here is the REAL figure.** The winner-only bank carries '
-      'no drawdown, so this stage re-scores each winner\'s selected '
-      'configuration with `want_dd=True` and takes the true chronological max '
-      'DD from `role_dd` over the span being reported. It is therefore '
-      'comparable with `MODEA_WINNERS.md`, unlike the spread proxy in '
-      '`B1_NARROW.md`.\n')
-    any_rows = False
+      'year is 2011 and whose trade years are 2016-2020. **Trade years 2010 '
+      'through 2015 were touched by no part of that selection** — not by '
+      'tuning, not by grading, not by the luck floors.\n')
+    a('\n## Era-correct costs\n')
+    a('`cost_table_h22.csv` was calibrated on **2016-2020** spreads, and it '
+      'carries `bp_2004_2015` beside them. **25 of 28 pairs were wider in '
+      '2004-2015, median 1.26x.** So charging the 2010-2015 trade years the '
+      '2016-2020 table under-charges them, and the six unseen years are '
+      'FLATTERED in the charged column.\n')
+    a('\nThe era column re-scores the **same selected configurations** under '
+      '`results/cost_table_era_2004_2015.csv`, built from that column. Only the '
+      'costs change, so the difference isolates the cost effect rather than '
+      'mixing in a different selection. R is taken from the engine\'s '
+      're-scored daily series, not from the bank — the bank was built under the '
+      'other table and reading it would ignore the override entirely, which is '
+      'how a first attempt returned a difference of exactly zero.\n')
     for mode in ('A', 'B'):
         f = os.path.join(OUT, 'mode%s_b1winners.csv' % mode)
-        D = _safe_csv(f)
+        fe = os.path.join(OUT, 'mode%s_b1winners_era.csv' % mode)
+        D = _safe_csv(f); E = _safe_csv(fe)
         a('\n## Mode %s\n' % mode)
         if not len(D):
-            a('_Not run yet._\n')
-            continue
-        any_rows = True
-        a('### R per trade year, 2010-2020\n')
-        a('Total R in the year. `never_seen` years are **2010-2015**.\n')
+            a('_Not run yet._\n'); continue
+        a('### R per trade year, 2010-2020 — corrected\n')
+        a('**2010-2015 were never seen at selection.** 2016-2020 are the years '
+          'the winners were chosen on and now reproduce the record exactly.\n')
         a(G3x.BK_tbl(D, ['sid', 'stream'] + ['R_%d' % y
                                              for y in NEW_YEARS + OLD_YEARS]))
-        a('\n### R per trade, same years\n')
-        a(G3x.BK_tbl(D, ['sid'] + ['Rpt_%d' % y
-                                   for y in NEW_YEARS + OLD_YEARS]))
-        a('\n### The six never-seen years, summarised\n')
-        a(G3x.BK_tbl(D, ['sid', 'stream', 'R_new6', 'n_new6', 'dd_new6',
-                         't_new6', 'years_pos_new6', 'prop_return_new6']))
+        a('\n### The six never-seen years, charged both ways\n')
+        T_ = D[['sid', 'stream', 'R_new6', 'n_new6', 'dd_new6', 't_new6',
+                'years_pos_new6', 'prop_return_new6']].copy()
+        if len(E) == len(D):
+            T_['R_new6_era'] = E.R_new6.values
+            T_['R_delta_era'] = (E.R_new6.values - D.R_new6.values)
+            T_['R_delta_per_trade'] = T_.R_delta_era / D.n_new6.values
+            T_['prop_return_new6_era'] = E.prop_return_new6.values
+        a(G3x.BK_tbl(T_, list(T_.columns)))
+        nn = int((D.R_new6 > 0).sum())
+        c6 = int((D.prop_return_new6 >= WN.PROP_TARGET).sum())
+        a('\n**%d of %d winners are positive over the six never-seen years '
+          'under the charged table, and %s under era-correct costs. %d clear '
+          'the %.0f%%/yr prop target either way.**\n'
+          % (nn, len(D),
+             ('%d of %d' % (int((E.R_new6 > 0).sum()), len(E))) if len(E) == len(D)
+             else 'not yet measured', c6, WN.PROP_TARGET))
+        if len(E) == len(D):
+            a('\nThe era correction costs every winner between %.1f and %.1f R '
+              'over the six years — about %.4f R per trade, consistent across '
+              'all of them, which is the sanity check a uniform cost increase '
+              'should pass.\n'
+              % (abs(T_.R_delta_era.max()), abs(T_.R_delta_era.min()),
+                 float(T_.R_delta_per_trade.mean())))
         a('\n### All eleven years\n')
         a(G3x.BK_tbl(D, ['sid', 'R_all11', 'n_all11', 'dd_all11',
                          'years_pos_all11', 'prop_return_all11']))
-        nn = int((D.R_new6 > 0).sum())
-        c6 = int((D.prop_return_new6 >= WN.PROP_TARGET).sum())
-        c11 = int((D.prop_return_all11 >= WN.PROP_TARGET).sum())
-        a('\n**%d of %d winners are positive over the six never-seen years.** '
-          '**%d clear the %.0f%%/yr prop target on those six years; %d clear it '
-          'on all eleven.** Median years-positive out of six: %.1f.\n'
-          % (nn, len(D), c6, WN.PROP_TARGET, c11,
-             float(D.years_pos_new6.median())))
-        a('\nTop by prop return on the never-seen years:\n')
-        a(G3x.BK_tbl(D.sort_values('prop_return_new6', ascending=False).head(30),
-                     ['sid', 'stream', 'prop_return_new6', 'R_new6', 'dd_new6',
-                      't_new6']))
-    if not any_rows:
-        a('\n_No winner rows written._\n')
-    a('\n## How to read a failure here\n')
-    a('These winners cleared two luck floors on 2016-2020. If they are flat or '
-      'negative on 2010-2015 the floors did their job on the years they were '
-      'given and the selection still does not generalise — which is a finding '
-      'about the METHOD, not about these ten strategies. If they hold up, the '
-      'six years are the first genuinely out-of-sample evidence the project '
-      'has for them.\n')
+    a('\n## How to read this\n')
+    a('These winners cleared two luck floors on 2016-2020 and they do not '
+      'generalise backwards. That is a finding about the **selection method**, '
+      'not about these ten strategies: the floors did their job on the years '
+      'they were given, and those years were not representative. Charging the '
+      'costs that actually prevailed makes it worse, not better.\n')
     a('\n## Still pending\n')
-    a('- The family sample and the control run as a **second stage** and are '
-      'reported in `B1_NARROW.md`. Without them, a winner holding up here '
-      'cannot yet be separated from the family holding up.\n')
+    a('- The family sample and the control run as a second stage, reported in '
+      '`B1_NARROW.md`. Until then a winner holding up here cannot be separated '
+      'from the family holding up.\n')
     a('- The random-entry null on these six years needs an engine pass and is '
       'not in this read.\n')
+    a('- **The gate 2 / gate 3 per-year divergence above is unresolved.**\n')
     a('\n## Provenance\n')
-    for mode in ('A', 'B'):
-        p_ = os.path.join(OUT, 'mode%s_b1winners.csv' % mode)
+    for nm in ('modeA_b1winners', 'modeB_b1winners', 'modeA_b1winners_era',
+               'modeB_b1winners_era'):
+        p_ = os.path.join(OUT, '%s.csv' % nm)
+        if os.path.exists(p_):
+            a('- `%s` — %s rows, md5 `%s`'
+              % (os.path.relpath(p_, _R), f'{len(_safe_csv(p_)):,}',
+                 hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+    for p_ in (os.path.join(ROOTOUT, 'r2gate2_cond3_crosswalk.csv'),
+               os.path.join(ROOTOUT, 'r2gate2', 'gate2_vs_gate3_peryear.csv'),
+               os.path.join(ROOTOUT, 'cost_table_era_2004_2015.csv')):
         if os.path.exists(p_):
             a('- `%s` — %s rows, md5 `%s`'
               % (os.path.relpath(p_, _R), f'{len(_safe_csv(p_)):,}',
@@ -403,14 +518,19 @@ def read_bank(mode='A'):
     return rows, CB
 
 
-def _per_year(win_one):
-    """-> {calendar_year: R per trade}, pooled over streams, trade years only."""
+def _per_year(win_one, stream):
+    """-> {calendar_year: R per trade} for ONE STREAM, trade years only.
+
+    `stream` is required. The first version summed the stream axis, which pools
+    trend and chop, routed and always-on, into one number that corresponds to
+    no strategy. See the note in stage_winners.
+    """
     out = {}
     for si, stp in enumerate(G2.steps()):
         y = stp['trade'][0]
         yi = y - G2.YEAR0
-        n = float(np.nansum(win_one[:, si, yi, 0]))
-        r = float(np.nansum(win_one[:, si, yi, 1]))
+        n = float(win_one[stream, si, yi, 0])
+        r = float(win_one[stream, si, yi, 1])
         out[y] = (r / n) if n > 0 else np.nan
     return out
 
@@ -469,7 +589,12 @@ def stage_md(out=None):
             k = int(u.bank_row)
             if k not in bank:
                 continue
-            per = _per_year(bank[k])
+            st_ = (list(G2.STREAMS).index(u.stream)
+                   if 'stream' in U.columns and isinstance(u.stream, str)
+                   else None)
+            if st_ is None:
+                continue          # a universe row with no stream cannot be read
+            per = _per_year(bank[k], st_)
             sn = _stats(per, NEW_YEARS); so = _stats(per, OLD_YEARS)
             sa = _stats(per, NEW_YEARS + OLD_YEARS)
             r = dict(mode=mode, cohort=u.cohort, bank_row=k, sid=u.sid,
@@ -550,6 +675,114 @@ def stage_md(out=None):
     return out
 
 
+
+def _bank_arrays(mode, tag):
+    """(win, tag) dicts keyed by bank row, for any bank directory."""
+    d = G2.out_dir(mode, tag)
+    fs = sorted(glob.glob(os.path.join(d, 'shard_*_part*.npz')))
+    assert fs, 'no bank at %s' % d
+    win, tg, cb = {}, {}, {}
+    for f in fs:
+        z = np.load(f, allow_pickle=True)
+        idx = np.asarray(z['idx'], np.int64)
+        if not len(idx):
+            continue
+        w_ = np.asarray(z['win'], np.float32)
+        t_ = np.asarray(z['tag'], np.int32)
+        c_ = np.asarray(z['combo'], dtype=object)
+        for j, k in enumerate(idx):
+            win[int(k)] = w_[j]; tg[int(k)] = t_[j]; cb[int(k)] = tuple(c_[j])
+    return win, tg, cb
+
+
+SHARED_YEARS = tuple(range(2016, 2021))
+
+
+def condition3(modes=('A', 'B'), tol=1e-6, verbose=True, out=None):
+    """CONDITION 3 — CROSS-WALK REPRODUCTION.
+
+    Jack, 24 Nov: trade years 2016-2020 use the same tuning years in both
+    walks -- tune 2011-2014 / grade 2015 / trade 2016, and so on -- so the
+    eleven-step walk MUST reproduce the five-step record on them exactly.
+
+    WHAT IS COMPARED, AND WHY NOT THE WINNERS CSV. Jack's wording named
+    mode?_winners.csv as the reference. That file's R_<year> comes from the
+    GATE 3 KPI bank, not from gate 2's win array, and the two disagree on
+    41 of 50 winner-years by a median of 1.01 R -- with the same strategy, the
+    same config index and the same year. A direct re-score of winner 1's
+    config 289 over 2016 returns 13.812019, which is gate 2's number, so gate 2
+    is the faithful record and the gate 3 KPI bank is the one that diverges.
+    Comparing ext11 against the winners csv would therefore fail for a reason
+    that has nothing to do with the walk. So this condition compares the ext11
+    bank against the BASE5 BANK, which is the cross-walk property Jack is
+    actually testing, and the gate2-vs-gate3 divergence is filed separately as
+    its own defect.
+
+    Checks, per winner and per shared year, on the winner's OWN stream:
+      per-year total R      equal to `tol`
+      per-year trade count  equal to `tol`
+      selected config index identical
+    """
+    rows = []
+    for mode in modes:
+        W = winners_frame(mode)
+        b5, t5, _c5 = _bank_arrays(mode, 'full')
+        try:
+            e11, t11, c11 = _bank_arrays(mode, TAG_WIN)
+        except AssertionError:
+            if verbose:
+                print('  condition 3 [mode %s]: no ext11 winner bank yet' % mode,
+                      flush=True)
+            continue
+        # the ext11 bank is keyed by POSITION in the winners frame
+        for wi, w in W.iterrows():
+            k5 = int(w.bank_row)
+            if wi not in e11 or k5 not in b5:
+                continue
+            assert '|'.join(c11[wi]) == w.sid, (
+                'ext11 row %d holds %s, the winners frame says %s'
+                % (wi, '|'.join(c11[wi]), w.sid))
+            st = list(G2.STREAMS).index(w.stream)
+            for y in SHARED_YEARS:
+                s5, y5 = y - 2016, y - 2011           # base5: YEAR0 2011
+                s11, y11 = y - 2010, y - 2005         # ext11: YEAR0 2005
+                r5 = float(b5[k5][st, s5, y5, 1]); n5 = float(b5[k5][st, s5, y5, 0])
+                r11 = float(e11[wi][st, s11, y11, 1]); n11 = float(e11[wi][st, s11, y11, 0])
+                c5_ = int(t5[k5][st, s5]); c11_ = int(t11[wi][st, s11])
+                rows.append(dict(mode=mode, winner=wi + 1, sid=w.sid,
+                                 stream=w.stream, year=y,
+                                 base5_R=r5, ext11_R=r11, dR=abs(r11 - r5),
+                                 base5_n=n5, ext11_n=n11, dn=abs(n11 - n5),
+                                 base5_cfg=c5_, ext11_cfg=c11_,
+                                 cfg_same=int(c5_ == c11_)))
+    D = pd.DataFrame(rows)
+    out = out or os.path.join(ROOTOUT, 'r2gate2_cond3_crosswalk.csv')
+    D.to_csv(out, index=False)
+    if not len(D):
+        if verbose:
+            print('  CONDITION 3: nothing to compare (no ext11 winner bank)',
+                  flush=True)
+        return D, False
+    badR = D[D.dR > tol]; badn = D[D.dn > tol]; badc = D[D.cfg_same == 0]
+    ok = (len(badR) == 0 and len(badn) == 0 and len(badc) == 0)
+    if verbose:
+        print('  CONDITION 3 (cross-walk reproduction): %d comparisons over '
+              '%d winner-rows x %d shared years'
+              % (len(D), len(D) // max(1, len(SHARED_YEARS)),
+                 len(SHARED_YEARS)), flush=True)
+        print('    per-year R   : worst |diff| %.3e  (%d over tol)'
+              % (D.dR.max(), len(badR)), flush=True)
+        print('    trade count  : worst |diff| %.3e  (%d over tol)'
+              % (D.dn.max(), len(badn)), flush=True)
+        print('    config index : %d of %d identical'
+              % (int(D.cfg_same.sum()), len(D)), flush=True)
+        print('    -> %s' % ('PASS' if ok else 'FAIL'), flush=True)
+        for _i, r in badR.head(5).iterrows():
+            print('       FAIL %s w%d %d: base5 %.6f ext11 %.6f'
+                  % (r['mode'], r.winner, r.year, r.base5_R, r.ext11_R), flush=True)
+    return D, ok
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'universe')
     md = G.opt('--mode', str, 'A')
@@ -561,9 +794,15 @@ if __name__ == '__main__':
         stage_tune(md, jobs=G.opt('--jobs', int, 8),
                    nshard=G.opt('--nshard', int, None), nmax=G.opt('--nmax', int, None))
     elif st == 'winners':
-        stage_winners(md, jobs=G.opt('--jobs', int, 4))
+        stage_winners(md, jobs=G.opt('--jobs', int, 4),
+                      costtag=G.opt('--costtag', str, ''))
     elif st == 'mdwinners':
         stage_md_winners()
+    elif st == 'cond3':
+        _D, _ok = condition3()
+        if not _ok:
+            raise SystemExit('CONDITION 3 FAILED -- nothing from the extended '
+                             'walk may be quoted')
     elif st == 'md':
         stage_md()
     else:

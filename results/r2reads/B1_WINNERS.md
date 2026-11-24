@@ -1,158 +1,170 @@
 # B1-WINNERS — THE 10 WINNERS ON SIX YEARS THEY WERE NEVER SELECTED ON
 
-Generated 2026-11-24 10:18 by `code/b1narrow.py --stage winners` with `FX_WALK=ext11`.
+Generated 2026-11-24 11:08 by `code/b1narrow.py --stage winners` with `FX_WALK=ext11`.
 
-Eleven rolling steps: tune 2005-2008 / grade 2009 / trade 2010 through tune 2015-2018 / grade 2019 / trade 2020. **2021 onward stays sealed.** One-bar lag; costs from `cost_table_h22.csv`.
+
+> ## THE VERSION OF THIS FILE ISSUED AT 10:21 ON 24 NOV IS SUPERSEDED AND WRONG
+>
+> It reported winner 1 as 16.68 / 6.63 / 120.8 / 85.14 / 12.14 R over 2016-2020 against a record of 13.812 / 17.462 / 51.399 / 29.295 / 13.121, and about 1,886 trades over those five years against 826. Jack caught it by checking the years the two walks share.
+>
+> **THE CAUSE, IN TWO LINES.** I read the banked record as `bank[k][:, step, year, ...]`, which SUMS the four streams — trend-routed, trend-allon, chop-routed and chop-allon — into one number that belongs to no strategy, instead of selecting the winner's own stream. The eleven-step tune was never wrong: it used the same gate 2 grid, the same objective and the same scoring, and it reproduces the five-step record on the shared years exactly.
+>
+> **Nothing else changed.** The direction of the finding is the same and slightly worse once era-correct costs are charged.
+
+
+## Condition 3 — cross-walk reproduction
+
+Trade years 2016-2020 use the same tuning years in both walks — tune 2011-2014 / grade 2015 / trade 2016, and so on — so the eleven-step walk must reproduce the five-step record on them exactly.
+
+
+| check | worst difference | over tolerance |
+|---|---:|---:|
+| per-year total R | 0.000e+00 | 0 of 50 |
+| per-year trade count | 0.000e+00 | 0 of 50 |
+| selected config index | — | 50 of 50 identical |
+
+**CONDITION 3: PASS** — 50 winner-years, 10 winners x 5 shared years. It is registered as preflight guard 30 and runs on any extended-walk job. Nothing from 2010-2015 is quoted below unless it passes.
+
+
+## A SECOND DIVERGENCE, FOUND WHILE CHASING THE FIRST — NOT MINE
+
+Jack's reference numbers came from `mode?_winners.csv`, whose `R_<year>` is written from the **gate 3 KPI bank**, not from gate 2's `win` array. The two disagree for the **same strategy, the same config index and the same year**:
+
+
+| | |
+|---|---|
+| winner-years compared | 50 |
+| per-year R differing by more than 1e-6 | **41 of 50** |
+| trade counts differing | **35 of 50** |
+| median \|ΔR\| | 1.0096 R |
+| largest \|ΔR\| | 10.6274 R |
+| largest \|Δn\| | 11 trades |
+
+**Gate 2 is the faithful record.** A direct re-score of winner 1's config 289 over 2016 returns **13.812019**, which is gate 2's banked `sum_r` to six decimals. The gate 3 KPI bank says 16.5096. Gate 3 reads the *same* config index out of gate 2's tag and then scores it through a different scorer (`sc.score`), and that is where the two part.
+
+
+So this report compares against the **gate 2 bank**, which is the cross-walk property being tested. **The gate 2 / gate 3 divergence is a separate, pre-existing defect that affects `mode?_winners.csv` and everything built on it, including `MODEA_WINNERS.md`.** It is filed in `results/r2gate2/gate2_vs_gate3_peryear.csv` and is not fixed here, because fixing it means deciding which engine is right about trade-year attribution and that is a change to what is computed.
 
 
 ## What makes this a test
 
-The winners were selected on the FIVE-step walk, whose earliest tuning year is 2011 and whose trade years are 2016-2020. **Trade years 2010, 2011, 2012, 2013, 2014 and 2015 were touched by no part of that selection** — not by tuning, not by grading, not by the luck floors. They are marked `never_seen = 1` below. 2016-2020 are the years the winners were chosen on and are shown only for contrast; they are not evidence.
+The winners were selected on the FIVE-step walk, whose earliest tuning year is 2011 and whose trade years are 2016-2020. **Trade years 2010 through 2015 were touched by no part of that selection** — not by tuning, not by grading, not by the luck floors.
 
 
-**Both conditions pass on this walk**: condition 1 worst |per-year marks − trade R| = 8.88e-16 over 48 evaluations; condition 2 264 comparisons over 11 steps, zero tune-pick and zero record mismatches.
+## Era-correct costs
+
+`cost_table_h22.csv` was calibrated on **2016-2020** spreads, and it carries `bp_2004_2015` beside them. **25 of 28 pairs were wider in 2004-2015, median 1.26x.** So charging the 2010-2015 trade years the 2016-2020 table under-charges them, and the six unseen years are FLATTERED in the charged column.
 
 
-**Prop return here is the REAL figure.** The winner-only bank carries no drawdown, so this stage re-scores each winner's selected configuration with `want_dd=True` and takes the true chronological max DD from `role_dd` over the span being reported. It is therefore comparable with `MODEA_WINNERS.md`, unlike the spread proxy in `B1_NARROW.md`.
+The era column re-scores the **same selected configurations** under `results/cost_table_era_2004_2015.csv`, built from that column. Only the costs change, so the difference isolates the cost effect rather than mixing in a different selection. R is taken from the engine's re-scored daily series, not from the bank — the bank was built under the other table and reading it would ignore the override entirely, which is how a first attempt returned a difference of exactly zero.
 
 
 ## Mode A
 
-### R per trade year, 2010-2020
+### R per trade year, 2010-2020 — corrected
 
-Total R in the year. `never_seen` years are **2010-2015**.
+**2010-2015 were never seen at selection.** 2016-2020 are the years the winners were chosen on and now reproduce the record exactly.
 
 | sid | stream | R_2010 | R_2011 | R_2012 | R_2013 | R_2014 | R_2015 | R_2016 | R_2017 | R_2018 | R_2019 | R_2020 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -86.3 | -20.32 | -13.54 | -4.813 | 31.36 | -75.17 | 16.68 | 6.629 | 120.8 | 85.14 | 12.14 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -115.6 | 16.69 | -49.26 | 48.71 | 44.96 | -33.56 | 19.66 | 58.25 | 82.89 | 72.96 | 14.6 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -81.99 | -43.96 | -25.75 | 34.63 | -2.522 | -7.787 | -20.45 | 12.56 | 133.5 | 70.96 | 7.693 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -123.3 | -39.22 | -37.32 | 52.06 | 0.05824 | 30.81 | -3.113 | 17.44 | 78.32 | 77.98 | 16.71 |
-| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -123.8 | 51.25 | -57.38 | -18.02 | 18.02 | 48.34 | 85.11 | -29.37 | 60.88 | 61.24 | 61.97 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | -12.43 | -6.932 | -24.87 | 65.05 | -30.61 | 22.78 | 14.45 | 39.84 | 78.71 | 56.39 | -1.848 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -93.64 | -12.78 | 32.99 | -29.17 | -118.4 | -28.58 | -2.648 | 17.1 | 68.95 | 55.71 | 24.36 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | trend-allon | -32.57 | -40.83 | -62.91 | 65.33 | -1.276 | -29.13 | 29.86 | -6.519 | 151.2 | 75.74 | 41.92 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -41.93 | -20.98 | -11.69 | -5.828 | 26.82 | -28.69 | 13.81 | 17.46 | 51.4 | 29.29 | 13.12 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -52.62 | -9.751 | -20.13 | 22.61 | 20.83 | -44.81 | 14.45 | 42.17 | 39.57 | 34.99 | 8.264 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -41.67 | -23.07 | -10.64 | -2.736 | 1.717 | 0.7386 | 7.85 | 14.39 | 44.64 | 25.36 | 12.18 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -49.16 | -8.065 | -15.67 | 23.26 | 8.207 | 20.37 | 5.652 | 36.92 | 29.35 | 35.07 | 7.936 |
+| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -72.98 | 31.92 | -19.92 | -12.22 | 19.24 | 13.89 | 46.76 | -1.309 | 32.92 | 26.37 | 22.77 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | 1.239 | -4.101 | -7.428 | 46.8 | -13.8 | -13.76 | 17.65 | 29.9 | 27.68 | 23.59 | -0.3228 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -46.44 | -6.199 | 15.74 | -23.56 | -47.35 | -5.099 | 21.44 | 21.61 | 44.88 | 17.14 | 13.18 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | trend-allon | -38.25 | -8.147 | -18.89 | 34.53 | -9.979 | -18.54 | 11.91 | -5.781 | 62.2 | 29.66 | 18.53 |
 
 
-### R per trade, same years
+### The six never-seen years, charged both ways
 
-| sid | Rpt_2010 | Rpt_2011 | Rpt_2012 | Rpt_2013 | Rpt_2014 | Rpt_2015 | Rpt_2016 | Rpt_2017 | Rpt_2018 | Rpt_2019 | Rpt_2020 |
+| sid | stream | R_new6 | n_new6 | dd_new6 | t_new6 | years_pos_new6 | prop_return_new6 | R_new6_era | R_delta_era | R_delta_per_trade | prop_return_new6_era |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | -0.08933 | -0.02139 | -0.02746 | -0.007057 | 0.03934 | -0.1563 | 0.03033 | 0.01451 | 0.364 | 0.2711 | 0.0521 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | -0.1089 | 0.01914 | -0.119 | 0.08825 | 0.07543 | -0.05285 | 0.03355 | 0.06649 | 0.2193 | 0.1379 | 0.03387 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | -0.08931 | -0.05296 | -0.05287 | 0.05992 | -0.003991 | -0.02512 | -0.05271 | 0.03461 | 0.375 | 0.1993 | 0.0286 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | -0.1143 | -0.0423 | -0.09952 | 0.1186 | 0.0001309 | 0.06939 | -0.006302 | 0.0236 | 0.2146 | 0.13 | 0.03868 |
-| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | -0.1117 | 0.05939 | -0.1502 | -0.02768 | 0.02076 | 0.06649 | 0.1107 | -0.1064 | 0.1381 | 0.1105 | 0.1386 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | -0.04913 | -0.0212 | -0.0625 | 0.1328 | -0.07972 | 0.04574 | 0.02811 | 0.1379 | 0.2905 | 0.1855 | -0.00672 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | -0.1019 | -0.01516 | 0.1875 | -0.03828 | -0.2407 | -0.05648 | -0.005633 | 0.04266 | 0.2268 | 0.1565 | 0.04912 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | -0.04487 | -0.1464 | -0.1597 | 0.1261 | -0.002435 | -0.04691 | 0.04832 | -0.02469 | 0.3846 | 0.1654 | 0.08899 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -82.31 | 2108 | 88.28 | -1.943 | 1 | -0.5594 | -90.9 | -8.589 | -0.004074 | -0.5736 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -83.87 | 2295 | 95.8 | -0.9208 | 2 | -0.5253 | -93.01 | -9.147 | -0.003986 | -0.5323 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -75.66 | 1794 | 91.44 | -2.144 | 2 | -0.4965 | -82.79 | -7.127 | -0.003973 | -0.5048 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -21.05 | 1947 | 89.26 | 0.1628 | 3 | -0.1415 | -28.74 | -7.686 | -0.003948 | -0.1846 |
+| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -40.07 | 2485 | 99.13 | -0.5621 | 3 | -0.2425 | -50.17 | -10.1 | -0.004066 | -0.2975 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | 8.96 | 1174 | 39.27 | -0.06533 | 2 | 0.1369 | 4.261 | -4.699 | -0.004003 | 0.06159 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -112.9 | 1985 | 131.7 | -0.6256 | 1 | -0.5145 | -120.6 | -7.65 | -0.003854 | -0.5218 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | trend-allon | -59.27 | 1571 | 80.72 | -1.352 | 1 | -0.4406 | -65.37 | -6.096 | -0.003881 | -0.4717 |
 
 
-### The six never-seen years, summarised
+**1 of 8 winners are positive over the six never-seen years under the charged table, and 1 of 8 under era-correct costs. 0 clear the 12%/yr prop target either way.**
 
-| sid | stream | R_new6 | n_new6 | dd_new6 | t_new6 | years_pos_new6 | prop_return_new6 |
-|---|---|---|---|---|---|---|---|
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -168.8 | 4369 | 88.28 | -1.553 | 1 | -1.147 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -88.11 | 4131 | 95.8 | -0.4412 | 3 | -0.5519 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -127.4 | 3755 | 91.44 | -1.3 | 1 | -0.8357 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -116.9 | 3708 | 89.26 | -0.3 | 3 | -0.7855 |
-| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -81.63 | 4600 | 99.13 | -0.6461 | 3 | -0.494 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | 12.98 | 2350 | 39.27 | -0.172 | 2 | 0.1984 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -249.6 | 3698 | 131.7 | -0.7784 | 1 | -1.138 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | trend-allon | -101.4 | 3062 | 80.72 | -1.072 | 1 | -0.7537 |
+
+The era correction costs every winner between 4.7 and 10.1 R over the six years — about -0.0040 R per trade, consistent across all of them, which is the sanity check a uniform cost increase should pass.
 
 
 ### All eleven years
 
 | sid | R_all11 | n_all11 | dd_all11 | years_pos_all11 | prop_return_all11 |
 |---|---|---|---|---|---|
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | 72.64 | 6255 | 104 | 6 | 0.2286 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | 160.2 | 6931 | 115.7 | 8 | 0.4533 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | 76.9 | 5487 | 94.42 | 5 | 0.2666 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | 70.48 | 6338 | 89.26 | 7 | 0.2584 |
-| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | 158.2 | 7087 | 99.13 | 7 | 0.5223 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | 200.5 | 4003 | 55.68 | 6 | 1.179 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | -86.13 | 5725 | 151 | 5 | -0.1866 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | 190.8 | 5266 | 80.72 | 5 | 0.7734 |
-
-
-**1 of 8 winners are positive over the six never-seen years.** **0 clear the 12%/yr prop target on those six years; 0 clear it on all eleven.** Median years-positive out of six: 1.5.
-
-
-Top by prop return on the never-seen years:
-
-| sid | stream | prop_return_new6 | R_new6 | dd_new6 | t_new6 |
-|---|---|---|---|---|---|
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | 0.1984 | 12.98 | 39.27 | -0.172 |
-| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -0.494 | -81.63 | 99.13 | -0.6461 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -0.5519 | -88.11 | 95.8 | -0.4412 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | trend-allon | -0.7537 | -101.4 | 80.72 | -1.072 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -0.7855 | -116.9 | 89.26 | -0.3 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -0.8357 | -127.4 | 91.44 | -1.3 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | trend-allon | -1.138 | -249.6 | 131.7 | -0.7784 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | -1.147 | -168.8 | 88.28 | -1.553 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | 42.78 | 2934 | 104 | 6 | 0.1346 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | 55.58 | 3607 | 115.7 | 7 | 0.1572 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | 28.76 | 2563 | 94.42 | 7 | 0.09969 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|volatility_ratio_volume_signals|alma_baseline|adx_dmi_exit | 93.88 | 3245 | 89.26 | 8 | 0.3442 |
+| lemantrend_signals|relative_vigor_index_signals|volatility_ratio_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | 87.44 | 3673 | 99.13 | 7 | 0.2887 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|fantail_vma|adx_dmi_exit | 107.5 | 2077 | 55.68 | 6 | 0.6317 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|super_smoother_2pole_baseline|adx_dmi_exit | 5.354 | 2977 | 151 | 6 | 0.0116 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|choppiness_index_volume_signals|frama_baseline|adx_dmi_exit | 57.24 | 2647 | 80.72 | 5 | 0.2321 |
 
 
 ## Mode B
 
-### R per trade year, 2010-2020
+### R per trade year, 2010-2020 — corrected
 
-Total R in the year. `never_seen` years are **2010-2015**.
+**2010-2015 were never seen at selection.** 2016-2020 are the years the winners were chosen on and now reproduce the record exactly.
 
 | sid | stream | R_2010 | R_2011 | R_2012 | R_2013 | R_2014 | R_2015 | R_2016 | R_2017 | R_2018 | R_2019 | R_2020 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | -17.92 | -28.3 | 7.647 | 6.684 | 16.98 | -3.177 | -5.294 | 15.41 | 57.46 | 45.76 | 13.7 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | 23.45 | -42.67 | -28.98 | 56.39 | -13.98 | 7.112 | 2.918 | 33.44 | 111.9 | 45.97 | 15.29 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | -15.86 | -6.066 | 0.2522 | 4.584 | 7.233 | 1.62 | 17.12 | 14.11 | 34.84 | 18.32 | 7.85 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | 11.54 | -16.58 | -12.34 | 12.98 | 10.78 | 6.023 | 5.283 | 23.73 | 46.81 | 12.02 | 10.31 |
 
 
-### R per trade, same years
+### The six never-seen years, charged both ways
 
-| sid | Rpt_2010 | Rpt_2011 | Rpt_2012 | Rpt_2013 | Rpt_2014 | Rpt_2015 | Rpt_2016 | Rpt_2017 | Rpt_2018 | Rpt_2019 | Rpt_2020 |
+| sid | stream | R_new6 | n_new6 | dd_new6 | t_new6 | years_pos_new6 | prop_return_new6 | R_new6_era | R_delta_era | R_delta_per_trade | prop_return_new6_era |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | -0.03838 | -0.09726 | 0.04134 | 0.02832 | 0.06361 | -0.02626 | -0.02036 | 0.06729 | 0.1785 | 0.152 | 0.06315 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | 0.08498 | -0.2072 | -0.1146 | 0.09477 | -0.01944 | 0.02586 | 0.006017 | 0.08823 | 0.3067 | 0.1372 | 0.0665 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | -8.235 | 659 | 36.08 | -0.02951 | 4 | -0.137 | -10.92 | -2.683 | -0.004072 | -0.1766 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | 12.41 | 1129 | 36.64 | 0.03372 | 4 | 0.2032 | 7.101 | -5.307 | -0.0047 | 0.1129 |
 
 
-### The six never-seen years, summarised
+**1 of 2 winners are positive over the six never-seen years under the charged table, and 1 of 2 under era-correct costs. 0 clear the 12%/yr prop target either way.**
 
-| sid | stream | R_new6 | n_new6 | dd_new6 | t_new6 | years_pos_new6 | prop_return_new6 |
-|---|---|---|---|---|---|---|---|
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | -18.09 | 1567 | 36.08 | -0.1946 | 3 | -0.3008 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | 1.318 | 2324 | 36.64 | -0.4669 | 3 | 0.02158 |
+
+The era correction costs every winner between 2.7 and 5.3 R over the six years — about -0.0044 R per trade, consistent across all of them, which is the sanity check a uniform cost increase should pass.
 
 
 ### All eleven years
 
 | sid | R_all11 | n_all11 | dd_all11 | years_pos_all11 | prop_return_all11 |
 |---|---|---|---|---|---|
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | 109 | 2896 | 36.08 | 7 | 0.9883 |
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | 210.9 | 4118 | 36.64 | 8 | 1.884 |
+| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | 84 | 1249 | 36.08 | 9 | 0.762 |
+| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | 110.6 | 1988 | 36.64 | 9 | 0.9877 |
 
 
-**1 of 2 winners are positive over the six never-seen years.** **0 clear the 12%/yr prop target on those six years; 0 clear it on all eleven.** Median years-positive out of six: 3.0.
+## How to read this
 
-
-Top by prop return on the never-seen years:
-
-| sid | stream | prop_return_new6 | R_new6 | dd_new6 | t_new6 |
-|---|---|---|---|---|---|
-| lemantrend_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|alma_baseline|adx_dmi_exit | trend-allon | 0.02158 | 1.318 | 36.64 | -0.4669 |
-| waddah_attar_explosion_signals|hieken_ashi_smoothed_signals|chaikin_volatility_volume_signals|fantail_vma|adx_dmi_exit | trend-allon | -0.3008 | -18.09 | 36.08 | -0.1946 |
-
-
-## How to read a failure here
-
-These winners cleared two luck floors on 2016-2020. If they are flat or negative on 2010-2015 the floors did their job on the years they were given and the selection still does not generalise — which is a finding about the METHOD, not about these ten strategies. If they hold up, the six years are the first genuinely out-of-sample evidence the project has for them.
+These winners cleared two luck floors on 2016-2020 and they do not generalise backwards. That is a finding about the **selection method**, not about these ten strategies: the floors did their job on the years they were given, and those years were not representative. Charging the costs that actually prevailed makes it worse, not better.
 
 
 ## Still pending
 
-- The family sample and the control run as a **second stage** and are reported in `B1_NARROW.md`. Without them, a winner holding up here cannot yet be separated from the family holding up.
+- The family sample and the control run as a second stage, reported in `B1_NARROW.md`. Until then a winner holding up here cannot be separated from the family holding up.
 
 - The random-entry null on these six years needs an engine pass and is not in this read.
+
+- **The gate 2 / gate 3 per-year divergence above is unresolved.**
 
 
 ## Provenance
 
-- `results/r2reads/modeA_b1winners.csv` — 8 rows, md5 `e1f5681887cf`
-- `results/r2reads/modeB_b1winners.csv` — 2 rows, md5 `9ef287546af7`
+- `results/r2reads/modeA_b1winners.csv` — 8 rows, md5 `d1d70eefb2a0`
+- `results/r2reads/modeB_b1winners.csv` — 2 rows, md5 `98c8349d6234`
+- `results/r2reads/modeA_b1winners_era.csv` — 8 rows, md5 `9c052dbdf7f7`
+- `results/r2reads/modeB_b1winners_era.csv` — 2 rows, md5 `b17dd2afe550`
+- `results/r2gate2_cond3_crosswalk.csv` — 50 rows, md5 `9c5ba615e165`
+- `results/r2gate2/gate2_vs_gate3_peryear.csv` — 50 rows, md5 `7a38d783b53e`
+- `results/cost_table_era_2004_2015.csv` — 28 rows, md5 `7d5148783e64`
