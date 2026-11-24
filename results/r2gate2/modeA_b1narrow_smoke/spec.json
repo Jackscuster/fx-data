@@ -19,5 +19,5 @@
  ],
  "objective": "account-normalised R (ACCT_OBJECTIVE True), trade-weighted over the step tune years, PF tiebreak, MIN_TRADES_PICK=100",
  "config_set": "axial: default + every single-knob deviation over each declared grid",
- "stamp": "2026-11-24 16:29:28"
+ "stamp": "2026-11-24 18:41:27"
 }
