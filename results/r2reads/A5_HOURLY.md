@@ -1,6 +1,6 @@
 # A5 — THE HOURLY PATH AGAINST THE DAILY BAR
 
-Generated 2026-11-24 10:33 by `code/r2hourly.py`.
+Generated 2026-11-24 16:40 by `code/r2hourly.py`.
 
 
 ## What was specified, and what each section answers
@@ -79,19 +79,19 @@ Reported as a curve over the full range, not at a chosen threshold.
 
 | threshold_R | winners | years | days | days_marked_hourly | days_stop_fires | R_total | max_dd_R | R_per_year | prop_return | clears_12pct | R_vs_no_overlay |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 0.2 | 1 | 1 | 259 | 240 | 172 | -30.68 | 35 | -30.68 | -3.155 | 0 | -44.49 |
-| 0.4 | 1 | 1 | 259 | 240 | 133 | -52.15 | 56.28 | -52.15 | -3.336 | 0 | -65.96 |
-| 0.6 | 1 | 1 | 259 | 240 | 114 | -67.08 | 71 | -67.08 | -3.401 | 0 | -80.89 |
-| 0.8 | 1 | 1 | 259 | 240 | 95 | -69.26 | 78 | -69.26 | -3.197 | 0 | -83.08 |
-| 1 | 1 | 1 | 259 | 240 | 86 | -82.15 | 92.23 | -82.15 | -3.207 | 0 | -95.96 |
-| 1.2 | 1 | 1 | 259 | 240 | 77 | -87.84 | 95.45 | -87.84 | -3.313 | 0 | -101.6 |
-| 1.5 | 1 | 1 | 259 | 240 | 62 | -86.68 | 96.9 | -86.68 | -3.22 | 0 | -100.5 |
-| 2 | 1 | 1 | 259 | 240 | 49 | -93.68 | 105.4 | -93.68 | -3.2 | 0 | -107.5 |
-| 2.5 | 1 | 1 | 259 | 240 | 33 | -78.62 | 90.91 | -78.62 | -3.113 | 0 | -92.43 |
-| 3 | 1 | 1 | 259 | 240 | 27 | -78.79 | 90.76 | -78.79 | -3.125 | 0 | -92.61 |
-| 4 | 1 | 1 | 259 | 240 | 16 | -60.22 | 77.09 | -60.22 | -2.812 | 0 | -74.04 |
-| 5 | 1 | 1 | 259 | 240 | 11 | -51.34 | 68.21 | -51.34 | -2.71 | 0 | -65.15 |
-|  | 1 | 1 | 259 | 240 | 0 | 13.81 | 18.18 | 13.81 | 2.735 | 0 | 0 |
+| 0.2 | 8 | 5 | 1.037e+04 | 8947 | 6492 | -943.5 | 52.37 | -188.7 | -12.97 | 0 | -1888 |
+| 0.4 | 8 | 5 | 1.037e+04 | 8947 | 5445 | -1775 | 76.21 | -354.9 | -16.77 | 0 | -2719 |
+| 0.6 | 8 | 5 | 1.037e+04 | 8947 | 4615 | -2307 | 112.6 | -461.3 | -14.74 | 0 | -3251 |
+| 0.8 | 8 | 5 | 1.037e+04 | 8947 | 3892 | -2556 | 126.2 | -511.2 | -14.58 | 0 | -3501 |
+| 1 | 8 | 5 | 1.037e+04 | 8947 | 3349 | -2752 | 148.3 | -550.4 | -13.37 | 0 | -3697 |
+| 1.2 | 8 | 5 | 1.037e+04 | 8947 | 2842 | -2792 | 163.7 | -558.5 | -12.28 | 0 | -3737 |
+| 1.5 | 8 | 5 | 1.037e+04 | 8947 | 2264 | -2753 | 191.5 | -550.7 | -10.35 | 0 | -3698 |
+| 2 | 8 | 5 | 1.037e+04 | 8947 | 1506 | -2259 | 184.3 | -451.9 | -8.826 | 0 | -3204 |
+| 2.5 | 8 | 5 | 1.037e+04 | 8947 | 1084 | -1930 | 198.1 | -386.1 | -7.017 | 0 | -2875 |
+| 3 | 8 | 5 | 1.037e+04 | 8947 | 799 | -1636 | 182.5 | -327.2 | -6.453 | 0 | -2581 |
+| 4 | 8 | 5 | 1.037e+04 | 8947 | 463 | -1021 | 131.4 | -204.1 | -5.592 | 0 | -1965 |
+| 5 | 8 | 5 | 1.037e+04 | 8947 | 254 | -398.4 | 103.1 | -79.67 | -2.781 | 0 | -1343 |
+|  | 8 | 5 | 1.037e+04 | 8947 | 0 | 944.7 | 24.79 | 188.9 | 27.43 | 1 | 0 |
 
 
 **What this measurement can and cannot say.** It is computed on the ambiguous days alone, because those are the only days for which an hourly path was built. It is a per-day rate on those days and is NOT extrapolated to the rest of the book. A full hourly-marked equity curve for every book member over every day is a separate engine pass and is not in this read.
@@ -143,6 +143,30 @@ On **all** days at the entry hour the realised spread is 2.57 bp against 2.43 bp
 The extra spread on those days is worth far less than the +27.50 R the disagreements are worth, so correcting the daily fill assumption is a net gain even after paying the wider spread.
 
 
+### 4 — the daily loss stop on hourly marks, swept
+
+Reported as a curve over the full range, not at a chosen threshold.
+
+| threshold_R | winners | years | days | days_marked_hourly | days_stop_fires | R_total | max_dd_R | R_per_year | prop_return | clears_12pct | R_vs_no_overlay |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0.2 | 2 | 5 | 2592 | 2045 | 1475 | -241.5 | 38.85 | -48.31 | -4.476 | 0 | -431.9 |
+| 0.4 | 2 | 5 | 2592 | 2045 | 1182 | -369.6 | 56.71 | -73.91 | -4.692 | 0 | -560 |
+| 0.6 | 2 | 5 | 2592 | 2045 | 966 | -459.3 | 68.17 | -91.85 | -4.85 | 0 | -649.7 |
+| 0.8 | 2 | 5 | 2592 | 2045 | 791 | -484 | 70.56 | -96.8 | -4.939 | 0 | -674.4 |
+| 1 | 2 | 5 | 2592 | 2045 | 662 | -508.7 | 81.05 | -101.7 | -4.519 | 0 | -699.1 |
+| 1.2 | 2 | 5 | 2592 | 2045 | 545 | -487.3 | 76.51 | -97.46 | -4.586 | 0 | -677.7 |
+| 1.5 | 2 | 5 | 2592 | 2045 | 424 | -464.2 | 79.57 | -92.83 | -4.2 | 0 | -654.6 |
+| 2 | 2 | 5 | 2592 | 2045 | 268 | -365.2 | 76.95 | -73.04 | -3.417 | 0 | -555.6 |
+| 2.5 | 2 | 5 | 2592 | 2045 | 178 | -248.2 | 77.11 | -49.64 | -2.317 | 0 | -438.6 |
+| 3 | 2 | 5 | 2592 | 2045 | 127 | -178.2 | 77.46 | -35.64 | -1.657 | 0 | -368.6 |
+| 4 | 2 | 5 | 2592 | 2045 | 70 | -75.69 | 59.96 | -15.14 | -0.909 | 0 | -266.1 |
+| 5 | 2 | 5 | 2592 | 2045 | 39 | 8.565 | 53.69 | 1.713 | 0.1149 | 0 | -181.8 |
+|  | 2 | 5 | 2592 | 2045 | 0 | 190.4 | 12.61 | 38.08 | 10.87 | 0 | 0 |
+
+
+**What this measurement can and cannot say.** It is computed on the ambiguous days alone, because those are the only days for which an hourly path was built. It is a per-day rate on those days and is NOT extrapolated to the rest of the book. A full hourly-marked equity curve for every book member over every day is a separate engine pass and is not in this read.
+
+
 ## What this says about A6
 
 A6 states that every breach count is a lower bound because the input is a daily series. This report is the first direct evidence of the size of that blind spot: on the days where the daily bar is genuinely ambiguous, the hourly path disagrees with it **40%% of the time in mode A and 50%% in mode B**, always favourably. A6 is therefore conservative on fills and, separately, optimistic on intraday breaches.
@@ -156,11 +180,13 @@ A6 states that every breach count is a lower bound because the input is a daily 
 - `results/r2reads/modeA_a5_delta_book.csv` — 1 rows, md5 `68bc3efd0317`
 - `results/r2reads/modeA_a5_spreads.csv` — 77 rows, md5 `2215d564a1e3`
 - `results/r2reads/modeA_a5_spreads_by_pair.csv` — 13 rows, md5 `257a8048951f`
-- `results/r2reads/modeA_a5_overlay.csv` — 13 rows, md5 `0c284a12879b`
-- `results/r2reads/modeA_a5_overlay_curve.csv` — 13 rows, md5 `aef2991a2544`
+- `results/r2reads/modeA_a5_overlay.csv` — 520 rows, md5 `c3b13a6bfb12`
+- `results/r2reads/modeA_a5_overlay_curve.csv` — 13 rows, md5 `f27b4f53dd1b`
 - `results/r2reads/modeB_a5_hourly.csv` — 22 rows, md5 `827a1d3c7521`
 - `results/r2reads/modeB_a5_disagree.csv` — 22 rows, md5 `774bc785c16a`
 - `results/r2reads/modeB_a5_delta_strategy.csv` — 2 rows, md5 `6b3dc9df9cfa`
 - `results/r2reads/modeB_a5_delta_book.csv` — 1 rows, md5 `9ba27f6e05d5`
 - `results/r2reads/modeB_a5_spreads.csv` — 22 rows, md5 `29e5af6b3bfb`
 - `results/r2reads/modeB_a5_spreads_by_pair.csv` — 12 rows, md5 `4eedd5706202`
+- `results/r2reads/modeB_a5_overlay.csv` — 130 rows, md5 `69e8d5bee491`
+- `results/r2reads/modeB_a5_overlay_curve.csv` — 13 rows, md5 `f6fd448f628d`
