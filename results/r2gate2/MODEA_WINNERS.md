@@ -1,3 +1,23 @@
+<!-- PROVISIONAL, added 2026-11-24. The winner list in this file is NOT SAFE.
+
+Item 0b found that `mode?_winners.csv`, from which this report is built, writes
+`R_<year>` from the GATE 3 KPI bank, which books each whole trade to the year it
+was ENTERED. Gate 2's `win` array marks every trade to market at each year end,
+which is this project's declared rule and the convention the staged build now
+uses (item 8). The two disagree on 41 of 50 winner-years, median 1.01 R, largest
+10.63 R, and on 35 of 50 trade counts by up to 11 trades.
+
+CONSEQUENCE FOR THIS FILE: one winner's yearly t moves 4.116 -> 5.033 against a
+floor that was set at 5.08, and another's years-positive moves 4 -> 5 against a
+rule requiring 4 of 5. So the MEMBERSHIP of the list could have been different.
+The broad conclusion -- that these winners are not distinguishable from luck at
+a best-of-field floor -- does not reverse, and B1_WINNERS.md shows they do not
+survive the six years they were never selected on either.
+
+Nothing here has been regenerated, as instructed. See
+results/nnfx/SCORER_DIVERGENCE.md and results/r2gate2/gate2_vs_gate3_peryear.csv.
+-->
+
 # MODE A — WINNERS, NO GATES
 
 Generated 2026-11-22 14:35 by `code/l2r2winners.py`, read-only off the gate 2 bank and the gate 3 scoring. **Nothing is filtered before it is measured**: all 273,780 strategies are recorded on both unseen records, and the only cut is the LUCK FLOOR, which is a statement about chance rather than a preference about settings. Individual strategies first; the book last.
