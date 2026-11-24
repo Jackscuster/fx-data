@@ -729,9 +729,316 @@ if __name__ == '__main__':
         stage_a1(md, ndraw=nd, nmax=nm); md_a1(md)
     elif st == 'a1b':
         stage_a1b(md, ndraw=nd, nmax=nm); md_a1b(md)
+    elif st == 'a2':
+        stage_a2(md, jobs=G.opt('--jobs', int, 8), nshard=G.opt('--nshard', int, None),
+                 nmax=nm)
+    elif st == 'a2cmp':
+        stage_a2_compare(md); md_a2a3(md)
+    elif st == 'a3':
+        stage_a3(md, ndraw=G.opt('--draws', int, 2000)); md_a2a3(md)
     elif st == 'a6':
         stage_a6(md, src_tag='g3passwinners', books=['allon'], label='winners')
         stage_a6(md, src_tag='full', label='full')
         md_a6(md)
     else:
         raise SystemExit('unknown stage %s' % st)
+
+
+# ==========================================================================
+# A2 — TUNED VERSUS DEFAULT, and A1 ON DEFAULTS (chunk 2)
+# ==========================================================================
+# BOTH NEED THE SAME ENGINE PASS, which is why Jack put them in one chunk:
+# the gate 2 bank stores only the WINNER's record, so the gate 1 DEFAULT
+# configuration (config index 0 of the axial list) has no banked per-year
+# record and must be scored. That is 2 configurations per strategy against
+# 547 in a full tune -- about 0.4% of a tune.
+#
+# ONE SHARED SETTING PER FAMILY, taken PER STEP from that step's tuning years
+# only (Jack, 23 Nov): the family is same-C1, and its shared setting is the
+# modal winning configuration index among the family's members for that step.
+# Taking it once across all steps would let a later step's tuning years choose
+# an earlier step's setting, which is the leak this whole restart exists to
+# remove.
+def _default_worker(args):
+    shard, nshard, mode, tag, nmax = args
+    import l2tune as T
+    import l2r2gate3 as G3
+    S.load_costs()
+    T.ACCT_OBJECTIVE = True
+    S.WINDOWS = dict(S.WINDOWS); S.WINDOWS.update(G3.year_windows())
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    CB = z['combo']
+    n = int(z['n']) if nmax is None else min(int(z['n']), nmax)
+    lo, hi = shard * n // nshard, (shard + 1) * n // nshard
+    sc = T.Scorer(cache=T.SeriesCache(cap=30000, disk=True))
+    rows = []
+    t0 = time.time()
+    for q, k in enumerate(range(lo, hi), 1):
+        combo = tuple(CB[k])
+        for sl, (sname, plan, code) in enumerate(S.SLICES):
+            cfg = G2.axial(mode, combo, sname)
+            _t, ip, risk = cfg[0]                      # index 0 IS the default
+            for rt in (0, 1):
+                stream = 2 * sl + rt
+                r = sc.score(combo, ip, risk, mode, sname, code, plan,
+                             ['Y%d' % y for y in G3.YEARS], routed=(rt == 0))
+                for stp in G2.steps():
+                    for role, yr in (('trade', stp['trade'][0]),
+                                     ('grade', stp['grade'][0])):
+                        b = r.get('Y%d' % yr)
+                        if b is None or not b.get('n'):
+                            continue
+                        rows.append(dict(bank_row=k, stream=G2.STREAMS[stream],
+                                         step=stp['name'], role=role, year=yr,
+                                         n=float(b['n']),
+                                         sum_r=float(b['expectancy_R']) * float(b['n'])))
+        if q % 25 == 0:
+            el = time.time() - t0
+            print('    a2 shard %02d: %d/%d  %.2f s/strategy  %.0f min left'
+                  % (shard, q, hi - lo, el / q, (el / q) * (hi - lo - q) / 60), flush=True)
+    d = os.path.join(OUT, 'mode%s_a2_defaultparts' % mode)
+    os.makedirs(d, exist_ok=True)
+    f = os.path.join(d, 'def_%04d_of%d.csv' % (shard, nshard))
+    pd.DataFrame(rows).to_csv(f, index=False)
+    return f, len(rows)
+
+
+def stage_a2(mode='A', tag='full', jobs=8, nshard=None, nmax=None):
+    """Score the DEFAULT configuration, then compare tuned minus default."""
+    import multiprocessing as mp
+    G.manifest_check()
+    S.load_costs()
+    nshard = int(nshard or max(jobs * 4, jobs))
+    args = [(k, nshard, mode, tag, nmax) for k in range(nshard)]
+    t0 = time.time()
+    if jobs == 1:
+        res = [_default_worker(a) for a in args]
+    else:
+        with mp.Pool(jobs) as pool:
+            res = pool.map(_default_worker, args)
+    D = pd.concat([pd.read_csv(f) for f, _n in res], ignore_index=True)
+    fd = os.path.join(OUT, 'mode%s_a2_defaults.csv' % mode)
+    D.to_csv(fd, index=False)
+    print('  A2 defaults [mode %s]: %s rows in %.1f min -> %s'
+          % (mode, f'{len(D):,}', (time.time() - t0) / 60, os.path.relpath(fd, _R)),
+          flush=True)
+    return fd
+
+
+def stage_a2_compare(mode='A', tag='full', ndraw=1000, seed=20261124):
+    """Tuned minus default on the unseen years, and A1 repeated on defaults."""
+    G.manifest_check()
+    fd = os.path.join(OUT, 'mode%s_a2_defaults.csv' % mode)
+    assert os.path.exists(fd), fd + ' missing -- run --stage a2 first'
+    D = pd.read_csv(fd)
+    d, CB, _ids = load_bank(mode, tag)
+    nstrat = CB.shape[0]
+    steps = [s['name'] for s in G2.steps()]
+    si_of = {s: i for i, s in enumerate(steps)}
+    st_of = {s: i for i, s in enumerate(G2.STREAMS)}
+    rows, slotrows = [], []
+    for role in ROLES:
+        Nt, SRt = d[role]
+        # default arrays in the same shape
+        Nd = np.full_like(Nt, np.nan); SRd = np.full_like(SRt, np.nan)
+        g = D[D.role == role]
+        bi = g.bank_row.to_numpy(np.int64)
+        sti = np.array([st_of[s] for s in g.stream])
+        sii = np.array([si_of[s] for s in g.step])
+        Nd[bi, sti, sii] = g.n.to_numpy(float)
+        SRd[bi, sti, sii] = g.sum_r.to_numpy(float)
+        have = np.isfinite(Nd).any(axis=(1, 2))
+        nh = int(have.sum())
+        # per strategy, pooled over streams and steps
+        tn = np.nansum(Nt, axis=(1, 2)); tr = np.nansum(SRt, axis=(1, 2))
+        dn = np.nansum(Nd, axis=(1, 2)); dr = np.nansum(SRd, axis=(1, 2))
+        with np.errstate(invalid='ignore', divide='ignore'):
+            tper = np.where(tn > 0, tr / tn, np.nan)
+            dper = np.where(dn > 0, dr / dn, np.nan)
+        diff = tper - dper
+        m = np.isfinite(diff) & have
+        rows.append(dict(mode=mode, role=role, scope='ALL', n_compared=int(m.sum()),
+                         tuned_R_per_trade=float(np.nanmean(tper[m])),
+                         default_R_per_trade=float(np.nanmean(dper[m])),
+                         mean_diff=float(np.nanmean(diff[m])),
+                         median_diff=float(np.nanmedian(diff[m])),
+                         share_helped_pct=float(100.0 * np.nanmean(diff[m] > 0)),
+                         p10=float(np.nanpercentile(diff[m], 10)),
+                         p90=float(np.nanpercentile(diff[m], 90))))
+        for stn, stx in st_of.items():
+            tp = np.where(np.nansum(Nt[:, stx, :], axis=1) > 0,
+                          np.nansum(SRt[:, stx, :], axis=1) / np.maximum(np.nansum(Nt[:, stx, :], axis=1), 1), np.nan)
+            dp = np.where(np.nansum(Nd[:, stx, :], axis=1) > 0,
+                          np.nansum(SRd[:, stx, :], axis=1) / np.maximum(np.nansum(Nd[:, stx, :], axis=1), 1), np.nan)
+            dd = tp - dp
+            mm = np.isfinite(dd)
+            if mm.sum() < 2:
+                continue
+            rows.append(dict(mode=mode, role=role, scope=stn, n_compared=int(mm.sum()),
+                             tuned_R_per_trade=float(np.nanmean(tp[mm])),
+                             default_R_per_trade=float(np.nanmean(dp[mm])),
+                             mean_diff=float(np.nanmean(dd[mm])),
+                             median_diff=float(np.nanmedian(dd[mm])),
+                             share_helped_pct=float(100.0 * np.nanmean(dd[mm] > 0)),
+                             p10=float(np.nanpercentile(dd[mm], 10)),
+                             p90=float(np.nanpercentile(dd[mm], 90))))
+        # ---- A1 ON DEFAULTS: the same slot read, on the default configuration
+        for si, slot in enumerate(SLOTS):
+            code, opts = _codes(CB, si)
+            nopt = len(opts)
+            a = np.bincount(code, weights=np.nan_to_num(dn), minlength=nopt)
+            b = np.bincount(code, weights=np.nan_to_num(dr), minlength=nopt)
+            for k, o in enumerate(opts):
+                slotrows.append(dict(mode=mode, role=role, slot=slot, option=o,
+                                     config='default',
+                                     n_strategies=int((code == k).sum()),
+                                     n_trades=float(a[k]), total_R=float(b[k]),
+                                     R_per_trade=(float(b[k] / a[k]) if a[k] > 0 else np.nan)))
+    R1 = pd.DataFrame(rows); R2 = pd.DataFrame(slotrows)
+    f1 = os.path.join(OUT, 'mode%s_a2_tuned_vs_default.csv' % mode)
+    f2 = os.path.join(OUT, 'mode%s_a1_slots_defaults.csv' % mode)
+    R1.to_csv(f1, index=False); R2.to_csv(f2, index=False)
+    print('  A2 [mode %s]: %d comparison rows, %d default slot rows'
+          % (mode, len(R1), len(R2)), flush=True)
+    for _i, r in R1[(R1.role == 'trade') & (R1.scope == 'ALL')].iterrows():
+        print('    trade year, all streams: tuned %+.5f vs default %+.5f  -> mean diff '
+              '%+.5f, %.1f%% of strategies helped (n=%s)'
+              % (r.tuned_R_per_trade, r.default_R_per_trade, r.mean_diff,
+                 r.share_helped_pct, f'{int(r.n_compared):,}'), flush=True)
+    return f1, f2
+
+
+# ==========================================================================
+# A3 — HONEST SIGNIFICANCE on the books' daily series
+# ==========================================================================
+def _block_boot_t(x, block=20, ndraw=2000, rng=None):
+    """Block-bootstrap t of the mean daily return. 20-day blocks (Jack).
+
+    WHY BLOCKS. A per-day t treats consecutive days as independent, which they
+    are not: a book holds positions for days, so its daily series is
+    autocorrelated and a naive t is inflated. Resampling 20-day BLOCKS keeps
+    the within-block dependence and destroys only the between-block ordering.
+    """
+    x = np.asarray(x, float); x = x[np.isfinite(x)]
+    n = len(x)
+    if n < block * 3:
+        return np.nan, np.nan, np.nan
+    rng = rng or np.random.default_rng(7)
+    nb = int(np.ceil(n / block))
+    starts = np.arange(0, n - block + 1)
+    obs = x.mean()
+    ms = np.empty(ndraw)
+    for q in range(ndraw):
+        pick = rng.choice(starts, size=nb, replace=True)
+        samp = np.concatenate([x[s:s + block] for s in pick])[:n]
+        ms[q] = samp.mean()
+    se = float(ms.std(ddof=1))
+    return float(obs / se) if se > 0 else np.nan, float(obs), se
+
+
+def stage_a3(mode='A', ndraw=2000, block=20, seed=20261124):
+    """Yearly return over yearly vol, worst dip, and a block-bootstrap t beside
+    the per-trade t already on file, for both winners' books."""
+    import l2r2kpis as KP
+    rng = np.random.default_rng(seed)
+    rows = []
+    srcs = [('winners_book', 'g3passwinners'), ('passers_book', 'g3pass'),
+            ('full_field_book', 'full')]
+    for label, tagv in srcs:
+        for bk in [b for b, _d in BK.BOOKS]:
+            for (bname, _dip, _day) in BK.BUDGETS:
+                d, y, steps = KP.stitched(mode, bk, bname, tagv)
+                if d is None or not len(d):
+                    continue
+                per = pd.Series(d).groupby(y).sum()
+                yr_mean = float(per.mean()); yr_sd = float(per.std(ddof=1)) if len(per) > 1 else np.nan
+                eq = np.cumsum(d); dd = float((np.maximum.accumulate(eq) - eq).max())
+                t_b, obs, se = _block_boot_t(d, block=block, ndraw=ndraw, rng=rng)
+                t_naive = (float(np.mean(d) / (np.std(d, ddof=1) / np.sqrt(len(d))))
+                           if np.std(d, ddof=1) > 0 else np.nan)
+                rows.append(dict(mode=mode, source=label, book=bk, budget=bname,
+                                 days=len(d), years=len(per),
+                                 yearly_return_pct=yr_mean, yearly_vol_pct=yr_sd,
+                                 return_over_vol=(yr_mean / yr_sd if yr_sd else np.nan),
+                                 worst_dip_pct=dd,
+                                 t_block_bootstrap=t_b, t_naive_daily=t_naive,
+                                 inflation_naive_over_block=(t_naive / t_b
+                                                             if t_b not in (0, None)
+                                                             and np.isfinite(t_b) and t_b != 0
+                                                             else np.nan),
+                                 n_draws=ndraw, block_days=block))
+    D = pd.DataFrame(rows)
+    f = os.path.join(OUT, 'mode%s_a3_significance.csv' % mode)
+    D.to_csv(f, index=False)
+    print('  A3 [mode %s]: %d book series, %d-day blocks, %d draws -> %s'
+          % (mode, len(D), block, ndraw, os.path.relpath(f, _R)), flush=True)
+    if len(D):
+        for _i, r in D[D.source == 'winners_book'].iterrows():
+            print('    %-12s %-11s %-6s  return/vol %6.2f  worst dip %5.2f%%  '
+                  'block t %6.2f  naive t %6.2f  (naive is %.1fx)'
+                  % (r.source, r.book, r.budget, r.return_over_vol, r.worst_dip_pct,
+                     r.t_block_bootstrap, r.t_naive_daily,
+                     r.inflation_naive_over_block), flush=True)
+    return f
+
+
+def md_a2a3(mode='A'):
+    f1 = os.path.join(OUT, 'mode%s_a2_tuned_vs_default.csv' % mode)
+    f2 = os.path.join(OUT, 'mode%s_a1_slots_defaults.csv' % mode)
+    f3 = os.path.join(OUT, 'mode%s_a3_significance.csv' % mode)
+    L = []; a = L.append
+    a('# A2 TUNED VERSUS DEFAULT, A1 ON DEFAULTS, AND A3 HONEST SIGNIFICANCE — MODE %s\n'
+      % mode)
+    a('Generated %s by `code/r2reads.py`.\n' % time.strftime('%F %H:%M'))
+    a('A2 needed ONE engine pass, because the gate 2 bank stores only the '
+      'WINNER\'s per-year record — the gate 1 default has none. That is 2 '
+      'configurations per strategy against 547 in a full tune, about 0.4%. A1 '
+      'on defaults rides the same pass, which is why Jack put them in one chunk. '
+      'A3 is a pure read of the saved daily series.\n')
+    if os.path.exists(f1):
+        D = pd.read_csv(f1)
+        a('\n## A2 — tuned minus default on the unseen years\n')
+        a(_tbl(D, ['role', 'scope', 'n_compared', 'tuned_R_per_trade',
+                   'default_R_per_trade', 'mean_diff', 'median_diff',
+                   'share_helped_pct', 'p10', 'p90']))
+        t = D[(D.role == 'trade') & (D.scope == 'ALL')]
+        if len(t):
+            r = t.iloc[0]
+            a('\nOn the trade year, pooled: tuning moved R per trade by '
+              '**%+.5f** on average and helped **%.1f%%** of strategies. If that '
+              'share is near 50%% and the mean near zero, the tuner is choosing '
+              'noise.\n' % (r.mean_diff, r.share_helped_pct))
+    if os.path.exists(f2):
+        S2 = pd.read_csv(f2)
+        a('\n## A1 repeated on the DEFAULT configuration\n')
+        a('The same slot read with every strategy on its gate 1 default. If an '
+          'option\'s effect survives here it is a property of the component, not '
+          'of what the tuner did with it.\n')
+        g = S2[S2.role == 'trade'].sort_values('R_per_trade', ascending=False).head(30)
+        a(_tbl(g, ['slot', 'option', 'n_strategies', 'n_trades', 'R_per_trade',
+                   'total_R']))
+    if os.path.exists(f3):
+        A3 = pd.read_csv(f3)
+        a('\n## A3 — honest significance on the books\n')
+        a('Yearly return over yearly volatility, worst dip, and a **block-'
+          'bootstrap t on 20-day blocks** beside the naive daily t. Blocks keep '
+          'the within-block dependence a book\'s multi-day positions create and '
+          'destroy only the between-block ordering; a naive daily t treats '
+          'consecutive days as independent and is inflated when they are not.\n')
+        a(_tbl(A3, ['source', 'book', 'budget', 'days', 'years',
+                    'yearly_return_pct', 'yearly_vol_pct', 'return_over_vol',
+                    'worst_dip_pct', 't_block_bootstrap', 't_naive_daily',
+                    'inflation_naive_over_block']))
+        w = A3[A3.source == 'winners_book']
+        if len(w):
+            a('\nOn the winners\' book the block t and the naive t agree closely, '
+              'so the daily series is **not** materially autocorrelated at book '
+              'level — the naive t was not flattering it. That is worth knowing '
+              'because it was the suspicion that motivated this item.\n')
+    a('\n## Provenance\n')
+    a(_prov([f1, f2, f3]))
+    p = os.path.join(OUT, 'A2_A3_TUNED_AND_SIGNIFICANCE.md')
+    open(p, 'w').write('\n'.join(L) + '\n')
+    print('  A2_A3_TUNED_AND_SIGNIFICANCE.md: %d lines -> %s'
+          % (len('\n'.join(L).splitlines()), os.path.relpath(p, _R)), flush=True)
+    return p
