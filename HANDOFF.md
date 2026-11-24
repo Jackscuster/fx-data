@@ -429,6 +429,52 @@
    NOT to be started until Jack says go. **(15 Sep: SUPERSEDED BY 0d — the
    kernel had a look-ahead; nothing Book-based below 0d may be quoted.)**
 
+RESUME. **WHERE THIS SESSION STOPPED — 23 Nov 2026. Read before launching anything.**
+
+   **Nothing is running.** No chain is registered in `~/fx-data-logs/chain_current`.
+   Free disk 20 GiB (96% used). Working tree clean at the commit below except
+   `Claude outputs/PROJECT_OVERVIEW_2026-11-23.md`, which this session did NOT
+   write and has NOT committed or altered.
+
+   **WHAT WAS IN FLIGHT: chain 22A, the `_r2dd` re-tune of mode A.** Paused on
+   22 Nov at 14:28 with `stop_chain.sh` (ZERO survivors verified), NOT killed.
+   Its three conditions had already passed and are committed; the tune stage
+   was about 55% done — per-shard 4,200-4,825 of 8,555, **177 part files
+   banked and tracked in git** at `results/r2gate2/modeA_full_r2dd/` (196 MB).
+   It resumes by SET DIFFERENCE, so nothing is lost. Measured ~12 h remaining
+   at 8 workers.
+
+   Pick it up with exactly:
+
+       cd ~/fx-data
+       nohup bash code/chain/queue.sh code/chain/l2r2y1.sh code/chain/l2r2y2.sh > /dev/null 2>&1 &
+
+   `l2r2y1.sh` is the tune plus gate 3; `l2r2y2.sh` is books, nulls, winners
+   and reports. `queue.sh` runs them back to back in ONE process — do not use
+   `arm_next.sh` for the handoff, which failed twice on 21 Nov (see below).
+
+   **WHAT IS UNVERIFIED.** The extended walk back to 2005 (item B1) is NOT
+   built: `steps()` still emits five steps, `YEAR0/NYEAR` are still 2011/10,
+   and the per-pair per-direction accumulator does not exist. Its cost is a
+   PROJECTION (~21 h tune + ~31 h gate 3 per mode) with two unmeasured
+   multipliers and no smoke behind it. Do not quote it as measured.
+
+   **DATA CHECKED THIS SESSION, so later work need not re-check:**
+   `data/px28.csv` runs 2002-09-24 to 2026-08-14 with **all 28 pairs complete
+   through 2005**, so the eleven-step walk is buildable. `data/oanda_h1/` holds
+   56 files (28 pairs x bid/ask, 453 MB) from 2002-05-06, so the hourly items
+   are feasible. `data/rates2y.csv` is present. `HANDOFF_LAYER2.md` is the
+   layer-2 redesign document item C2 asks about.
+
+   **TWO PROCESS FAULTS FOUND ON 21-22 Nov, both fixed, both worth knowing:**
+   `arm_next.sh` lost over two hours of machine time in one day -- once giving
+   up on a 20 h timeout while the chain ahead had 80 minutes to run, once
+   printing three mutually exclusive branches in one second and launching
+   nothing. `code/chain/queue.sh` replaces it. And `l2cache.BUDGET_GB` was a
+   fixed 10 GB on a volume that had 6: a budget above the free space can never
+   be exceeded, so eviction never fired and the cache filled the disk during
+   the tune. It is now 25% of free space, re-measured on every eviction.
+
 0l-NOW. **LAYER 2 RESTART — WHERE IT ACTUALLY STANDS. This is the index; the
    16 Nov record of the restart decision is item **0l** further down this
    section. Updated 2026-11-21.**
