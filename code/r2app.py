@@ -69,6 +69,56 @@ def stage_app():
         rankcorr={m: _recs(os.path.join(ROOTOUT, 'r2gate1_rankcorr_mode%s_full.csv' % m)) for m in 'ABC'},
         curve={m: curve_digest(m, 'full') for m in 'ABC'},
     )
+    # ---- THE READS SECTION: A1..A6, B1 and C1..C3.
+    # STANDING RULE: every result gets an app tab. These reports were delivered
+    # as markdown and csv on 24 Nov and had no tab until this section existed;
+    # the rule is not satisfied by a file on disk.
+    RD = os.path.join(ROOTOUT, 'r2reads')
+    def rd(name, cols=None, head=60):
+        return _recs(os.path.join(RD, name), cols=cols, head=head)
+    sec['reads'] = dict(
+        note=('The read-only passes off the banked gate 2 and gate 3 results. '
+              'Every number here comes from a csv in results/r2reads and every '
+              'report names its own provenance with an md5.'),
+        b1_winners={m: rd('mode%s_b1winners.csv' % m,
+                          ['sid', 'stream', 'R_new6', 'dd_new6', 't_new6',
+                           'years_pos_new6', 'prop_return_new6', 'R_all11',
+                           'dd_all11', 'prop_return_all11'])
+                    for m in 'AB'},
+        a4_capcurve={m: rd('mode%s_a4_capcurve.csv' % m) for m in 'AB'},
+        a4_attribution={m: rd('mode%s_a4_attribution.csv' % m,
+                              ['rule', 'step', 'book', 'budget',
+                               'worst10_mean_pct', 'worst10_largest_leg_share',
+                               'worst10_top_currency',
+                               'allday_largest_leg_share', 'worst_dip_pct',
+                               'worst_dip_largest_leg_share'])
+                       for m in 'AB'},
+        a5_delta={m: rd('mode%s_a5_delta_strategy.csv' % m) for m in 'AB'},
+        a5_spreads={m: rd('mode%s_a5_spreads_by_pair.csv' % m) for m in 'AB'},
+        a5_overlay={m: rd('mode%s_a5_overlay_curve.csv' % m) for m in 'AB'},
+        c1_data=rd('c1_data_availability.csv', head=20),
+        c3_fix={e: rd('c3_fix_%s.csv' % e, head=0) for e in ('measure',)},
+    )
+    # C3 is rolled up rather than shipped raw: 1,344 rows per era is a table
+    # nobody reads, and the roll-up is the currency-against-basket figure.
+    try:
+        import c3hourly as _C3
+        import pandas as _pd
+        for era in ('measure', 'confirm'):
+            f_ = os.path.join(RD, 'c3_hours_%s.csv' % era)
+            if os.path.exists(f_):
+                g = _C3.roll_up(_pd.read_csv(f_), ['currency', 'hour_ny'])
+                g = g.reindex(g.move_bp.abs().sort_values(ascending=False).index)
+                sec['reads']['c3_hours_%s' % era] = json.loads(
+                    g.head(40)[['currency', 'hour_ny', 'n', 'pairs', 'move_bp',
+                                'spread_bp', 'move_net_bp', 't_across_pairs']]
+                    .replace({np.nan: None}).to_json(orient='records'))
+    except Exception as e:
+        sec['reads']['c3_error'] = '%s: %s' % (type(e).__name__, e)
+    for k in ('b1_winners', 'a4_capcurve', 'a4_attribution', 'a5_delta',
+              'a5_spreads', 'a5_overlay'):
+        sec['reads'][k] = {m: v for m, v in sec['reads'][k].items() if v}
+    sec['reads'].pop('c3_fix', None)
     sec['curve'] = {k: v for k, v in sec['curve'].items() if v}
     sec['rankcorr'] = {k: v for k, v in sec['rankcorr'].items() if v}
     for root in (os.path.join(_R, 'app_data.json'), os.path.join(ROOTOUT, 'app_data.json')):

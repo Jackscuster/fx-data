@@ -80,6 +80,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="tr2">Trend round 2</button>
 <button role="tab" aria-selected="false" data-t="tq">Trend quality</button>
 <button role="tab" aria-selected="false" data-t="r2">L2 restart</button>
+<button role="tab" aria-selected="false" data-t="rr">Reads</button>
 <button role="tab" aria-selected="false" data-t="cw">Crisis witnesses</button>
 </nav>`;
 
@@ -604,6 +605,7 @@ reads tune years only. Four streams are measured and none is selected on. The cu
 over its whole range and reported as a curve, with the identity null beside it. Nothing from
 the old Layer 2 was deleted.</div>
 <div id="r2body"></div>
+<div id="rrbody"></div>
 </section>
 <section id="tq" hidden>
 <h3>Trend round 3: is there a quality flag on the trend label?</h3>
@@ -5494,6 +5496,7 @@ function boot(BUNDLE,root){
    if(t==='tr2')tr2Fill();
    if(t==='tq')tqFill();
    if(t==='r2')r2Fill();
+   if(t==='rr')rrFill();
    if(t==='cw')cwFill();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
@@ -5682,4 +5685,56 @@ const r2Fill=()=>{const el=document.getElementById('r2body');if(!el||el.dataset.
  Object.keys(D.curve||{}).forEach(m=>{h+=tbl(D.curve[m],['stream','cut_tune_R','n_pass','pct_pass','n_families','n_lone_survivor_families','grade_R_pass','trade_R_pass','trade_R_fail','null_trade_R_mean','null_p_one_sided'],'Mode '+m+' gate 1 curve, pooled over the five windows (cut reads tune years only)');});
  Object.keys(D.rankcorr||{}).forEach(m=>{h+=tbl(D.rankcorr[m],['window','stream','n_eligible','spearman_tune_to_trade','p'],'Mode '+m+': does the tune-year rank survive to the trade year?');});
  h+=tbl(D.superseded,null,'Superseded, headed, kept in full');
+ el.innerHTML=h;el.dataset.done='1';};
+
+/* READS -- A1..A6, B1 and C1..C3. Added 24 Nov. The standing rule is that every
+   result gets a tab; a markdown file on disk does not satisfy it. Each table
+   below is the csv the matching report in results/r2reads names in its own
+   provenance block, so the tab and the report cannot disagree. */
+const rrFill=()=>{const el=document.getElementById('rrbody');if(!el||el.dataset.done)return;
+ const R=((window.DATA||{}).l2_restart||{}).reads;
+ if(!R){el.innerHTML='<div class="note">no reads section in app_data.json</div>';return;}
+ const tbl=(rows,cols,title)=>{if(!rows||!rows.length)return '';
+  const c=cols||Object.keys(rows[0]);
+  return '<h4>'+title+'</h4><div style="overflow-x:auto"><table><thead><tr>'+c.map(k=>'<th>'+k+'</th>').join('')+'</tr></thead><tbody>'+
+   rows.map(r=>'<tr>'+c.map(k=>{let v=r[k];if(typeof v==='number')v=Math.abs(v)>=1000?v.toLocaleString():(Number.isInteger(v)?v:v.toFixed(4));return '<td>'+(v===null||v===undefined?'':v)+'</td>';}).join('')+'</tr>').join('')+
+   '</tbody></table></div>';};
+ const per=(o,t,cols)=>Object.keys(o||{}).map(m=>tbl(o[m],cols,'Mode '+m+' — '+t)).join('');
+ let h='<div class="note">'+(R.note||'')+'</div>';
+ h+='<h3>B1 — the winners on six years they were never selected on</h3>';
+ h+='<div class="note">The winners were chosen on the five-step walk, whose trade years are 2016-2020. '
+   +'Trade years 2010-2015 were touched by no part of that selection. 1 of 8 is positive on them in mode A, '
+   +'1 of 2 in mode B, and none of the ten clears 12%/yr on six years or on eleven. '
+   +'Prop return here is the real figure: the drawdown is re-scored with want_dd and taken from role_dd.</div>';
+ h+=per(R.b1_winners,'B1 winners, eleven-step walk');
+ h+='<h3>A4 — currency netting and the exposure cap</h3>';
+ h+='<div class="note">The cap is the shipped one (l2walkfwd.Book.series, cap_pct), swept over its full range. '
+   +'It does essentially nothing. And the largest currency leg carries LESS of total exposure on the ten worst '
+   +'days than on an average day, so the bad days are not concentration events.</div>';
+ h+=per(R.a4_capcurve,'A4 cap sweep, Team 1 budget, median across steps and books');
+ h+=per(R.a4_attribution,'A4 attribution: the ten worst days and the worst dip');
+ h+='<h3>A5 — the hourly path against the daily bar</h3>';
+ h+='<div class="note">The daily engine fills the STOP on a bar covering both levels (l2engine.py:37), so only an '
+   +'hourly verdict of target disagrees and every disagreement is favourable. The cost table is accurate: on all '
+   +'days at the entry hour the realised spread is 2.36 bp against 2.30 bp charged. The wider figure on ambiguous '
+   +'days is a selection effect, since an ambiguous day is a high-range day by construction.</div>';
+ h+=per(R.a5_delta,'A5 disagreements and the change in R, per strategy');
+ h+=per(R.a5_spreads,'A5 spreads: charged against realised, at the entry hour and all hours');
+ h+=per(R.a5_overlay,'A5 daily loss stop on hourly marks, swept over 13 thresholds');
+ h+='<h3>C3 — raw hourly effects</h3>';
+ h+='<div class="note">Per currency against the basket of the other seven, in basis points, gross and net of that '
+   +'hour’s own median spread. ZERO of 192 currency-hour cells have a positive move net of spread, pre-2016 and '
+   +'on 2016-2020 alike. Nothing tradable was built from this.</div>';
+ h+=tbl(R.c3_hours_measure,null,'C3 measured on pre-2016 — the 40 largest hour effects');
+ h+=tbl(R.c3_hours_confirm,null,'C3 confirmed once on 2016-2020 — the same');
+ h+='<h3>C1 — what daily OHLC is obtainable beyond FX</h3>';
+ h+='<div class="note">Fetched live through code/l2data.py:yahoo_ohlc. ETH starts 2017-11-09, almost two years '
+   +'after the 2016 split, so it cannot be tuned at all; BTC’s 1.3 IS years cannot be tuned honestly. The blocker '
+   +'is costs, not prices: the endpoint returns mid only and there are no OANDA credentials on the machine.</div>';
+ h+=tbl(R.c1_data,['asset_class','ticker','description','rows','first','last','has_ohlc'],'C1 data availability, measured');
+ h+='<h3>C2 — the boundary-fade strategy</h3>';
+ h+='<div class="note">NOT BUILT, deliberately. layer1_states.csv has 14 columns and not one is a price level, so the '
+   +'range boundary is not exposed. Two defects are filed against the producer in C2_BOUNDARY_DEFECT.md: the levels '
+   +'are missing, and the four mechanism reads have no per-column definition, unit or sign convention. Building a fade '
+   +'on a boundary I had invented would have produced something that looked like evidence and was not.</div>';
  el.innerHTML=h;el.dataset.done='1';};
