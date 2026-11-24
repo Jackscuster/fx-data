@@ -1,1076 +1,1076 @@
 # results/r2gate2/modeA_full
-# written 2026-11-24 09:37:08 by code/bankcheck.py at commit 0ae2def1dcf5
+# written 2026-11-24 16:59:06 by code/bankcheck.py at commit 735a941b0873
 # file	size	sha256	producing_commit
-shard_0000_part0000.npz	1297165		0ae2def1dcf5
-shard_0000_part0001.npz	1173985		0ae2def1dcf5
-shard_0000_part0002.npz	1312792		0ae2def1dcf5
-shard_0000_part0003.npz	1300612		0ae2def1dcf5
-shard_0000_part0004.npz	1335274		0ae2def1dcf5
-shard_0000_part0005.npz	1266071		0ae2def1dcf5
-shard_0000_part0006.npz	1271892		0ae2def1dcf5
-shard_0000_part0007.npz	1301508		0ae2def1dcf5
-shard_0000_part0008.npz	1137230		0ae2def1dcf5
-shard_0000_part0009.npz	994993		0ae2def1dcf5
-shard_0000_part0010.npz	954275		0ae2def1dcf5
-shard_0000_part0011.npz	1194358		0ae2def1dcf5
-shard_0000_part0012.npz	1136192		0ae2def1dcf5
-shard_0000_part0013.npz	1245244		0ae2def1dcf5
-shard_0000_part0014.npz	1064569		0ae2def1dcf5
-shard_0000_part0015.npz	1145769		0ae2def1dcf5
-shard_0000_part0016.npz	1219416		0ae2def1dcf5
-shard_0000_part0017.npz	1115722		0ae2def1dcf5
-shard_0000_part0018.npz	1228766		0ae2def1dcf5
-shard_0000_part0019.npz	754223		0ae2def1dcf5
-shard_0000_part0020.npz	990737		0ae2def1dcf5
-shard_0000_part0021.npz	1353047		0ae2def1dcf5
-shard_0000_part0022.npz	1078140		0ae2def1dcf5
-shard_0000_part0023.npz	1407619		0ae2def1dcf5
-shard_0000_part0024.npz	1169673		0ae2def1dcf5
-shard_0000_part0025.npz	1441101		0ae2def1dcf5
-shard_0000_part0026.npz	1390138		0ae2def1dcf5
-shard_0000_part0027.npz	1443810		0ae2def1dcf5
-shard_0000_part0028.npz	1506100		0ae2def1dcf5
-shard_0000_part0029.npz	1551510		0ae2def1dcf5
-shard_0000_part0030.npz	1573588		0ae2def1dcf5
-shard_0000_part0031.npz	1498459		0ae2def1dcf5
-shard_0000_part0032.npz	1457522		0ae2def1dcf5
-shard_0000_part0033.npz	1413465		0ae2def1dcf5
-shard_0000_part0034.npz	1009090		0ae2def1dcf5
-shard_0000_part0035.npz	1407708		0ae2def1dcf5
-shard_0000_part0036.npz	1474466		0ae2def1dcf5
-shard_0000_part0037.npz	1456856		0ae2def1dcf5
-shard_0000_part0038.npz	1474147		0ae2def1dcf5
-shard_0000_part0039.npz	1421579		0ae2def1dcf5
-shard_0000_part0040.npz	1476633		0ae2def1dcf5
-shard_0000_part0041.npz	1518636		0ae2def1dcf5
-shard_0000_part0042.npz	1412913		0ae2def1dcf5
-shard_0000_part0043.npz	948245		0ae2def1dcf5
-shard_0000_part0044.npz	1042509		0ae2def1dcf5
-shard_0000_part0045.npz	1509443		0ae2def1dcf5
-shard_0000_part0046.npz	1339245		0ae2def1dcf5
-shard_0000_part0047.npz	1527821		0ae2def1dcf5
-shard_0000_part0048.npz	1392895		0ae2def1dcf5
-shard_0000_part0049.npz	1327024		0ae2def1dcf5
-shard_0000_part0050.npz	1381614		0ae2def1dcf5
-shard_0000_part0051.npz	1309622		0ae2def1dcf5
-shard_0000_part0052.npz	1295953		0ae2def1dcf5
-shard_0000_part0053.npz	1390523		0ae2def1dcf5
-shard_0000_part0054.npz	1394187		0ae2def1dcf5
-shard_0000_part0055.npz	1300624		0ae2def1dcf5
-shard_0000_part0056.npz	1280605		0ae2def1dcf5
-shard_0000_part0057.npz	1225785		0ae2def1dcf5
-shard_0000_part0058.npz	1196706		0ae2def1dcf5
-shard_0000_part0059.npz	895141		0ae2def1dcf5
-shard_0000_part0060.npz	1001056		0ae2def1dcf5
-shard_0000_part0061.npz	1262451		0ae2def1dcf5
-shard_0000_part0062.npz	1257971		0ae2def1dcf5
-shard_0000_part0063.npz	1208409		0ae2def1dcf5
-shard_0000_part0064.npz	1162421		0ae2def1dcf5
-shard_0000_part0065.npz	1255875		0ae2def1dcf5
-shard_0000_part0066.npz	1134446		0ae2def1dcf5
-shard_0000_part0067.npz	1087606		0ae2def1dcf5
-shard_0000_part0068.npz	1120145		0ae2def1dcf5
-shard_0000_part0069.npz	1164418		0ae2def1dcf5
-shard_0000_part0070.npz	849182		0ae2def1dcf5
-shard_0000_part0071.npz	754838		0ae2def1dcf5
-shard_0000_part0072.npz	1152709		0ae2def1dcf5
-shard_0000_part0073.npz	1433408		0ae2def1dcf5
-shard_0000_part0074.npz	1241664		0ae2def1dcf5
-shard_0000_part0075.npz	1460308		0ae2def1dcf5
-shard_0000_part0076.npz	1350231		0ae2def1dcf5
-shard_0000_part0077.npz	1432779		0ae2def1dcf5
-shard_0000_part0078.npz	1441576		0ae2def1dcf5
-shard_0000_part0079.npz	1485902		0ae2def1dcf5
-shard_0000_part0080.npz	1401173		0ae2def1dcf5
-shard_0000_part0081.npz	1516463		0ae2def1dcf5
-shard_0000_part0082.npz	1503894		0ae2def1dcf5
-shard_0000_part0083.npz	1439436		0ae2def1dcf5
-shard_0000_part0084.npz	1389165		0ae2def1dcf5
-shard_0000_part0085.npz	1319677		0ae2def1dcf5
-shard_0000_part0086.npz	1152043		0ae2def1dcf5
-shard_0000_part0087.npz	1166271		0ae2def1dcf5
-shard_0000_part0088.npz	1481668		0ae2def1dcf5
-shard_0000_part0089.npz	1395845		0ae2def1dcf5
-shard_0000_part0090.npz	1457422		0ae2def1dcf5
-shard_0000_part0091.npz	1398980		0ae2def1dcf5
-shard_0000_part0092.npz	1444230		0ae2def1dcf5
-shard_0000_part0093.npz	1478773		0ae2def1dcf5
-shard_0000_part0094.npz	1415036		0ae2def1dcf5
-shard_0000_part0095.npz	1425781		0ae2def1dcf5
-shard_0000_part0096.npz	768081		0ae2def1dcf5
-shard_0000_part0097.npz	1155328		0ae2def1dcf5
-shard_0000_part0098.npz	1487422		0ae2def1dcf5
-shard_0000_part0099.npz	1291904		0ae2def1dcf5
-shard_0000_part0100.npz	1487834		0ae2def1dcf5
-shard_0000_part0101.npz	1416802		0ae2def1dcf5
-shard_0000_part0102.npz	1429796		0ae2def1dcf5
-shard_0000_part0103.npz	1381956		0ae2def1dcf5
-shard_0000_part0104.npz	1503085		0ae2def1dcf5
-shard_0000_part0105.npz	1423265		0ae2def1dcf5
-shard_0000_part0106.npz	1426664		0ae2def1dcf5
-shard_0000_part0107.npz	1484928		0ae2def1dcf5
-shard_0000_part0108.npz	1481740		0ae2def1dcf5
-shard_0000_part0109.npz	1452419		0ae2def1dcf5
-shard_0000_part0110.npz	1290664		0ae2def1dcf5
-shard_0000_part0111.npz	1262158		0ae2def1dcf5
-shard_0000_part0112.npz	1141403		0ae2def1dcf5
-shard_0000_part0113.npz	1442237		0ae2def1dcf5
-shard_0000_part0114.npz	1477577		0ae2def1dcf5
-shard_0000_part0115.npz	1548952		0ae2def1dcf5
-shard_0000_part0116.npz	1343316		0ae2def1dcf5
-shard_0000_part0117.npz	1349351		0ae2def1dcf5
-shard_0000_part0118.npz	1383285		0ae2def1dcf5
-shard_0000_part0119.npz	1310025		0ae2def1dcf5
-shard_0000_part0120.npz	1367690		0ae2def1dcf5
-shard_0000_part0121.npz	888684		0ae2def1dcf5
-shard_0000_part0122.npz	939419		0ae2def1dcf5
-shard_0000_part0123.npz	1478535		0ae2def1dcf5
-shard_0001_part0000.npz	1308285		0ae2def1dcf5
-shard_0001_part0001.npz	1401810		0ae2def1dcf5
-shard_0001_part0002.npz	1442543		0ae2def1dcf5
-shard_0001_part0003.npz	1315274		0ae2def1dcf5
-shard_0001_part0004.npz	1357486		0ae2def1dcf5
-shard_0001_part0005.npz	1356934		0ae2def1dcf5
-shard_0001_part0006.npz	1378635		0ae2def1dcf5
-shard_0001_part0007.npz	1375523		0ae2def1dcf5
-shard_0001_part0008.npz	1437822		0ae2def1dcf5
-shard_0001_part0009.npz	1404383		0ae2def1dcf5
-shard_0001_part0010.npz	1317088		0ae2def1dcf5
-shard_0001_part0011.npz	1321388		0ae2def1dcf5
-shard_0001_part0012.npz	1189230		0ae2def1dcf5
-shard_0001_part0013.npz	1241605		0ae2def1dcf5
-shard_0001_part0014.npz	892981		0ae2def1dcf5
-shard_0001_part0015.npz	1194357		0ae2def1dcf5
-shard_0001_part0016.npz	1321750		0ae2def1dcf5
-shard_0001_part0017.npz	1234199		0ae2def1dcf5
-shard_0001_part0018.npz	1288068		0ae2def1dcf5
-shard_0001_part0019.npz	1311343		0ae2def1dcf5
-shard_0001_part0020.npz	1332565		0ae2def1dcf5
-shard_0001_part0021.npz	1351258		0ae2def1dcf5
-shard_0001_part0022.npz	1421072		0ae2def1dcf5
-shard_0001_part0023.npz	1337304		0ae2def1dcf5
-shard_0001_part0024.npz	1221223		0ae2def1dcf5
-shard_0001_part0025.npz	781159		0ae2def1dcf5
-shard_0001_part0026.npz	1107167		0ae2def1dcf5
-shard_0001_part0027.npz	1432431		0ae2def1dcf5
-shard_0001_part0028.npz	1279925		0ae2def1dcf5
-shard_0001_part0029.npz	1493575		0ae2def1dcf5
-shard_0001_part0030.npz	1451487		0ae2def1dcf5
-shard_0001_part0031.npz	1400321		0ae2def1dcf5
-shard_0001_part0032.npz	1320089		0ae2def1dcf5
-shard_0001_part0033.npz	1470360		0ae2def1dcf5
-shard_0001_part0034.npz	1407054		0ae2def1dcf5
-shard_0001_part0035.npz	1475747		0ae2def1dcf5
-shard_0001_part0036.npz	1491999		0ae2def1dcf5
-shard_0001_part0037.npz	1460340		0ae2def1dcf5
-shard_0001_part0038.npz	1358535		0ae2def1dcf5
-shard_0001_part0039.npz	1359089		0ae2def1dcf5
-shard_0001_part0040.npz	1275746		0ae2def1dcf5
-shard_0001_part0041.npz	1053297		0ae2def1dcf5
-shard_0001_part0042.npz	1292994		0ae2def1dcf5
-shard_0001_part0043.npz	1439446		0ae2def1dcf5
-shard_0001_part0044.npz	1397503		0ae2def1dcf5
-shard_0001_part0045.npz	1418465		0ae2def1dcf5
-shard_0001_part0046.npz	1371285		0ae2def1dcf5
-shard_0001_part0047.npz	1421626		0ae2def1dcf5
-shard_0001_part0048.npz	1436057		0ae2def1dcf5
-shard_0001_part0049.npz	1389562		0ae2def1dcf5
-shard_0001_part0050.npz	1088235		0ae2def1dcf5
-shard_0001_part0051.npz	795312		0ae2def1dcf5
-shard_0001_part0052.npz	1227783		0ae2def1dcf5
-shard_0001_part0053.npz	1413706		0ae2def1dcf5
-shard_0001_part0054.npz	1204726		0ae2def1dcf5
-shard_0001_part0055.npz	1376010		0ae2def1dcf5
-shard_0001_part0056.npz	1292608		0ae2def1dcf5
-shard_0001_part0057.npz	1319553		0ae2def1dcf5
-shard_0001_part0058.npz	1265801		0ae2def1dcf5
-shard_0001_part0059.npz	1352176		0ae2def1dcf5
-shard_0001_part0060.npz	1332711		0ae2def1dcf5
-shard_0001_part0061.npz	1335633		0ae2def1dcf5
-shard_0001_part0062.npz	1415776		0ae2def1dcf5
-shard_0001_part0063.npz	1409302		0ae2def1dcf5
-shard_0001_part0064.npz	1264093		0ae2def1dcf5
-shard_0001_part0065.npz	1312544		0ae2def1dcf5
-shard_0001_part0066.npz	1196153		0ae2def1dcf5
-shard_0001_part0067.npz	1077683		0ae2def1dcf5
-shard_0001_part0068.npz	843916		0ae2def1dcf5
-shard_0001_part0069.npz	1170453		0ae2def1dcf5
-shard_0001_part0070.npz	1250446		0ae2def1dcf5
-shard_0001_part0071.npz	1268943		0ae2def1dcf5
-shard_0001_part0072.npz	1336946		0ae2def1dcf5
-shard_0001_part0073.npz	1365467		0ae2def1dcf5
-shard_0001_part0074.npz	1496727		0ae2def1dcf5
-shard_0001_part0075.npz	1482470		0ae2def1dcf5
-shard_0001_part0076.npz	1486800		0ae2def1dcf5
-shard_0001_part0077.npz	1481699		0ae2def1dcf5
-shard_0001_part0078.npz	846132		0ae2def1dcf5
-shard_0001_part0079.npz	1176732		0ae2def1dcf5
-shard_0001_part0080.npz	1563561		0ae2def1dcf5
-shard_0001_part0081.npz	1347378		0ae2def1dcf5
-shard_0001_part0082.npz	1521709		0ae2def1dcf5
-shard_0001_part0083.npz	1444271		0ae2def1dcf5
-shard_0001_part0084.npz	1462826		0ae2def1dcf5
-shard_0001_part0085.npz	1455449		0ae2def1dcf5
-shard_0001_part0086.npz	1542698		0ae2def1dcf5
-shard_0001_part0087.npz	1501173		0ae2def1dcf5
-shard_0001_part0088.npz	1617360		0ae2def1dcf5
-shard_0001_part0089.npz	1564948		0ae2def1dcf5
-shard_0001_part0090.npz	1527442		0ae2def1dcf5
-shard_0001_part0091.npz	1410148		0ae2def1dcf5
-shard_0001_part0092.npz	1283435		0ae2def1dcf5
-shard_0001_part0093.npz	1239979		0ae2def1dcf5
-shard_0001_part0094.npz	1475869		0ae2def1dcf5
-shard_0001_part0095.npz	1487945		0ae2def1dcf5
-shard_0001_part0096.npz	1538369		0ae2def1dcf5
-shard_0001_part0097.npz	1407687		0ae2def1dcf5
-shard_0001_part0098.npz	1509991		0ae2def1dcf5
-shard_0001_part0099.npz	1528584		0ae2def1dcf5
-shard_0001_part0100.npz	1486945		0ae2def1dcf5
-shard_0001_part0101.npz	1053622		0ae2def1dcf5
-shard_0001_part0102.npz	1005204		0ae2def1dcf5
-shard_0001_part0103.npz	1487557		0ae2def1dcf5
-shard_0001_part0104.npz	1312602		0ae2def1dcf5
-shard_0001_part0105.npz	1491817		0ae2def1dcf5
-shard_0001_part0106.npz	1389389		0ae2def1dcf5
-shard_0001_part0107.npz	1354455		0ae2def1dcf5
-shard_0001_part0108.npz	1345334		0ae2def1dcf5
-shard_0001_part0109.npz	1472744		0ae2def1dcf5
-shard_0001_part0110.npz	1404842		0ae2def1dcf5
-shard_0001_part0111.npz	1489876		0ae2def1dcf5
-shard_0001_part0112.npz	1528674		0ae2def1dcf5
-shard_0001_part0113.npz	1490708		0ae2def1dcf5
-shard_0001_part0114.npz	1489776		0ae2def1dcf5
-shard_0001_part0115.npz	1416827		0ae2def1dcf5
-shard_0001_part0116.npz	1105853		0ae2def1dcf5
-shard_0001_part0117.npz	1278149		0ae2def1dcf5
-shard_0001_part0118.npz	1379587		0ae2def1dcf5
-shard_0001_part0119.npz	1336797		0ae2def1dcf5
-shard_0001_part0120.npz	1413764		0ae2def1dcf5
-shard_0001_part0121.npz	1335980		0ae2def1dcf5
-shard_0001_part0122.npz	1333109		0ae2def1dcf5
-shard_0001_part0123.npz	1382542		0ae2def1dcf5
-shard_0001_part0124.npz	1102864		0ae2def1dcf5
-shard_0002_part0000.npz	1366198		0ae2def1dcf5
-shard_0002_part0001.npz	783825		0ae2def1dcf5
-shard_0002_part0002.npz	1140728		0ae2def1dcf5
-shard_0002_part0003.npz	1450091		0ae2def1dcf5
-shard_0002_part0004.npz	1318491		0ae2def1dcf5
-shard_0002_part0005.npz	1489007		0ae2def1dcf5
-shard_0002_part0006.npz	1305871		0ae2def1dcf5
-shard_0002_part0007.npz	1385289		0ae2def1dcf5
-shard_0002_part0008.npz	1354949		0ae2def1dcf5
-shard_0002_part0009.npz	1401444		0ae2def1dcf5
-shard_0002_part0010.npz	1320791		0ae2def1dcf5
-shard_0002_part0011.npz	1370052		0ae2def1dcf5
-shard_0002_part0012.npz	1390047		0ae2def1dcf5
-shard_0002_part0013.npz	1435864		0ae2def1dcf5
-shard_0002_part0014.npz	1342097		0ae2def1dcf5
-shard_0002_part0015.npz	1269390		0ae2def1dcf5
-shard_0002_part0016.npz	1187455		0ae2def1dcf5
-shard_0002_part0017.npz	983424		0ae2def1dcf5
-shard_0002_part0018.npz	1264988		0ae2def1dcf5
-shard_0002_part0019.npz	1310832		0ae2def1dcf5
-shard_0002_part0020.npz	1398487		0ae2def1dcf5
-shard_0002_part0021.npz	1368985		0ae2def1dcf5
-shard_0002_part0022.npz	1381044		0ae2def1dcf5
-shard_0002_part0023.npz	1389718		0ae2def1dcf5
-shard_0002_part0024.npz	1464498		0ae2def1dcf5
-shard_0002_part0025.npz	1417055		0ae2def1dcf5
-shard_0002_part0026.npz	962579		0ae2def1dcf5
-shard_0002_part0027.npz	922693		0ae2def1dcf5
-shard_0002_part0028.npz	1443989		0ae2def1dcf5
-shard_0002_part0029.npz	1419986		0ae2def1dcf5
-shard_0002_part0030.npz	1468548		0ae2def1dcf5
-shard_0002_part0031.npz	1403369		0ae2def1dcf5
-shard_0002_part0032.npz	1445099		0ae2def1dcf5
-shard_0002_part0033.npz	1422152		0ae2def1dcf5
-shard_0002_part0034.npz	1507167		0ae2def1dcf5
-shard_0002_part0035.npz	1443887		0ae2def1dcf5
-shard_0002_part0036.npz	1485329		0ae2def1dcf5
-shard_0002_part0037.npz	1547061		0ae2def1dcf5
-shard_0002_part0038.npz	1506597		0ae2def1dcf5
-shard_0002_part0039.npz	1391873		0ae2def1dcf5
-shard_0002_part0040.npz	1336878		0ae2def1dcf5
-shard_0002_part0041.npz	1144736		0ae2def1dcf5
-shard_0002_part0042.npz	1182023		0ae2def1dcf5
-shard_0002_part0043.npz	1494634		0ae2def1dcf5
-shard_0002_part0044.npz	1401821		0ae2def1dcf5
-shard_0002_part0045.npz	1464203		0ae2def1dcf5
-shard_0002_part0046.npz	1422804		0ae2def1dcf5
-shard_0002_part0047.npz	1429931		0ae2def1dcf5
-shard_0002_part0048.npz	1481584		0ae2def1dcf5
-shard_0002_part0049.npz	1384581		0ae2def1dcf5
-shard_0002_part0050.npz	1297484		0ae2def1dcf5
-shard_0002_part0051.npz	727133		0ae2def1dcf5
-shard_0002_part0052.npz	1100624		0ae2def1dcf5
-shard_0002_part0053.npz	1494495		0ae2def1dcf5
-shard_0002_part0054.npz	1304832		0ae2def1dcf5
-shard_0002_part0055.npz	1494412		0ae2def1dcf5
-shard_0002_part0056.npz	1408602		0ae2def1dcf5
-shard_0002_part0057.npz	1358313		0ae2def1dcf5
-shard_0002_part0058.npz	1273331		0ae2def1dcf5
-shard_0002_part0059.npz	1377461		0ae2def1dcf5
-shard_0002_part0060.npz	1290597		0ae2def1dcf5
-shard_0002_part0061.npz	1386769		0ae2def1dcf5
-shard_0002_part0062.npz	1393093		0ae2def1dcf5
-shard_0002_part0063.npz	1383920		0ae2def1dcf5
-shard_0002_part0064.npz	1276919		0ae2def1dcf5
-shard_0002_part0065.npz	1301876		0ae2def1dcf5
-shard_0002_part0066.npz	1253556		0ae2def1dcf5
-shard_0002_part0067.npz	849813		0ae2def1dcf5
-shard_0002_part0068.npz	999133		0ae2def1dcf5
-shard_0002_part0069.npz	1307938		0ae2def1dcf5
-shard_0002_part0070.npz	1217306		0ae2def1dcf5
-shard_0002_part0071.npz	1316453		0ae2def1dcf5
-shard_0002_part0072.npz	1274836		0ae2def1dcf5
-shard_0002_part0073.npz	1339921		0ae2def1dcf5
-shard_0002_part0074.npz	1390935		0ae2def1dcf5
-shard_0002_part0075.npz	1423202		0ae2def1dcf5
-shard_0002_part0076.npz	1426742		0ae2def1dcf5
-shard_0002_part0077.npz	1029497		0ae2def1dcf5
-shard_0002_part0078.npz	882937		0ae2def1dcf5
-shard_0002_part0079.npz	1333014		0ae2def1dcf5
-shard_0002_part0080.npz	1425442		0ae2def1dcf5
-shard_0002_part0081.npz	1334788		0ae2def1dcf5
-shard_0002_part0082.npz	1446389		0ae2def1dcf5
-shard_0002_part0083.npz	1259361		0ae2def1dcf5
-shard_0002_part0084.npz	1435150		0ae2def1dcf5
-shard_0002_part0085.npz	1345653		0ae2def1dcf5
-shard_0002_part0086.npz	1451739		0ae2def1dcf5
-shard_0002_part0087.npz	1376570		0ae2def1dcf5
-shard_0002_part0088.npz	1472528		0ae2def1dcf5
-shard_0002_part0089.npz	1466995		0ae2def1dcf5
-shard_0002_part0090.npz	1471435		0ae2def1dcf5
-shard_0002_part0091.npz	1343025		0ae2def1dcf5
-shard_0002_part0092.npz	1350016		0ae2def1dcf5
-shard_0002_part0093.npz	1306056		0ae2def1dcf5
-shard_0002_part0094.npz	1027620		0ae2def1dcf5
-shard_0002_part0095.npz	1283968		0ae2def1dcf5
-shard_0002_part0096.npz	1436085		0ae2def1dcf5
-shard_0002_part0097.npz	1391454		0ae2def1dcf5
-shard_0002_part0098.npz	1410327		0ae2def1dcf5
-shard_0002_part0099.npz	1380906		0ae2def1dcf5
-shard_0002_part0100.npz	1370445		0ae2def1dcf5
-shard_0002_part0101.npz	1457475		0ae2def1dcf5
-shard_0002_part0102.npz	1360000		0ae2def1dcf5
-shard_0002_part0103.npz	1335680		0ae2def1dcf5
-shard_0002_part0104.npz	765212		0ae2def1dcf5
-shard_0002_part0105.npz	1042172		0ae2def1dcf5
-shard_0002_part0106.npz	1354272		0ae2def1dcf5
-shard_0002_part0107.npz	1234041		0ae2def1dcf5
-shard_0002_part0108.npz	1274378		0ae2def1dcf5
-shard_0002_part0109.npz	1372558		0ae2def1dcf5
-shard_0002_part0110.npz	1241783		0ae2def1dcf5
-shard_0002_part0111.npz	1305555		0ae2def1dcf5
-shard_0002_part0112.npz	1248962		0ae2def1dcf5
-shard_0002_part0113.npz	1408587		0ae2def1dcf5
-shard_0002_part0114.npz	1428183		0ae2def1dcf5
-shard_0002_part0115.npz	1477460		0ae2def1dcf5
-shard_0002_part0116.npz	1479812		0ae2def1dcf5
-shard_0002_part0117.npz	1353388		0ae2def1dcf5
-shard_0002_part0118.npz	1212817		0ae2def1dcf5
-shard_0002_part0119.npz	1294642		0ae2def1dcf5
-shard_0002_part0120.npz	904580		0ae2def1dcf5
-shard_0002_part0121.npz	1005457		0ae2def1dcf5
-shard_0002_part0122.npz	1253249		0ae2def1dcf5
-shard_0002_part0123.npz	1263926		0ae2def1dcf5
-shard_0002_part0124.npz	1401432		0ae2def1dcf5
-shard_0002_part0125.npz	1149040		0ae2def1dcf5
-shard_0003_part0000.npz	1244021		0ae2def1dcf5
-shard_0003_part0001.npz	1323533		0ae2def1dcf5
-shard_0003_part0002.npz	1270524		0ae2def1dcf5
-shard_0003_part0003.npz	1317197		0ae2def1dcf5
-shard_0003_part0004.npz	776233		0ae2def1dcf5
-shard_0003_part0005.npz	944099		0ae2def1dcf5
-shard_0003_part0006.npz	1303836		0ae2def1dcf5
-shard_0003_part0007.npz	1262473		0ae2def1dcf5
-shard_0003_part0008.npz	1309808		0ae2def1dcf5
-shard_0003_part0009.npz	1112287		0ae2def1dcf5
-shard_0003_part0010.npz	1248100		0ae2def1dcf5
-shard_0003_part0011.npz	1144639		0ae2def1dcf5
-shard_0003_part0012.npz	1314676		0ae2def1dcf5
-shard_0003_part0013.npz	1294994		0ae2def1dcf5
-shard_0003_part0014.npz	1374511		0ae2def1dcf5
-shard_0003_part0015.npz	1374608		0ae2def1dcf5
-shard_0003_part0016.npz	1381896		0ae2def1dcf5
-shard_0003_part0017.npz	1279475		0ae2def1dcf5
-shard_0003_part0018.npz	1181198		0ae2def1dcf5
-shard_0003_part0019.npz	1192804		0ae2def1dcf5
-shard_0003_part0020.npz	1066915		0ae2def1dcf5
-shard_0003_part0021.npz	1348555		0ae2def1dcf5
-shard_0003_part0022.npz	1368936		0ae2def1dcf5
-shard_0003_part0023.npz	1407658		0ae2def1dcf5
-shard_0003_part0024.npz	1372787		0ae2def1dcf5
-shard_0003_part0025.npz	1372488		0ae2def1dcf5
-shard_0003_part0026.npz	1416954		0ae2def1dcf5
-shard_0003_part0027.npz	1399679		0ae2def1dcf5
-shard_0003_part0028.npz	1156580		0ae2def1dcf5
-shard_0003_part0029.npz	893710		0ae2def1dcf5
-shard_0003_part0030.npz	1418056		0ae2def1dcf5
-shard_0003_part0031.npz	1306218		0ae2def1dcf5
-shard_0003_part0032.npz	1437203		0ae2def1dcf5
-shard_0003_part0033.npz	1348664		0ae2def1dcf5
-shard_0003_part0034.npz	883420		0ae2def1dcf5
-shard_0003_part0035.npz	949101		0ae2def1dcf5
-shard_0003_part0036.npz	894949		0ae2def1dcf5
-shard_0003_part0037.npz	953713		0ae2def1dcf5
-shard_0003_part0038.npz	951882		0ae2def1dcf5
-shard_0003_part0039.npz	956174		0ae2def1dcf5
-shard_0003_part0040.npz	934321		0ae2def1dcf5
-shard_0003_part0041.npz	953099		0ae2def1dcf5
-shard_0003_part0042.npz	975652		0ae2def1dcf5
-shard_0003_part0043.npz	961499		0ae2def1dcf5
-shard_0003_part0044.npz	947863		0ae2def1dcf5
-shard_0003_part0045.npz	915895		0ae2def1dcf5
-shard_0003_part0046.npz	937225		0ae2def1dcf5
-shard_0003_part0047.npz	894222		0ae2def1dcf5
-shard_0003_part0048.npz	947726		0ae2def1dcf5
-shard_0003_part0049.npz	728676		0ae2def1dcf5
-shard_0003_part0050.npz	791761		0ae2def1dcf5
-shard_0003_part0051.npz	821755		0ae2def1dcf5
-shard_0003_part0052.npz	879256		0ae2def1dcf5
-shard_0003_part0053.npz	919065		0ae2def1dcf5
-shard_0003_part0054.npz	931267		0ae2def1dcf5
-shard_0003_part0055.npz	970149		0ae2def1dcf5
-shard_0003_part0056.npz	973435		0ae2def1dcf5
-shard_0003_part0057.npz	911387		0ae2def1dcf5
-shard_0003_part0058.npz	912027		0ae2def1dcf5
-shard_0003_part0059.npz	931288		0ae2def1dcf5
-shard_0003_part0060.npz	955836		0ae2def1dcf5
-shard_0003_part0061.npz	940836		0ae2def1dcf5
-shard_0003_part0062.npz	912073		0ae2def1dcf5
-shard_0003_part0063.npz	929676		0ae2def1dcf5
-shard_0003_part0064.npz	645348		0ae2def1dcf5
-shard_0003_part0065.npz	571397		0ae2def1dcf5
-shard_0003_part0066.npz	833697		0ae2def1dcf5
-shard_0003_part0067.npz	846312		0ae2def1dcf5
-shard_0003_part0068.npz	865972		0ae2def1dcf5
-shard_0003_part0069.npz	841398		0ae2def1dcf5
-shard_0003_part0070.npz	793451		0ae2def1dcf5
-shard_0003_part0071.npz	923920		0ae2def1dcf5
-shard_0003_part0072.npz	915552		0ae2def1dcf5
-shard_0003_part0073.npz	1072177		0ae2def1dcf5
-shard_0003_part0074.npz	1284933		0ae2def1dcf5
-shard_0003_part0075.npz	1183076		0ae2def1dcf5
-shard_0003_part0076.npz	1360267		0ae2def1dcf5
-shard_0003_part0077.npz	1273355		0ae2def1dcf5
-shard_0003_part0078.npz	1413051		0ae2def1dcf5
-shard_0003_part0079.npz	1380614		0ae2def1dcf5
-shard_0003_part0080.npz	1419434		0ae2def1dcf5
-shard_0003_part0081.npz	1266914		0ae2def1dcf5
-shard_0003_part0082.npz	1119621		0ae2def1dcf5
-shard_0003_part0083.npz	1198836		0ae2def1dcf5
-shard_0003_part0084.npz	1039604		0ae2def1dcf5
-shard_0003_part0085.npz	1272189		0ae2def1dcf5
-shard_0003_part0086.npz	1334633		0ae2def1dcf5
-shard_0003_part0087.npz	1315661		0ae2def1dcf5
-shard_0003_part0088.npz	1041592		0ae2def1dcf5
-shard_0003_part0089.npz	1164470		0ae2def1dcf5
-shard_0003_part0090.npz	1323525		0ae2def1dcf5
-shard_0003_part0091.npz	1310980		0ae2def1dcf5
-shard_0003_part0092.npz	1324628		0ae2def1dcf5
-shard_0003_part0093.npz	1071544		0ae2def1dcf5
-shard_0003_part0094.npz	749480		0ae2def1dcf5
-shard_0003_part0095.npz	1146413		0ae2def1dcf5
-shard_0003_part0096.npz	1339407		0ae2def1dcf5
-shard_0003_part0097.npz	1193409		0ae2def1dcf5
-shard_0003_part0098.npz	1238803		0ae2def1dcf5
-shard_0003_part0099.npz	1019154		0ae2def1dcf5
-shard_0003_part0100.npz	1349699		0ae2def1dcf5
-shard_0003_part0101.npz	1370932		0ae2def1dcf5
-shard_0003_part0102.npz	1424640		0ae2def1dcf5
-shard_0003_part0103.npz	1383960		0ae2def1dcf5
-shard_0003_part0104.npz	1430016		0ae2def1dcf5
-shard_0003_part0105.npz	1422018		0ae2def1dcf5
-shard_0003_part0106.npz	1352784		0ae2def1dcf5
-shard_0003_part0107.npz	1292222		0ae2def1dcf5
-shard_0003_part0108.npz	1336209		0ae2def1dcf5
-shard_0003_part0109.npz	983026		0ae2def1dcf5
-shard_0003_part0110.npz	1189267		0ae2def1dcf5
-shard_0003_part0111.npz	1419334		0ae2def1dcf5
-shard_0003_part0112.npz	1314923		0ae2def1dcf5
-shard_0003_part0113.npz	1417091		0ae2def1dcf5
-shard_0003_part0114.npz	1344513		0ae2def1dcf5
-shard_0003_part0115.npz	1384842		0ae2def1dcf5
-shard_0003_part0116.npz	1464102		0ae2def1dcf5
-shard_0003_part0117.npz	1347692		0ae2def1dcf5
-shard_0003_part0118.npz	1141383		0ae2def1dcf5
-shard_0003_part0119.npz	695604		0ae2def1dcf5
-shard_0003_part0120.npz	1107608		0ae2def1dcf5
-shard_0003_part0121.npz	1365403		0ae2def1dcf5
-shard_0003_part0122.npz	1134338		0ae2def1dcf5
-shard_0003_part0123.npz	1342788		0ae2def1dcf5
-shard_0003_part0124.npz	1288095		0ae2def1dcf5
-shard_0003_part0125.npz	1557524		0ae2def1dcf5
-shard_0003_part0126.npz	1628880		0ae2def1dcf5
-shard_0003_part0127.npz	1741463		0ae2def1dcf5
-shard_0003_part0128.npz	1760951		0ae2def1dcf5
-shard_0003_part0129.npz	1793279		0ae2def1dcf5
-shard_0003_part0130.npz	1770651		0ae2def1dcf5
-shard_0003_part0131.npz	1644610		0ae2def1dcf5
-shard_0003_part0132.npz	1424099		0ae2def1dcf5
-shard_0003_part0133.npz	1235755		0ae2def1dcf5
-shard_0003_part0134.npz	1303563		0ae2def1dcf5
-shard_0004_part0000.npz	1368687		0ae2def1dcf5
-shard_0004_part0001.npz	1462123		0ae2def1dcf5
-shard_0004_part0002.npz	1365662		0ae2def1dcf5
-shard_0004_part0003.npz	1366157		0ae2def1dcf5
-shard_0004_part0004.npz	1433252		0ae2def1dcf5
-shard_0004_part0005.npz	1369282		0ae2def1dcf5
-shard_0004_part0006.npz	1371224		0ae2def1dcf5
-shard_0004_part0007.npz	742456		0ae2def1dcf5
-shard_0004_part0008.npz	1081011		0ae2def1dcf5
-shard_0004_part0009.npz	1434447		0ae2def1dcf5
-shard_0004_part0010.npz	1208086		0ae2def1dcf5
-shard_0004_part0011.npz	1435712		0ae2def1dcf5
-shard_0004_part0012.npz	1248219		0ae2def1dcf5
-shard_0004_part0013.npz	1241405		0ae2def1dcf5
-shard_0004_part0014.npz	1242375		0ae2def1dcf5
-shard_0004_part0015.npz	1261234		0ae2def1dcf5
-shard_0004_part0016.npz	1298487		0ae2def1dcf5
-shard_0004_part0017.npz	1214258		0ae2def1dcf5
-shard_0004_part0018.npz	1300195		0ae2def1dcf5
-shard_0004_part0019.npz	1279493		0ae2def1dcf5
-shard_0004_part0020.npz	1386706		0ae2def1dcf5
-shard_0004_part0021.npz	1299315		0ae2def1dcf5
-shard_0004_part0022.npz	1267004		0ae2def1dcf5
-shard_0004_part0023.npz	1258101		0ae2def1dcf5
-shard_0004_part0024.npz	963821		0ae2def1dcf5
-shard_0004_part0025.npz	1216447		0ae2def1dcf5
-shard_0004_part0026.npz	1345881		0ae2def1dcf5
-shard_0004_part0027.npz	1316373		0ae2def1dcf5
-shard_0004_part0028.npz	1409242		0ae2def1dcf5
-shard_0004_part0029.npz	1329991		0ae2def1dcf5
-shard_0004_part0030.npz	1378508		0ae2def1dcf5
-shard_0004_part0031.npz	1376750		0ae2def1dcf5
-shard_0004_part0032.npz	1328712		0ae2def1dcf5
-shard_0004_part0033.npz	1378578		0ae2def1dcf5
-shard_0004_part0034.npz	836382		0ae2def1dcf5
-shard_0004_part0035.npz	991958		0ae2def1dcf5
-shard_0004_part0036.npz	1367851		0ae2def1dcf5
-shard_0004_part0037.npz	1307704		0ae2def1dcf5
-shard_0004_part0038.npz	1343629		0ae2def1dcf5
-shard_0004_part0039.npz	1379730		0ae2def1dcf5
-shard_0004_part0040.npz	1328232		0ae2def1dcf5
-shard_0004_part0041.npz	1430961		0ae2def1dcf5
-shard_0004_part0042.npz	1382305		0ae2def1dcf5
-shard_0004_part0043.npz	1456982		0ae2def1dcf5
-shard_0004_part0044.npz	1386540		0ae2def1dcf5
-shard_0004_part0045.npz	1434809		0ae2def1dcf5
-shard_0004_part0046.npz	1474052		0ae2def1dcf5
-shard_0004_part0047.npz	1436595		0ae2def1dcf5
-shard_0004_part0048.npz	1390812		0ae2def1dcf5
-shard_0004_part0049.npz	1304020		0ae2def1dcf5
-shard_0004_part0050.npz	1299813		0ae2def1dcf5
-shard_0004_part0051.npz	912675		0ae2def1dcf5
-shard_0004_part0052.npz	1250343		0ae2def1dcf5
-shard_0004_part0053.npz	1415278		0ae2def1dcf5
-shard_0004_part0054.npz	1392213		0ae2def1dcf5
-shard_0004_part0055.npz	1419112		0ae2def1dcf5
-shard_0004_part0056.npz	1290253		0ae2def1dcf5
-shard_0004_part0057.npz	1273019		0ae2def1dcf5
-shard_0004_part0058.npz	1293766		0ae2def1dcf5
-shard_0004_part0059.npz	1315749		0ae2def1dcf5
-shard_0004_part0060.npz	1274209		0ae2def1dcf5
-shard_0004_part0061.npz	1217035		0ae2def1dcf5
-shard_0004_part0062.npz	731325		0ae2def1dcf5
-shard_0004_part0063.npz	1022424		0ae2def1dcf5
-shard_0004_part0064.npz	1234615		0ae2def1dcf5
-shard_0004_part0065.npz	1285859		0ae2def1dcf5
-shard_0004_part0066.npz	1192906		0ae2def1dcf5
-shard_0004_part0067.npz	1216969		0ae2def1dcf5
-shard_0004_part0068.npz	1113122		0ae2def1dcf5
-shard_0004_part0069.npz	1243991		0ae2def1dcf5
-shard_0004_part0070.npz	1177378		0ae2def1dcf5
-shard_0004_part0071.npz	1364744		0ae2def1dcf5
-shard_0004_part0072.npz	1299078		0ae2def1dcf5
-shard_0004_part0073.npz	1415380		0ae2def1dcf5
-shard_0004_part0074.npz	1598602		0ae2def1dcf5
-shard_0004_part0075.npz	1547913		0ae2def1dcf5
-shard_0004_part0076.npz	1481700		0ae2def1dcf5
-shard_0004_part0077.npz	1466691		0ae2def1dcf5
-shard_0004_part0078.npz	1186646		0ae2def1dcf5
-shard_0004_part0079.npz	1281942		0ae2def1dcf5
-shard_0004_part0080.npz	1538642		0ae2def1dcf5
-shard_0004_part0081.npz	1492459		0ae2def1dcf5
-shard_0004_part0082.npz	1527928		0ae2def1dcf5
-shard_0004_part0083.npz	1415115		0ae2def1dcf5
-shard_0004_part0084.npz	1481201		0ae2def1dcf5
-shard_0004_part0085.npz	1551400		0ae2def1dcf5
-shard_0004_part0086.npz	1443656		0ae2def1dcf5
-shard_0004_part0087.npz	944897		0ae2def1dcf5
-shard_0004_part0088.npz	1117114		0ae2def1dcf5
-shard_0004_part0089.npz	1536478		0ae2def1dcf5
-shard_0004_part0090.npz	1356042		0ae2def1dcf5
-shard_0004_part0091.npz	1548907		0ae2def1dcf5
-shard_0004_part0092.npz	1021059		0ae2def1dcf5
-shard_0004_part0093.npz	1061024		0ae2def1dcf5
-shard_0004_part0094.npz	1332784		0ae2def1dcf5
-shard_0004_part0095.npz	1274579		0ae2def1dcf5
-shard_0004_part0096.npz	1356328		0ae2def1dcf5
-shard_0004_part0097.npz	1357488		0ae2def1dcf5
-shard_0004_part0098.npz	1071980		0ae2def1dcf5
-shard_0004_part0099.npz	1357290		0ae2def1dcf5
-shard_0004_part0100.npz	1092150		0ae2def1dcf5
-shard_0004_part0101.npz	1243222		0ae2def1dcf5
-shard_0004_part0102.npz	779438		0ae2def1dcf5
-shard_0004_part0103.npz	1069568		0ae2def1dcf5
-shard_0004_part0104.npz	1094159		0ae2def1dcf5
-shard_0004_part0105.npz	1167631		0ae2def1dcf5
-shard_0004_part0106.npz	1281022		0ae2def1dcf5
-shard_0004_part0107.npz	1026435		0ae2def1dcf5
-shard_0004_part0108.npz	1296687		0ae2def1dcf5
-shard_0004_part0109.npz	1090526		0ae2def1dcf5
-shard_0004_part0110.npz	1266660		0ae2def1dcf5
-shard_0004_part0111.npz	803159		0ae2def1dcf5
-shard_0004_part0112.npz	1038397		0ae2def1dcf5
-shard_0004_part0113.npz	1390098		0ae2def1dcf5
-shard_0004_part0114.npz	898949		0ae2def1dcf5
-shard_0004_part0115.npz	1473211		0ae2def1dcf5
-shard_0004_part0116.npz	1358630		0ae2def1dcf5
-shard_0004_part0117.npz	1325700		0ae2def1dcf5
-shard_0004_part0118.npz	1262629		0ae2def1dcf5
-shard_0004_part0119.npz	1335582		0ae2def1dcf5
-shard_0004_part0120.npz	1308999		0ae2def1dcf5
-shard_0004_part0121.npz	1308167		0ae2def1dcf5
-shard_0004_part0122.npz	1355935		0ae2def1dcf5
-shard_0004_part0123.npz	1335205		0ae2def1dcf5
-shard_0004_part0124.npz	1406503		0ae2def1dcf5
-shard_0004_part0125.npz	1478042		0ae2def1dcf5
-shard_0004_part0126.npz	480573		0ae2def1dcf5
-shard_0005_part0000.npz	1214981		0ae2def1dcf5
-shard_0005_part0001.npz	958049		0ae2def1dcf5
-shard_0005_part0002.npz	1210855		0ae2def1dcf5
-shard_0005_part0003.npz	1333972		0ae2def1dcf5
-shard_0005_part0004.npz	1326514		0ae2def1dcf5
-shard_0005_part0005.npz	1318237		0ae2def1dcf5
-shard_0005_part0006.npz	1287747		0ae2def1dcf5
-shard_0005_part0007.npz	1350337		0ae2def1dcf5
-shard_0005_part0008.npz	1354717		0ae2def1dcf5
-shard_0005_part0009.npz	1241130		0ae2def1dcf5
-shard_0005_part0010.npz	1250489		0ae2def1dcf5
-shard_0005_part0011.npz	812523		0ae2def1dcf5
-shard_0005_part0012.npz	875430		0ae2def1dcf5
-shard_0005_part0013.npz	1204518		0ae2def1dcf5
-shard_0005_part0014.npz	1310530		0ae2def1dcf5
-shard_0005_part0015.npz	1137507		0ae2def1dcf5
-shard_0005_part0016.npz	1343606		0ae2def1dcf5
-shard_0005_part0017.npz	1244379		0ae2def1dcf5
-shard_0005_part0018.npz	1290080		0ae2def1dcf5
-shard_0005_part0019.npz	1254106		0ae2def1dcf5
-shard_0005_part0020.npz	1437297		0ae2def1dcf5
-shard_0005_part0021.npz	1404564		0ae2def1dcf5
-shard_0005_part0022.npz	1414221		0ae2def1dcf5
-shard_0005_part0023.npz	1451816		0ae2def1dcf5
-shard_0005_part0024.npz	1465254		0ae2def1dcf5
-shard_0005_part0025.npz	1418712		0ae2def1dcf5
-shard_0005_part0026.npz	1359938		0ae2def1dcf5
-shard_0005_part0027.npz	1377317		0ae2def1dcf5
-shard_0005_part0028.npz	1024913		0ae2def1dcf5
-shard_0005_part0029.npz	1322008		0ae2def1dcf5
-shard_0005_part0030.npz	1499977		0ae2def1dcf5
-shard_0005_part0031.npz	1484663		0ae2def1dcf5
-shard_0005_part0032.npz	1543497		0ae2def1dcf5
-shard_0005_part0033.npz	1445885		0ae2def1dcf5
-shard_0005_part0034.npz	1520043		0ae2def1dcf5
-shard_0005_part0035.npz	1543297		0ae2def1dcf5
-shard_0005_part0036.npz	1479480		0ae2def1dcf5
-shard_0005_part0037.npz	1201962		0ae2def1dcf5
-shard_0005_part0038.npz	902596		0ae2def1dcf5
-shard_0005_part0039.npz	1410778		0ae2def1dcf5
-shard_0005_part0040.npz	1518890		0ae2def1dcf5
-shard_0005_part0041.npz	1425390		0ae2def1dcf5
-shard_0005_part0042.npz	1509089		0ae2def1dcf5
-shard_0005_part0043.npz	1346601		0ae2def1dcf5
-shard_0005_part0044.npz	1420095		0ae2def1dcf5
-shard_0005_part0045.npz	1405491		0ae2def1dcf5
-shard_0005_part0046.npz	1471047		0ae2def1dcf5
-shard_0005_part0047.npz	1396857		0ae2def1dcf5
-shard_0005_part0048.npz	1478841		0ae2def1dcf5
-shard_0005_part0049.npz	1488604		0ae2def1dcf5
-shard_0005_part0050.npz	1406087		0ae2def1dcf5
-shard_0005_part0051.npz	1295035		0ae2def1dcf5
-shard_0005_part0052.npz	1157328		0ae2def1dcf5
-shard_0005_part0053.npz	1268277		0ae2def1dcf5
-shard_0005_part0054.npz	999970		0ae2def1dcf5
-shard_0005_part0055.npz	1273408		0ae2def1dcf5
-shard_0005_part0056.npz	1317546		0ae2def1dcf5
-shard_0005_part0057.npz	1229399		0ae2def1dcf5
-shard_0005_part0058.npz	1278899		0ae2def1dcf5
-shard_0005_part0059.npz	1251404		0ae2def1dcf5
-shard_0005_part0060.npz	1271173		0ae2def1dcf5
-shard_0005_part0061.npz	1251468		0ae2def1dcf5
-shard_0005_part0062.npz	1251018		0ae2def1dcf5
-shard_0005_part0063.npz	1267592		0ae2def1dcf5
-shard_0005_part0064.npz	989518		0ae2def1dcf5
-shard_0005_part0065.npz	717552		0ae2def1dcf5
-shard_0005_part0066.npz	1024274		0ae2def1dcf5
-shard_0005_part0067.npz	1152723		0ae2def1dcf5
-shard_0005_part0068.npz	1120002		0ae2def1dcf5
-shard_0005_part0069.npz	1068389		0ae2def1dcf5
-shard_0005_part0070.npz	1259732		0ae2def1dcf5
-shard_0005_part0071.npz	1250242		0ae2def1dcf5
-shard_0005_part0072.npz	1254181		0ae2def1dcf5
-shard_0005_part0073.npz	1370931		0ae2def1dcf5
-shard_0005_part0074.npz	1501722		0ae2def1dcf5
-shard_0005_part0075.npz	1481827		0ae2def1dcf5
-shard_0005_part0076.npz	1562219		0ae2def1dcf5
-shard_0005_part0077.npz	1603333		0ae2def1dcf5
-shard_0005_part0078.npz	1575872		0ae2def1dcf5
-shard_0005_part0079.npz	1429653		0ae2def1dcf5
-shard_0005_part0080.npz	1507935		0ae2def1dcf5
-shard_0005_part0081.npz	998163		0ae2def1dcf5
-shard_0005_part0082.npz	1423754		0ae2def1dcf5
-shard_0005_part0083.npz	1493098		0ae2def1dcf5
-shard_0005_part0084.npz	1500934		0ae2def1dcf5
-shard_0005_part0085.npz	1450266		0ae2def1dcf5
-shard_0005_part0086.npz	1449224		0ae2def1dcf5
-shard_0005_part0087.npz	1506898		0ae2def1dcf5
-shard_0005_part0088.npz	1509760		0ae2def1dcf5
-shard_0005_part0089.npz	1501317		0ae2def1dcf5
-shard_0005_part0090.npz	795151		0ae2def1dcf5
-shard_0005_part0091.npz	1217057		0ae2def1dcf5
-shard_0005_part0092.npz	1544501		0ae2def1dcf5
-shard_0005_part0093.npz	1393065		0ae2def1dcf5
-shard_0005_part0094.npz	1493536		0ae2def1dcf5
-shard_0005_part0095.npz	1301945		0ae2def1dcf5
-shard_0005_part0096.npz	1417618		0ae2def1dcf5
-shard_0005_part0097.npz	1379672		0ae2def1dcf5
-shard_0005_part0098.npz	1465252		0ae2def1dcf5
-shard_0005_part0099.npz	1405099		0ae2def1dcf5
-shard_0005_part0100.npz	1468588		0ae2def1dcf5
-shard_0005_part0101.npz	1471997		0ae2def1dcf5
-shard_0005_part0102.npz	1450870		0ae2def1dcf5
-shard_0005_part0103.npz	1356153		0ae2def1dcf5
-shard_0005_part0104.npz	1346662		0ae2def1dcf5
-shard_0005_part0105.npz	961852		0ae2def1dcf5
-shard_0005_part0106.npz	1193385		0ae2def1dcf5
-shard_0005_part0107.npz	1383271		0ae2def1dcf5
-shard_0005_part0108.npz	1320978		0ae2def1dcf5
-shard_0005_part0109.npz	1387366		0ae2def1dcf5
-shard_0005_part0110.npz	1188967		0ae2def1dcf5
-shard_0005_part0111.npz	1319413		0ae2def1dcf5
-shard_0005_part0112.npz	1357722		0ae2def1dcf5
-shard_0005_part0113.npz	1396517		0ae2def1dcf5
-shard_0005_part0114.npz	1445927		0ae2def1dcf5
-shard_0005_part0115.npz	899660		0ae2def1dcf5
-shard_0005_part0116.npz	1082752		0ae2def1dcf5
-shard_0005_part0117.npz	1353178		0ae2def1dcf5
-shard_0005_part0118.npz	1207676		0ae2def1dcf5
-shard_0005_part0119.npz	1309828		0ae2def1dcf5
-shard_0005_part0120.npz	1221845		0ae2def1dcf5
-shard_0005_part0121.npz	1256246		0ae2def1dcf5
-shard_0005_part0122.npz	1315049		0ae2def1dcf5
-shard_0005_part0123.npz	1323137		0ae2def1dcf5
-shard_0005_part0124.npz	1455341		0ae2def1dcf5
-shard_0005_part0125.npz	1532632		0ae2def1dcf5
-shard_0005_part0126.npz	1666311		0ae2def1dcf5
-shard_0005_part0127.npz	430809		0ae2def1dcf5
-shard_0006_part0000.npz	1355695		0ae2def1dcf5
-shard_0006_part0001.npz	1379462		0ae2def1dcf5
-shard_0006_part0002.npz	1315150		0ae2def1dcf5
-shard_0006_part0003.npz	1318852		0ae2def1dcf5
-shard_0006_part0004.npz	977642		0ae2def1dcf5
-shard_0006_part0005.npz	1157211		0ae2def1dcf5
-shard_0006_part0006.npz	1378804		0ae2def1dcf5
-shard_0006_part0007.npz	1328557		0ae2def1dcf5
-shard_0006_part0008.npz	1415371		0ae2def1dcf5
-shard_0006_part0009.npz	1328264		0ae2def1dcf5
-shard_0006_part0010.npz	1257336		0ae2def1dcf5
-shard_0006_part0011.npz	1316353		0ae2def1dcf5
-shard_0006_part0012.npz	1297075		0ae2def1dcf5
-shard_0006_part0013.npz	1271687		0ae2def1dcf5
-shard_0006_part0014.npz	1196770		0ae2def1dcf5
-shard_0006_part0015.npz	710840		0ae2def1dcf5
-shard_0006_part0016.npz	1014941		0ae2def1dcf5
-shard_0006_part0017.npz	1287831		0ae2def1dcf5
-shard_0006_part0018.npz	1226969		0ae2def1dcf5
-shard_0006_part0019.npz	1241486		0ae2def1dcf5
-shard_0006_part0020.npz	1416829		0ae2def1dcf5
-shard_0006_part0021.npz	1244559		0ae2def1dcf5
-shard_0006_part0022.npz	1276138		0ae2def1dcf5
-shard_0006_part0023.npz	1246221		0ae2def1dcf5
-shard_0006_part0024.npz	1351372		0ae2def1dcf5
-shard_0006_part0025.npz	1262572		0ae2def1dcf5
-shard_0006_part0026.npz	1374164		0ae2def1dcf5
-shard_0006_part0027.npz	1337640		0ae2def1dcf5
-shard_0006_part0028.npz	1401723		0ae2def1dcf5
-shard_0006_part0029.npz	1336735		0ae2def1dcf5
-shard_0006_part0030.npz	1293344		0ae2def1dcf5
-shard_0006_part0031.npz	993833		0ae2def1dcf5
-shard_0006_part0032.npz	1156769		0ae2def1dcf5
-shard_0006_part0033.npz	1381336		0ae2def1dcf5
-shard_0006_part0034.npz	1323647		0ae2def1dcf5
-shard_0006_part0035.npz	1400845		0ae2def1dcf5
-shard_0006_part0036.npz	1327929		0ae2def1dcf5
-shard_0006_part0037.npz	1345539		0ae2def1dcf5
-shard_0006_part0038.npz	1350780		0ae2def1dcf5
-shard_0006_part0039.npz	1324220		0ae2def1dcf5
-shard_0006_part0040.npz	1328496		0ae2def1dcf5
-shard_0006_part0041.npz	740782		0ae2def1dcf5
-shard_0006_part0042.npz	1162981		0ae2def1dcf5
-shard_0006_part0043.npz	1427018		0ae2def1dcf5
-shard_0006_part0044.npz	1172915		0ae2def1dcf5
-shard_0006_part0045.npz	1387850		0ae2def1dcf5
-shard_0006_part0046.npz	1063680		0ae2def1dcf5
-shard_0006_part0047.npz	700178		0ae2def1dcf5
-shard_0006_part0048.npz	775228		0ae2def1dcf5
-shard_0006_part0049.npz	722748		0ae2def1dcf5
-shard_0006_part0050.npz	716170		0ae2def1dcf5
-shard_0006_part0051.npz	731092		0ae2def1dcf5
-shard_0006_part0052.npz	764849		0ae2def1dcf5
-shard_0006_part0053.npz	753484		0ae2def1dcf5
-shard_0006_part0054.npz	766347		0ae2def1dcf5
-shard_0006_part0055.npz	751218		0ae2def1dcf5
-shard_0006_part0056.npz	750745		0ae2def1dcf5
-shard_0006_part0057.npz	739853		0ae2def1dcf5
-shard_0006_part0058.npz	717037		0ae2def1dcf5
-shard_0006_part0059.npz	716247		0ae2def1dcf5
-shard_0006_part0060.npz	718417		0ae2def1dcf5
-shard_0006_part0061.npz	687464		0ae2def1dcf5
-shard_0006_part0062.npz	695727		0ae2def1dcf5
-shard_0006_part0063.npz	735102		0ae2def1dcf5
-shard_0006_part0064.npz	623035		0ae2def1dcf5
-shard_0006_part0065.npz	670893		0ae2def1dcf5
-shard_0006_part0066.npz	655624		0ae2def1dcf5
-shard_0006_part0067.npz	487327		0ae2def1dcf5
-shard_0006_part0068.npz	523588		0ae2def1dcf5
-shard_0006_part0069.npz	572882		0ae2def1dcf5
-shard_0006_part0070.npz	668183		0ae2def1dcf5
-shard_0006_part0071.npz	697188		0ae2def1dcf5
-shard_0006_part0072.npz	701657		0ae2def1dcf5
-shard_0006_part0073.npz	742028		0ae2def1dcf5
-shard_0006_part0074.npz	809186		0ae2def1dcf5
-shard_0006_part0075.npz	813170		0ae2def1dcf5
-shard_0006_part0076.npz	821548		0ae2def1dcf5
-shard_0006_part0077.npz	790690		0ae2def1dcf5
-shard_0006_part0078.npz	819239		0ae2def1dcf5
-shard_0006_part0079.npz	777141		0ae2def1dcf5
-shard_0006_part0080.npz	816499		0ae2def1dcf5
-shard_0006_part0081.npz	784434		0ae2def1dcf5
-shard_0006_part0082.npz	817703		0ae2def1dcf5
-shard_0006_part0083.npz	762084		0ae2def1dcf5
-shard_0006_part0084.npz	771264		0ae2def1dcf5
-shard_0006_part0085.npz	616797		0ae2def1dcf5
-shard_0006_part0086.npz	555045		0ae2def1dcf5
-shard_0006_part0087.npz	699640		0ae2def1dcf5
-shard_0006_part0088.npz	775963		0ae2def1dcf5
-shard_0006_part0089.npz	810717		0ae2def1dcf5
-shard_0006_part0090.npz	838133		0ae2def1dcf5
-shard_0006_part0091.npz	703108		0ae2def1dcf5
-shard_0006_part0092.npz	748756		0ae2def1dcf5
-shard_0006_part0093.npz	814723		0ae2def1dcf5
-shard_0006_part0094.npz	847951		0ae2def1dcf5
-shard_0006_part0095.npz	893541		0ae2def1dcf5
-shard_0006_part0096.npz	1161629		0ae2def1dcf5
-shard_0006_part0097.npz	1176876		0ae2def1dcf5
-shard_0006_part0098.npz	1297396		0ae2def1dcf5
-shard_0006_part0099.npz	1304439		0ae2def1dcf5
-shard_0006_part0100.npz	1302827		0ae2def1dcf5
-shard_0006_part0101.npz	1314686		0ae2def1dcf5
-shard_0006_part0102.npz	1321811		0ae2def1dcf5
-shard_0006_part0103.npz	1287835		0ae2def1dcf5
-shard_0006_part0104.npz	1231992		0ae2def1dcf5
-shard_0006_part0105.npz	1237417		0ae2def1dcf5
-shard_0006_part0106.npz	1112843		0ae2def1dcf5
-shard_0006_part0107.npz	1176917		0ae2def1dcf5
-shard_0006_part0108.npz	896937		0ae2def1dcf5
-shard_0006_part0109.npz	957804		0ae2def1dcf5
-shard_0006_part0110.npz	1177370		0ae2def1dcf5
-shard_0006_part0111.npz	1203134		0ae2def1dcf5
-shard_0006_part0112.npz	1238351		0ae2def1dcf5
-shard_0006_part0113.npz	1217445		0ae2def1dcf5
-shard_0006_part0114.npz	1336064		0ae2def1dcf5
-shard_0006_part0115.npz	1254005		0ae2def1dcf5
-shard_0006_part0116.npz	1289700		0ae2def1dcf5
-shard_0006_part0117.npz	1210106		0ae2def1dcf5
-shard_0006_part0118.npz	1127396		0ae2def1dcf5
-shard_0006_part0119.npz	1135432		0ae2def1dcf5
-shard_0006_part0120.npz	848579		0ae2def1dcf5
-shard_0006_part0121.npz	757763		0ae2def1dcf5
-shard_0006_part0122.npz	1115257		0ae2def1dcf5
-shard_0006_part0123.npz	1259106		0ae2def1dcf5
-shard_0006_part0124.npz	1101904		0ae2def1dcf5
-shard_0006_part0125.npz	1298817		0ae2def1dcf5
-shard_0006_part0126.npz	1498225		0ae2def1dcf5
-shard_0006_part0127.npz	1531657		0ae2def1dcf5
-shard_0006_part0128.npz	1706792		0ae2def1dcf5
-shard_0006_part0129.npz	1776678		0ae2def1dcf5
-shard_0006_part0130.npz	1692127		0ae2def1dcf5
-shard_0006_part0131.npz	1816488		0ae2def1dcf5
-shard_0006_part0132.npz	1748384		0ae2def1dcf5
-shard_0006_part0133.npz	1486558		0ae2def1dcf5
-shard_0006_part0134.npz	1400518		0ae2def1dcf5
-shard_0006_part0135.npz	1425460		0ae2def1dcf5
-shard_0006_part0136.npz	1208401		0ae2def1dcf5
-shard_0006_part0137.npz	1427974		0ae2def1dcf5
-shard_0006_part0138.npz	1343312		0ae2def1dcf5
-shard_0006_part0139.npz	1371964		0ae2def1dcf5
-shard_0006_part0140.npz	1363076		0ae2def1dcf5
-shard_0006_part0141.npz	1338282		0ae2def1dcf5
-shard_0006_part0142.npz	1384521		0ae2def1dcf5
-shard_0006_part0143.npz	1442206		0ae2def1dcf5
-shard_0006_part0144.npz	1381364		0ae2def1dcf5
-shard_0006_part0145.npz	908858		0ae2def1dcf5
-shard_0006_part0146.npz	966951		0ae2def1dcf5
-shard_0006_part0147.npz	1374696		0ae2def1dcf5
-shard_0006_part0148.npz	1326072		0ae2def1dcf5
-shard_0006_part0149.npz	1368069		0ae2def1dcf5
-shard_0006_part0150.npz	1398091		0ae2def1dcf5
-shard_0006_part0151.npz	1291734		0ae2def1dcf5
-shard_0006_part0152.npz	1351755		0ae2def1dcf5
-shard_0006_part0153.npz	1378032		0ae2def1dcf5
-shard_0006_part0154.npz	358409		0ae2def1dcf5
-shard_0007_part0000.npz	1374390		0ae2def1dcf5
-shard_0007_part0001.npz	1415813		0ae2def1dcf5
-shard_0007_part0002.npz	1505320		0ae2def1dcf5
-shard_0007_part0003.npz	1451066		0ae2def1dcf5
-shard_0007_part0004.npz	1439668		0ae2def1dcf5
-shard_0007_part0005.npz	1314577		0ae2def1dcf5
-shard_0007_part0006.npz	1238214		0ae2def1dcf5
-shard_0007_part0007.npz	1044105		0ae2def1dcf5
-shard_0007_part0008.npz	1328920		0ae2def1dcf5
-shard_0007_part0009.npz	1394312		0ae2def1dcf5
-shard_0007_part0010.npz	1311899		0ae2def1dcf5
-shard_0007_part0011.npz	1363884		0ae2def1dcf5
-shard_0007_part0012.npz	1242861		0ae2def1dcf5
-shard_0007_part0013.npz	1344706		0ae2def1dcf5
-shard_0007_part0014.npz	1383616		0ae2def1dcf5
-shard_0007_part0015.npz	1311535		0ae2def1dcf5
-shard_0007_part0016.npz	1080718		0ae2def1dcf5
-shard_0007_part0017.npz	705103		0ae2def1dcf5
-shard_0007_part0018.npz	1196642		0ae2def1dcf5
-shard_0007_part0019.npz	1417171		0ae2def1dcf5
-shard_0007_part0020.npz	1280292		0ae2def1dcf5
-shard_0007_part0021.npz	1496565		0ae2def1dcf5
-shard_0007_part0022.npz	1199180		0ae2def1dcf5
-shard_0007_part0023.npz	1277884		0ae2def1dcf5
-shard_0007_part0024.npz	1282860		0ae2def1dcf5
-shard_0007_part0025.npz	1348952		0ae2def1dcf5
-shard_0007_part0026.npz	1298586		0ae2def1dcf5
-shard_0007_part0027.npz	1318826		0ae2def1dcf5
-shard_0007_part0028.npz	1406305		0ae2def1dcf5
-shard_0007_part0029.npz	1423544		0ae2def1dcf5
-shard_0007_part0030.npz	1381872		0ae2def1dcf5
-shard_0007_part0031.npz	1238803		0ae2def1dcf5
-shard_0007_part0032.npz	1143667		0ae2def1dcf5
-shard_0007_part0033.npz	1014069		0ae2def1dcf5
-shard_0007_part0034.npz	1229034		0ae2def1dcf5
-shard_0007_part0035.npz	1347308		0ae2def1dcf5
-shard_0007_part0036.npz	1368881		0ae2def1dcf5
-shard_0007_part0037.npz	1160256		0ae2def1dcf5
-shard_0007_part0038.npz	1325069		0ae2def1dcf5
-shard_0007_part0039.npz	1419069		0ae2def1dcf5
-shard_0007_part0040.npz	1387608		0ae2def1dcf5
-shard_0007_part0041.npz	1357983		0ae2def1dcf5
-shard_0007_part0042.npz	886167		0ae2def1dcf5
-shard_0007_part0043.npz	1013691		0ae2def1dcf5
-shard_0007_part0044.npz	1427765		0ae2def1dcf5
-shard_0007_part0045.npz	1403662		0ae2def1dcf5
-shard_0007_part0046.npz	1440647		0ae2def1dcf5
-shard_0007_part0047.npz	1258452		0ae2def1dcf5
-shard_0007_part0048.npz	1509289		0ae2def1dcf5
-shard_0007_part0049.npz	1396604		0ae2def1dcf5
-shard_0007_part0050.npz	1559063		0ae2def1dcf5
-shard_0007_part0051.npz	1419562		0ae2def1dcf5
-shard_0007_part0052.npz	1449540		0ae2def1dcf5
-shard_0007_part0053.npz	1492907		0ae2def1dcf5
-shard_0007_part0054.npz	1499864		0ae2def1dcf5
-shard_0007_part0055.npz	1387941		0ae2def1dcf5
-shard_0007_part0056.npz	1275311		0ae2def1dcf5
-shard_0007_part0057.npz	1215245		0ae2def1dcf5
-shard_0007_part0058.npz	964187		0ae2def1dcf5
-shard_0007_part0059.npz	1216774		0ae2def1dcf5
-shard_0007_part0060.npz	1369464		0ae2def1dcf5
-shard_0007_part0061.npz	1321826		0ae2def1dcf5
-shard_0007_part0062.npz	1368267		0ae2def1dcf5
-shard_0007_part0063.npz	1320570		0ae2def1dcf5
-shard_0007_part0064.npz	1244928		0ae2def1dcf5
-shard_0007_part0065.npz	1384024		0ae2def1dcf5
-shard_0007_part0066.npz	1275029		0ae2def1dcf5
-shard_0007_part0067.npz	1235365		0ae2def1dcf5
-shard_0007_part0068.npz	823429		0ae2def1dcf5
-shard_0007_part0069.npz	763872		0ae2def1dcf5
-shard_0007_part0070.npz	1165411		0ae2def1dcf5
-shard_0007_part0071.npz	1470706		0ae2def1dcf5
-shard_0007_part0072.npz	1173828		0ae2def1dcf5
-shard_0007_part0073.npz	1525671		0ae2def1dcf5
-shard_0007_part0074.npz	1476120		0ae2def1dcf5
-shard_0007_part0075.npz	1494015		0ae2def1dcf5
-shard_0007_part0076.npz	1444503		0ae2def1dcf5
-shard_0007_part0077.npz	1550440		0ae2def1dcf5
-shard_0007_part0078.npz	1497784		0ae2def1dcf5
-shard_0007_part0079.npz	1536795		0ae2def1dcf5
-shard_0007_part0080.npz	1561412		0ae2def1dcf5
-shard_0007_part0081.npz	1475327		0ae2def1dcf5
-shard_0007_part0082.npz	1432094		0ae2def1dcf5
-shard_0007_part0083.npz	1390780		0ae2def1dcf5
-shard_0007_part0084.npz	1032615		0ae2def1dcf5
-shard_0007_part0085.npz	1362153		0ae2def1dcf5
-shard_0007_part0086.npz	1472422		0ae2def1dcf5
-shard_0007_part0087.npz	1463419		0ae2def1dcf5
-shard_0007_part0088.npz	1508394		0ae2def1dcf5
-shard_0007_part0089.npz	1449926		0ae2def1dcf5
-shard_0007_part0090.npz	1434757		0ae2def1dcf5
-shard_0007_part0091.npz	1511447		0ae2def1dcf5
-shard_0007_part0092.npz	1445444		0ae2def1dcf5
-shard_0007_part0093.npz	956975		0ae2def1dcf5
-shard_0007_part0094.npz	999798		0ae2def1dcf5
-shard_0007_part0095.npz	1443621		0ae2def1dcf5
-shard_0007_part0096.npz	1407951		0ae2def1dcf5
-shard_0007_part0097.npz	1438109		0ae2def1dcf5
-shard_0007_part0098.npz	1460284		0ae2def1dcf5
-shard_0007_part0099.npz	1069088		0ae2def1dcf5
-shard_0007_part0100.npz	1073723		0ae2def1dcf5
-shard_0007_part0101.npz	1352270		0ae2def1dcf5
-shard_0007_part0102.npz	1343212		0ae2def1dcf5
-shard_0007_part0103.npz	1352216		0ae2def1dcf5
-shard_0007_part0104.npz	1265756		0ae2def1dcf5
-shard_0007_part0105.npz	1092857		0ae2def1dcf5
-shard_0007_part0106.npz	1340095		0ae2def1dcf5
-shard_0007_part0107.npz	1209550		0ae2def1dcf5
-shard_0007_part0108.npz	1089678		0ae2def1dcf5
-shard_0007_part0109.npz	946064		0ae2def1dcf5
-shard_0007_part0110.npz	734655		0ae2def1dcf5
-shard_0007_part0111.npz	1228559		0ae2def1dcf5
-shard_0007_part0112.npz	1119366		0ae2def1dcf5
-shard_0007_part0113.npz	1256601		0ae2def1dcf5
-shard_0007_part0114.npz	1293776		0ae2def1dcf5
-shard_0007_part0115.npz	1284353		0ae2def1dcf5
-shard_0007_part0116.npz	1357565		0ae2def1dcf5
-shard_0007_part0117.npz	979005		0ae2def1dcf5
-shard_0007_part0118.npz	1183684		0ae2def1dcf5
-shard_0007_part0119.npz	780888		0ae2def1dcf5
-shard_0007_part0120.npz	1036227		0ae2def1dcf5
-shard_0007_part0121.npz	1333177		0ae2def1dcf5
-shard_0007_part0122.npz	892625		0ae2def1dcf5
-shard_0007_part0123.npz	1240404		0ae2def1dcf5
-shard_0007_part0124.npz	1340334		0ae2def1dcf5
-shard_0007_part0125.npz	404823		0ae2def1dcf5
-shard_fill_0000_part0000.npz	1437080		0ae2def1dcf5
-shard_fill_0000_part0001.npz	1328487		0ae2def1dcf5
-shard_fill_0000_part0002.npz	1457059		0ae2def1dcf5
-shard_fill_0000_part0003.npz	1449606		0ae2def1dcf5
-shard_fill_0000_part0004.npz	161332		0ae2def1dcf5
-shard_fill_0001_part0000.npz	1441255		0ae2def1dcf5
-shard_fill_0001_part0001.npz	1327975		0ae2def1dcf5
-shard_fill_0001_part0002.npz	1447654		0ae2def1dcf5
-shard_fill_0001_part0003.npz	1345830		0ae2def1dcf5
-shard_fill_0002_part0000.npz	1468231		0ae2def1dcf5
-shard_fill_0002_part0001.npz	1334674		0ae2def1dcf5
-shard_fill_0002_part0002.npz	1448005		0ae2def1dcf5
-shard_fill_0002_part0003.npz	1388730		0ae2def1dcf5
-shard_fill_0003_part0000.npz	1412905		0ae2def1dcf5
-shard_fill_0003_part0001.npz	1303160		0ae2def1dcf5
-shard_fill_0003_part0002.npz	1440308		0ae2def1dcf5
-shard_fill_0003_part0003.npz	1474664		0ae2def1dcf5
-shard_fill_0003_part0004.npz	36116		0ae2def1dcf5
-shard_fill_0004_part0000.npz	1473153		0ae2def1dcf5
-shard_fill_0004_part0001.npz	1375633		0ae2def1dcf5
-shard_fill_0004_part0002.npz	1496386		0ae2def1dcf5
-shard_fill_0004_part0003.npz	1398417		0ae2def1dcf5
-shard_fill_0005_part0000.npz	1497672		0ae2def1dcf5
-shard_fill_0005_part0001.npz	1352168		0ae2def1dcf5
-shard_fill_0005_part0002.npz	1486393		0ae2def1dcf5
-shard_fill_0005_part0003.npz	1436206		0ae2def1dcf5
-spec.json	431		0ae2def1dcf5
+shard_0000_part0000.npz	1297165	48c9c0eaeabb21e027e23d5dd8a8626c3231bbc773dae20f650c57213ba07c36	735a941b0873
+shard_0000_part0001.npz	1173985	2f99c54cd56be1eb3834005b69b0e84944dcef4c294cf6762a71daea3cf70745	735a941b0873
+shard_0000_part0002.npz	1312792	eaee98c2e98871c9f9f1e0acdbeab25c566d966443aa71eedf35d21b28c1cff1	735a941b0873
+shard_0000_part0003.npz	1300612	ac43a40f30f123d421200bc57e666d59960b321683e76c7a36d43a57ef02c18b	735a941b0873
+shard_0000_part0004.npz	1335274	d307491885e1b728dcb2b9a9d1b0e8b5be32e759df9695feb3c192d07e8bc0d4	735a941b0873
+shard_0000_part0005.npz	1266071	d3d005c58b1d1e9444ccb20205da09d097d777f2c15b88d33e060ad852619b1d	735a941b0873
+shard_0000_part0006.npz	1271892	6f63074e5b193ce516d622332b54b93c9235efbcc11b9a1a9b6ec455f72c53c8	735a941b0873
+shard_0000_part0007.npz	1301508	5b5a71f87011a1d00f3e22da1e73827b78b8ee5fb151a698726fa42a8155337c	735a941b0873
+shard_0000_part0008.npz	1137230	4320d927bd6dec4184432a8c1ff72b13ab069d735a850d1bd773f84b5d3fc38b	735a941b0873
+shard_0000_part0009.npz	994993	0773d87cadb77a19fc23beeed8b2d5a7c506488afd773f229f45b5668dbf42b4	735a941b0873
+shard_0000_part0010.npz	954275	da98e3784739fd54ffa33ad4b2142fe37b42cf32e090b65d60da7711a06d591a	735a941b0873
+shard_0000_part0011.npz	1194358	7b075302974900d6eae60fd331c06d7915edc02f141a6f7b283f0653ba4c552b	735a941b0873
+shard_0000_part0012.npz	1136192	71499cc1ca3462d4f78338e6e1a9f570e2ceff0b56bc369a86a6522967739e7e	735a941b0873
+shard_0000_part0013.npz	1245244	7d0419f4e3cdd61b9fd8e03fe616ce8e38a829fed27d08e4d527be35d51a0799	735a941b0873
+shard_0000_part0014.npz	1064569	ddf4f18f71a4c260e481db40d6984aff4161c3e259c1dde0ca54c8bf2cfcdb1e	735a941b0873
+shard_0000_part0015.npz	1145769	ef26ea9c18000b7b66d7d80c13a0dc63fac90151ce26592a8c36498fe0dbb4e3	735a941b0873
+shard_0000_part0016.npz	1219416	fa5ff4885b99ee4198f4fd8ed50c7153b8edea4677788f7cbec29a30062ba70b	735a941b0873
+shard_0000_part0017.npz	1115722	608cb7ca21533705530c70aecfaf61048ff4eb2dbf3f5ea4d3d26bffdf733fb7	735a941b0873
+shard_0000_part0018.npz	1228766	558eafc1e98dbec96f833d0e88df230e7f067fcdbfa8a2be2c035301c1a97496	735a941b0873
+shard_0000_part0019.npz	754223	cb24b48a8c7e35d65aa2045b0e7c988e5459b96a8cae60c9541d74e223f06f91	735a941b0873
+shard_0000_part0020.npz	990737	11983aaef0e370357b4d479f4ca27bff45d589cb7538a80a1f84171222a0b7da	735a941b0873
+shard_0000_part0021.npz	1353047	2f5ff63a11af4769db18aac4d9181ec4abf70bba94ca240faf07b94a5e47ec48	735a941b0873
+shard_0000_part0022.npz	1078140	7f7c3c79e296127d78656874c2afac451a133a700afa9276f8c20a415b5c065a	735a941b0873
+shard_0000_part0023.npz	1407619	7c6a77cc1022b9d67c67508e4b3fded4a8ffb30aba72d6c0002b0e04ad9b96c0	735a941b0873
+shard_0000_part0024.npz	1169673	0eb6d6a6a3ebdb2ce7f66dacd835b067221eaafb4439cdfae7f459f220bb504b	735a941b0873
+shard_0000_part0025.npz	1441101	a80eb03fbb86af7c71b8c4a2dd1f6d2657d30956aee68be8a0ffad2986ce6a57	735a941b0873
+shard_0000_part0026.npz	1390138	c788016fa862495fd433ae47e0bdf03a2e72a03c4c31fdbb8182e66034a1db38	735a941b0873
+shard_0000_part0027.npz	1443810	7c953b045099bb0fc56f540861e5f0babe7a48b072d5e3c7f6b0a7a9f6425279	735a941b0873
+shard_0000_part0028.npz	1506100	78922d1f19c268b60f62df2c399f274552fbdfb267edcb6b6f6ad802a97bd752	735a941b0873
+shard_0000_part0029.npz	1551510	6fbaff31c67b4654a36e0cf1eafe8a7d0dd2d5f7c546979417dc12c00ea16c76	735a941b0873
+shard_0000_part0030.npz	1573588	c038f215deb4a71ebb34df11886d65560c4e49501ae17735d8d77b71759f9f2f	735a941b0873
+shard_0000_part0031.npz	1498459	751e80f5c5dde28d1614643dd82014c4edbb2883079a04024ba7ac9d10812a1b	735a941b0873
+shard_0000_part0032.npz	1457522	30e35ee4a114552c979bcfac52d9218d4e45690807795f0ab5143057e583797f	735a941b0873
+shard_0000_part0033.npz	1413465	5c8c5957bab555433517c5b8e4490b97d8289a8f27a4fedad040c06d531137ab	735a941b0873
+shard_0000_part0034.npz	1009090	9bc4eb40c7e61ed222b1c187d709974a22552f102caef523ebf97b2234c08169	735a941b0873
+shard_0000_part0035.npz	1407708	48323d3b3d090949d43504cd31d83104480e6dfb6ee74e980e70a3379cb9aeb6	735a941b0873
+shard_0000_part0036.npz	1474466	35c38b9d9ea0b6ed6d305f2d62cd600d1e6110e8bb75fc4087aef9390599e2eb	735a941b0873
+shard_0000_part0037.npz	1456856	cd8a4685dc75b5936ca044121903421cd8a514824ee698f2d66494724b458492	735a941b0873
+shard_0000_part0038.npz	1474147	06bb61c68ccab41bfb58a33a58a1d2a9c12393996ee58006857f33f21db08d69	735a941b0873
+shard_0000_part0039.npz	1421579	a579d3ae03382e71aad1629a96e233dc2916ca693769ac82e036145c72d30385	735a941b0873
+shard_0000_part0040.npz	1476633	75c570e5397fe408f01a9d75089871dfcb428c6067caee55b6bd800cfce509e7	735a941b0873
+shard_0000_part0041.npz	1518636	46782583d8780d37504f15a46e96569a3d9b6c53c7689d3943acf6636dee48f0	735a941b0873
+shard_0000_part0042.npz	1412913	f67702621ec63ca202b4a5827ee07c409a1b0d734c8d5d8a4dfcd33f2a5a4928	735a941b0873
+shard_0000_part0043.npz	948245	79f8612cd94afcb380fc0313624738aeef0677f042a9f47dd1643b5b219ae883	735a941b0873
+shard_0000_part0044.npz	1042509	93e44c258a24de006ea6883b95512b6cef3d1fc44c031af3c20af2abdeede03f	735a941b0873
+shard_0000_part0045.npz	1509443	ed1862a69c1edc6cd4b34929cb5d17a356ba4d6de81906e1441dc688ac3f8dc2	735a941b0873
+shard_0000_part0046.npz	1339245	908272735ca031e73a5063c91a68bdcf48bfaee08cfe5c5b15f4fb9ef307e1b0	735a941b0873
+shard_0000_part0047.npz	1527821	64c3c0c6cbe7ca48a999be709454d81eedb8ba58939e2168a5f81860f090877a	735a941b0873
+shard_0000_part0048.npz	1392895	c48978a4421163a1e5334121de93691edd8b378023642f4c5867e266a7bbcd1f	735a941b0873
+shard_0000_part0049.npz	1327024	0b1532fe864d6fb725f01b9ac967fdc5687910e7dea3a1500653152abc74730b	735a941b0873
+shard_0000_part0050.npz	1381614	614bd3b6341eab46c947752d443bbaf9661f03eb1cf69bca3fe326af096a9b7d	735a941b0873
+shard_0000_part0051.npz	1309622	fa4ca1d8245b9a09b973d8aba9453fd46cc575691ed3a3018ebaaf1a4341902f	735a941b0873
+shard_0000_part0052.npz	1295953	79a89648edb8159c9882a2137f34b520aa53801bbb6fca96118acf2b3a18ff0c	735a941b0873
+shard_0000_part0053.npz	1390523	d1842b45be24ee3bafd61a6116048a2a7c493e58103c4838592302c678dae3d2	735a941b0873
+shard_0000_part0054.npz	1394187	cd282e1fe42e8e0cf9baf3136da47e82cbe4ac1eae3e3deea57cad6a85c68f59	735a941b0873
+shard_0000_part0055.npz	1300624	df08fb0545f06bb5ea09273dd25b6a969d43a9790b4582c85d02f593b86b1bc1	735a941b0873
+shard_0000_part0056.npz	1280605	daf768f2b76bef0994c3dba7670c95dc76fbeeb4b3127a12260651de7055cd83	735a941b0873
+shard_0000_part0057.npz	1225785	e2d334277a32e210cab983a306e50f9fd970ce6381be86c41e0e9733827fb3ea	735a941b0873
+shard_0000_part0058.npz	1196706	06de3543a017df7eeb3ee8f96dae94e035d2cd73193a7114762721d6f8c092f8	735a941b0873
+shard_0000_part0059.npz	895141	053ac033c3170cf1bbaea63314304c52d897dc36cd8fe90d2b0b4f4b7976813e	735a941b0873
+shard_0000_part0060.npz	1001056	e11507a4fca1f95babd217ff1051c63ff3ac257fdcb4da77c09db781b374f5c9	735a941b0873
+shard_0000_part0061.npz	1262451	39058e28c2348c3e6ab55543607d1231f684ef46da307ab8f0f92407729e3d6d	735a941b0873
+shard_0000_part0062.npz	1257971	9b95a06558e4dea33b5117c5a7f6ba3ce4313f82a11bd501b2804e96120d41e7	735a941b0873
+shard_0000_part0063.npz	1208409	32e31f874b568fd053b10c92743b94e5516ab42cacedf4a59a74b5d988e4c1b5	735a941b0873
+shard_0000_part0064.npz	1162421	ae23688867a865cd8edf0ac2ecf5251f680695c6ab1bb25dd0da8a3f43c34001	735a941b0873
+shard_0000_part0065.npz	1255875	73ac964754bc417e6dc974323a94b0483ad20978866756db9bb7ceb95f54c940	735a941b0873
+shard_0000_part0066.npz	1134446	a272d01aea9995dfbc56eb686b54552f02cf5dd8bb2ef8e1aa0b59bc8cd24a53	735a941b0873
+shard_0000_part0067.npz	1087606	e33d15f8bf50bd748f4700744555930962ec9256a86549326a27568f1f90d405	735a941b0873
+shard_0000_part0068.npz	1120145	a155112510ee1a6134dab956d270366c3cb90174cdd0af9b270d9585cdca527f	735a941b0873
+shard_0000_part0069.npz	1164418	1c0c6e82520067a19c56b18ad420c9b30b13921474099a44697d20c895ba571d	735a941b0873
+shard_0000_part0070.npz	849182	588a32d416e7219d1c9ab814af39a5ae79d3fc883b9a496cd44185b169f668e8	735a941b0873
+shard_0000_part0071.npz	754838	087526e0b4d9f683e8b77301a62a657d8e04ef47ba850a1caaeb8721455b02b3	735a941b0873
+shard_0000_part0072.npz	1152709	6cf9a0101ab9d408464cd61803aef88776617dd058834f16cc2ef61e26f10696	735a941b0873
+shard_0000_part0073.npz	1433408	697041154280a921e1dcdd21b7e04d9adde970e18ded7c1feb44ce0b0d3cec56	735a941b0873
+shard_0000_part0074.npz	1241664	9fa7fa6a38bf6a6b155c357827283dea245cc34af124908031e66b32165668ed	735a941b0873
+shard_0000_part0075.npz	1460308	b0c90a6c84acaa70011bf534aab0d3c3d6dfd52182574d1ff3d157fa38737e67	735a941b0873
+shard_0000_part0076.npz	1350231	042f5490c33a6f81b95b1ec64aed671b50d2fca4e3e7fe8ae4ff605bd9fde3a7	735a941b0873
+shard_0000_part0077.npz	1432779	f117a3b32690d716e73469aab5f228299c44e07cf5604d8d7f3839a269389691	735a941b0873
+shard_0000_part0078.npz	1441576	95af8d5bb9e2392b037f61bb6e896d01fb71ef84d6e6acf35434e6b1c0d9e0fc	735a941b0873
+shard_0000_part0079.npz	1485902	ba35f4a95429ec37451a8465b3324bcfc2a9b214148c2da845f337a58adc8801	735a941b0873
+shard_0000_part0080.npz	1401173	13bfc0752da7f36c1254525e1ac51808cdf955a80dda29f7e70d9169346e6454	735a941b0873
+shard_0000_part0081.npz	1516463	9fe6d296c5542e17c4ba76d5c7aabe5e0a53b6374ed28248162a5ef461c6df3d	735a941b0873
+shard_0000_part0082.npz	1503894	690ee01aedb6270e963cb09f907ff516cc21401edacb8d5b4e0b29d58b226895	735a941b0873
+shard_0000_part0083.npz	1439436	7b22efc03409a70fad82969eb3b82d6654a17650b391df9edd06177653df8001	735a941b0873
+shard_0000_part0084.npz	1389165	082db647a7a7aeaa911fbdde0afcb3ee20cf597ecd5ac08da5a47ec3f3645b68	735a941b0873
+shard_0000_part0085.npz	1319677	d51401f1f82fb578a76210d378acb6d78f10316e3026c66670c5f87419e76e1d	735a941b0873
+shard_0000_part0086.npz	1152043	171b91decf04229e808ece3b1467efef5d773543a1b99840d95f9311c0da39cc	735a941b0873
+shard_0000_part0087.npz	1166271	eee36cfaddf91b9dbe1bd0c7004f1ce1b4a5cdb037e04751616af8f716014d0d	735a941b0873
+shard_0000_part0088.npz	1481668	1b3130e1c7b19c1434a44ee0640c09650ace11a20ebac465bb3757a67cb6dd07	735a941b0873
+shard_0000_part0089.npz	1395845	e35912679152f7b2a46f632c58aea2773c78e546618fa83c98d57d45952bed47	735a941b0873
+shard_0000_part0090.npz	1457422	a196132d0b5300b98424c7679ef581fa761475640ba6f5cf2a5018e21baf4635	735a941b0873
+shard_0000_part0091.npz	1398980	11741df62fd35044d6cb95493e0856f87709f8f13314f51c0227e94f76ba0947	735a941b0873
+shard_0000_part0092.npz	1444230	461d1d0c2dd016bc4a629527fa1a67b3fca9f792d171327091ce11e52f70019c	735a941b0873
+shard_0000_part0093.npz	1478773	abe8a98cb7eae6fe51043e346d5553607f063c6040061ffddc1c57617c0a5826	735a941b0873
+shard_0000_part0094.npz	1415036	0c6d86e7f60f09fb769638f529b8002f9a39900dc18d1586306db3637e72efcd	735a941b0873
+shard_0000_part0095.npz	1425781	bb06a3328ac912ca9d5b04ff9dcc7d8db4093645420facbdbd0a1cf2573303e6	735a941b0873
+shard_0000_part0096.npz	768081	f0570b8a3c32b1c5ff29ae05b905a20ebc0d19d18a89aa0dd087615d2cfc0ec2	735a941b0873
+shard_0000_part0097.npz	1155328	f6973dbefc050a7dc515fa4dfbad8f2b3fa1b8073816bea2a4892541606fb15f	735a941b0873
+shard_0000_part0098.npz	1487422	54c46e6337f62163587c3b34d14f7baa14df4f183d323e980a9c218c9371c555	735a941b0873
+shard_0000_part0099.npz	1291904	876dac23c77f2e261464cfd4e393f4a85b66500686fa65db7686180f0b763497	735a941b0873
+shard_0000_part0100.npz	1487834	073ca62f0328ad6724ea142ba408c21f4a422dfb19b71017ddc5a1a67203f8be	735a941b0873
+shard_0000_part0101.npz	1416802	6075eb9004c5ecd72f446bc82311f0cad032cabcb287b6ba32eaaceae610d0a1	735a941b0873
+shard_0000_part0102.npz	1429796	a9f3656b56dd015bf85b74d9ab1328e6db06b7644ee60df9105e85175e5530a2	735a941b0873
+shard_0000_part0103.npz	1381956	e59cdc12f9bafe7666164724632edf7c56fbd6b46292fb6ad525e2f09c23f087	735a941b0873
+shard_0000_part0104.npz	1503085	309da2240e72258080ae278589a0703d09bb0e11a767a5b298e550573cc6577d	735a941b0873
+shard_0000_part0105.npz	1423265	aa0d9e8c750b74f3e6cf96b8e4c19b4f1557cc53679192415f85c95ef454a66a	735a941b0873
+shard_0000_part0106.npz	1426664	eb537e7c06295c262c170281fcdd513dbddbcf5dcc2dfc04f200596cd6940cb9	735a941b0873
+shard_0000_part0107.npz	1484928	1a98bdaa99ffec8843776c3e508af386500887400044d3d3b509027217a3b3e5	735a941b0873
+shard_0000_part0108.npz	1481740	a5b197e812a63b37594e509239494cde8d922cc26c739c61b727007809e0b149	735a941b0873
+shard_0000_part0109.npz	1452419	ad9c08ba1393577d276abd1397cb4008f236516df34a341e73976fade82cd9bc	735a941b0873
+shard_0000_part0110.npz	1290664	9ae663e5ef60cc5649a996f4c1fb6fd1f0071fb0cdda7eeedf9cef0e514f0cfe	735a941b0873
+shard_0000_part0111.npz	1262158	76c9a4e523591a87966c513060da485d140e0732f4f8dc88a2a4f40f2a2e0a3f	735a941b0873
+shard_0000_part0112.npz	1141403	8935c232ab66d399a5c4449ed89089d8cb280cc9fe4beb17eaafe817c4edc116	735a941b0873
+shard_0000_part0113.npz	1442237	cbd04dda105532ab5bbe74e82500fb9a04f45078968f30e24e4083e6b0fafde2	735a941b0873
+shard_0000_part0114.npz	1477577	e3d87811b09734ed26f19a34000e9dfb8b57513530c47366b5dcbe813d604b4b	735a941b0873
+shard_0000_part0115.npz	1548952	5ec4b293ff7875bbdf6ec1d794f22b8446b50a0ddfc6c95d9fe64545db4b0a81	735a941b0873
+shard_0000_part0116.npz	1343316	3e3bb2e63bf0d99a25ca3e606ba8fb2b6ee23de3697a0276a38ab285ca34f402	735a941b0873
+shard_0000_part0117.npz	1349351	5b62bddb4e5a08e735fc7f757658da12755131b09535d6e45dc83d6ab665eb23	735a941b0873
+shard_0000_part0118.npz	1383285	29046c88433ea0dd41f6179332e2938b07f1b45c38a97a88c484b1e99e9556ff	735a941b0873
+shard_0000_part0119.npz	1310025	fdb85e9b60e26d92aa271aee3331a211b3f62029e8d77fd27ac0c2bfa94b7733	735a941b0873
+shard_0000_part0120.npz	1367690	bc07454db7ac4cd79902c262e5838d3d75eda6797a28b52a3d3fc1b7ef820417	735a941b0873
+shard_0000_part0121.npz	888684	31ca72ab14a5345ecd0e94823976ab445c5787420af819f950521c3856d03a71	735a941b0873
+shard_0000_part0122.npz	939419	815e37e2e9fdaf33897fce84773f97ea28e0ff2538a1f3c230b90e4ed46796ea	735a941b0873
+shard_0000_part0123.npz	1478535	597326ec996147cc2767521f15de45ecfe6f87c7dec5046fbf8be1ebf87375c3	735a941b0873
+shard_0001_part0000.npz	1308285	457d85ab84e179596b68275996d3c216c6519e25922df0169c71944091b67996	735a941b0873
+shard_0001_part0001.npz	1401810	aec1f3ca5af79ad551296afb6fbb325e736004bdcaacd2e90e279f596c128775	735a941b0873
+shard_0001_part0002.npz	1442543	d824456d9cbd83db65a85464d80f28173e0e92599a819f6ba183ca8e66080524	735a941b0873
+shard_0001_part0003.npz	1315274	95883be59c87bcfef7311c38ad64fee2ade34a53c09eaf6cd610e63b48581de6	735a941b0873
+shard_0001_part0004.npz	1357486	33c749f7b3a830ed647475245c3995f3b5a58114ae93412ad663b4767b9ab485	735a941b0873
+shard_0001_part0005.npz	1356934	40006db67d160283bc65a3732ef4c912dec40d4375ca204dec80917a8c951f76	735a941b0873
+shard_0001_part0006.npz	1378635	fa238f88eb5b4c6335f60e6c59c14eb9de72da4a3d221f36240d8944d9a3f3e8	735a941b0873
+shard_0001_part0007.npz	1375523	f5340248e27b26d6be9e03fcf0f702010d4a911c5bec304cd96d338c6dcb775e	735a941b0873
+shard_0001_part0008.npz	1437822	0ef354b74e9a671ac4aab9783b40d4a820ac36081a958ba4376683a1bb2e1c61	735a941b0873
+shard_0001_part0009.npz	1404383	e8d16388f466f412804ad77ce8a7c36de269519239232c94f98998f55bd86897	735a941b0873
+shard_0001_part0010.npz	1317088	c71699648219c6544e94cc60106339aa0e679899817bf2a15e5d836aab15907c	735a941b0873
+shard_0001_part0011.npz	1321388	204e3b113aaeb5f1607ba6566428f203501edfdc861a51018de19c55bfa8d8e4	735a941b0873
+shard_0001_part0012.npz	1189230	aa5448007a9c005324eb4dc8196b38007fdde9c31973270e224eb6d5b302c038	735a941b0873
+shard_0001_part0013.npz	1241605	549b100ff0c87e3e742e6de19a30b706c9d0df12d7a46b60dbbbfd1e30cde5e9	735a941b0873
+shard_0001_part0014.npz	892981	9abfba601c9fc9964bce5340a0588ee29d8eeaf682fe517807000ca1420a673d	735a941b0873
+shard_0001_part0015.npz	1194357	112a7f68a39ef00a100e00c2823e5337bb6fb36825043bc373fc98677d30f038	735a941b0873
+shard_0001_part0016.npz	1321750	5a9dd90f515cf33075d9fb7c73d947314735b2a0cf794a0ad3cfe9b7657d0525	735a941b0873
+shard_0001_part0017.npz	1234199	384751a0c0f378e93b0f8d14f231f569381659099c1577c0d27379eae564e82d	735a941b0873
+shard_0001_part0018.npz	1288068	ef478e8ee9dcb632b838a11f6c4d96eab15795a9a450d80c7a09477e5c9078d0	735a941b0873
+shard_0001_part0019.npz	1311343	61a52fe6b97e9f49dbd6d027e7ae83bb9d6a7eb1652b8a31aae9500387ac9fe3	735a941b0873
+shard_0001_part0020.npz	1332565	540bddf1a9522ae45b4825737ad13e62bba85f3d52e08379d864b59ece725cb9	735a941b0873
+shard_0001_part0021.npz	1351258	495aca624c1591c089a1257482d2c276947bd866661cefd9b0d1938c9640d32e	735a941b0873
+shard_0001_part0022.npz	1421072	ab80e01dd4b53d419b93e5f5c825806c5736e9623c7a146bec70cd91f9b617f9	735a941b0873
+shard_0001_part0023.npz	1337304	ec3748af343e95c57db36ce509b53c9b456f202d36ca8f8077ab6146005512fc	735a941b0873
+shard_0001_part0024.npz	1221223	07f8a6226cad222cd1f91e8fa517eaeca60ac63594605c494b40bc3a7a51fe70	735a941b0873
+shard_0001_part0025.npz	781159	c377c12bc5badc7ba19b3477592d2a37441d3a49232e444adc40d8661be1a876	735a941b0873
+shard_0001_part0026.npz	1107167	6111a038c149805d9de779a3e5901b2e85362399a4f56c0d4d9c8b8e554e6e0e	735a941b0873
+shard_0001_part0027.npz	1432431	bb85a53ff52a41a3e1f8b786c42970829c94c4e2c5b418af105c8e09e38deb93	735a941b0873
+shard_0001_part0028.npz	1279925	d17af7171884803593276132a3d3d385c5cb795577a05d1c37f5902dd80fa427	735a941b0873
+shard_0001_part0029.npz	1493575	fc9d7b680d856b57df14bad156a55a45b034774dc936564bbfe1cc72b66b9533	735a941b0873
+shard_0001_part0030.npz	1451487	0efd643b20672483d16164313c1fb37a10007596ca9441d1ebf42d161a733da5	735a941b0873
+shard_0001_part0031.npz	1400321	7e4d565df7a1bcbcd58396b33793159c43421c2224f6f3316f34e188b09196c7	735a941b0873
+shard_0001_part0032.npz	1320089	0cb5345d1e7a94222d85e5dd3f0f82f50d804e216efa7b4ad42bc88138e7c4b4	735a941b0873
+shard_0001_part0033.npz	1470360	bf4d1f7c2bf701c034dcb8f264913b00b39c6037784d6b10f31cef4d39cd1d06	735a941b0873
+shard_0001_part0034.npz	1407054	60687207d3c765402afe67912af2a8aa6ef6a4992604c74e93117d725385a619	735a941b0873
+shard_0001_part0035.npz	1475747	af595b11c549cabaf42c917e364143068cb3d59ce4fc5dd974fdfb7c21a4acce	735a941b0873
+shard_0001_part0036.npz	1491999	c75d2c8c388860ae71b3699f22f7c1c9fe93fe54acd5be078cf5e305e58b226f	735a941b0873
+shard_0001_part0037.npz	1460340	b42e2fa296c3368f53e30879602f8a47f1d9567aed37da5966159803d9fa9975	735a941b0873
+shard_0001_part0038.npz	1358535	8c53b4977e19d0126ab3f916d449016c0d3be56f3315090ccb3ac760edc41998	735a941b0873
+shard_0001_part0039.npz	1359089	fb0faa6714b8cb8b8a0b67bd19aa2d131085eb0b1427942058efd29a2276e5e9	735a941b0873
+shard_0001_part0040.npz	1275746	e7f0dddd80f561ce86135e4ceb7b5b9548332c41be660edcc3beb643be38e101	735a941b0873
+shard_0001_part0041.npz	1053297	87e83813c7d4f4dacd7d106483f2c5a2d181db6d1af1d4365234ea57c304fec7	735a941b0873
+shard_0001_part0042.npz	1292994	8fb65ff23b7770623a50326945a5c3c7adc6648abadad8e66887930deaa7dc67	735a941b0873
+shard_0001_part0043.npz	1439446	d11f589376c43f651ff0b1cda2cb3e797197f23a20ec07398ee37bedfb3a2b13	735a941b0873
+shard_0001_part0044.npz	1397503	d80452c031c33db815133dbf5a09eabaf40eb62b07c5e82456bb66444892bff5	735a941b0873
+shard_0001_part0045.npz	1418465	90d9247b8013d869ec2b640646a72f770945f25051d29f343d853c39a0ec3afa	735a941b0873
+shard_0001_part0046.npz	1371285	ce75a2734f372b22426963b586a3c3a2551f38e0eb2cff22f6d6412c98cb9d21	735a941b0873
+shard_0001_part0047.npz	1421626	f0c843cfa8a8e513bf29d4bc0d19bf18502afecadc4372d76c7f0d7cd4252f94	735a941b0873
+shard_0001_part0048.npz	1436057	d2fbcffeace74bdd705ea89e6b338a3d1556e2ddab1cfc7690e9f68114629245	735a941b0873
+shard_0001_part0049.npz	1389562	7fcc8ef1adc62d227bec9d3a6a1ac1e06b1a25afb0dc2bd3b2e3e206c2dbcfd5	735a941b0873
+shard_0001_part0050.npz	1088235	6487838800766c4cfa19db7832dd536ef2e7e9212e93cc2c7c94959665b3e25d	735a941b0873
+shard_0001_part0051.npz	795312	751fd38c77633108689ab8a3263b9cc0b1ab9d01611ad35f83a4990debfcd7f3	735a941b0873
+shard_0001_part0052.npz	1227783	d90fd959d8e83d3241f498bbe9ecc547de41c3b07e41cffd9cd71c76a96a65c7	735a941b0873
+shard_0001_part0053.npz	1413706	281d0c3c0061f29575eef5c8ab09ef14d0eefd4fdfe2c0ef826f60598afd5a06	735a941b0873
+shard_0001_part0054.npz	1204726	363914c6bfb3137261184b0d410736a8ef36d13dd2f5557dbbb789d6cd7c945a	735a941b0873
+shard_0001_part0055.npz	1376010	997a7106474e05d8f6bfc078d33cb20f47c68c554daab89f92a4232ab47c9662	735a941b0873
+shard_0001_part0056.npz	1292608	423e440b2752338a84104e55f3390503880f3b04c3648a3a0c474c61d7bb28bb	735a941b0873
+shard_0001_part0057.npz	1319553	cc9b8745b08e9605568a66e8baf80d708dd1af7d36d713e5ea0f18411415385c	735a941b0873
+shard_0001_part0058.npz	1265801	1a596841b3b86e82424afe1d94f241b7289f783a49e8a8386428ad97244e5e2a	735a941b0873
+shard_0001_part0059.npz	1352176	2a10f42d4f7c24a40279cc4c0c7bfaceaaccc68385f6c39a64ced1d14726c36b	735a941b0873
+shard_0001_part0060.npz	1332711	7592c07d8987c58efee538221ec3b8046e151c9f976c828fab7722d19d829afa	735a941b0873
+shard_0001_part0061.npz	1335633	ddd2d8794a288410a17052b87bdaa9b301f53130d0acac8711e7696a8f6db309	735a941b0873
+shard_0001_part0062.npz	1415776	feaa6f7339a69146c213b9996de448c2c3484f116d68b23352c3900b7fdebb05	735a941b0873
+shard_0001_part0063.npz	1409302	88a0215205d9a2095a2a7fd46b167e5f10f753f099e54e9f1f891ed03b7edb6d	735a941b0873
+shard_0001_part0064.npz	1264093	4b1e817c97c02bf721ea83332bafffcec4b7bf3109f88d2c71c0c81f1aa06697	735a941b0873
+shard_0001_part0065.npz	1312544	f85fcbf6fc91b690b4108353b91efd5b0b2ed778eb26c5847a9e5f9cbe5ca257	735a941b0873
+shard_0001_part0066.npz	1196153	58bc8847cc937dc40f421193dd1c71067d263fed657038c8f459f747b4564028	735a941b0873
+shard_0001_part0067.npz	1077683	be645d4123b2440d2938d2ca578fedc01c3da899485f0dc543a7d298c30ee92d	735a941b0873
+shard_0001_part0068.npz	843916	e76325f21b9764d45751e950da654c5e23d84d12c35f19f68f704a3ef940c1ba	735a941b0873
+shard_0001_part0069.npz	1170453	d4e35a30b10c3bb030f71d269e7cf2abd1f806739daae11fe80416458aa9ff86	735a941b0873
+shard_0001_part0070.npz	1250446	59bb2f7e40d16e9eb6252cf8dbb731b56253f64cd1e9935434e69afc68d32c60	735a941b0873
+shard_0001_part0071.npz	1268943	11a3296e29b54225b300602a207620ceb9dae92766976defaea27ea8b570fe3c	735a941b0873
+shard_0001_part0072.npz	1336946	411359c2a46d36aae0aa24f0f6e165cb5cb8a2fe503b550cad4e478aa113d7d6	735a941b0873
+shard_0001_part0073.npz	1365467	3caceac64b494be54b53d78c3ea22e30619d4ff47ed263ee941455cfb9900c96	735a941b0873
+shard_0001_part0074.npz	1496727	215bb02664fa8136e42b5ba2b0d64c29f5944193052400f2d8482cdcea855320	735a941b0873
+shard_0001_part0075.npz	1482470	45699b01d9c7251493449ef4de6865dabcd22df68374b6f9c6d536a93487bd67	735a941b0873
+shard_0001_part0076.npz	1486800	a0b184046b9d14b74f04bae67a1e9ca8ade25949471d39fb13b0456539a4e71e	735a941b0873
+shard_0001_part0077.npz	1481699	b5334cfcd4f784c2a328d7efac355a20fae841d3c8552907d6d0fe0a5e57ccc4	735a941b0873
+shard_0001_part0078.npz	846132	0e96b2d6ba027915d88c8848e71408096667749c0270def4ccef709ec578f03a	735a941b0873
+shard_0001_part0079.npz	1176732	6484be7520902ed3fce563aa60e43f92ff8ab2b7d297a0b659bd36c8bd37acc3	735a941b0873
+shard_0001_part0080.npz	1563561	00d8c6fe1e46e2a9fe798fa11340c5685ea427e665cccd4d185cb07e4bfe905d	735a941b0873
+shard_0001_part0081.npz	1347378	3ee359291f6f0707a7cb59cd5c19364b573bc7132812c470b77d9ba37fcdf9a5	735a941b0873
+shard_0001_part0082.npz	1521709	e4758e1defa3372c66393a47f0d874e957a41c8488a6448995d7478caf1a1708	735a941b0873
+shard_0001_part0083.npz	1444271	394ba2f6703458aec838d60b58b1a25df851a2f9317ca4ba1a77a151538c5dfd	735a941b0873
+shard_0001_part0084.npz	1462826	b860cf95441b237e030761d60e159a2ce9715c21cfa015abe5b304d654e7091c	735a941b0873
+shard_0001_part0085.npz	1455449	9cb651d4c5ddcfaf287de0741c6c937b4a5fe7b06fac906b3703e98ef21b271a	735a941b0873
+shard_0001_part0086.npz	1542698	0047199a6c387fd9e5ab5dcf86cffc9876c6d2cf67503a75bc67716eb0e1ff9d	735a941b0873
+shard_0001_part0087.npz	1501173	f927a4492c4de4171174e7a820452ab19a26a61fd6df4ab4edc33436d0912104	735a941b0873
+shard_0001_part0088.npz	1617360	9d5ce573345dff42a5abb0b8065d39c46631d181b454384824e32a73041b29c1	735a941b0873
+shard_0001_part0089.npz	1564948	eb7b833edca43a31b98b49afca589791c156f0a50978d386a9f2b433ea9d80f1	735a941b0873
+shard_0001_part0090.npz	1527442	9ffd30acf1b68166fdada40ecdf005a97dd81419d1daa5c66633131265095dd0	735a941b0873
+shard_0001_part0091.npz	1410148	6021375edf334cb36b7fe0ef2a0e729d7a501b68e906034acc5ff01d9aa250c2	735a941b0873
+shard_0001_part0092.npz	1283435	0da47c647403170cd68abeb7524952d7f94922a5e8ffa6e895953d6099cb8bf3	735a941b0873
+shard_0001_part0093.npz	1239979	5c9ddd349f2773930cd93a995b057ab0f6106a530919e1d78fd946ca62dd223f	735a941b0873
+shard_0001_part0094.npz	1475869	2d806aa48646a0e031ad0fd131f9a31c938417c98c21d603e84329881de88f15	735a941b0873
+shard_0001_part0095.npz	1487945	cec4add47dfa17c6c71df2174605d1b6a64006574393799db9a55db1c7392d4d	735a941b0873
+shard_0001_part0096.npz	1538369	404ce063e227fac4e6283d58377bf38e6caa13fce2223735e868c38f441874a8	735a941b0873
+shard_0001_part0097.npz	1407687	ccd82dc97ff23ffd6b329a45ac1d1b07cb24b6ca51d4dd16fb322fe936c5a42f	735a941b0873
+shard_0001_part0098.npz	1509991	9436deab141bad3252fdf557652213088b6c36b53c15d07d7c9b8dac5c40b984	735a941b0873
+shard_0001_part0099.npz	1528584	f4489db93f896e21bf9a527339535a683e607a1c996146c2808f24525f9c78e3	735a941b0873
+shard_0001_part0100.npz	1486945	fb288b391884a69f97afe2b677bf12e6c6869b85aed9651340991bf2bec3a468	735a941b0873
+shard_0001_part0101.npz	1053622	752a4c1f34b063293213b93e453a671e98e2d1ecc72c03c9b21bdfd390cb72da	735a941b0873
+shard_0001_part0102.npz	1005204	c02576bbf8cfba50532e8aa7e7c0b7c8c81fe882143b0dd5537a74d1c78ded54	735a941b0873
+shard_0001_part0103.npz	1487557	045c56bc85ffd51f0c343b93f0ebbfae5ef2d8a28e4d80c5b71f3cf2e2968052	735a941b0873
+shard_0001_part0104.npz	1312602	5fbb03e47328e11d4760d0333ba7442cb24bd02b823ad19dee2db8486beeb34e	735a941b0873
+shard_0001_part0105.npz	1491817	800c0494158ea3401faa7771e446a9ffd38358bf15d21a47c8e1fc0b78b8e313	735a941b0873
+shard_0001_part0106.npz	1389389	36a45abf730959903df09ad403e2a4c2335854c3d3554baa7f093489f8a057bf	735a941b0873
+shard_0001_part0107.npz	1354455	f03627529808da2aaa6e311ac71c4838f289e10c24fe1106ae340f901039c8c9	735a941b0873
+shard_0001_part0108.npz	1345334	24ac55571de4bfb8af2030356900f6b44091160c7a1b29c86d9c819b38746840	735a941b0873
+shard_0001_part0109.npz	1472744	8215d98ab880bf11ac8dd3d2ca1cb08473809a9edcc4d0c14c777b4a73777337	735a941b0873
+shard_0001_part0110.npz	1404842	1b6685d4b9dc362bb1c5ed9419cfefe48437ffd1f26b90e4786ca10dfa1292c0	735a941b0873
+shard_0001_part0111.npz	1489876	fc8e7557ecc0c33153fb8e5dab99743cb5024968b7dbedda4c4909c41794f86e	735a941b0873
+shard_0001_part0112.npz	1528674	b10526b61b673baa7d591a00d8b57987847df2dbd7d06a60f95f931f92ec42d7	735a941b0873
+shard_0001_part0113.npz	1490708	0d4a1d3b2dc649ce0542633543192089e1d9b49f227486afb97740de4cbb9c61	735a941b0873
+shard_0001_part0114.npz	1489776	dffd746653f359a8a1e15480e99cdb07cf81fb5afddf707691e28871965f9a83	735a941b0873
+shard_0001_part0115.npz	1416827	b19e8e397f693078b781a248cec8c7de56a3a701091ac92ffac516d7058bb9a6	735a941b0873
+shard_0001_part0116.npz	1105853	2fbb6ab3f5ce4f17038969ad90d4fdb53721364387ea7ab9c451bc436506777d	735a941b0873
+shard_0001_part0117.npz	1278149	8bdde6d58591081b57e7e4772112ff7f9f6f6e7c64e8614e494bb18c66b69d71	735a941b0873
+shard_0001_part0118.npz	1379587	ccefcadbf23497b73a5407325fe09774117a878df045c8738da9df14ac4cd0fc	735a941b0873
+shard_0001_part0119.npz	1336797	87d2d97c93685941a815f17c4edd50ab23fac50e551b218c1c20656b5014774c	735a941b0873
+shard_0001_part0120.npz	1413764	ad1e8184f7a5a9513365bcd3598cc7a0c753a669d74db66e82b8381c405c5c24	735a941b0873
+shard_0001_part0121.npz	1335980	1f5ef7d39d21ee4ddd0d399c91c2ffb2f33a1790868e31a296b227db1360a298	735a941b0873
+shard_0001_part0122.npz	1333109	6add587c29071aa7d9152115757cbe5553dc52bd17dff1fd762e1d0b585a6e00	735a941b0873
+shard_0001_part0123.npz	1382542	5bb63218d9f3e38adf3d415ddee38fa9be12794e7244a13a6b803e611510a06e	735a941b0873
+shard_0001_part0124.npz	1102864	fedbea46a025266777ef6c119ea8b724efc28b2966d3aded99bb15a006dab121	735a941b0873
+shard_0002_part0000.npz	1366198	f0ebda114b042f3a980118d355a44f908eb8d9183e5c36dba11f6a3f249c62af	735a941b0873
+shard_0002_part0001.npz	783825	e841f71616228efcb4f0c2b62d72f0d7b417c95e6fa9b59a70a7d8efc7565b56	735a941b0873
+shard_0002_part0002.npz	1140728	77f9a12a37845841be4a066ca53c8c1e30f71e516286b576536c44f11d02db1c	735a941b0873
+shard_0002_part0003.npz	1450091	1181e6c2dea7f00c8c13510ec6261b947a79f4b13d66cab7acb99f082f808c05	735a941b0873
+shard_0002_part0004.npz	1318491	0d2e12f1be856b6264d14800243cc0295e67e3229adc91c3b2264d2823b797e8	735a941b0873
+shard_0002_part0005.npz	1489007	68540d726e3ced044f08ab5b9e04220c4f5e63c29df3eabaeb3fc83ee0379e84	735a941b0873
+shard_0002_part0006.npz	1305871	1336ad16919ca726fec8f6d39f4367ce560169c6d7984fcd5f94df2d5ff0dd43	735a941b0873
+shard_0002_part0007.npz	1385289	f962f8898022d24c19c74c44d1ca8f716cb32d350bd81ca3ee27f9c397e14fed	735a941b0873
+shard_0002_part0008.npz	1354949	bb5fbbe89efc217555667a7bfab61ec46e9c504db54d58c921c186611c807b27	735a941b0873
+shard_0002_part0009.npz	1401444	9e1e85279faeea3edb1d5bbd2be477ffcd340c2152a30c336076573199620ea8	735a941b0873
+shard_0002_part0010.npz	1320791	a2310dce663e3b66f38a7046675be723501cc81caf886d4b4a9ca0c10b2f413e	735a941b0873
+shard_0002_part0011.npz	1370052	f8506df273fbe7941bdb9a4a39edf5df3221dc25d37ae2a79c5ac04d02eaa9d5	735a941b0873
+shard_0002_part0012.npz	1390047	b53a55af4c63b701640be1df05701045d390998e63c322e8175108e154334071	735a941b0873
+shard_0002_part0013.npz	1435864	4c01885666c5583b598c7511ff4ba613feac84ce222a9ac62b1a6c7f279b6168	735a941b0873
+shard_0002_part0014.npz	1342097	83fb267ef0fbf59a001462243523ae1664416b0974b56ad11e58ee4be49c8b23	735a941b0873
+shard_0002_part0015.npz	1269390	6e7ab52203f70c8a1c5c2420b5571f0b4df7c76e11ccad848ffd2c81c8c4919e	735a941b0873
+shard_0002_part0016.npz	1187455	f59806cae45a69dd8b1d61135605cc78e2b4439439fcfc595c388380904f983f	735a941b0873
+shard_0002_part0017.npz	983424	db1a4e8936689584c0240c88d1f56112970d32cef43542bd7580d268d6595f5e	735a941b0873
+shard_0002_part0018.npz	1264988	b61e6b1b60da73cb6befc4b3216b5638b65925444dd37e492e048d4fec2b7751	735a941b0873
+shard_0002_part0019.npz	1310832	73ca5513498b40a0471fa8d0dcf0770cd8f207e88db2a4959534371e2f4e47ca	735a941b0873
+shard_0002_part0020.npz	1398487	f6ba503543beec1d40cc484522c97ec3425a745fefe72080302a0309ff8f7e22	735a941b0873
+shard_0002_part0021.npz	1368985	e970cb9580629398bbcf111a9cf53002557489ecb8a3259299df4b32671ef89a	735a941b0873
+shard_0002_part0022.npz	1381044	69a96d5d796388a9bb71f1fbd71a636ede9c1ee79e7f5712f32451c9ab086c12	735a941b0873
+shard_0002_part0023.npz	1389718	4f9fd8c9881324731550e66e8681695a71da477e888703d42c60ebdcf2e6ff1d	735a941b0873
+shard_0002_part0024.npz	1464498	9d162bd1117f6933cb121d47636ecb522a44f011fb22e6e929dd9483e20cc80f	735a941b0873
+shard_0002_part0025.npz	1417055	78bcdcfbd1df9764698fd2d3be051070bb63011b59eca7137f457b67f57367ef	735a941b0873
+shard_0002_part0026.npz	962579	249fe7634fc05a3a01f96ea2857b540240dbe675b645ca481ebbaf4708fd77ea	735a941b0873
+shard_0002_part0027.npz	922693	3512e2cbd8c6b047d00e83d9b871a845f10304620cb2b601f72e725e8456211d	735a941b0873
+shard_0002_part0028.npz	1443989	38f931895c31a71fdb1480cc4914988013d19f02dd741abf831628fe14a49e75	735a941b0873
+shard_0002_part0029.npz	1419986	6617e6bdd4977e4fa26dd350e293e4dc39655d3f840ac14206472c3abb042c4a	735a941b0873
+shard_0002_part0030.npz	1468548	2b42d8984e34dfc47fac4a0d6d99615d4420fcacdd028987e55954b740c16b03	735a941b0873
+shard_0002_part0031.npz	1403369	412738444a47c28e25d5e5b4c0494a9fdd64546b89e24fa09cc68527ddefa390	735a941b0873
+shard_0002_part0032.npz	1445099	60da7757a69e43971651b6b76263c16d529e4eb369bc39eeee8ee8cb505776de	735a941b0873
+shard_0002_part0033.npz	1422152	666d5faa788b68e0efe29ad59bc416dcd3369a236507ee1d02f3527e8f2dfdf9	735a941b0873
+shard_0002_part0034.npz	1507167	80bb77e130a53706c2876cb794958f3fb66051d908e9317326a1dd34657936c3	735a941b0873
+shard_0002_part0035.npz	1443887	d4943f176fdca25e074f085a9575d3329c8cc1498d745b9ba7b86ce1c449106c	735a941b0873
+shard_0002_part0036.npz	1485329	dcd229a75086cdc8d97fb40fab092371fd16d96eb3f5c37675499869908596ad	735a941b0873
+shard_0002_part0037.npz	1547061	e71c5e98671005ac9fc0ad59c0f98ea0e32951fca43ba1657eff90b8c1b8abaf	735a941b0873
+shard_0002_part0038.npz	1506597	7c6c087e37c983e123dfc808a82138099f8f934d5dcf9d909e788e206c2b6120	735a941b0873
+shard_0002_part0039.npz	1391873	522a23b8aea04de9a3ca397c72a21e530bcfffe48a1d47f567207be68f78a8de	735a941b0873
+shard_0002_part0040.npz	1336878	7915c7fbd278d329bc73fe1f503fc4d2044d8727c07b2943ba0a274c9c5d379e	735a941b0873
+shard_0002_part0041.npz	1144736	8a253b1d7099977bd9e418d8ec3b6edace46f91092416f03453f95fd715c7f34	735a941b0873
+shard_0002_part0042.npz	1182023	87c37c41ff2ed5bb0c25799f9ec49ed06bb4151115307e9951b616ca9aa62a03	735a941b0873
+shard_0002_part0043.npz	1494634	a9b13bdbd186bce6d7be72cfceeaaecfecbed57caeecdb62a1842ad4d9daf1c5	735a941b0873
+shard_0002_part0044.npz	1401821	c867a4afe8e0308ba66cf1dbff93012218278d9a93213a02fb5d51da7e1eee96	735a941b0873
+shard_0002_part0045.npz	1464203	0d6b8120a375e76d89280db9304e35c4e2a9dd5fcb3b10ad6706aaaa0f8fefc1	735a941b0873
+shard_0002_part0046.npz	1422804	595e8aad71b905fd9c6050f6e3d0c5881b468834e614de5772eac6f298e0c231	735a941b0873
+shard_0002_part0047.npz	1429931	801119f31e624b0bd60af6c941f27d05f959f540884aab76aea9fbac8b2b124d	735a941b0873
+shard_0002_part0048.npz	1481584	54297deedcefb2a64005daf6d3afe656e5ad627929c93b0571cf4e8c69996279	735a941b0873
+shard_0002_part0049.npz	1384581	2b84e6832d9099067999f7aa07e1e85235a447dc3ebc87a5bfb635de776a4d72	735a941b0873
+shard_0002_part0050.npz	1297484	a7fe4e7f139e10067f1178a68d034e32bcbb12b3d150e1baf6b4d9e795166d2d	735a941b0873
+shard_0002_part0051.npz	727133	6886ef39c6920affa8ca136e13a1b478a7aeb13613dfc0ab23df5ff9d5fee734	735a941b0873
+shard_0002_part0052.npz	1100624	73a569ab41fb13bf678eb6346e87eb0e495c36eccf74662300def78ecb5cb702	735a941b0873
+shard_0002_part0053.npz	1494495	9620959a4695b444e9e73fc360d44f21656bca5dada9b2441a49507fb9b1bcd6	735a941b0873
+shard_0002_part0054.npz	1304832	ce02dd6cf2fabfb22f4fdc48fc7d80018cf9f6c71960e0bd3956ed256ae3b088	735a941b0873
+shard_0002_part0055.npz	1494412	505a8d08600abe0c31b2672d0cee4613d3510e9289f93f996366180acc9de034	735a941b0873
+shard_0002_part0056.npz	1408602	19ea6ba1220f74917fe01b6a42cf19440b06aa77816a254fa87a14574ebf50fe	735a941b0873
+shard_0002_part0057.npz	1358313	dcfb028c9ca1573127121e44ef92de8a05cd295d8c8ecf4e27d5a9811f06b64e	735a941b0873
+shard_0002_part0058.npz	1273331	6ff8d26ec232a07e3cb801c44b04e10ca067aee45cc23f5e55cee3cc5125a584	735a941b0873
+shard_0002_part0059.npz	1377461	6345da49dc448bbc6b65eef0c1957d5bbdf8053bb0ad97e457b05b9810a0e63a	735a941b0873
+shard_0002_part0060.npz	1290597	e27f6351a3bc4988a9d49689517befda7de0607c0d667ca716c15a31cb1686a4	735a941b0873
+shard_0002_part0061.npz	1386769	99f0f3b52352f73b713a53c1db927a77f718c8a3e3ebb8891a16147d2edc0403	735a941b0873
+shard_0002_part0062.npz	1393093	d4991af812d5a2444643b728fd6fa91179907a449c21805becca555a57903aea	735a941b0873
+shard_0002_part0063.npz	1383920	95b9e8ac6e155a021c4b8113f71036c3250694ee9604c24091ae088b8e49e7a7	735a941b0873
+shard_0002_part0064.npz	1276919	6a3943280bd348922d707099daf8d7d69cd20c8c77a0628728a7289048cdf916	735a941b0873
+shard_0002_part0065.npz	1301876	1aa52db1455f821df940620f49ee42f6541ffd945bc2186a2b988be1fc5852f8	735a941b0873
+shard_0002_part0066.npz	1253556	2214da0f01837773f3c37fa8dd2bbe07923c5677b6f8ad37539c904dd28b71aa	735a941b0873
+shard_0002_part0067.npz	849813	a24bfbf19d0e0f89d00c683cf5648e717ed31e015eb674bcc4ce436e60f5ff22	735a941b0873
+shard_0002_part0068.npz	999133	293714cf1a8b3dca64689c49652418e80e7c2de0958c84c473404e5740da6593	735a941b0873
+shard_0002_part0069.npz	1307938	7c615e9adb1a83ea9779433bbe383713964a8aaf3d52f0465741bffdb5b5567f	735a941b0873
+shard_0002_part0070.npz	1217306	e19d1e5df73b2a40da3efbd21ab0d35f9bf1d11b9eafe63a20da3340d1a4448f	735a941b0873
+shard_0002_part0071.npz	1316453	d2e3b571c632d7b44c1724e5d3662d28071193cf9696039d2a810f129db2b3df	735a941b0873
+shard_0002_part0072.npz	1274836	8f8ba8442205ac62d4730f05cba892c48a86c852b3bec82541030661307e3c60	735a941b0873
+shard_0002_part0073.npz	1339921	f7419911b2ecad341c72517d92caf3723144fbecf14826ed94b59b7d8f1c9128	735a941b0873
+shard_0002_part0074.npz	1390935	dfdf3175e3714e3cce090828f8c0b644ebcb252461088dce5928e0c493318bd0	735a941b0873
+shard_0002_part0075.npz	1423202	9b52f64d80ae597d885b7731bf315741274b9e88d5a26dadc4907e56635f77fd	735a941b0873
+shard_0002_part0076.npz	1426742	4b4a925bfc594dd28e59790db89efa283f6d12d5020a2e3992ce81fe328e493e	735a941b0873
+shard_0002_part0077.npz	1029497	03c019bb8dddad87a8c756d40f14cffd1d8246bd2b562a3888caef8753108678	735a941b0873
+shard_0002_part0078.npz	882937	d2bb6e566ad19fa1afcb2f812849c60ddb8719a802f1801ae57cdfb6dfc9a5bf	735a941b0873
+shard_0002_part0079.npz	1333014	929965abe900c2f556542708d07490a529b8e802fc99acada60eb80c57b6d653	735a941b0873
+shard_0002_part0080.npz	1425442	8167d55a069fb0b4e83c8f1db911a18dc12ef9559bdfb3933653c4c9fa780598	735a941b0873
+shard_0002_part0081.npz	1334788	dba3cfdf3f520b9f8d8389183b99a354ca489bee843fccd190f865d2b49923ed	735a941b0873
+shard_0002_part0082.npz	1446389	97d1b085ecf3f52c59f8f8d5ec1c01fe5470265a8496bbdbb262eb9f7010fbf2	735a941b0873
+shard_0002_part0083.npz	1259361	5ed7e4cd6e61391ea5357776103125d9a9b21ea3000ce3e2b747c6ab8fd76ef2	735a941b0873
+shard_0002_part0084.npz	1435150	23bbdbfc984335a18bd3650390ff3eed594c94c2f166e9a3738411313bbebe12	735a941b0873
+shard_0002_part0085.npz	1345653	d46a9f5a531f2553e665c8c2d7f6647afe6fe92f5e1027a9164c9a511c4cd5f6	735a941b0873
+shard_0002_part0086.npz	1451739	e914aa501686d60013409f107809ca8cd4c5a0c7d695abfebadd4c5e2c08e491	735a941b0873
+shard_0002_part0087.npz	1376570	68dd8e1671d707f1fa4eb7135ddf3bce26279dbb017b63a06b63c1380d32a61a	735a941b0873
+shard_0002_part0088.npz	1472528	d7885d60af6b5918cccf0b27b6fcaad7d89c27c55aeeb1e59adb202c985a5415	735a941b0873
+shard_0002_part0089.npz	1466995	9b917251c1cb4314d03dc83789b1880cde5261951cc55c85e121e89336b9d297	735a941b0873
+shard_0002_part0090.npz	1471435	8e296ddee772075721ca5ba159b357e8f21da6e9f9ab00df166fd798deeec357	735a941b0873
+shard_0002_part0091.npz	1343025	2dd39c7449f15fb3d1573c6b582ff9aa385af4577cac882c6f5062692dbe9aef	735a941b0873
+shard_0002_part0092.npz	1350016	dfa590409d6f66aea8eb9c8291ab8512375389e7382fe5abb430f7f443a5c646	735a941b0873
+shard_0002_part0093.npz	1306056	1dca59839bbc750d8198541bf322a50ea50225542875006195651ecb42654b55	735a941b0873
+shard_0002_part0094.npz	1027620	5887dab87704e6de1ca332ce03d453ddc178c32ed03032bbf961f599e264916f	735a941b0873
+shard_0002_part0095.npz	1283968	06069ba4f039b7d62fdd9b82291e5db6f0574aaab8e5d8d39014c6e2a2c490f7	735a941b0873
+shard_0002_part0096.npz	1436085	33db483176a1ce9a7c30f2555b31ad05f2e0062f1291f23535a57526d6986d65	735a941b0873
+shard_0002_part0097.npz	1391454	dadf0ef2d0edb3328518642ecdc04c7409fa679eb61094b969ecd541cb775ee0	735a941b0873
+shard_0002_part0098.npz	1410327	0bb2d63755505540cde0a2ab939f1f4b34d4f40b1059a8c09b43723d253d1109	735a941b0873
+shard_0002_part0099.npz	1380906	cbeca8ded30d069c20eb44ae828dadfccf9f1bed583682683418779ffb76f497	735a941b0873
+shard_0002_part0100.npz	1370445	21a81e36b35ac2ccef884ad70644f4fe9ec6dba390c5f9f296338748e8de0aae	735a941b0873
+shard_0002_part0101.npz	1457475	08b14ae9cedd9944648cf20cc4f3e0d13641e13d69ed124238327f5fb6cd44cc	735a941b0873
+shard_0002_part0102.npz	1360000	4f1b868cd60dc98a7c4d7f69aca2ad6f964de23b04c27d6d3004e34f85f32088	735a941b0873
+shard_0002_part0103.npz	1335680	8283783b9d6d815c0af187b00e9e1e4903477244e10b9990ee0c10258b30f2c7	735a941b0873
+shard_0002_part0104.npz	765212	da905be4aea1d9d99cbbf286d4148bbca737ed499d740da887eedcd0e5d18ed1	735a941b0873
+shard_0002_part0105.npz	1042172	d8500e4ddd19e7b50c8f0ee63a6e16c90de8b67ac42aa4dd7faa3e05003e9157	735a941b0873
+shard_0002_part0106.npz	1354272	c4b6817d8193a566c78d75508b4c0a2db9d4fa5f0ebd8a501368577b87d7602a	735a941b0873
+shard_0002_part0107.npz	1234041	6cb7813993b98d7f5f23de853137ed016e5e813df128a50d1b92bb190a4ab0cf	735a941b0873
+shard_0002_part0108.npz	1274378	7ee1f57f3ba3cfdec2b0f0e27ba53cdd8f136e60614c7acdb76da371b4a1d932	735a941b0873
+shard_0002_part0109.npz	1372558	e3d31635dadb57c745556f6fe2f3ec8af6149ae029dad7b9abae6ba7cebf81da	735a941b0873
+shard_0002_part0110.npz	1241783	173784e5e6c860a6d3ae6e10f6d98ff4fb11218759210a047534b1c40296ae17	735a941b0873
+shard_0002_part0111.npz	1305555	5434120194f3c6bbf81f20d7ddbf144312d725e9b7f160293a7bd63d9e3c7b03	735a941b0873
+shard_0002_part0112.npz	1248962	3d2aa366d3f1399c886e950ae589cb902c199b43278f6f18c154232a6dbba568	735a941b0873
+shard_0002_part0113.npz	1408587	c04b183c4820ec93a0804a53eb9075cfec54f2b521442a977e8ffe9452c32dcc	735a941b0873
+shard_0002_part0114.npz	1428183	21a230324894cc17f46053cb836d79c7ae7402736b367ef11469ff6b8c75ef8b	735a941b0873
+shard_0002_part0115.npz	1477460	813d77d4b2baf69f0f4210a44c9a7c3c3c5f2ae16c6105a4fdb90f2df8ccb987	735a941b0873
+shard_0002_part0116.npz	1479812	6359a9e5c57369481f6dca23d6fdf31458474a14b365656374fa390501f0e3f3	735a941b0873
+shard_0002_part0117.npz	1353388	8afc054035c1307adc90fff6948b67598c2841a1baadc52ef63141e5e490591d	735a941b0873
+shard_0002_part0118.npz	1212817	7014cf4f2bb853c85c29e53c9e7141bcdd9c7681f953e99f7080dade3d2dcbbd	735a941b0873
+shard_0002_part0119.npz	1294642	e0559401ecf22f082e6ee5a4c5819a38dd1f2e5fdea76795cefa24acff97f250	735a941b0873
+shard_0002_part0120.npz	904580	73c36b792bc49191dc6e3f5cb45337c638bacbdd660d18a830c8b997bd573c36	735a941b0873
+shard_0002_part0121.npz	1005457	7d2b88bd37efc409fc1faf5840d7b48d91981f7e42396722e28384d8b3002c62	735a941b0873
+shard_0002_part0122.npz	1253249	6c507d0c3aa4162bd25e42b1a32d21bb8c4160b4002be27008e18b2b1ff15928	735a941b0873
+shard_0002_part0123.npz	1263926	a564d5c6febd2f32f949733b1c950cf8b17402ec84b0697cd15849a498ac1a57	735a941b0873
+shard_0002_part0124.npz	1401432	da4aa1f5bb25c8ada6be8b8ca0fa5666c7d0b3b353a4b635a5c518e10f0e5285	735a941b0873
+shard_0002_part0125.npz	1149040	a5308c5eb514b7bf0fc5938461a9156766556817e608dd4c5e22d0e3c8627506	735a941b0873
+shard_0003_part0000.npz	1244021	e978c4a7365cd203e3a5b0e4a3f3711501c7dcf1e42887f901b7a454a07b8242	735a941b0873
+shard_0003_part0001.npz	1323533	ac1bb602e1594979e59e26538ef6a358eaadf68382055ec3952ce7a09c66c35b	735a941b0873
+shard_0003_part0002.npz	1270524	58438612966ca2c31deae7ee0bb600be03e57e9be36c961b15958cca7288e12c	735a941b0873
+shard_0003_part0003.npz	1317197	97d3b96d288746958e8278dcfd5832bed6f931b59be20a1ad94f8fe6eb30796e	735a941b0873
+shard_0003_part0004.npz	776233	8d258b26239b1946c822ef3afa4b55784cc8f9389f90a6d528f28c781464423e	735a941b0873
+shard_0003_part0005.npz	944099	d539c8fe6deab17c70923073dd36cdfda1fd7e5734c4a84af0e0eea27689a0f0	735a941b0873
+shard_0003_part0006.npz	1303836	eba98d7171b0e38a7632cc4288bf96c52de55148d7207ad9cfab84b2dfea41f6	735a941b0873
+shard_0003_part0007.npz	1262473	d4394a2870caf09f672268f3190ae7dc3d065f545d4a931dba152cb12af56610	735a941b0873
+shard_0003_part0008.npz	1309808	7abe5576fe65fb502226a4204da72ff6553411953d7aef5e852d1e7560d7bf55	735a941b0873
+shard_0003_part0009.npz	1112287	237977c477a087c8f4c8e37b826fa7403f9c18807f955609a57e245807d7fd01	735a941b0873
+shard_0003_part0010.npz	1248100	4f065bd83df871f33d385ee17ec90dbc2dc34f093b212fabae0718fabf6c67c0	735a941b0873
+shard_0003_part0011.npz	1144639	8b4d45c9b3378b6ab18917eb0e1c67e5b8b540e6499c11a0969bda9e41a59fb7	735a941b0873
+shard_0003_part0012.npz	1314676	0313897945f43aa85f3c0a8773502b7b9a4c44c9d7a8dbf308026552dc7bb6c8	735a941b0873
+shard_0003_part0013.npz	1294994	0d6cfe4f420f761c190d9e12583fa4b9901ca89abb4a4f88108dc7d4055ddad6	735a941b0873
+shard_0003_part0014.npz	1374511	d4dc99b4ddc3f2df770594d58afbdb63e6a36448b1154d282cd2ea72049beb41	735a941b0873
+shard_0003_part0015.npz	1374608	4afef9ca6dc70ba68ae9e091893849a2209a1909295c332be674c22cbc90cd34	735a941b0873
+shard_0003_part0016.npz	1381896	1f3613e28feef265f28bff16f0c79db5a2abc7ac101b62dbee56c18a427ad855	735a941b0873
+shard_0003_part0017.npz	1279475	ba1a2254c6117751691ae3c477a65547d3af90ae9cd04955df5553c46811a404	735a941b0873
+shard_0003_part0018.npz	1181198	e5566654dd24c9b6e74ef15b00303aea0c5f004e1308185a29b5791f6de4be35	735a941b0873
+shard_0003_part0019.npz	1192804	3fa9c32e7f43a5941e1e1fdad072c00ca3b487fbd88456950945dcc6f0cdb7b5	735a941b0873
+shard_0003_part0020.npz	1066915	1425198f82f11a2594278a0fa54db09ead5ef1ae2575f3b64262f34d10ebfe1f	735a941b0873
+shard_0003_part0021.npz	1348555	3e28abb6ece7d4198aadc9bd77bca9d972ce7e3a6133343963c947e952a11dcd	735a941b0873
+shard_0003_part0022.npz	1368936	9b7adbd436663296affda13ddc40b4ee1db8e435f9c75a5008afd513518c3775	735a941b0873
+shard_0003_part0023.npz	1407658	69cf46a7d9ff5d1eff3608b7ac47e08af852ba4f9af54e27a540a2058148c20d	735a941b0873
+shard_0003_part0024.npz	1372787	07a366213a92a1fa9893aa089801fbdf459f93fcb66e7b8de36b7221905f6c44	735a941b0873
+shard_0003_part0025.npz	1372488	1822a895e25383f78b2c0ce24825c072e9d2637c0a629abce5d361e6e346422f	735a941b0873
+shard_0003_part0026.npz	1416954	99d26d6a71a60c32ce4edf43d0ef1fe63e14d119c914d1e71eedf4ec1006d03d	735a941b0873
+shard_0003_part0027.npz	1399679	3c3a00dd38a3fc961fb6a5f374ee5f479c1c9e7172250da5b946fed655ac586c	735a941b0873
+shard_0003_part0028.npz	1156580	11316ac1d46801bf223244169d79f8db943ff064ba19e42799c416e59eb580a7	735a941b0873
+shard_0003_part0029.npz	893710	4f48604b022a560b4a6f55aeb564dce137bd34fea81ebbaddb8832d1a3a21eba	735a941b0873
+shard_0003_part0030.npz	1418056	99bb13db961267ba833c080d54179092a9fbfc274f48995954b251b4ea058ce7	735a941b0873
+shard_0003_part0031.npz	1306218	1993236b8d00914501c949df4432a0c0d0d96489a00e54303a06c2d91e546fc9	735a941b0873
+shard_0003_part0032.npz	1437203	535a1dd374121c7f6ecb0ba45a04edef09569eb5de5a67bc578cf4221b6c2368	735a941b0873
+shard_0003_part0033.npz	1348664	219a5129562e46a28e8409309af12b8f1b667ff9eaddb0faed5b76e92179792d	735a941b0873
+shard_0003_part0034.npz	883420	a35baecd8ad14baa0183b49f99f4df38abb4764ae2f132e1bdb5e78db8bc0487	735a941b0873
+shard_0003_part0035.npz	949101	3b74c0387bbe566ca67f392d21f268071b6fb4fe502c5ac27dcb7819b8038b66	735a941b0873
+shard_0003_part0036.npz	894949	de03d38d75193dbb266592d750b0b9e01e21ff1bda793dc04aa160feee9cc7ec	735a941b0873
+shard_0003_part0037.npz	953713	db6cec5d90b32c58b473a91abaab7bab53c128f59cf88e00813de8483efbadb1	735a941b0873
+shard_0003_part0038.npz	951882	7f2fb8e15a9ec6d0febe4a1b43a46124e3b84ef048f518ae1601229bf001c1b1	735a941b0873
+shard_0003_part0039.npz	956174	297d6c34d4c1b480c96c94b3c394cff14496413bc23df8970c3de3006e0284a1	735a941b0873
+shard_0003_part0040.npz	934321	3e173081bee70a2696afeca62c72291ccc8fa5a69acf6984abf7bbc2c5c804a1	735a941b0873
+shard_0003_part0041.npz	953099	3e0b5b224fb31be0a4b0decae1da3ac5efb6ec2b4a9dea7e83120a853d86ebaf	735a941b0873
+shard_0003_part0042.npz	975652	ab308ec12420673f8c9bd23e4eec1e62bf87f6226549c2db1f832404ff742831	735a941b0873
+shard_0003_part0043.npz	961499	1e29f6732ba0b05d0bf702b3d6fe9a655c17f5da1f0f02fa583d9f5617a26e66	735a941b0873
+shard_0003_part0044.npz	947863	161ec595d2b123a7f66d94aa5d91e2c068c83258d7337c18a83867018fffd511	735a941b0873
+shard_0003_part0045.npz	915895	0f4c221dfc623bfa557ec0f4fc438d29befa0347dc86adb8555445979ae74f9b	735a941b0873
+shard_0003_part0046.npz	937225	5326f25a14a108c09811ea5aa5174899a2011444e973dd8d10b079b4aab349a2	735a941b0873
+shard_0003_part0047.npz	894222	aef73a5428fb420a0494d551e460afac2311407b03de861698db8ef01972d2ac	735a941b0873
+shard_0003_part0048.npz	947726	f2c1c9315a4a046a9503d295df5029e51d38a396436d5e41d1b97a7e608f9ec9	735a941b0873
+shard_0003_part0049.npz	728676	eeab2ef168d48d97a9f483e29133bf65354ef7cf98188489dc284cd41df28b71	735a941b0873
+shard_0003_part0050.npz	791761	277fd4a00c90626357a9b01b3b96526eed790cefb046e8192e1e797b07fb720a	735a941b0873
+shard_0003_part0051.npz	821755	bcb52bed3414d23190143c3c994b929bcb252e7ce5f44ae2fb8bebb53b7bca63	735a941b0873
+shard_0003_part0052.npz	879256	bd59db33a56c4dcf606325e73326c91cc0c29735eb941cec2d6237f5830096f6	735a941b0873
+shard_0003_part0053.npz	919065	52ef2ee4cf365a502ace66079dd6ddd4d6c7cbea566d3312093a2653a61fc498	735a941b0873
+shard_0003_part0054.npz	931267	0cd8b15da14689966144248474d3590c6829d44ea7ef8a34ef407e26ac11301d	735a941b0873
+shard_0003_part0055.npz	970149	196cc408b42667f9d1b89535a37e314b6daac36756cc7ecf268ba3eda93b1df5	735a941b0873
+shard_0003_part0056.npz	973435	8ce61d52fddb878ccf33cf58afff4d0441238fd22e782410533b9bd034f0f427	735a941b0873
+shard_0003_part0057.npz	911387	3f7d98a09c1140e3697a2073a8712eac73fa67230298e48ee751881b6cf29d88	735a941b0873
+shard_0003_part0058.npz	912027	2d837fddeec02d53f178155b7505a207e2ef57b1db27d01d506d59c1905baf91	735a941b0873
+shard_0003_part0059.npz	931288	5a94ff0a2a98d5e5f440f56c152e66deccafa82271d08b1db0d3f0944a5d8da1	735a941b0873
+shard_0003_part0060.npz	955836	67479b0b82dc01234e3d1070dd4521596056a7a2f7027bad439027989ea215a0	735a941b0873
+shard_0003_part0061.npz	940836	82c7bd25d762bf11d4846cf4096ee0b47c72b22e65bc5c6d1ff3da61a1c3a2e5	735a941b0873
+shard_0003_part0062.npz	912073	c6b732bdf0041b78516082b3558ae3b9dd88d63faf9e230043e69ad6173f2e3e	735a941b0873
+shard_0003_part0063.npz	929676	c20d00c855339297fed0086df4c744a5c0ab543682734d93113710f45395ee2b	735a941b0873
+shard_0003_part0064.npz	645348	42a9a1a7b8a539a81490e8fa8db5f012edeb1fbf0671e28a8050a6f00e4ea659	735a941b0873
+shard_0003_part0065.npz	571397	f16171ad61684a1d5319880aa0b86dfad94f55dff0e3169708f241905f8ee17e	735a941b0873
+shard_0003_part0066.npz	833697	fd5a4c7503d22064daff9f490d79f7167e5d152e3b35ab5cfaced644eb7fb8d5	735a941b0873
+shard_0003_part0067.npz	846312	094ab57f4d44d86ae7171ae369f59c9eb92d34218ddeb052e5676d5e7a0df772	735a941b0873
+shard_0003_part0068.npz	865972	960567995678c036ef31f2784cf3eb88f30bae458812f47e536fcca3f14b42f5	735a941b0873
+shard_0003_part0069.npz	841398	2c7501a428dc471b00487804a7dab13c5008f8cdf6e7d5622d2a1e93b36bc109	735a941b0873
+shard_0003_part0070.npz	793451	2c04ad138cbef260a70fd09e22dd986f1b020d24fecde451de9eda26456e5c4b	735a941b0873
+shard_0003_part0071.npz	923920	44aac10626c5e659bc0ac59e5f39353df3090f1abfe67f9b5e4e94815c44c072	735a941b0873
+shard_0003_part0072.npz	915552	cbdccf92c586cadd9e6861169f72fbdfe321a3024a08b22a6756054d3e661f8c	735a941b0873
+shard_0003_part0073.npz	1072177	4d6076a955a33ebd760a1b71385dd20a31e0fc74e737bd980cf86730e3da97e1	735a941b0873
+shard_0003_part0074.npz	1284933	05b3d875b90c88e94f14d1e1bac8483d32257787c8796229b41f32c8acbf88b1	735a941b0873
+shard_0003_part0075.npz	1183076	35c2b736e10cdb7bcdc72ff93abe56c56cb3646a0ecdb11c5143835c3b0069b2	735a941b0873
+shard_0003_part0076.npz	1360267	044b8e40a269d096fbdc0778b35f3db553bed7345a7c13fce7b5794dff5c4f85	735a941b0873
+shard_0003_part0077.npz	1273355	604a80217cb4b657e23505200ab8b617902d094eb4d560ac9822f31fdc828c13	735a941b0873
+shard_0003_part0078.npz	1413051	d6e6a8210186df907a2b6729f41637b2cf29ab98fd72471e64f91d65f7390a6f	735a941b0873
+shard_0003_part0079.npz	1380614	74b4c059f228a72e2a93dae0f8ca444f4e1bddff44925e36a3bb720496ac6072	735a941b0873
+shard_0003_part0080.npz	1419434	25a4c6e09802ddc9a04f3b4c2f974cbb0d03f8cf3e7b157143b54386668a77f1	735a941b0873
+shard_0003_part0081.npz	1266914	2090dbf051f5c8d5f20fe4572f0cd50ef4721374053b75daf1d280d60dd1f1ad	735a941b0873
+shard_0003_part0082.npz	1119621	8bb04e407de5022e59630fafd452a3ea7b6926b8a8f010445c10c1c07c63a32f	735a941b0873
+shard_0003_part0083.npz	1198836	725ead7e5c6275ecc6dfa6b80a47e8086c0aa919776006e25ad8ca9e8b252508	735a941b0873
+shard_0003_part0084.npz	1039604	c3a6e69980c5e2e727cd76afe983f9283f341e8c8100a164a7b6985f5be9b802	735a941b0873
+shard_0003_part0085.npz	1272189	c5cf0facc54b8123c2b00a35509bdeeaf76b5b1c527c082beee1c658467385d4	735a941b0873
+shard_0003_part0086.npz	1334633	e6bced529c42277206c0e8951753f4a703e1b2311a55e841552cc2d19ded8d7a	735a941b0873
+shard_0003_part0087.npz	1315661	e753bdaa6843992f06e73eaf37f8ea97d9ce9bcf4212ab897e15831882d4b849	735a941b0873
+shard_0003_part0088.npz	1041592	5abefe1b44284beb063aeb2f2202ec6e66b6c46603e278af41e5a48eb24fb232	735a941b0873
+shard_0003_part0089.npz	1164470	23f2447e5a27cf82ea92a96a46ab1ed0fa1ba5c86bfd3d570542cfc574bb28e5	735a941b0873
+shard_0003_part0090.npz	1323525	414eeddd7ad49e84e34299a42e27da700afa1a723545b06afcead91c895b34bd	735a941b0873
+shard_0003_part0091.npz	1310980	218756293f2b2b3b654904a437cb6b82c638d0e1a88259bf2c7be09919212b43	735a941b0873
+shard_0003_part0092.npz	1324628	d93dc85b10d891edfd4c52cbfd9e92eca25b841b7c960b1b875a8ad2e2847705	735a941b0873
+shard_0003_part0093.npz	1071544	9e702cdeb5e8e69de1318587fb85266e5265bc46afd44e8f906d497e26bc62ea	735a941b0873
+shard_0003_part0094.npz	749480	bf9eb01f24e9c7e90809c4469194f83d819c561de5fb18a0a9967c574c194b7d	735a941b0873
+shard_0003_part0095.npz	1146413	13502398606e2d6a3877ddf6b5cb4076819a6a594c692b9705d390696772fef1	735a941b0873
+shard_0003_part0096.npz	1339407	e84f58d27d7b488e712bfb9a48c6e11129d98eb05cc17900231c4abfa3ddd815	735a941b0873
+shard_0003_part0097.npz	1193409	5b4d2985eb86b8fac9267439e362b14fcff94ddae5643438a62eee0d85ffab1f	735a941b0873
+shard_0003_part0098.npz	1238803	0a29f1d2abba33e1744d683695f16f1eb68c5dfcf2d6b9e4f0e28e8e8a9f4047	735a941b0873
+shard_0003_part0099.npz	1019154	3979187c6ed251a583e5cb48abba085f40ac965930f8ccc4dc67800a1f91ac04	735a941b0873
+shard_0003_part0100.npz	1349699	d8426c17c6822a220ddce35074accdfdb279a26e474c6acd5dec2625023a449c	735a941b0873
+shard_0003_part0101.npz	1370932	5389f88358f94bf8092246684a9faeac6b7634c03798796e25bbd5d796dcd994	735a941b0873
+shard_0003_part0102.npz	1424640	6a6d2c0e85e432f3cd1718147ab3523d0e97818b2537f923916bae0d9b348aeb	735a941b0873
+shard_0003_part0103.npz	1383960	a99c16cfbaf878937c10f5035cebf3d176dc7155c3770fac11bf6fd1f7497a36	735a941b0873
+shard_0003_part0104.npz	1430016	a1b6a7a52746d51e44d9d3502cbb23fb10973ad167ff759dc32e0c405cb7afb9	735a941b0873
+shard_0003_part0105.npz	1422018	f64f3d7bd3fb70c8e43ca3656003003fedcf7f4c1de7a6ff179440795ad1547f	735a941b0873
+shard_0003_part0106.npz	1352784	ec1d6f78e1fe766e2a608325c49536876958c692a52b34999446badaa9029f63	735a941b0873
+shard_0003_part0107.npz	1292222	b1211adc464a7bbc315635da579f311c747883d61cd8796d9ba82aa1692a4e0b	735a941b0873
+shard_0003_part0108.npz	1336209	7bc73b8152a711b4b8bf9ee48af96ed54892b56de28ce5b7a9142e6b7677f7e3	735a941b0873
+shard_0003_part0109.npz	983026	87ee214584fb0605b3884eabc3d561bb2803e7b72592b67509fd7e9343fb4fa3	735a941b0873
+shard_0003_part0110.npz	1189267	ff0b9f578871cce56530eb23acf768e9cda7e9d7f59c872fd1239e4daa7952fc	735a941b0873
+shard_0003_part0111.npz	1419334	b05c623e2db1fa4f69747c133e47e659b34c65a35184627482eef18268104f9d	735a941b0873
+shard_0003_part0112.npz	1314923	3f9e0dac1bca71e483a481d018b617a205f7df732237e1718a399e0c5fd44ae7	735a941b0873
+shard_0003_part0113.npz	1417091	b96885d01c61c5a4857a3082061977fd138b73a64bc6386e9da1e0a6addab7b5	735a941b0873
+shard_0003_part0114.npz	1344513	daecb4b5cc126e2bb53c962ed6757a091bf78b9466f3b83e870702ff8081b174	735a941b0873
+shard_0003_part0115.npz	1384842	2fc8d8d74b2e1c59f328029b6d40c82a57dcf2296b40ae622c998894460467c8	735a941b0873
+shard_0003_part0116.npz	1464102	a99f20bd7262c05e1732c97e59761edddf91805160a9d8d61120c8aceed2aff4	735a941b0873
+shard_0003_part0117.npz	1347692	acfed9fd5c0666d2f3d5227aa27ffd48e9e5c9af4be57cd5c4adbd7ebdb7bfa4	735a941b0873
+shard_0003_part0118.npz	1141383	c26aabfd4f63957639c17fee79a5c830cf32eaf2cdc6ea5743ae55aeeccdc302	735a941b0873
+shard_0003_part0119.npz	695604	0874120bb557742694f50617caed3e639a70ee6a8411c6b31c31abe048f8006c	735a941b0873
+shard_0003_part0120.npz	1107608	ea2abd38ddc5ea0b6b602fbe5a091d09bb3d549fe5483a2b3ad475c528488cc5	735a941b0873
+shard_0003_part0121.npz	1365403	c3d8bafee24150b7190bad98abcd23b8be6067dbc34a72bac0ebf48c3a8021d9	735a941b0873
+shard_0003_part0122.npz	1134338	490cf132bf8284520304fe12ba513681abab10205006e6cad898fb17ee47d720	735a941b0873
+shard_0003_part0123.npz	1342788	18ca07cdb2dcdf1d993fdbcb6697a3d96512300bb95160f332f85774e8f2792a	735a941b0873
+shard_0003_part0124.npz	1288095	06b6548908e44238dd41178e854858422a4394a2f03c59c7a549833a8efbdcc8	735a941b0873
+shard_0003_part0125.npz	1557524	0534910392df045006dc9d68e8f2ce103f9ff7fdbd5da9dedc182178aa42007a	735a941b0873
+shard_0003_part0126.npz	1628880	7d72929ebbb483ba40d57753a6771f4b8c1747c0187d4b4a892b41b3293f5f16	735a941b0873
+shard_0003_part0127.npz	1741463	c44752bd67dee649a7e85b9d9cab62a3704f8380965aa573b4901987d8d7e30f	735a941b0873
+shard_0003_part0128.npz	1760951	d4f8529099507314e9109ad05c9222c236aefdbb7938617055dd04e711bde1d4	735a941b0873
+shard_0003_part0129.npz	1793279	c11c92896529f42ca1e8f4a560235107bc361a04501287c7d5f88f3ed1840d92	735a941b0873
+shard_0003_part0130.npz	1770651	a5f32ab6685cd235f58f445bf141c58d28a702cf8fce0f1acc9b3e5ff1db39af	735a941b0873
+shard_0003_part0131.npz	1644610	908e37d55efc1731257fc57143dc0f0aeadd9b4b3e40b8a76ae5b5f750122c37	735a941b0873
+shard_0003_part0132.npz	1424099	fc1c9fd00b9a3444201214e365d2e10e2ec33c33dd6a1705859eeb98f2685ecd	735a941b0873
+shard_0003_part0133.npz	1235755	292031b0287c8d21a0382f69a99ae997e526ffc640381e3a3dfb35bfa8033d40	735a941b0873
+shard_0003_part0134.npz	1303563	296b83bfb8fe037025e5295af52357c820e260e650346b784a9e5b0395b5077b	735a941b0873
+shard_0004_part0000.npz	1368687	ea3085f84377c9dad71043fe7bfb7914c4855430e19ef7d564cd77a186176de7	735a941b0873
+shard_0004_part0001.npz	1462123	ada160f6e9e70d66c9ef73e023ef41f39c8fcc625fdc304c1539bd47c69b4919	735a941b0873
+shard_0004_part0002.npz	1365662	950219da71813322017cd8ad4cedb1a8e8ceb629b41389db0a2d387fc28b2290	735a941b0873
+shard_0004_part0003.npz	1366157	cfcb4d36d37a2baf9daff1bdf0fdbe33017ad06d2a0ca506e0b0490a382f5e5b	735a941b0873
+shard_0004_part0004.npz	1433252	b034cc5f002f0025cd73530173cab5371ad3f4b8de2bbda4d348a7a898894054	735a941b0873
+shard_0004_part0005.npz	1369282	880c155e2c1a8b14d952ce4423d615280e12de567eb0c20b1727ce16567602d8	735a941b0873
+shard_0004_part0006.npz	1371224	0c039f14acdc464e4a7c4f5897393bf1d1a2675f8a8572d21a5a55293f5f405b	735a941b0873
+shard_0004_part0007.npz	742456	d9b6a15a8bcb157c04024d01fc5dbd1140ee84e77b3236f86af8f00c508caf97	735a941b0873
+shard_0004_part0008.npz	1081011	b60b116a5bc8bded856c84acf1d006d7542378177f9c6e0f145f59e576d1faea	735a941b0873
+shard_0004_part0009.npz	1434447	1bb3dff2fe7d14f21440eef0851fb2e52d808c6b2b5396ce8a7996c7fae14818	735a941b0873
+shard_0004_part0010.npz	1208086	ccbbc1bdcdd9d0913d1d0c89d1c9a2e31e70d8da1450df9aeebfdfa38c89b967	735a941b0873
+shard_0004_part0011.npz	1435712	16a732e2d607274bb7253fff03b83daae4a006e9b0067ae972de2debcd18393a	735a941b0873
+shard_0004_part0012.npz	1248219	01f453a1cda1ee22151c89828b6f135b1df67d4e6922785e8d108ec0bbeecdc8	735a941b0873
+shard_0004_part0013.npz	1241405	f1034cf718affd2e35669df86992107c3d4d6edfec55f788c10bfc117afa0b9c	735a941b0873
+shard_0004_part0014.npz	1242375	71aa119758ec2f7914067344cb1184b4adb75c498df686999db09d769880694d	735a941b0873
+shard_0004_part0015.npz	1261234	ab0c6bbe5a9b209f59d26ceb2f5d50aaea9a160a4404e54e1ca49637edacd003	735a941b0873
+shard_0004_part0016.npz	1298487	3a026240c06a4d15c133427870e5c1c81498b83589fceedd02be76bd585076c2	735a941b0873
+shard_0004_part0017.npz	1214258	5b4ac23dd65f453c7e77fbc5cf8ae24869e9993552365c9bae7ff04f3181c6ea	735a941b0873
+shard_0004_part0018.npz	1300195	cdd7bb4d8f8b9fec846d291bf2be293121158be9c57f84abe53c4088a66bc66b	735a941b0873
+shard_0004_part0019.npz	1279493	86056ef24c3b2ad5228b12431446a5a8680fefc21f6f4ab1602dc531d0db40a8	735a941b0873
+shard_0004_part0020.npz	1386706	14329314d142ca2d81055936571225a0e623f75aad80b93a59ab68c1210f4720	735a941b0873
+shard_0004_part0021.npz	1299315	d701244301fff718c1ada7a685ee8d6a8f71c93b98e9f663b63511b15dbf5e50	735a941b0873
+shard_0004_part0022.npz	1267004	5d4c4f88c0785b32b7fd171f12163654c3590833e49d2db61bb454ed4ee357bb	735a941b0873
+shard_0004_part0023.npz	1258101	db292f944346b76a0c250dfb50007773f818b36123851817a7416ac74a19ae16	735a941b0873
+shard_0004_part0024.npz	963821	ca742dde99a7cde1e12822ac1a644f7fad6e4bb476fc581b2a2ce896c2986c21	735a941b0873
+shard_0004_part0025.npz	1216447	25ed26327d11950c6c0648d3178a9412618d219c31a2f2d7d93d00d945ee8a9c	735a941b0873
+shard_0004_part0026.npz	1345881	4dbe982915d1cd285ed897f98c701606c886021185f7631af434fd7cc99edbe1	735a941b0873
+shard_0004_part0027.npz	1316373	9335a44cabc16b458e7decaf4e353e465d022ff1874636040fab76a5532e530a	735a941b0873
+shard_0004_part0028.npz	1409242	2d9a4a60e9470442a460f9c2937a3ca397dcb3c3f67bc367d087982aec0552d0	735a941b0873
+shard_0004_part0029.npz	1329991	167cc66dd8b71e27d86ad396b96c1d4053d909b80be6fd1396e27a26a0dadbf1	735a941b0873
+shard_0004_part0030.npz	1378508	d7010363e98988a4d5bd44de948c74b6bb42f2e4ed52c204fe8e6c0705de6cdd	735a941b0873
+shard_0004_part0031.npz	1376750	be573e99157fdf0787a9ec41bf2ce5941c954c1e1eb2bdd64379c51c655a75b9	735a941b0873
+shard_0004_part0032.npz	1328712	fe797ed1d7a89d2c814abf1696547b8232309efec99c28217238c3b392611d7a	735a941b0873
+shard_0004_part0033.npz	1378578	7b289381076db2ff046135b8f7fec408930207ed3c479c66b7f93191c3a0d569	735a941b0873
+shard_0004_part0034.npz	836382	170ad4256dfd8154d02a3a8cc75bd48bc42bce9f91957f1f0a1d291f036fd7cf	735a941b0873
+shard_0004_part0035.npz	991958	abfd81bf6e5f33b3f59300da2c5364c0c2d01ab63b3e1e36f551db9d2c23682c	735a941b0873
+shard_0004_part0036.npz	1367851	b19456c13fc86e69b5b764d767c77d6b2bb565578418a1530d7756ab724ba8c2	735a941b0873
+shard_0004_part0037.npz	1307704	950dd73d7dca5e6c4efc33feccce8dc14bb47b4cd323e7c86ea4c88fd888193e	735a941b0873
+shard_0004_part0038.npz	1343629	7aad0af42e7d1d42f275523efb6edc441a6fc28ed4a5dfa24b65dfd9fc5ab18e	735a941b0873
+shard_0004_part0039.npz	1379730	a23dedf529bf6e094ded8cf857ad821eddf440c5b73d922d4257203004dfac23	735a941b0873
+shard_0004_part0040.npz	1328232	4574119bb39f6a69a47ed96233d90d284596e3f3b5fc609b3f523695dc109302	735a941b0873
+shard_0004_part0041.npz	1430961	11a95bdb24ae2cf467593f2bb18b6a80aebd3cca870012c78f35792261f308f9	735a941b0873
+shard_0004_part0042.npz	1382305	0d5b95ac6352d597658ddc692ba49e96b5530c4a160da71fdcda61e202047ab3	735a941b0873
+shard_0004_part0043.npz	1456982	2ff90133deba474dc018521f240955eb81989bc9cffb371c3f5740abd632db33	735a941b0873
+shard_0004_part0044.npz	1386540	132c69e4b2574fdf29e3d2562d043f1cc7c8a449d40cc461efe8f635ead58cab	735a941b0873
+shard_0004_part0045.npz	1434809	6d70450242b430a681fd129fa999dbff3ad18202383d03066feee056e6120ce6	735a941b0873
+shard_0004_part0046.npz	1474052	cee2a0ee62b46db31f9f98068cd3ee424e0c64ec1796b2d3fd7f20067a2ce54d	735a941b0873
+shard_0004_part0047.npz	1436595	66d830c08b1c0d71700fd33ea366ac93f6bdf66b2048d596a4ffff96ed7d595a	735a941b0873
+shard_0004_part0048.npz	1390812	5219bbc7f0989c3411f9d66b6d5d29cfca19b87d1f64823bf0206cb333c9ec2b	735a941b0873
+shard_0004_part0049.npz	1304020	821ca4296fd237dcaceaa3070149e0fa0627c63f5772aff279726183f556e516	735a941b0873
+shard_0004_part0050.npz	1299813	7bc389972fb3a62f1029e28e307b79f2aeda488eef4b45941463261bdf166c19	735a941b0873
+shard_0004_part0051.npz	912675	69809bbce0b9f39d76590454419daa77864f4f21a34a20940104657089414783	735a941b0873
+shard_0004_part0052.npz	1250343	c0cbc570275c88f1f43adfe05f02b5eced2f34458feb7a35ae13e891cb14f213	735a941b0873
+shard_0004_part0053.npz	1415278	895f87238b92d2590595cc66825f647d8f05687fce2c0a52e835b93e298f15c7	735a941b0873
+shard_0004_part0054.npz	1392213	f6395acd0e54cc9bc40d013ffaeea5154e5dc719230753da95eabdbb6bf84bb6	735a941b0873
+shard_0004_part0055.npz	1419112	705fab106ca77f5e24e2b096ef89065578fb3548e218e7c0da8fbab256c7377e	735a941b0873
+shard_0004_part0056.npz	1290253	d4356fa58f71850e63b4b8a6db7fd5848e12dbaedc49e614929d796a4b2792a9	735a941b0873
+shard_0004_part0057.npz	1273019	e45273ef4e52c0d3dbd5e66f8f672204fd9dd3cab915979d6b5aea59484189ba	735a941b0873
+shard_0004_part0058.npz	1293766	60852bf4e6f05848bca92ecf264728b805539021731e0ac0578d6ea5a4676cee	735a941b0873
+shard_0004_part0059.npz	1315749	65d4eaad2629f468fe4e3e17ad71440fd4aa608c453da95ea66d9f70b6a8946d	735a941b0873
+shard_0004_part0060.npz	1274209	2125ded275ba9762da9d442636306e5c52f11923fc1c30ab98159bc4879dee41	735a941b0873
+shard_0004_part0061.npz	1217035	1a0ff1f372174b07ade1078e1ca5d9c3ca17a0285c191f87c53b978d067d4bdc	735a941b0873
+shard_0004_part0062.npz	731325	a1838d2b9eb9bbaa73a6ea490bc1e0cd782a2c51a61de4eaa3bdbc06b27192b2	735a941b0873
+shard_0004_part0063.npz	1022424	491f4f65f4e39136613253e243c25417781c403e348aac2adabb405ac1955f5b	735a941b0873
+shard_0004_part0064.npz	1234615	c782e4ec08b5f8ad7eeb1ba4bf67d30d3ac6cbb99a694bfa35dfd8dd4d6278f7	735a941b0873
+shard_0004_part0065.npz	1285859	5f7fada773e13a633f0d267460db28af16bbd5019122f9ab7715edf8b7084934	735a941b0873
+shard_0004_part0066.npz	1192906	44ee3858b392c8310602254fc1d0f693bd7646bbd8d781572146773e24649ee1	735a941b0873
+shard_0004_part0067.npz	1216969	ef1feb8c5cc195d9e1a30b47e2277bdeb8c33c4d46304f07e5804636a1f007c2	735a941b0873
+shard_0004_part0068.npz	1113122	91536c045559910de5e85c204a7f042c61da2c0d2a88fa9ce249c97c25c6218a	735a941b0873
+shard_0004_part0069.npz	1243991	9edb35248a1ddabbbaba94e670956aab36cc4f5ceaea69619ab2db6e145e2757	735a941b0873
+shard_0004_part0070.npz	1177378	0d93360b87ae898025a7790b994cdede5e3d0aaf3175baccf3f88367fa1ecbf1	735a941b0873
+shard_0004_part0071.npz	1364744	8bfd9e387274f824f8e4fe6a954da120e6ccd5ff4e07f14a571b2dd9ed172d1d	735a941b0873
+shard_0004_part0072.npz	1299078	82b79624b857a29e9c6ffeec20c3bf040b3caccf5cb162f39180a7ff55497c46	735a941b0873
+shard_0004_part0073.npz	1415380	70ea4bd86012302b3534513e6e1b545d071137e46e045c62f0998b08149aabe9	735a941b0873
+shard_0004_part0074.npz	1598602	05544299cd9f35172eafa6e46fe131e1549db55b5dfc84335c06f57623818999	735a941b0873
+shard_0004_part0075.npz	1547913	a42b785d44ffd673c5824782efa0c50c9d0f420be561b6d57dc973c67085e823	735a941b0873
+shard_0004_part0076.npz	1481700	11c26881a1b2d36c7b178a13cb09ba3753eeaaf1d1d3ee211059bb10de87dac2	735a941b0873
+shard_0004_part0077.npz	1466691	bce07c550dcfafed748e3cc0e7f96dc61710f443a8d363dcfd2af42cde649524	735a941b0873
+shard_0004_part0078.npz	1186646	21497e8796a205a9625f838b1bc46655f65f9b35901f756663697d724250595a	735a941b0873
+shard_0004_part0079.npz	1281942	06560852c455bcfdecd12f0286e9f6b51d39be6883f86eaec7fa51f1e60b4fbe	735a941b0873
+shard_0004_part0080.npz	1538642	6e8f4d807930096180ba03a32ef449f4f2ce6d66f0ed42527193d7589e1e9634	735a941b0873
+shard_0004_part0081.npz	1492459	24054c2ed4a2c17f55ac924cd71c0611858c1ffb9b5ac59fcac0445db85b265e	735a941b0873
+shard_0004_part0082.npz	1527928	f4b9c4de89e764813848d1472ed1437f2d16e3cfb320091cad1932c173189a0b	735a941b0873
+shard_0004_part0083.npz	1415115	6455ae3ed247bfe52b61ec127417e4842da5252dce0889df115d30d7bb695b77	735a941b0873
+shard_0004_part0084.npz	1481201	7f5e083cdff565c21b7ec1e414d9f02fb949bdd5063d4d76617a876f35db092a	735a941b0873
+shard_0004_part0085.npz	1551400	4a1bb67eb319593c5f1a3d2139037a5115817d2fbc44052e614a1f23a3cd0e99	735a941b0873
+shard_0004_part0086.npz	1443656	6c6dbb1595ff6fcb6ed8829b70c4bc7b1e3fb438f47fc947635f4e174c43ed98	735a941b0873
+shard_0004_part0087.npz	944897	3ba62acbd5f77512bedb1e16188e2505c79b8832bfa9d246d036055384a1daab	735a941b0873
+shard_0004_part0088.npz	1117114	8566be1641b4e5e3b2be42f7727c4c442f5e900d752a81105c93136c3d7063af	735a941b0873
+shard_0004_part0089.npz	1536478	3d8c7bcbd6d668738dfa559625411d255981c07376e5b73f5f7c11d043daaf82	735a941b0873
+shard_0004_part0090.npz	1356042	4acab4256c7ce544cf093be82ac63e0d642a2812c1c6799996d2834c262f6426	735a941b0873
+shard_0004_part0091.npz	1548907	df344cf8ae42dce8c73e217719e170f32a04c7ff4935de3b30ee7b5e342177dc	735a941b0873
+shard_0004_part0092.npz	1021059	33e5af1e871e0e0075250de006642a640b757a8d6bbd1d68860786c8b90729ea	735a941b0873
+shard_0004_part0093.npz	1061024	6bc1f39bb7f39b2428f950e96d9ae76ae5a25b2019463b79d35e84e3c8ce170d	735a941b0873
+shard_0004_part0094.npz	1332784	64c5c04c04ed97a17998434c78ef0ddb60fdcce0791ab6cff00ac26b0419e366	735a941b0873
+shard_0004_part0095.npz	1274579	04dda3bb5bc11f64e741de4132cc0df25bd34b2a1b4c82703c269daa4e3cd89d	735a941b0873
+shard_0004_part0096.npz	1356328	7addd9ff2f97c2c997cbcb9557d6aa98eaf3163161085becdbe15e7b90885681	735a941b0873
+shard_0004_part0097.npz	1357488	d1fc2038c4f3c71417a2ac1fdf13fdbc97a6e643103574556d0173394084d7fc	735a941b0873
+shard_0004_part0098.npz	1071980	7022f1f071e7d103f34fee6c85bcfd88b0ff9b04289d827fe2ad1bb960ef1091	735a941b0873
+shard_0004_part0099.npz	1357290	267abe5fabdc60896f5a95bf7a7c7c413476852e2dfa9b95a9724d018e217851	735a941b0873
+shard_0004_part0100.npz	1092150	69b3fe658fa979fee4e6051f9f6c952976b25af55d6f2f2a04e5fd49a35e6459	735a941b0873
+shard_0004_part0101.npz	1243222	d494ca2e6ff7a9ca56651480bb3bcdb48c69746f9cb75af6252a4ffb882f054a	735a941b0873
+shard_0004_part0102.npz	779438	1ffe86ece204a58ff15955c044ae8856f932337477672984ace855c37ad400e1	735a941b0873
+shard_0004_part0103.npz	1069568	204e91e2a30900eb599c936c7a77f8144eccec8c2cbfd43189cf754c19acc8aa	735a941b0873
+shard_0004_part0104.npz	1094159	b1d96e081d8f1112bad7ed361f258c9f8d4d47db3843c191de2094b53409a00b	735a941b0873
+shard_0004_part0105.npz	1167631	70710e2512f663e6ed74c31469f64925f83148644bb57b393e3c0a0219ca4e85	735a941b0873
+shard_0004_part0106.npz	1281022	0909d87a91ae372b34ace23fdbdc577f51f81fb2a80660567ea06c0ba37c0266	735a941b0873
+shard_0004_part0107.npz	1026435	51c3eaad6e51a1f835406be98dad4b6b9053c72c984f826c5f68eceaee26aad4	735a941b0873
+shard_0004_part0108.npz	1296687	f6b1b1daa54b22718a003ceb5978b3fc6a96686f1cb6da2c08548b6bec050f62	735a941b0873
+shard_0004_part0109.npz	1090526	49e767cf4434c423abf5b89912d3473d4abebe68f6927126c43298a7b05d3382	735a941b0873
+shard_0004_part0110.npz	1266660	c3fb1a386b9b70971e1c150bf46d45f9442598a0adcb97d54f0b58d9ee156d3b	735a941b0873
+shard_0004_part0111.npz	803159	bb0f3338603c35f1a8abaf4cd384d1ab05974f6315eee8d2da5be92a8c822eee	735a941b0873
+shard_0004_part0112.npz	1038397	ae37a21dd67eb57a78ac18afa48af7fe2c413d034b0b2f408367186909da0348	735a941b0873
+shard_0004_part0113.npz	1390098	4647f841b94b9f3f980647d88fee6d66a64e115084205fda8395f821c1a72ce7	735a941b0873
+shard_0004_part0114.npz	898949	64f08d432eb010acac73ae9862a26d4b165d6ce9a59b920d76abe9f1cda51dd2	735a941b0873
+shard_0004_part0115.npz	1473211	5ef70b42946f79f92829e8302603a9d0ffa03fd2d6ca4bca7c68ae490762df57	735a941b0873
+shard_0004_part0116.npz	1358630	d81d1d352c70344739b1b03322088bcf01201f40eb3d934872681fe7bf7910b8	735a941b0873
+shard_0004_part0117.npz	1325700	a751fc394fd66bf5971abfec3269f6463bb154018ffca73771e7ced706694034	735a941b0873
+shard_0004_part0118.npz	1262629	5e12bf2155c3003d6ccf76ccd3dde3724a31cbfc88f4df0ee35cfa2a113968de	735a941b0873
+shard_0004_part0119.npz	1335582	8937669cd606156da6217f14d5e785246447a493fca816c615f1f34eb0463009	735a941b0873
+shard_0004_part0120.npz	1308999	c9a68c1f1da9c18793637c018727145ef4edb858a00b6ef9033e060b569739dc	735a941b0873
+shard_0004_part0121.npz	1308167	967a438531181bcae84b0644c94df6248b462da12703a4ca6be8fd543fd5baf2	735a941b0873
+shard_0004_part0122.npz	1355935	553429bd8526d7dadf8ce12e26daadfa42ced33501e66f57c0013e176f14036a	735a941b0873
+shard_0004_part0123.npz	1335205	f2c33a39483148fb33b41627c15c0ce75eb14e37e10151ee911701b3d6e724bf	735a941b0873
+shard_0004_part0124.npz	1406503	0ae9b9a1769a7713a05e1ae3ac4abc225f4ff4957c8f86f7b4e06c5f512a5085	735a941b0873
+shard_0004_part0125.npz	1478042	66aff1bdb1c3738827a4294598a03e0a8bdd6d80b19a310636196e17cf38fc32	735a941b0873
+shard_0004_part0126.npz	480573	f84de95b47185a71c3e9fc64d9ce1c07a1aa951f0ded7c1e9cb11749b343bb5c	735a941b0873
+shard_0005_part0000.npz	1214981	98a53d19e05774960b3f6b8ca119a1eedf69f86d129dd37f92b1de845b969e7d	735a941b0873
+shard_0005_part0001.npz	958049	68213906674dc438efe7424f565f70199fb10f10db61c12596782775155fbca2	735a941b0873
+shard_0005_part0002.npz	1210855	415cc0856bad546e12a69de429cc8581b6b614eb7982c562292a73b23792894d	735a941b0873
+shard_0005_part0003.npz	1333972	d600890e0c8d437ebc7d411ed48de7e7d8ee6684c96812500e61a946f9954f3c	735a941b0873
+shard_0005_part0004.npz	1326514	2c091a7a033f96e7fbbf8216dec7a9385bea82bfa9783ee2971610cb7285d3c7	735a941b0873
+shard_0005_part0005.npz	1318237	d2346312a259452c67361f93e0f41704ff7d3b0bbecbacd8094a77fb8a2edc0d	735a941b0873
+shard_0005_part0006.npz	1287747	f5ce03df02c910f0ff1a0253d273425350bb134b8420dd8a36d28ea35f102724	735a941b0873
+shard_0005_part0007.npz	1350337	f4eb9df938281a56069ee7efe4090a29f0d4d0d0939d098037de73aa7d301dca	735a941b0873
+shard_0005_part0008.npz	1354717	f9dbc040ba55c75755f5191ba4e30576c30b4fed7501656ff88fb5242e033f54	735a941b0873
+shard_0005_part0009.npz	1241130	89de074c658f50619a33c38a3e159215c461f5e198fafe52be8a8409996b4990	735a941b0873
+shard_0005_part0010.npz	1250489	2efe05473080b47b25845d5243095130831937f95daf5669a2d34eff1ef07284	735a941b0873
+shard_0005_part0011.npz	812523	f4a60910520710ebabd3c898696ceec0f306db91aa1b4aa4d3cce60398b40cce	735a941b0873
+shard_0005_part0012.npz	875430	e66bf50c0c8d4183fe03e29ffc4ef9c72ba2033e05013303120bf5ebf812b2c6	735a941b0873
+shard_0005_part0013.npz	1204518	5cc29fa0dbf534e3fce4bd4b12e75c59cd7f62fafdd530e9550b38299668987c	735a941b0873
+shard_0005_part0014.npz	1310530	36b85e5ed8a4913f892d1ac220ed85fb5560112742e73c947aabbdfc92f3e947	735a941b0873
+shard_0005_part0015.npz	1137507	b1c21b6804bca049d7c217ff25965111078bf996d613aead46ef69522d339452	735a941b0873
+shard_0005_part0016.npz	1343606	6e941a188452cab86aeabe910e99d23a4215290fa881e976960c90e4ed0105a5	735a941b0873
+shard_0005_part0017.npz	1244379	80319dba213e13496296a3260f2fecd35820b46f2d2dbc8ac503b17ee3caed7c	735a941b0873
+shard_0005_part0018.npz	1290080	6f5364f9e09029f5ed9ae6d8edee44f25fecee3b64fbd6429e500073545a47b5	735a941b0873
+shard_0005_part0019.npz	1254106	4a8c9f334df0d8ce0010c8ca21b31e9879f69e6c2dfe9dd2244d8a0e79ebcba1	735a941b0873
+shard_0005_part0020.npz	1437297	20a260ca096303ff022503d1baacfffcbd76947740d9825cb8bd6ced942013ac	735a941b0873
+shard_0005_part0021.npz	1404564	03e960d68e6240a5ef775242c777e51d0fbfa19e09d7f8f90a65402cf5bd254d	735a941b0873
+shard_0005_part0022.npz	1414221	70ef2a70403c45d96a8e76c071e9780971ef203acec8e620ce0d627e032e402f	735a941b0873
+shard_0005_part0023.npz	1451816	90955527fe0ea8180c6cf76e9cce5a3b601b83a082e5f39df3727ddfbaa74465	735a941b0873
+shard_0005_part0024.npz	1465254	a2173c6039e6dfd0f055aafbf95678f46db0032c5b7882dd378924c4e5fd3ac3	735a941b0873
+shard_0005_part0025.npz	1418712	a83207bf1a55cb136f01ad8bf785d8c1890a2c595b540f54c0141aef297dec12	735a941b0873
+shard_0005_part0026.npz	1359938	92e43f6626d268e847733fb5c7dbadf56bbf8eb54d0e23d5ef171599f961fcd2	735a941b0873
+shard_0005_part0027.npz	1377317	aed2899503dd095bf933bab61cf016f17fd525867dfaa046f7a5d853d4a1c2a7	735a941b0873
+shard_0005_part0028.npz	1024913	2c611fbc452e1222e8261863638c8f239ad0f313a8f0a2c8c331e5cc6c5c1c98	735a941b0873
+shard_0005_part0029.npz	1322008	5e5abacc22be4dc193084a57ca52baa9c9f5b99dd6539bd2ac098893397b79ab	735a941b0873
+shard_0005_part0030.npz	1499977	47f2a364e039a02df57ed87f27565ce8ade21399ee5f60972bb7575bfb21d4e0	735a941b0873
+shard_0005_part0031.npz	1484663	16ea03df1d1b65e122f9fb8a547e09893b7b45ab532163c3e0736c7733246b3d	735a941b0873
+shard_0005_part0032.npz	1543497	0b8d4e78600b4b9644fb844b9543236527f0e8a3db5143aed3901da6135cbc3e	735a941b0873
+shard_0005_part0033.npz	1445885	3aad1666a3f890bf5c3f6925006bfea00f0b4186dc6456f36efd1265078c40b3	735a941b0873
+shard_0005_part0034.npz	1520043	c76c1a67c1fbf947a76726340059e3c7502eb49c001440bc588b2e04a39e4242	735a941b0873
+shard_0005_part0035.npz	1543297	5fbcea2781646ab7aec1dea7f33a38a2822578cbb12e7e26cb5bcd8b9676512d	735a941b0873
+shard_0005_part0036.npz	1479480	3cdd26d8cc6df2fadd2606d44ab750fec0ed93faed18df83e5342d59261e788d	735a941b0873
+shard_0005_part0037.npz	1201962	af9cbadc211bd1184ba50b87c289ad386699c1ac99243c4c86e8841358c74a66	735a941b0873
+shard_0005_part0038.npz	902596	49323597a694ce510024b10d3d70b9cba6ed09184b2bede8b7c9c27f1ab061ba	735a941b0873
+shard_0005_part0039.npz	1410778	448892059b7557663de88d6b6275fc0cb5e5592b8e2c7ba9daafdff3bbcb76a8	735a941b0873
+shard_0005_part0040.npz	1518890	fa2a7440d0df1bea75ffde4cdf787dd6c70fe04e7904f9dc672c497314b23887	735a941b0873
+shard_0005_part0041.npz	1425390	04aab1c47e8c1f9d8ed158e2bf7411b108916fc8fc32e2c96e67a3fad879d707	735a941b0873
+shard_0005_part0042.npz	1509089	bc43103039efeee3eb1d7986402d6b06e1f24a3cef88c49b0d3f974215f7e4dc	735a941b0873
+shard_0005_part0043.npz	1346601	436fba23c448f5ec8379223df5221c012f241cef70f81871b5b4928cd0724793	735a941b0873
+shard_0005_part0044.npz	1420095	10c8b6434de062d5e3c4b968881199e1fe7641460ffa900f103f3afa4b006207	735a941b0873
+shard_0005_part0045.npz	1405491	59fc92dd82da4397f8a890072e25af48f00c0f03c6c274243dde9ea5de076f3c	735a941b0873
+shard_0005_part0046.npz	1471047	0ef6c362ae0ec8ddeea85e0f5e4bffd50d8c30e1a020d0ae4a1132dbad4f2416	735a941b0873
+shard_0005_part0047.npz	1396857	ece2c8b0a947603032a71d752cfc3955d03ba284269f64410f788ca0dba8f458	735a941b0873
+shard_0005_part0048.npz	1478841	569109438fb2926f8d07a048a1d313c5431613a043cb9ba4e0be9e2884eba055	735a941b0873
+shard_0005_part0049.npz	1488604	8367fb6dc77ab290efe39d849d8f7defedbf9a255bcf41d2de84fedb01d12f68	735a941b0873
+shard_0005_part0050.npz	1406087	c41f88e5d7abc6ccc584b10d1ec565d26f4b67e3c403bee76227a9317ec3db4b	735a941b0873
+shard_0005_part0051.npz	1295035	c95000b69b95a77ef5603542c5a43b52d8902a864d7259b2ec1a5af35797ff2f	735a941b0873
+shard_0005_part0052.npz	1157328	b6319fa4bdbbc79ef26cc7fefea51b0ef30bbb7a80baa2055273fc1d2ec440e0	735a941b0873
+shard_0005_part0053.npz	1268277	da6a20e0d403ec1d4800ee4e29fd51b766d7cb3e36414e9dc63ccf8fa34c5f4b	735a941b0873
+shard_0005_part0054.npz	999970	e00b42dd4f13aa478113df900c834f2a687456887050f8ac4a3d8f56cc13a234	735a941b0873
+shard_0005_part0055.npz	1273408	e45b459fc3fa82e60723965a27495f1875b310f7f984722a306020498867dff0	735a941b0873
+shard_0005_part0056.npz	1317546	90d7af6a949cd240d1393a7384f4efe6632d487a72daca03bea9ca59c9360c67	735a941b0873
+shard_0005_part0057.npz	1229399	e2e566a911a679ea41280f9cc89294a41e2217d12b615ff00b59465813666a6e	735a941b0873
+shard_0005_part0058.npz	1278899	314df4fdf484f6d6c72fe4acf4d3763f09f5225e2ab0fd5672be82da89436184	735a941b0873
+shard_0005_part0059.npz	1251404	e9f3772931c9f0c202a4b3543ebd21f040a554e09034f3cf168763c12c83e856	735a941b0873
+shard_0005_part0060.npz	1271173	5c4badf7e3118b81fb7af4844b07fc28bf3662f77f9931e4c981690ac883cee2	735a941b0873
+shard_0005_part0061.npz	1251468	8e5edd6f904d8902047052545f1067f4b3983c8b2d2a9cf3e6ac12b3812397e4	735a941b0873
+shard_0005_part0062.npz	1251018	e25e18efa9bb067963ba7f0d009a25e6e41cadd38f48d4f973417be295578619	735a941b0873
+shard_0005_part0063.npz	1267592	4699a2231868c713c41ce84f5787aad029ebf0087f39edbea968666065db749c	735a941b0873
+shard_0005_part0064.npz	989518	637c9c0a141546dc7d4695ea1027b8cd4d7d56e2d2d140f579a769f317e8178d	735a941b0873
+shard_0005_part0065.npz	717552	27f0b8d10267b8dfdccf493893a4a4dd629343ffbb587b3a3b933d9722e2e411	735a941b0873
+shard_0005_part0066.npz	1024274	a68032d6dc953ab6ca6fb07fa1671de7d376b1ac7fb9c874b53805df71ca8ed6	735a941b0873
+shard_0005_part0067.npz	1152723	a5f7531d0b0abf1b4aaec1426cdbc612bb03d4376030afc1d951ce516a02d8ca	735a941b0873
+shard_0005_part0068.npz	1120002	e72391a61aa10f3705115b44bc6626fdffa0ee07fd465287b8971d56654702f3	735a941b0873
+shard_0005_part0069.npz	1068389	825ade6c85965317a57f9754b06bdd06a1b4d4e6c1d737e77d311b29d697f4fa	735a941b0873
+shard_0005_part0070.npz	1259732	00719b417ce04a295d73384d0f624464596e5ae24d066caf51947b6e2181bd78	735a941b0873
+shard_0005_part0071.npz	1250242	7f0018acfee95efbf3445199da2b770a89667ef1e173a1016cf88790cb2ce3e5	735a941b0873
+shard_0005_part0072.npz	1254181	6b5d61203afbe839ebfac1f7aeedc3575d3e15d425150f1cdc799c4e68d75be9	735a941b0873
+shard_0005_part0073.npz	1370931	e234064fabacc417658149157f2d696207955fd98ab52742c42281fdcb4f4918	735a941b0873
+shard_0005_part0074.npz	1501722	1f0dc0ba642bd663021ae19f6c3da0f53ac21b7edff1f11c815b0418db3d1f32	735a941b0873
+shard_0005_part0075.npz	1481827	4dab9450a94db735df55700a750abd53406aa76a62a996b2d33b7196d2c32a41	735a941b0873
+shard_0005_part0076.npz	1562219	422b27c98afed48943e68308d74dd8c9ac144d50b7c8684859962e92beefc886	735a941b0873
+shard_0005_part0077.npz	1603333	aab3d9b5d1178a53cf589637b317e6000883cef63ea02d8ada5fab66862a62ad	735a941b0873
+shard_0005_part0078.npz	1575872	505874fbfc8fd149ae96138b825d4d9263757783da3f9eec15949f588c66ecc6	735a941b0873
+shard_0005_part0079.npz	1429653	77c7b8ef4d80b6620ecc38355f12ed511551a4ae65df67533454dad28d0b7304	735a941b0873
+shard_0005_part0080.npz	1507935	0518017c22a393e26cf787515509ffdf095ec81007495914792e837a33b7aa23	735a941b0873
+shard_0005_part0081.npz	998163	24a16dd65dc11e97be812ff4b5d932c63506108fb7135b3583f15d1f54b2eb86	735a941b0873
+shard_0005_part0082.npz	1423754	2e8979b08527720b31c23ce89b979e85ebefa7777f4e50d5ad0df856bd522243	735a941b0873
+shard_0005_part0083.npz	1493098	f7ec908b953ac9249f0102c14775d6f12a99b354b3a9f58bf06b69d2d7437d26	735a941b0873
+shard_0005_part0084.npz	1500934	500053532b9bb6515b5d3f3a4381cb96289fc6da9f430562e0ee81c3c65e4f42	735a941b0873
+shard_0005_part0085.npz	1450266	69b3ee51789ff37df085c4b243b2af0c9d4230e6c974a4daa59fec3fdb3d178f	735a941b0873
+shard_0005_part0086.npz	1449224	b054506c34edd9c1673609087f8ea0b9507b673a8541c84050889d1d37d8a648	735a941b0873
+shard_0005_part0087.npz	1506898	5297f754638194a76ebf307a7b7b08416ffdb7b7ae2226934af61da2acdf582c	735a941b0873
+shard_0005_part0088.npz	1509760	68b5c6355658ff61d275ca1e48f5237d55d09f9b171d4e9f4bafc88511acf39b	735a941b0873
+shard_0005_part0089.npz	1501317	493df90690954ffc19b3c75ab94722d5a8a42225130a4b0478b75e3b4c74424f	735a941b0873
+shard_0005_part0090.npz	795151	0fc300e911e55fb6cb7879c2c6a5cc91f8fbfd3d6903ae02f7dfbf7ac9c7f1f9	735a941b0873
+shard_0005_part0091.npz	1217057	5ded408022de5dcc8928eb757b3cb35ea21048333d15aeebd467a19409ee1542	735a941b0873
+shard_0005_part0092.npz	1544501	c243daf6e066f10c4ced4462e33379906b0d66003662ed7962a28d61ee5b678a	735a941b0873
+shard_0005_part0093.npz	1393065	04cdbd4182576c7f25b9fff6d5413d32221f247e62b23cfaacfc370dc1a11954	735a941b0873
+shard_0005_part0094.npz	1493536	a76d294bb5f776c1b9be898ba38ae1271be8ca10653a54a593c0cd0943015fbc	735a941b0873
+shard_0005_part0095.npz	1301945	50048cbec069ed9c17a16f930cb116a2d051a5d1fb76330d7d99630d776ba1dc	735a941b0873
+shard_0005_part0096.npz	1417618	9f97485da72264a271ddc86e2eb6c84e20c0cd702816049fcd5f40712bd6f1f9	735a941b0873
+shard_0005_part0097.npz	1379672	e5d182f298d27a515f409ca9b131c282dcf275a4e8005332c3268a309847dc9a	735a941b0873
+shard_0005_part0098.npz	1465252	2cc0a2121d216eb0f64b3cabbe32a7ae2987524790656aa57548e422b6041127	735a941b0873
+shard_0005_part0099.npz	1405099	6182865d461c2b2ad8b60e576574ee57f3aa694cf909ac19d1d660eb900e04dc	735a941b0873
+shard_0005_part0100.npz	1468588	332538dab8f0be45790f2c1c6350ac16c7bffc0feb39cbef2a0b48a7ad5b0c61	735a941b0873
+shard_0005_part0101.npz	1471997	e181378019d2cc8272c9f307094e74ddb9c2ada6f88547e0da476d532cfcd8d6	735a941b0873
+shard_0005_part0102.npz	1450870	be390f886e3a61061322960e324663bcfa52d6757a6ba9a35b990913c68708b8	735a941b0873
+shard_0005_part0103.npz	1356153	bc244f55bc94d6134ae4d20961685c31e04438540cd2f8a663d495414cffeaed	735a941b0873
+shard_0005_part0104.npz	1346662	e28a678225da92295af0179d17c759b61949724e6bb520c2b9eca32565f7d05e	735a941b0873
+shard_0005_part0105.npz	961852	063c87c70c478a0f58e4e99d5835f3f0f50a143ad4c083d1b2828840ea1a9bf6	735a941b0873
+shard_0005_part0106.npz	1193385	e08c8ae1e30d8e6cf4edbea696a29540173db94bd4db03017ad2aae86743792a	735a941b0873
+shard_0005_part0107.npz	1383271	5bee30acaf108673a25b1e1b3b03bc84e1984abc42b099f0624f796e9ed1a244	735a941b0873
+shard_0005_part0108.npz	1320978	f36fbb5428fd3fee4669e81859ac56724f089819dc2c6eaa4556929d5c7abfbe	735a941b0873
+shard_0005_part0109.npz	1387366	f542cb873b23a9c971486689aefbe484542fcaa39270cfabd476104290769104	735a941b0873
+shard_0005_part0110.npz	1188967	81bfe0536138b4802bacc7f1f2fa3dea37dfe0b61d3d4303b6cd79e16c60770b	735a941b0873
+shard_0005_part0111.npz	1319413	59f67962f0eb0340a9409a21acd69d88abae736b75abbb7ef9f23940b490b6de	735a941b0873
+shard_0005_part0112.npz	1357722	74471d217c7472cd73658692179922808bf3e0bff31f7f7347f9a445c6a0d59a	735a941b0873
+shard_0005_part0113.npz	1396517	2f9d08923f731a83b46694939e5a7f883548069d782f59d47088a1f489ddbf1e	735a941b0873
+shard_0005_part0114.npz	1445927	fce8bc3824506700abd508361a98bc455aa52ef5090937c9300d86558c1bd2f2	735a941b0873
+shard_0005_part0115.npz	899660	187b95d10885ff2bb3fd962891c503c6f4988ca481383feb926d3592dc20f5c2	735a941b0873
+shard_0005_part0116.npz	1082752	d759f31182ab1651adb4f45ac43bf359a788c837fba7a84cf5147510d3da72eb	735a941b0873
+shard_0005_part0117.npz	1353178	a6056a3aef08e430d2489157d0ab13a7144cd0e38b45cf13b08bc001aea46422	735a941b0873
+shard_0005_part0118.npz	1207676	cda1f4f6b6bf2932b0f389d9069425e172dd84af58ca1f30b8149ea18a2e73be	735a941b0873
+shard_0005_part0119.npz	1309828	4576cc589ef37ec9aff5392954dbebc5711ee73e58da5e9c5d9fb962610fdb5f	735a941b0873
+shard_0005_part0120.npz	1221845	165a4f4d204257576afdf7f75a5a03bc2d1f07d5389e0157a81881bc36f646e1	735a941b0873
+shard_0005_part0121.npz	1256246	fa8eaeb1e325ec488f4d2f8fdb4e3c75c8bc0de4f38cb0bbfe402cd454447a18	735a941b0873
+shard_0005_part0122.npz	1315049	ddae4020f1056f2de5e083b90538926d0e5253c4945f6de53ca1e4743e02b257	735a941b0873
+shard_0005_part0123.npz	1323137	e1f79263706ac467ee408e145a29b56daa117d6003a026766c104b4ce8745c84	735a941b0873
+shard_0005_part0124.npz	1455341	42bda4e3aef99e0ed60748e106079d224862728025a9ec74970986cc557586ca	735a941b0873
+shard_0005_part0125.npz	1532632	224141927d9cfc1c43a14b18f1e916531a67e1f904d3916fac0d025d16766c98	735a941b0873
+shard_0005_part0126.npz	1666311	1bd0bd17a0c93cd3d6c27c838c602ceb376c92e26ce2a06e62ced7a717060e6c	735a941b0873
+shard_0005_part0127.npz	430809	fe8c47a4f48912a58db2bdd7ca0d7a0cbaaced1bcf5d455e07ee0f9413d2f1ae	735a941b0873
+shard_0006_part0000.npz	1355695	6850fc32d51db7e4e1bc3743cc2835e048c5dc91bf07f52bc55ea84409aa3d33	735a941b0873
+shard_0006_part0001.npz	1379462	efcb2e7636afcc8e32e92ea4f40dbf202ba8a4ade7b156ae7acaa9decdb1fd45	735a941b0873
+shard_0006_part0002.npz	1315150	862fa3803135d980572f99a53f555c130a479461ef7589529af7d0a61992f02c	735a941b0873
+shard_0006_part0003.npz	1318852	57637e49d0ecc6e4e9b8b2ae9d9b473a8044170f16d9423f70db88d35eadbdc1	735a941b0873
+shard_0006_part0004.npz	977642	0a730c0bb34c2236351d328446140c86ca95359d489cfcdc956d57fadfd705b4	735a941b0873
+shard_0006_part0005.npz	1157211	4d927c0f10a17c4ca8e63ff171126ed89ad6f82f3c61531deb337b92eab74c72	735a941b0873
+shard_0006_part0006.npz	1378804	9c4231c081b1d9f0b49aaf0beff8080a5ce0e0047623387884a73bf45258fa7f	735a941b0873
+shard_0006_part0007.npz	1328557	f655fa272071a283f17d816c201925f2f470aed77598cd7e32493bc839e83476	735a941b0873
+shard_0006_part0008.npz	1415371	36ab8139c8cca984dc5cbf9a2d7204b9561a9629914910f45b5da2745406ad2c	735a941b0873
+shard_0006_part0009.npz	1328264	9d8d16fea2ab48a58e702eab10854a27bfdc5034972d59f7c76a57cc4b6a889d	735a941b0873
+shard_0006_part0010.npz	1257336	d2766d1f27ea8314498c651001225a510d174c16ad32feffef50e615a7225419	735a941b0873
+shard_0006_part0011.npz	1316353	143f80a1c1f1e50675b5531d7efa84a652b06e396a75c6172e15f09599777704	735a941b0873
+shard_0006_part0012.npz	1297075	ac066ce6ee47b1f200916471f8f4dc1e9dac130e0acd2ee83986e36d2d68fd38	735a941b0873
+shard_0006_part0013.npz	1271687	df546765722b4a6dcb0d3a923fefaaacf66dd054da9153474995b28ea097d3ce	735a941b0873
+shard_0006_part0014.npz	1196770	b70c3cd8cd4a8ab8d4a331531fdb6c66fa4bc50915d4c65bbfb8909440dbdd38	735a941b0873
+shard_0006_part0015.npz	710840	a12dcea080b4e08c01675366e5f1c348a343325621d5b1702dfc6acd853bf515	735a941b0873
+shard_0006_part0016.npz	1014941	bcc73f323a42a380d21ef88a1e7b9a235bf82b602a0aa7524286c5faaeface50	735a941b0873
+shard_0006_part0017.npz	1287831	e64a7a87f3b2adf02c30a64df004f0153d26f8f556a3a3d03ffbef686b8939a0	735a941b0873
+shard_0006_part0018.npz	1226969	7e0a26ce066d1ee9afe942383d2675badcc339d21c323eb971d9b8fce4e885bb	735a941b0873
+shard_0006_part0019.npz	1241486	f98ae6dd343ac295586a3ffdf58a787cda74afbf505683145c86990f3bad5b38	735a941b0873
+shard_0006_part0020.npz	1416829	877d33892d5b80857fcc0de2c4f49189700bbf7c1d7df5c5f2903012c505777e	735a941b0873
+shard_0006_part0021.npz	1244559	767b21a568f81faeacbde090d26b26a8dac33c51b851ed25defa54fc3b1d6b22	735a941b0873
+shard_0006_part0022.npz	1276138	7044f262920c2cc2fd1dddf50897fb5f2d6f24bd2add9fbdc97991ce1da2f295	735a941b0873
+shard_0006_part0023.npz	1246221	ffeb5960f6450e803c509a9b8f7444afb72383bd3afac48705a3ab23712f57b0	735a941b0873
+shard_0006_part0024.npz	1351372	bafaf47c4d4f9a61758dea78ec0bbda6db431717ef721be2bbf9855fce1d219f	735a941b0873
+shard_0006_part0025.npz	1262572	8dd057ed7ed12da4f7fc3cc06502f48adb9ae5455be7c7c4c0f02e10e5367a71	735a941b0873
+shard_0006_part0026.npz	1374164	77147388ba9458a3ae4ab0f97a81adca51a884b5c408a4c92e147bbe39e757c6	735a941b0873
+shard_0006_part0027.npz	1337640	3deac756c35f4c3725ace6f98592c0daee23cbf22d1e4fa798d83daa072a3c46	735a941b0873
+shard_0006_part0028.npz	1401723	dee539725732e958390c0e37d6ac936a64705067bb9c7338502c9ccc1cc44119	735a941b0873
+shard_0006_part0029.npz	1336735	49c49af797e3744268dcd1a7aa4e1975332e7e132bbbfa85b8f07d7681ad7ecf	735a941b0873
+shard_0006_part0030.npz	1293344	5fe45ee8bd7cd47c2c9600e50233a00d497b05a4a5d8df33b19f0fefddeaa040	735a941b0873
+shard_0006_part0031.npz	993833	9cd1cdb615911d2f44461bc1aade14a60c821cb3c07eaf338b336376042fb1d9	735a941b0873
+shard_0006_part0032.npz	1156769	3409d636c251ed632c432f487aa402efe1e123f15b442b1c81989b59e1fd755d	735a941b0873
+shard_0006_part0033.npz	1381336	d1321bd7ccbd73b9cc7447b8db2bfeb62dfaea5b061c8b03a2c8f21a29e8a3f4	735a941b0873
+shard_0006_part0034.npz	1323647	a6826f83e59977d1f1a1ec442c00dd9221c957670f5c5146fbfd923ffbf50b2c	735a941b0873
+shard_0006_part0035.npz	1400845	889240007a5c925225ba29513e6dd58b7b4a3d35195541d430051f4ace74ac15	735a941b0873
+shard_0006_part0036.npz	1327929	e240e2619b233aa834bc18475e30ebd7ece3517332897996d8fdb8331d13e067	735a941b0873
+shard_0006_part0037.npz	1345539	4a98c8c673a621776e3075c2b2e51de022e69ead8c0dd80d6f76d4e0ad5f89c0	735a941b0873
+shard_0006_part0038.npz	1350780	c239ca9e3b7f5912aac5bf4e15059c7155d07ed9821949bc422ab02fde4ff404	735a941b0873
+shard_0006_part0039.npz	1324220	dae832b8255d1fd3af4766195978b503a206192d3e35b811d610774c5d449f82	735a941b0873
+shard_0006_part0040.npz	1328496	fcccadbb5313b6a2ff69049ccd0b509b5fe8ae4680bc41392594daaab165823d	735a941b0873
+shard_0006_part0041.npz	740782	50690ef162416fb14747ab1d1a715384652cf650b696d06e2b95027e080084ff	735a941b0873
+shard_0006_part0042.npz	1162981	0f710973f46a68ca3b967bcb069eb7d51069a8d9b02fb1db234eb1d2402c17dd	735a941b0873
+shard_0006_part0043.npz	1427018	3aa444e4d33ba7df5b457a54e6bc89f83ea8aa1d23443d5089d72038b4d43c21	735a941b0873
+shard_0006_part0044.npz	1172915	b1b802aefa8a1afc586cba0b6d2a185e16726e038b607ebfb20e993e3fc5b922	735a941b0873
+shard_0006_part0045.npz	1387850	8b3b91eef257d468cd7f9696a2b79112a380bf17400be86b91980f827fdf9029	735a941b0873
+shard_0006_part0046.npz	1063680	b37a591536a79b6e840fc9a21ae91c641f19a82b13ae895e47de40c7b61de72a	735a941b0873
+shard_0006_part0047.npz	700178	6b8dd4982409a9f9cf470cb83e7ec8eca77bb20604f647671221c21c25a5c9b4	735a941b0873
+shard_0006_part0048.npz	775228	d72c4d47e9eb2244e16b2c0abf771098ed4273a8bfd26d3ade8b21a081614247	735a941b0873
+shard_0006_part0049.npz	722748	3f6bf2b550dc4787fddc52e3dd2cd293b0038f6be3d98dce5d13182ed6c15fd7	735a941b0873
+shard_0006_part0050.npz	716170	9d213fae05d020fcd8b079d9dab52cf3504683fccddb50e3cc1f157d8c9d758d	735a941b0873
+shard_0006_part0051.npz	731092	bd7077dc8be6b6709d85a021442884943af65f7339fb1010020f3c7ee6bc81f5	735a941b0873
+shard_0006_part0052.npz	764849	fcef8997393e3b31ead2b654fea41559acb0eaf7013792a4a1c83a3134c05554	735a941b0873
+shard_0006_part0053.npz	753484	22ad3ea328bdea863d060d80491f96fd119c6b52a4f48a2974f2357f7d705be2	735a941b0873
+shard_0006_part0054.npz	766347	c4cbd0611caef451cdb0095eaed40e050f9270bc4a513501d414b2b48fabdd69	735a941b0873
+shard_0006_part0055.npz	751218	37dac5c04fd1a9d12d61e57beb0028f3adb323747a02a8f91441a895383c49a1	735a941b0873
+shard_0006_part0056.npz	750745	442570e9662ffa87fd6451193ee0c774c19463a8679abb1392a98d232fc621a2	735a941b0873
+shard_0006_part0057.npz	739853	22934ca4cf77bad39a346c5045fa8e8afbf6ce8f85ad7803ffb764ca2eba32dd	735a941b0873
+shard_0006_part0058.npz	717037	c888be5c01ad1645d41047f3e00aba81a1672b0cf9c72e6f6a809dd287e10c95	735a941b0873
+shard_0006_part0059.npz	716247	983e1c40c76aeec0bfe1e531e69f15279b6293114744f5ea93998fce521479e9	735a941b0873
+shard_0006_part0060.npz	718417	e4eaccbd400bb7c4611a9b3456f11dbc5c7afc6efde776ed831c499be904d37e	735a941b0873
+shard_0006_part0061.npz	687464	3d9c8eafaa21310088b0afc23e53f24ab9507bb03db6d8688f9efada29bf7270	735a941b0873
+shard_0006_part0062.npz	695727	706bf57325a9d20e521cd6d1f99c9330ad96c2ebf452900a69984f90f9c9867a	735a941b0873
+shard_0006_part0063.npz	735102	f91fbf9586f166cc211a254b88e26a763f5221e31da08c9420e83aa6e38f672e	735a941b0873
+shard_0006_part0064.npz	623035	83e39c5b2fc02a9ecd8ffc466931f975f483a3727b7a842594e288bfb8b7fbac	735a941b0873
+shard_0006_part0065.npz	670893	5696cf1029143e367d5aec75451e3465334ec390e466364384e7dcb153753603	735a941b0873
+shard_0006_part0066.npz	655624	f386cd0db9909a489db405441d93e2343f2675d6a6bc0d435552b15df246e0b7	735a941b0873
+shard_0006_part0067.npz	487327	10b91f0efce50087a2cb095e6e575fc5296dfeca645b798593aaa2f9673ef4b2	735a941b0873
+shard_0006_part0068.npz	523588	26d2a4606f6335a39acb9d650110d1573b3c885fd5904d20d6f4aad99e6382f9	735a941b0873
+shard_0006_part0069.npz	572882	3ab35c5d9ffc0955b27c0cd8e10926a2a5c34af50c913557b692e51c233630d1	735a941b0873
+shard_0006_part0070.npz	668183	e790b0f2264e8fb6b2f15d0ee289b3984413ebabce201e265ba838f5c87e96a5	735a941b0873
+shard_0006_part0071.npz	697188	d2ab734a6b8fdf76c24e3c4b86398d3347b7392f61a942124b76aac85b2c0e4c	735a941b0873
+shard_0006_part0072.npz	701657	25ae986babff7ef78c4f4b58e4d032f7232c6ce8991dc11f7ac787351ddfad6d	735a941b0873
+shard_0006_part0073.npz	742028	eedd3f6344302d2f6a9858c3b61442ac5276a42fe17fa408b274c8fd0f414b8d	735a941b0873
+shard_0006_part0074.npz	809186	ff82a7febe0c3c231d90978a37e01cf3db4da2da17b817af729326150591554b	735a941b0873
+shard_0006_part0075.npz	813170	8077f45d9feea416850e1eff480b4624fc901d05216c03d74fd5b2cc7a34299d	735a941b0873
+shard_0006_part0076.npz	821548	0bdc15a4ae6ad6b4fae5108a3f45327dad2348243e81f7a6994c3db723929654	735a941b0873
+shard_0006_part0077.npz	790690	b05dacb7cae5e2415edde2959d915c8fa086fb1f1736e31f507404bc0e0e31ae	735a941b0873
+shard_0006_part0078.npz	819239	2b91fad5765196c9ebe27769718247afe735057b472ee58dc9954771e6e8ec7a	735a941b0873
+shard_0006_part0079.npz	777141	ac702e8a43ff97fdb6f8f1946c5f4b092f390d4fde283868396166bce6b37164	735a941b0873
+shard_0006_part0080.npz	816499	b7b42b6cd293482f7d163c744296239790f4a06dd07627d7402a4c1fbdeeadcc	735a941b0873
+shard_0006_part0081.npz	784434	cf9b2cf9d94bd5c9b46a686eaf7f1c19e039dcce934c83868ea985aed4ef9f7b	735a941b0873
+shard_0006_part0082.npz	817703	effa94f7459ad51835d4abc1b132130369a563fdb64b0faf1ab9faf82056d460	735a941b0873
+shard_0006_part0083.npz	762084	eaf274b949351092a4aa823d6b769b4867a8bbb1cf7a6edbdec01fd00f4bee81	735a941b0873
+shard_0006_part0084.npz	771264	aa182a2a8c73776fce55de575ad680b3aac0b122d4d5dcc607a892ef9cdb20f4	735a941b0873
+shard_0006_part0085.npz	616797	7b80acc9aad547395dee96611d0e168878edf1ccad14aedf55fd079769493441	735a941b0873
+shard_0006_part0086.npz	555045	610bbd02cc25e783f29cadfabd39ecb34a8f0b26e643dcc4af83d54875b79baf	735a941b0873
+shard_0006_part0087.npz	699640	69cf8c5f6c70bc9ad0dee10b10cdfc7ff92f46257026ed3af56e3fd255eb59e0	735a941b0873
+shard_0006_part0088.npz	775963	87b2aaa804c32f6e3761f0e3801e00d11d63a848b0f935e60b3c02c0c4090360	735a941b0873
+shard_0006_part0089.npz	810717	4046b54dd8871ced3cfcc71697a00063939b0274c66f48592ad7026b540e834b	735a941b0873
+shard_0006_part0090.npz	838133	83cdbe2345cc6aa0549ed0acabca14447bd0b1a06fc611ff0cfd7072646380a0	735a941b0873
+shard_0006_part0091.npz	703108	e1126f4f05213d267f6eb43ef52cbf6138c542f5d3172a2e8268dada865b7113	735a941b0873
+shard_0006_part0092.npz	748756	2a537b404e84a6f7bb4ab52232eb67a6e65581e7cdda8d5fbe09338ba8454412	735a941b0873
+shard_0006_part0093.npz	814723	85fa2721e871b022d6c882ba410b9007028d58b725aea4c9f694fa90915d7539	735a941b0873
+shard_0006_part0094.npz	847951	15bba587d570db87705d5edbdf91ecfa3c7a027cf80a786c8b4ec508ede70955	735a941b0873
+shard_0006_part0095.npz	893541	2db3825374094c796eb6c9e6d97ef70d8c366af19bcbbc0189ca46ed94c0548d	735a941b0873
+shard_0006_part0096.npz	1161629	6e443638aaeafd2279438b794e8f4e3934174d59c26fd017ee27fa9b3019c42f	735a941b0873
+shard_0006_part0097.npz	1176876	322a92b641259043fab866fc6375149d03115486306187f291ceaf51df9b9ba4	735a941b0873
+shard_0006_part0098.npz	1297396	e997e1179a2508d2f68d9949777aea4b18192bdfedbc43c4edfa507083e33a19	735a941b0873
+shard_0006_part0099.npz	1304439	9696cd1c78525e2432073a0a4ca905615f285ea2463ee539565b407ca49f1d73	735a941b0873
+shard_0006_part0100.npz	1302827	c2e4ec5b1e35f883428b024a05af87903d916738734ba032577bfcaeb9b08035	735a941b0873
+shard_0006_part0101.npz	1314686	98d82a4aeb89aa263750ebf8468a2df098711c1e67de395349a12d220fc4c269	735a941b0873
+shard_0006_part0102.npz	1321811	2ba384b6fe6cbd87cb34c2ef4f339760d887ce7d87cead9c4c11d5aadb4b7b33	735a941b0873
+shard_0006_part0103.npz	1287835	a96c1ab2f8ef9c8284b247049292ee67b219a0cbd551fa12773d3c629dfe9249	735a941b0873
+shard_0006_part0104.npz	1231992	19bf3d0230dbdba7dd58c049afabc2ce6e257ab6be7c10d06b2248c24da93868	735a941b0873
+shard_0006_part0105.npz	1237417	115d16e2957fad5f01799c8da7be9223b7e4ccf8c3be30771b9197cae43866f0	735a941b0873
+shard_0006_part0106.npz	1112843	dbbfb7a2cc6d89f08135d27d13b57cf0bb7025e5a7654f3474ca54d7b154fb54	735a941b0873
+shard_0006_part0107.npz	1176917	ff4052d5b22da2b64aaa0dce106a2a84cd425745b76c12ead3bc9d8bea9589ad	735a941b0873
+shard_0006_part0108.npz	896937	593a25edea9d525246b1a6ef9df843b7c1f0b5a0d522bd904b5593da908ed49e	735a941b0873
+shard_0006_part0109.npz	957804	932854cc0241345e546abfb7e84ec6c9b04d4f13300003bcb0dc65f2c5d447f8	735a941b0873
+shard_0006_part0110.npz	1177370	d8115a0e52e501b4b3b42168f6a99fdd37b16f20536668c342c0a33c71c951e1	735a941b0873
+shard_0006_part0111.npz	1203134	f2741bc25aa182ff8e82d0a278640bd56361570e0116d536aa209bb100c0d971	735a941b0873
+shard_0006_part0112.npz	1238351	d691fcdfa0ecf7284a05f05f1de3834c1357a9959d01779593b3735827cb6b02	735a941b0873
+shard_0006_part0113.npz	1217445	df9bb5f7700acdc3fbd92179d244545bd702b4f97d23a447cf8bbd721f733c38	735a941b0873
+shard_0006_part0114.npz	1336064	1299a222acda4c03812ee9e1b7cac9a91bf7b15ae13df83e6fcd28674e8a7e1e	735a941b0873
+shard_0006_part0115.npz	1254005	91afe776c458b314ac30ea03d60b073fc8243146302a973b69213afbf4744669	735a941b0873
+shard_0006_part0116.npz	1289700	fcc1d7a7005d61472138f6ab8320cc8d39ac891b55c9c9fe05d91230ec0b6282	735a941b0873
+shard_0006_part0117.npz	1210106	86593904aaf022bdc17371ffd943fae7cff707a4464ce156a708376066fa7f91	735a941b0873
+shard_0006_part0118.npz	1127396	0de2eb159486986d0b71d8b40cdda38274e3a8effc073ba0d88a0d8fdbaf0e44	735a941b0873
+shard_0006_part0119.npz	1135432	7f2bedcd9a469e6615945d451f6e3661dc83f4a890445d1ee9797b24ad2cd49e	735a941b0873
+shard_0006_part0120.npz	848579	17ceb52cb205b799cf4a1c8f92f92281f750f32c9ded71e6b3dfc891395998a2	735a941b0873
+shard_0006_part0121.npz	757763	f7f65cbf49b064ec0e0649b3bb81bf1856695768f39d63a0edabe01adfb0469e	735a941b0873
+shard_0006_part0122.npz	1115257	5a9045db0dd07c03a10dd69bd054143754fcd984a4eddeded05eecc747c95112	735a941b0873
+shard_0006_part0123.npz	1259106	cfde8f295d167aa8273d549ec53561aa83f272ce75c3e4562e8d2c60960e9204	735a941b0873
+shard_0006_part0124.npz	1101904	d31a08ed1a08d3cb1e0d80b279e2552c96ed87b16aec42ac52c69cda9f4e7cd2	735a941b0873
+shard_0006_part0125.npz	1298817	6c9fe9ee63ad8ccaa9cd7d68c3407f410e1bbd747be6995e6aeaa5d884764baa	735a941b0873
+shard_0006_part0126.npz	1498225	8e50aca6bf376e74afd52f92d7bc64edb7e8a7187772d4457a9268ec457d3b6d	735a941b0873
+shard_0006_part0127.npz	1531657	ae776a42ea18943570d9c80633b0c9d34e30ba489ee829a487699bde7f7a0bca	735a941b0873
+shard_0006_part0128.npz	1706792	d586397ca67111324db83fd8a3ccff9b4ca2770995309ef3c8bc0a9020186938	735a941b0873
+shard_0006_part0129.npz	1776678	ee97e505f548ff7720bedea24fe362fa6f5e231bbd9402c06f4e957fa9ae4028	735a941b0873
+shard_0006_part0130.npz	1692127	927d8d1835f418dcd7d50096219595b15f0c2f0cfc0de2d95dbecd850a3bcda0	735a941b0873
+shard_0006_part0131.npz	1816488	7c3ec75f30a11fb2d7d4e7e3b00725bf8ee850672881bf43646ee9343955c23d	735a941b0873
+shard_0006_part0132.npz	1748384	ece6208943b7d0dd02ff7c1d7c34bf255de591dfe99fd51adea522c6b5b7a113	735a941b0873
+shard_0006_part0133.npz	1486558	afa4c5aa8b61b0e672e80fdf4562752009e0695ee717190148c4375f17dd64b0	735a941b0873
+shard_0006_part0134.npz	1400518	1ef6855a6a8cf2cba614f15511ca4300225842b9c1cadb0ecf989d5e4fdc6339	735a941b0873
+shard_0006_part0135.npz	1425460	d9d9b188429f49c9d41b2a8cc6deab201d1af161d7f1a4ec2987cdc5cf5e42c2	735a941b0873
+shard_0006_part0136.npz	1208401	06f4a05440e62157b991c078d43f9972fc6a5fb71ba0b2ce4e89d6c65e2cb6db	735a941b0873
+shard_0006_part0137.npz	1427974	5d40d4d0380d7300198eb70a59eb6dbe281faabb770226a3a5d6786e1f89daf2	735a941b0873
+shard_0006_part0138.npz	1343312	7ee1ba019827506f32af72ffa54651a92cf5c38da7e4b6baa34fc6146938a233	735a941b0873
+shard_0006_part0139.npz	1371964	329ce7b0abe9b379290848c7afbf91b6935d24592b758be1c3fd54bc352ef893	735a941b0873
+shard_0006_part0140.npz	1363076	bfc166213886dbf08b90b0b125648ae37542f1490a78011d8ba442bcc9b87581	735a941b0873
+shard_0006_part0141.npz	1338282	141df447b47022dc1f5332d93a7f70515532b463737bd2ce8ec62bb87f153cc5	735a941b0873
+shard_0006_part0142.npz	1384521	390aa10a7551ddf071fde92bcdc4bf149b2bafd15316f6d506282414d34de40d	735a941b0873
+shard_0006_part0143.npz	1442206	50b8a0ea20573a57228c1560a083a58ef4cb0b5ee4c8f341f66a0dbb78c9ab46	735a941b0873
+shard_0006_part0144.npz	1381364	dee847f955fd90d57912c693fb07605e0e653ece24540b0c06b60fe47ed7377d	735a941b0873
+shard_0006_part0145.npz	908858	d639bea7e992bc598a9ae69510d6f1f9603f04fc62e7533e21472e1ce15ad4a3	735a941b0873
+shard_0006_part0146.npz	966951	b21afde38c4625e6fa231b402cd1b2436132e9647473b80cf2bf31f30344a438	735a941b0873
+shard_0006_part0147.npz	1374696	1d0b9becf9f4d149f23b59d75e4ed95329a635751d68a71073a4e734fc90f412	735a941b0873
+shard_0006_part0148.npz	1326072	2c83c6f1061ecdb5b74e63dae15eaacfd1b60a77d2aa9e46863b9e6d7ad88a0f	735a941b0873
+shard_0006_part0149.npz	1368069	f77688634e22be53bb2c18e9a6fa18af873247b79b1416e358a2d30985332ce7	735a941b0873
+shard_0006_part0150.npz	1398091	fd8d0dae0acaf0e8c881baec9569687e095f4344ddb86b662aae5830f2c68aea	735a941b0873
+shard_0006_part0151.npz	1291734	539e6ccf3b764372b7554a7df8443c01836c4d97e425fff881ded1319a38a3e9	735a941b0873
+shard_0006_part0152.npz	1351755	347cf13edb4ef5214c629cea6de44e778b608d98713255ae9e4bdb53984f7baf	735a941b0873
+shard_0006_part0153.npz	1378032	b3b65770eef7501ff5aaf092627a75843a312828665dd7edced7ed0cf8044e9c	735a941b0873
+shard_0006_part0154.npz	358409	9ef824670b986a88fd65dcde1e89f9caed6b1703888517dca8b22cebbba21d62	735a941b0873
+shard_0007_part0000.npz	1374390	4d2fc9315777c3b0917b378c5d354efe768f68aba76754742b390099b09ea382	735a941b0873
+shard_0007_part0001.npz	1415813	d55d71a6a1c5697c71dcd5b641cf6f9e8961bb2f147f4c4b05d070dc0fa09c6e	735a941b0873
+shard_0007_part0002.npz	1505320	83356e65a3fe058d807b08af2bceb961e1b2e3db05e5a263cc81d3b4a8216686	735a941b0873
+shard_0007_part0003.npz	1451066	dbaa296dd6b69caeaa2bd15c4cef0b30d19bf81fdc56f69573e65ca32f9b227e	735a941b0873
+shard_0007_part0004.npz	1439668	e8cf63475274418aeb84337a12fbcdee23574148c3c7d80c7a74fc1bd0509150	735a941b0873
+shard_0007_part0005.npz	1314577	559cd53233208c899d2e1ace65699ca1c3eb54106d8aef017dbbc772b4b9bf46	735a941b0873
+shard_0007_part0006.npz	1238214	8d79f31bbb99d641a327b3f3ebc07b7f7ce8a85d46b7c92bb08eedd6efe2078f	735a941b0873
+shard_0007_part0007.npz	1044105	50aaebce6b3680c39e4188e92be73ca13352d2a42ab5e2fae1b849e1cc9cc345	735a941b0873
+shard_0007_part0008.npz	1328920	0bad81beab6dc620f82a0406a7e81e3bdf4349787eda975940de2017ae3ea3e5	735a941b0873
+shard_0007_part0009.npz	1394312	82eba72057dca5a6dec67a4be8383cd243caab8552a5cd466f619f4c850496a3	735a941b0873
+shard_0007_part0010.npz	1311899	eb17c3c682b1ff8ee84ca657c8004b743d6ed0c365367d0834aca44dd7be8d6b	735a941b0873
+shard_0007_part0011.npz	1363884	61d3c86363c32d27d03e28d2b5243a3f99e07c24d56ac7a4e470988d0f3252f1	735a941b0873
+shard_0007_part0012.npz	1242861	b28fc4143ae4b76c7d5880f1c98f9d92216503fd4d52c623965b934226081a0d	735a941b0873
+shard_0007_part0013.npz	1344706	3af6390d739e9d0ec025b8697858d8f51db4dafb270aea270d6e6bd2145595cb	735a941b0873
+shard_0007_part0014.npz	1383616	c0fea94a288c1a735fd8f7e8d06a1c34af305194ee3e2e5b8f15c17a4f8968b9	735a941b0873
+shard_0007_part0015.npz	1311535	eef909ae209e7f3b28006347238cee3b3a0ab13fcca4b03cccb51668aa918781	735a941b0873
+shard_0007_part0016.npz	1080718	28d5aa2b18d8407a93025219add6c82ec0200777a8b536b169882c394115dc74	735a941b0873
+shard_0007_part0017.npz	705103	f37ee9a9807dcb94009d5f39e4299f7ef30031377e31be186b05b58ca30c7031	735a941b0873
+shard_0007_part0018.npz	1196642	7790baacb297d0c56ae60789acd9576a9839b7edcd4146c1d184a56e440dfa48	735a941b0873
+shard_0007_part0019.npz	1417171	95d73d452938ed242369bada77e46d50b6c533d7390d53762cb40c260f82a8ec	735a941b0873
+shard_0007_part0020.npz	1280292	35cedfa7e7728624235d8688013c62f47918b2e3ee244224320daee9e8c87374	735a941b0873
+shard_0007_part0021.npz	1496565	3939dbe8a2b3b0975b5fada6b40e56cf15421bff2a3d6ada8d7ba1bf189f25fa	735a941b0873
+shard_0007_part0022.npz	1199180	30adfdacf4d9303267f5abe389282ab020ce15af1af450195639e9894feda6b7	735a941b0873
+shard_0007_part0023.npz	1277884	1c3d3548a40bfd9f25fc09aed75d2cedcb3ce4dbc37a8fba922e59c5935e0db7	735a941b0873
+shard_0007_part0024.npz	1282860	fb3624a9bb9ad2a25b56a85cb2f8508c8232beff0e63f1b6b88d1b65183af1d0	735a941b0873
+shard_0007_part0025.npz	1348952	4deebc61a95c69adb7dd9e04e1e6583d06b688ada2e929c06713e3f4bae73afc	735a941b0873
+shard_0007_part0026.npz	1298586	2f0c7469711470ff67a3be82c5abee1e917e1985ba10afcbc1aacc5b8c888c94	735a941b0873
+shard_0007_part0027.npz	1318826	2993ec6093eeb1cbe7eb17b35375416eca9347d4457918192929616a21c415a0	735a941b0873
+shard_0007_part0028.npz	1406305	aef873b99a29cc17f31228c69a0a1b23719d3a1c257b23a40bf961280e894240	735a941b0873
+shard_0007_part0029.npz	1423544	e196a08fe2c6d36ed0fbab3f8d4d6745ee2d35bf15d9185292179e48778289c3	735a941b0873
+shard_0007_part0030.npz	1381872	8e457511196057a2c43b0f94ccb04e4e1d129b04a91ce7824a1244eca74c3da5	735a941b0873
+shard_0007_part0031.npz	1238803	fa02d18d10e6f9ed086d3755784585adc25adb732dd5dc8579397588b4a6308d	735a941b0873
+shard_0007_part0032.npz	1143667	3719b30377187e8c69c6629417e91268f162f5436ef4af87e14bffdf22664330	735a941b0873
+shard_0007_part0033.npz	1014069	1d9737a17755879a107dc7979c07d9d98d0c51994c47b604ff73d777d037806e	735a941b0873
+shard_0007_part0034.npz	1229034	0b33d633315875e7daaf052909bdc284dd0444caca324f210e72bc43ba13ee48	735a941b0873
+shard_0007_part0035.npz	1347308	63dc9350b8bd7aea819b0a536ddcb5a6f6dff7113d8950a7e156d05853f84203	735a941b0873
+shard_0007_part0036.npz	1368881	575829c869a335cb441fee5452faeca2c50f782c611b3541cf3eb9b04789c4d1	735a941b0873
+shard_0007_part0037.npz	1160256	b60c0485cfafb2864ec7590fe8c3497165b7c87df9a4ac183292ddacce04e170	735a941b0873
+shard_0007_part0038.npz	1325069	32122ebf551a464a0b600a5575aa3deb4812b7b8a9f87d63721f0dd5de2a415a	735a941b0873
+shard_0007_part0039.npz	1419069	358549fa32c0befa4bdf2baa864a3b07168d2d1fec50fadfda39267202ded044	735a941b0873
+shard_0007_part0040.npz	1387608	636c9af814e1499d2f7d744707f972a87a725f3ceb6b3598cfcdce4e5e5d7ee2	735a941b0873
+shard_0007_part0041.npz	1357983	a30b46a9a557d0efac3791f699264ed85a5707250ad3ac11f4dca58b40f1aa38	735a941b0873
+shard_0007_part0042.npz	886167	59503240bafbc36157c2bf3de5c087b2ba3cc31addfbf2982902cfc39560bdaa	735a941b0873
+shard_0007_part0043.npz	1013691	4513c95b8361054c2f0db53ed9a69c1748193e9e99c443a08dc3298bc1a0079c	735a941b0873
+shard_0007_part0044.npz	1427765	8a992b32e8e6ae31807f167407bf73b01d5bb571020cb4501739f1f13d4dbee2	735a941b0873
+shard_0007_part0045.npz	1403662	1082ea5f3b6748ded44bd10770cf9c9aeaa4982b12017fdcafbd65943a0977e2	735a941b0873
+shard_0007_part0046.npz	1440647	910ebb2de6248948e862589da296fed052e84c0892fbf5b98bfadd3f1f14aea1	735a941b0873
+shard_0007_part0047.npz	1258452	d7f2e90f9ce334d7cf6996aa3154676eff58653de8c232a9e96a7daa2938d01c	735a941b0873
+shard_0007_part0048.npz	1509289	6e8adec4c628563becf84c41127609b55f0b16b789ff6ec91534af5e7ddf740e	735a941b0873
+shard_0007_part0049.npz	1396604	9b52e9e1c3cc87aea2ede365be5c36f4a63f9d4d20087d214f48f3dd9c7f1eee	735a941b0873
+shard_0007_part0050.npz	1559063	7d9833e370326089341d0db6b1c08c464e14a39476b42cea2750090b05862181	735a941b0873
+shard_0007_part0051.npz	1419562	fd7d9574e3cf416bda38281221fc11a4c3c2bfdc75c46c5c70d4610bbdb6cd1b	735a941b0873
+shard_0007_part0052.npz	1449540	1121c1ba0638b437abf47c1428ed4db7c7a65ddd68c8260de2f5566b6090a66c	735a941b0873
+shard_0007_part0053.npz	1492907	4cdf9410dc1be07438441e89f956649cee38e8fa1ce2386e4c370c7f49ba752a	735a941b0873
+shard_0007_part0054.npz	1499864	803c9ec719c0decd6da008baae4e0786954eea586a382943cd88069434859b2e	735a941b0873
+shard_0007_part0055.npz	1387941	d44affac3ab428a99f873ca3c2f32bb10dc944bc70a55760e7b80e4efc7f4f3b	735a941b0873
+shard_0007_part0056.npz	1275311	53f300123ecd684d1260fb76c6a1a1406355cb3e29f5ac3404d2ebb6289b1e64	735a941b0873
+shard_0007_part0057.npz	1215245	ca3411f6c894831179766a73cea3a522900b70eb4f03d3969f6da8de28a708fa	735a941b0873
+shard_0007_part0058.npz	964187	644c19dd18f6ec1322a1c2ba539f31032da022cec3dd9345bacc07aa63b88634	735a941b0873
+shard_0007_part0059.npz	1216774	68141c1d31236fa6637039af8490abd0826d2fbcb321df79b9f6fce8899d833d	735a941b0873
+shard_0007_part0060.npz	1369464	84bed7ca23df4eedf796d07734d76816829fee4d36806c1f12ee73b80a923d69	735a941b0873
+shard_0007_part0061.npz	1321826	286ab5d8d922c2a7739ccd4766530e3756e70d064b11a653e17abcff5c4d8489	735a941b0873
+shard_0007_part0062.npz	1368267	a0a65258ce3eda141b0c195601fc73dd5c9511e95ea11604e9ee519877dcbae8	735a941b0873
+shard_0007_part0063.npz	1320570	469863e780c8bc642e1a4c1dab781b49c50fffe7a71dfc109789923c81d8834e	735a941b0873
+shard_0007_part0064.npz	1244928	1be6b60f2bcf8d60113cecabc34996466102e19eaf6d3c258b7c5b6da1f7dbfd	735a941b0873
+shard_0007_part0065.npz	1384024	d474902e33bd87a0bab517ca929d30682a39c90b723224302ff3b2403e263d40	735a941b0873
+shard_0007_part0066.npz	1275029	7548159287cde2a005337f01104e604607c0d2362bca51f315f9ac937eb2161e	735a941b0873
+shard_0007_part0067.npz	1235365	e51067f26b324a1b9d63ba458bf0c34f416ecc37aa30ca811b491c9977cb2165	735a941b0873
+shard_0007_part0068.npz	823429	d56411f3b991269adefe6cd401933a7a1d3be14cc79dfa5a4fc1226141b11005	735a941b0873
+shard_0007_part0069.npz	763872	b2899472588a39dc816c58008110136dd2af47324ab4ab76c41877861042bdd2	735a941b0873
+shard_0007_part0070.npz	1165411	d18ed25f3386631aaa619fbd2add766c4d56de1b5729da26d7cd4c3d55d90cc9	735a941b0873
+shard_0007_part0071.npz	1470706	6cda1cca41ca61ee5b6f61eb7fa0211a1cf40a8ae4b5ebbb89e7a7b7c6a73b40	735a941b0873
+shard_0007_part0072.npz	1173828	ffbb2d861244b943eb302ef003cfacf3b3acca7df7fc48c82d303f9d09d44a9e	735a941b0873
+shard_0007_part0073.npz	1525671	bce99ed9f699ba86185c104a02f3dec5fb3f370ba92c68a6d76cb6093c24b814	735a941b0873
+shard_0007_part0074.npz	1476120	1a327832bf12579f249e2defea7803f04d51d58b29033b557105bca6f019ebfc	735a941b0873
+shard_0007_part0075.npz	1494015	784fe791ca1366d8ecdff0609a63fc9dc17c278615c7e0908e2b6fe34b09d876	735a941b0873
+shard_0007_part0076.npz	1444503	a5840f26e5db106834483eb176c9201f188093b45a1788f1a620ec264c23801a	735a941b0873
+shard_0007_part0077.npz	1550440	cb183ac0f10c4d784a1573bfc9de3708c4929ffde5a34f86759ba83e90a35d97	735a941b0873
+shard_0007_part0078.npz	1497784	cea7bcf67edfe5557db1b02423607391d0c11411731fd615e4841682551ce722	735a941b0873
+shard_0007_part0079.npz	1536795	4d1c394a666e57c391718e4521fbcca344374dc8ab8de6320fd11773215b1759	735a941b0873
+shard_0007_part0080.npz	1561412	c3351980a46c811091b7b70d9896561d919ca7f2e0a7f719c037cc7fb6c68499	735a941b0873
+shard_0007_part0081.npz	1475327	261ff0480f74418a3367f8c369a20f9e6b7ef6f82397f0303cfbfdd9c84cb65b	735a941b0873
+shard_0007_part0082.npz	1432094	4542c7b8a3a14b268035e74c2350f1ac6ea3c5850cc1b06bf2e6963ff51377e5	735a941b0873
+shard_0007_part0083.npz	1390780	98ba568e275af1d538c863c2241d7cfdc19e813f7cbd3fdc8a9f37c18076f976	735a941b0873
+shard_0007_part0084.npz	1032615	be1bca909c3e34ad3b3cd2691a50c9ed9ab768b448dbf8a8f6af09943235f7c5	735a941b0873
+shard_0007_part0085.npz	1362153	a11c447faf9fb8bb2ee089895857bafa4b058b237de194d3464f0cc908d67a5a	735a941b0873
+shard_0007_part0086.npz	1472422	b26ccfd2cb165b2a12af0906ef23129a68dae9cab7b2a02339e4c50ca7f7315a	735a941b0873
+shard_0007_part0087.npz	1463419	2dbc49d2325cc89466b63bc68dd82fca84a9cae2a364eb6d71f962de35b9e236	735a941b0873
+shard_0007_part0088.npz	1508394	08b84770d6f291aa45d3afe70b0169ed1b7d35809549e773bccbfb551b4b3132	735a941b0873
+shard_0007_part0089.npz	1449926	f33ee1a1070912edba3536b0f018629dc6678855d7ae0928a1ec9273c790312a	735a941b0873
+shard_0007_part0090.npz	1434757	52d069855067338564a33f3f6e45fb71710936243c96e4b0248f2b9c2999a799	735a941b0873
+shard_0007_part0091.npz	1511447	09dbc7bbaae56f15c7b85a8d2a592f2f0568d676c6bd4f05b6fed972c95d4b33	735a941b0873
+shard_0007_part0092.npz	1445444	8f60fac628a17bd0299eec202cdcca145a4368dbc765c26d27677b17a06dc7a2	735a941b0873
+shard_0007_part0093.npz	956975	fa3535f44ba620dfb419203d2cf7897283c8438195850fca1489bbf78f491b3e	735a941b0873
+shard_0007_part0094.npz	999798	3475a1cdcb35e2e043a7aca562c9e8b6b61dbb013778fdadce7264eda92dd19f	735a941b0873
+shard_0007_part0095.npz	1443621	328219ad4b5f05f2ffd1c7060fd5d84f9931024e90c98c4fba17bafa28200978	735a941b0873
+shard_0007_part0096.npz	1407951	3f55aba78ebad5b81e1421b2950ede8040f594245c128cc5bd732d8e63702986	735a941b0873
+shard_0007_part0097.npz	1438109	15f90a57857b8f2b72920404a57df6402d20ff6884b0a9198c0ad942ac625def	735a941b0873
+shard_0007_part0098.npz	1460284	274c01ce484eee704ff77f4a281a2cef6dd8f28111125c07243f322004702c4a	735a941b0873
+shard_0007_part0099.npz	1069088	56a361f5f147a8d2a5f729dc9967e2a8c91863ca806a7bba62658d38d3a027b9	735a941b0873
+shard_0007_part0100.npz	1073723	0832dd12b9f84e948fd177afac266c840a2fc2fc5eb689ceca581619c6785149	735a941b0873
+shard_0007_part0101.npz	1352270	5877723e657ed0b7bf4808ca3669d68f88ed109c78616af9edf963fcb48a69d2	735a941b0873
+shard_0007_part0102.npz	1343212	c723c9adb8e97608f9b5977272cf4d3079562c675a1e07fabdca6239769a3ecd	735a941b0873
+shard_0007_part0103.npz	1352216	19309c37a01da836a0ef80371ac073550ac39922e88730d78121ed8865891893	735a941b0873
+shard_0007_part0104.npz	1265756	a2ddcfe70f628e1d6a608f292de6ae14e0096c60db4a849fb2ce4f6e726200f8	735a941b0873
+shard_0007_part0105.npz	1092857	e07f450649d36f4f7f126701cab9860423c77f93d5f657a68016e1df02c7c59c	735a941b0873
+shard_0007_part0106.npz	1340095	2099e0afebe5ebe713895dc3b4ae82f316e382836f0bcb59670fc9652a272fc7	735a941b0873
+shard_0007_part0107.npz	1209550	5ed32a4b0045ad16f19edf4d1edf313a33bd9fe1f2e3b5dad4a6c000a28304ea	735a941b0873
+shard_0007_part0108.npz	1089678	6dc5e948f40d39aba7df1592818a15025a3030dd40501d0e3aeae66c9b01750b	735a941b0873
+shard_0007_part0109.npz	946064	85dde0ddb81cc9da753846b07b6abcdc60273c55ca5260d3d9f1e559ac5a90db	735a941b0873
+shard_0007_part0110.npz	734655	4df94804da24cae627f272e004b9106ebac168a040f2ba75e5763d0ff7665be5	735a941b0873
+shard_0007_part0111.npz	1228559	f35311d313c106a7fa0b0ec6bace7a1f366a7a53ddf92d238e1363a1675b6e85	735a941b0873
+shard_0007_part0112.npz	1119366	ad5a20409bf046ea54aa6ea8337a4c35b2927e8475e4ce0dfc2c81ed154807ca	735a941b0873
+shard_0007_part0113.npz	1256601	d5152b37df45269404dc7f7513bce976b449288c256c41881d45517c9e4e3777	735a941b0873
+shard_0007_part0114.npz	1293776	3d1f22d8a114637b7a206fe0432e547f29cb9f106fad99eedd510b65a7879bb7	735a941b0873
+shard_0007_part0115.npz	1284353	fb20e82e033977b4fa8813f5ab7f8b2633d19539ddef0c092b80cfb76c04ac2e	735a941b0873
+shard_0007_part0116.npz	1357565	3f7af7a64f6182b242392c9a0b4074f54ca0fa5d93f26723233817c06f40e0bc	735a941b0873
+shard_0007_part0117.npz	979005	6907b45c5e5aa32f0ca3c4df7d56e007a52c3675ee1320d041790ee7289f173d	735a941b0873
+shard_0007_part0118.npz	1183684	ef98c1115ae4090230a9ca1a7c4e3a01d46106a5cceb593e233e7a733f93fac8	735a941b0873
+shard_0007_part0119.npz	780888	8f1b609f39ebfe1826c8aa892ea6e8985d0c5bcfe9f7edd894724493886f8d80	735a941b0873
+shard_0007_part0120.npz	1036227	4755ecb6fdec825e9b72cfbe3caf235f485581c8f233a5ba84c526d740aec693	735a941b0873
+shard_0007_part0121.npz	1333177	4f1f3ec1f20f7993f2d432fae3bc369b81cc5911a6ae120574ed0807dc5a35e6	735a941b0873
+shard_0007_part0122.npz	892625	577036c402dd6167853629aa8e263a21735a0bf5dec6c40c9d9e861c6b3ffb49	735a941b0873
+shard_0007_part0123.npz	1240404	61cae4cf4b45b12adbb7dce8f1eb9449686f99002b0fca5deb021cf60714f853	735a941b0873
+shard_0007_part0124.npz	1340334	bf41070fd522dd6ef431ba5adc4b46a04b7800b972ac25dc55181cb399f67038	735a941b0873
+shard_0007_part0125.npz	404823	61d84e113e6e3c64ba371726ccaf55a440cfcdc0c2b05e88e0d962846b1218a1	735a941b0873
+shard_fill_0000_part0000.npz	1437080	dc3e46c0eeb8d3e9eb7287c2cd96b90d8c9428bf07a1338511feafc84985cf1c	735a941b0873
+shard_fill_0000_part0001.npz	1328487	f5dacd5327fc617d333ba540dcd71da4820d86c1ecd84e46c7ca61f38759559c	735a941b0873
+shard_fill_0000_part0002.npz	1457059	c4fc74eced9559368aad73225cac651da6a0aec8253fc6abd133db77826cae97	735a941b0873
+shard_fill_0000_part0003.npz	1449606	42a6a9dd92c555c736ae6d29e4d06521ff3432447d261a1aac4f16ecaa01b2c0	735a941b0873
+shard_fill_0000_part0004.npz	161332	2c4abb18c02b32c4bb24b49c49567b2af74bc6ef60e632f712d73e228f99094b	735a941b0873
+shard_fill_0001_part0000.npz	1441255	a211ea3d0bcbc967be75f6daf821b83300aa1401ad8b3f4885c060c9a547348a	735a941b0873
+shard_fill_0001_part0001.npz	1327975	7710f2a59e22cc07f8a209cac055624f41e486bf459f9af9ae723a98309043da	735a941b0873
+shard_fill_0001_part0002.npz	1447654	efdd771c9770d3281a7f8c32f79c1389a0ba32e170f485535e951285c7843ce5	735a941b0873
+shard_fill_0001_part0003.npz	1345830	8be47479488218fa8292ef679b199d4291aea8f61291135af89f6f487ffa7f0a	735a941b0873
+shard_fill_0002_part0000.npz	1468231	6d0c547d23209540f726629f3265a4edcbe94c3cdc9dc9589d0ccfada659510c	735a941b0873
+shard_fill_0002_part0001.npz	1334674	3064126431dcc9f3f88e637ba7923646f8f26b0ad12812d5d84868ed46533438	735a941b0873
+shard_fill_0002_part0002.npz	1448005	94b499442fb9c6f57c7914558a5b66ea11f871fcb374582908ef3e5ed0cb6396	735a941b0873
+shard_fill_0002_part0003.npz	1388730	771834dddb09347854a89a857f2f32a9ec9ccfe8bdb3a358b2290169a15325ef	735a941b0873
+shard_fill_0003_part0000.npz	1412905	2c72bb7d1818f905a43339c89823c56d8775e05b46a44b075c25b55544d3afd6	735a941b0873
+shard_fill_0003_part0001.npz	1303160	331c5bd8f9eeaaac030d832be04babeb90a7ae5e9c44ec28f898f202281415fe	735a941b0873
+shard_fill_0003_part0002.npz	1440308	f406cf29de732e726a03cc3f94f9cee2a9dd51f66bd3022165370d9c9ea57074	735a941b0873
+shard_fill_0003_part0003.npz	1474664	8a038f6d641b39e3ed6007523c9af9cc88e47fed961ea22d80b2e127338e1871	735a941b0873
+shard_fill_0003_part0004.npz	36116	1855efd1d325e4126fbd00993b0bfe4534c7a6c00cd73e006b5565aaf8e2ff9b	735a941b0873
+shard_fill_0004_part0000.npz	1473153	9ad1094a55c59d8cd31526f521f3ed2b91f0226b60f8e5e91d10eee2b9ea5954	735a941b0873
+shard_fill_0004_part0001.npz	1375633	fbfbd757b3df556aa5ecf282d0ca6a757594a730034f55452909138a439d7422	735a941b0873
+shard_fill_0004_part0002.npz	1496386	6cb4f308ae6dfa6c21d637812b471c83593feb542b9bb519f2d82f3864774de5	735a941b0873
+shard_fill_0004_part0003.npz	1398417	13900ae56534ede884d7e58cdf2073fde1d09d473ef7567c7535b61c856d4950	735a941b0873
+shard_fill_0005_part0000.npz	1497672	5a9ddffd1705c799043922215b0830b21c44b3292188367dad382c13c2fa895b	735a941b0873
+shard_fill_0005_part0001.npz	1352168	69bcddd5d465897939a82e7c0b3e2cd8805bd65eed28e6900d2208fe50d7e863	735a941b0873
+shard_fill_0005_part0002.npz	1486393	019a39e57995bc3945c0edb1ed6d62ff1d3f43e28132c6de8c8a2ce8fb66e129	735a941b0873
+shard_fill_0005_part0003.npz	1436206	7987895dcc002192e69122565fd90d982cc140c68d3f3af992f85095c5264d55	735a941b0873
+spec.json	431	fccc4582bfb7455b1f84f8be1686dc728ec467357b2ac8771cb26a93ecc1bd7e	735a941b0873

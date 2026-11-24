@@ -128,3 +128,14 @@ results/r2gate2/*_nullparts_*/
 # the two universe files and anything created from here on; nothing is git rm'd.
 results/r2gate2/*_winners_universe.npz
 !results/r2gate2/**/MANIFEST.sha256
+
+# THE A2 DEFAULTS PASS, 24 Nov. Jack's push decision, step 4.
+# mode<M>_a2_defaults.csv is 654 and 655 MB -- one row per
+# (bank_row, stream, step, role, year), 10.7 M rows each. GitHub refuses any
+# file over 100 MB, and these are intermediate data read once by
+# r2reads.stage_a2_compare, so they live on disk under a manifest exactly as
+# guard 28 keeps the banks. results/r2reads/a2_defaults_summary.csv and
+# a2_defaults_by_year.csv are committed in their place, and
+# a2_defaults_MANIFEST.sha256 records size and sha256 of each raw file.
+# DO NOT DELETE THE RAW FILES. They are the input stage_a2_compare reads.
+results/r2reads/mode*_a2_defaults.csv
