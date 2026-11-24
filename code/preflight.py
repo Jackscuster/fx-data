@@ -421,6 +421,37 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def c32():
+    """ITEM 8 — THE STAGED BUILD NAMES ITS TWO CONVENTIONS DIFFERENTLY.
+
+    0b found gate 2 and gate 3 disagreeing on 41 of 50 winner-years because
+    both wrote a column called `n` meaning different things: gate 2 counted a
+    straddling trade in every year it touched, gate 3 counted it once in its
+    entry year. The staged build adopts gate 2's year-end mark to market for R
+    and gate 3's distinct-trade count for n -- and the only durable protection
+    against repeating the confusion is that the columns cannot share a name.
+
+    So every stage 1 R2 yearly file must carry `R_mtm`, `n_entered` and
+    `n_touching`, and must NOT carry a bare `R` or a bare `n` as its only
+    count. A no-op when no such file exists.
+    """
+    import glob as _g
+    fs = sorted(_g.glob(os.path.join(ROOTOUT, 'nnfx', 'stage1r2_*_yearly.csv')))
+    if not fs:
+        return 'no stage 1 R2 yearly files on disk yet'
+    need = ('R_mtm', 'n_entered', 'n_touching')
+    bad = []
+    for f in fs:
+        cols = set(pd.read_csv(f, nrows=1).columns)
+        miss = [c for c in need if c not in cols]
+        if miss:
+            bad.append('%s missing %s' % (os.path.basename(f), ', '.join(miss)))
+    assert not bad, ('the staged build must name its two conventions '
+                     'differently: ' + '; '.join(bad))
+    return ('%d stage 1 R2 yearly files all carry R_mtm, n_entered and '
+            'n_touching' % len(fs))
+
+
 def c31():
     """CONDITION 4 — THE ZERO-EDGE CHECK, for every Layer 2 job.
 
@@ -587,6 +618,9 @@ def main():
     guard(31, 'A measurement apparatus with a built-in bias: random entries taking the same exits lost 0.0203 R per trade GROSS of costs under the stop-and-target plan, against a band of 0.0029, because l2engine fills the stop whenever one daily bar covers both levels and A5 measured the target first on 40% of such days',
           'condition 4 compares the random-entry null gross of costs against zero, judged against the null OWN standard error, per candidate and per variant',
           'null gross R per trade is zero within 3 SE for every candidate in every variant', c31)
+    guard(32, 'Two different conventions sharing one column name: gate 2 and gate 3 both wrote `n` -- one counting a straddling trade in every year it touched, the other once in its entry year -- and the confusion cost a winner list',
+          'the staged build writes R_mtm for year-end mark-to-market R, n_entered for distinct trades and n_touching for the touching count, so the two can never be conflated again',
+          'every stage1r2_*_yearly.csv carries R_mtm, n_entered and n_touching', c32)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
