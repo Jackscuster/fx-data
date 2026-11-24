@@ -80,6 +80,15 @@ def stage_app():
         note=('The read-only passes off the banked gate 2 and gate 3 results. '
               'Every number here comes from a csv in results/r2reads and every '
               'report names its own provenance with an md5.'),
+        b1_winners_era={m: rd('mode%s_b1winners_era.csv' % m,
+                              ['sid', 'R_new6', 'prop_return_new6'])
+                        for m in 'AB'},
+        cond3=_recs(os.path.join(ROOTOUT, 'r2gate2_cond3_crosswalk.csv'),
+                    cols=['mode', 'winner', 'year', 'base5_R', 'ext11_R', 'dR',
+                          'base5_n', 'ext11_n', 'dn', 'base5_cfg', 'ext11_cfg',
+                          'cfg_same'], head=50),
+        gate2_vs_gate3=_recs(os.path.join(ROOTOUT, 'r2gate2',
+                                          'gate2_vs_gate3_peryear.csv'), head=50),
         b1_winners={m: rd('mode%s_b1winners.csv' % m,
                           ['sid', 'stream', 'R_new6', 'dd_new6', 't_new6',
                            'years_pos_new6', 'prop_return_new6', 'R_all11',
@@ -115,7 +124,7 @@ def stage_app():
                     .replace({np.nan: None}).to_json(orient='records'))
     except Exception as e:
         sec['reads']['c3_error'] = '%s: %s' % (type(e).__name__, e)
-    for k in ('b1_winners', 'a4_capcurve', 'a4_attribution', 'a5_delta',
+    for k in ('b1_winners', 'b1_winners_era', 'a4_capcurve', 'a4_attribution', 'a5_delta',
               'a5_spreads', 'a5_overlay'):
         sec['reads'][k] = {m: v for m, v in sec['reads'][k].items() if v}
     sec['reads'].pop('c3_fix', None)

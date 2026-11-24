@@ -5706,7 +5706,19 @@ const rrFill=()=>{const el=document.getElementById('rrbody');if(!el||el.dataset.
    +'Trade years 2010-2015 were touched by no part of that selection. 1 of 8 is positive on them in mode A, '
    +'1 of 2 in mode B, and none of the ten clears 12%/yr on six years or on eleven. '
    +'Prop return here is the real figure: the drawdown is re-scored with want_dd and taken from role_dd.</div>';
- h+=per(R.b1_winners,'B1 winners, eleven-step walk');
+ h+=per(R.b1_winners,'B1 winners, eleven-step walk \u2014 corrected');
+ h+=per(R.b1_winners_era,'B1 winners, six unseen years charged ERA-CORRECT 2004-2015 spreads');
+ h+='<div class="note"><b>The version of B1_WINNERS.md issued at 10:21 on 24 Nov was wrong and is superseded.</b> '
+   +'It read the banked record as bank[k][:, step, year, ...], which sums the four streams into a number belonging to no '
+   +'strategy, instead of selecting the winner\u2019s own stream. The eleven-step tune was never wrong. Condition 3, '
+   +'cross-walk reproduction over the five shared trade years, passes with worst difference exactly zero and all 50 '
+   +'selected config indices identical \u2014 it is preflight guard 30.</div>';
+ h+=tbl(R.cond3,null,'Condition 3 \u2014 cross-walk reproduction, ext11 against the base5 bank');
+ h+='<div class="note"><b>A second divergence, not in the walk and not fixed.</b> mode?_winners.csv writes R_&lt;year&gt; from the '
+   +'GATE 3 KPI bank, not gate 2\u2019s win array, and for the same strategy, config index and year the two disagree on 41 of 50 '
+   +'winner-years by a median of 1.01 R. A direct re-score returns gate 2\u2019s number, so gate 2 is the faithful record. '
+   +'This affects mode?_winners.csv and everything built on it, including MODEA_WINNERS.md.</div>';
+ h+=tbl(R.gate2_vs_gate3,null,'Gate 2 win array against the gate 3 KPI bank, same strategy and config');
  h+='<h3>A4 — currency netting and the exposure cap</h3>';
  h+='<div class="note">The cap is the shipped one (l2walkfwd.Book.series, cap_pct), swept over its full range. '
    +'It does essentially nothing. And the largest currency leg carries LESS of total exposure on the ten worst '
