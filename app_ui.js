@@ -5807,5 +5807,45 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
    +'shuffle destroys a monthly series’ autocorrelation as well as its alignment and makes p too small. The book is a 1,988 of '
    +'273,780 sample, and two independent half-samples correlate at 0.9972, so 0.3% of monthly variance is sample noise.</div>';
  h+=tbl(R.market,['era','measure','months','pearson_r','spearman','p_circular','p_shuffle'],'2a correlations, tuning era against unseen era');
+ /* STAGE 1 R2 -- the rerun. STAGE1.md and the first stage-1 tables above are
+    SUPERSEDED; three faults Jack found were real and a fourth was mine. */
+ const Q=R.r2||{};
+ if(Q.note){
+  h+='<h3>Stage 1 R2 — the rerun, superseding the stage 1 tables above</h3>';
+  h+='<div class="note">'+Q.note+'</div>';
+  h+='<div class="note"><b>The four faults.</b> (1) No cost was charged on the no-stop variant — R was restated to the '
+    +'1.5 ATR unit and the cost was not, so with a 2000 ATR sentinel stop the charge was 2000 times too small. (2) The worst '
+    +'dip was computed from six yearly sums, so it equalled minus the worst year on 56 of 117 rows; the true chronological '
+    +'drawdown is two to three times larger. (3) Ambiguous bars were all filled stop-first. (4) MINE: the random-entry null '
+    +'ran over 2005-2020 while the summary divided by the six-year trade count, a factor of 2.607 — which made the '
+    +'apparatus look biased by -0.020 R per trade when it was not, and made every null p meaningless.</div>';
+  h+=tbl(Q.ambiguity,['variant','indicator','trades_resolved','ambiguous_bars','resolved_target_first','resolved_stop_first','unresolved','dR_total','dR_per_trade'],'Ambiguous bars resolved from the hourly bid/ask path — flip-only is exactly zero, which is the control');
+  h+='<div class="note"><b>The block-bootstrap t is what changes the picture.</b> At one of 39 candidates over eleven years it '
+    +'detects a 0.10 R per trade edge 82% of the time where the yearly t managed 14.6%, at a false-positive rate measured at '
+    +'0.053 against a nominal 0.05. Limitation: the 0a simulation lays planted trades on a calendar with independent per-trade '
+    +'R, so it under-tests the serial dependence a block bootstrap exists for — 0.053 is a LOWER bound, and both statistics '
+    +'are reported for every candidate rather than one instead of the other.</div>';
+  h+=tbl(Q.power_boot,['edge_R','median_t','floor_emp_alone','floor_emp_of_3','floor_emp_of_15','floor_emp_of_39','power_alone','power_of_3','power_of_15','power_of_39'],'0a rerun for the block-bootstrap t, floors from its own zero-edge null');
+  h+='<div class="note"><b>Condition 4, the zero-edge check:</b> random entries must lose their costs and nothing else. '
+    +'Charged cost +0.01752 R per trade, identical across all three plans — which is the declared-notional fix working — '
+    +'and each plan’s null NET equals minus that cost to five decimals. It is preflight guard 31.</div>';
+  h+=tbl(Q.zero_edge,['label','indicator','setting','charged_cost_per_trade','null_net_R_per_trade','null_gross_R_per_trade','tol_3se','passes'],'Condition 4 per candidate');
+  h+='<h4>1c — the selection test, and Jack’s plan wins it</h4>';
+  h+='<div class="note">C1 under the <b>jack</b> plan reaches <b>+13.93 R per year at K=3</b> against a null mean of -8.02, '
+    +'p 0.001, with 28 of 39 K values beating their own null. The <b>textbook</b> plan’s best K is <b>negative</b> (-0.59) '
+    +'even though 29 of 39 of its K values beat their null — beating a null of -8.02 is not the same as making money. '
+    +'Under flip-only the best C1 K is -8.55 and only 3 of 39 beat anything.</div>';
+  ['c1','base'].forEach(kk=>['flip_only','jack','textbook'].forEach(vv=>{
+    h+=tbl(Q['sel_'+kk+'_'+vv],['K','R_per_year_mean','years_positive','t_yearly','null_mean','null_p95','null_p'],
+           '1c '+(kk==='c1'?'C1':'baselines')+' — '+vv);}));
+  h+='<h4>Every candidate, every plan — sorted by net R per year</h4>';
+  h+='<div class="note">No single candidate clears the best-of-family floor in any plan. Three clear the ALONE floor under '
+    +'jack and under textbook, none under flip-only. The no-stop variant has 24 of 117 settings positive but enormous '
+    +'drawdowns: its best makes +37.4 R a year against a 427 R worst dip, where the jack plan’s best makes +7.4 R against '
+    +'a 57.6 R dip.</div>';
+  ['c1','base'].forEach(kk=>['flip_only','jack','textbook'].forEach(vv=>{
+    h+=tbl(Q['sum_'+kk+'_'+vv],['indicator','setting','n_entered','trades_per_year','mean_bars','R_gross_per_trade','R_net_per_trade','cost_per_trade','R_net_per_year','years_positive','worst_year','worst_dip_R','t_yearly','t_block_boot','null_p'],
+           (kk==='c1'?'C1':'Baselines')+' — '+vv+', fixed settings, unseen 2005-2015');}));
+ }
  h+='<div class="note">Candidates on record in CANDIDATE_LEDGER.csv: '+(R.ledger_n||0)+'. Every candidate ever tested is listed there, because the luck floor is computed from that file and not from memory.</div>';
  el.innerHTML=h;el.dataset.done='1';};

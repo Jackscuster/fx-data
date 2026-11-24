@@ -153,6 +153,33 @@ def stage_app():
         ledger_n=(sum(1 for _ in open(os.path.join(ND, 'CANDIDATE_LEDGER.csv'))) - 1
                   if os.path.exists(os.path.join(ND, 'CANDIDATE_LEDGER.csv')) else 0),
     )
+    # ---- STAGE 1 R2 (the rerun with all eight items applied)
+    sec['nnfx']['r2'] = dict(
+        note=('Stage 1 R2 supersedes stage 1. Costs charged in a declared '
+              'notional, true chronological drawdowns on the daily '
+              'mark-to-market series, ambiguous bars resolved from the hourly '
+              'bid/ask path, eleven unseen trade years 2005-2015 for the fixed '
+              'settings, three risk plans declared in advance, a '
+              'block-bootstrap t beside the yearly t, and luck floors from the '
+              'random-entry null rather than from a formula.'),
+        ambiguity=nd('stage1r2_ambiguity_delta.csv'),
+        power_boot=nd('power_test_bootstrap.csv'),
+        zero_edge=nd('condition4_zero_edge.csv', head=40),
+    )
+    for kind in ('c1', 'base'):
+        for v in ('flip_only', 'jack', 'textbook'):
+            sec['nnfx']['r2']['sum_%s_%s' % (kind, v)] = nd(
+                'stage1r2_%s_%s_summary.csv' % (kind, v),
+                cols=['indicator', 'setting', 'n_entered', 'trades_per_year',
+                      'mean_bars', 'R_gross_per_trade', 'R_net_per_trade',
+                      'cost_per_trade', 'R_net_per_year', 'years',
+                      'years_positive', 'worst_year', 'worst_dip_R',
+                      't_yearly', 't_block_boot', 'null_p',
+                      'floor_emp_alone', 'floor_emp_best_of_family'], head=120)
+            sec['nnfx']['r2']['sel_%s_%s' % (kind, v)] = nd(
+                'stage1r2_%s_%s_select.csv' % (kind, v))
+    sec['nnfx']['r2'] = {k: v for k, v in sec['nnfx']['r2'].items()
+                         if not (isinstance(v, list) and not v)}
     sec['nnfx'] = {k: v for k, v in sec['nnfx'].items()
                    if not (isinstance(v, list) and not v)}
 
