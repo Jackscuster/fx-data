@@ -400,6 +400,27 @@ def c27():
     return 'all three paths scale by atr_mult; scaled cost == f*px/ATR at atr_mult 1.0, 1.2, 1.5 (unscaled it is that / atr_mult)'
 
 
+def c28():
+    """Every bank matches its MANIFEST.sha256 on file list and size.
+
+    SIZES, NOT HASHES, at preflight. A full sha256 of the gate 3 banks is ~20 s
+    each and preflight runs before every launch; a size change catches the
+    failures that actually happen -- a truncated flush, a half-written part, a
+    deleted shard. `python3 code/bankcheck.py --full` hashes everything and is
+    what to run before publishing a result.
+    """
+    import bankcheck as BC
+    bad, seen = BC.verify(full=False, verbose=False)
+    if seen == 0:
+        return 'WARN', 'no bank manifests found; run code/bankcheck.py --write'
+    if bad:
+        d = bad[0]
+        return 'FAIL', ('%d of %d banks drifted; first: %s (%d missing, %d extra, %d changed)'
+                        % (len(bad), seen, d['bank'], len(d['missing']),
+                           len(d['extra']), len(d['changed'])))
+    return 'PASS', '%d banks match their manifests (file list and size)' % seen
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -442,6 +463,9 @@ def main():
     guard(25, 'Silenced errors; git tree ops during a chain; logs in results/; launches not confirmed', 'l2nosilence.py; launch.sh confirms 60 s and refuses git ops while a chain runs; logs in ~/fx-data-logs', 'l2nosilence passes; no logs in results/ (CI failure log excepted); launch.sh exists', c25)
     guard(26, 'Repo on the iCloud-synced volume (dataless files, read timeouts)', 'move the repo out of ~/Documents (Jack)', 'repo path not under ~/Documents or ~/Desktop', c26)
     guard(27, 'Costs under-charged by the account-normalisation factor: R restated by x atr_mult, cost subtracted unscaled (median 20%, p90 46% too cheap)', 'the cost is multiplied by atr_mult wherever R is -- engine marks, refit marks, the Scorer objective', 'code assert in all three paths + the arithmetic identity cost == f x px / ATR at several atr_mult', c27)
+    guard(28, 'A bank drifted from the bank a result names: a part file missing, truncated or regenerated, with nothing to notice it',
+          'code/bankcheck.py writes MANIFEST.sha256 per bank directory (file, size, sha256, producing commit); banks are gitignored from 23 Nov and the manifest is what is committed',
+          'every bank directory matches its manifest on file list and size', c28)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

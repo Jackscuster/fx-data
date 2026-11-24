@@ -114,3 +114,17 @@ results/r2gate1/
 # feed, 6.7 h of scoring that nothing else can reproduce cheaply.
 results/r2gate2/*_gate3bookparts/
 results/r2gate2/*_nullparts_*/
+
+# BANKS ARE NOT SOURCE (23 Nov). Two committed 145 MB bank files made the
+# remote unreachable -- GitHub refuses a blob over 100 MB -- and the history
+# had to be rewritten to recover. Banks are regenerable derived data. What is
+# committed instead is MANIFEST.sha256 inside each bank directory: every part
+# file with its size, sha256 and producing commit, so a result stays traceable
+# to the exact bytes it came from. code/bankcheck.py verifies the manifests at
+# preflight, so a missing or altered bank fails LOUDLY instead of silently
+# producing numbers for a different universe.
+#
+# BANKS ALREADY TRACKED STAY TRACKED (Jack's call, 23 Nov). These rules bind
+# the two universe files and anything created from here on; nothing is git rm'd.
+results/r2gate2/*_winners_universe.npz
+!results/r2gate2/**/MANIFEST.sha256

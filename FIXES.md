@@ -1,5 +1,36 @@
 # FIXES OWED — deliver these to Claude Code
 
+## 23 Nov — the two winners-universe banks: deleted, then regenerated
+
+`results/r2gate2/modeA_winners_universe.npz` and `modeB_winners_universe.npz`
+were **deleted on 22 Nov** to reclaim 292 MB when the volume hit 100% and a
+running chain was at risk. They are streamed reductions of the gate 3 KPI bank
+and carry no information that is not in `mode{A,B}_gate3parts/`; measured
+regeneration is about six seconds each.
+
+On 23 Nov those same two files turned out to be the reason the repo could not
+be pushed at all: at 145.7 MB and 145.6 MB they exceed GitHub's hard 100 MB
+blob limit, so `pre-receive` declined every push containing them. The history
+was rewritten with `git filter-repo` to strip them, and they are now
+gitignored. See `results/REWRITE_VERIFY_2026-11-23.md`.
+
+**Regenerated 23 Nov**, both from `code/l2r2winners.py --stage universe`,
+both covering 273,780 of 273,780 strategies:
+
+| file | size | sha256 (first 32) |
+|---|---|---|
+| `results/r2gate2/modeA_winners_universe.npz` | 145.7 MB | `ea5f233e0138b83ee914a6596280452a` |
+| `results/r2gate2/modeB_winners_universe.npz` | 145.6 MB | `b1aceed23183b6fe8efa0fa92e9d7e2b` |
+
+**The lesson, which is now enforced rather than remembered.** A regenerable
+bank in git is a liability with no upside: it cost a full history rewrite. From
+23 Nov banks are gitignored and what is committed is `MANIFEST.sha256` per bank
+directory — every part file with its size, sha256 and producing commit — so a
+result stays traceable to the exact bytes it came from. `code/bankcheck.py` is
+preflight check 28 and fails the launch if a bank has drifted from its
+manifest. Banks already tracked stay tracked; nothing was `git rm`'d.
+
+
 ## 2026-09-15 — THE NETTING LAYER HAD A ONE-BAR LOOK-AHEAD. EVERY LAYER 2 BOOK NUMBER IS CONTAMINATED.
 
 **Found by item 12 (sit-out) returning 20.06% / 28.71% with a worst year of 18%.**
