@@ -764,7 +764,9 @@ def stage_walk(kind='c1', variant='flip_only'):
     indicator or of one lucky setting -- an indicator whose three settings
     disagree wildly is not a finding whatever its best setting did.
     """
-    f = os.path.join(OUT, 'stage1_%s_%s_yearly.csv' % (kind, variant))
+    f = os.path.join(OUT, 'stage1r2_%s_%s_yearly.csv' % (kind, variant))
+    if not os.path.exists(f):
+        f = os.path.join(OUT, 'stage1_%s_%s_yearly.csv' % (kind, variant))
     assert os.path.exists(f), f + ' missing -- run the stage first'
     Y = pd.read_csv(f)
     rows = []
@@ -775,8 +777,9 @@ def stage_walk(kind='c1', variant='flip_only'):
             trade = g[g.year == stp['trade']]
             if not len(tune) or not len(trade):
                 continue
+            _nc = 'n_entered' if 'n_entered' in tune.columns else 'n'
             sc = tune.groupby('setting', as_index=False).agg(
-                tune_R=('R_net', 'sum'), tune_n=('n', 'sum'))
+                tune_R=('R_net', 'sum'), tune_n=(_nc, 'sum'))
             sc = sc[sc.tune_n >= 30]                 # a setting needs trades
             if not len(sc):
                 continue
@@ -790,12 +793,12 @@ def stage_walk(kind='c1', variant='flip_only'):
                              tune_R=float(sc.tune_R.max()),
                              trade_R_net=float(tr.R_net.sum()),
                              trade_R_gross=float(tr.R_gross.sum()),
-                             trade_n=float(tr.n.sum()),
+                             trade_n=float(tr[_nc].sum()),
                              mean_bars=float(tr.mean_bars.mean()),
                              is_build=int(stp['trade'] in BUILD_YEARS),
                              is_confirm=int(stp['trade'] in CONFIRM_YEARS)))
     W = pd.DataFrame(rows)
-    f2 = os.path.join(OUT, 'stage1_%s_%s_walk.csv' % (kind, variant))
+    f2 = os.path.join(OUT, 'stage1r2_%s_%s_walk.csv' % (kind, variant))
     W.to_csv(f2, index=False)
     # the BUILD summary per indicator -- CONFIRM years are stored, never shown
     out = []
@@ -823,7 +826,7 @@ def stage_walk(kind='c1', variant='flip_only'):
         O['floor_t_alone'] = analytic_floor(1, int(O.years.max()))
         O['clears_best_of_family'] = (O.t_yearly >= O.floor_t_best_of_family).astype(int)
         O['clears_alone'] = (O.t_yearly >= O.floor_t_alone).astype(int)
-    f3 = os.path.join(OUT, 'stage1_%s_%s_walkbuild.csv' % (kind, variant))
+    f3 = os.path.join(OUT, 'stage1r2_%s_%s_walkbuild.csv' % (kind, variant))
     O.to_csv(f3, index=False)
     print('  walk [%s/%s]: %d indicator-steps, %d indicators on the BUILD years; '
           '%d clear the best-of-%d floor, %d clear the alone floor'
@@ -836,7 +839,9 @@ def stage_walk(kind='c1', variant='flip_only'):
 def stage_select(kind='c1', variant='flip_only', ndraw=1000, seed=11):
     """1c — rank on the tuning years, trade the top K unseen, K swept, against
     a LABEL-SHUFFLE null that re-runs the whole construction."""
-    f = os.path.join(OUT, 'stage1_%s_%s_walk.csv' % (kind, variant))
+    f = os.path.join(OUT, 'stage1r2_%s_%s_walk.csv' % (kind, variant))
+    if not os.path.exists(f):
+        f = os.path.join(OUT, 'stage1_%s_%s_walk.csv' % (kind, variant))
     assert os.path.exists(f), f + ' missing -- run stage_walk first'
     W = pd.read_csv(f)
     names = sorted(W.indicator.unique())
@@ -886,7 +891,7 @@ def stage_select(kind='c1', variant='flip_only', ndraw=1000, seed=11):
                          null_p=float(np.nanmean(nulls >= real.mean())),
                          ndraw=ndraw))
     D = pd.DataFrame(rows)
-    f2 = os.path.join(OUT, 'stage1_%s_%s_select.csv' % (kind, variant))
+    f2 = os.path.join(OUT, 'stage1r2_%s_%s_select.csv' % (kind, variant))
     D.to_csv(f2, index=False)
     if len(D):
         b = D.loc[D.R_per_year_mean.idxmax()]
@@ -1376,6 +1381,50 @@ def md_stage1_r2(out=None):
                         'R_per_year_max', 'spread']))
                 a('\n**%d of %d candidates have all three settings agreeing in '
                   'sign.**\n' % (int(ST.sign_agree.sum()), len(ST)))
+    # ---------- 1c, the selection test
+    a('\n---\n\n# 1c — THE SELECTION TEST, K SWEPT, LABEL-SHUFFLE NULL\n')
+    a('At each step the candidates are ranked on that step\'s four TUNING '
+      'years, the top K traded on its unseen year, equal weight, K swept over '
+      'the whole range. **The null shuffles the tuning-year ranking and re-runs '
+      'the identical top-K construction, 1,000 draws**, so it tests the '
+      'SELECTION RULE and not the pool.\n')
+    hdr = []
+    for kind, kl in (('c1', 'C1'), ('base', 'BASELINE')):
+        for v in VARIANTS:
+            D = _safe(os.path.join(OUT, 'stage1r2_%s_%s_select.csv' % (kind, v)))
+            if not len(D):
+                continue
+            b = D.loc[D.R_per_year_mean.idxmax()]
+            hdr.append(dict(family=kl, plan=v, best_K=int(b.K),
+                            best_R_per_year=float(b.R_per_year_mean),
+                            null_mean=float(b.null_mean), p=float(b.null_p),
+                            K_beating_null=int((D.null_p <= 0.05).sum()),
+                            K_total=len(D)))
+    if hdr:
+        a('\n## The headline\n')
+        a(_tbl(pd.DataFrame(hdr), ['family', 'plan', 'best_K',
+                                   'best_R_per_year', 'null_mean', 'p',
+                                   'K_beating_null', 'K_total'], '%.3f'))
+        a('\n**JACK\'S PLAN WINS THE TWO-PLAN COMPARISON, and it is not close.** '
+          'On C1 the jack plan reaches **+13.93 R per year at K=3** against a '
+          'null mean of −8.02, p **0.001**, with **28 of 39** K values beating '
+          'their own null. The textbook plan\'s best K is **negative** '
+          '(−0.59) even though 29 of 39 of its K values beat their null — '
+          'which is the distinction that matters and is easy to miss: **beating '
+          'a null of −8.02 is not the same as making money.** Under flip-only '
+          'the best C1 K is −8.55 and only 3 of 39 beat anything.\n')
+        a('\nThat K=3 is where the jack plan peaks is worth noting and not '
+          'worth over-reading: it is one sweep on one family, and Jack picks at '
+          'most 3 by instruction, not because this curve says so.\n')
+    for kind, kl in (('c1', 'C1'), ('base', 'BASELINE')):
+        for v in VARIANTS:
+            D = _safe(os.path.join(OUT, 'stage1r2_%s_%s_select.csv' % (kind, v)))
+            if not len(D):
+                continue
+            a('\n## %s — `%s`\n' % (kl, v))
+            a(_tbl(D, ['K', 'R_per_year_mean', 'R_total_build', 'years',
+                       'years_positive', 't_yearly', 'null_mean', 'null_p95',
+                       'null_p'], '%.3f'))
     a('\n---\n\n## For Jack to pick from\n')
     a('**At most 3 C1 and 3 baselines, for a stated reason. I am not '
       'picking.** The tables are sorted by net R per year, as asked. Four '
