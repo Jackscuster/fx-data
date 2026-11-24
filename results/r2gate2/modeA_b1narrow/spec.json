@@ -1,7 +1,7 @@
 {
  "mode": "A",
- "n": 40,
- "jobs": 4,
+ "n": 4008,
+ "jobs": 8,
  "cache_cap": 30000,
  "years": "2005-2020",
  "steps": [
@@ -19,5 +19,5 @@
  ],
  "objective": "account-normalised R (ACCT_OBJECTIVE True), trade-weighted over the step tune years, PF tiebreak, MIN_TRADES_PICK=100",
  "config_set": "axial: default + every single-knob deviation over each declared grid",
- "stamp": "2026-11-24 01:15:52"
+ "stamp": "2026-11-24 18:44:58"
 }
