@@ -703,6 +703,56 @@ The evidence that nothing but those two paths changed is
    while two full gates had been run since. Any chain that writes a new
    `results/r2gate2/*.md` updates the table above in the same commit.
 
+   ---
+
+   **STAGE 1 IS CLOSED AND STAGE 2 IS JACK'S PICKS. Jack, 24 Nov, after
+   reading `results/nnfx/STAGE1_R2.md`.** These are HIS picks with HIS reasons,
+   recorded verbatim. I did not choose them and did not narrow them. They are
+   also in `results/nnfx/CANDIDATE_LEDGER.csv`, which is where every luck floor
+   in this build is computed from.
+
+   | what | pick | Jack's stated reason |
+   |---|---|---|
+   | C1 | `ichimoku`, `schaff_trend_cycle`, `halftrend` | "the only C1 positive net under both the jack and textbook plans at more than one setting" |
+   | C1 rule | **ROLLING TOP 3** — at each step the 3 C1 ranked best on the four tuning years, traded on the unseen year | "the selection test: +13.9 R per year against a null of -8.0, p 0.001" |
+   | baselines | `sma`, `hma`, `t3` | "the double setting was best for every baseline; none is positive alone, so they are judged as filters" |
+
+   `jack` plan is the MAIN VERSION; `textbook` is reported beside it. All
+   rigour unchanged: walk-forward, random-entry and shuffle nulls, zero-edge
+   check, both t statistics, true drawdown, era-correct costs, 2016-2020
+   computed and NOT reported, ledger updated.
+
+   **STAGE 2 — THE BASELINE ADDED TO C1.** `code/nnfx2s.py`, reports to
+   `results/nnfx/STAGE2.md`. 2a adds each baseline as NNFX uses it (side
+   filter, distance rule, cross entries, cross exit), settings picked
+   walk-forward from the three per indicator. 2b judges each addition as a
+   PAIRED test on the same days with a block-bootstrap t on the difference, and
+   attributes the effect to the individual rules. 2c reports every combination
+   on 2010-2015 and through the prop simulator. 2f sweeps the rolling rule for
+   K 1-10 with turnover and the picked set per year. 2d caps pairs by
+   cost/ATR known in advance; 2e sweeps a minimum trade gap and a minimum
+   signal age. `code/nnfxaudit2.py` answers the four engine questions into
+   `results/nnfx/ENGINE_AUDIT_2.md`.
+
+   **ONE OF THE FOUR BASELINE RULES CANNOT BE SWITCHED OFF, AND THE ENGINE IS
+   WHY.** `side` is the sign of (close − baseline), recomputed every bar
+   (`l2engine.py:274-279`), and EVERY entry route gates on agreement, which
+   contains `side` (`:527`, `:549-552`). There is no path into a trade that
+   avoids it. So the side filter is the FLOOR and the other three rules are
+   measured as increments over it, never over the bare C1. Reporting them as
+   independent additions would credit whichever rule was switched on with the
+   side filter's entire effect.
+
+   **TWO FINDINGS FROM ENGINE AUDIT 2 THAT CHANGE HOW FIGURES ARE READ.**
+   (1) The daily feed's bar is `(16:00 NY D−1, 16:00 NY D]`, NOT 17:00 — mean
+   |gap| to the hourly mid is 0.00011 R at 16:00 against 0.043 R at 17:00 and
+   0.132 R at 22:00, which independently confirms `nnfxamb`'s range-containment
+   finding by a different method. (2) Overnight financing is charged NOWHERE in
+   the engine, and on these candidates its mean is POSITIVE (+0.003 R per
+   trade, absolute size 0.018 against a 0.019 spread charge), so adding it
+   would FLATTER them. Leaving it out is the conservative choice here, which is
+   the opposite of how a missing cost usually reads.
+
 0d. **15 SEP — THE NETTING LAYER HAD A ONE-BAR LOOK-AHEAD. EVERY LAYER 2 BOOK
    NUMBER IN THIS FILE IS CONTAMINATED UNTIL RERUN. READ THIS BEFORE QUOTING
    ANYTHING BELOW.**

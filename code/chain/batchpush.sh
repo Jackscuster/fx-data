@@ -21,10 +21,21 @@ N=$(git rev-list --count "$R..$H" 2>/dev/null || echo 0)
 say "batched push: remote $(echo $R | cut -c1-8), $N commits behind, step $STEP"
 while [ "$N" -gt 0 ]; do
   if [ "$N" -le "$STEP" ]; then T=$H; else T=$(git rev-parse "$H~$((N-STEP))"); fi
-  if git push origin "+$T:refs/heads/main" >>"$LOG" 2>&1; then
+  # NOT A FORCE PUSH. The first version of this script used "+$T:..." and that
+  # is a loaded gun: .github/workflows/update.yml pushes generated files back to
+  # main as fx-bot on any push touching code/**, so a force push can discard the
+  # bot's commits. A plain push is rejected instead, which is the right outcome.
+  if git push origin "$T:refs/heads/main" >>"$LOG" 2>&1; then
     say "pushed to $(git rev-parse --short $T)"
   else
     say "batched push: step to $(git rev-parse --short $T) FAILED -- stopping, nothing is lost"
+    # A >100 MB FILE IS A PERMANENT REJECTION, NOT A RETRYABLE ONE.
+    if grep -q "exceeds GitHub.s file size limit" "$LOG"; then
+      say "batched push: the remote refuses a file over 100 MB. This cannot be"
+      say "  retried and is NOT fixed by pushing again. It needs Jack's decision:"
+      say "  git-lfs, a history rewrite, or the remote staying behind. Local"
+      say "  history is complete and nothing is deleted."
+    fi
     exit 1
   fi
   R=$(git ls-remote origin refs/heads/main 2>/dev/null | cut -f1)
