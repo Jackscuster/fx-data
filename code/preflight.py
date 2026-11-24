@@ -421,6 +421,46 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def c31():
+    """CONDITION 4 — THE ZERO-EDGE CHECK, for every Layer 2 job.
+
+    Random entries taking the same exits as a real strategy must lose their
+    costs and nothing else: gross of costs the mean R per trade must be zero
+    within the null's own standard error. If it is not, the apparatus has a
+    bias and every number it produces is wrong by that bias before any strategy
+    is considered.
+
+    On the first stage 1 run this failed decisively for the stop-and-target
+    plan -- null gross -0.0203 R per trade against a band of +/-0.0029 -- while
+    the flip-only exit passed 45 of 45. That localised the fault to the fill
+    mechanics rather than to costs, and specifically to l2engine filling the
+    STOP whenever one daily bar covers both levels, where A5 measured the target
+    first on 40% of such days.
+
+    A no-op when no stage 1 null files exist, so it does not fail a machine that
+    has not run one.
+    """
+    import importlib
+    try:
+        C = importlib.import_module('nnfxcond')
+    except Exception as e:
+        return 'nnfxcond not importable (%s)' % type(e).__name__
+    A, oks = C.condition4_all(verbose=False)
+    if not len(A):
+        return 'no stage 1 null files on disk; nothing to check yet'
+    bad = [k for k, v in oks.items() if not v]
+    worst = A.loc[A.null_gross_R_per_trade.abs().idxmax()]
+    assert not bad, (
+        'zero-edge check FAILED for %s. Worst: %s/%s gross %+.5f R per trade '
+        'against a band of +/-%.5f. Random entries are not losing only their '
+        'costs, so the apparatus is biased'
+        % (', '.join(bad), worst.label, worst.indicator,
+           worst.null_gross_R_per_trade, worst.tol_3se))
+    return ('%d candidate-settings across %d variants: null gross R per trade '
+            'is zero within 3 SE everywhere (worst %+.5f)'
+            % (len(A), len(oks), A.null_gross_R_per_trade.abs().max()))
+
+
 def c30():
     """CONDITION 3 — CROSS-WALK REPRODUCTION, for any extended-walk job.
 
@@ -544,6 +584,9 @@ def main():
     guard(30, 'An extended-walk run that does not reproduce the five-step record on the years both walks share: on 24 Nov B1_WINNERS.md reported 120.8 R for 2018 where the record says 51.399, and ~1,886 trades over 2016-2020 where the record says 826',
           'condition 3 compares the ext11 bank against the base5 bank per winner, per shared year, on the winner OWN stream: per-year R, trade count and selected config index',
           'all 50 winner-years equal to 1e-6 with identical config indices; nothing from 2010-2015 is quoted until it passes', c30)
+    guard(31, 'A measurement apparatus with a built-in bias: random entries taking the same exits lost 0.0203 R per trade GROSS of costs under the stop-and-target plan, against a band of 0.0029, because l2engine fills the stop whenever one daily bar covers both levels and A5 measured the target first on 40% of such days',
+          'condition 4 compares the random-entry null gross of costs against zero, judged against the null OWN standard error, per candidate and per variant',
+          'null gross R per trade is zero within 3 SE for every candidate in every variant', c31)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
