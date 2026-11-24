@@ -89,7 +89,7 @@ say "=== LAYER 2 CHAIN 29: B1-narrow family and control, on the fixed code ==="
 # the real bank.
 g "b1w endtoend" env FX_WALK=ext11 nice -n 19 python3 -c "
 import sys, os; sys.path.insert(0,'code')
-import pandas as pd
+import numpy as np, pandas as pd
 import b1narrow as B, l2r2gate2 as G2, l2sweep as S
 assert G2.WALK == 'ext11', G2.WALK
 S.load_costs()
@@ -98,11 +98,17 @@ if not os.path.exists(f): B.universe('A')
 U = pd.read_csv(f).head(20)
 combos = [tuple(x.split('|')) for x in U.sid]
 od, _res = G2.run('A', combos, 'b1narrow_smoke', jobs=2, cap=30000, nshard=2)
-bank, tr, _c = G2.load('A', 'b1narrow_smoke')
-assert len(tr) == 20, 'banked %d of 20' % len(tr)
-k = sorted(bank)[0]
-assert bank[k].size and float(abs(bank[k]).sum()) > 0, 'read back an empty bank row'
-print('  END TO END: 20 strategies banked under b1narrow_smoke and read back, %d rows' % len(tr))
+# G2.load RETURNS FIVE ARRAYS, NOT THREE. The first version of this stage
+# unpacked three and died on 'too many values to unpack' after banking all 20
+# strategies correctly -- the smoke proved the save path and then failed on its
+# own read-back. Unpack by index so the count is explicit.
+_L = G2.load('A', 'b1narrow_smoke')
+assert len(_L) >= 2, 'load returned %d arrays' % len(_L)
+n_read = len(_L[1])
+assert n_read == 20, 'banked and read back %d of 20' % n_read
+assert float(np.abs(np.asarray(_L[1], float)).sum()) > 0, 'read back all zeros'
+print('  END TO END: 20 strategies banked under b1narrow_smoke and read back '
+      '(%d arrays, %d rows)' % (len(_L), n_read))
 "
 
 # ---- THE GATE. Runs on its own, so a failure is unambiguous.
