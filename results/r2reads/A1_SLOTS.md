@@ -1,6 +1,6 @@
 # A1 — SLOT MAIN EFFECTS, MODE A
 
-Generated 2026-11-24 00:08 by `code/r2reads.py`, a **pure read** of the gate 2 bank (`win` and `combo`). Nothing was scored and the engine was not run.
+Generated 2026-11-24 00:10 by `code/r2reads.py`, a **pure read** of the gate 2 bank (`win` and `combo`). Nothing was scored and the engine was not run.
 
 **Trade year is the primary unseen record**; the grade year is reported separately as a second independent read. **Significance is on the five yearly values**, not per trade: `t = mean/(sd/sqrt(5))` over the five per-year R-per-trade figures, which is the honest unit for "does this option work across years".
 
