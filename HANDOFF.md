@@ -743,6 +743,94 @@ The evidence that nothing but those two paths changed is
    independent additions would credit whichever rule was switched on with the
    side filter's entire effect.
 
+   ---
+
+   **THE PUSH WAS BLOCKED AND 33 UNPUSHED COMMITS WERE REWRITTEN. Jack's
+   decision, 24 Nov: "narrow rewrite of unpushed commits only. No LFS, no force
+   push, nothing online changes."**
+
+   A chain's own `ci` committed `results/r2reads/modeA_a2_defaults.csv` at
+   **654 MB** (and mode B at 655 MB). GitHub refuses anything over 100 MB at
+   the pre-receive hook, so the remote could not advance past that commit by
+   any means — **a retry cannot fix it, because the blob is in the history
+   being offered.**
+
+   **What was removed:** `results/r2reads/modeA_a2_defaults.csv` and
+   `results/r2reads/modeB_a2_defaults.csv`, from the commits in
+   `origin/main..main` only. They remain **on disk, gitignored, under
+   `results/r2reads/a2_defaults_MANIFEST.sha256`**, with
+   `a2_defaults_summary.csv` (80 rows) and `a2_defaults_by_year.csv` committed
+   in their place by `code/a2summary.py`. **They are not deleted** — 
+   `r2reads.stage_a2_compare` still reads the raw csv and must fail loudly if
+   it is missing, because a summary cannot reconstruct a per-strategy array.
+
+   **Method, and why not filter-repo.** `code/chain/strip_unpushed.sh` replays
+   the range with `git commit-tree`, oldest first, remapping each parent to the
+   already-rewritten one and starting from `origin/main`'s own unmodified
+   commit object. filter-repo was Jack's first option but removes the `origin`
+   remote as a safety measure — destroying the very reference the result has to
+   be verified against — and would rewrite the whole object store of a 7 GiB
+   repo to change 33 commits. The replay touches no ref but `main`.
+
+   **Verified:** `git merge-base --is-ancestor origin/main HEAD` succeeds, so
+   the push was a **plain fast-forward, not a force**. Per commit, 31 of 33
+   trees changed and **0 changed in any path other than those two**. Only the
+   46 KB and 92 KB smoke versions remain reachable from `main`, both at or
+   before `origin/main`; the 654 MB and 655 MB blobs exist solely on the backup
+   branch.
+
+   **Backup:** `backup/pre-strip-2026-11-24` at `edf2195`. **Never delete it.
+   It is not pushed and must not be** — it carries the oversized blobs.
+
+   **Remote after the push: `99c32a2dfc47fe52a4d3ba63cc6fa2232a959ef4`**, equal
+   to local HEAD, 0 unpushed.
+
+   **Guard 34 and `chainlib.sh ci_size_gate`** now refuse any NEW file over
+   50 MB — half GitHub's limit, enforced in two places because preflight runs
+   *before* a chain and these files are written *during* one. 71 existing
+   oversized files are grandfathered, all already on the remote, and the count
+   prints every run so the set cannot grow unnoticed.
+   `results/OVERSIZED_STAGES.md` lists every stage that can emit one; the next
+   to hit the limit is `results/signals.json` at 92 MB.
+
+   **OLD → NEW COMMIT HASHES** (also `results/strip_map_2026-11-24.tsv`):
+
+   | old | new | subject |
+   |---|---|---|
+   | `03e9c5b2d468` | `f79c739eb0f5` | NNFX build app tab, and STATUS addendum 3: phase 0, stage 1 and 2a |
+   | `78e12c4028ea` | `59067f3c5a5d` | A2 mode A: tuned minus default on the unseen years, and A1 repeated on t |
+   | `1d5d7eb3896d` | `b62270010261` | Item 2, condition 4: the apparatus is biased by -0.020 R per trade and p |
+   | `a8b482c4aba8` | `b1d2395ace7f` | Items 1 and 2: the apparatus is NOT biased -- the -0.020 was my own scop |
+   | `9000a211ed91` | `1e48dc3f152d` | Item 8: provisional notes on the winners files, superseded note on STAGE |
+   | `3d6fc5e1b4c9` | `a828e4671e7e` | Items 3 to 6: cost in a declared notional, true drawdowns, three plans,  |
+   | `ca4f4e8bc255` | `bf76b8c3c0e0` | Condition 4 passes on the fixed pipeline, and preflight is clear at 32 o |
+   | `c375d919be8e` | `15dbedc6aac6` | Item 7: stage 1 rerun complete -- STAGE1_R2.md, and Jack's plan wins the |
+   | `324314395986` | `97498ba6a22c` | Stage 1 R2 app tab and STATUS addendum 4 |
+   | `88ba388542de` | `4c6ad571ac20` | Chain 27 is stopped after chunk 2: its frozen code predates the B1 strea |
+   | `182beb83b3f6` | `c0bf2898d356` | The batched push, as a script on record instead of an inline loop |
+   | `0afce1ce135e` | `272f1269dba6` | STATUS addendum 5: chain 27 stopped after chunk 2, chain 29 armed on fix |
+   | `29ee6f18ae15` | `610d75a9dfa9` | Stage 2 goes to the front of the queue: Jack's picks, the baseline added |
+   | `480a581a8f9a` | `485b848e8f60` | STATUS addendum 6: stage 2 to the front, ETAs, and the push blocker that |
+   | `1bcd90f7713e` | `2df7c040cd52` | Stage 2 and engine audit 2 wired into the app before the chain needs it |
+   | `a25f1a30d7d5` | `2dd42909509c` | A leg was being counted as a trade: every per-trade column in the staged |
+   | `b50ecde594f0` | `91f72532dffa` | The halt marker from chain 29's first stage-check, so the tree is clean  |
+   | `3db0c899f907` | `e036488dba31` | Every stage 2 stage tested before launch, and three fragilities fixed |
+   | `1e1227f7db1a` | `185ee09f9116` | STATUS addendum 7: the leg-vs-trade fault, guard 33, and what the smokes |
+   | `9716f54e257d` | `1eeb90fa5936` | A2 mode B: the same |
+   | `cc539d3cec50` | `3028e7c2a0aa` | Chunk 2 mode B outputs, committed after chain 27 was stopped before its  |
+   | `9d10ff8935b2` | `2eba37985e82` | Condition 3: the eleven-step walk reproduces the five-step bank on the s |
+   | `ef41bbd386ce` | `b8aa53435d42` | Conditions 1 and 2 re-proven on the eleven-step walk, into walk-suffixed |
+   | `ddd849b1de1e` | `670ca551ffe1` | B1-narrow mode A: the sampled family and the whole control tuned on the  |
+   | `30a609ee71b0` | `0dd1f4df3ad1` | Chunk 2 and B1-narrow wired into the app |
+   | `5733937e43da` | `a6cc582ab917` | A4: the grade-rule book parts rebuilt for mode A, which the cap sweep ne |
+   | `b97c456ef8c8` | `d9c7df6b6263` | A4: the same on mode B |
+   | `81da232d38d2` | `d3d223676fae` | A4: the exposure cap swept over its full range on the winners' books AND |
+   | `0933ccb99422` | `4539854bd9e2` | A5: the daily loss stop on hourly marks, swept over 13 thresholds, all w |
+   | `6181043da217` | `0fd90906b3e9` | A4_NETTING.md and A5_HOURLY.md regenerated on the full sweep |
+   | `735a941b0873` | `a2ab1a71b2d0` | A4 and A5 wired into the app |
+   | `54a3837edee8` | `cbe820b313fe` | The A2 defaults pass moves to disk under a manifest, with a summary comm |
+   | `edf2195c56cd` | `7eec45c223ed` | The narrow strip, as a script on record |
+
    **TWO FINDINGS FROM ENGINE AUDIT 2 THAT CHANGE HOW FIGURES ARE READ.**
    (1) The daily feed's bar is `(16:00 NY D−1, 16:00 NY D]`, NOT 17:00 — mean
    |gap| to the hourly mid is 0.00011 R at 16:00 against 0.043 R at 17:00 and

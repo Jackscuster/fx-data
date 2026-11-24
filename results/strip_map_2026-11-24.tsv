@@ -1,0 +1,34 @@
+old	new	subject
+03e9c5b2d4683e4b032c8fc0eb0d771c0c1aef37	f79c739eb0f596a05cd47dd894f511e1cf85ab18	NNFX build app tab, and STATUS addendum 3: phase 0, stage 1 and 2a
+78e12c4028eaa6437baba19b3651e3a44afb7d03	59067f3c5a5df0c29e4159159a7876fdde461624	A2 mode A: tuned minus default on the unseen years, and A1 repeated on the defaults
+1d5d7eb3896d3784adadf86a9a1b6221e0bb5cb8	b6227001026148a4a1995b9ee33d01e4c9f142c1	Item 2, condition 4: the apparatus is biased by -0.020 R per trade and preflight now says so
+a8b482c4aba8bd9eff39d1e48eddf3bb689cd70c	b1d2395ace7f8479b3cd771da8212ccc2acd704a	Items 1 and 2: the apparatus is NOT biased -- the -0.020 was my own scope mismatch
+9000a211ed913dafd40b4e54720be17b0ccb97d6	1e48dc3f152dfd92fd977ab1164cb8dc8126b057	Item 8: provisional notes on the winners files, superseded note on STAGE1.md
+3d6fc5e1b4c997c8788ce008a4314b2a9f3636ab	a828e4671e7ea4c7c130650da0ffa7af6a6ff908	Items 3 to 6: cost in a declared notional, true drawdowns, three plans, eleven unseen years, and a statistic with real power
+ca4f4e8bc255d9c7182f88334e1d35330311d15a	bf76b8c3c0e092ed1b90481e6f455106d33fb759	Condition 4 passes on the fixed pipeline, and preflight is clear at 32 of 32
+c375d919be8e1e21f1f86c91d22cdbe4c185c6c4	15dbedc6aac69c41b704ae563f37d53fc4b16c8a	Item 7: stage 1 rerun complete -- STAGE1_R2.md, and Jack's plan wins the two-plan comparison
+3243143959869e600c3f82acdee361fbe2d52cae	97498ba6a22c614c51aa15bbde96916221d79b35	Stage 1 R2 app tab and STATUS addendum 4
+88ba388542dec3fbd4655705e47619cc52010609	4c6ad571ac2072571cd3c6b6f7819ef90d8edb5f	Chain 27 is stopped after chunk 2: its frozen code predates the B1 stream fix
+182beb83b3f67f3c68ce6f6431e476117b92ea9f	c0bf2898d356c49bb9f7d4d1984f04913c4267df	The batched push, as a script on record instead of an inline loop
+0afce1ce135ee327bd37963c2219e67a6bc41bb0	272f1269dba61ad25a7c1945674dc5a0d99bca36	STATUS addendum 5: chain 27 stopped after chunk 2, chain 29 armed on fixed code
+29ee6f18ae15fba344a99a85ad47c91408f306fe	610d75a9dfa96fe4eb02d747d8d2ec6e39054bd6	Stage 2 goes to the front of the queue: Jack's picks, the baseline added to C1
+480a581a8f9a2f2fd9ed01bf898e828907d98224	485b848e8f601da90da247991e2be26847bcd16d	STATUS addendum 6: stage 2 to the front, ETAs, and the push blocker that needs a decision
+1bcd90f7713e9377a16f88dbd628f1b9d52f3e63	2df7c040cd520b4333afe0e9d425da9847ed7562	Stage 2 and engine audit 2 wired into the app before the chain needs it
+a25f1a30d7d58f8535d7c5a65338fb9804a0124a	2dd42909509c9797ae846f46ad27ec97c225a9ab	A leg was being counted as a trade: every per-trade column in the staged build was wrong by two
+b50ecde594f07423efcafa1e1676ef2554d34614	91f72532dffa7ae8db3619b5e81b69d54493182e	The halt marker from chain 29's first stage-check, so the tree is clean when the queue starts
+3db0c899f907fbf83a49e8aa2f18fb8125d8375c	e036488dba3163c23b218ac82000e8257a6adc7d	Every stage 2 stage tested before launch, and three fragilities fixed
+1e1227f7db1a56aba96ae98bef8a3dfcb14dfe85	185ee09f91165b0e535ede7a40ca069cedaa164b	STATUS addendum 7: the leg-vs-trade fault, guard 33, and what the smokes already show
+9716f54e257d68ade337882990a26ea2075cefdb	1eeb90fa59360a54260712691318535368c2734c	A2 mode B: the same
+cc539d3cec505140c5bebff3575b3bc741c11b61	3028e7c2a0aa678136f06243bcdfa6f01a5f185b	Chunk 2 mode B outputs, committed after chain 27 was stopped before its B1 half
+9d10ff8935b2aeaa9c15333bf8b1150903a0dcae	2eba37985e82b2ab818050e60882ce91865fb066	Condition 3: the eleven-step walk reproduces the five-step bank on the shared years
+ef41bbd386ce015cf7c428e1eadb4cc345a03716	b8aa53435d420efc4f49a37a88057eaae8e334bc	Conditions 1 and 2 re-proven on the eleven-step walk, into walk-suffixed files
+ddd849b1de1e898d77660d09d33e927e6f829dd5	670ca551ffe17ec28e8f5c8937b63b36f312a183	B1-narrow mode A: the sampled family and the whole control tuned on the eleven-step walk
+30a609ee71b05342474e26faa378a810b7fc727f	0dd1f4df3ad1cb6c7cb41ebc964b8a1dfce9749c	Chunk 2 and B1-narrow wired into the app
+5733937e43da806741bc2deb19dc9f5f692f5e2c	a6cc582ab9173301067567661d4b9240c3c291c3	A4: the grade-rule book parts rebuilt for mode A, which the cap sweep needs for positions
+b97c456ef8c8c293057d7deba37fbe26040ecb3f	d9c7df6b6263393d0d2076d1f3d80b6f5924561c	A4: the same on mode B
+81da232d38d2b847c6f362a08fe2153bb70933d8	d3d223676fae9678ff9b07c1e845cbd873411a8b	A4: the exposure cap swept over its full range on the winners' books AND the whole-field book
+0933ccb99422b189f684f934bdc8e6df0792f1b4	4539854bd9e2257ee9cde2da758000b0edc02027	A5: the daily loss stop on hourly marks, swept over 13 thresholds, all winners and all steps
+6181043da2179e515d9ae11a949876490ec9dea2	0fd90906b3e9dc245f82bff3a36106866ed1cb49	A4_NETTING.md and A5_HOURLY.md regenerated on the full sweep
+735a941b0873048cab7e03d3575ccbdacaf1be1e	a2ab1a71b2d03cac66bc3b1135308f11d3b50899	A4 and A5 wired into the app
+54a3837edee86dacb816a96134c890da74fd4d47	cbe820b313fe1ce71d9945192c6d993df809d46d	The A2 defaults pass moves to disk under a manifest, with a summary committed in its place
+edf2195c56cd3c28b18e071e9b03bfeefd3e8e87	7eec45c223ed8d10c93ae96a660107b56b601b41	The narrow strip, as a script on record
