@@ -5847,5 +5847,89 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     h+=tbl(Q['sum_'+kk+'_'+vv],['indicator','setting','n_entered','trades_per_year','mean_bars','R_gross_per_trade','R_net_per_trade','cost_per_trade','R_net_per_year','years_positive','worst_year','worst_dip_R','t_yearly','t_block_boot','null_p'],
            (kk==='c1'?'C1':'Baselines')+' — '+vv+', fixed settings, unseen 2005-2015');}));
  }
+ /* STAGE 2 -- the baseline added to C1, on Jack's picks of 24 Nov. */
+ const T2=R.s2||{};
+ if(T2.note){
+  h+='<h3>Stage 2 — the baseline added to C1 (Jack\u2019s picks, 24 Nov)</h3>';
+  h+='<div class="note">'+T2.note+'</div>';
+  h+='<div class="note"><b>One of the four baseline rules cannot be switched off, and the engine is why.</b> '
+    +'<code>side</code> is the sign of (close \u2212 baseline), recomputed every bar (<code>l2engine.py:274-279</code>), and '
+    +'EVERY entry route gates on agreement, which contains <code>side</code>: '
+    +'<code>agree_long = c1_lc &amp;&amp; c2_lc &amp;&amp; v_ok_l &amp;&amp; side == 1</code> (:527), then '
+    +'<code>r1l = use_base_cross &amp;&amp; \u2026 &amp;&amp; agree_long</code> and '
+    +'<code>r2l = use_c1_flip &amp;&amp; c1_lt &amp;&amp; agree_long</code> (:549-552). There is no path into a trade that '
+    +'avoids it. So the side filter is the FLOOR, and the distance, cross-entry and cross-exit rows below are '
+    +'<b>increments over it</b>, never over the bare C1 \u2014 reading them as independent additions would credit whichever '
+    +'rule was switched on with the side filter\u2019s entire effect. <code>c1_alone</code> is the control: the baseline is '
+    +'pushed far from price so <code>side</code> is pinned, and the two directions are run separately.</div>';
+  if(T2.neutral&&T2.neutral.length){
+   const bad=T2.neutral.filter(r=>!r.passes).length;
+   h+='<div class="note"><b>The control is checked, not assumed.</b> If a base setting could reach the engine through a '
+     +'neutralised baseline, every paired number here would be contaminated. The grid computes all three base settings for '
+     +'the control anyway, so the check is free: '+T2.neutral.length+' control cells, '
+     +(bad?('<b>'+bad+' FAILING</b>'):'<b>all passing at exactly zero spread</b>')+'.</div>';}
+  h+=tbl(T2.report,['c1','base','variant','ruleset','R_net_per_year','R_net_per_trade','R_gross_per_trade','trades_per_year','mean_bars','years_positive','worst_year','worst_dip_R','R_per_year_per_dip','t_yearly','t_block_boot','null_p','clears_alone','clears_best_of_family'],'2a / 2c — each combination on the unseen years 2010-2015, settings picked walk-forward');
+  h+='<h4>2b — the paired test: the same C1 with and without the baseline</h4>';
+  h+='<div class="note">Both series live through the same 2010-2015 markets, so differencing their daily P&amp;L day by day '
+    +'removes everything common to them and leaves the baseline\u2019s own contribution. The t is a block bootstrap on that '
+    +'difference, 20-day blocks, 2,000 draws. <b>The days are unioned, not intersected:</b> a day on which only one of the two '
+    +'is in the market is a real difference, and intersecting would delete the baseline\u2019s main effect, which is to STOP '
+    +'trades happening. A missing day is zero P&amp;L, not missing data.</div>';
+  h+=tbl(T2.paired,['c1','base','variant','ruleset','days','R_without','R_with','delta_R','delta_R_per_year','delta_t_block_boot','delta_t_yearly','years_delta_positive','days_with_only','days_without_only'],'2b — \u0394 against the C1-alone control');
+  h+='<h4>2f — the rolling top-K rule in full, K from 1 to 10</h4>';
+  h+='<div class="note">At each step the K C1 ranked best on the four TUNING years are traded, equal weight, on that '
+    +'step\u2019s unseen year. No trade-year information touches the ranking. The null permutes the tuning-year ranking and '
+    +'applies the same top-K rule, so what is tested is the SELECTION RULE and not the quality of the pool.</div>';
+  h+=tbl(T2.rolling,['variant','base','K','R_per_year_mean','years_positive','worst_year','worst_dip_R','t_yearly','turnover_mean','null_mean','null_p95','null_p'],'2f — K swept, with turnover of the picked set');
+  h+=tbl(T2.rolling_picks,['base','trade_year','picked','trade_R_net','trade_n'],'2f — what the rule actually picked each year at K=3');
+  h+='<h4>2d — the cost cap</h4>';
+  h+='<div class="note">Pairs are ranked each year by round-trip cost divided by ATR. The cost is the era table\u2019s; the '
+    +'ATR is measured over the PREVIOUS calendar year and never the year being traded, so the ranking is known in advance and '
+    +'the trade year stays unseen. No performance is used. cost/ATR is the right ratio because R is measured in ATR units: a '
+    +'pair whose spread is a large share of its daily range eats a large share of every R, whatever its pip cost.</div>';
+  h+=tbl(T2.costcap,['c1','setting','cap','pairs_kept','share_trades','R_net_per_year','R_net_per_trade','worst_dip_R','R_per_year_per_dip','t_block_boot'],'2d — cap swept over its full range');
+  h+='<h4>2e — fewer trades</h4>';
+  h+='<div class="note">A minimum gap between trades on a pair, and a minimum signal age, each swept. The gap is applied '
+    +'greedily FORWARD in time \u2014 take a trade, then refuse every entry within the gap of that entry \u2014 because '
+    +'choosing which of two close trades to keep by their outcome would use the future. Jack\u2019s question is whether net R '
+    +'per trade rises faster than trade count falls, so both are here and so is total R: a rule that lifts R per trade while '
+    +'destroying total R is not an improvement.</div>';
+  h+=tbl(T2.fewer,['c1','setting','rule','cut','share_trades','base_R_net_per_trade','R_net_per_trade','base_trades_per_year','trades_per_year','base_R_net_build','R_net_build','worst_dip_R'],'2e — minimum trade gap and minimum signal age');
+  h+='<h4>Through the prop simulator</h4>';
+  h+='<div class="note">The daily series is in R, where 1 R is one 1.5 ATR risk unit. Converting it to the percent-of-equity '
+    +'series the simulator consumes needs a declared risk per unit, and since the firm\u2019s limits are 4% daily and 6% '
+    +'trailing the answer depends entirely on that number \u2014 so it is SWEPT, not assumed.</div>';
+  h+=tbl(T2.prop,['c1','base','ruleset','risk_pct_per_R','phase','days','breached','return_pct_per_year','worst_dip_pct','paid_out_per_year'],'Prop simulator, risk per R swept');
+ }
+ /* ENGINE AUDIT 2 -- measurement only. */
+ const AU=R.audit2||{};
+ if(AU.note){
+  h+='<h3>Engine audit 2</h3>';
+  h+='<div class="note">'+AU.note+'</div>';
+  h+='<div class="note"><b>1. The fill price, and the question needed correcting first.</b> The daily feed Layer 2 trades is '
+    +'<code>data/oanda_ohlc</code>, NOT the 17:00 New York file (<code>px28_5pm.csv</code>) that HANDOFF describes for '
+    +'Layer 1. Measuring the daily close against the hourly mid at each candidate hour, in R at that bar\u2019s ATR, '
+    +'<b>16:00 NY matches almost exactly</b> \u2014 mean |gap| 0.00011 R and exact on 67.9% of days, against 0.043 R at '
+    +'17:00 and 0.132 R at 22:00. So the engine fills at a price that genuinely existed, and this confirms '
+    +'<code>nnfxamb</code>\u2019s range-containment finding by a DIFFERENT METHOD on the same files.</div>';
+  h+=tbl(AU.fillprice,['pair','ny_hour','days','mean_gap_px','mean_gap_R','mean_abs_gap_R','p95_abs_gap_R','share_exact'],'Audit 2.1 — daily close against the hourly mid, per pair and hour');
+  h+='<div class="note"><b>2. Overnight financing is charged NOWHERE</b> \u2014 checked, not remembered: a grep for '
+    +'carry/swap/financing/overnight/rollover/interest over <code>l2engine.py</code> and <code>l2sweep.py</code> returns only '
+    +'the English word \u201ccarry\u201d in three comments. Its size from <code>rates2y.csv</code> is as large as the spread, '
+    +'and <b>its mean is POSITIVE</b> \u2014 so adding it would FLATTER these candidates and leaving it out is the '
+    +'conservative choice, which is the opposite of how a missing cost usually reads. Caveat: <code>rates2y.csv</code> is '
+    +'TWO-YEAR yields, not overnight, and brokers charge a spread on the swap, so this is a lower bound.</div>';
+  h+=tbl(AU.financing,['c1','setting','n','mean_days','financing_R_per_trade','financing_R_per_trade_abs','spread_cost_R_per_trade','ratio_financing_to_spread','R_net_per_trade','R_net_per_trade_with_financing','share_paid'],'Audit 2.2 — financing from rates2y, as a proxy');
+  h+='<div class="note"><b>3. Cost per R</b>, as charged cost over mean |gross R|, because that ratio is what decides whether '
+    +'a pair is worth trading: a pair whose spread is 30% of the R it generates needs an edge half again as large as one where '
+    +'it is 10%.</div>';
+  h+=tbl(AU.cost_by_pair,['pair','n','cost_R_per_trade','gross_abs_per_trade','cost_per_unit_gross'],'Audit 2.3 — cost per unit of gross R, by pair');
+  h+=tbl(AU.cost_by_year,['year','n','cost_R_per_trade','gross_abs_per_trade','cost_per_unit_gross'],'Audit 2.3 — by year');
+  h+='<div class="note"><b>4. Tick volume is usable from 2005.</b> The question is not whether <code>v</code> exists \u2014 it '
+    +'does \u2014 but whether it carries information: a column of ones is a placeholder, and an indicator built on it would '
+    +'look like it worked while reading nothing. 100% of 2002 bars and 99.8% of 2003 bars sit at v\u22641; 2011 is degraded at '
+    +'about 11%. It is a tick COUNT (OANDA counts quote updates), not traded size, and must not be read as exchange volume.</div>';
+  h+=tbl(AU.tickvolume,['pair','side','year','bars','share_le1','median_v','max_v','distinct'],'Audit 2.4 — tick volume usability by pair-year');
+ }
  h+='<div class="note">Candidates on record in CANDIDATE_LEDGER.csv: '+(R.ledger_n||0)+'. Every candidate ever tested is listed there, because the luck floor is computed from that file and not from memory.</div>';
  el.innerHTML=h;el.dataset.done='1';};

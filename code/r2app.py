@@ -180,6 +180,56 @@ def stage_app():
                 'stage1r2_%s_%s_select.csv' % (kind, v))
     sec['nnfx']['r2'] = {k: v for k, v in sec['nnfx']['r2'].items()
                          if not (isinstance(v, list) and not v)}
+    # ---- STAGE 2 (the baseline added to C1) and ENGINE AUDIT 2.
+    # Jack's picks, 24 Nov. The side filter is in every ruleset but the
+    # control, so the three other rules are INCREMENTS over it -- the note
+    # carries that, because a reader comparing `side_dist` against the bare C1
+    # would read the side filter's effect into the distance rule.
+    sec['nnfx']['s2'] = dict(
+        note=('Stage 2: the baseline added to C1, on Jack\'s picks '
+              '(ichimoku / schaff_trend_cycle / halftrend plus the rolling '
+              'top 3; sma / hma / t3). jack plan is the main version, '
+              'textbook beside it. The baseline SIDE FILTER cannot be '
+              'switched off -- every entry route gates on agreement, which '
+              'contains side -- so `side` is the floor and the distance, '
+              'cross-entry and cross-exit rows are INCREMENTS OVER IT, not '
+              'over the bare C1.'),
+        report=nd('stage2_picks_report.csv',
+                  cols=['c1', 'base', 'variant', 'ruleset', 'R_net_per_year',
+                        'R_net_per_trade', 'R_gross_per_trade',
+                        'trades_per_year', 'mean_bars', 'years_positive',
+                        'worst_year', 'worst_dip_R', 'R_per_year_per_dip',
+                        't_yearly', 't_block_boot', 'null_p',
+                        'clears_alone', 'clears_best_of_family'], head=160),
+        paired=nd('stage2_picks_paired.csv',
+                  cols=['c1', 'base', 'variant', 'ruleset', 'days',
+                        'R_without', 'R_with', 'delta_R', 'delta_R_per_year',
+                        'delta_t_block_boot', 'delta_t_yearly',
+                        'years_delta_positive', 'days_with_only',
+                        'days_without_only'], head=160),
+        rolling=nd('stage2_rolling_sweep.csv', head=120),
+        rolling_picks=nd('stage2_rolling_picks.csv', head=80),
+        costcap=nd('stage2_costcap.csv', head=200),
+        fewer=nd('stage2_fewer.csv', head=200),
+        prop=nd('stage2_picks_prop.csv', head=200),
+        neutral=nd('stage2_picks_neutralcheck.csv', head=40),
+        grid=nd('stage2_picks_grid.csv', head=200),
+    )
+    sec['nnfx']['audit2'] = dict(
+        note=('Engine audit 2, measurement only. The daily bar is '
+              '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '
+              'charged NOWHERE, and its mean on these candidates is POSITIVE, '
+              'so adding it would flatter them. Tick volume is usable from '
+              '2005 and is a tick COUNT, not traded size.'),
+        fillprice=nd('audit2_fillprice.csv', head=160),
+        financing=nd('audit2_financing.csv', head=40),
+        cost_by_pair=nd('audit2_cost_by_pair.csv', head=40),
+        cost_by_year=nd('audit2_cost_by_year.csv', head=40),
+        tickvolume=nd('audit2_tickvolume.csv', head=200),
+    )
+    for _k in ('s2', 'audit2'):
+        sec['nnfx'][_k] = {k: v for k, v in sec['nnfx'][_k].items()
+                           if not (isinstance(v, list) and not v)}
     sec['nnfx'] = {k: v for k, v in sec['nnfx'].items()
                    if not (isinstance(v, list) and not v)}
 
