@@ -1,9 +1,9 @@
 # results/r2gate2/modeA_winners_nullparts
-# written 2026-11-23 23:34:07 by code/bankcheck.py at commit 3cbf8f6fdc72
+# written 2026-11-24 09:37:08 by code/bankcheck.py at commit 0ae2def1dcf5
 # file	size	sha256	producing_commit
-ns_0000_of2.csv	19168		3cbf8f6fdc72
-ns_0000_of4.csv	2551028		3cbf8f6fdc72
-ns_0001_of2.csv	19627		3cbf8f6fdc72
-ns_0001_of4.csv	2546972		3cbf8f6fdc72
-ns_0002_of4.csv	2545876		3cbf8f6fdc72
-ns_0003_of4.csv	2541139		3cbf8f6fdc72
+ns_0000_of2.csv	19168		0ae2def1dcf5
+ns_0000_of4.csv	2551028		0ae2def1dcf5
+ns_0001_of2.csv	19627		0ae2def1dcf5
+ns_0001_of4.csv	2546972		0ae2def1dcf5
+ns_0002_of4.csv	2545876		0ae2def1dcf5
+ns_0003_of4.csv	2541139		0ae2def1dcf5

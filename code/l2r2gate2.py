@@ -53,10 +53,27 @@ import l2sweep as S
 import l2tune as T
 import l2r2gate1 as G
 
-YEAR0, NYEAR = 2011, 10            # the years the five windows use
+# THE WALK, SWITCHED BY ENVIRONMENT (Jack, 24 Nov). FX_WALK=ext11 extends the
+# walk back to 2005: eleven rolling steps from tune 2005-2008 / grade 2009 /
+# trade 2010 through tune 2015-2018 / grade 2019 / trade 2020, so 2010-2020 are
+# all traded blind and 2021 onward stays sealed. Default is the five-step walk
+# the shipped banks were built on, byte-identical.
+#
+# AN ENVIRONMENT VARIABLE, NOT AN ARGUMENT, for the reason FX_G2_OBJECTIVE is:
+# macOS multiprocessing SPAWNS, so a worker re-imports this module and takes
+# its module globals fresh. A walk threaded as a parameter would be right in
+# the parent and the default in every child.
+WALK = os.environ.get('FX_WALK', 'base5').strip().lower()
+assert WALK in ('base5', 'ext11'), 'FX_WALK must be base5 or ext11, got %r' % WALK
+if WALK == 'ext11':
+    YEAR0, NYEAR = 2005, 16        # 2005..2020; 2021+ sealed
+    _STEP_FIRST, _STEP_LAST = 2005, 2015
+else:
+    YEAR0, NYEAR = 2011, 10        # the years the five windows use
+    _STEP_FIRST, _STEP_LAST = 2011, 2015
 NSTAT = 5                          # n, sum_r, gain, loss, n_win
 STREAMS = ('trend-routed', 'trend-allon', 'chop-routed', 'chop-allon')
-NSTEP = 5
+NSTEP = len(range(_STEP_FIRST, _STEP_LAST + 1))
 MIN_TUNE_TRADES = S.MIN_TRADES_PICK   # 100, l2tune's own rule
 
 # ==========================================================================
@@ -132,9 +149,12 @@ CACHE_BUDGET_GB = 4.0
 
 
 def steps():
-    """0f, unchanged: tune years 1-4, grade year 5, trade year 6, rolling."""
+    """0f, unchanged in shape: tune years 1-4, grade year 5, trade year 6,
+    rolling. The RANGE depends on FX_WALK -- five steps from 2011 by default,
+    eleven from 2005 under ext11."""
     return [dict(name='%d-%d' % (a, a + 3), tune=(a, a + 3), grade=(a + 4, a + 4),
-                 trade=(a + 5, a + 5)) for a in range(2011, 2016)]
+                 trade=(a + 5, a + 5))
+            for a in range(_STEP_FIRST, _STEP_LAST + 1)]
 
 
 # ==========================================================================

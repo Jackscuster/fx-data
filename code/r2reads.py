@@ -720,30 +720,6 @@ def md_a6(mode='A', labels=('winners', 'full')):
     return p
 
 
-if __name__ == '__main__':
-    st = G.opt('--stage', str, 'a1')
-    md = G.opt('--mode', str, 'A')
-    nd = G.opt('--draws', int, 1000)
-    nm = G.opt('--nmax', int, None)
-    if st == 'a1':
-        stage_a1(md, ndraw=nd, nmax=nm); md_a1(md)
-    elif st == 'a1b':
-        stage_a1b(md, ndraw=nd, nmax=nm); md_a1b(md)
-    elif st == 'a2':
-        stage_a2(md, jobs=G.opt('--jobs', int, 8), nshard=G.opt('--nshard', int, None),
-                 nmax=nm)
-    elif st == 'a2cmp':
-        stage_a2_compare(md); md_a2a3(md)
-    elif st == 'a3':
-        stage_a3(md, ndraw=G.opt('--draws', int, 2000)); md_a2a3(md)
-    elif st == 'a6':
-        stage_a6(md, src_tag='g3passwinners', books=['allon'], label='winners')
-        stage_a6(md, src_tag='full', label='full')
-        md_a6(md)
-    else:
-        raise SystemExit('unknown stage %s' % st)
-
-
 # ==========================================================================
 # A2 — TUNED VERSUS DEFAULT, and A1 ON DEFAULTS (chunk 2)
 # ==========================================================================
@@ -1042,3 +1018,28 @@ def md_a2a3(mode='A'):
     print('  A2_A3_TUNED_AND_SIGNIFICANCE.md: %d lines -> %s'
           % (len('\n'.join(L).splitlines()), os.path.relpath(p, _R)), flush=True)
     return p
+
+
+
+if __name__ == '__main__':
+    st = G.opt('--stage', str, 'a1')
+    md = G.opt('--mode', str, 'A')
+    nd = G.opt('--draws', int, 1000)
+    nm = G.opt('--nmax', int, None)
+    if st == 'a1':
+        stage_a1(md, ndraw=nd, nmax=nm); md_a1(md)
+    elif st == 'a1b':
+        stage_a1b(md, ndraw=nd, nmax=nm); md_a1b(md)
+    elif st == 'a2':
+        stage_a2(md, jobs=G.opt('--jobs', int, 8), nshard=G.opt('--nshard', int, None),
+                 nmax=nm)
+    elif st == 'a2cmp':
+        stage_a2_compare(md); md_a2a3(md)
+    elif st == 'a3':
+        stage_a3(md, ndraw=G.opt('--draws', int, 2000)); md_a2a3(md)
+    elif st == 'a6':
+        stage_a6(md, src_tag='g3passwinners', books=['allon'], label='winners')
+        stage_a6(md, src_tag='full', label='full')
+        md_a6(md)
+    else:
+        raise SystemExit('unknown stage %s' % st)
