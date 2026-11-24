@@ -84,6 +84,11 @@ g(){
   return 0
 }
 
+# LOCAL-ONLY MODE (Jack, 24 Nov). With FX_CI_LOCAL=1 a stage COMMITS and does
+# not pull or push. It exists because a batched push of rewritten history was
+# still landing and chunk 1's stages only read LOCAL banks -- there is no reason
+# for a read to wait on a slow remote. One push follows once the batcher lands.
+# The default is unchanged: commit, pull --rebase, push.
 ci(){
   cd /Users/jackcuster/fx-data
   git add -A code/ results/ HANDOFF.md .gitignore app_data.json app_ui.js >/dev/null 2>&1
@@ -91,6 +96,10 @@ ci(){
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_016fb2CjHx3RvfiWm6g7bVgc" >/dev/null 2>&1 || echo 'nothing to commit' >> "$L"
+  if [ "${FX_CI_LOCAL:-0}" = "1" ]; then
+    say "committed LOCAL-ONLY: $(git log --oneline -1) [$(freegb) GB free]"
+    return 0
+  fi
   git pull -q --rebase origin main >> "$L" 2>&1
   git push -q origin main 2>&1 | grep -v 'GH001\|warning:' >> "$L"
   say "committed: $(git log --oneline -1) [$(freegb) GB free]"

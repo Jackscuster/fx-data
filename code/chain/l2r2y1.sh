@@ -68,6 +68,7 @@
 cd /Users/jackcuster/fx-data
 export FX_COST_TABLE=results/cost_table_h22.csv
 export FX_CKPT_SECONDS=300
+export FX_CI_LOCAL=1          # commit locally while the batched push is still landing
 export FX_G2_OBJECTIVE=r2dd          # the objective AND the widened grids
 TAG=full_r2dd
 
