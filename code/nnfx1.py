@@ -436,6 +436,53 @@ def true_dip(DS, years=None):
     return float((np.maximum.accumulate(eq) - eq).max())
 
 
+def entry_frame(T):
+    """ONE ROW PER ENTRY, NOT PER LEG. Item 8's "distinct-trade count for n".
+
+    THE FAULT THIS FIXES, FOUND 24 NOV WHILE TESTING STAGE 2's 2e.
+    `plan=2` splits every position into TWO legs -- leg1 banks at the first
+    target, leg2 runs on the trail -- and `E.trade_frame` returns one row per
+    LEG. Verified on EURUSD and GBPJPY across all three plans: rows are exactly
+    2x distinct entries, every time, min and max legs per entry both 2.
+
+    The TOTALS were never wrong. Each leg carries half the units against the
+    full risk, so the two legs' R sums to the position's R (a full stop-out is
+    -0.5 + -0.5 = -1.0 R) and each leg is charged half the spread, summing to
+    the whole. So R_net_build, R_gross_build, worst_dip_R, both t statistics,
+    null_p and R_net_per_year were all correct and are unchanged by this fix.
+
+    What WAS wrong is every per-trade and count column:
+        n_entered, n_touching, trades_per_year   2x too large
+        R_net_per_trade, R_gross_per_trade,      half the truth
+        cost_per_trade
+    and item 8 said in as many words to adopt the count of DISTINCT trades. A
+    leg is not a distinct trade. Guard 32 checked that the two conventions were
+    NAMED apart and never that the count counted the right thing, which is why
+    this survived to be found by a sweep that happened to halve at a one-day
+    gap -- exactly 0.500000 of trades dropped, which is too round to be real.
+
+    THE POSITION's HOLDING PERIOD IS ITS LAST LEG's. The position is open until
+    leg2 closes, so mean_bars takes the MAX over the legs of an entry and not
+    their mean.
+    """
+    k = ['pair', 'entry_date', 'direction'] if 'pair' in T.columns \
+        else ['entry_date', 'direction']
+    g = T.groupby(k, as_index=False).agg(
+        entry_date_=('entry_date', 'first'), exit_date=('exit_date', 'max'),
+        bars_held=('bars_held', 'max'), n_legs=('R_gross', 'size'))
+    g = g.drop(columns=['entry_date_'])
+    return g
+
+
+def n_entries(T):
+    """The number of DISTINCT trades in a leg-level frame."""
+    if not len(T):
+        return 0
+    k = ['pair', 'entry_date', 'direction'] if 'pair' in T.columns \
+        else ['entry_date', 'direction']
+    return int(len(T.groupby(k)))
+
+
 def _yearly(T, cost, DS=None):
     """Per calendar year, BY YEAR-END MARK TO MARKET (item 8).
 
@@ -459,13 +506,24 @@ def _yearly(T, cost, DS=None):
     g = (DS.assign(year=pd.DatetimeIndex(DS.date).year)
            .groupby('year', as_index=False).agg(R_mtm=('R', 'sum'),
                                                 days=('R', 'size')))
-    ent = (pd.DataFrame(dict(year=ed.year, bars=T.bars_held.to_numpy(float),
-                             gross=T.R_gross.to_numpy(float), cost=cost))
-             .groupby('year', as_index=False)
-             .agg(n_entered=('bars', 'size'), mean_bars=('bars', 'mean'),
-                  R_gross_entered=('gross', 'sum'), cost_entered=('cost', 'sum')))
+    # COUNTS AND HOLDING PERIODS COME FROM ENTRIES; R AND COST FROM LEGS.
+    # See entry_frame: a leg is not a trade, but the two legs' R and cost sum to
+    # the position's, so the sums must stay at leg level and only the counts
+    # move to entry level.
+    EF = entry_frame(T)
+    ent_cnt = (pd.DataFrame(dict(year=pd.DatetimeIndex(EF.entry_date).year,
+                                bars=EF.bars_held.to_numpy(float)))
+                 .groupby('year', as_index=False)
+                 .agg(n_entered=('bars', 'size'), mean_bars=('bars', 'mean')))
+    ent_sum = (pd.DataFrame(dict(year=ed.year,
+                                gross=T.R_gross.to_numpy(float), cost=cost))
+                 .groupby('year', as_index=False)
+                 .agg(R_gross_entered=('gross', 'sum'),
+                      cost_entered=('cost', 'sum')))
+    ent = ent_cnt.merge(ent_sum, on='year', how='outer')
     touch = []
-    for y0, y1 in zip(ed.year, xd.year):
+    for y0, y1 in zip(pd.DatetimeIndex(EF.entry_date).year,
+                      pd.DatetimeIndex(EF.exit_date).year):
         for y in range(int(y0), int(y1) + 1):
             touch.append(y)
     tc = (pd.Series(touch).value_counts().rename_axis('year')
@@ -473,7 +531,9 @@ def _yearly(T, cost, DS=None):
           else pd.DataFrame(columns=['year', 'n_touching']))
     out = g.merge(ent, on='year', how='outer').merge(tc, on='year', how='outer')
     out = out.sort_values('year').reset_index(drop=True)
-    out['straddles'] = int((ed.year != xd.year).sum())
+    out['straddles'] = int((pd.DatetimeIndex(EF.entry_date).year
+                            != pd.DatetimeIndex(EF.exit_date).year).sum())
+    out['n_legs'] = int(len(T))
     # R_net is the MTM figure; it is already net of cost (charged on entry day)
     out['R_net'] = out.R_mtm
     out['R_gross'] = out.R_mtm + out.cost_entered.fillna(0.0)

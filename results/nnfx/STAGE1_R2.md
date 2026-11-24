@@ -1,5 +1,45 @@
 # STAGE 1 R2 — ONE PIECE ALONE, THREE RISK PLANS, ELEVEN UNSEEN YEARS
 
+> ## CORRECTION, 24 Nov 16:40 ET — the per-trade and count columns in this file are wrong by a factor of two
+>
+> Found while testing stage 2's trade-thinning sweep, and it is my fault.
+>
+> `plan=2` splits every position into **two legs** — leg1 banks at the first
+> target, leg2 runs on the trail — and `l2engine.trade_frame` returns **one row
+> per leg**. `nnfx1._yearly` counted those rows as `n_entered`. Verified on
+> EURUSD and GBPJPY across all three plans: rows are exactly 2× distinct
+> entries, every time, min and max legs per entry both 2.
+>
+> **What is wrong in the tables below:**
+>
+> | column | this file says | truth |
+> |---|---|---|
+> | `n_entered`, `n_touching`, `trades_per_year` | 2× too large | halve it |
+> | `R_net_per_trade`, `R_gross_per_trade`, `cost_per_trade` | half the truth | double it |
+>
+> **What is NOT wrong, and this is most of the file.** Each leg carries half the
+> units against the full risk, so the two legs' R sums to the position's R (a
+> full stop-out is −0.5 + −0.5 = −1.0 R) and each leg is charged half the
+> spread, summing to the whole. So **every total and every test statistic is
+> unaffected**: `R_net_build`, `R_gross_build`, `R_net_per_year`,
+> `worst_dip_R`, `t_yearly`, `t_block_boot`, `null_p`, the luck floors, the
+> selection test, condition 4's pass, and the conclusion that Jack's plan wins
+> the two-plan comparison. That is also exactly why it was invisible for a day.
+>
+> The one quoted number that needs restating: **condition 4's charged cost of
+> +0.01752 R is per LEG; per trade it is +0.03504.** The zero-edge test itself
+> still passes, because the null was computed on the same per-leg basis as the
+> charge it is compared against.
+>
+> Guard 32 checked that the two conventions were *named* apart and never that
+> the count counted the right thing. **Preflight guard 33** now checks the
+> arithmetic on a live candidate instead of the spelling. Fixed in
+> `nnfx1.entry_frame` / `n_entries`; stage 2 is built on the fixed version. This
+> file is not regenerated — the correction is stated here instead, because the
+> totals it turns on are unchanged.
+
+
+
 Generated 2026-11-24 13:55 by `code/nnfx1.py`. HANDOFF 0m.
 
 

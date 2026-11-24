@@ -684,7 +684,8 @@ def stage_costcap(c1_names=None, variant=MAIN_PLAN, years=BUILD_YEARS,
                 rows.append(dict(c1=c1, setting=st, variant=variant,
                                  cap=float(cap),
                                  pairs_kept=int(sub.pair.nunique()),
-                                 share_trades=float(len(sub) / len(T)),
+                                 share_trades=float(N.n_entries(sub)
+                                                    / max(1, N.n_entries(T))),
                                  **{k: v for k, v in sc.items()
                                     if not k.startswith('_')}))
         if verbose:
@@ -732,51 +733,63 @@ def stage_fewer(c1_names=None, variant=MAIN_PLAN, years=BUILD_YEARS,
                 continue
             T = T.reset_index(drop=True)
             base = _score(T, years, want_null=False)
+            # THE RULE APPLIES TO ENTRIES, NOT LEGS, AND GETTING THAT WRONG IS
+            # WHAT EXPOSED THE WHOLE FAULT. plan=2 splits each position into
+            # leg1 and leg2, both stamped with the same entry date, so a
+            # per-row gap rule of one day kept exactly one leg of every entry
+            # and reported "50.0000% of trades dropped" -- a number too round
+            # to be real, which is how it was caught. Dropping one leg of a
+            # position is not trading less, it is trading half size.
+            ekey = ['pair', 'entry_date', 'direction']
+            ENT = T[ekey].drop_duplicates().sort_values(['pair', 'entry_date'])
             for g in gaps:
-                keep = []
-                for p, grp in T.groupby('pair'):
-                    grp = grp.sort_values('entry_date')
+                keep_e = []
+                for p, grp in ENT.groupby('pair'):
                     last = None
-                    eb = pd.DatetimeIndex(grp.entry_date)
-                    for i, (ix, _r) in enumerate(grp.iterrows()):
-                        if last is None or (eb[i] - last).days >= g:
-                            keep.append(ix); last = eb[i]
-                sub = T.loc[sorted(keep)].reset_index(drop=True)
-                if len(sub) < 30:
+                    for ed_ in pd.DatetimeIndex(grp.entry_date):
+                        if last is None or (ed_ - last).days >= g:
+                            keep_e.append((p, ed_)); last = ed_
+                ks = set(keep_e)
+                mask = [(pp, dd) in ks for pp, dd in
+                        zip(T.pair, pd.DatetimeIndex(T.entry_date))]
+                sub = T[np.asarray(mask)].reset_index(drop=True)
+                if N.n_entries(sub) < 30:
                     continue
                 sc = _score(sub, years, want_null=False)
                 rows.append(dict(c1=c1, setting=st, variant=variant,
                                  rule='min_gap_days', cut=float(g),
-                                 share_trades=float(len(sub) / len(T)),
+                                 share_trades=float(N.n_entries(sub)
+                                                    / max(1, N.n_entries(T))),
                                  base_R_net_per_trade=base['R_net_per_trade'],
                                  base_R_net_build=base['R_net_build'],
                                  base_trades_per_year=base['trades_per_year'],
                                  **{k: v for k, v in sc.items()
                                     if not k.startswith('_')}))
             # ---- minimum signal age, from the trade's own bars since the flip
-            if 'bars_since_flip' in T.columns:
-                agecol = T.bars_since_flip.to_numpy(float)
-            else:
-                # derive it: bars between this entry and the previous entry on
-                # the same pair in the SAME direction, which is the observable
-                # proxy for how long the side has been live
-                agecol = np.zeros(len(T))
-                for p, grp in T.groupby(['pair', 'direction']):
-                    gi = grp.sort_values('entry_date').index.to_numpy()
-                    ed = pd.DatetimeIndex(T.loc[gi].entry_date)
-                    a = np.zeros(len(gi))
-                    if len(gi) > 1:
-                        a[1:] = (ed[1:] - ed[:-1]).days
-                    agecol[T.index.get_indexer(gi)] = a
+            # DERIVED PER ENTRY, for the same reason. Two legs of one
+            # position share an entry date, so a leg-level diff gives the
+            # second leg an age of 0 and makes the sweep thin by leg.
+            E2 = (T[ekey].drop_duplicates()
+                   .sort_values(['pair', 'direction', 'entry_date']))
+            age_of = {}
+            for (p, dr), grp in E2.groupby(['pair', 'direction']):
+                eds = pd.DatetimeIndex(grp.entry_date)
+                for i, dd in enumerate(eds):
+                    age_of[(p, dr, dd)] = (0.0 if i == 0
+                                           else float((dd - eds[i - 1]).days))
+            agecol = np.array([age_of.get((pp, dr, dd), 0.0) for pp, dr, dd in
+                               zip(T.pair, T.direction,
+                                   pd.DatetimeIndex(T.entry_date))])
             T = T.assign(signal_age=agecol)
             for a in ages:
                 sub = T[T.signal_age >= a].reset_index(drop=True)
-                if len(sub) < 30:
+                if N.n_entries(sub) < 30:
                     continue
                 sc = _score(sub, years, want_null=False)
                 rows.append(dict(c1=c1, setting=st, variant=variant,
                                  rule='min_signal_age_days', cut=float(a),
-                                 share_trades=float(len(sub) / len(T)),
+                                 share_trades=float(N.n_entries(sub)
+                                                    / max(1, N.n_entries(T))),
                                  base_R_net_per_trade=base['R_net_per_trade'],
                                  base_R_net_build=base['R_net_build'],
                                  base_trades_per_year=base['trades_per_year'],

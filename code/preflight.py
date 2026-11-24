@@ -421,6 +421,59 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def c33():
+    """A LEG COUNTED AS A TRADE. Found 24 Nov, and guard 32 did not catch it.
+
+    `plan=2` splits every position into two legs -- leg1 banks at the first
+    target, leg2 runs on the trail -- and `l2engine.trade_frame` returns ONE ROW
+    PER LEG. nnfx1._yearly counted those rows as `n_entered`, so every
+    per-trade and count column in the staged build was wrong by exactly two:
+
+        n_entered, n_touching, trades_per_year    2x too large
+        R_net_per_trade, R_gross_per_trade,       half the truth
+        cost_per_trade
+
+    The TOTALS were never affected -- each leg carries half the units against
+    the full risk, so the legs' R sums to the position's R and each is charged
+    half the spread -- which is exactly why it was invisible for a day.
+
+    GUARD 32 CHECKED THAT THE COLUMNS WERE NAMED APART AND NEVER THAT THE COUNT
+    COUNTED THE RIGHT THING. Item 8 said "gate 3's distinct-trade count for n",
+    and a leg is not a distinct trade. This guard checks the arithmetic instead
+    of the spelling: run one real candidate and assert that n_entered equals
+    the number of distinct (pair, entry_date, direction) triples and that it is
+    STRICTLY LESS than the row count whenever the plan has two legs.
+    """
+    import numpy as _np
+    sys.path.insert(0, ROOTLIB)
+    import nnfx1 as _N, l2sweep as _S
+    _S.load_costs(os.environ.get('FX_COST_TABLE',
+                                 'results/cost_table_h22.csv'))
+    T = _N.run_one('ichimoku_signals', 'c1', 'default', 'jack',
+                   pairs=['EURUSD', 'GBPJPY'], use_hourly=False)
+    assert len(T), 'guard 33: the probe candidate took no trades'
+    T = T.reset_index(drop=True)
+    cost = _N._cost_R(T)
+    Y = _N._yearly(T, cost)
+    ne = _N.n_entries(T)
+    got = float(Y.n_entered.sum())
+    assert abs(got - ne) < 1e-9, (
+        'n_entered counts LEGS, not trades: %.0f against %d distinct entries'
+        % (got, ne))
+    nlegs = len(T)
+    assert nlegs > ne, ('guard 33 probe has one leg per entry (%d rows, %d '
+                        'entries) so it cannot detect the fault -- check that '
+                        'plan=2 is still two-legged' % (nlegs, ne))
+    # and the totals must be untouched by the fix
+    tot = float(T.R_gross.sum() - cost.sum())
+    assert abs(float(Y.R_mtm.sum()) - tot) < 1e-8, (
+        'the yearly R no longer sums to total net R: %.6f against %.6f'
+        % (Y.R_mtm.sum(), tot))
+    return ('n_entered == %d distinct entries from %d legs (%.1f legs per '
+            'entry); yearly R still sums to total net R at %.1e'
+            % (ne, nlegs, nlegs / ne, abs(float(Y.R_mtm.sum()) - tot)))
+
+
 def c32():
     """ITEM 8 — THE STAGED BUILD NAMES ITS TWO CONVENTIONS DIFFERENTLY.
 
@@ -621,6 +674,9 @@ def main():
     guard(32, 'Two different conventions sharing one column name: gate 2 and gate 3 both wrote `n` -- one counting a straddling trade in every year it touched, the other once in its entry year -- and the confusion cost a winner list',
           'the staged build writes R_mtm for year-end mark-to-market R, n_entered for distinct trades and n_touching for the touching count, so the two can never be conflated again',
           'every stage1r2_*_yearly.csv carries R_mtm, n_entered and n_touching', c32)
+    guard(33, 'A LEG counted as a TRADE: plan=2 splits every position into leg1 and leg2 and trade_frame returns one row per leg, so n_entered, n_touching and trades_per_year were 2x too large and every per-trade figure was half the truth -- guard 32 checked the column NAMES and not the arithmetic',
+          'nnfx1.entry_frame / n_entries count distinct (pair, entry_date, direction) triples; _yearly takes counts and holding periods from entries and R and cost from legs',
+          'n_entered equals the distinct-entry count on a live probe candidate, is strictly less than the row count, and the yearly R still sums to total net R', c33)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
