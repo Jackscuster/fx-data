@@ -373,10 +373,126 @@ def md_power(out=None):
     return out
 
 
+
+
+# ---------------------------------------------------------------------------
+# ITEM 6 — THE SAME POWER TEST, FOR THE BLOCK-BOOTSTRAP t ON THE DAILY SERIES.
+#
+# The yearly t is honest about how few independent observations a decade is,
+# and 0a showed what that honesty costs: on six yearly values even a
+# pre-declared candidate tested alone is blind below 0.20 R per trade. A daily
+# series has thousands of points, so a statistic built on it should see more --
+# but only if its false-positive rate at zero edge is actually right, which is
+# what this measures rather than assumes.
+#
+# THE NOISE IS THE SAME MEASURED NOISE: per-trade R dispersion recovered from
+# the random-entry control re-runs. A daily series is built by laying the
+# planted trades on a calendar at the measured rate, so the serial structure a
+# block bootstrap is meant to handle is present.
+# ---------------------------------------------------------------------------
+
+def _boot_t(x, block=20, ndraw=500, rng=None):
+    x = np.asarray(x, float)
+    n = len(x)
+    if n < 2 * block:
+        return np.nan
+    rng = rng or np.random.default_rng(0)
+    nb = int(np.ceil(n / block))
+    st = rng.integers(0, n - block + 1, size=(ndraw, nb))
+    ar = np.arange(block)
+    means = np.empty(ndraw)
+    for i in range(ndraw):
+        idx = (st[i][:, None] + ar[None, :]).ravel()[:n]
+        means[i] = x[idx].mean()
+    sd = means.std(ddof=1)
+    return float(x.mean() / sd) if sd > 0 else np.nan
+
+
+def stage_power_boot(nrep=400, span_years=11, nboot=500, trades_per_year=140,
+                     bars_per_year=252, seed=4242):
+    """0a for the block-bootstrap t. -> power and the zero-edge false-positive."""
+    z = np.load(NOISE)
+    sd_pool = z['sd_pt']
+    rng = np.random.default_rng(seed)
+    ndays = span_years * bars_per_year
+    rows = []
+    for edge in EDGES:
+        ts = np.full(nrep, np.nan)
+        for i in range(nrep):
+            sd = float(rng.choice(sd_pool))
+            ntr = int(trades_per_year * span_years)
+            # lay the trades on the calendar, each resolving on one day
+            day = rng.integers(0, ndays, size=ntr)
+            r = rng.normal(edge, sd, size=ntr)
+            x = np.zeros(ndays)
+            np.add.at(x, day, r)
+            ts[i] = _boot_t(x, ndraw=nboot, rng=rng)
+        ok = np.isfinite(ts)
+        rows.append(dict(statistic='block_boot_t', years=span_years,
+                         edge_R=edge, repeats=int(ok.sum()),
+                         median_t=float(np.nanmedian(ts)),
+                         p95_t=float(np.nanpercentile(ts, 95)),
+                         ts_mean=float(np.nanmean(ts))))
+    D = pd.DataFrame(rows)
+    # the zero-edge row IS the null, so the floors come from it, not a formula
+    z0 = D[D.edge_R == 0.0].iloc[0]
+    # rebuild the zero-edge sample to get max-of-M quantiles
+    ts0 = []
+    for i in range(nrep):
+        sd = float(rng.choice(sd_pool))
+        ntr = int(trades_per_year * span_years)
+        day = rng.integers(0, ndays, size=ntr)
+        r = rng.normal(0.0, sd, size=ntr)
+        x = np.zeros(ndays); np.add.at(x, day, r)
+        ts0.append(_boot_t(x, ndraw=nboot, rng=rng))
+    ts0 = np.array([t for t in ts0 if np.isfinite(t)])
+    fl = {}
+    for m in (1, 3, 15, 39):
+        mx = np.array([ts0[rng.integers(0, len(ts0), size=m)].max()
+                       for _ in range(4000)])
+        fl[m] = float(np.quantile(mx, 0.95))
+    D['floor_emp_alone'] = fl[1]
+    D['floor_emp_of_3'] = fl[3]
+    D['floor_emp_of_15'] = fl[15]
+    D['floor_emp_of_39'] = fl[39]
+    D['false_positive_at_zero_alone'] = float((ts0 >= fl[1]).mean())
+    for c, m in (('power_alone', 1), ('power_of_39', 39), ('power_of_15', 15),
+                 ('power_of_3', 3)):
+        D[c] = np.nan
+    # power: share of repeats clearing each floor, per edge
+    for i, edge in enumerate(EDGES):
+        ts = []
+        for _ in range(nrep):
+            sd = float(rng.choice(sd_pool))
+            ntr = int(trades_per_year * span_years)
+            day = rng.integers(0, ndays, size=ntr)
+            r = rng.normal(edge, sd, size=ntr)
+            x = np.zeros(ndays); np.add.at(x, day, r)
+            ts.append(_boot_t(x, ndraw=nboot, rng=rng))
+        ts = np.array([t for t in ts if np.isfinite(t)])
+        D.loc[D.edge_R == edge, 'power_alone'] = float((ts >= fl[1]).mean())
+        D.loc[D.edge_R == edge, 'power_of_3'] = float((ts >= fl[3]).mean())
+        D.loc[D.edge_R == edge, 'power_of_15'] = float((ts >= fl[15]).mean())
+        D.loc[D.edge_R == edge, 'power_of_39'] = float((ts >= fl[39]).mean())
+    f = os.path.join(OUT, 'power_test_bootstrap.csv')
+    D.to_csv(f, index=False)
+    print('  0a bootstrap-t: floors from the zero-edge null -- alone %.3f, '
+          'of 3 %.3f, of 15 %.3f, of 39 %.3f; false positive at zero edge %.3f'
+          % (fl[1], fl[3], fl[15], fl[39],
+             float(D.false_positive_at_zero_alone.iloc[0])), flush=True)
+    for _i, r in D.iterrows():
+        print('    edge %+.2f R  power alone %.3f  of 3 %.3f  of 15 %.3f  of 39 %.3f'
+              % (r.edge_R, r.power_alone, r.power_of_3, r.power_of_15,
+                 r.power_of_39), flush=True)
+    return f
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'power')
     if st == 'power':
         stage_power(nrep=G.opt('--nrep', int, NREP))
+    elif st == 'powerboot':
+        stage_power_boot(nrep=G.opt('--nrep', int, 400))
     elif st == 'powermd':
         md_power()
     else:

@@ -1,3 +1,34 @@
+<!-- SUPERSEDED 2026-11-24 by results/nnfx/STAGE1_R2.md.
+
+Jack read this file and found three faults. All three were real:
+
+1. NO COST WAS CHARGED ON THE FLIP-ONLY VARIANT. R was restated against the
+   1.5 ATR risk unit and the cost was not, so with a 2000 ATR sentinel stop the
+   charge came out 2000 times too small -- +0.00001 R per trade instead of
+   +0.018. Every flip-only figure in this file is GROSS of costs.
+
+2. THE WORST DIP WAS NOT A DRAWDOWN. It was computed from six yearly sums, so
+   it equalled minus the worst year on 56 of 117 rows and was exactly 0 on four
+   more. The true chronological drawdown on the daily mark-to-market series is
+   two to three times larger: 384 R against 115 R on one candidate.
+
+3. AMBIGUOUS BARS WERE RESOLVED STOP-FIRST. Every bar whose daily range covered
+   both the stop and the target was filled as a stop, where A5 had measured the
+   target first on 40 per cent of such days.
+
+And a fourth fault, mine, which Jack's zero-edge check exposed: the random-entry
+null was computed over the WHOLE span 2005-2020 while the summary divided its
+total by the six-year BUILD trade count, a factor of 2.607. That made every
+null_p in this file meaningless, because a six-year real total was being
+compared against a sixteen-year null total.
+
+STAGE1_R2.md replaces it with costs charged in a declared notional, true
+chronological drawdowns, hourly-resolved ambiguous bars, eleven unseen years for
+the fixed settings, three declared risk plans, a block-bootstrap t beside the
+yearly t, and luck floors computed from the random-entry null rather than from a
+formula. Read that instead.
+-->
+
 # STAGE 1 — ONE PIECE ALONE, WALK-FORWARD
 
 Generated 2026-11-24 12:31 by `code/nnfx1.py`. HANDOFF 0m.

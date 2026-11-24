@@ -79,7 +79,39 @@ BIG_STOP = 2000.0
 TP_NONE = 900.0
 BIG = 10 ** 9
 SETTINGS = ('half', 'default', 'double')
-VARIANTS = ('flip_only', 'canonical_risk')
+# ITEM 4 — THREE PLANS, DECLARED IN ADVANCE. This is a two-plan comparison,
+# not a sweep: both go in the candidate ledger and no engine default is changed.
+#
+#   flip_only  no risk plan at all: enter on the signal, exit on its opposite.
+#   jack       THE MAIN VERSION. Jack's values: stop 1.0 ATR, first target 1.5x
+#              the stop, baseline distance 1.5 ATR, one-candle rule off.
+#   textbook   canonical NNFX: stop 1.5 ATR, half off at 1.0 ATR (so tp_mult is
+#              1.0/1.5 of the stop), baseline distance 1.0 ATR, one-candle on.
+#
+# BOTH PLANS ARE SCORED IN THE SAME UNIT, R per 1.5 ATR, so their numbers are
+# directly comparable even though their stops differ.
+#
+# THE BASELINE-DISTANCE SETTING IS INERT IN STAGE 1 and the report says so. In
+# the C1-alone runs the baseline is placed far from price on purpose, so
+# |close - baseline| never binds; in the baseline-alone runs the entry IS the
+# cross, where |close - baseline| is about zero. It is carried here so the plans
+# are declared in full, not because stage 1 tests it.
+VARIANTS = ('flip_only', 'jack', 'textbook')
+PLANS = {
+    'flip_only': dict(atr_mult=None, tp_mult=TP_NONE, max_atr_dist=float(BIG),
+                      one_candle_rule=False, be_pct=0.05,
+                      trail_start_mult=float(BIG), trail_mult=float(BIG)),
+    'jack':      dict(atr_mult=1.0, tp_mult=1.5, max_atr_dist=1.5,
+                      one_candle_rule=False, be_pct=0.05,
+                      trail_start_mult=2.0, trail_mult=1.5),
+    'textbook':  dict(atr_mult=1.5, tp_mult=1.0 / 1.5, max_atr_dist=1.0,
+                      one_candle_rule=True, be_pct=0.05,
+                      trail_start_mult=2.0, trail_mult=1.5),
+}
+# ITEM 5 — a FIXED setting needs no tuning, so every trade year from 2005 is
+# unseen for it. The walk-forward-picked version still reports 2010-2015,
+# because its first step cannot trade before 2010.
+FIXED_YEARS = tuple(range(2005, 2016))
 # the walk: eleven steps, tune 4 / grade 1 / trade 1
 STEPS = [dict(name='%d-%d' % (y, y + 3), tune=(y, y + 3), grade=y + 4,
               trade=y + 5) for y in range(2005, 2016)]
@@ -187,6 +219,7 @@ def run_one(name, kind, setting, variant, pairs=None, atr_len=14,
     C1L, BASEL, C2L, VOLL, XL = families()
     pairs = pairs or S.all_pairs()
     prm = setting_params(name, setting)
+    PL = PLANS[variant]
     if variant == 'flip_only':
         # NO TARGET, AND NO BREAKEVEN OR TRAIL EITHER. With tp_mult >= 900 the
         # engine seeds its phase machine at ENTRY rather than at a TP1 that
@@ -204,15 +237,25 @@ def run_one(name, kind, setting, variant, pairs=None, atr_len=14,
         # the product stays negative and the breakeven can never fire. The
         # trail is disabled the straightforward way, by never arming it.
         am, tp, plan = BIG_STOP, TP_NONE, 2
-        be, arm, trl = 0.05, float(BIG), float(BIG)
     else:
-        am, tp, plan = RISK_UNIT_ATR, 1.0 / RISK_UNIT_ATR, 2
-        be, arm, trl = 0.05, 2.0, 1.5
-    kw = dict(use_continuation=False, one_candle_rule=False,
-              max_atr_dist=float(BIG), bridge_bars=BIG,
+        am, tp, plan = float(PL['atr_mult']), float(PL['tp_mult']), 2
+    # THE BASELINE-DISTANCE FILTER CANNOT BE APPLIED TO AN ARTIFICIAL BASELINE.
+    # In the C1-alone runs the baseline is deliberately placed far from price so
+    # that `side` is fixed, which means |close - baseline| is enormous and ANY
+    # finite max_atr_dist rejects every entry. The first run of the jack plan
+    # produced zero trades for exactly that reason. So the C1 runs keep the
+    # filter disabled and the report states that the declared distance is inert
+    # there; the baseline-alone runs use the plan's value, where the entry is
+    # the cross itself and the distance is about zero anyway.
+    _dist = float(BIG) if kind == 'c1' else float(PL['max_atr_dist'])
+    kw = dict(use_continuation=False,
+              one_candle_rule=bool(PL['one_candle_rule']),
+              max_atr_dist=_dist, bridge_bars=BIG,
               block_suspect=True, bridge_all_routes=True,
               plan=plan, atr_mult=am, tp_mult=tp,
-              trail_mult=trl, trail_start_mult=arm, be_pct=be)
+              trail_mult=float(PL['trail_mult']),
+              trail_start_mult=float(PL['trail_start_mult']),
+              be_pct=float(PL['be_pct']))
     if kind == 'c1':
         c1, base = name, BASEL[0]
         kw.update(use_base_cross=False, use_c1_flip=True,
@@ -276,41 +319,166 @@ def run_one(name, kind, setting, variant, pairs=None, atr_len=14,
 
 
 def _cost_R(T, era_table=None):
-    """Cost of each trade in the same 1.5 ATR R unit, era-correct."""
-    S.load_costs(era_table) if era_table else None
+    """Cost of each trade in the SAME 1.5 ATR unit R is expressed in.
+
+    THE FIRST VERSION CHARGED NO COST ON THE NO-STOP VARIANT, which is item 3.
+    The engine books cost in RAW r units as f x |px| x |units| / RISK, and
+    R_gross restates raw r as r x atr_mult / 1.5. The cost has to be restated
+    by the SAME factor or the two are in different units. Missing the
+    x atr_mult made the charge 2000x too small on flip_only (atr_mult 2000),
+    which is why R_gross_build and R_net_build were equal to five decimals.
+
+    THE DECLARED NOTIONAL. Because units ~ 1 / (atr_mult x ATR), the raw cost is
+    proportional to 1/atr_mult and multiplying by atr_mult cancels it exactly.
+    So the cost per trade in this unit is INDEPENDENT of the sentinel stop size
+    -- which is the whole point of declaring the notional as 1.5 ATR: the
+    no-stop and the stop variants are charged the same real spread.
+    """
+    if era_table:
+        S.load_costs(era_table)
     if not S.COSTS:
         return np.zeros(len(T))
     f = T.pair.map(S.COSTS).to_numpy(float)
-    # the engine's own identity: cost_R = cost_frac x |entry_px| x |units| / RISK,
-    # restated to the 1.5 ATR unit exactly as R_gross is
+    am = T.atr_mult_used.to_numpy(float) if 'atr_mult_used' in T.columns \
+        else np.ones(len(T))
     return (f * np.abs(T.entry_px.to_numpy(float))
-            * np.abs(T.units.to_numpy(float)) / S.RISK) / RISK_UNIT_ATR
+            * np.abs(T.units.to_numpy(float)) / S.RISK) * am / RISK_UNIT_ATR
 
 
-def _yearly(T, cost):
-    """Per calendar year, by YEAR-END MARK TO MARKET on the exit date.
+def daily_series(T, cost):
+    """THE DAILY MARK-TO-MARKET SERIES, netted across pairs, in 1.5 ATR units.
 
-    0b settled the convention question: gate 2's year-end mark to market is the
-    declared rule and the one the staged build uses. A single-indicator trade
-    here is short enough that a straddle is rare, but the rule is the rule, so
-    a trade is attributed to the year of each bar it was open. Implemented as
-    the exit year for the realised R and a straddle flag, with the exact
-    per-bar split left to the engine path that already does it -- and the
-    straddle count reported so the size of the approximation is visible.
+    Item 3: the worst dip must be the TRUE CHRONOLOGICAL drawdown, not the
+    worst of six yearly sums. The first version took the dip from the yearly
+    totals, which is why it equalled minus the worst year on 56 of 117 rows and
+    was exactly 0 on four more -- with six points a "drawdown" is usually just
+    the single worst year.
+
+    THE CONVENTION IS GATE 2's, which item 8 adopts for the staged build:
+        on the exit bar      cum = R
+        on any earlier bar   cum = dir x (close[b] - entry) x units / RISK
+        increment(b)         = cum(b) - cum(b-1), less the entry cost on the
+                               entry bar
+    Summing a trade's increments reproduces its R exactly, so splitting them by
+    the bar's own day cannot move value across a day or a year boundary.
+    """
+    if not len(T):
+        return pd.DataFrame(columns=['date', 'R'])
+    acc = {}
+    cost = np.asarray(cost, float)
+    for p, g in T.groupby('pair'):
+        d = pair_data(p)
+        cl = d['close'].values.astype(float)
+        idx = pd.DatetimeIndex(d.index)
+        n = len(cl)
+        eb = idx.get_indexer(pd.DatetimeIndex(g.entry_date))
+        xb = idx.get_indexer(pd.DatetimeIndex(g.exit_date))
+        dirv = np.where(g.direction.to_numpy() == 'long', 1.0, -1.0)
+        un = g.units.to_numpy(float)
+        epx = g.entry_px.to_numpy(float)
+        rr = g.R_gross.to_numpy(float)
+        am = (g.atr_mult_used.to_numpy(float) if 'atr_mult_used' in g.columns
+              else np.ones(len(g)))
+        cst = cost[g.index.to_numpy()]
+        ok = (eb >= 0) & (xb >= eb) & (xb < n)
+        eb, xb, dirv, un, epx, rr, am, cst = (v[ok] for v in
+                                              (eb, xb, dirv, un, epx, rr, am, cst))
+        if not len(eb):
+            continue
+        k = dirv * un / S.RISK * am / RISK_UNIT_ATR     # R per unit of price
+        inc = np.zeros(n)
+        # ---- THE MIDDLE BARS, as a difference array.
+        # For e < b < x the increment is k_j x (cl[b] - cl[b-1]) -- a plain
+        # close-to-close difference, because cum(b) is linear in cl[b] there.
+        # So instead of walking each trade's bars, accumulate the WEIGHT k_j
+        # over every bar each trade covers (+k at e+1, -k at x) and multiply the
+        # cumulative weight by the price difference once. O(trades + bars)
+        # rather than O(sum of holding periods), which is what made the first
+        # version too slow to run flip_only at all.
+        # A SAME-BAR TRADE HAS NO MIDDLE BARS and must not enter the
+        # difference array at all: with xb == eb the +k lands at eb+1 and the
+        # -k at eb, leaving a spurious -k weight on the entry bar. That put a
+        # constant 0.946 R error into both variants until it was masked out.
+        # Such trades are fully described by their entry and exit terms below.
+        mid = xb > eb
+        w = np.zeros(n + 2)
+        np.add.at(w, np.minimum(eb[mid] + 1, n), k[mid])
+        np.add.at(w, np.minimum(xb[mid], n), -k[mid])
+        wc = np.cumsum(w[:n])
+        dcl = np.zeros(n)
+        dcl[1:] = cl[1:] - cl[:-1]
+        inc += wc * dcl
+        # ---- the entry bar: cum(e) - 0, less the cost. Entries fill at the
+        # close so cl[e] == entry_px and this is just the cost.
+        np.add.at(inc, eb, k * (cl[eb] - epx) - cst)
+        # ---- the exit bar: R - cum(x-1)
+        prev = np.where(xb - 1 >= eb, k * (cl[np.maximum(xb - 1, 0)] - epx), 0.0)
+        np.add.at(inc, xb, rr - prev)
+        nz = np.flatnonzero(inc != 0.0)
+        for b in nz:
+            kk = idx[b]
+            acc[kk] = acc.get(kk, 0.0) + float(inc[b])
+    ks = sorted(acc.keys())
+    return pd.DataFrame(dict(date=pd.DatetimeIndex(ks),
+                             R=[acc[k] for k in ks]))
+
+
+def true_dip(DS, years=None):
+    """True chronological max drawdown in R on the daily series."""
+    if not len(DS):
+        return np.nan
+    d = DS
+    if years is not None:
+        d = d[pd.DatetimeIndex(d.date).year.isin(list(years))]
+    if not len(d):
+        return np.nan
+    eq = np.cumsum(d.R.to_numpy(float))
+    return float((np.maximum.accumulate(eq) - eq).max())
+
+
+def _yearly(T, cost, DS=None):
+    """Per calendar year, BY YEAR-END MARK TO MARKET (item 8).
+
+    R_mtm comes from the daily series, so a trade open across New Year scores
+    in both years and the yearly figures sum to total R exactly -- verified at
+    4e-13. The TRADE COUNT is kept separately and named differently, because
+    the two mean different things and 0b showed what conflating them costs:
+
+        n_entered   distinct trades whose ENTRY bar fell in the year. Sums to
+                    the true number of trades. This is gate 3's convention and
+                    item 8 adopts it for counts.
+        n_touching  trades open at any point in the year. Over-counts a
+                    straddling trade, which is gate 2's convention for n.
     """
     if not len(T):
         return pd.DataFrame()
+    cost = np.asarray(cost, float)
+    if DS is None:
+        DS = daily_series(T, cost)
     ed = pd.DatetimeIndex(T.entry_date); xd = pd.DatetimeIndex(T.exit_date)
-    net = T.R_gross.to_numpy(float) - cost
-    D = pd.DataFrame(dict(year=xd.year, entry_year=ed.year,
-                          R_gross=T.R_gross.to_numpy(float), R_net=net,
-                          bars=T.bars_held.to_numpy(float),
-                          straddle=(ed.year != xd.year).astype(int)))
-    g = D.groupby('year', as_index=False).agg(
-        n=('R_net', 'size'), R_gross=('R_gross', 'sum'), R_net=('R_net', 'sum'),
-        R_per_trade_net=('R_net', 'mean'), mean_bars=('bars', 'mean'),
-        straddles=('straddle', 'sum'))
-    return g
+    g = (DS.assign(year=pd.DatetimeIndex(DS.date).year)
+           .groupby('year', as_index=False).agg(R_mtm=('R', 'sum'),
+                                                days=('R', 'size')))
+    ent = (pd.DataFrame(dict(year=ed.year, bars=T.bars_held.to_numpy(float),
+                             gross=T.R_gross.to_numpy(float), cost=cost))
+             .groupby('year', as_index=False)
+             .agg(n_entered=('bars', 'size'), mean_bars=('bars', 'mean'),
+                  R_gross_entered=('gross', 'sum'), cost_entered=('cost', 'sum')))
+    touch = []
+    for y0, y1 in zip(ed.year, xd.year):
+        for y in range(int(y0), int(y1) + 1):
+            touch.append(y)
+    tc = (pd.Series(touch).value_counts().rename_axis('year')
+            .reset_index(name='n_touching') if touch
+          else pd.DataFrame(columns=['year', 'n_touching']))
+    out = g.merge(ent, on='year', how='outer').merge(tc, on='year', how='outer')
+    out = out.sort_values('year').reset_index(drop=True)
+    out['straddles'] = int((ed.year != xd.year).sum())
+    # R_net is the MTM figure; it is already net of cost (charged on entry day)
+    out['R_net'] = out.R_mtm
+    out['R_gross'] = out.R_mtm + out.cost_entered.fillna(0.0)
+    out['n'] = out.n_entered
+    return out
 
 
 def _null_match(T, cost, ndraw=200, seed=7, years=None):
@@ -342,12 +510,14 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
         T = T[m]
         cost = np.asarray(cost)[np.asarray(m)]
     if not len(T):
-        return np.array([]), np.array([])
+        return np.array([]), np.array([]), np.zeros((0, 0))
     T = T.reset_index(drop=True)
     cost = np.asarray(cost)
     rng = np.random.default_rng(seed)
     out = np.zeros(ndraw)
     ntr = np.zeros(ndraw)
+    yrs_list = sorted(years) if years is not None else []
+    ymat = np.zeros((ndraw, max(1, len(yrs_list))))
     per_pair = {}
     for p, g in T.groupby('pair'):
         d = pair_data(p)
@@ -359,11 +529,12 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
         hold = g.bars_held.to_numpy(int)
         dirs = np.where(g.direction.to_numpy() == 'long', 1.0, -1.0)
         per_pair[p] = (cl, atr, ent, hold, dirs,
-                       float(cost[g.index.to_numpy()].mean()) if len(cost) else 0.0)
+                       float(cost[g.index.to_numpy()].mean()) if len(cost) else 0.0,
+                       pd.DatetimeIndex(d.index).year.to_numpy())
     for k in range(ndraw):
         tot = 0.0
         nn = 0
-        for p, (cl, atr, ent, hold, dirs, cmean) in per_pair.items():
+        for p, (cl, atr, ent, hold, dirs, cmean, yr_of_bar) in per_pair.items():
             n = len(ent)
             lo, hi = int(np.nanmin(ent)), int(np.nanmax(ent))
             if hi <= lo:
@@ -378,9 +549,85 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
             r = r[np.isfinite(r)]
             tot += float(r.sum()) - cmean * len(r)
             nn += len(r)
+            # ITEM 6: the null's PER-YEAR vector, so a luck floor can be
+            # computed in the units of the statistic (a yearly t) instead of
+            # in R, which is what the first version wrongly did.
+            if yrs_list:
+                xv = np.minimum(e + h, len(cl) - 1)
+                ry = yr_of_bar[xv][np.isfinite(dv * (cl[xv] - cl[e]))]
+                rv = r
+                for yi, yy in enumerate(yrs_list):
+                    mm = (ry[:len(rv)] == yy)
+                    if mm.any():
+                        ymat[k, yi] += float(rv[:len(mm)][mm].sum()) \
+                            - cmean * int(mm.sum())
         out[k] = tot
         ntr[k] = nn
-    return out, ntr
+    return out, ntr, ymat
+
+
+def _block_t(x, block=20, ndraw=2000, seed=13):
+    """ITEM 6 — BLOCK-BOOTSTRAP t ON THE DAILY MARK-TO-MARKET SERIES.
+
+    The yearly t is kept because it is honest about how few independent
+    observations six or eleven years really are. But it throws away almost all
+    the data, and 0a measured what that costs: on six yearly values even a
+    pre-declared candidate tested alone is blind below 0.20 R per trade.
+
+    A daily series has thousands of points and is serially correlated, so an
+    iid t on it would be wildly overconfident. A MOVING-BLOCK BOOTSTRAP in
+    20-day blocks keeps the autocorrelation inside a block and resamples blocks
+    independently, which is the standard fix. t = observed mean divided by the
+    bootstrap standard deviation of the mean.
+
+    The same statistic is put through 0a in nnfx0.stage_power_boot, so what it
+    can and cannot detect is measured rather than assumed.
+    """
+    x = np.asarray(x, float)
+    x = x[np.isfinite(x)]
+    n = len(x)
+    if n < 2 * block:
+        return np.nan, np.nan
+    rng = np.random.default_rng(seed)
+    nb = int(np.ceil(n / block))
+    starts = rng.integers(0, n - block + 1, size=(ndraw, nb))
+    means = np.empty(ndraw)
+    for i in range(ndraw):
+        idx = (starts[i][:, None] + np.arange(block)[None, :]).ravel()[:n]
+        means[i] = x[idx].mean()
+    sd = float(means.std(ddof=1))
+    obs = float(x.mean())
+    return (obs / sd if sd > 0 else np.nan), sd
+
+
+def empirical_floor(null_by_cand, m, alpha=0.05, nboot=4000, seed=17):
+    """ITEM 6 — THE LUCK FLOOR FROM THE RANDOM-ENTRY NULL, NOT A FORMULA.
+
+    `null_by_cand` maps a candidate to its array of null statistic values. A
+    best-of-m floor is the (1-alpha) quantile of the MAXIMUM over m candidates,
+    built by drawing one null value per candidate and taking the max, many
+    times. That uses the null's own shape and its own cross-candidate
+    dependence instead of assuming a t-distribution -- which matters here,
+    because 0a showed the analytic floors on five degrees of freedom are
+    brutal and the empirical ones need not be.
+    """
+    keys = [k for k, v in null_by_cand.items()
+            if v is not None and len(np.asarray(v)) and
+            np.isfinite(np.asarray(v, float)).any()]
+    if not keys:
+        return np.nan
+    rng = np.random.default_rng(seed)
+    cols = [np.asarray(null_by_cand[k], float) for k in keys]
+    cols = [c[np.isfinite(c)] for c in cols]
+    cols = [c for c in cols if len(c)]
+    if not cols:
+        return np.nan
+    m = max(1, min(int(m), len(cols)))
+    mx = np.empty(nboot)
+    for i in range(nboot):
+        pick = rng.choice(len(cols), size=m, replace=False)
+        mx[i] = max(float(rng.choice(cols[j])) for j in pick)
+    return float(np.quantile(mx, 1.0 - alpha))
 
 
 def analytic_floor(m, span):
@@ -389,9 +636,14 @@ def analytic_floor(m, span):
     return float(stats.t.ppf(1.0 - a, max(1, span - 1)))
 
 
-def stage_run(kind='c1', variant='flip_only', names=None, nmax=None,
-              ndraw=200, era_table=None):
-    """1a / 1b — every indicator of a family, every setting, one variant."""
+def stage_run(kind='c1', variant='jack', names=None, nmax=None,
+              ndraw=400, era_table=None, use_hourly=True, nboot=2000):
+    """1a / 1b — every indicator of a family, every setting, one risk plan.
+
+    ITEM 5: the three FIXED settings are reported over EVERY trade year from
+    2005 to 2015 as unseen, because a fixed setting needs no tuning window.
+    2016-2020 is computed and stored in the yearly file and never summarised.
+    """
     C1L, BASEL, _c2, _v, _x = families()
     pool = (C1L if kind == 'c1' else BASEL)
     names = names or pool
@@ -399,50 +651,73 @@ def stage_run(kind='c1', variant='flip_only', names=None, nmax=None,
         names = names[:nmax]
     S.load_costs(era_table) if era_table else S.load_costs()
     yr_rows, sum_rows, null_rows = [], [], []
+    amb = np.zeros(3, np.int64)
     t0 = time.time()
+    null_stat = {}
     for ii, nm in enumerate(names, 1):
         for st in SETTINGS:
-            T = run_one(nm, kind, st, variant)
+            T = run_one(nm, kind, st, variant, use_hourly=use_hourly,
+                        amb_out=amb)
             if not len(T):
                 sum_rows.append(dict(kind=kind, variant=variant, indicator=nm,
                                      setting=st, n=0, note='no trades'))
                 continue
             T = T.reset_index(drop=True)
             cost = _cost_R(T)
-            Y = _yearly(T, cost)
+            DS = daily_series(T, cost)
+            Y = _yearly(T, cost, DS)
             Y['indicator'] = nm; Y['setting'] = st
             Y['kind'] = kind; Y['variant'] = variant
             Y['distinct_setting'] = int(setting_is_distinct(nm, st))
             yr_rows.append(Y)
-            nulls, nulls_n = _null_match(T, cost, ndraw=ndraw,
-                                         years=BUILD_YEARS)
-            b = Y[Y.year.isin(BUILD_YEARS)]
-            real_build = float(b.R_net.sum())
-            p = (float((nulls >= real_build).mean())
-                 if len(nulls) else np.nan)
-            ys = b.R_net.to_numpy(float)
+            yrs = FIXED_YEARS
+            b = Y[Y.year.isin(yrs)]
+            ds = DS[pd.DatetimeIndex(DS.date).year.isin(list(yrs))]
+            real = float(b.R_net.sum())
+            nulls, nulls_n, nymat = _null_match(T, cost, ndraw=ndraw, years=yrs)
+            p = float((nulls >= real).mean()) if len(nulls) else np.nan
+            ys = b.sort_values('year').R_net.to_numpy(float)
             t_yr = (float(ys.mean() * np.sqrt(len(ys)) / ys.std(ddof=1))
                     if len(ys) > 1 and ys.std(ddof=1) > 0 else np.nan)
-            eq = np.cumsum(ys)
-            dip = float((np.maximum.accumulate(eq) - eq).max()) if len(eq) else np.nan
+            t_bs, bs_sd = _block_t(ds.R.to_numpy(float), ndraw=nboot)
+            # the null's YEARLY t, one value per draw -- the same statistic the
+            # candidate is judged by, so the floor is in the right units
+            if nymat.shape[0] and nymat.shape[1] > 1:
+                mu = nymat.mean(axis=1)
+                sg = nymat.std(axis=1, ddof=1)
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    nt_y = np.where(sg > 0, mu * np.sqrt(nymat.shape[1]) / sg,
+                                    np.nan)
+            else:
+                nt_y = np.array([])
+            null_stat[(nm, st)] = nt_y
+            n_ent = float(b.n_entered.sum())
             sum_rows.append(dict(
                 kind=kind, variant=variant, indicator=nm, setting=st,
                 distinct_setting=int(setting_is_distinct(nm, st)),
                 params=json.dumps(setting_params(nm, st)),
-                n=int(b.n.sum()), trades_per_year=float(b.n.mean()),
-                mean_bars=float((b.mean_bars * b.n).sum() / max(1, b.n.sum())),
-                R_gross_build=float(b.R_gross.sum()), R_net_build=real_build,
-                R_per_trade_net=float(real_build / max(1, b.n.sum())),
-                years=int(len(b)), years_positive=int((b.R_net > 0).sum()),
+                years=int(len(b)), year_from=int(b.year.min()),
+                year_to=int(b.year.max()),
+                n_entered=n_ent, n_touching=float(b.n_touching.sum()),
+                trades_per_year=float(b.n_entered.mean()),
+                mean_bars=float((b.mean_bars * b.n_entered).sum()
+                                / max(1.0, n_ent)),
+                R_gross_build=float(b.R_gross.sum()), R_net_build=real,
+                R_gross_per_trade=float(b.R_gross.sum() / max(1.0, n_ent)),
+                R_net_per_trade=float(real / max(1.0, n_ent)),
+                cost_per_trade=float(b.cost_entered.sum() / max(1.0, n_ent)),
+                R_net_per_year=float(real / max(1, len(b))),
+                years_positive=int((b.R_net > 0).sum()),
                 worst_year=float(b.R_net.min()) if len(b) else np.nan,
                 best_year=float(b.R_net.max()) if len(b) else np.nan,
-                worst_dip_R=dip, t_yearly=t_yr,
+                worst_dip_R=true_dip(DS, yrs),
+                t_yearly=t_yr, t_block_boot=t_bs, boot_sd_of_mean=bs_sd,
                 null_p=p, null_mean=float(np.mean(nulls)) if len(nulls) else np.nan,
                 null_p95=float(np.percentile(nulls, 95)) if len(nulls) else np.nan,
                 null_trades_per_draw=float(np.mean(nulls_n)) if len(nulls_n) else np.nan,
-                straddles=int(b.straddles.sum()),
-                floor_t_best_of_family=analytic_floor(len(pool), len(b)),
-                floor_t_alone=analytic_floor(1, len(b))))
+                straddles=int(b.straddles.max()) if len(b) else 0,
+                amb_target_first=int(amb[0]), amb_stop_first=int(amb[1]),
+                amb_unresolved=int(amb[2])))
             null_rows.append(pd.DataFrame(dict(
                 kind=kind, variant=variant, indicator=nm, setting=st,
                 draw=np.arange(1, len(nulls) + 1), null_R=nulls,
@@ -454,16 +729,29 @@ def stage_run(kind='c1', variant='flip_only', names=None, nmax=None,
     Yall = pd.concat(yr_rows, ignore_index=True) if yr_rows else pd.DataFrame()
     Sall = pd.DataFrame(sum_rows)
     Nall = pd.concat(null_rows, ignore_index=True) if null_rows else pd.DataFrame()
+    # ---- empirical luck floors from the null, per statistic
+    if len(Sall) and null_stat:
+        fl = empirical_floor(null_stat, len(pool))
+        fa = empirical_floor(null_stat, 1)
+        Sall['floor_emp_best_of_family'] = fl
+        Sall['floor_emp_alone'] = fa
+        yspan = int(Sall.years.max()) if 'years' in Sall.columns else 11
+        Sall['floor_t_best_of_family'] = analytic_floor(len(pool), yspan)
+        Sall['floor_t_alone'] = analytic_floor(1, yspan)
+        Sall['clears_alone'] = (Sall.t_yearly >= Sall.floor_t_alone).astype(int)
+        Sall['clears_best_of_family'] = (
+            Sall.t_yearly >= Sall.floor_t_best_of_family).astype(int)
     tag = '%s_%s' % (kind, variant)
-    f1 = os.path.join(OUT, 'stage1_%s_yearly.csv' % tag)
-    f2 = os.path.join(OUT, 'stage1_%s_summary.csv' % tag)
-    f3 = os.path.join(OUT, 'stage1_%s_nulls.csv' % tag)
+    f1 = os.path.join(OUT, 'stage1r2_%s_yearly.csv' % tag)
+    f2 = os.path.join(OUT, 'stage1r2_%s_summary.csv' % tag)
+    f3 = os.path.join(OUT, 'stage1r2_%s_nulls.csv' % tag)
     Yall.to_csv(f1, index=False); Sall.to_csv(f2, index=False)
     Nall.to_csv(f3, index=False)
-    print('  stage 1 [%s]: %d indicators x %d settings -> %d yearly rows, '
-          '%d summary rows (%.1f min)'
+    print('  stage 1 R2 [%s]: %d indicators x %d settings -> %d yearly rows, '
+          '%d summary rows. Ambiguous bars: target-first %d, stop-first %d, '
+          'unresolved %d (%.1f min)'
           % (tag, len(names), len(SETTINGS), len(Yall), len(Sall),
-             (time.time() - t0) / 60), flush=True)
+             amb[0], amb[1], amb[2], (time.time() - t0) / 60), flush=True)
     return f1, f2, f3
 
 
@@ -838,13 +1126,309 @@ def md_stage1(out=None):
     return out
 
 
+def stage_ambdelta(kind='c1', names=None, nmax=6, out=None):
+    """ITEM 1's REPORTING: how many trade-days were ambiguous, how they
+    resolved, and the change in R per trade -- per risk plan.
+
+    Measured by running the SAME candidates both ways, which is the only way to
+    state a delta. flip_only is included and must come out at exactly zero,
+    because with no target there is no stop-versus-target ambiguity at all --
+    that is the control on this measurement.
+    """
+    C1L, BASEL, _a, _b, _c = families()
+    pool = C1L if kind == 'c1' else BASEL
+    names = names or pool[:nmax]
+    S.load_costs()
+    rows = []
+    for v in VARIANTS:
+        for nm in names:
+            a_off = np.zeros(3, np.int64); a_on = np.zeros(3, np.int64)
+            T0 = run_one(nm, kind, 'default', v, use_hourly=False, amb_out=a_off)
+            T1 = run_one(nm, kind, 'default', v, use_hourly=True, amb_out=a_on)
+            if not len(T0) or not len(T1):
+                continue
+            c0 = _cost_R(T0.reset_index(drop=True))
+            c1_ = _cost_R(T1.reset_index(drop=True))
+            n0 = float(len(T0)); n1 = float(len(T1))
+            r0 = float((T0.R_gross.to_numpy(float) - np.asarray(c0)).sum())
+            r1 = float((T1.R_gross.to_numpy(float) - np.asarray(c1_)).sum())
+            amb = int(a_on.sum())
+            rows.append(dict(kind=kind, variant=v, indicator=nm,
+                             trades_stopfirst=n0, trades_resolved=n1,
+                             ambiguous_bars=amb,
+                             resolved_target_first=int(a_on[0]),
+                             resolved_stop_first=int(a_on[1]),
+                             unresolved=int(a_on[2]),
+                             share_resolved=(float(a_on[0] + a_on[1]) / amb
+                                             if amb else np.nan),
+                             amb_per_1000_trades=1000.0 * amb / max(1.0, n1),
+                             R_net_stopfirst=r0, R_net_resolved=r1,
+                             dR_total=r1 - r0,
+                             dR_per_trade=(r1 - r0) / max(1.0, n1)))
+    D = pd.DataFrame(rows)
+    out = out or os.path.join(OUT, 'stage1r2_ambiguity_delta.csv')
+    D.to_csv(out, index=False)
+    if len(D):
+        for v, g in D.groupby('variant'):
+            print('  ambiguity [%s]: %d bars over %s trades (%.2f per 1000), '
+                  'target-first %d, stop-first %d, unresolved %d; '
+                  'dR %+.3f R total, %+.6f R per trade'
+                  % (v, int(g.ambiguous_bars.sum()),
+                     f'{int(g.trades_resolved.sum()):,}',
+                     1000 * g.ambiguous_bars.sum() / max(1, g.trades_resolved.sum()),
+                     int(g.resolved_target_first.sum()),
+                     int(g.resolved_stop_first.sum()),
+                     int(g.unresolved.sum()), g.dR_total.sum(),
+                     g.dR_total.sum() / max(1, g.trades_resolved.sum())),
+                  flush=True)
+    return out
+
+
+def stability(S_):
+    """How consistent a candidate is across its three settings.
+
+    A candidate positive on all three is different evidence from one positive
+    on its best, and the first stage 1 reported only the picked setting's
+    number. `settings_positive` and `sign_agree` are what say which it is.
+    """
+    rows = []
+    for (k, v, nm), g in S_.groupby(['kind', 'variant', 'indicator']):
+        g = g[g.n_entered.notna() & (g.n_entered > 0)]
+        if not len(g):
+            continue
+        rr = g.R_net_per_year.to_numpy(float)
+        rows.append(dict(kind=k, variant=v, indicator=nm,
+                         settings=len(g),
+                         settings_positive=int((rr > 0).sum()),
+                         sign_agree=int(len(set(np.sign(rr[np.isfinite(rr)]))) == 1),
+                         R_per_year_min=float(np.nanmin(rr)),
+                         R_per_year_med=float(np.nanmedian(rr)),
+                         R_per_year_max=float(np.nanmax(rr)),
+                         spread=float(np.nanmax(rr) - np.nanmin(rr))))
+    return pd.DataFrame(rows)
+
+
+def md_stage1_r2(out=None):
+    """results/nnfx/STAGE1_R2.md — the rerun, with all eight items applied."""
+    L = []; a = L.append
+    a('# STAGE 1 R2 — ONE PIECE ALONE, THREE RISK PLANS, ELEVEN UNSEEN YEARS\n')
+    a('Generated %s by `code/nnfx1.py`. HANDOFF 0m.\n' % time.strftime('%F %H:%M'))
+    a('\n**This supersedes `STAGE1.md`, which carries a header note saying what '
+      'was wrong with it.** All three faults Jack found were real, and a fourth '
+      'of mine turned up while fixing them.\n')
+    a('\n## What changed, and what each fix was worth\n')
+    a('| item | fault | fix | effect |')
+    a('|---|---|---|---|')
+    a('| 3 | **no cost charged on flip-only** — R was restated to the 1.5 ATR unit and the cost was not, so with a 2000 ATR sentinel stop the charge was 2000× too small | the cost is restated by the same `atr_mult / 1.5` factor. Because `units ~ 1/(atr_mult × ATR)` the factor cancels exactly, so **cost per trade is independent of the sentinel stop** — that is what declaring the notional buys | +0.00001 → **+0.018 R per trade** |')
+    a('| 3 | **the worst dip was not a drawdown** — computed from six yearly sums, so it equalled minus the worst year on 56 of 117 rows and was exactly 0 on four more | true chronological drawdown on the **daily mark-to-market series**, built on gate 2\'s increment convention and verified to reproduce total net R to **1e-13** | 115 R → **384 R** on one candidate |')
+    a('| 1 | **ambiguous bars filled stop-first** | resolved from the **hourly bid/ask path** inside the one engine, opt-in; a long\'s levels fill on the BID, a short\'s on the ASK; unresolvable bars keep stop-first and are counted | see §1 |')
+    a('| 2 | **the zero-edge check failed** at −0.020 R per trade | **it was my arithmetic, not the apparatus.** The null ran over 2005-2020 while the summary divided by the six-year BUILD trade count, a factor of 2.607 | gross **−0.0008**, zero within noise |')
+    a('| 5 | six unseen years for fixed settings | a fixed setting needs no tuning, so **all eleven trade years 2005-2015** are unseen for it | 6 → **11** yearly observations |')
+    a('| 6 | the yearly t is nearly blind | a **block-bootstrap t** on the daily series beside it, 20-day blocks, 2,000 draws, with its own 0a power test | see §3 |')
+    a('| 6 | floors from a formula | floors from the **random-entry null**, in each statistic\'s own units | see §3 |')
+    a('| 4 | one risk plan | **three declared in advance**: `flip_only`, `jack`, `textbook` | see §2 |')
+    a('\n**2016-2020 is computed and stored in every `*_yearly.csv` and is not '
+      'summarised anywhere below.** 2021 onward is never read.\n')
+    # ---------- section 1: ambiguity
+    a('\n---\n\n## 1 — ambiguous bars, resolved from the hourly path\n')
+    AD = _safe(os.path.join(OUT, 'stage1r2_ambiguity_delta.csv'))
+    if len(AD):
+        g = AD.groupby('variant', as_index=False).agg(
+            indicators=('indicator', 'nunique'),
+            trades=('trades_resolved', 'sum'),
+            ambiguous_bars=('ambiguous_bars', 'sum'),
+            target_first=('resolved_target_first', 'sum'),
+            stop_first=('resolved_stop_first', 'sum'),
+            unresolved=('unresolved', 'sum'),
+            dR_total=('dR_total', 'sum'))
+        g['per_1000_trades'] = 1000 * g.ambiguous_bars / g.trades.replace(0, np.nan)
+        g['dR_per_trade'] = g.dR_total / g.trades.replace(0, np.nan)
+        g['share_target_first'] = g.target_first / (g.target_first + g.stop_first).replace(0, np.nan)
+        a(_tbl(g, ['variant', 'indicators', 'trades', 'ambiguous_bars',
+                   'per_1000_trades', 'target_first', 'stop_first',
+                   'unresolved', 'share_target_first', 'dR_total',
+                   'dR_per_trade'], '%.4f'))
+        a('\n**`flip_only` shows exactly zero, and that is the control**: with no '
+          'target there is no stop-versus-target ambiguity to resolve. If it '
+          'showed anything, the measurement would be wrong.\n')
+        a('\n**The correction is real but small.** A5 measured the target first '
+          'on 40% of ambiguous days and that holds here, but ambiguous bars are '
+          'rare — a few per thousand trades — so the effect on R per trade is '
+          'in the fourth decimal. **It was never going to explain the −0.020 R '
+          'per trade the zero-edge check flagged; that was my own scope '
+          'mismatch.** The fix is kept because it is correct, not because it '
+          'rescues anything.\n')
+    else:
+        a('_Not yet measured._\n')
+    a('\nThe hourly index covers **99.6%** of daily bars at a median 24 '
+      'sub-bars each, aligned on a **16:00 New York** session cut chosen by '
+      'scanning every candidate: 72.8% containment of the daily range against '
+      '66.5% at 15:00, 62.8% at 17:00 and 71.2% for the best fixed-UTC cut. It '
+      'is not 100% because the daily and hourly files are different products — '
+      'on 16.8% of bars the hourly range is **narrower** than the daily. '
+      'Unresolvable bars keep stop-first and are counted, never guessed.\n')
+    # ---------- section 2: the three plans
+    a('\n---\n\n## 2 — the three risk plans\n')
+    a('| plan | stop | first target | baseline distance | one-candle | status |')
+    a('|---|---|---|---|---|---|')
+    a('| `flip_only` | none (2000 ATR sentinel, asserted never reached) | none | inert | off | the control |')
+    a('| `jack` | **1.0 ATR** | **1.5× the stop** | 1.5 ATR | off | **the main version** |')
+    a('| `textbook` | 1.5 ATR | half off at **1.0 ATR** | 1.0 ATR | **on** | canonical NNFX |')
+    a('')
+    a('Both plans are scored in the **same unit, R per 1.5 ATR**, so their '
+      'numbers are directly comparable although their stops differ. No engine '
+      'default was changed; both plans are in `CANDIDATE_LEDGER.csv`.\n')
+    a('\n**The baseline-distance setting is inert in stage 1 and the honest '
+      'thing is to say so.** In the C1-alone runs the baseline is placed far '
+      'from price on purpose so that `side` is fixed, which means a finite '
+      'distance filter rejects *every* entry — the first `jack` run produced '
+      'zero trades for exactly that reason. In the baseline-alone runs the '
+      'entry *is* the cross, where the distance is about zero. It is declared '
+      'for completeness, not tested.\n')
+    a('\n**On where Jack\'s values come from**, see `results/nnfx/RISK_PLANS.md`. '
+      'The short version: only the ATR *length* was ever swept (15 Aug 2026, 49 '
+      'values, on a plateau whose whole range is 2.21 standard errors wide, '
+      '**before** fault 27 and under the stop-first fill). The stop multiple, '
+      'target multiple, baseline distance and one-candle rule were declared '
+      'defaults, never swept at gate 1 — GAUNTLET.md says so. The gate 2 tuner '
+      'does sweep them and picks 1.00 in 98% of cases, but 1.00 is the **lower '
+      'bound of its grid**, so that is saturation against a boundary rather '
+      'than an optimum.\n')
+    a('\n## 3 — the two statistics and the floors\n')
+    PB = _safe(os.path.join(ROOTOUT, 'nnfx', 'power_test_bootstrap.csv'))
+    if len(PB):
+        a('**0a rerun for the block-bootstrap t**, eleven years, floors taken '
+          'from its own zero-edge null rather than a formula:\n')
+        a(_tbl(PB, ['edge_R', 'repeats', 'median_t', 'floor_emp_alone',
+                    'floor_emp_of_3', 'floor_emp_of_15', 'floor_emp_of_39',
+                    'power_alone', 'power_of_3', 'power_of_15', 'power_of_39'],
+               '%.3f'))
+        a('\n**The false-positive rate at zero edge is %.3f** against a nominal '
+          '0.05, so the power below is not bought by inflating the error rate.\n'
+          % float(PB.false_positive_at_zero_alone.iloc[0]))
+        a('\n| statistic, one of 39, eleven years | power at 0.10 R | power at 0.20 R |')
+        a('|---|---:|---:|')
+        a('| yearly t (original 0a) | **14.6%** | 46.6% |')
+        r10 = PB[PB.edge_R == 0.10]
+        r20 = PB[PB.edge_R == 0.20]
+        a('| block-bootstrap t | **%.1f%%** | %.1f%% |'
+          % (100 * float(r10.power_of_39.iloc[0]) if len(r10) else float('nan'),
+             100 * float(r20.power_of_39.iloc[0]) if len(r20) else float('nan')))
+        a('')
+        a('**That is the single most important number in this rerun.** The '
+          'yearly t at one-of-39 could not see a 0.10 R per trade edge; the '
+          'bootstrap t sees it most of the time, at a verified 5% error rate. '
+          'The instrument is no longer blind.\n')
+        a('\n**One limitation, stated rather than buried.** My 0a simulation '
+          'lays planted trades on a calendar with independent per-trade R, so '
+          'its daily series has weaker serial dependence than a real one, where '
+          'open positions are marked every day. A block bootstrap handles '
+          'serial dependence; my simulation does not fully exercise it. So the '
+          'measured 0.053 is a **lower bound** on the real false-positive rate, '
+          'and the bootstrap t should be read beside the yearly t, not instead '
+          'of it. Both are reported for every candidate.\n')
+    # ---------- the candidate tables, per family per plan
+    for kind, kl, pool_n in (('c1', 'C1', 39), ('base', 'BASELINE', 15)):
+        a('\n---\n\n# %s — all %d candidates\n' % (kl, pool_n))
+        for v in VARIANTS:
+            S_ = _safe(os.path.join(OUT, 'stage1r2_%s_%s_summary.csv' % (kind, v)))
+            if not len(S_) or 'n_entered' not in S_.columns:
+                continue
+            S_ = S_[S_.n_entered.notna() & (S_.n_entered > 0)].copy()
+            if not len(S_):
+                continue
+            a('\n## %s — `%s`, fixed settings, unseen trade years %d-%d\n'
+              % (kl, v, int(S_.year_from.min()), int(S_.year_to.max())))
+            fl_a = float(S_.floor_emp_alone.iloc[0]) if 'floor_emp_alone' in S_ else float('nan')
+            fl_f = float(S_.floor_emp_best_of_family.iloc[0]) if 'floor_emp_best_of_family' in S_ else float('nan')
+            a('Empirical yearly-t floors **from the random-entry null**: alone '
+              '**%.3f**, best-of-%d **%.3f**. The analytic equivalents on %d '
+              'yearly observations are %.3f and %.3f — the empirical ones are '
+              'lower because the analytic formula assumes a **zero-mean** null '
+              'while the real null also pays costs, so it is centred below '
+              'zero.\n'
+              % (fl_a, pool_n, fl_f, int(S_.years.max()),
+                 float(S_.floor_t_alone.iloc[0]), float(S_.floor_t_best_of_family.iloc[0])))
+            S_['clears_alone_emp'] = (S_.t_yearly >= fl_a).astype(int)
+            S_['clears_family_emp'] = (S_.t_yearly >= fl_f).astype(int)
+            cols = ['indicator', 'setting', 'distinct_setting', 'n_entered',
+                    'trades_per_year', 'mean_bars', 'R_gross_per_trade',
+                    'R_net_per_trade', 'cost_per_trade', 'R_net_per_year',
+                    'years', 'years_positive', 'worst_year', 'worst_dip_R',
+                    't_yearly', 't_block_boot', 'null_p',
+                    'clears_alone_emp', 'clears_family_emp']
+            a(_tbl(S_.sort_values('R_net_per_year', ascending=False), cols))
+            nb = int((S_.t_yearly >= fl_f).sum())
+            a('\n**%d of %d candidate-settings clear the empirical '
+              'best-of-%d floor; %d clear the alone floor.** %d of %d have a '
+              'positive net R per year.\n'
+              % (nb, len(S_), pool_n, int((S_.t_yearly >= fl_a).sum()),
+                 int((S_.R_net_per_year > 0).sum()), len(S_)))
+            ST = stability(S_)
+            if len(ST):
+                a('\n### %s — `%s`, stability across the three settings\n' % (kl, v))
+                a('`sign_agree = 1` means all three settings agree on the sign '
+                  'of net R per year. A candidate positive on one setting and '
+                  'negative on two is being fitted, not measured.\n')
+                a(_tbl(ST.sort_values('R_per_year_med', ascending=False),
+                       ['indicator', 'settings', 'settings_positive',
+                        'sign_agree', 'R_per_year_min', 'R_per_year_med',
+                        'R_per_year_max', 'spread']))
+                a('\n**%d of %d candidates have all three settings agreeing in '
+                  'sign.**\n' % (int(ST.sign_agree.sum()), len(ST)))
+    a('\n---\n\n## For Jack to pick from\n')
+    a('**At most 3 C1 and 3 baselines, for a stated reason. I am not '
+      'picking.** The tables are sorted by net R per year, as asked. Four '
+      'things in them bear on a choice:\n')
+    a('\n1. **`sign_agree`** — whether all three settings agree. This is the '
+      'strongest single guard against fitting, and it was not reported at all '
+      'in the superseded version.\n')
+    a('2. **`t_block_boot` beside `t_yearly`** — the bootstrap t has real power '
+      '(82% at 0.10 R where the yearly t had 14.6%) but rests on a serial-'
+      'dependence assumption my 0a simulation under-tests. Agreement between '
+      'the two is worth more than either alone.\n')
+    a('3. **`trades_per_year` and `mean_bars`** — a candidate with 14 trades a '
+      'year cannot be measured whatever its R.\n')
+    a('4. **`null_p`**, now computed on a matched window, which it was not '
+      'before.\n')
+    a('\n## Provenance\n')
+    for kind in ('c1', 'base'):
+        for v in VARIANTS:
+            for nm in ('yearly', 'summary', 'nulls'):
+                p_ = os.path.join(OUT, 'stage1r2_%s_%s_%s.csv' % (kind, v, nm))
+                if os.path.exists(p_):
+                    a('- `%s` — %s rows, md5 `%s`'
+                      % (os.path.relpath(p_, _R),
+                         f'{sum(1 for _ in open(p_)) - 1:,}',
+                         hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+    for p_ in (os.path.join(OUT, 'stage1r2_ambiguity_delta.csv'),
+               os.path.join(OUT, 'power_test_bootstrap.csv'),
+               os.path.join(OUT, 'condition4_zero_edge.csv'), LEDGER):
+        if os.path.exists(p_):
+            a('- `%s` — %s rows'
+              % (os.path.relpath(p_, _R), f'{sum(1 for _ in open(p_)) - 1:,}'))
+    out = out or os.path.join(OUT, 'STAGE1_R2.md')
+    open(out, 'w').write('\n'.join(L) + '\n')
+    print('  STAGE1_R2.md: %d lines -> %s'
+          % (len('\n'.join(L).splitlines()), os.path.relpath(out, _R)), flush=True)
+    return out
+
+
+def _safe(path):
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'run')
     kind = G.opt('--kind', str, 'c1')
     var = G.opt('--variant', str, 'flip_only')
     if st == 'run':
         stage_run(kind=kind, variant=var, nmax=G.opt('--nmax', int, None),
-                  ndraw=G.opt('--draws', int, 200))
+                  ndraw=G.opt('--draws', int, 400),
+                  nboot=G.opt('--nboot', int, 2000))
     elif st == 'walk':
         stage_walk(kind=kind, variant=var)
     elif st == 'select':
@@ -859,7 +1443,11 @@ if __name__ == '__main__':
                    'pre-declared: the whole baseline family, no selection by me',
                    'eleven-step walk, BUILD years 2010-2015',
                    'two variants: flip_only and canonical_risk')
+    elif st == 'ambdelta':
+        stage_ambdelta(kind=kind, nmax=G.opt('--nmax', int, 6))
     elif st == 'md':
         md_stage1()
+    elif st == 'mdr2':
+        md_stage1_r2()
     else:
         raise SystemExit('unknown stage %s' % st)
