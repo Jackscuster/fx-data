@@ -89,9 +89,42 @@ g(){
 # still landing and chunk 1's stages only read LOCAL banks -- there is no reason
 # for a read to wait on a slow remote. One push follows once the batcher lands.
 # The default is unchanged: commit, pull --rebase, push.
+# REFUSE TO STAGE ANY NEW FILE OVER 50 MB. Jack, 24 Nov, step 5.
+#
+# On 24 Nov this function committed results/r2reads/modeA_a2_defaults.csv at
+# 654 MB. GitHub refuses anything over 100 MB at the pre-receive hook, so the
+# remote could not advance past that commit by ANY means -- a retry cannot help,
+# because the blob is in the history being offered. Clearing it took a rewrite
+# of 33 unpushed commits, and that was only safe because they had never been
+# pushed. Had it been pushed, the choice would have been LFS or living with it.
+#
+# So the check is here, where the commit is made, and not only in preflight:
+# preflight runs before a chain, and this file is written DURING one.
+#
+# A file already on the remote is left alone -- 71 of them exceed 50 MB and
+# removing those would mean rewriting pushed history, which Jack ruled out.
+# The question is only whether a commit is ADDING one.
+ci_size_gate(){
+  local lim=$((50*1024*1024)) bad=0 f sz
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    [ -f "$f" ] || continue
+    sz=$(stat -f %z "$f" 2>/dev/null || echo 0)
+    if [ "$sz" -gt "$lim" ]; then
+      say "!!! REFUSING TO COMMIT $f at $((sz/1048576)) MB -- over the 50 MB limit."
+      say "    Write it to disk, gitignore it, and commit a MANIFEST.sha256 entry"
+      say "    and a summary instead (see code/a2summary.py). Unstaging it."
+      git reset -q HEAD -- "$f" 2>/dev/null
+      bad=$((bad+1))
+    fi
+  done < <(git diff --cached --name-only --diff-filter=AM)
+  [ "$bad" = "0" ] || say "    $bad oversized file(s) unstaged; the rest of the commit proceeds"
+}
+
 ci(){
   cd /Users/jackcuster/fx-data
   git add -A code/ results/ HANDOFF.md .gitignore app_data.json app_ui.js >/dev/null 2>&1
+  ci_size_gate
   git commit -q -m "$1
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

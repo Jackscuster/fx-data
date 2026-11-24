@@ -421,6 +421,65 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def c34():
+    """NO NEW FILE OVER 50 MB MAY BE COMMITTED. Jack, 24 Nov, step 5.
+
+    WHAT THIS COST. A chain's own `ci` committed
+    results/r2reads/modeA_a2_defaults.csv at 654 MB, and GitHub refuses any
+    file over 100 MB at the pre-receive hook. The remote then could not advance
+    past that commit by ANY means -- a retry cannot fix it, because the blob is
+    in the history being offered. It took a rewrite of 33 unpushed commits to
+    clear, and the only reason that was safe is that they had never been pushed.
+
+    THE LIMIT IS 50 MB, NOT 100. Half of GitHub's hard limit, so a stage that
+    grows is noticed before it blocks anything. A stage with a big artifact
+    writes it to disk, gitignores it, and commits a MANIFEST.sha256 entry and a
+    summary instead -- guard 28 for the banks, code/a2summary.py for this file.
+
+    WHY EXISTING FILES ARE GRANDFATHERED, AND IT IS NOT A LOOPHOLE. 71 tracked
+    files already exceed 50 MB: results/signals.json at 92 MB, 64 KPI-bank
+    shards at 58.8 MB each, six refit mark pickles. Every one of them is
+    ALREADY ON THE REMOTE, so none can block a push, and removing them would
+    mean rewriting pushed history -- which Jack ruled out in the same
+    instruction that set this limit. So the guard's question is not "is any
+    tracked file large" but "is any large file one the remote has not already
+    accepted", which is exactly the thing that can break a push. The
+    grandfathered count is printed every run so the set cannot grow unnoticed.
+    """
+    LIM = 50 * 1024 * 1024
+    out = subprocess.run(['git', 'ls-files', '-z'], cwd=_R,
+                         capture_output=True, text=True).stdout
+    big = []
+    for rel in [x for x in out.split('\0') if x]:
+        try:
+            n = os.path.getsize(os.path.join(_R, rel))
+        except OSError:
+            continue
+        if n > LIM:
+            big.append((n, rel))
+    if not big:
+        return 'no tracked file exceeds 50 MB'
+    base = subprocess.run(['git', 'ls-remote', 'origin', 'refs/heads/main'],
+                          cwd=_R, capture_output=True, text=True).stdout.split()
+    base = base[0] if base else ''
+    grand, newbig = [], []
+    for n, rel in sorted(big, reverse=True):
+        at_remote = False
+        if base:
+            at_remote = subprocess.run(
+                ['git', 'cat-file', '-e', '%s:%s' % (base, rel)], cwd=_R,
+                capture_output=True).returncode == 0
+        (grand if at_remote else newbig).append((n, rel))
+    assert not newbig, (
+        '%d file(s) over 50 MB that the remote has NOT already accepted -- '
+        'write a manifest entry and a summary instead: %s'
+        % (len(newbig), '; '.join('%s (%.0f MB)' % (r, n / 1048576)
+                                  for n, r in newbig[:5])))
+    return ('no NEW file over 50 MB; %d grandfathered and already on the '
+            'remote, largest %s at %.0f MB'
+            % (len(grand), grand[0][1], grand[0][0] / 1048576))
+
+
 def c33():
     """A LEG COUNTED AS A TRADE. Found 24 Nov, and guard 32 did not catch it.
 
@@ -677,6 +736,9 @@ def main():
     guard(33, 'A LEG counted as a TRADE: plan=2 splits every position into leg1 and leg2 and trade_frame returns one row per leg, so n_entered, n_touching and trades_per_year were 2x too large and every per-trade figure was half the truth -- guard 32 checked the column NAMES and not the arithmetic',
           'nnfx1.entry_frame / n_entries count distinct (pair, entry_date, direction) triples; _yearly takes counts and holding periods from entries and R and cost from legs',
           'n_entered equals the distinct-entry count on a live probe candidate, is strictly less than the row count, and the yearly R still sums to total net R', c33)
+    guard(34, 'A file too large for the remote committed by a chain: results/r2reads/modeA_a2_defaults.csv at 654 MB against GitHub\'s 100 MB pre-receive limit, which no retry can clear because the blob is in the history being offered -- it took a rewrite of 33 unpushed commits',
+          'the limit is 50 MB, half of GitHub\'s, so a growing stage is noticed before it blocks anything; a big artifact goes to disk gitignored with a MANIFEST.sha256 entry and a committed summary, as guard 28 does for the banks and a2summary.py now does for this file; chainlib ci refuses the commit too',
+          'no tracked file in the index or working tree exceeds 50 MB', c34)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
