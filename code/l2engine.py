@@ -149,6 +149,55 @@ REASON = {STOP: 'stop', TARGET: 'target', EXIT_IND: 'exit indicator',
 LEG1, LEG2, SINGLE = 1, 2, 0
 
 
+# THE OFF SENTINEL. Every caller that supplies no hourly data passes these, and
+# with hr_on False the engine behaves exactly as it did before the hourly
+# resolver existed -- asserted by the regression check in code/nnfxamb.py.
+_AMB_EMPTY = np.zeros(1, np.float64)
+
+
+def _amb_off(n):
+    """(hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts), hourly OFF."""
+    return (_AMB_EMPTY, _AMB_EMPTY, _AMB_EMPTY, _AMB_EMPTY,
+            np.zeros(n + 1, np.int64), False, np.zeros(3, np.int64))
+
+
+@njit(cache=True)
+def _amb_first(hb_lo, hb_hi, ha_lo, ha_hi, hr_off, i, stop, tp, is_long):
+    """WHICH LEVEL THE HOURLY PATH TOUCHED FIRST inside daily bar `i`.
+
+    +1 the TARGET was reached first, -1 the STOP was, 0 the hourly path cannot
+    say -- no sub-bars for that daily bar, neither level touched inside it, or
+    both inside the very same hour.
+
+    THE QUOTE SIDE IS THE ONE THAT WOULD ACTUALLY FILL. A long exits by
+    SELLING, so its stop and its target both fill on the BID; a short exits by
+    buying, so both fill on the ASK. Using the mid would flatter both levels by
+    half a spread.
+
+    0 IS NOT A GUESS. The caller keeps the engine's stop-first convention when
+    this returns 0 and counts the case, so an unresolvable bar is reported
+    rather than quietly resolved in the favourable direction.
+    """
+    a = hr_off[i]
+    b = hr_off[i + 1]
+    if b <= a:
+        return 0
+    for k in range(a, b):
+        if is_long:
+            hit_s = hb_lo[k] <= stop
+            hit_t = hb_hi[k] >= tp
+        else:
+            hit_s = ha_hi[k] >= stop
+            hit_t = ha_lo[k] <= tp
+        if hit_s and hit_t:
+            return 0
+        if hit_s:
+            return -1
+        if hit_t:
+            return 1
+    return 0
+
+
 @njit(cache=True)
 def run_bars(o, h, l, c, atr,
              bl,
@@ -166,7 +215,8 @@ def run_bars(o, h, l, c, atr,
              max_atr_dist, bridge_bars,
              block_suspect, bridge_all_routes,
              t_entry_bar, t_exit_bar, t_dir, t_leg, t_entry_px, t_exit_px,
-             t_units, t_r, t_reason, t_route):
+             t_units, t_r, t_reason, t_route,
+             hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts):
     """The bar loop. Returns (n_trades, n_both_touched, n_blocked_late,
     n_blocked_stale). Trade fields are written into the t_* output arrays."""
     n = c.size
@@ -244,9 +294,27 @@ def run_bars(o, h, l, c, atr,
             if pos == 1:
                 l1_hit_stop = l1_open and lo <= l1_stop
                 l1_hit_tp = l1_open and hi >= l1_tp
+                amb_tp_first = False
                 if l1_hit_stop and l1_hit_tp:
                     both_touched += 1
-                if l1_open and l1_hit_stop:
+                    # AMBIGUOUS BAR. The daily range covers both levels and a
+                    # daily bar cannot say which came first, so this engine
+                    # fills the STOP. With hourly two-sided quotes it no longer
+                    # has to guess: ask the hourly path, and keep stop-first
+                    # only where that path cannot resolve it.
+                    if hr_on:
+                        _v = _amb_first(hb_lo, hb_hi, ha_lo, ha_hi, hr_off,
+                                        i, l1_stop, l1_tp, True)
+                        if _v == 1:
+                            amb_tp_first = True
+                            amb_counts[0] += 1
+                        elif _v == -1:
+                            amb_counts[1] += 1
+                        else:
+                            amb_counts[2] += 1
+                    else:
+                        amb_counts[2] += 1
+                if l1_open and l1_hit_stop and not amb_tp_first:
                     # GAP-AWARE FILL. A bar that OPENS below the stop gapped
                     # through it overnight; the stop price was never available.
                     # Fill at the open, which is worse. Filling at the stop
@@ -292,9 +360,27 @@ def run_bars(o, h, l, c, atr,
                 hi = h[i]; lo = l[i]
                 l1_hit_stop = l1_open and hi >= l1_stop
                 l1_hit_tp = l1_open and lo <= l1_tp
+                amb_tp_first = False
                 if l1_hit_stop and l1_hit_tp:
                     both_touched += 1
-                if l1_open and l1_hit_stop:
+                    # AMBIGUOUS BAR. The daily range covers both levels and a
+                    # daily bar cannot say which came first, so this engine
+                    # fills the STOP. With hourly two-sided quotes it no longer
+                    # has to guess: ask the hourly path, and keep stop-first
+                    # only where that path cannot resolve it.
+                    if hr_on:
+                        _v = _amb_first(hb_lo, hb_hi, ha_lo, ha_hi, hr_off,
+                                        i, l1_stop, l1_tp, False)
+                        if _v == 1:
+                            amb_tp_first = True
+                            amb_counts[0] += 1
+                        elif _v == -1:
+                            amb_counts[1] += 1
+                        else:
+                            amb_counts[2] += 1
+                    else:
+                        amb_counts[2] += 1
+                if l1_open and l1_hit_stop and not amb_tp_first:
                     px = o[i] if o[i] > l1_stop else l1_stop    # gap-aware
                     t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = px
                     t_r[l1_idx] = ((entry_px - px) * units_leg) / risk_dollars
@@ -692,7 +778,7 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         use_base_cross=True, use_c1_flip=True, use_continuation=True,
         exit_on_c1_flip=False, exit_on_base_cross=True, exit_on_exit_ind=True,
         one_candle_rule=False, block_suspect=True,
-        bridge_all_routes=True):
+        bridge_all_routes=True, amb=None):
     n = A['c'].size
     cap = 4 * n + 8                      # a hard ceiling on trade records
     t = {k: np.zeros(cap, dt) for k, dt in
@@ -715,9 +801,13 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         float(max_atr_dist), int(bridge_bars), bool(block_suspect),
         bool(bridge_all_routes),
         t['entry_bar'], t['exit_bar'], t['dir'], t['leg'], t['entry_px'],
-        t['exit_px'], t['units'], t['r'], t['reason'], t['route'])
+        t['exit_px'], t['units'], t['r'], t['reason'], t['route'],
+                *(amb if amb is not None else _amb_off(n)))
     out = {k: v[:nt] for k, v in t.items()}
     out['_n'] = nt; out['_both_touched'] = both
+    _ac = (amb[6] if amb is not None else None)
+    out['_amb'] = (np.asarray(_ac).copy() if _ac is not None
+                   else np.zeros(3, np.int64))
     out['_blocked_late'] = late; out['_blocked_stale'] = stale
     return out
 

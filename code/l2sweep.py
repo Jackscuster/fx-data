@@ -343,7 +343,8 @@ def run_combo(P, c1, c2, vol, base, ex, buf, plan=2, atr=None, **kw):
         1.5, 7, True, True,
         buf['entry_bar'], buf['exit_bar'], buf['dir'], buf['leg'],
         buf['entry_px'], buf['exit_px'], buf['units'], buf['r'],
-        buf['reason'], buf['route'])
+        buf['reason'], buf['route'],
+                *E._amb_off(len(c)))
     return nt
 
 

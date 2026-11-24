@@ -61,9 +61,15 @@ def condition4(nulls, summary, label='', verbose=True, out=None):
     S_ = S_[S_.n > 0]
     N_ = pd.read_csv(nulls)
     assert len(S_) and len(N_), 'condition 4: empty inputs for %s' % label
-    tn = S_.set_index(['indicator', 'setting']).n
-    key = list(zip(N_.indicator, N_.setting))
-    N_ = N_.assign(ntr=[tn.get(k, np.nan) for k in key])
+    # THE NULL'S OWN TRADE COUNT, not the summary's. Using the summary's
+    # BUILD-years count against a null computed over the whole span is the
+    # mismatch that produced a false -0.022 R per trade "bias".
+    if 'null_n' in N_.columns and N_.null_n.notna().any():
+        N_ = N_.assign(ntr=N_.null_n)
+    else:
+        tn = S_.set_index(['indicator', 'setting']).n
+        key = list(zip(N_.indicator, N_.setting))
+        N_ = N_.assign(ntr=[tn.get(k, np.nan) for k in key])
     N_ = N_[N_.ntr.notna() & (N_.ntr > 0)]
     N_ = N_.assign(per_trade=N_.null_R / N_.ntr)
     rows = []

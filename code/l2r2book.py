@@ -143,7 +143,8 @@ def marks_of(Y, mode, combo, ip, risk, sname, plan, code, years):
             float(risk['trail_mult']), float(risk['trail_arm']), float(risk['be_pct']),
             1.5, 7, True, True,
             b['entry_bar'], b['exit_bar'], b['dir'], b['leg'], b['entry_px'],
-            b['exit_px'], b['units'], b['r'], b['reason'], b['route'])
+            b['exit_px'], b['units'], b['r'], b['reason'], b['route'],
+                *E._amb_off(len(c)))
         if nt == 0:
             continue
         eb = b['entry_bar'][:nt]
@@ -495,7 +496,8 @@ def accumulate_strategy(Y, mode, combo, ip, risk, sname, plan, years_idx, BA, ke
             float(risk['trail_mult']), float(risk['trail_arm']), float(risk['be_pct']),
             1.5, 7, True, True,
             b['entry_bar'], b['exit_bar'], b['dir'], b['leg'], b['entry_px'],
-            b['exit_px'], b['units'], b['r'], b['reason'], b['route'])
+            b['exit_px'], b['units'], b['r'], b['reason'], b['route'],
+                *E._amb_off(len(c)))
         if nt == 0:
             continue
         eb = b['entry_bar'][:nt]

@@ -89,7 +89,8 @@ def run_pair(cfg, pair, sc=None):
         float(risk['atr_mult']), float(risk['tp_mult']), float(risk['trail_mult']),
         float(risk['trail_arm']), float(risk['be_pct']), 1.5, 7, True, True,
         t['entry_bar'], t['exit_bar'], t['dir'], t['leg'], t['entry_px'],
-        t['exit_px'], t['units'], t['r'], t['reason'], t['route'])
+        t['exit_px'], t['units'], t['r'], t['reason'], t['route'],
+                *E._amb_off(len(c)))
     tr = {k: v[:nt] for k, v in t.items()}
     return dict(dates=d.index, o=o, h=h, l=l, c=c, atr=atr, trades=tr,
                 risk=risk, plan=plan)

@@ -67,7 +67,8 @@ def run(o, h, l, c, atr, bl, sig, plan=2, **kw):
         float(p['max_atr_dist']), int(p['bridge_bars']),
         bool(p['block_suspect']), bool(p['bridge_all_routes']),
         t['entry_bar'], t['exit_bar'], t['dir'], t['leg'], t['entry_px'],
-        t['exit_px'], t['units'], t['r'], t['reason'], t['route'])
+        t['exit_px'], t['units'], t['r'], t['reason'], t['route'],
+                *E._amb_off(len(c)))
     return {k: v[:nt] for k, v in t.items()}
 
 

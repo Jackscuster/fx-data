@@ -177,7 +177,8 @@ def _neutralise(A, kind, side=None):
     return A
 
 
-def run_one(name, kind, setting, variant, pairs=None, atr_len=14):
+def run_one(name, kind, setting, variant, pairs=None, atr_len=14,
+            use_hourly=False, amb_out=None):
     """One indicator, one setting, one variant, across the pairs. -> trade frame.
 
     kind 'c1'   enter on the indicator's flip, exit on the opposite flip
@@ -238,7 +239,14 @@ def run_one(name, kind, setting, variant, pairs=None, atr_len=14):
                 A['c1_st'] = np.ones(A['c'].size, bool)
                 A['c1_lc'] = np.ones(A['c'].size, bool)
                 A['c1_sc'] = np.ones(A['c'].size, bool)
-            res = E.run(A, **kw)
+            if use_hourly:
+                import nnfxamb as _AMB
+                _a = _AMB.amb_args(p)
+                res = E.run(A, amb=_a, **kw)
+                if amb_out is not None:
+                    amb_out += np.asarray(res.get('_amb', np.zeros(3, np.int64)))
+            else:
+                res = E.run(A, **kw)
             tf = E.trade_frame(res, d)
             if tf is None or not len(tf):
                 continue
@@ -305,7 +313,22 @@ def _yearly(T, cost):
     return g
 
 
-def _null_match(T, cost, ndraw=200, seed=7):
+def _null_match(T, cost, ndraw=200, seed=7, years=None):
+    """SCOPE MATTERS, AND GETTING IT WRONG COST ME A FALSE FAULT.
+
+    The first version of this ran over the WHOLE span 2005-2020 while the
+    summary divided its total by the BUILD-years trade count. The spans differ
+    by a factor of 2.607 (6,408 trades against 2,458), so every per-trade null
+    figure came out 2.6x too large and, because the total is dominated by the
+    cost subtraction, 2.6x too NEGATIVE: -0.0221 R per trade gross instead of
+    -0.0008. I reported that as a bias in the apparatus and it was a bias in my
+    own arithmetic. The same mismatch made every null_p meaningless, because a
+    six-year real total was being compared against a sixteen-year null total.
+
+    `years` now restricts the null to the same window as the real figure it is
+    compared against, and the per-draw trade count is returned so no caller has
+    to guess it.
+    """ 
     """Random-entry null MATCHED on trade count and holding period, per pair.
 
     For each draw and each pair, draw as many entry bars as the real strategy
@@ -313,10 +336,18 @@ def _null_match(T, cost, ndraw=200, seed=7):
     book the move over that window in the same 1.5 ATR units. Direction is
     drawn with the real long/short split, so only the TIMING is random.
     """
+    if years is not None:
+        xd = pd.DatetimeIndex(T.exit_date)
+        m = xd.year.isin(list(years))
+        T = T[m]
+        cost = np.asarray(cost)[np.asarray(m)]
     if not len(T):
-        return np.array([])
+        return np.array([]), np.array([])
+    T = T.reset_index(drop=True)
+    cost = np.asarray(cost)
     rng = np.random.default_rng(seed)
     out = np.zeros(ndraw)
+    ntr = np.zeros(ndraw)
     per_pair = {}
     for p, g in T.groupby('pair'):
         d = pair_data(p)
@@ -327,10 +358,11 @@ def _null_match(T, cost, ndraw=200, seed=7):
         ent = idx.get_indexer(pd.DatetimeIndex(g.entry_date))
         hold = g.bars_held.to_numpy(int)
         dirs = np.where(g.direction.to_numpy() == 'long', 1.0, -1.0)
-        per_pair[p] = (cl, atr, ent, hold, dirs, float(cost[g.index].mean())
-                       if len(cost) else 0.0)
+        per_pair[p] = (cl, atr, ent, hold, dirs,
+                       float(cost[g.index.to_numpy()].mean()) if len(cost) else 0.0)
     for k in range(ndraw):
         tot = 0.0
+        nn = 0
         for p, (cl, atr, ent, hold, dirs, cmean) in per_pair.items():
             n = len(ent)
             lo, hi = int(np.nanmin(ent)), int(np.nanmax(ent))
@@ -345,8 +377,10 @@ def _null_match(T, cost, ndraw=200, seed=7):
                 r = dv * (cl[x] - cl[e]) / (RISK_UNIT_ATR * a)
             r = r[np.isfinite(r)]
             tot += float(r.sum()) - cmean * len(r)
+            nn += len(r)
         out[k] = tot
-    return out
+        ntr[k] = nn
+    return out, ntr
 
 
 def analytic_floor(m, span):
@@ -380,7 +414,8 @@ def stage_run(kind='c1', variant='flip_only', names=None, nmax=None,
             Y['kind'] = kind; Y['variant'] = variant
             Y['distinct_setting'] = int(setting_is_distinct(nm, st))
             yr_rows.append(Y)
-            nulls = _null_match(T, cost, ndraw=ndraw)
+            nulls, nulls_n = _null_match(T, cost, ndraw=ndraw,
+                                         years=BUILD_YEARS)
             b = Y[Y.year.isin(BUILD_YEARS)]
             real_build = float(b.R_net.sum())
             p = (float((nulls >= real_build).mean())
@@ -404,12 +439,14 @@ def stage_run(kind='c1', variant='flip_only', names=None, nmax=None,
                 worst_dip_R=dip, t_yearly=t_yr,
                 null_p=p, null_mean=float(np.mean(nulls)) if len(nulls) else np.nan,
                 null_p95=float(np.percentile(nulls, 95)) if len(nulls) else np.nan,
+                null_trades_per_draw=float(np.mean(nulls_n)) if len(nulls_n) else np.nan,
                 straddles=int(b.straddles.sum()),
                 floor_t_best_of_family=analytic_floor(len(pool), len(b)),
                 floor_t_alone=analytic_floor(1, len(b))))
             null_rows.append(pd.DataFrame(dict(
                 kind=kind, variant=variant, indicator=nm, setting=st,
-                draw=np.arange(1, len(nulls) + 1), null_R=nulls)))
+                draw=np.arange(1, len(nulls) + 1), null_R=nulls,
+                null_n=nulls_n)))
         if ii % 5 == 0 or ii == len(names):
             print('    %s/%s: %d of %d indicators, %.1f min'
                   % (kind, variant, ii, len(names), (time.time() - t0) / 60),

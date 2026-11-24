@@ -242,7 +242,8 @@ def _null_worker(args):
                         float(risk['tp_mult']), float(risk['trail_mult']),
                         float(risk['trail_arm']), float(risk['be_pct']), 1.5, 7, True, True,
                         b['entry_bar'], b['exit_bar'], b['dir'], b['leg'], b['entry_px'],
-                        b['exit_px'], b['units'], b['r'], b['reason'], b['route'])
+                        b['exit_px'], b['units'], b['r'], b['reason'], b['route'],
+                *E._amb_off(len(c)))
                     if nt == 0:
                         continue
                     ebv = b['entry_bar'][:nt]
