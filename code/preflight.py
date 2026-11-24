@@ -421,6 +421,44 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def c29():
+    """EVERY MODULE'S __main__ BLOCK IS THE LAST THING IN THE FILE.
+
+    THIS GUARD EXISTS BECAUSE I MADE THE SAME MISTAKE THREE TIMES IN ONE DAY.
+    Appending a stage function AFTER the dispatch block leaves the dispatch
+    calling a name that does not exist yet, and python only finds out at run
+    time: chunk 2 died on `NameError: stage_a2 is not defined` six seconds into
+    chain 24 on 24 Nov, after r2hourly.py had done the same thing an hour
+    earlier. A chain is the worst place to discover it, so it is checked here.
+    """
+    import ast as _ast
+    bad = []
+    for f in sorted(glob.glob(os.path.join(ROOTLIB, '*.py'))):
+        try:
+            src = open(f).read()
+            tree = _ast.parse(src)
+        except Exception:
+            continue
+        mains = [n for n in tree.body
+                 if isinstance(n, _ast.If)
+                 and _ast.dump(n.test).find("'__main__'") >= 0]
+        if not mains:
+            continue
+        m = mains[-1]
+        after = [n for n in tree.body
+                 if getattr(n, 'lineno', 0) > getattr(m, 'end_lineno', 0)]
+        defs = [n for n in after
+                if isinstance(n, (_ast.FunctionDef, _ast.AsyncFunctionDef,
+                                  _ast.ClassDef, _ast.Assign))]
+        if defs:
+            names = [getattr(d, 'name', '<assign>') for d in defs][:4]
+            bad.append('%s: %d definition(s) after __main__ (%s)'
+                       % (os.path.basename(f), len(defs), ', '.join(names)))
+    assert not bad, 'definitions after the __main__ dispatch:\n    ' + '\n    '.join(bad)
+    return '%d modules: no definition sits after a __main__ dispatch' % len(
+        glob.glob(os.path.join(ROOTLIB, '*.py')))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -466,6 +504,9 @@ def main():
     guard(28, 'A bank drifted from the bank a result names: a part file missing, truncated or regenerated, with nothing to notice it',
           'code/bankcheck.py writes MANIFEST.sha256 per bank directory (file, size, sha256, producing commit); banks are gitignored from 23 Nov and the manifest is what is committed',
           'every bank directory matches its manifest on file list and size', c28)
+    guard(29, 'A stage function appended AFTER the __main__ dispatch: the dispatch calls a name that does not exist yet and python only finds out at run time (chunk 2 died on NameError six seconds into chain 24, 24 Nov; r2hourly.py did the same an hour earlier and b1narrow.py would have been the third)',
+          'the __main__ block is the LAST thing in every module under code/, and this guard asserts it',
+          'no function, class or assignment is defined after a __main__ dispatch in any code/*.py', c29)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

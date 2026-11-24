@@ -1027,10 +1027,6 @@ def main():
     return summary
 
 
-if __name__ == '__main__':
-    main()
-
-
 # ==========================================================================
 # ATR LENGTH PRE-TEST -- run once, before gate 1, then frozen
 # ==========================================================================
@@ -1151,3 +1147,7 @@ def choose_atr(D, plateau=5):
                 chop_best=int(D.atr_len.values[int(np.argmax(D.chop_exp.values))]),
                 trend_corr=float(np.corrcoef(D.atr_len, D.trend_exp)[0, 1]),
                 chop_corr=float(np.corrcoef(D.atr_len, D.chop_exp)[0, 1]))
+
+
+if __name__ == '__main__':
+    main()

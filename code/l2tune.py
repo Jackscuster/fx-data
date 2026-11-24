@@ -939,10 +939,6 @@ def main():
     return D
 
 
-if __name__ == '__main__':
-    main()
-
-
 # ==========================================================================
 # THE FINAL RANKING — production and risk-aversion, co-equal
 # ==========================================================================
@@ -971,3 +967,7 @@ def rank_graduates(D):
     D = D.sort_values(['rank_score', 'calmar'], ascending=[True, False])
     D['final_rank'] = range(1, len(D) + 1)
     return D
+
+
+if __name__ == '__main__':
+    main()

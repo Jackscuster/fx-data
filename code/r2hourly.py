@@ -285,11 +285,198 @@ def stage_a4(mode='A', tag='full', rule='winners', caps=None):
 
 
 
+# ---------------------------------------------------------------------------
+# A5, THE PARTS THAT WERE SPECIFIED AND NOT DELIVERED (built 24 Nov).
+#
+# stage_a5 above identified the AMBIGUOUS days -- those whose daily bar covers
+# both the stop and the target -- and asked the hourly path which level came
+# first. That was one of five things specified. The rest are below:
+#   the disagreement COUNT, against the daily engine's actual convention;
+#   the change in R per strategy and per book;
+#   the same trades under the daily cost table versus realised hourly spreads;
+#   the daily loss stop on hourly marks, threshold swept, through A6.
+#
+# THE DAILY CONVENTION IS "STOP WINS" (l2engine.py:37): a bar whose range covers
+# both levels fills the stop, because a daily bar cannot say which came first
+# and assuming the good one is how you fool yourself. So an hourly verdict of
+# 'stop' AGREES with the daily engine and only 'target' DISAGREES -- and every
+# disagreement is therefore in the FAVOURABLE direction. The daily assumption
+# costs R; it does not flatter the result. That asymmetry is the point of the
+# test and is stated in the report.
+# ---------------------------------------------------------------------------
+
+def stage_a5_disagree(mode='A', tag='full'):
+    """The disagreement count and the change in R, per strategy and per book."""
+    import l2r2gate3 as G3x
+    f = os.path.join(OUT, 'mode%s_a5_hourly.csv' % mode)
+    assert os.path.exists(f), f + ' missing -- run --stage a5 first'
+    D = pd.read_csv(f)
+    assert len(D), 'no ambiguous days recorded for mode %s' % mode
+    # the engine fills the STOP on an ambiguous bar, so only 'target' disagrees
+    D['daily_assumed'] = 'stop'
+    D['disagrees'] = (D.hourly_first == 'target').astype(int)
+    # R on a resolved trade is -1 at the stop and +tp_mult at the target, both
+    # in risk units before cost; the flip is therefore worth tp_mult + 1.
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    TG, CB = z['tag'], z['combo']
+    W = pd.read_csv(os.path.join(ROOTOUT, 'r2gate2', 'mode%s_winners.csv' % mode))
+    ST = G2.steps()
+    tpm = {}
+    for _i, w in W.iterrows():
+        k = int(w.bank_row)
+        stream = list(G2.STREAMS).index(w.stream)
+        sname, plan, code = S.SLICES[stream // 2]
+        for si, stp in enumerate(ST):
+            ci = int(TG[k, stream, si])
+            if ci < 0:
+                continue
+            _ip, risk = BK.winner_config(mode, tuple(CB[k]), sname, ci)
+            tpm[(k, stp['name'])] = float(risk['tp_mult'])
+    D['tp_mult'] = [tpm.get((int(r.bank_row), r.step), np.nan)
+                    for _i, r in D.iterrows()]
+    D['delta_R'] = np.where(D.disagrees == 1, D.tp_mult + 1.0, 0.0)
+    f2 = os.path.join(OUT, 'mode%s_a5_disagree.csv' % mode)
+    D.to_csv(f2, index=False)
+    # per strategy
+    P = D.groupby('bank_row', as_index=False).agg(
+        ambiguous_days=('disagrees', 'size'), disagreements=('disagrees', 'sum'),
+        delta_R=('delta_R', 'sum'))
+    P['share_disagree'] = P.disagreements / P.ambiguous_days
+    P['mode'] = mode
+    f3 = os.path.join(OUT, 'mode%s_a5_delta_strategy.csv' % mode)
+    P.to_csv(f3, index=False)
+    # per book: equal weight over the members that appear, which for the
+    # winners' book is every winner, so the book delta is the mean member delta
+    B = pd.DataFrame([dict(mode=mode, book='winners_allon', members=len(P),
+                           ambiguous_days=int(P.ambiguous_days.sum()),
+                           disagreements=int(P.disagreements.sum()),
+                           delta_R_total=float(P.delta_R.sum()),
+                           delta_R_per_member=float(P.delta_R.mean()))])
+    f4 = os.path.join(OUT, 'mode%s_a5_delta_book.csv' % mode)
+    B.to_csv(f4, index=False)
+    print('  A5 disagreement [mode %s]: %d of %d ambiguous days disagree (%.0f%%), '
+          'delta R %+.2f total, %+.2f per member'
+          % (mode, int(P.disagreements.sum()), int(P.ambiguous_days.sum()),
+             100.0 * P.disagreements.sum() / max(1, P.ambiguous_days.sum()),
+             float(P.delta_R.sum()), float(P.delta_R.mean())), flush=True)
+    return f2, f3, f4
+
+
+def _era_bp():
+    """The cost table's own by-era spreads, which it already carries.
+
+    cost_table_h22.csv was calibrated on OANDA hourly bid/ask at 22:00 NY over
+    2016-2020, and carries bp_2004_2015 and bp_2021_2026 beside it. That matters
+    beyond A5: the eleven-step walk trades 2010-2015 while being charged
+    2016-2020 costs, and 2004-2015 spreads are WIDER on nearly every pair. The
+    early years are therefore charged too little, which FLATTERS them -- and
+    B1-winners still loses money there.
+    """
+    t = pd.read_csv(os.environ.get('FX_COST_TABLE')
+                    or os.path.join(ROOTOUT, 'cost_table_h22.csv'))
+    cols = [c for c in ('bp_2004_2015', 'cost_bp_roundtrip', 'bp_2021_2026')
+            if c in t.columns]
+    return t[['pair'] + cols]
+
+
+def stage_a5_spread(mode='A'):
+    """Those trades under the DAILY COST TABLE versus REALISED HOURLY SPREADS."""
+    f = os.path.join(OUT, 'mode%s_a5_disagree.csv' % mode)
+    if not os.path.exists(f):
+        f = os.path.join(OUT, 'mode%s_a5_hourly.csv' % mode)
+    D = pd.read_csv(f)
+    assert len(D), 'no A5 rows for mode %s' % mode
+    S.load_costs()
+    rows = []
+    for _i, r in D.iterrows():
+        p = r.pair
+        bid, ask = hourly(p, 'bid'), hourly(p, 'ask')
+        if bid is None or ask is None:
+            continue
+        day = pd.Timestamp(r.day)
+        if day.tz is None:
+            day = day.tz_localize('UTC')
+        sl_b = bid.loc[(bid.index >= day) & (bid.index < day + pd.Timedelta(days=1))]
+        sl_a = ask.loc[(ask.index >= day) & (ask.index < day + pd.Timedelta(days=1))]
+        if not len(sl_b) or not len(sl_a):
+            continue
+        n = min(len(sl_b), len(sl_a))
+        mid = (sl_b.close.values[:n] + sl_a.close.values[:n]) / 2.0
+        spr = (sl_a.close.values[:n] - sl_b.close.values[:n])
+        with np.errstate(divide='ignore', invalid='ignore'):
+            bp = np.where(mid > 0, 1e4 * spr / mid, np.nan)
+        # the cost table charges a ROUND TRIP, so the comparable realised
+        # figure is twice the one-way spread. The table's own bp is
+        # 1e4 x cost_frac_roundtrip.
+        table_bp = 1e4 * float(S.COSTS.get(p, np.nan))
+        rows.append(dict(mode=mode, pair=p, day=str(r.day),
+                         hours=int(n),
+                         realised_oneway_bp_mean=float(np.nanmean(bp)),
+                         realised_roundtrip_bp_mean=float(2 * np.nanmean(bp)),
+                         realised_roundtrip_bp_max=float(2 * np.nanmax(bp)),
+                         table_roundtrip_bp=table_bp))
+    Sp = pd.DataFrame(rows)
+    f2 = os.path.join(OUT, 'mode%s_a5_spreads.csv' % mode)
+    Sp.to_csv(f2, index=False)
+    if len(Sp):
+        g = Sp.groupby('pair', as_index=False).agg(
+            days=('day', 'size'),
+            realised_rt_bp=('realised_roundtrip_bp_mean', 'mean'),
+            table_rt_bp=('table_roundtrip_bp', 'first'))
+        g['realised_over_table'] = g.realised_rt_bp / g.table_rt_bp
+        g['mode'] = mode
+        f3 = os.path.join(OUT, 'mode%s_a5_spreads_by_pair.csv' % mode)
+        g.to_csv(f3, index=False)
+        print('  A5 spreads [mode %s]: %d trade-days, realised round trip '
+              '%.2f bp against %.2f bp charged (%.2fx)'
+              % (mode, len(Sp), float(Sp.realised_roundtrip_bp_mean.mean()),
+                 float(Sp.table_roundtrip_bp.mean()),
+                 float(Sp.realised_roundtrip_bp_mean.mean() /
+                       max(1e-9, Sp.table_roundtrip_bp.mean()))), flush=True)
+        return f2, f3
+    print('  A5 spreads [mode %s]: no rows' % mode, flush=True)
+    return f2, None
+
+
+def _hourly_equity_day(trades, day):
+    """Hourly mark-to-market of the open trades on one day, in R.
+
+    WHAT THIS CAN AND CANNOT SEE. It marks each open trade on the hourly MID of
+    its pair, so it sees an intraday excursion the daily close hides -- which is
+    the whole reason the daily breach counts in A6 are a LOWER BOUND. It still
+    cannot see inside the hour.
+    """
+    eq = None
+    for t in trades:
+        p, dirv, entry, risk_r = t['pair'], t['dir'], t['entry_px'], t['risk']
+        b, a = hourly(p, 'bid'), hourly(p, 'ask')
+        if b is None or a is None:
+            continue
+        sl_b = b.loc[(b.index >= day) & (b.index < day + pd.Timedelta(days=1))]
+        sl_a = a.loc[(a.index >= day) & (a.index < day + pd.Timedelta(days=1))]
+        if not len(sl_b) or not len(sl_a):
+            continue
+        n = min(len(sl_b), len(sl_a))
+        mid = (sl_b.close.values[:n] + sl_a.close.values[:n]) / 2.0
+        r = dirv * (mid - entry) / max(1e-12, risk_r)
+        if eq is None:
+            eq = np.zeros(n)
+        m = min(len(eq), len(r))
+        eq[:m] += r[:m]
+    return eq
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'a5')
     md = G.opt('--mode', str, 'A')
     if st == 'a5':
         stage_a5(md, max_winners=G.opt('--winners', int, None))
+    elif st == 'a5dis':
+        for m in ([md] if md != 'both' else ['A', 'B']):
+            stage_a5_disagree(m)
+    elif st == 'a5spread':
+        for m in ([md] if md != 'both' else ['A', 'B']):
+            stage_a5_spread(m)
     elif st == 'a4':
         stage_a4(md, rule=G.opt('--rule', str, 'winners'))
     else:
