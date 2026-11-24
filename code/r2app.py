@@ -128,6 +128,27 @@ def stage_app():
               'a5_spreads', 'a5_overlay'):
         sec['reads'][k] = {m: v for m, v in sec['reads'][k].items() if v}
     sec['reads'].pop('c3_fix', None)
+    # ---- JACK'S TWO A4/A5 FOLLOW-UPS, 24 Nov.
+    def _rr(n, cols=None, head=200):
+        return _recs(os.path.join(ROOTOUT, 'r2reads', n), cols=cols, head=head)
+    sec['reads']['a4_capsweep_binding'] = {
+        m: _rr('mode%s_a4_capsweep_binding.csv' % m) for m in ('A', 'B')}
+    sec['reads']['a5_overlay_team1'] = {
+        m: _rr('mode%s_a5_overlay_team1.csv' % m) for m in ('A', 'B')}
+    sec['reads']['followup_note'] = (
+        'A4: the shipped cap grid binds on 0 days at 11 of its 13 caps in the '
+        'slice Jack read, because that slice reaches only 0.843 exposure. '
+        'a4_capsweep_binding re-sweeps the range where it DOES bind -- the cap '
+        'binding on a share q of days is the (1-q) quantile of the day worst-'
+        'exposure series, so 1% of days is the 99th percentile and 50% is the '
+        'median. A5: section 4 summed eight full-risk strategies in the '
+        'numerator and took ONE winner-year dip in the denominator, giving '
+        '27.43%/yr; on the per-strategy Team 1 basis it is 1.45%/yr and NONE '
+        'of the 8 winners clears 12%. The stop was tested on ALL open-trade '
+        'days with hourly coverage (8,947 of 10,370 member-days), not on '
+        'ambiguous days only -- the earlier caveat in the file was wrong.')
+    for k in ('a4_capsweep_binding', 'a5_overlay_team1'):
+        sec['reads'][k] = {m: v for m, v in sec['reads'][k].items() if v}
     # ---- THE NNFX BUILD SECTION (HANDOFF 0m). Standing rule: every result
     # gets an app tab, and a markdown file on disk does not satisfy it.
     ND = os.path.join(ROOTOUT, 'nnfx')

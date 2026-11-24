@@ -1,6 +1,6 @@
 # A5 — THE HOURLY PATH AGAINST THE DAILY BAR
 
-Generated 2026-11-24 16:40 by `code/r2hourly.py`.
+Generated 2026-11-24 17:59 by `code/r2hourly.py`.
 
 
 ## What was specified, and what each section answers
@@ -94,7 +94,35 @@ Reported as a curve over the full range, not at a chosen threshold.
 |  | 8 | 5 | 1.037e+04 | 8947 | 0 | 944.7 | 24.79 | 188.9 | 27.43 | 1 | 0 |
 
 
-**What this measurement can and cannot say.** It is computed on the ambiguous days alone, because those are the only days for which an hourly path was built. It is a per-day rate on those days and is NOT extrapolated to the rest of the book. A full hourly-marked equity curve for every book member over every day is a separate engine pass and is not in this read.
+> **CORRECTION, 24 Nov — the table above is on the wrong unit, and the caveat this file previously carried was also wrong.**
+>
+> **The unit.** The curve aggregates `R_total` as the SUM of R over all (winner x step) rows -- eight strategies each at full risk on its own account, added together -- while `max_dd_R` is the MAX of `max_dd_R` over those same rows, the worst drawdown of ONE winner in ONE year. An eight-member numerator over a one-member denominator. 3.6 x (944.7/5) / 24.79 = 27.43, which is what the table says and is economically meaningless. Restated per strategy on `l2r2winners.prop_return_strategy`, the basis `mode?_winners.csv` uses, the eight winners come out at **1.15 to 2.15 % per year, median 1.45**, and **not one clears the 12% target** -- so `clears_12pct` is 0, not 1. See `mode?_a5_overlay_team1.csv` and the section below.
+>
+> **The days.** This file previously said the measurement was "computed on the ambiguous days alone". That was wrong. `_open_trades` returns EVERY open trade in the trade year with every calendar day from its entry bar to its exit bar, and there is no ambiguity filter anywhere in the stage. The stop is tested on **all open-trade days for which an hourly path exists** -- 8,947 of 10,370 member-days in mode A, 86.3% coverage. So no rerun on all days is needed: this already is the all-days measurement. What it does NOT cover is the 13.7% of member-days where the hourly file has no path, and those days keep their daily mark.
+
+
+### 4b — the same sweep on the Team 1 per-strategy basis
+
+`old_prop_return` is the published figure, kept so the change is visible. `prop_return_median` is the honest one: per strategy, `(total_R / years) * 3.6 / max_dd_R_sumyr`, where `max_dd_R_sumyr` is the SUM of that strategy's yearly drawdowns (`l2r2winners.py:111`).
+
+
+Three numbers that are all legitimate and must not be conflated: the 8-winner **book** on team 1, netted, runs at a median 2.28 %/yr (mean 2.96) in the A4 sweep; the **per-strategy median** on this basis is 1.45 %/yr; the published 27.43 %/yr is neither. The book beats the per-strategy median because netting eight members diversifies, which is a real effect and the reason both bases are shown.
+
+| threshold_R | winners | days | days_marked_hourly | days_stop_fires | old_R_total | old_max_dd_R | old_prop_return | R_per_strategy_median | dd_sumyr_median | prop_return_median | prop_return_min | prop_return_max | winners_clearing_12pct |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0.2 | 8 | 1.037e+04 | 8947 | 6492 | -943.5 | 52.37 | -12.97 | -116 | 142.9 | -0.5711 | -0.6069 | -0.4958 | 0 |
+| 0.4 | 8 | 1.037e+04 | 8947 | 5445 | -1775 | 76.21 | -16.77 | -204.9 | 234.5 | -0.6301 | -0.6655 | -0.5833 | 0 |
+| 0.6 | 8 | 1.037e+04 | 8947 | 4615 | -2307 | 112.6 | -14.74 | -273.7 | 303.3 | -0.6466 | -0.6833 | -0.6095 | 0 |
+| 0.8 | 8 | 1.037e+04 | 8947 | 3892 | -2556 | 126.2 | -14.58 | -301.1 | 326.8 | -0.6505 | -0.6882 | -0.602 | 0 |
+| 1 | 8 | 1.037e+04 | 8947 | 3349 | -2752 | 148.3 | -13.37 | -323 | 349 | -0.6543 | -0.6948 | -0.5919 | 0 |
+| 1.2 | 8 | 1.037e+04 | 8947 | 2842 | -2792 | 163.7 | -12.28 | -313.3 | 343.9 | -0.6512 | -0.695 | -0.5866 | 0 |
+| 1.5 | 8 | 1.037e+04 | 8947 | 2264 | -2753 | 191.5 | -10.35 | -296.5 | 336.7 | -0.6495 | -0.6916 | -0.5656 | 0 |
+| 2 | 8 | 1.037e+04 | 8947 | 1506 | -2259 | 184.3 | -8.826 | -240.8 | 285.6 | -0.6269 | -0.6734 | -0.5238 | 0 |
+| 2.5 | 8 | 1.037e+04 | 8947 | 1084 | -1930 | 198.1 | -7.017 | -203.8 | 249.5 | -0.6021 | -0.6717 | -0.4533 | 0 |
+| 3 | 8 | 1.037e+04 | 8947 | 799 | -1636 | 182.5 | -6.453 | -163.4 | 220.7 | -0.5572 | -0.6586 | -0.3981 | 0 |
+| 4 | 8 | 1.037e+04 | 8947 | 463 | -1021 | 131.4 | -5.592 | -94.17 | 168.8 | -0.4193 | -0.6028 | -0.1724 | 0 |
+| 5 | 8 | 1.037e+04 | 8947 | 254 | -398.4 | 103.1 | -2.781 | -42.7 | 140.3 | -0.2116 | -0.4673 | 0.2247 | 0 |
+|  | 8 | 1.037e+04 | 8947 | 0 | 944.7 | 24.79 | 27.43 | 117.4 | 59.89 | 1.451 | 1.15 | 2.147 | 0 |
 
 
 ## Mode B
@@ -164,7 +192,35 @@ Reported as a curve over the full range, not at a chosen threshold.
 |  | 2 | 5 | 2592 | 2045 | 0 | 190.4 | 12.61 | 38.08 | 10.87 | 0 | 0 |
 
 
-**What this measurement can and cannot say.** It is computed on the ambiguous days alone, because those are the only days for which an hourly path was built. It is a per-day rate on those days and is NOT extrapolated to the rest of the book. A full hourly-marked equity curve for every book member over every day is a separate engine pass and is not in this read.
+> **CORRECTION, 24 Nov — the table above is on the wrong unit, and the caveat this file previously carried was also wrong.**
+>
+> **The unit.** The curve aggregates `R_total` as the SUM of R over all (winner x step) rows -- eight strategies each at full risk on its own account, added together -- while `max_dd_R` is the MAX of `max_dd_R` over those same rows, the worst drawdown of ONE winner in ONE year. An eight-member numerator over a one-member denominator. 3.6 x (944.7/5) / 24.79 = 27.43, which is what the table says and is economically meaningless. Restated per strategy on `l2r2winners.prop_return_strategy`, the basis `mode?_winners.csv` uses, the eight winners come out at **1.15 to 2.15 % per year, median 1.45**, and **not one clears the 12% target** -- so `clears_12pct` is 0, not 1. See `mode?_a5_overlay_team1.csv` and the section below.
+>
+> **The days.** This file previously said the measurement was "computed on the ambiguous days alone". That was wrong. `_open_trades` returns EVERY open trade in the trade year with every calendar day from its entry bar to its exit bar, and there is no ambiguity filter anywhere in the stage. The stop is tested on **all open-trade days for which an hourly path exists** -- 8,947 of 10,370 member-days in mode A, 86.3% coverage. So no rerun on all days is needed: this already is the all-days measurement. What it does NOT cover is the 13.7% of member-days where the hourly file has no path, and those days keep their daily mark.
+
+
+### 4b — the same sweep on the Team 1 per-strategy basis
+
+`old_prop_return` is the published figure, kept so the change is visible. `prop_return_median` is the honest one: per strategy, `(total_R / years) * 3.6 / max_dd_R_sumyr`, where `max_dd_R_sumyr` is the SUM of that strategy's yearly drawdowns (`l2r2winners.py:111`).
+
+
+Three numbers that are all legitimate and must not be conflated: the 8-winner **book** on team 1, netted, runs at a median 2.28 %/yr (mean 2.96) in the A4 sweep; the **per-strategy median** on this basis is 1.45 %/yr; the published 27.43 %/yr is neither. The book beats the per-strategy median because netting eight members diversifies, which is a real effect and the reason both bases are shown.
+
+| threshold_R | winners | days | days_marked_hourly | days_stop_fires | old_R_total | old_max_dd_R | old_prop_return | R_per_strategy_median | dd_sumyr_median | prop_return_median | prop_return_min | prop_return_max | winners_clearing_12pct |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0.2 | 2 | 2592 | 2045 | 1475 | -241.5 | 38.85 | -4.476 | -120.8 | 149 | -0.5799 | -0.6508 | -0.5091 | 0 |
+| 0.4 | 2 | 2592 | 2045 | 1182 | -369.6 | 56.71 | -4.692 | -184.8 | 215.8 | -0.6124 | -0.6568 | -0.5681 | 0 |
+| 0.6 | 2 | 2592 | 2045 | 966 | -459.3 | 68.17 | -4.85 | -229.6 | 259.8 | -0.6334 | -0.6752 | -0.5915 | 0 |
+| 0.8 | 2 | 2592 | 2045 | 791 | -484 | 70.56 | -4.939 | -242 | 273.6 | -0.6334 | -0.6744 | -0.5924 | 0 |
+| 1 | 2 | 2592 | 2045 | 662 | -508.7 | 81.05 | -4.519 | -254.3 | 286.3 | -0.636 | -0.6764 | -0.5956 | 0 |
+| 1.2 | 2 | 2592 | 2045 | 545 | -487.3 | 76.51 | -4.586 | -243.7 | 279.8 | -0.6228 | -0.6696 | -0.576 | 0 |
+| 1.5 | 2 | 2592 | 2045 | 424 | -464.2 | 79.57 | -4.2 | -232.1 | 276 | -0.6035 | -0.6366 | -0.5703 | 0 |
+| 2 | 2 | 2592 | 2045 | 268 | -365.2 | 76.95 | -3.417 | -182.6 | 234.7 | -0.5589 | -0.5755 | -0.5423 | 0 |
+| 2.5 | 2 | 2592 | 2045 | 178 | -248.2 | 77.11 | -2.317 | -124.1 | 188.4 | -0.4745 | -0.477 | -0.472 | 0 |
+| 3 | 2 | 2592 | 2045 | 127 | -178.2 | 77.46 | -1.657 | -89.1 | 168.8 | -0.3732 | -0.4137 | -0.3327 | 0 |
+| 4 | 2 | 2592 | 2045 | 70 | -75.69 | 59.96 | -0.909 | -37.85 | 127.7 | -0.2141 | -0.2329 | -0.1953 | 0 |
+| 5 | 2 | 2592 | 2045 | 39 | 8.565 | 53.69 | 0.1149 | 4.283 | 102.5 | 0.03126 | -0.02547 | 0.08799 | 0 |
+|  | 2 | 2592 | 2045 | 0 | 190.4 | 12.61 | 10.87 | 95.2 | 40.43 | 1.699 | 1.641 | 1.757 | 0 |
 
 
 ## What this says about A6

@@ -739,6 +739,14 @@ class Book:
             fac[over] = cap_pct / mx[over]
             sz = sz * fac[self.dpos]
             binds = int(over.sum()); worst = float(mx.max())
+            # STASH THE WHOLE EXPOSURE SERIES, NOT JUST ITS MAX. Jack, 24 Nov:
+            # the A4 cap sweep binds on 0 days at 11 of its 13 caps because the
+            # grid was chosen a priori and sits above the exposure the book
+            # actually reaches. Choosing a range that BINDS needs the
+            # distribution, not the maximum -- the cap that binds on a share q
+            # of days is the (1-q) quantile of this series -- and `worst` alone
+            # cannot give it. Stashing costs nothing: mx is already computed.
+            self.ccy_mx = mx.copy()
         pnl = np.zeros(self.nd); gross = np.zeros(self.nd)
         np.add.at(pnl, self.dpos, mk * sz)
         np.add.at(gross, self.dpos, sz)

@@ -686,6 +686,69 @@ def stage_a5_overlay(mode='A', tag='full', thresholds=None, max_winners=None,
     return f2, f3
 
 
+def cap_range_binding(SB, wb, curve, per_unit, lo_share=0.01, hi_share=0.50,
+                      n=13):
+    """THE CAP LEVELS AT WHICH THE CAP ACTUALLY BINDS. Jack, 24 Nov, item 1.
+
+    HIS OBSERVATION, AND IT IS CORRECT. In the mode A grade/allon/team1 slice
+    for step 2011-2014 the sweep reports `cap_bound_days` of 0 at eleven of its
+    thirteen caps, 29 at 0.75 and 357 at 0.50, because `worst_ccy_exposure` for
+    that slice is 0.843 -- every cap at or above 1.00 is above anything the book
+    ever reaches, so the sweep measures nothing there. The aggregate table hides
+    it: summed over all rule/book/budget/step rows the cap does bind at five
+    levels, which is why this was not obvious.
+
+    WHY A FIXED GRID CANNOT WORK. The exposure a book reaches is a property of
+    that book -- its member count, its netting, its budget scaling. Across the
+    slices on disk the worst exposure runs from 0.600 to 1.692, nearly a factor
+    of three, so one a priori grid is necessarily too high for some slices and
+    too low for others. The range has to be read off each slice's own
+    distribution.
+
+    THE ARITHMETIC. The cap binds on day d exactly when the day's worst
+    currency exposure exceeds the cap, so the share of days bound at cap c is
+    P(exposure > c). Therefore the cap that binds on a share q of days is the
+    (1 - q) QUANTILE of the exposure series. Binding on 1% of days is the 99th
+    percentile; binding on 50% is the median. Geometric spacing between them,
+    because exposure is a positive scale quantity and a linear grid would crowd
+    the top of the range.
+
+    The probe call uses a cap of 1e9, which can never bind, so the series it
+    stashes is the pure uncapped exposure.
+    """
+    _d, _den, binds, _w, _sz, _f = SB.series(wb, curve, cap_pct=1e9,
+                                             per_unit=per_unit)
+    assert binds == 0, 'the 1e9 probe cap bound on %d days' % binds
+    mx = getattr(SB, 'ccy_mx', None)
+    if mx is None or not len(mx):
+        return [], {}
+    mx = np.asarray(mx, float)
+    mx = mx[np.isfinite(mx) & (mx > 0)]
+    if not len(mx):
+        return [], {}
+    hi = float(np.quantile(mx, 1.0 - lo_share))   # binds on ~1% of days
+    lo = float(np.quantile(mx, 1.0 - hi_share))   # binds on ~50% of days
+    if not (hi > lo > 0):
+        return [], dict(exposure_p50=float(np.quantile(mx, 0.5)),
+                        exposure_p99=float(np.quantile(mx, 0.99)),
+                        exposure_max=float(mx.max()), days=len(mx))
+    caps = list(np.geomspace(hi, lo, n))
+    info = dict(exposure_p50=float(np.quantile(mx, 0.5)),
+                exposure_p99=float(np.quantile(mx, 0.99)),
+                exposure_max=float(mx.max()), days=len(mx),
+                cap_binds_1pct=hi, cap_binds_50pct=lo)
+    return caps, info
+
+
+def _safe_read(path):
+    """An empty or absent csv is a legitimate state; pandas raises on one.
+    The fifth place in this project to need this guard."""
+    try:
+        return pd.read_csv(path) if os.path.exists(path) else pd.DataFrame()
+    except Exception:
+        return pd.DataFrame()
+
+
 def md_a5(out=None):
     """results/r2reads/A5_HOURLY.md"""
     import l2r2gate3 as G3x
@@ -760,12 +823,52 @@ def md_a5(out=None):
             a('Reported as a curve over the full range, not at a chosen '
               'threshold.\n')
             a(G3x.BK_tbl(Cv, list(Cv.columns)))
-            a('\n**What this measurement can and cannot say.** It is computed '
-              'on the ambiguous days alone, because those are the only days for '
-              'which an hourly path was built. It is a per-day rate on those '
-              'days and is NOT extrapolated to the rest of the book. A full '
-              'hourly-marked equity curve for every book member over every day '
-              'is a separate engine pass and is not in this read.\n')
+            a('\n> **CORRECTION, 24 Nov — the table above is on the wrong unit, '
+              'and the caveat this file previously carried was also wrong.**\n>\n'
+              '> **The unit.** The curve aggregates `R_total` as the SUM of R '
+              'over all (winner x step) rows -- eight strategies each at full '
+              'risk on its own account, added together -- while `max_dd_R` is '
+              'the MAX of `max_dd_R` over those same rows, the worst drawdown '
+              'of ONE winner in ONE year. An eight-member numerator over a '
+              'one-member denominator. 3.6 x (944.7/5) / 24.79 = 27.43, which '
+              'is what the table says and is economically meaningless. Restated '
+              'per strategy on `l2r2winners.prop_return_strategy`, the basis '
+              '`mode?_winners.csv` uses, the eight winners come out at **1.15 '
+              'to 2.15 % per year, median 1.45**, and **not one clears the 12% '
+              'target** -- so `clears_12pct` is 0, not 1. See '
+              '`mode?_a5_overlay_team1.csv` and the section below.\n>\n'
+              '> **The days.** This file previously said the measurement was '
+              '\"computed on the ambiguous days alone\". That was wrong. '
+              '`_open_trades` returns EVERY open trade in the trade year with '
+              'every calendar day from its entry bar to its exit bar, and there '
+              'is no ambiguity filter anywhere in the stage. The stop is tested '
+              'on **all open-trade days for which an hourly path exists** -- '
+              '8,947 of 10,370 member-days in mode A, 86.3% coverage. So no '
+              'rerun on all days is needed: this already is the all-days '
+              'measurement. What it does NOT cover is the 13.7% of member-days '
+              'where the hourly file has no path, and those days keep their '
+              'daily mark.\n')
+        Tm = _safe_read(os.path.join(OUT, 'mode%s_a5_overlay_team1.csv' % mode))
+        if len(Tm):
+            a('\n### 4b — the same sweep on the Team 1 per-strategy basis\n')
+            a('`old_prop_return` is the published figure, kept so the change is '
+              'visible. `prop_return_median` is the honest one: per strategy, '
+              '`(total_R / years) * 3.6 / max_dd_R_sumyr`, where '
+              '`max_dd_R_sumyr` is the SUM of that strategy\'s yearly drawdowns '
+              '(`l2r2winners.py:111`).\n')
+            a('\nThree numbers that are all legitimate and must not be '
+              'conflated: the 8-winner **book** on team 1, netted, runs at a '
+              'median 2.28 %/yr (mean 2.96) in the A4 sweep; the **per-strategy '
+              'median** on this basis is 1.45 %/yr; the published 27.43 %/yr is '
+              'neither. The book beats the per-strategy median because netting '
+              'eight members diversifies, which is a real effect and the reason '
+              'both bases are shown.\n')
+            a(G3x.BK_tbl(Tm, ['threshold_R', 'winners', 'days',
+                              'days_marked_hourly', 'days_stop_fires',
+                              'old_R_total', 'old_max_dd_R', 'old_prop_return',
+                              'R_per_strategy_median', 'dd_sumyr_median',
+                              'prop_return_median', 'prop_return_min',
+                              'prop_return_max', 'winners_clearing_12pct']))
     a('\n## What this says about A6\n')
     a('A6 states that every breach count is a lower bound because the input is '
       'a daily series. This report is the first direct evidence of the size of '
@@ -822,8 +925,17 @@ def stage_a4_sweep(mode='A', tag='full', rules=('winners', 'grade'), caps=None,
     """The exposure-cap sweep and the worst-day / worst-dip attribution."""
     import l2walkfwd as W_
     import l2r2gate3 as G3x
+    # caps='binding' re-reads the range off each slice's OWN exposure
+    # distribution, from the level that binds on 1% of days down to the one
+    # that binds on 50%. See cap_range_binding for why a fixed grid cannot
+    # work: across the slices on disk the worst exposure runs 0.600 to 1.692,
+    # so one a priori grid is too high for some slices and too low for others.
+    ADAPTIVE = (caps == 'binding')
+    if ADAPTIVE:
+        caps = None
     caps = caps if caps is not None else \
         [None, 8.0, 6.0, 5.0, 4.0, 3.0, 2.5, 2.0, 1.75, 1.5, 1.25, 1.0, 0.75, 0.5]
+    FIXED_CAPS = list(caps)
     G.manifest_check(); S.load_costs()
     rows, att = [], []
     for rule in rules:
@@ -901,7 +1013,15 @@ def stage_a4_sweep(mode='A', tag='full', rules=('winners', 'grade'), caps=None,
                             ccy[int(np.bincount(big_i[dipslice]).argmax())]
                             if len(ddser) and j >= jstart else '')))
                     # ---------- THE CAP SWEEP
-                    for cp in caps:
+                    caps_here, crange = FIXED_CAPS, {}
+                    if ADAPTIVE:
+                        cc, crange = cap_range_binding(
+                            SB, wb, curve, per_unit=sc_ / den)
+                        # the uncapped row is kept as the reference the whole
+                        # curve is read against; without it there is nothing to
+                        # say what the cap COSTS
+                        caps_here = [None] + list(cc) if cc else [None]
+                    for cp in caps_here:
                         d1, _dn, capbinds, worst, _sz2, _f2 = SB.series(
                             wb, curve, cap_pct=cp, per_unit=sc_ / den, den=den)
                         kb = W_.kpis(d1[ybuild] * sc_, yrs[ybuild])
@@ -909,6 +1029,7 @@ def stage_a4_sweep(mode='A', tag='full', rules=('winners', 'grade'), caps=None,
                         pr = (WN.PROP_DIP * kt['median_year_pct'] / kt['dip95_pct']
                               if kt['dip95_pct'] else np.nan)
                         rows.append(dict(
+                            **({k: crange[k] for k in crange} if ADAPTIVE else {}),
                             mode=mode, rule=rule, step=stp['name'], book=bk,
                             budget=bname, members=nm,
                             cap_pct=(np.nan if cp is None else cp),
@@ -926,7 +1047,8 @@ def stage_a4_sweep(mode='A', tag='full', rules=('winners', 'grade'), caps=None,
                             build_median_year_pct=kb['median_year_pct']))
             del BA
     Sw = pd.DataFrame(rows); At = pd.DataFrame(att)
-    f1 = os.path.join(OUT, 'mode%s_a4_capsweep.csv' % mode)
+    f1 = os.path.join(OUT, 'mode%s_a4_capsweep%s.csv'
+                      % (mode, '_binding' if ADAPTIVE else ''))
     f2 = os.path.join(OUT, 'mode%s_a4_attribution.csv' % mode)
     Sw.to_csv(f1, index=False); At.to_csv(f2, index=False)
     print('  A4 sweep [mode %s]: %d sweep rows over %d caps, %d attribution rows'
@@ -1023,6 +1145,49 @@ def md_a4(out=None):
               'books. `cap_pct = NaN` is uncapped. Reported as a curve, not at '
               'a chosen cap.\n')
             a(G3x.BK_tbl(Cv, list(Cv.columns)))
+            Bd = _safe_csv2(os.path.join(
+                OUT, 'mode%s_a4_capsweep_binding.csv' % mode))
+            if len(Bd):
+                a('\n#### 3b — the cap re-swept over the range where it BINDS\n')
+                a('**The grid above measures nothing over most of its range, '
+                  'and Jack caught it.** In the mode A `grade`/`allon`/`team1` '
+                  'slice at step 2011-2014 the cap binds on **0 days at eleven '
+                  'of the thirteen caps**, 29 days at 0.75 and 357 at 0.50, '
+                  'because that slice\'s worst currency exposure is **0.843** '
+                  '-- every cap at or above 1.00 sits above anything the book '
+                  'ever reaches. The aggregate table hides it: summed over all '
+                  'rule/book/budget/step rows the cap does bind at five levels, '
+                  'which is why it was not obvious.\n')
+                a('\n**Why no fixed grid can work.** The exposure a book '
+                  'reaches is a property of that book -- its member count, its '
+                  'netting, its budget scaling. Across the slices on disk the '
+                  'worst exposure runs from **0.600 to 1.692**, nearly a factor '
+                  'of three, so one a priori grid is necessarily too high for '
+                  'some slices and too low for others.\n')
+                a('\n**The range is read off each slice\'s own distribution.** '
+                  'The cap binds on day *d* exactly when that day\'s worst '
+                  'currency exposure exceeds it, so the share of days bound at '
+                  'cap *c* is P(exposure > *c*) -- and the cap that binds on a '
+                  'share *q* of days is the **(1 - q) quantile** of the '
+                  'exposure series. 1% of days is the 99th percentile, 50% is '
+                  'the median. Thirteen levels, geometrically spaced because '
+                  'exposure is a positive scale quantity and a linear grid '
+                  'would crowd the top. `l2walkfwd.Book.series` now stashes the '
+                  'whole exposure series rather than only its maximum, which '
+                  'costs nothing because it was already computed.\n')
+                a('\n`cap_pct = NaN` is the uncapped reference, kept because '
+                  'without it there is nothing to say what the cap COSTS. Same '
+                  'columns as above, plus the exposure percentiles the range '
+                  'was derived from.\n')
+                cols = [c for c in ['rule', 'book', 'budget', 'step',
+                                    'members', 'cap_pct', 'cap_bound_days',
+                                    'days', 'worst_ccy_exposure',
+                                    'exposure_p50', 'exposure_p99',
+                                    'exposure_max', 'cap_binds_1pct',
+                                    'cap_binds_50pct', 'yearly_return_pct',
+                                    'worst_year_pct', 'total_return_pct',
+                                    'prop_return'] if c in Bd.columns]
+                a(G3x.BK_tbl(Bd.head(200), cols))
             if Cv.prop_return.notna().any():
                 b = Cv.loc[Cv.prop_return.idxmax()]
                 un = (float(Cv[Cv.cap_pct.isna()].prop_return.iloc[0])
@@ -1057,6 +1222,100 @@ def md_a4(out=None):
     return out
 
 
+def stage_a5_restate(mode='A'):
+    """A5 SECTION 4 RESTATED ON THE SAME TEAM 1 BASIS AS MODE?_WINNERS.md.
+
+    JACK, 24 Nov: "the no-overlay row shows R_total 944.7, max_dd 24.79,
+    prop_return 27.43, clears_12pct 1 for the 8-winner book. Every other file
+    puts that book near 2.9% a year. Explain the unit."
+
+    THE UNIT, AND HE IS RIGHT THAT IT IS WRONG. The curve in section 4 was
+    aggregated like this:
+
+        R_total   = sum  of R over all 40 (winner x step) rows
+        max_dd_R  = MAX  of max_dd_R over those same 40 rows
+        prop_return = 3.6 * (R_total / 5) / max_dd_R
+
+    So the NUMERATOR is eight strategies each run at full risk on its own
+    account, added together, while the DENOMINATOR is the worst drawdown of
+    ONE winner in ONE year. An eight-member numerator over a one-member
+    denominator. 3.6 x (944.7/5) / 24.79 = 27.43, which is arithmetically what
+    the file says and economically meaningless.
+
+    THE RIGHT BASIS, taken from l2r2winners.prop_return_strategy, which is what
+    mode?_winners.csv and MODE?_WINNERS.md use:
+
+        prop_return = (total_R / n_years) * 3.6 / max_dd_R_sumyr
+
+    per STRATEGY, where max_dd_R_sumyr is the SUM of that strategy's yearly
+    drawdowns (l2r2winners.py:111 -- "sumyr" is a sum over years, not the dip of
+    the concatenated series). Restated that way the eight winners come out at
+    1.15 to 2.15 % per year, median 1.45, and NOT ONE clears the 12% target, so
+    clears_12pct is 0 and not 1.
+
+    THREE NUMBERS THAT ARE ALL LEGITIMATE AND MUST NOT BE CONFLATED:
+      8-winner BOOK, team 1, netted   median 2.28 %/yr, mean 2.96  (A4 sweep)
+      per-STRATEGY, team 1 prop basis median 1.45 %/yr             (this stage)
+      A5 section 4 as published       27.43 %/yr                   (unit error)
+    The book beats the per-strategy median because netting eight members
+    diversifies; that is a real effect and is the reason both bases are
+    reported here rather than one.
+
+    NO ENGINE PASS. mode?_a5_overlay.csv already carries one row per
+    (bank_row, step, threshold), so this is a re-aggregation of data on disk.
+    """
+    f = os.path.join(OUT, 'mode%s_a5_overlay.csv' % mode)
+    if not os.path.exists(f):
+        print('  a5 restate [mode %s]: no overlay csv' % mode, flush=True)
+        return None
+    O = pd.read_csv(f)
+    rows = []
+    for th, g in O.groupby('threshold_R', as_index=False, dropna=False):
+        per = g.groupby('bank_row', as_index=False).agg(
+            total_R=('R', 'sum'), dd_sumyr=('max_dd_R', 'sum'),
+            years=('trade_year', 'nunique'),
+            days=('days', 'sum'), marked=('days_marked_hourly', 'sum'),
+            fired=('days_stop_fires', 'sum'))
+        ny = float(per.years.max()) if len(per) else 5.0
+        per['prop_return_pct_per_year'] = WN.prop_return_strategy(
+            per.total_R.to_numpy(float), per.dd_sumyr.to_numpy(float), ny)
+        per['clears_12pct'] = (per.prop_return_pct_per_year
+                               >= WN.PROP_TARGET).astype(int)
+        thv = (np.nan if (isinstance(th, float) and np.isnan(th)) else th)
+        rows.append(dict(
+            mode=mode, threshold_R=thv, winners=int(per.bank_row.nunique()),
+            years=ny, days=int(per.days.sum()),
+            days_marked_hourly=int(per.marked.sum()),
+            days_stop_fires=int(per.fired.sum()),
+            # the OLD, wrong aggregation, kept so the change is visible
+            old_R_total=float(per.total_R.sum()),
+            old_max_dd_R=float(g.max_dd_R.max()),
+            old_prop_return=float(WN.PROP_DIP * (per.total_R.sum() / ny)
+                                  / g.max_dd_R.max())
+            if g.max_dd_R.max() > 0 else np.nan,
+            # the RIGHT basis, per strategy
+            R_per_strategy_median=float(per.total_R.median()),
+            dd_sumyr_median=float(per.dd_sumyr.median()),
+            prop_return_median=float(per.prop_return_pct_per_year.median()),
+            prop_return_min=float(per.prop_return_pct_per_year.min()),
+            prop_return_max=float(per.prop_return_pct_per_year.max()),
+            winners_clearing_12pct=int(per.clears_12pct.sum())))
+    D = pd.DataFrame(rows).sort_values('threshold_R',
+                                       na_position='last').reset_index(drop=True)
+    f2 = os.path.join(OUT, 'mode%s_a5_overlay_team1.csv' % mode)
+    D.to_csv(f2, index=False)
+    b = D[D.threshold_R.isna()]
+    if len(b):
+        b = b.iloc[0]
+        print('  a5 restate [mode %s]: no-overlay prop return was %.2f%%/yr as '
+              'published; on the per-strategy team 1 basis it is %.2f%%/yr '
+              '(range %.2f to %.2f), and %d of %d winners clear 12%%'
+              % (mode, b.old_prop_return, b.prop_return_median,
+                 b.prop_return_min, b.prop_return_max,
+                 b.winners_clearing_12pct, b.winners), flush=True)
+    return f2
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'a5')
     md = G.opt('--mode', str, 'A')
@@ -1072,11 +1331,17 @@ if __name__ == '__main__':
         for m in ([md] if md != 'both' else ['A', 'B']):
             stage_a5_overlay(m, max_winners=G.opt('--nmax', int, None),
                              max_years=G.opt('--nyears', int, None))
+    elif st == 'a5restate':
+        for m in ([md] if md != 'both' else ['A', 'B']):
+            stage_a5_restate(m)
     elif st == 'a5md':
         md_a5()
     elif st == 'a4sweep':
         for m in ([md] if md != 'both' else ['A', 'B']):
             stage_a4_sweep(m)
+    elif st == 'a4resweep':
+        for m in ([md] if md != 'both' else ['A', 'B']):
+            stage_a4_sweep(m, caps='binding')
     elif st == 'a4md':
         md_a4()
     elif st == 'a4':
