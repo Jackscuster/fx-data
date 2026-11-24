@@ -1,0 +1,13 @@
+asset_class,ticker,description,rows,first,last,has_ohlc,source
+gold,GC=F,"COMEX gold future, front month",6585,2000-08-30,2026-11-24,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+gold,XAUUSD=X,spot gold cross,0,,,0,FAILED: HTTPError
+silver,SI=F,COMEX silver future,6586,2000-08-30,2026-11-24,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+oil WTI,CL=F,NYMEX WTI future,6593,2000-08-23,2026-11-24,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+oil Brent,BZ=F,ICE Brent future,4811,2007-07-30,2026-11-24,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+index S&P,^GSPC,S&P 500 index,9292,1990-01-02,2026-11-23,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+index Nasdaq,^NDX,Nasdaq 100 index,9292,1990-01-02,2026-11-23,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+index Dow,^DJI,Dow Jones index,8786,1992-01-02,2026-11-23,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+index DAX,^GDAXI,DAX index,9337,1990-01-02,2026-11-24,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+index Nikkei,^N225,Nikkei 225 index,9050,1990-01-04,2026-11-20,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+crypto BTC,BTC-USD,Bitcoin in USD,4452,2014-09-17,2026-11-24,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
+crypto ETH,ETH-USD,Ether in USD,3303,2017-11-09,2026-11-24,1,Yahoo v8 chart (code/l2data.py:yahoo_ohlc)
