@@ -540,6 +540,109 @@ The evidence that nothing but those two paths changed is
    | `c23fe98` | `88d29ef` | HANDOFF: mode C through the blind pipeline (routed +1.33%, PF  |
 
 
+0m. **LAYER 2 REBUILT THE NNFX WAY — ONE ALGORITHM, BUILT ONE PIECE AT A TIME.
+   Jack, 24 Nov. This plan replaces all earlier unsent instructions.**
+
+   **WHY.** The old route tested 273,780 strategies at once, which forced a
+   best-of-field luck floor near t 5.08. Nothing could clear it honestly, and
+   B1-winners then showed that what did clear it on 2016-2020 does not survive
+   the six earlier years: 1 of 8 positive, none clearing 12%/yr, worse once
+   era-correct spreads are charged. The answer is not a bigger search. It is a
+   smaller one: **few candidates per stage, declared before testing, so the
+   luck floor is a floor a real effect can cross.**
+
+   **THE RIGOUR DOES NOT CHANGE. Every stage keeps all of this:**
+
+   - **Rolling walk-forward, ELEVEN steps**: tune 2005-2008 / grade 2009 /
+     trade 2010, through tune 2015-2018 / grade 2019 / trade 2020. Anything
+     chosen -- a setting, a component, a rule -- is chosen on a step's TUNING
+     years and judged only on that step's unseen trade year.
+   - **Unseen trade years 2010-2015 are the BUILD evidence. Unseen trade years
+     2016-2020 are the CONFIRM: computed and stored, but NOT reported and not
+     looked at until Jack calls for the confirm, ONCE. 2021 onward sealed.**
+   - **Luck tests on everything**: random-entry null matched on trade count and
+     holding period; label-shuffle null wherever a selection is made; and a
+     luck floor computed for the REAL number of candidates tried, taken from
+     `results/nnfx/CANDIDATE_LEDGER.csv`, which records every candidate ever
+     tested.
+   - **Era-correct spreads** (`results/cost_table_era_2004_2015.csv` for
+     2004-2015; 25 of 28 pairs were wider then, median 1.26x), one-bar lag,
+     year-end mark to market, **significance on yearly values, not per trade**,
+     preflight before every launch, **condition 3 on every extended walk**
+     (preflight guard 30).
+   - Numbers from files; every cut swept and shown as a curve; nothing deleted;
+     nothing to `/tmp`.
+
+   **Reports to `results/nnfx/`, app tab "NNFX build", committed.**
+
+   **QUEUE.** The stage running when this was issued finishes. Then B1 family
+   and control, chain 28, 22A and 22B all move to the BACK of the queue, behind
+   everything below. **Nothing is cancelled and nothing is deleted.**
+
+   ### PHASE 0 — TRUST THE INSTRUMENT
+
+   **0a. POWER TEST.** Random-entry control re-runs are the noise. Plant a known
+   true edge of +0.02, +0.05, +0.10, +0.15, +0.20 R per trade and measure over
+   1,000 repeats how often the walk-forward detects it by four routes:
+   (a) the old route, best-of-273,780 floor at t 5.08 plus 4 of 5 years
+   positive; (b) one pre-declared strategy tested alone; (c) one of 39
+   pre-declared candidates; (d) one of 3. On six unseen years and on eleven.
+   **Say what edge size each route is blind to.** -> `POWER_TEST.md`
+
+   **0b. ONE SCORER.** Gate 2 and gate 3 return different R and trade counts for
+   the same config and the same year -- 41 of 50 winner-years differ, median
+   1.01 R, largest 10.63 R, and 35 of 50 trade counts differ by up to 11. Find
+   the cause with ONE trade-level example, say which is right, and list every
+   file on record built on the wrong one and whether its conclusion could
+   change. **Report first, regenerate nothing yet.** The staged build uses only
+   the scorer proven right. -> `SCORER_DIVERGENCE.md`
+
+   **0c. NNFX FIDELITY AUDIT, report only.** For each canonical rule: implemented
+   or not, where, and the cost to add it as a switchable rule. The rules: entry
+   on baseline cross with C1 agreeing, and on C1 flip with price on the right
+   side of the baseline; no entry when price is more than 1 ATR from the
+   baseline; bridge too far (C1 signal 7 or more bars old); one-candle rule;
+   pullback rule; continuation trades; C2 agreement; volume gate; 1.5 ATR stop;
+   half off at 1 ATR then stop to breakeven and trail the rest; exit by exit
+   indicator, C1 flip or baseline cross; risk halved when two trades share a
+   currency; no entry before major news; a market-wide volatility floor. **State
+   how modes A, B and C differ from canonical.** -> `NNFX_FIDELITY.md`
+
+   ### PHASE 1, STAGE 1 — ONE PIECE ALONE, WALK-FORWARD
+
+   **1a.** Each of the **39 C1 indicators by itself**, all 28 pairs: enter on the
+   flip, exit on the opposite flip, nothing else. Then the same with the
+   canonical 1.5 ATR stop and half off at 1 ATR. **Three settings per indicator**
+   (half length, default, double length). Each step picks the setting on its
+   four tuning years and trades the unseen year; **also report all three
+   settings unpicked**, to show whether the result is stable across settings.
+
+   **1b.** Each of the **15 baselines by itself**: enter when price closes across
+   it, exit on the cross back. Same treatment.
+
+   **1c. Selection test.** At each step rank the 39 C1 (and separately the 15
+   baselines) on tuning years, trade the top K on the unseen year, **K swept
+   over the full range**, against a **label-shuffle null of 1,000 draws**.
+
+   For all three: gross and net of costs, R per trade, trades per year, average
+   holding days, R per unseen year 2010-2015, years positive, worst year, worst
+   dip in R, p against the matched random-entry null (200 draws), and the luck
+   floor for best-of-39 and best-of-15. **No selection by me: Jack picks at most
+   3 of each, for a stated reason.** -> `STAGE1.md`
+
+   ### PHASE 2 GROUNDWORK — MEASUREMENT ONLY
+
+   **2a. MARKET-WIDE SWITCH.** From the gate 2 bank, the whole-field trend
+   always-on book's P&L by month, 2011-2020. Beside it, present-tense panel
+   measures from **Layer 1 outputs only**, lagged one bar: share of the 28 pairs
+   labelled trending, mean activity, the currency-leg gap quality flag, the
+   crisis flag. Correlation of each with the same month's book P&L, tuning years
+   against unseen years, with a shuffle null. **No trading rule built.**
+   -> `MARKET_SWITCH.md`
+
+   **ORDER: 0a, 0b, 0c, 1a, 1b, 1c, 2a.**
+
+
 0l-NOW. **LAYER 2 RESTART — WHERE IT ACTUALLY STANDS. This is the index; the
    16 Nov record of the restart decision is item **0l** further down this
    section. Updated 2026-11-21.**

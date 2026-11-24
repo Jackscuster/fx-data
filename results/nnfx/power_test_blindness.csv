@@ -1,0 +1,17 @@
+span,years,model,route,t_crit,false_positive_at_zero,min_edge_power50,min_edge_power80,power_at_0_10,power_at_0_20
+six_unseen_2010_2015,6,normal,old_bestof273780,5.08,0.0,,,0.036,0.084
+six_unseen_2010_2015,6,normal,alone,2.0150483733330233,0.055,0.1,0.2,0.545,0.86
+six_unseen_2010_2015,6,normal,one_of_39,5.540633040095487,0.0,,,0.025,0.06
+six_unseen_2010_2015,6,normal,one_of_3,2.897104822701679,0.015,0.2,,0.263,0.549
+six_unseen_2010_2015,6,twopoint,old_bestof273780,5.08,0.0,,,0.039,0.089
+six_unseen_2010_2015,6,twopoint,alone,2.0150483733330233,0.032,0.1,0.2,0.545,0.835
+six_unseen_2010_2015,6,twopoint,one_of_39,5.540633040095487,0.0,,,0.024,0.062
+six_unseen_2010_2015,6,twopoint,one_of_3,2.897104822701679,0.012,0.2,,0.274,0.541
+eleven_2010_2020,11,normal,old_bestof273780,5.08,0.0,,,0.042,0.155
+eleven_2010_2020,11,normal,alone,1.8124611228107335,0.041,0.1,0.1,0.817,0.985
+eleven_2010_2020,11,normal,one_of_39,3.9734370589801884,0.002,,,0.168,0.434
+eleven_2010_2020,11,normal,one_of_3,2.456051003177863,0.013,0.1,0.15,0.624,0.912
+eleven_2010_2020,11,twopoint,old_bestof273780,5.08,0.0,,,0.03,0.152
+eleven_2010_2020,11,twopoint,alone,1.8124611228107335,0.062,0.1,0.1,0.817,0.991
+eleven_2010_2020,11,twopoint,one_of_39,3.9734370589801884,0.001,,,0.146,0.466
+eleven_2010_2020,11,twopoint,one_of_3,2.456051003177863,0.019,0.1,0.15,0.598,0.921
