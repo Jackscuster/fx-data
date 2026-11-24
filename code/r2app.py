@@ -128,6 +128,34 @@ def stage_app():
               'a5_spreads', 'a5_overlay'):
         sec['reads'][k] = {m: v for m, v in sec['reads'][k].items() if v}
     sec['reads'].pop('c3_fix', None)
+    # ---- THE NNFX BUILD SECTION (HANDOFF 0m). Standing rule: every result
+    # gets an app tab, and a markdown file on disk does not satisfy it.
+    ND = os.path.join(ROOTOUT, 'nnfx')
+    def nd(name, cols=None, head=80):
+        return _recs(os.path.join(ND, name), cols=cols, head=head)
+    sec['nnfx'] = dict(
+        note=('Layer 2 rebuilt the NNFX way: one algorithm, one piece at a '
+              'time, few candidates per stage. Eleven-step walk; unseen trade '
+              'years 2010-2015 are the BUILD evidence and 2016-2020 are '
+              'computed and stored but NOT shown until the confirm is called.'),
+        power=nd('power_test_blindness.csv'),
+        power_floors=nd('power_test_true_floors.csv'),
+        scorer=nd('scorer_consequence.csv'),
+        stage1_c1_flip=nd('stage1_c1_flip_only_walkbuild.csv'),
+        stage1_c1_risk=nd('stage1_c1_canonical_risk_walkbuild.csv'),
+        stage1_base_flip=nd('stage1_base_flip_only_walkbuild.csv'),
+        stage1_base_risk=nd('stage1_base_canonical_risk_walkbuild.csv'),
+        select_c1_flip=nd('stage1_c1_flip_only_select.csv'),
+        select_c1_risk=nd('stage1_c1_canonical_risk_select.csv'),
+        select_base_flip=nd('stage1_base_flip_only_select.csv'),
+        select_base_risk=nd('stage1_base_canonical_risk_select.csv'),
+        market=nd('market_switch_corr.csv'),
+        ledger_n=(sum(1 for _ in open(os.path.join(ND, 'CANDIDATE_LEDGER.csv'))) - 1
+                  if os.path.exists(os.path.join(ND, 'CANDIDATE_LEDGER.csv')) else 0),
+    )
+    sec['nnfx'] = {k: v for k, v in sec['nnfx'].items()
+                   if not (isinstance(v, list) and not v)}
+
     sec['curve'] = {k: v for k, v in sec['curve'].items() if v}
     sec['rankcorr'] = {k: v for k, v in sec['rankcorr'].items() if v}
     for root in (os.path.join(_R, 'app_data.json'), os.path.join(ROOTOUT, 'app_data.json')):

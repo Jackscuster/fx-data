@@ -81,6 +81,7 @@ const NAV=`<nav role="tablist">
 <button role="tab" aria-selected="false" data-t="tq">Trend quality</button>
 <button role="tab" aria-selected="false" data-t="r2">L2 restart</button>
 <button role="tab" aria-selected="false" data-t="rr">Reads</button>
+<button role="tab" aria-selected="false" data-t="nx">NNFX build</button>
 <button role="tab" aria-selected="false" data-t="cw">Crisis witnesses</button>
 </nav>`;
 
@@ -606,6 +607,7 @@ over its whole range and reported as a curve, with the identity null beside it. 
 the old Layer 2 was deleted.</div>
 <div id="r2body"></div>
 <div id="rrbody"></div>
+<div id="nxbody"></div>
 </section>
 <section id="tq" hidden>
 <h3>Trend round 3: is there a quality flag on the trend label?</h3>
@@ -5497,6 +5499,7 @@ function boot(BUNDLE,root){
    if(t==='tq')tqFill();
    if(t==='r2')r2Fill();
    if(t==='rr')rrFill();
+   if(t==='nx')nxFill();
    if(t==='cw')cwFill();};
   const applyAdv=()=>{
    document.querySelectorAll('nav button[data-t]').forEach(b=>{
@@ -5749,4 +5752,60 @@ const rrFill=()=>{const el=document.getElementById('rrbody');if(!el||el.dataset.
    +'range boundary is not exposed. Two defects are filed against the producer in C2_BOUNDARY_DEFECT.md: the levels '
    +'are missing, and the four mechanism reads have no per-column definition, unit or sign convention. Building a fade '
    +'on a boundary I had invented would have produced something that looked like evidence and was not.</div>';
+ el.innerHTML=h;el.dataset.done='1';};
+
+/* NNFX BUILD (HANDOFF 0m). Layer 2 rebuilt one piece at a time, few candidates
+   per stage, so the luck floor is a floor a real effect can cross. Unseen trade
+   years 2010-2015 are the BUILD evidence; 2016-2020 are computed and stored but
+   deliberately NOT shown here until the confirm is called, once. */
+const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.done)return;
+ const R=((window.DATA||{}).l2_restart||{}).nnfx;
+ if(!R){el.innerHTML='<div class="note">no nnfx section in app_data.json</div>';return;}
+ const tbl=(rows,cols,title)=>{if(!rows||!rows.length)return '';
+  const c=cols||Object.keys(rows[0]);
+  return '<h4>'+title+'</h4><div style="overflow-x:auto"><table><thead><tr>'+c.map(k=>'<th>'+k+'</th>').join('')+'</tr></thead><tbody>'+
+   rows.map(r=>'<tr>'+c.map(k=>{let v=r[k];if(typeof v==='number')v=Math.abs(v)>=1000?v.toLocaleString():(Number.isInteger(v)?v:v.toFixed(4));return '<td>'+(v===null||v===undefined?'':v)+'</td>';}).join('')+'</tr>').join('')+
+   '</tbody></table></div>';};
+ let h='<div class="note">'+(R.note||'')+'</div>';
+ h+='<h3>0a — power test: what edge is the instrument blind to?</h3>';
+ h+='<div class="note"><b>The old floor of t 5.08 was in the wrong units.</b> A genuine best-of-273,780 floor on SIX yearly '
+   +'observations is t 34.69, and on eleven t 11.69; 5.08 came from a per-trade t where the degrees of freedom run to the '
+   +'hundreds. So the old route was both too lenient to control the family-wise error it claimed to control and too strict to '
+   +'find a real edge — it detects a 0.20 R per trade edge 8.9% of the time on six years. And ONE OF 39 IS WORSE than that '
+   +'on six years, floor t 5.54 against 5.08. Six yearly observations is a thin instrument whatever the candidate count, '
+   +'so the confirm years are most of the statistical power, not a formality.</div>';
+ h+=tbl(R.power,['span','years','route','t_crit','false_positive_at_zero','min_edge_power50','power_at_0_10','power_at_0_20'],'0a blindness by route (two-point and normal models agree)');
+ h+=tbl(R.power_floors,null,'0a — the honest max-of-M floor on yearly values');
+ h+='<h3>0b — one scorer</h3>';
+ h+='<div class="note"><b>Two undeclared conventions, not a bug.</b> Gate 2 marks every trade to market at each year end; '
+   +'gate 3 books each whole trade to the year it was entered. Both reproduce exactly from one trade list. Gate 2 is right on R '
+   +'(year-end MTM is the declared rule); gate 3 is right on the count of DISTINCT trades. The membership of the winner list is '
+   +'not safe: one winner’s yearly t moves 4.116 → 5.033 against a floor set at 5.08.</div>';
+ h+=tbl(R.scorer,['mode','winner','t_gate2','t_gate3','t_delta','yrs_pos_gate2','yrs_pos_gate3','R5_gate2','R5_gate3'],'0b consequence per winner');
+ h+='<h3>Stage 1 — one piece alone, walk-forward (BUILD years 2010-2015)</h3>';
+ h+='<div class="note">All 39 C1 and all 15 baselines, three settings each, no selection by the model. <b>Not one of the 39 C1 '
+   +'clears even the single-candidate floor in either variant</b>; the baselines manage one, under flip-only only.</div>';
+ h+=tbl(R.stage1_c1_flip,['indicator','R_net_build','n','R_per_trade','trades_per_year','mean_bars','years_positive','worst_dip_R','t_yearly','n_settings_used'],'C1, flip only (enter on the flip, exit on the opposite flip, nothing else)');
+ h+=tbl(R.stage1_c1_risk,['indicator','R_net_build','n','R_per_trade','trades_per_year','mean_bars','years_positive','worst_dip_R','t_yearly','n_settings_used'],'C1, canonical risk (1.5 ATR stop, half off at 1 ATR)');
+ h+=tbl(R.stage1_base_flip,['indicator','R_net_build','n','R_per_trade','years_positive','worst_dip_R','t_yearly','n_settings_used'],'Baselines, flip only');
+ h+=tbl(R.stage1_base_risk,['indicator','R_net_build','n','R_per_trade','years_positive','worst_dip_R','t_yearly','n_settings_used'],'Baselines, canonical risk');
+ h+='<h3>1c — the selection test, K swept, against a label-shuffle null</h3>';
+ h+='<div class="note"><b>This is where it divides, and it is a statement about the RISK PLAN, not about any indicator.</b> '
+   +'Under flip-only: nothing — 0 of 39 and 0 of 15 K values beat their null and the best C1 mean is negative. Under canonical '
+   +'risk: C1 best +1.113 R/year at K=23, null -3.225, p 0.002, and 18 of 39 K values beat their own null at p≤0.05, far more '
+   +'than the two chance would give. Baselines best +13.052 at K=1, p 0.007. The same components ranked the same way are '
+   +'worthless without the stop and the half-off, and have an edge with them. Four family-by-variant combinations were run, so '
+   +'there is a multiplicity of 4 these p-values do not carry — a lead, not a finding, until the confirm years open.</div>';
+ h+=tbl(R.select_c1_risk,['K','R_per_year_mean','years_positive','t_yearly','null_mean','null_p95','null_p'],'C1, canonical risk — K swept');
+ h+=tbl(R.select_base_risk,['K','R_per_year_mean','years_positive','t_yearly','null_mean','null_p95','null_p'],'Baselines, canonical risk — K swept');
+ h+=tbl(R.select_c1_flip,['K','R_per_year_mean','years_positive','t_yearly','null_mean','null_p'],'C1, flip only — nothing beats the null');
+ h+='<h3>2a — market-wide switch: measurement only, no rule built</h3>';
+ h+='<div class="note"><b>The one Layer 1 measure that relates to the trend book is the crisis flag, and share_trending has the '
+   +'WRONG SIGN.</b> crisis_flag r +0.248 on tuning years and +0.279 on unseen, same sign both eras, pooled p 0.000 — crisis '
+   +'months are GOOD for a trend book. share_trending is -0.120 and -0.158, the measure one reaches for first and the one that '
+   +'fails. An r of 0.27 is about 7% of monthly variance, so this is not a switch. The null is a CIRCULAR SHIFT, because a plain '
+   +'shuffle destroys a monthly series’ autocorrelation as well as its alignment and makes p too small. The book is a 1,988 of '
+   +'273,780 sample, and two independent half-samples correlate at 0.9972, so 0.3% of monthly variance is sample noise.</div>';
+ h+=tbl(R.market,['era','measure','months','pearson_r','spearman','p_circular','p_shuffle'],'2a correlations, tuning era against unseen era');
+ h+='<div class="note">Candidates on record in CANDIDATE_LEDGER.csv: '+(R.ledger_n||0)+'. Every candidate ever tested is listed there, because the luck floor is computed from that file and not from memory.</div>';
  el.innerHTML=h;el.dataset.done='1';};
