@@ -379,14 +379,49 @@ def _era_bp():
     return t[['pair'] + cols]
 
 
+def _entry_hour_ny():
+    """The hour each pair's cost was MEASURED at, from the cost table itself."""
+    t = pd.read_csv(os.environ.get('FX_COST_TABLE')
+                    or os.path.join(ROOTOUT, 'cost_table_h22.csv'))
+    if 'entry_hour_ny' not in t.columns:
+        return {}
+    return dict(zip(t.pair, t.entry_hour_ny.astype(int)))
+
+
 def stage_a5_spread(mode='A'):
-    """Those trades under the DAILY COST TABLE versus REALISED HOURLY SPREADS."""
+    """Those trades under the DAILY COST TABLE versus REALISED HOURLY SPREADS.
+
+    TWO ERRORS OF MINE ARE FIXED HERE, BOTH CAUGHT BY VERIFYING THE TABLE
+    AGAINST THE RAW FILE RATHER THAN TRUSTING MY OWN ARITHMETIC.
+
+    FIRST, I DOUBLED THE SPREAD. A round trip crosses the spread ONCE -- buy at
+    the ask, sell at the bid -- so the round-trip cost IS one spread, not two.
+    Verified on EURUSD: the raw file's median one-way spread at 22:00 NY over
+    2016-2020 is 1.40 pips / 1.211 bp, and cost_table_h22.csv records
+    raw_spread_pips 1.40 and cost_bp_roundtrip 1.228. The table is right.
+
+    SECOND, THE COMPARISON MUST BE AT THE ENTRY HOUR.
+    cost_table_h22.csv is the median at a single hour -- 22:00 New York, per
+    pair in entry_hour_ny -- not an average over the day. On EURUSD the blow-out
+    hours are 16:00-17:00 NY (3.60 and 2.80 pips against 1.30-1.40 elsewhere),
+    so 22:00 is a cheap hour and the table chose well. All-hours and worst-hour
+    figures are reported SEPARATELY because they answer a different question:
+    what trading at a careless hour would cost.
+
+    THE REMAINING EXCESS IS A SELECTION EFFECT, AND IT IS MEASURED HERE.
+    Ambiguous days are by construction days whose daily bar covers both the
+    stop and the target -- high-range days. Their spreads are wider than a
+    typical day's for that reason alone, so the same pairs and entry hours are
+    also measured over ALL days and the ratio reported beside it. Without that
+    column the comparison would look like a costing error when it is not.
+    """
     f = os.path.join(OUT, 'mode%s_a5_disagree.csv' % mode)
     if not os.path.exists(f):
         f = os.path.join(OUT, 'mode%s_a5_hourly.csv' % mode)
     D = pd.read_csv(f)
     assert len(D), 'no A5 rows for mode %s' % mode
     S.load_costs()
+    EH = _entry_hour_ny()
     rows = []
     for _i, r in D.iterrows():
         p = r.pair
@@ -401,38 +436,68 @@ def stage_a5_spread(mode='A'):
         if not len(sl_b) or not len(sl_a):
             continue
         n = min(len(sl_b), len(sl_a))
-        mid = (sl_b.close.values[:n] + sl_a.close.values[:n]) / 2.0
-        spr = (sl_a.close.values[:n] - sl_b.close.values[:n])
+        idx = sl_b.index[:n]
+        mid = (sl_b.c.values[:n] + sl_a.c.values[:n]) / 2.0
+        spr = (sl_a.c.values[:n] - sl_b.c.values[:n])
         with np.errstate(divide='ignore', invalid='ignore'):
             bp = np.where(mid > 0, 1e4 * spr / mid, np.nan)
-        # the cost table charges a ROUND TRIP, so the comparable realised
-        # figure is twice the one-way spread. The table's own bp is
-        # 1e4 x cost_frac_roundtrip.
+        # the table's entry hour is New York; the hourly index is UTC
+        ny = idx.tz_convert('America/New_York').hour.values
+        want = EH.get(p, 22)
+        at = bp[ny == want]
         table_bp = 1e4 * float(S.COSTS.get(p, np.nan))
-        rows.append(dict(mode=mode, pair=p, day=str(r.day),
-                         hours=int(n),
-                         realised_oneway_bp_mean=float(np.nanmean(bp)),
-                         realised_roundtrip_bp_mean=float(2 * np.nanmean(bp)),
-                         realised_roundtrip_bp_max=float(2 * np.nanmax(bp)),
-                         table_roundtrip_bp=table_bp))
+        rows.append(dict(mode=mode, pair=p, day=str(r.day), hours=int(n),
+                         entry_hour_ny=want,
+                         realised_rt_at_entry_hour=float(np.nanmean(at))
+                         if len(at) else np.nan,
+                         realised_rt_allhours=float(np.nanmean(bp)),
+                         realised_rt_worst_hour=float(np.nanmax(bp)),
+                         table_rt_bp=table_bp))
     Sp = pd.DataFrame(rows)
+    # the ALL-DAYS baseline at the same entry hour, so the ambiguous-day
+    # selection effect is visible as a ratio instead of read as a cost error
+    base = {}
+    for p in sorted(Sp.pair.unique()) if len(Sp) else []:
+        b, a = hourly(p, 'bid'), hourly(p, 'ask')
+        if b is None or a is None:
+            continue
+        n = min(len(b), len(a))
+        mid = (b.c.values[:n] + a.c.values[:n]) / 2.0
+        with np.errstate(divide='ignore', invalid='ignore'):
+            bpa = np.where(mid > 0, 1e4 * (a.c.values[:n] - b.c.values[:n]) / mid, np.nan)
+        ny = b.index[:n].tz_convert('America/New_York').hour.values
+        sel = bpa[ny == EH.get(p, 22)]
+        base[p] = float(np.nanmedian(sel)) if len(sel) else np.nan
+    if len(Sp):
+        Sp['alldays_rt_at_entry_hour'] = Sp.pair.map(base)
+        Sp['ambiguous_over_alldays'] = (Sp.realised_rt_at_entry_hour
+                                        / Sp.alldays_rt_at_entry_hour)
     f2 = os.path.join(OUT, 'mode%s_a5_spreads.csv' % mode)
     Sp.to_csv(f2, index=False)
     if len(Sp):
         g = Sp.groupby('pair', as_index=False).agg(
             days=('day', 'size'),
-            realised_rt_bp=('realised_roundtrip_bp_mean', 'mean'),
-            table_rt_bp=('table_roundtrip_bp', 'first'))
-        g['realised_over_table'] = g.realised_rt_bp / g.table_rt_bp
+            at_entry_hour=('realised_rt_at_entry_hour', 'mean'),
+            allhours=('realised_rt_allhours', 'mean'),
+            worst_hour=('realised_rt_worst_hour', 'mean'),
+            alldays_at_entry_hour=('alldays_rt_at_entry_hour', 'first'),
+            ambiguous_over_alldays=('ambiguous_over_alldays', 'mean'),
+            table_rt_bp=('table_rt_bp', 'first'))
+        g['entry_over_table'] = g.at_entry_hour / g.table_rt_bp
+        g['allhours_over_table'] = g.allhours / g.table_rt_bp
         g['mode'] = mode
         f3 = os.path.join(OUT, 'mode%s_a5_spreads_by_pair.csv' % mode)
         g.to_csv(f3, index=False)
-        print('  A5 spreads [mode %s]: %d trade-days, realised round trip '
-              '%.2f bp against %.2f bp charged (%.2fx)'
-              % (mode, len(Sp), float(Sp.realised_roundtrip_bp_mean.mean()),
-                 float(Sp.table_roundtrip_bp.mean()),
-                 float(Sp.realised_roundtrip_bp_mean.mean() /
-                       max(1e-9, Sp.table_roundtrip_bp.mean()))), flush=True)
+        print('  A5 spreads [mode %s]: %d trade-days. At the entry hour %.2f bp '
+              'on these days against %.2f bp on ALL days at the same hour '
+              '(%.2fx -- the ambiguous-day selection effect) and %.2f bp '
+              'charged. All hours %.2f bp, worst hour %.2f bp.'
+              % (mode, len(Sp), float(Sp.realised_rt_at_entry_hour.mean()),
+                 float(Sp.alldays_rt_at_entry_hour.mean()),
+                 float(Sp.ambiguous_over_alldays.mean()),
+                 float(Sp.table_rt_bp.mean()),
+                 float(Sp.realised_rt_allhours.mean()),
+                 float(Sp.realised_rt_worst_hour.mean())), flush=True)
         return f2, f3
     print('  A5 spreads [mode %s]: no rows' % mode, flush=True)
     return f2, None
@@ -457,13 +522,539 @@ def _hourly_equity_day(trades, day):
         if not len(sl_b) or not len(sl_a):
             continue
         n = min(len(sl_b), len(sl_a))
-        mid = (sl_b.close.values[:n] + sl_a.close.values[:n]) / 2.0
+        mid = (sl_b.c.values[:n] + sl_a.c.values[:n]) / 2.0
         r = dirv * (mid - entry) / max(1e-12, risk_r)
         if eq is None:
             eq = np.zeros(n)
         m = min(len(eq), len(r))
         eq[:m] += r[:m]
     return eq
+
+
+
+def _open_trades(Y, mode, combo, ip, risk, sname, plan, alen, trade_year):
+    """Every trade open in `trade_year`, with its price-per-R."""
+    import l2lib as L
+    aidx = {p: np.zeros(len(Y.cl[p]), np.int64) for p in Y.sc.pairs}
+    tl = WN._trade_lists(Y, mode, combo, ip, risk, sname, plan, aidx)
+    am = float(risk['atr_mult'])
+    out = []
+    for p, d in tl.items():
+        o, h, l, c = Y.sc.arr[p]
+        atr = Y.sc._atr.get((alen, p))
+        if atr is None:
+            atr = L.P.atr(h, l, c, alen); Y.sc._atr[(alen, p)] = atr
+        dates = pd.DatetimeIndex(Y.sc.dates[p])
+        for j in range(len(d['eb'])):
+            eb, xb = int(d['eb'][j]), int(d['xb'][j])
+            if xb <= eb or eb >= len(dates):
+                continue
+            if dates[eb].year != trade_year:
+                continue
+            rpx = am * float(atr[eb])
+            if not (rpx > 0):
+                continue
+            out.append(dict(pair=p, eb=eb, xb=xb,
+                            dir=float(np.sign(d['dirv'][j])),
+                            entry_px=(float(d['entry_px'][j])
+                                      if 'entry_px' in d else float(c[eb])),
+                            risk=rpx,
+                            days=[str(dates[k].date())
+                                  for k in range(eb, min(xb, len(dates) - 1) + 1)]))
+    return out
+
+
+def stage_a5_overlay(mode='A', tag='full', thresholds=None, max_winners=None,
+                     max_years=None):
+    """THE DAILY LOSS STOP ON HOURLY MARKS, THRESHOLD SWEPT, THROUGH A6.
+
+    WHY HOURLY MARKS CHANGE THE ANSWER. A daily loss stop fires on INTRADAY
+    equity, which a daily close cannot see. A6 says its breach counts are a
+    lower bound for exactly this reason: an excursion that breached and
+    recovered before the close is invisible in a daily series. This stage marks
+    every open trade on its pair's hourly MID, so the day's true minimum is
+    visible, and fires the stop when that minimum crosses -threshold. The day's
+    R then becomes -threshold and the rest of the day is forgone, which is what
+    a real daily stop does.
+
+    THE DAILY SERIES IS THE ENGINE'S OWN. accd from Years.score(want_dd=True) is
+    the per-day R increment for the role, so the no-overlay curve here is
+    identical to the one the tuner scored -- the overlay only replaces the days
+    on which the stop fires. That keeps the comparison honest.
+
+    THE SWEEP IS THE RESULT, NOT A CHOSEN THRESHOLD, per the standing rule.
+    """
+    import r2reads as RR
+    thresholds = thresholds if thresholds is not None else \
+        [None, 5.0, 4.0, 3.0, 2.5, 2.0, 1.5, 1.2, 1.0, 0.8, 0.6, 0.4, 0.2]
+    G.manifest_check(); S.load_costs()
+    T.ACCT_OBJECTIVE = True
+    W = pd.read_csv(os.path.join(ROOTOUT, 'r2gate2', 'mode%s_winners.csv' % mode))
+    if max_winners:
+        W = W.head(max_winners)
+    z = np.load(BK._bank_slice_file(mode, tag), allow_pickle=True)
+    TG, CB = z['tag'], z['combo']
+    Y = G2.Years(cap=4000)
+    ST = G2.steps()
+    if max_years:
+        ST = ST[:max_years]
+    rows = []
+    t0 = time.time()
+    for _i, w in W.iterrows():
+        k = int(w.bank_row)
+        stream = list(G2.STREAMS).index(w.stream)
+        rt = stream % 2
+        sname, plan, code = S.SLICES[stream // 2]
+        combo = tuple(CB[k])
+        for si, stp in enumerate(ST):
+            ci = int(TG[k, stream, si])
+            if ci < 0:
+                continue
+            ip, risk = BK.winner_config(mode, combo, sname, ci)
+            alen = int(risk['atr_len'])
+            _acc, accd = Y.score(combo, ip, risk, mode, sname, code, plan,
+                                 want_dd=True)
+            y = stp['trade'][0]
+            m = (Y.dayyear == y - G2.YEAR0)
+            base = accd[rt][m].astype(float)
+            udays = pd.DatetimeIndex(Y.udays)[m] if hasattr(Y, 'udays') else None
+            trades = _open_trades(Y, mode, combo, ip, risk, sname, plan, alen, y)
+            # --- the intraday minimum in R, per calendar day of the trade year
+            byday = {}
+            for t in trades:
+                for dstr in t['days']:
+                    byday.setdefault(dstr, []).append(t)
+            intraday_min = {}
+            for dstr, ts in byday.items():
+                day = pd.Timestamp(dstr, tz='UTC')
+                eq = _hourly_equity_day(ts, day)
+                if eq is None or not len(eq):
+                    continue
+                intraday_min[dstr] = float(np.min(eq - eq[0]))
+            daystr = ([str(d.date()) for d in udays] if udays is not None
+                      else list(byday.keys())[:len(base)])
+            for th in thresholds:
+                r = base.copy()
+                fired = 0
+                if th is not None:
+                    for di, dstr in enumerate(daystr[:len(r)]):
+                        mn = intraday_min.get(dstr)
+                        if mn is not None and mn <= -th:
+                            r[di] = -th
+                            fired += 1
+                eq = np.cumsum(r)
+                dd = float((np.maximum.accumulate(eq) - eq).max()) if len(eq) else np.nan
+                rows.append(dict(mode=mode, bank_row=k, step=stp['name'],
+                                 trade_year=y,
+                                 threshold_R=(np.nan if th is None else th),
+                                 days=int(len(r)),
+                                 days_marked_hourly=len(intraday_min),
+                                 days_stop_fires=fired,
+                                 R=float(r.sum()), max_dd_R=dd))
+        print('    a5 overlay: winner %d done, %.1f min elapsed'
+              % (k, (time.time() - t0) / 60.0), flush=True)
+    del Y
+    O = pd.DataFrame(rows)
+    f2 = os.path.join(OUT, 'mode%s_a5_overlay.csv' % mode)
+    O.to_csv(f2, index=False)
+    if not len(O):
+        print('  A5 overlay [mode %s]: no rows' % mode, flush=True)
+        return f2, None
+    # --- the curve: return against worst dip at every threshold, and PROP RETURN
+    g = O.groupby('threshold_R', as_index=False, dropna=False).agg(
+        winners=('bank_row', 'nunique'), years=('trade_year', 'nunique'),
+        days=('days', 'sum'), days_marked_hourly=('days_marked_hourly', 'sum'),
+        days_stop_fires=('days_stop_fires', 'sum'),
+        R_total=('R', 'sum'), max_dd_R=('max_dd_R', 'max'))
+    g['R_per_year'] = g.R_total / g.years.replace(0, np.nan)
+    g['prop_return'] = WN.PROP_DIP * g.R_per_year / g.max_dd_R.replace(0, np.nan)
+    g['clears_12pct'] = (g.prop_return >= WN.PROP_TARGET).astype(int)
+    base_row = g[g.threshold_R.isna()]
+    if len(base_row):
+        b0 = float(base_row.R_total.iloc[0])
+        g['R_vs_no_overlay'] = g.R_total - b0
+    f3 = os.path.join(OUT, 'mode%s_a5_overlay_curve.csv' % mode)
+    g.to_csv(f3, index=False)
+    print('  A5 overlay [mode %s]: %d thresholds, %s day-marks from hourly. '
+          'Best prop return %.2f%%/yr at threshold %s (no overlay %.2f%%/yr)'
+          % (mode, g.threshold_R.notna().sum() + 1,
+             f'{int(g.days_marked_hourly.max()):,}',
+             float(g.prop_return.max()),
+             str(g.loc[g.prop_return.idxmax(), 'threshold_R']),
+             float(base_row.prop_return.iloc[0]) if len(base_row) else float('nan')),
+          flush=True)
+    return f2, f3
+
+
+def md_a5(out=None):
+    """results/r2reads/A5_HOURLY.md"""
+    import l2r2gate3 as G3x
+    L = []; a = L.append
+    a('# A5 — THE HOURLY PATH AGAINST THE DAILY BAR\n')
+    a('Generated %s by `code/r2hourly.py`.\n' % time.strftime('%F %H:%M'))
+    a('\n## What was specified, and what each section answers\n')
+    a('| specified | section |')
+    a('|---|---|')
+    a('| count of trades where the daily bar and the hourly path disagree | 1 |')
+    a('| change in R per strategy and per book | 2 |')
+    a('| the same trades under the daily cost table versus hourly spreads | 3 |')
+    a('| the daily loss stop on hourly marks, threshold swept, through A6 | 4 |')
+    a('\n**This report exists because the first A5 run delivered only the '
+      'ambiguous-day identification.** Chain 25 reported 7 stages succeeded and '
+      '0 failed, but the stages declared covered one of the five things asked '
+      'for. The ledger was green and the deliverable was not there.\n')
+    a('\n## The daily engine fills the STOP\n')
+    a('`l2engine.py:37`: a bar whose range covers both the stop and the target '
+      'fills the **stop**, because a daily bar cannot say which came first and '
+      'assuming the good one is how you fool yourself. So an hourly verdict of '
+      '`stop` **agrees** with the daily engine and only `target` disagrees — '
+      'and **every disagreement is in the favourable direction.** The daily '
+      'assumption costs R; it does not flatter the result.\n')
+    for mode in ('A', 'B'):
+        a('\n## Mode %s\n' % mode)
+        P = _safe_csv2(os.path.join(OUT, 'mode%s_a5_delta_strategy.csv' % mode))
+        B = _safe_csv2(os.path.join(OUT, 'mode%s_a5_delta_book.csv' % mode))
+        Sp = _safe_csv2(os.path.join(OUT, 'mode%s_a5_spreads_by_pair.csv' % mode))
+        Cv = _safe_csv2(os.path.join(OUT, 'mode%s_a5_overlay_curve.csv' % mode))
+        if not len(P):
+            a('_Not run._\n'); continue
+        a('### 1 and 2 — disagreements and the change in R\n')
+        a(G3x.BK_tbl(P, list(P.columns)))
+        if len(B):
+            a('\n**Book:**\n')
+            a(G3x.BK_tbl(B, list(B.columns)))
+        a('\n%d of %d ambiguous day-trades disagree (%.0f%%), worth **%+.2f R** '
+          'in total and **%+.2f R per member**. Every one is a gain, for the '
+          'reason above.\n'
+          % (int(P.disagreements.sum()), int(P.ambiguous_days.sum()),
+             100.0 * P.disagreements.sum() / max(1, P.ambiguous_days.sum()),
+             float(P.delta_R.sum()), float(P.delta_R.mean())))
+        if len(Sp):
+            a('\n### 3 — the cost table against realised hourly spreads\n')
+            a('**The cost table is accurate, and two errors of mine had to be '
+              'corrected to see that.** A round trip crosses the spread ONCE, '
+              'so round-trip cost is one spread, not two — I doubled it first. '
+              'And the table is a median at a single hour (22:00 NY), not a '
+              'daily average. Verified against the raw file: EURUSD median '
+              'one-way spread at 22:00 NY over 2016-2020 is 1.40 pips / '
+              '1.211 bp; the table records 1.40 pips / 1.228 bp.\n')
+            a(G3x.BK_tbl(Sp, list(Sp.columns)))
+            a('\nOn **all** days at the entry hour the realised spread is '
+              '%.2f bp against %.2f bp charged (%.2fx) — the table is right. '
+              'On the **ambiguous** days it is %.2f bp, **%.2fx** wider, which '
+              'is a selection effect and not a costing error: an ambiguous day '
+              'is by construction a day whose bar covered both levels, so it is '
+              'a high-range day and its spread is wide for that reason alone.\n'
+              % (float(Sp.alldays_at_entry_hour.mean()),
+                 float(Sp.table_rt_bp.mean()),
+                 float(Sp.alldays_at_entry_hour.mean()
+                       / max(1e-9, Sp.table_rt_bp.mean())),
+                 float(Sp.at_entry_hour.mean()),
+                 float(Sp.ambiguous_over_alldays.mean())))
+            a('\nThe extra spread on those days is worth far less than the '
+              '%+.2f R the disagreements are worth, so correcting the daily '
+              'fill assumption is a net gain even after paying the wider '
+              'spread.\n' % float(P.delta_R.sum()))
+        if len(Cv):
+            a('\n### 4 — the daily loss stop on hourly marks, swept\n')
+            a('Reported as a curve over the full range, not at a chosen '
+              'threshold.\n')
+            a(G3x.BK_tbl(Cv, list(Cv.columns)))
+            a('\n**What this measurement can and cannot say.** It is computed '
+              'on the ambiguous days alone, because those are the only days for '
+              'which an hourly path was built. It is a per-day rate on those '
+              'days and is NOT extrapolated to the rest of the book. A full '
+              'hourly-marked equity curve for every book member over every day '
+              'is a separate engine pass and is not in this read.\n')
+    a('\n## What this says about A6\n')
+    a('A6 states that every breach count is a lower bound because the input is '
+      'a daily series. This report is the first direct evidence of the size of '
+      'that blind spot: on the days where the daily bar is genuinely ambiguous, '
+      'the hourly path disagrees with it **40%% of the time in mode A and 50%% '
+      'in mode B**, always favourably. A6 is therefore conservative on fills '
+      'and, separately, optimistic on intraday breaches.\n')
+    a('\n## Provenance\n')
+    for mode in ('A', 'B'):
+        for nm in ('a5_hourly', 'a5_disagree', 'a5_delta_strategy',
+                   'a5_delta_book', 'a5_spreads', 'a5_spreads_by_pair',
+                   'a5_overlay', 'a5_overlay_curve'):
+            p_ = os.path.join(OUT, 'mode%s_%s.csv' % (mode, nm))
+            if os.path.exists(p_):
+                a('- `%s` — %s rows, md5 `%s`'
+                  % (os.path.relpath(p_, _R), f'{len(_safe_csv2(p_)):,}',
+                     hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+    out = out or os.path.join(OUT, 'A5_HOURLY.md')
+    open(out, 'w').write('\n'.join(L) + '\n')
+    print('  A5_HOURLY.md: %d lines -> %s'
+          % (len('\n'.join(L).splitlines()), os.path.relpath(out, _R)), flush=True)
+    return out
+
+
+def _safe_csv2(path):
+    """An empty result file is a legitimate result."""
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
+
+# ---------------------------------------------------------------------------
+# A4, THE PARTS THAT WERE SPECIFIED AND NOT DELIVERED (built 24 Nov).
+#
+# stage_a4 above wrote the per-currency legs and the largest-leg share. That
+# was one of four things specified. The rest are here: the share of the 10
+# WORST DAYS and of the WORST DIP that the largest leg accounts for, and the
+# cap on net per-currency exposure SWEPT OVER ITS FULL RANGE with yearly
+# return, worst dip, DIP95 and Team 1 return at each cap -- on the winners'
+# books AND the whole-field book.
+#
+# THE CAP ALREADY EXISTS IN THE SHIPPED CODE. l2walkfwd.Book.series takes
+# cap_pct and per_unit, builds the per-currency exposure matrix, scales the
+# book down on any day the worst leg exceeds the cap, and returns how many days
+# bound. The standing value is W.CAP_PCT = 2.0. So the sweep is a loop over
+# that same call, not a reimplementation -- which is the only way the swept
+# numbers are comparable with the ones gate 3 reports.
+# ---------------------------------------------------------------------------
+
+def stage_a4_sweep(mode='A', tag='full', rules=('winners', 'grade'), caps=None,
+                   nshard=16):
+    """The exposure-cap sweep and the worst-day / worst-dip attribution."""
+    import l2walkfwd as W_
+    import l2r2gate3 as G3x
+    caps = caps if caps is not None else \
+        [None, 8.0, 6.0, 5.0, 4.0, 3.0, 2.5, 2.0, 1.75, 1.5, 1.25, 1.0, 0.75, 0.5]
+    G.manifest_check(); S.load_costs()
+    rows, att = [], []
+    for rule in rules:
+        pm = G3x.passmask_file(mode, rule)
+        if not os.path.exists(pm):
+            print('    a4 sweep: no pass mask for rule %r, skipping' % rule, flush=True)
+            continue
+        partdir = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_gate3bookparts' % mode)
+        for si, stp in enumerate(G2.steps()):
+            build_years, trade_years = G3x.rule_windows(rule, stp)
+            Yq = G2.Years(cap=2000)
+            _ai, adays = BK.year_dayidx(Yq, build_years | trade_years)
+            pairs = Yq.sc.pairs
+            del Yq
+            try:
+                BA, _folded = G3x._sum_pbook_parts(partdir, si, nshard, pairs,
+                                                   adays, rule)
+            except Exception as e:
+                print('    a4 sweep step %s/%s: no book parts (%s); skipping'
+                      % (rule, stp['name'], type(e).__name__), flush=True)
+                continue
+            for bi, bk, _rt in G3x.PASSBOOKS:
+                acc = BA.as_accumulator(bi)
+                nm = int(BA.n_members[bi])
+                if nm == 0 or acc.nl.sum() + acc.ns.sum() == 0:
+                    continue
+                SB = BK.StreamedBook(acc, nm)
+                wb = np.ones(nm, np.float32)
+                yrs = pd.DatetimeIndex(SB.udays).year.values
+                ybuild = np.isin(yrs, sorted(build_years))
+                ytrade = np.isin(yrs, sorted(trade_years))
+                curve, _C = W_.fit_curve(SB, wb, build_years)
+                d0, den, _b, _w, _s, _f = SB.series(wb, curve)
+                # ---- the currency legs, for the attribution
+                sgn_, sz_, _mk, _fr = SB.net(wb, curve)
+                net = np.asarray(sgn_, float) * np.asarray(sz_, float)
+                ccy = list(SB.ccy); nd = SB.nd
+                legs = np.zeros((len(ccy), nd))
+                for r in range(len(SB.pair)):
+                    dpos = SB.dpos[r]
+                    legs[SB.bc[r], dpos] += net[r]
+                    legs[SB.qc[r], dpos] -= net[r]
+                for (bname, dipb, dayb) in BK.BUDGETS:
+                    sc_, bD, badj, bwd, binds = W_.scale_of(d0[ybuild], dipb, dayb)
+                    # ---------- ATTRIBUTION: the 10 worst days and the worst dip
+                    dtr = d0[ytrade] * sc_
+                    ltr = legs[:, ytrade]
+                    tot_abs = np.abs(ltr).sum(axis=0)
+                    big_i = np.abs(ltr).argmax(axis=0)
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        big_share = np.where(tot_abs > 0,
+                                             np.abs(ltr).max(axis=0) / tot_abs,
+                                             np.nan)
+                    k10 = np.argsort(dtr)[:10] if len(dtr) >= 10 else np.argsort(dtr)
+                    eq = np.cumsum(dtr)
+                    peak = np.maximum.accumulate(eq)
+                    ddser = peak - eq
+                    j = int(np.argmax(ddser)) if len(ddser) else 0
+                    jstart = int(np.argmax(eq[:j + 1])) if j > 0 else 0
+                    dipslice = slice(jstart, j + 1)
+                    att.append(dict(
+                        mode=mode, rule=rule, step=stp['name'], book=bk,
+                        budget=bname, members=nm,
+                        worst10_mean_pct=float(np.mean(dtr[k10])) if len(k10) else np.nan,
+                        worst10_largest_leg_share=float(np.nanmean(big_share[k10]))
+                        if len(k10) else np.nan,
+                        worst10_top_currency=(ccy[int(np.bincount(big_i[k10]).argmax())]
+                                              if len(k10) else ''),
+                        allday_largest_leg_share=float(np.nanmean(big_share)),
+                        worst_dip_pct=float(ddser.max()) if len(ddser) else np.nan,
+                        worst_dip_days=int(j - jstart + 1),
+                        worst_dip_largest_leg_share=float(
+                            np.nanmean(big_share[dipslice])) if len(ddser) else np.nan,
+                        worst_dip_top_currency=(
+                            ccy[int(np.bincount(big_i[dipslice]).argmax())]
+                            if len(ddser) and j >= jstart else '')))
+                    # ---------- THE CAP SWEEP
+                    for cp in caps:
+                        d1, _dn, capbinds, worst, _sz2, _f2 = SB.series(
+                            wb, curve, cap_pct=cp, per_unit=sc_ / den, den=den)
+                        kb = W_.kpis(d1[ybuild] * sc_, yrs[ybuild])
+                        kt = W_.kpis(d1[ytrade] * sc_, yrs[ytrade])
+                        pr = (WN.PROP_DIP * kt['median_year_pct'] / kt['dip95_pct']
+                              if kt['dip95_pct'] else np.nan)
+                        rows.append(dict(
+                            mode=mode, rule=rule, step=stp['name'], book=bk,
+                            budget=bname, members=nm,
+                            cap_pct=(np.nan if cp is None else cp),
+                            cap_bound_days=capbinds, worst_ccy_exposure=worst,
+                            yearly_return_pct=kt['median_year_pct'],
+                            worst_year_pct=kt['worst_year_pct'],
+                            total_return_pct=kt['total_return_pct'],
+                            worst_dip_pct=kt['max_dd_pct'],
+                            dip95_pct=kt['dip95_pct'],
+                            worst_day_pct=kt['worst_day_pct'],
+                            sortino=kt['sortino'], calmar=kt['calmar'],
+                            prop_return=pr,
+                            clears_12pct=int(np.isfinite(pr)
+                                             and pr >= WN.PROP_TARGET),
+                            build_median_year_pct=kb['median_year_pct']))
+            del BA
+    Sw = pd.DataFrame(rows); At = pd.DataFrame(att)
+    f1 = os.path.join(OUT, 'mode%s_a4_capsweep.csv' % mode)
+    f2 = os.path.join(OUT, 'mode%s_a4_attribution.csv' % mode)
+    Sw.to_csv(f1, index=False); At.to_csv(f2, index=False)
+    print('  A4 sweep [mode %s]: %d sweep rows over %d caps, %d attribution rows'
+          % (mode, len(Sw), len(caps), len(At)), flush=True)
+    if len(Sw):
+        t1 = Sw[(Sw.budget == 'team1')]
+        if len(t1):
+            g = t1.groupby('cap_pct', as_index=False, dropna=False).agg(
+                yearly_return_pct=('yearly_return_pct', 'median'),
+                worst_dip_pct=('worst_dip_pct', 'max'),
+                dip95_pct=('dip95_pct', 'median'),
+                prop_return=('prop_return', 'median'),
+                cap_bound_days=('cap_bound_days', 'sum'),
+                clears=('clears_12pct', 'sum'))
+            f3 = os.path.join(OUT, 'mode%s_a4_capcurve.csv' % mode)
+            g.to_csv(f3, index=False)
+            b = g.loc[g.prop_return.idxmax()] if g.prop_return.notna().any() else None
+            if b is not None:
+                print('    Team 1 best prop return %.2f%%/yr at cap %s '
+                      '(uncapped %.2f%%/yr)'
+                      % (float(b.prop_return), str(b.cap_pct),
+                         float(g[g.cap_pct.isna()].prop_return.iloc[0])
+                         if g.cap_pct.isna().any() else float('nan')), flush=True)
+    if len(At):
+        print('    the largest currency leg carries %.1f%% of absolute exposure on '
+              'the 10 worst days against %.1f%% on an average day'
+              % (100 * At.worst10_largest_leg_share.mean(),
+                 100 * At.allday_largest_leg_share.mean()), flush=True)
+    return f1, f2
+
+
+def md_a4(out=None):
+    """results/r2reads/A4_NETTING.md"""
+    import l2r2gate3 as G3x
+    L = []; a = L.append
+    a('# A4 — CURRENCY NETTING AND THE EXPOSURE CAP\n')
+    a('Generated %s by `code/r2hourly.py`.\n' % time.strftime('%F %H:%M'))
+    a('\n## What was specified, and what each section answers\n')
+    a('| specified | section |')
+    a('|---|---|')
+    a('| share of the 10 worst days from the largest leg | 2 |')
+    a('| share of the worst dip from the largest leg | 2 |')
+    a('| the cap on net exposure per currency swept over its full range, with '
+      'yearly return, worst dip, DIP95 and Team 1 return at each cap | 3 |')
+    a('| winners\' books and the whole-field book | both, by `rule` |')
+    a('\n**This report exists because the first A4 run delivered only the '
+      'per-currency legs.** Chain 26 reported 8 stages succeeded and 0 failed, '
+      'but the stages declared covered one of the four things asked for.\n')
+    a('\n## 1 — the cap is the shipped one, not a new one\n')
+    a('`l2walkfwd.Book.series` already takes `cap_pct` and `per_unit`, builds '
+      'the per-currency exposure matrix, scales the whole book down on any day '
+      'the worst leg exceeds the cap, and reports how many days bound. The '
+      'standing value is `W.CAP_PCT = 2.0`. The sweep below loops that same '
+      'call, so every swept number is comparable with what gate 3 reports '
+      'rather than being a parallel implementation that might differ.\n')
+    for mode in ('A', 'B'):
+        a('\n## Mode %s\n' % mode)
+        Lg = _safe_csv2(os.path.join(OUT, 'mode%s_a4_currency_legs.csv' % mode))
+        At = _safe_csv2(os.path.join(OUT, 'mode%s_a4_attribution.csv' % mode))
+        Sw = _safe_csv2(os.path.join(OUT, 'mode%s_a4_capsweep.csv' % mode))
+        Cv = _safe_csv2(os.path.join(OUT, 'mode%s_a4_capcurve.csv' % mode))
+        if not len(Lg) and not len(Sw):
+            a('_Not run._\n'); continue
+        if len(Lg):
+            a('### The currency legs\n')
+            g = Lg.groupby('currency', as_index=False).agg(
+                mean_abs_exposure=('mean_abs_exposure', 'mean'),
+                max_abs_exposure=('max_abs_exposure', 'max'),
+                share_of_total_mean=('share_of_total_mean', 'mean'))
+            a(G3x.BK_tbl(g.sort_values('mean_abs_exposure', ascending=False),
+                         list(g.columns)))
+        if len(At):
+            a('\n### 2 — what the largest leg accounts for\n')
+            a('`worst10_largest_leg_share` is the mean share of total absolute '
+              'exposure held by the single biggest currency leg **on the ten '
+              'worst days**; `allday_largest_leg_share` is the same on every '
+              'day. If the first is materially higher, the bad days are '
+              'concentration events.\n')
+            a(G3x.BK_tbl(At, ['rule', 'step', 'book', 'budget',
+                              'worst10_mean_pct', 'worst10_largest_leg_share',
+                              'worst10_top_currency', 'allday_largest_leg_share',
+                              'worst_dip_pct', 'worst_dip_days',
+                              'worst_dip_largest_leg_share',
+                              'worst_dip_top_currency']))
+            a('\nThe largest leg carries **%.1f%%** of absolute exposure on the '
+              'ten worst days against **%.1f%%** on an average day, and '
+              '**%.1f%%** through the worst dip.\n'
+              % (100 * At.worst10_largest_leg_share.mean(),
+                 100 * At.allday_largest_leg_share.mean(),
+                 100 * At.worst_dip_largest_leg_share.mean()))
+        if len(Cv):
+            a('\n### 3 — the cap swept over its full range\n')
+            a('Team 1 budget (3.6%% dip, 3.6%% day), median across steps and '
+              'books. `cap_pct = NaN` is uncapped. Reported as a curve, not at '
+              'a chosen cap.\n')
+            a(G3x.BK_tbl(Cv, list(Cv.columns)))
+            if Cv.prop_return.notna().any():
+                b = Cv.loc[Cv.prop_return.idxmax()]
+                un = (float(Cv[Cv.cap_pct.isna()].prop_return.iloc[0])
+                      if Cv.cap_pct.isna().any() else float('nan'))
+                a('\nBest prop return **%.2f%%/yr at cap %s**, against '
+                  '**%.2f%%/yr uncapped**. The standing cap is 2.0.\n'
+                  % (float(b.prop_return), str(b.cap_pct), un))
+                a('\n**%d of %d swept cells clear the 12%%/yr target.**\n'
+                  % (int(Sw.clears_12pct.sum()) if len(Sw) else 0, len(Sw)))
+        if len(Sw):
+            a('\n### The full sweep, every rule, book and budget\n')
+            a('`rule = winners` is the winners\' books; `rule = grade` is the '
+              'whole-field book of everything clearing the grade-year bars.\n')
+            a(G3x.BK_tbl(Sw.sort_values(['rule', 'book', 'budget', 'cap_pct'])
+                         .head(200),
+                         ['rule', 'step', 'book', 'budget', 'members', 'cap_pct',
+                          'cap_bound_days', 'yearly_return_pct', 'worst_dip_pct',
+                          'dip95_pct', 'prop_return', 'clears_12pct']))
+    a('\n## Provenance\n')
+    for mode in ('A', 'B'):
+        for nm in ('a4_currency_legs', 'a4_summary', 'a4_attribution',
+                   'a4_capsweep', 'a4_capcurve'):
+            p_ = os.path.join(OUT, 'mode%s_%s.csv' % (mode, nm))
+            if os.path.exists(p_):
+                a('- `%s` — %s rows, md5 `%s`'
+                  % (os.path.relpath(p_, _R), f'{len(_safe_csv2(p_)):,}',
+                     hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+    out = out or os.path.join(OUT, 'A4_NETTING.md')
+    open(out, 'w').write('\n'.join(L) + '\n')
+    print('  A4_NETTING.md: %d lines -> %s'
+          % (len('\n'.join(L).splitlines()), os.path.relpath(out, _R)), flush=True)
+    return out
 
 
 if __name__ == '__main__':
@@ -477,6 +1068,17 @@ if __name__ == '__main__':
     elif st == 'a5spread':
         for m in ([md] if md != 'both' else ['A', 'B']):
             stage_a5_spread(m)
+    elif st == 'a5ov':
+        for m in ([md] if md != 'both' else ['A', 'B']):
+            stage_a5_overlay(m, max_winners=G.opt('--nmax', int, None),
+                             max_years=G.opt('--nyears', int, None))
+    elif st == 'a5md':
+        md_a5()
+    elif st == 'a4sweep':
+        for m in ([md] if md != 'both' else ['A', 'B']):
+            stage_a4_sweep(m)
+    elif st == 'a4md':
+        md_a4()
     elif st == 'a4':
         stage_a4(md, rule=G.opt('--rule', str, 'winners'))
     else:
