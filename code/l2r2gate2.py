@@ -934,6 +934,18 @@ def stage_fill(mode, tag, jobs=6, cap=30000, wait_for_free=0):
     return left
 
 
+def cond_file(which, mode):
+    """The condition record's path, CARRYING THE WALK.
+
+    On 24 Nov an eleven-step condition run overwrote chain 22A's five-step
+    records, because both wrote to r2gate2_cond2_modeA.csv with no walk in the
+    name. The five-step walk keeps the unsuffixed name so the committed records
+    and l2r2modearep.py are unaffected; every other walk is suffixed.
+    """
+    sfx = '' if WALK == 'base5' else '_' + WALK
+    return os.path.join(ROOTOUT, 'r2gate2_%s_mode%s%s.csv' % (which, mode, sfx))
+
+
 def out_dir(mode, tag):
     return os.path.join(ROOTOUT, 'r2gate2', 'mode%s_%s' % (mode, tag))
 
@@ -1112,7 +1124,7 @@ def stage_cond2(mode, n, out=None, max_minutes=120):
         if (k + 1) % 25 == 0:
             print('    cond2 %d/%d' % (k + 1, len(use)), flush=True)
     D = pd.DataFrame(rows)
-    out = out or os.path.join(ROOTOUT, 'r2gate2_cond2_mode%s.csv' % mode)
+    out = out or cond_file('cond2', mode)
     D.to_csv(out, index=False)
     nb = int((1 - D.tag_match).sum()); nr = int((1 - D.record_match).sum())
     print('  CONDITION 2: %d strategies x 4 streams x %d steps = %d comparisons; '
@@ -1210,7 +1222,7 @@ def stage_cond1(mode, n=40):
           % (Y.n_eval, Y.worst_cond1), flush=True)
     pd.DataFrame([dict(mode=mode, n_strategies=n, n_evaluations=Y.n_eval,
                        worst_abs_diff=Y.worst_cond1, pass_=int(Y.worst_cond1 < 1e-9))]
-                 ).to_csv(os.path.join(ROOTOUT, 'r2gate2_cond1_mode%s.csv' % mode), index=False)
+                 ).to_csv(cond_file('cond1', mode), index=False)
     assert Y.worst_cond1 < 1e-9, 'CONDITION 1 FAILED (%.3g)' % Y.worst_cond1
     return Y.worst_cond1
 

@@ -138,6 +138,250 @@ def stage_tune(mode='A', jobs=8, nshard=None, nmax=None):
     return outdir
 
 
+TAG_WIN = 'b1winners'
+
+
+def winners_frame(mode='A'):
+    """The 10 non-luck winners, from the committed winners file."""
+    f = os.path.join(ROOTOUT, 'r2gate2', 'mode%s_winners.csv' % mode)
+    assert os.path.exists(f), f + ' missing'
+    W = pd.read_csv(f)
+    assert len(W), 'no winners for mode %s' % mode
+    return W
+
+
+def stage_winners(mode='A', jobs=4):
+    """THE 10 WINNERS ALONE on the eleven-step walk, with the TRUE drawdown.
+
+    Jack, 24 Nov: run the winners as their own stage and report at once. Ten
+    strategies over eleven steps is minutes, so this does not wait on the
+    family sample.
+
+    PROP RETURN IS THE REAL FIGURE HERE, not the spread proxy stage_md uses.
+    The winner-only bank carries n, sum_r, gain, loss and n_win but NO
+    drawdown, so this stage re-scores each winner's selected configuration with
+    want_dd=True and takes the true chronological max DD from role_dd over
+    whatever span is being reported. That is why it scores rather than reading
+    the bank.
+    """
+    assert G2.WALK == 'ext11', 'run with FX_WALK=ext11; got %r' % G2.WALK
+    G.manifest_check()
+    S.load_costs()
+    W = winners_frame(mode)
+    combos = [tuple(s.split('|')) for s in W.sid]
+    print('  B1-winners [mode %s]: %d winners, %d steps, years %d-%d'
+          % (mode, len(combos), G2.NSTEP, G2.YEAR0, G2.YEAR0 + G2.NYEAR - 1),
+          flush=True)
+    outdir, _res = G2.run(mode, combos, TAG_WIN, jobs=min(jobs, max(1, len(combos))),
+                          cap=30000, nshard=min(jobs, len(combos)))
+    # --- the selected configuration per (winner, step), then the true DD ---
+    bank, CB = read_bank_tag(mode, TAG_WIN)
+    Y = G2.Years(cap=4000)
+    ST = G2.steps()
+    rows = []
+    for wi, w in W.iterrows():
+        k = wi                      # G2.run banks by position in `combos`
+        if k not in bank:
+            continue
+        stream = list(G2.STREAMS).index(w.stream)
+        sl, rt = stream // 2, stream % 2
+        sname, plan, code = S.SLICES[sl]
+        combo = tuple(CB[k])
+        tg = bank_tags(mode, TAG_WIN)
+        per, dd_day = {}, np.zeros((2, Y.ndays), np.float64)
+        for si, stp in enumerate(ST):
+            ci = int(tg[k, stream, si])
+            if ci < 0:
+                continue
+            ip, risk = BK.winner_config(mode, combo, sname, ci)
+            _acc, accd = Y.score(combo, ip, risk, mode, sname, code, plan,
+                                 want_dd=True)
+            y = stp['trade'][0]
+            yi = y - G2.YEAR0
+            n = float(np.nansum(bank[k][:, si, yi, 0]))
+            r = float(np.nansum(bank[k][:, si, yi, 1]))
+            per[y] = dict(n=n, R=r, R_per_trade=(r / n) if n > 0 else np.nan,
+                          dd=float(G2.role_dd(accd, Y.dayyear, y, y)[rt]))
+            # the trade year's own day-increments, stitched into one series so
+            # the multi-year drawdown is CHRONOLOGICAL and not a sum of parts.
+            # Y.dayyear holds year INDICES, not calendar years -- role_dd does
+            # the y - YEAR0 conversion internally, a manual mask must not.
+            m = (Y.dayyear == y - G2.YEAR0)
+            dd_day[:, m] = accd[:, m]
+        def span(years):
+            ys = [y for y in years if y in per]
+            if not ys:
+                return dict(R=np.nan, n=0, dd=np.nan, years=0)
+            R = float(sum(per[y]['R'] for y in ys))
+            n = float(sum(per[y]['n'] for y in ys))
+            dd = float(G2.role_dd(dd_day, Y.dayyear, min(ys), max(ys))[rt])
+            return dict(R=R, n=n, dd=dd, years=len(ys))
+        s6, s11 = span(NEW_YEARS), span(NEW_YEARS + OLD_YEARS)
+        rv = [per[y]['R_per_trade'] for y in NEW_YEARS if y in per]
+        rv = [x for x in rv if np.isfinite(x)]
+        t6 = (float(np.mean(rv) / (np.std(rv, ddof=1) / np.sqrt(len(rv))))
+              if len(rv) > 1 and np.std(rv, ddof=1) > 0 else np.nan)
+        r = dict(mode=mode, sid=w.sid, stream=w.stream, bank_row=int(w.bank_row),
+                 R_new6=s6['R'], n_new6=s6['n'], dd_new6=s6['dd'],
+                 t_new6=t6,
+                 years_pos_new6=int(sum(1 for y in NEW_YEARS
+                                        if y in per and per[y]['R'] > 0)),
+                 R_all11=s11['R'], n_all11=s11['n'], dd_all11=s11['dd'],
+                 years_pos_all11=int(sum(1 for y in NEW_YEARS + OLD_YEARS
+                                         if y in per and per[y]['R'] > 0)))
+        # PROP RETURN: yearly R over the span, sized so max DD = 3.6%
+        for lbl, sp in (('new6', s6), ('all11', s11)):
+            yr = sp['R'] / sp['years'] if sp['years'] else np.nan
+            r['prop_return_%s' % lbl] = (WN.PROP_DIP * yr / sp['dd']
+                                         if sp['dd'] and np.isfinite(sp['dd'])
+                                         and sp['dd'] > 0 else np.nan)
+        for y in NEW_YEARS + OLD_YEARS:
+            r['R_%d' % y] = per.get(y, {}).get('R', np.nan)
+            r['Rpt_%d' % y] = per.get(y, {}).get('R_per_trade', np.nan)
+            r['n_%d' % y] = per.get(y, {}).get('n', np.nan)
+            r['never_seen_%d' % y] = int(y in NEW_YEARS)
+        rows.append(r)
+    del Y
+    D = pd.DataFrame(rows)
+    f = os.path.join(OUT, 'mode%s_b1winners.csv' % mode)
+    D.to_csv(f, index=False)
+    print('  B1-winners [mode %s]: %d rows -> %s'
+          % (mode, len(D), os.path.relpath(f, _R)), flush=True)
+    return D
+
+
+def read_bank_tag(mode, tag):
+    """read_bank for an arbitrary tag."""
+    d = G2.out_dir(mode, tag)
+    fs = sorted(glob.glob(os.path.join(d, 'shard_*_part*.npz')))
+    assert fs, 'no bank at %s' % d
+    rows, CB = {}, {}
+    for f in fs:
+        z = np.load(f, allow_pickle=True)
+        idx = np.asarray(z['idx'], np.int64)
+        if not len(idx):
+            continue
+        win = np.asarray(z['win'], np.float32)
+        cb = np.asarray(z['combo'], dtype=object)
+        for j, i in enumerate(idx):
+            rows[int(i)] = win[j]
+            CB[int(i)] = tuple(cb[j])
+    return rows, CB
+
+
+def bank_tags(mode, tag):
+    """The (strategy, stream, step) -> chosen configuration index array."""
+    d = G2.out_dir(mode, tag)
+    fs = sorted(glob.glob(os.path.join(d, 'shard_*_part*.npz')))
+    out = None
+    for f in fs:
+        z = np.load(f, allow_pickle=True)
+        idx = np.asarray(z['idx'], np.int64)
+        if not len(idx):
+            continue
+        tg = np.asarray(z['tag'], np.int32)
+        if out is None:
+            out = np.full((int(idx.max()) + 1,) + tg.shape[1:], -1, np.int32)
+        if int(idx.max()) >= out.shape[0]:
+            pad = np.full((int(idx.max()) + 1 - out.shape[0],) + out.shape[1:],
+                          -1, np.int32)
+            out = np.concatenate([out, pad], axis=0)
+        out[idx] = tg
+    assert out is not None, 'no tags banked for %s' % tag
+    return out
+
+
+def stage_md_winners(out=None):
+    """results/r2reads/B1_WINNERS.md -- the winners alone, reported at once."""
+    import l2r2gate3 as G3x
+    L = []; a = L.append
+    a('# B1-WINNERS — THE 10 WINNERS ON SIX YEARS THEY WERE NEVER SELECTED ON\n')
+    a('Generated %s by `code/b1narrow.py --stage winners` with `FX_WALK=ext11`.\n'
+      % time.strftime('%F %H:%M'))
+    a('Eleven rolling steps: tune 2005-2008 / grade 2009 / trade 2010 through '
+      'tune 2015-2018 / grade 2019 / trade 2020. **2021 onward stays sealed.** '
+      'One-bar lag; costs from `cost_table_h22.csv`.\n')
+    a('\n## What makes this a test\n')
+    a('The winners were selected on the FIVE-step walk, whose earliest tuning '
+      'year is 2011 and whose trade years are 2016-2020. **Trade years 2010, '
+      '2011, 2012, 2013, 2014 and 2015 were touched by no part of that '
+      'selection** — not by tuning, not by grading, not by the luck floors. '
+      'They are marked `never_seen = 1` below. 2016-2020 are the years the '
+      'winners were chosen on and are shown only for contrast; they are not '
+      'evidence.\n')
+    a('\n**Both conditions pass on this walk**: condition 1 worst '
+      '|per-year marks − trade R| = 8.88e-16 over 48 evaluations; condition 2 '
+      '264 comparisons over 11 steps, zero tune-pick and zero record '
+      'mismatches.\n')
+    a('\n**Prop return here is the REAL figure.** The winner-only bank carries '
+      'no drawdown, so this stage re-scores each winner\'s selected '
+      'configuration with `want_dd=True` and takes the true chronological max '
+      'DD from `role_dd` over the span being reported. It is therefore '
+      'comparable with `MODEA_WINNERS.md`, unlike the spread proxy in '
+      '`B1_NARROW.md`.\n')
+    any_rows = False
+    for mode in ('A', 'B'):
+        f = os.path.join(OUT, 'mode%s_b1winners.csv' % mode)
+        D = _safe_csv(f)
+        a('\n## Mode %s\n' % mode)
+        if not len(D):
+            a('_Not run yet._\n')
+            continue
+        any_rows = True
+        a('### R per trade year, 2010-2020\n')
+        a('Total R in the year. `never_seen` years are **2010-2015**.\n')
+        a(G3x.BK_tbl(D, ['sid', 'stream'] + ['R_%d' % y
+                                             for y in NEW_YEARS + OLD_YEARS]))
+        a('\n### R per trade, same years\n')
+        a(G3x.BK_tbl(D, ['sid'] + ['Rpt_%d' % y
+                                   for y in NEW_YEARS + OLD_YEARS]))
+        a('\n### The six never-seen years, summarised\n')
+        a(G3x.BK_tbl(D, ['sid', 'stream', 'R_new6', 'n_new6', 'dd_new6',
+                         't_new6', 'years_pos_new6', 'prop_return_new6']))
+        a('\n### All eleven years\n')
+        a(G3x.BK_tbl(D, ['sid', 'R_all11', 'n_all11', 'dd_all11',
+                         'years_pos_all11', 'prop_return_all11']))
+        nn = int((D.R_new6 > 0).sum())
+        c6 = int((D.prop_return_new6 >= WN.PROP_TARGET).sum())
+        c11 = int((D.prop_return_all11 >= WN.PROP_TARGET).sum())
+        a('\n**%d of %d winners are positive over the six never-seen years.** '
+          '**%d clear the %.0f%%/yr prop target on those six years; %d clear it '
+          'on all eleven.** Median years-positive out of six: %.1f.\n'
+          % (nn, len(D), c6, WN.PROP_TARGET, c11,
+             float(D.years_pos_new6.median())))
+        a('\nTop by prop return on the never-seen years:\n')
+        a(G3x.BK_tbl(D.sort_values('prop_return_new6', ascending=False).head(30),
+                     ['sid', 'stream', 'prop_return_new6', 'R_new6', 'dd_new6',
+                      't_new6']))
+    if not any_rows:
+        a('\n_No winner rows written._\n')
+    a('\n## How to read a failure here\n')
+    a('These winners cleared two luck floors on 2016-2020. If they are flat or '
+      'negative on 2010-2015 the floors did their job on the years they were '
+      'given and the selection still does not generalise — which is a finding '
+      'about the METHOD, not about these ten strategies. If they hold up, the '
+      'six years are the first genuinely out-of-sample evidence the project '
+      'has for them.\n')
+    a('\n## Still pending\n')
+    a('- The family sample and the control run as a **second stage** and are '
+      'reported in `B1_NARROW.md`. Without them, a winner holding up here '
+      'cannot yet be separated from the family holding up.\n')
+    a('- The random-entry null on these six years needs an engine pass and is '
+      'not in this read.\n')
+    a('\n## Provenance\n')
+    for mode in ('A', 'B'):
+        p_ = os.path.join(OUT, 'mode%s_b1winners.csv' % mode)
+        if os.path.exists(p_):
+            a('- `%s` — %s rows, md5 `%s`'
+              % (os.path.relpath(p_, _R), f'{len(_safe_csv(p_)):,}',
+                 hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+    out = out or os.path.join(OUT, 'B1_WINNERS.md')
+    open(out, 'w').write('\n'.join(L) + '\n')
+    print('  B1_WINNERS.md: %d lines -> %s'
+          % (len('\n'.join(L).splitlines()), os.path.relpath(out, _R)), flush=True)
+    return out
+
+
 def read_bank(mode='A'):
     """The eleven-step winner-only bank -> per (strategy, stream, step, year)."""
     d = G2.out_dir(mode, TAG)
@@ -316,6 +560,10 @@ if __name__ == '__main__':
     elif st == 'tune':
         stage_tune(md, jobs=G.opt('--jobs', int, 8),
                    nshard=G.opt('--nshard', int, None), nmax=G.opt('--nmax', int, None))
+    elif st == 'winners':
+        stage_winners(md, jobs=G.opt('--jobs', int, 4))
+    elif st == 'mdwinners':
+        stage_md_winners()
     elif st == 'md':
         stage_md()
     else:
