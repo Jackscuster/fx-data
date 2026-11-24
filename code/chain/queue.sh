@@ -41,9 +41,17 @@ for D in "$@"; do
   BEFORE=$(grep -cF "$MARK" "$L/batch1.log" 2>/dev/null | head -1); BEFORE=${BEFORE:-0}
   FREE=$(df -g /System/Volumes/Data | tail -1 | awk '{print $4}')
   say "--- $B  (marker \"$MARK\", seen $BEFORE times, $FREE GB free)"
+  # A DIRTY TREE IS NOT A FAILED CHUNK. On 24 Nov a queue skipped all three of
+  # its chains because a stopped chain had left regenerated outputs behind for
+  # a few seconds. Wait for it to settle before giving up on the whole queue.
+  for _try in 1 2 3 4 5 6; do
+    [ -z "$(git status --porcelain 2>/dev/null | head -1)" ] && break
+    say "$B: tree dirty, waiting 30 s (attempt $_try of 6)"
+    sleep 30
+  done
   if [ -n "$(git status --porcelain 2>/dev/null | head -1)" ]; then
-    say "$B SKIPPED: the working tree is dirty, launch.sh guard 1a would refuse"
-    push "fx-data: $B not launched, dirty tree" "The queue skipped $B because the tree has uncommitted changes."
+    say "$B SKIPPED: the tree is still dirty after 3 min, launch.sh guard 1a would refuse"
+    push "fx-data: $B not launched, dirty tree" "The queue skipped $B: the tree still had uncommitted changes after 3 minutes."
     continue
   fi
   OUT=$(bash code/chain/launch.sh "$D" 2>&1); RC=$?
