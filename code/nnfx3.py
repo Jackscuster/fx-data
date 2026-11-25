@@ -590,24 +590,46 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
     f = os.path.join(OUT, 'stage3_walk.csv')
     assert os.path.exists(f), f + ' missing -- run stage_walk3 first'
     W = _safe_csv_(f)
+    # AN EMPTY CSV FIELD READS BACK AS NaN, NOT ''. The currency-agreement
+    # candidate has no indicator name, so its 47 walk rows carry c2 = '' on
+    # write and NaN on read, and every `W.c2 == ''` match came back all-False.
+    # The first version of this stage then found no control for any of the six
+    # base/plan cells, wrote 0 rows, and REPORTED OK in one second -- the same
+    # shape of fault as B1_NARROW, caught here only because 108 engine runs
+    # cannot finish in a second.
+    if 'c2' in W.columns:
+        W['c2'] = W.c2.fillna('').astype(str)
+    W2 = pd.read_csv(os.path.join(OUT, 'stage2_picks_walk.csv'))
     S.load_costs(os.environ.get('FX_COST_TABLE', 'results/cost_table_h22.csv'))
     rows, pair_rows, yearly = [], [], []
     allyears = tuple(list(BUILD_YEARS) + list(CONFIRM_YEARS))
     for (lab, c1, base, rs) in BASES:
         for v in PLANS_USED:
-            # ---- the control: this base with NO C2, the stage 2 cell
+            # ---- THE CONTROL: this base with NO C2, which is the stage 2
+            # cell. It is built straight from STAGE 2's walk, not from stage
+            # 3's: the C1 and baseline settings are stage 2's for every
+            # candidate alike, so routing the control through a C2 candidate's
+            # rows only creates a way for it to come back empty.
             _RUNC.clear()
-            T0 = _stitch3(c1, base, v, rs, 'ind', None,
-                          W[W.c2 == ''] if (W.c2 == '').any() else W,
-                          years=allyears, use_hourly=use_hourly,
-                          with_c2=False)
+            w2 = W2[(W2.c1 == c1) & (W2.base == base)
+                    & (W2.variant == v) & (W2.ruleset == rs)]
+            acc0 = []
+            for stp in STEPS:
+                if stp['trade'] not in allyears:
+                    continue
+                r2 = w2[w2.step == stp['name']]
+                if not len(r2):
+                    continue
+                T_ = run_combo3(c1, str(r2.iloc[0].picked_c1_setting), base,
+                                str(r2.iloc[0].picked_base_setting), v, rs,
+                                use_hourly=use_hourly)
+                if len(T_):
+                    acc0.append(T_[pd.DatetimeIndex(T_.exit_date).year
+                                   == stp['trade']])
+            T0 = pd.concat(acc0, ignore_index=True) if acc0 else pd.DataFrame()
             if not len(T0):
-                # no C2 row for the control: fall back to any candidate's picks
-                T0 = _stitch3(c1, base, v, rs, 'ind', None, W,
-                              years=allyears, use_hourly=use_hourly,
-                              with_c2=False)
-            if not len(T0):
-                print('  !! control empty for %s/%s' % (lab, v), flush=True)
+                print('  !! control empty for %s/%s -- no stage 2 walk rows'
+                      % (lab, v), flush=True)
                 continue
             sc0 = S2._score(T0, years, ndraw=ndraw, nboot=nboot)
             DS0 = sc0['_DS']
@@ -1108,16 +1130,24 @@ def md_stage3(out=None):
       'settings come from stage 2\'s walk unchanged.\n')
 
     a('\n## Provenance\n')
+    a('Every file this stage is supposed to produce is listed, **including any '
+      'that came back empty**. Pre-flight guard 35 reads these lines and fails '
+      'on a zero-row file — but it can only check what the report declares, '
+      'and the first version of this block SKIPPED empty files, which is how a '
+      'report with 0 rows in it passed pre-flight. It does not skip them now.\n')
+    import hashlib
     for n_ in ('stage3_zeroedge.csv', 'stage3_walk.csv', 'stage3_report.csv',
                'stage3_paired.csv', 'stage3_yearly.csv',
-               'stage3_ccy_agreement_rate.csv', 'stage4_paired.csv'):
+               'stage3_ccy_agreement_rate.csv', 'stage4_paired.csv',
+               'stage4_picks.csv'):
         p_ = os.path.join(OUT, n_)
-        if os.path.exists(p_) and os.path.getsize(p_) > 1:
-            import hashlib
-            a('- `%s` — %s rows, md5 `%s`'
-              % (os.path.relpath(p_, _R),
-                 '{:,}'.format(len(S2._safe_csv(p_))),
-                 hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+        if not os.path.exists(p_):
+            a('- `%s` — **MISSING**' % os.path.join('results', 'nnfx', n_))
+            continue
+        a('- `%s` — %s rows, md5 `%s`'
+          % (os.path.relpath(p_, _R),
+             '{:,}'.format(len(S2._safe_csv(p_))),
+             hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
     out = out or os.path.join(OUT, 'STAGE3.md')
     open(out, 'w').write('\n'.join(L_) + '\n')
     print('  STAGE3.md: %d lines -> %s'

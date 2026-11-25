@@ -421,6 +421,66 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def c37():
+    """A ZERO-ROW RESULT FILE NOBODY DECLARED.
+
+    WHAT THIS COST, twice in one day. `B1_NARROW.md` shipped naming a csv at 0
+    rows. Then `stage3_report.csv`, `stage3_paired.csv` and `stage3_yearly.csv`
+    were all written EMPTY and the chain logged `OK s3 report` -- in one second
+    for work that needs 108 engine runs. Guard 35 did not catch the second one,
+    because the report's provenance block SKIPPED files it found empty: the
+    guard can only check what a report declares, so omission was a way round
+    it.
+
+    THE CAUSE OF THE STAGE 3 ONE IS WORTH RECORDING. An empty CSV field reads
+    back as NaN, not ''. The currency-agreement candidate has no indicator
+    name, so its 47 walk rows carry `c2 = ''` on write and NaN on read, and
+    every `W.c2 == ''` match came back all-False -- so the stage found no
+    control for any of the six base/plan cells and scored nothing.
+
+    SO THIS GUARD DOES NOT GO THROUGH THE REPORTS AT ALL. It looks at the
+    files: no csv under results/ may have a header and no data rows unless it
+    is DECLARED empty here with a reason. An empty result file is always either
+    a fault or a stated fact, and this forces the choice to be written down.
+    """
+    DECLARED = {
+        'results/witness_events_acute_missed_2026-11-15.csv':
+            'the acute witnesses that were missed: none were, so the file is '
+            'empty BY RESULT and that is the finding',
+        'results/r2gate2_frozen_params.csv':
+            'PRE-EXISTING AND NOT YET EXPLAINED, 24 Nov -- on the list for '
+            'Jack, not blessed',
+        'results/r2gate2/modeA_gate3_stitched.csv':
+            'PRE-EXISTING AND NOT YET EXPLAINED, 24 Nov -- on the list for '
+            'Jack, not blessed',
+        'results/r2gate2/modeB_gate3_stitched.csv':
+            'PRE-EXISTING AND NOT YET EXPLAINED, 24 Nov -- on the list for '
+            'Jack, not blessed',
+    }
+    empty, declared_seen = [], []
+    for f in glob.glob(os.path.join(ROOTOUT, '**', '*.csv'), recursive=True):
+        rel = os.path.relpath(f, _R)
+        try:
+            with open(f, 'rb') as fh:
+                nrows = sum(1 for _ in fh)
+        except OSError:
+            continue
+        if max(0, nrows - 1) > 0:
+            continue
+        if rel in DECLARED:
+            declared_seen.append(rel)
+        else:
+            empty.append(rel)
+    assert not empty, (
+        '%d zero-row csv(s) under results/ that nothing declares -- either the '
+        'stage that wrote them failed quietly or the emptiness is a result and '
+        'must be declared in preflight.c37: %s'
+        % (len(empty), '; '.join(sorted(empty)[:6])))
+    return ('%d csv(s) scanned, no undeclared zero-row file; %d declared empty'
+            % (len(glob.glob(os.path.join(ROOTOUT, '**', '*.csv'),
+                             recursive=True)), len(declared_seen)))
+
+
 def _named_note(named_ok):
     """The named-exception line that guard 34 always prints, so the set of
     exceptions cannot grow or drift unnoticed."""
@@ -917,6 +977,9 @@ def main():
     guard(36, 'The daily mark-to-market path built from FULL `units` on a HALF-WEIGHT leg: trade_frame writes the whole position size on every leg of a plan=2 entry while each leg realises half, so open mark-to-market was overstated 2x. It cancels at the exit bar, so every total reconciled to the last decimal and guard 33 passed -- but worst_dip_R was too large (54.93 against 22.83 on ichimoku+sma), R_per_year_per_dip too small and t_block_boot biased down. On 15 Jan 2015 it showed +101.6 R then -50.2 R where the truth is +51.3 then -0.34, inventing the peak the 54.93 R dip was measured from',
           'nnfx1.daily_series divides `units` by the plan leg count, taken from the distinct `leg` labels so a frame filtered by exit year cannot sever a pair and halve the divisor',
           'on a live probe units/n_legs reproduces each leg R exactly on stop exits, full units is out by the leg count, and the daily series still totals to R_gross - cost', c36)
+    guard(37, 'A zero-row result file nobody declared: B1_NARROW.md shipped naming a csv at 0 rows, and hours later stage3_report/paired/yearly were all written EMPTY while the chain logged OK in one second for work needing 108 engine runs. Guard 35 missed the second one because the report SKIPPED the empty files from its own provenance block, so omission was a way round it. The cause is worth recording: an empty CSV field reads back as NaN, not the empty string, so every `c2 == \'\'` match on the currency-agreement rows came back all-False and the stage found no control at all',
+          'this guard does not go through the reports: it looks at the files, and no csv under results/ may carry a header and no data rows unless it is declared empty in preflight.c37 with a reason',
+          'no undeclared zero-row csv anywhere under results/', c37)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
