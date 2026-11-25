@@ -1,6 +1,6 @@
 # B1-NARROW — THE ELEVEN-STEP WALK ON A NARROW UNIVERSE
 
-Generated 2026-11-24 09:39 by `code/b1narrow.py` with `FX_WALK=ext11`.
+Generated 2026-11-24 19:11 by `code/b1narrow.py` with `FX_WALK=ext11`.
 
 Eleven rolling steps: tune 2005-2008 / grade 2009 / trade 2010 through tune 2015-2018 / grade 2019 / trade 2020. **2021 onward stays sealed.** Same expectancy objective and grid as gate 2.
 
@@ -14,11 +14,6 @@ Eleven rolling steps: tune 2005-2008 / grade 2009 / trade 2010 through tune 2015
 **WHAT IS NOT BANKED.** Per-config-per-year would be 19.1 GB against 10 GB free, so it was not built and **plateau selection and tuning-window length still need their own pass**. Nothing in this report needs it: every figure reads the selected configuration.
 
 
-## Mode B
-
-_No B1-narrow bank yet._
-
-
 _No bank rows read._
 
 
@@ -30,5 +25,5 @@ _Not run. It needs an engine pass over the universe on the eleven-step walk and 
 ## Provenance
 
 - `results/r2reads/b1narrow_per_strategy.csv` — 0 rows, md5 `68b329da9893`
-- `results/r2reads/modeA_b1narrow_universe.csv` — 16,040 rows, md5 `4a18c3c78438`
-- `results/r2reads/modeB_b1narrow_universe.csv` — 16,040 rows, md5 `2a3b690b5216`
+- `results/r2reads/modeA_b1narrow_universe.csv` — 4,008 rows, md5 `9cf6e43526d4`
+- `results/r2reads/modeB_b1narrow_universe.csv` — 4,002 rows, md5 `0b8ad1cd00c6`
