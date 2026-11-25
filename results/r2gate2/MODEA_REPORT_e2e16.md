@@ -1,3 +1,23 @@
+<!-- PROVENANCE DRIFT, found by pre-flight guard 35 on 24 Nov 2026 at 22:50.
+
+Two csvs this report names no longer hold the rows it claims:
+
+  results/r2gate2/modeA_books_layer1splits.csv   claimed 30     on disk 55
+  results/r2gate2_cond2_modeA.csv                claimed 7,660  on disk 240
+
+The first GREW: a later run added Layer 1 split rows and this report was not
+regenerated, so the figures it quotes come from the 30-row version.
+
+The second SHRANK by 97%, which is the same signature as the STAGE1
+canonical_risk overwrite: a later, smaller condition-2 run reused the
+production filename. THIS REPORT'S CONDITION 2 CLAIM IS NOT BACKED BY THE FILE
+IT NAMES. Do not re-derive it from that csv.
+
+Both are recorded in preflight.DECLARED_DRIFT pinned to the CURRENT on-disk
+counts, so if either file moves again the guard fails afresh. Regenerating this
+report is the real fix and is Jack's call, because it is a shipped record and
+rewriting it would move numbers he has already read.
+-->
 # MODE A — THE HONEST GATE 2, ALL 273,780 STRATEGIES
 
 Generated 2026-11-18 09:32 by `code/l2r2modearep.py`. **Every number below was read out of a file in this run and the file is named beside it.** A section whose source is missing says so and is left empty.

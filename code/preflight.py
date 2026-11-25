@@ -443,20 +443,7 @@ def c37():
     is DECLARED empty here with a reason. An empty result file is always either
     a fault or a stated fact, and this forces the choice to be written down.
     """
-    DECLARED = {
-        'results/witness_events_acute_missed_2026-11-15.csv':
-            'the acute witnesses that were missed: none were, so the file is '
-            'empty BY RESULT and that is the finding',
-        'results/r2gate2_frozen_params.csv':
-            'PRE-EXISTING AND NOT YET EXPLAINED, 24 Nov -- on the list for '
-            'Jack, not blessed',
-        'results/r2gate2/modeA_gate3_stitched.csv':
-            'PRE-EXISTING AND NOT YET EXPLAINED, 24 Nov -- on the list for '
-            'Jack, not blessed',
-        'results/r2gate2/modeB_gate3_stitched.csv':
-            'PRE-EXISTING AND NOT YET EXPLAINED, 24 Nov -- on the list for '
-            'Jack, not blessed',
-    }
+    DECLARED = DECLARED_EMPTY
     empty, declared_seen = [], []
     for f in glob.glob(os.path.join(ROOTOUT, '**', '*.csv'), recursive=True):
         rel = os.path.relpath(f, _R)
@@ -479,6 +466,53 @@ def c37():
     return ('%d csv(s) scanned, no undeclared zero-row file; %d declared empty'
             % (len(glob.glob(os.path.join(ROOTOUT, '**', '*.csv'),
                              recursive=True)), len(declared_seen)))
+
+
+# ---------------------------------------------------------------------------
+# FILES THAT ARE EMPTY BY RESULT, not by failure. Guards 35 and 37 both read
+# this list: 35 so a report may DECLARE a zero-row file without failing, 37 so
+# the file may exist at all. Every entry carries the result that makes it
+# empty, verified -- "it has always been empty" is not a reason.
+DECLARED_EMPTY = {
+    'results/witness_events_acute_missed_2026-11-15.csv':
+        'NO acute witness was missed. The file lists the misses and there are '
+        'none, so emptiness IS the finding.',
+    'results/r2gate2_frozen_params.csv':
+        'It lists parameters the library exposes that the declared grid does '
+        'NOT move. It is empty because EVERY exposed parameter is moved -- '
+        'l2r2gate2.py:1277 prints "NONE -- every parameter the registry '
+        'exposes is moved (Jack, 16 Nov)" in its place. Emptiness is the good '
+        'outcome here.',
+    'results/r2gate2/modeA_gate3_stitched.csv':
+        'ZERO of 273,780 strategies clear the stitched test in any of the four '
+        'streams -- modeA_gate3_stitched_counts.csv carries n_clears_stitched '
+        '= 0 on all four rows. The detail file is empty because nothing '
+        'cleared, and MODEA_GATE3.md declares it at 0 rows.',
+    'results/r2gate2/modeB_gate3_stitched.csv':
+        'The same, for mode B: n_clears_stitched = 0 on every stream, declared '
+        'at 0 rows in MODEB_GATE3.md.',
+}
+
+
+# ---------------------------------------------------------------------------
+# PROVENANCE DRIFT THAT IS ON THE RECORD. A report names a csv at N rows and
+# the file now holds M. Guard 35 allows ONLY these pairs, and it pins the
+# CURRENT on-disk count: if the file moves off that count the guard fails
+# afresh, so this is a record of a known divergence and not a way to switch
+# the check off. Regenerating the reports is the real fix and is Jack's call,
+# because MODEA_REPORT.md is a shipped record and rewriting it would move
+# numbers he has already read.
+DECLARED_DRIFT = {
+    ('results/r2gate2/modeA_books_layer1splits.csv', 30, 55):
+        'The file GREW: a later run added Layer 1 split rows and the two '
+        'MODEA_REPORT files were not regenerated. The numbers they quote come '
+        'from the 30-row version.',
+    ('results/r2gate2_cond2_modeA.csv', 7660, 240):
+        'The file SHRANK by 97%, the same signature as the STAGE1 '
+        'canonical_risk overwrite: a later, smaller condition-2 run reused the '
+        'production filename. MODEA_REPORT.md\'s condition-2 claim is NOT '
+        'backed by the file it names. Flagged to Jack 24 Nov.',
+}
 
 
 def _named_note(named_ok):
@@ -867,8 +901,16 @@ def c35():
     time and its csvs are allowed to have moved on -- but the skip is counted
     and printed, so the set cannot grow unnoticed.
     """
+    # TWO PROVENANCE FORMATS. The bullet list used by the nnfx and r2reads
+    # reports, and the TABLE used by the gate 3 reports:
+    #     | stitched | results/.../modeA_gate3_stitched.csv | 0 | 68b32... |
+    # The first version of this guard read only the bullet form, so a report
+    # that declared a zero-row file in a table escaped it -- which is how
+    # MODEA_GATE3.md sat on record declaring 0 rows while this guard passed.
     pat = re.compile(r'^- `([^`]+)` . ([\d,]+) rows, md5 `([0-9a-f]+)`')
-    bad, n_lines, n_files, skipped = [], 0, 0, []
+    pat_tbl = re.compile(r'^\|[^|]+\|\s*(results/[^|\s]+\.csv)\s*\|'
+                         r'\s*([\d,]+)\s*\|\s*[0-9a-f]{6,}\s*\|')
+    bad, n_lines, n_files, skipped, dec, drifted = [], 0, 0, [], [], []
     for md in sorted(glob.glob(os.path.join(ROOTOUT, '**', '*.md'),
                                recursive=True)):
         head = ''
@@ -881,7 +923,7 @@ def c35():
             continue
         hit = False
         for ln in lines:
-            m = pat.match(ln)
+            m = pat.match(ln) or pat_tbl.match(ln)
             if not m:
                 continue
             hit = True
@@ -894,16 +936,24 @@ def c35():
             with open(fp, 'rb') as fh:
                 act = max(0, sum(1 for _ in fh) - 1)
             if claim == 0 or act == 0:
+                if rel in DECLARED_EMPTY and claim == act == 0:
+                    dec.append(rel)        # empty BY RESULT, and on record
+                    continue
                 bad.append('%s names %s: %d rows claimed, %d on disk -- an '
                            'EMPTY read' % (os.path.basename(md), rel, claim, act))
             elif act != claim:
+                if (rel, claim, act) in DECLARED_DRIFT:
+                    drifted.append(rel)    # known, explained, and pinned
+                    continue
                 bad.append('%s names %s: %d rows claimed, %d on disk'
                            % (os.path.basename(md), rel, claim, act))
         n_files += 1 if hit else 0
     assert not bad, '; '.join(bad[:6])
-    return ('%d provenance lines across %d reports: every named csv exists, is '
-            'non-empty and matches its claimed row count%s'
-            % (n_lines, n_files,
+    return ('%d provenance lines across %d reports (bullet and table form): '
+            'every named csv exists and matches its claimed row count; '
+            '%d declared empty by result; %d with DECLARED DRIFT (%s)%s'
+            % (n_lines, n_files, len(set(dec)), len(set(drifted)),
+               ', '.join(sorted(set(drifted))) or 'none',
                ('; %d superseded report(s) skipped: %s'
                 % (len(skipped), ', '.join(skipped))) if skipped else ''))
 
