@@ -515,6 +515,69 @@ DECLARED_DRIFT = {
 }
 
 
+def c38():
+    """A LAYER 2 JOB THAT DOES NOT DECLARE WHETHER THE VOLATILITY FLOOR IS ON.
+
+    Jack's decided rule 1 (7 Sep 2026): a pair does not trade while its own ATR
+    is in its bottom 5%. It had been in the repo since then as
+    `l2suppvol.atr_floors` and was REPORT-ONLY -- l2suppvol says so of itself --
+    so the whole staged build ran without it and nobody could tell from a
+    result file either way. That is the thing this guard makes impossible.
+
+    WHAT IT CHECKS. Every trade-frame writer records the floor it used, and
+    every Layer 2 output that carries trades carries the column. Specifically:
+      - nnfx1, nnfx2s and nnfx3 each expose the switch and default it to 0.05;
+      - nnfx1._neutralise, nnfx2s.run_combo and nnfx3.run_combo3 each gate the
+        VOLUME slot, not `suspect` -- v_ok_l/v_ok_s are entry-only in l2engine
+        (:527-528, :585-587) whereas a suspect bar blocks exits too (:106);
+      - the mask is CAUSAL: an expanding percentile over bars <= t-1 and a
+        one-bar-lagged ATR, never the full-history percentile l2suppvol uses
+        for its report.
+    """
+    sys.path.insert(0, ROOTLIB)
+    import nnfxvol as _V
+    assert abs(_V.LOWVOL_Q - 0.05) < 1e-12, (
+        'the decided floor is 5%% and nnfxvol.LOWVOL_Q is %s' % _V.LOWVOL_Q)
+    n1, n2, n3 = (src('nnfx1.py'), src('nnfx2s.py'), src('nnfx3.py'))
+    assert 'LOWVOL_Q = 0.05' in n1, 'nnfx1 does not declare the floor'
+    for nm, t in (('nnfx2s', n2), ('nnfx3', n3)):
+        assert 'lowvol_q' in t, '%s does not expose the floor switch' % nm
+        assert "T['lowvol_q']" in t, '%s does not RECORD the floor it used' % nm
+    for nm, t in (('nnfx1', n1), ('nnfx2s', n2), ('nnfx3', n3)):
+        assert "A['v_ok_l'] = vok" in t or "A['v_ok_l'] = vm" in t, (
+            '%s does not gate the VOLUME slot for the floor' % nm)
+        assert "A['suspect']" not in t.split('def ')[0], (
+            '%s touches suspect at module level' % nm)
+    # the mask must be causal, and the as-built form must still be reachable
+    vs = src('nnfxvol.py')
+    assert 'expanding(min_periods=MIN_HIST)' in vs, (
+        'nnfxvol does not use an EXPANDING percentile -- a full-history '
+        'percentile is look-ahead the moment it decides a trade')
+    assert 'rl[1:] = rel[:-1]' in vs, 'nnfxvol does not lag the ATR one bar'
+    # and it must actually change trades, checked live rather than asserted
+    import nnfx1 as _N, l2sweep as _S
+    _S.load_costs(os.environ.get('FX_COST_TABLE',
+                                 'results/cost_table_h22.csv'))
+    keep = _N.LOWVOL_Q
+    try:
+        _N.LOWVOL_Q = None
+        a = _N.run_one('ichimoku_signals', 'c1', 'default', 'jack',
+                       pairs=['EURCHF'], use_hourly=False)
+        _N.LOWVOL_Q = 0.05
+        b = _N.run_one('ichimoku_signals', 'c1', 'default', 'jack',
+                       pairs=['EURCHF'], use_hourly=False)
+    finally:
+        _N.LOWVOL_Q = keep
+    na, nb = _N.n_entries(a), _N.n_entries(b)
+    assert nb < na, ('the floor removed no EURCHF entry (%d with, %d without) '
+                     '-- it is wired but inert' % (nb, na))
+    _ix, _m = _V.lowvol_mask('EURCHF', q=0.05, causal=True)
+    return ('floor declared in all three writers and gating the volume slot; '
+            'causal mask flags %.2f%% of EURCHF bars and removes %d of %d of '
+            'its entries on a live probe'
+            % (100.0 * float(_m.mean()), na - nb, na))
+
+
 def _named_note(named_ok):
     """The named-exception line that guard 34 always prints, so the set of
     exceptions cannot grow or drift unnoticed."""
@@ -1030,6 +1093,9 @@ def main():
     guard(37, 'A zero-row result file nobody declared: B1_NARROW.md shipped naming a csv at 0 rows, and hours later stage3_report/paired/yearly were all written EMPTY while the chain logged OK in one second for work needing 108 engine runs. Guard 35 missed the second one because the report SKIPPED the empty files from its own provenance block, so omission was a way round it. The cause is worth recording: an empty CSV field reads back as NaN, not the empty string, so every `c2 == \'\'` match on the currency-agreement rows came back all-False and the stage found no control at all',
           'this guard does not go through the reports: it looks at the files, and no csv under results/ may carry a header and no data rows unless it is declared empty in preflight.c37 with a reason',
           'no undeclared zero-row csv anywhere under results/', c37)
+    guard(38, 'A Layer 2 job that does not declare whether the VOLATILITY FLOOR is on: Jack\'s decided rule 1 of 7 Sep 2026 -- a pair does not trade while its own ATR is in its bottom 5% -- had been in the repo since then as l2suppvol.atr_floors and was REPORT-ONLY, so the entire staged build ran without it and no result file said either way. The SNB trade of 15 Jan 2015, worth +74.996 R and 56-137% of three carried-forward candidates, entered on a bar the as-built flag marks low-volatility',
+          'nnfx1, nnfx2s and nnfx3 each expose the switch, default it to 0.05, record it on every trade frame, and gate the VOLUME slot rather than `suspect` -- v_ok is entry-only in l2engine while a suspect bar blocks exits too; and the mask is causal, an expanding percentile over bars <= t-1 with a one-bar-lagged ATR',
+          'all three writers declare and record the floor, and it demonstrably removes entries on a live EURCHF probe', c38)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

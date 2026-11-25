@@ -65,6 +65,7 @@ import l2engine as E
 import l2r2gate1 as G
 import nnfx1 as N
 import l2r2winners as WN
+import nnfxvol as VOL
 
 OUT = os.path.join(ROOTOUT, 'nnfx')
 os.makedirs(OUT, exist_ok=True)
@@ -127,7 +128,8 @@ def _write_csv(D, path, cols=None):
 
 
 def run_combo(c1, c1_set, base, base_set, variant, ruleset,
-              pairs=None, atr_len=14, use_hourly=True, amb_out=None):
+              pairs=None, atr_len=14, use_hourly=True, amb_out=None,
+              lowvol_q=VOL.LOWVOL_Q):
     """One C1 + one baseline, one ruleset, across the pairs. -> trade frame.
 
     THE C1 ENTRY AND EXIT ARE ALWAYS ON. Stage 2 adds a baseline to a C1; it
@@ -178,7 +180,18 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
             T_ = np.ones(n, bool)
             # the C2 and volume slots and the exit indicator are not under test
             A['c2_lc'] = T_.copy(); A['c2_sc'] = T_.copy()
-            A['v_ok_l'] = T_.copy(); A['v_ok_s'] = T_.copy()
+            # THE VOLATILITY FLOOR, Jack's decided rule 1, standing from
+            # 24 Nov. No ENTRY while the pair's own ATR is in its bottom q.
+            # It rides the VOLUME SLOT because v_ok_l/v_ok_s appear only in
+            # l2engine's entry conditions (:527-528, :585-587) -- `suspect`
+            # would also freeze exits (:106), which the rule does not say.
+            vok = T_.copy()
+            if lowvol_q:
+                _ix, _lv = VOL.lowvol_mask(p, q=lowvol_q, causal=True)
+                assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
+                    p, len(_lv), n)
+                vok = ~_lv
+            A['v_ok_l'] = vok.copy(); A['v_ok_s'] = vok.copy()
             A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
             if not RS['side']:
                 K = 10.0 * float(np.nanmax(np.abs(A['c'])) + 1.0)
@@ -208,6 +221,7 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
     T['c1'] = c1; T['c1_setting'] = c1_set
     T['base'] = base; T['base_setting'] = base_set
     T['variant'] = variant; T['ruleset'] = ruleset
+    T['lowvol_q'] = (lowvol_q if lowvol_q else 0.0)
     return T
 
 
@@ -244,6 +258,9 @@ def _score(T, years, ndraw=400, nboot=2000, want_null=True, seed=7):
         R_per_year_per_dip=(float(real / max(1, len(b)) / dip)
                             if np.isfinite(dip) and dip > 1e-9 else np.nan),
         t_yearly=t_yr, t_block_boot=t_bs, boot_sd_of_mean=bs_sd)
+    # ---- JACK'S STANDING ROBUSTNESS COLUMNS, 24 Nov, in EVERY Layer 2 table.
+    # A candidate is judged on the excluding-best-day figures FIRST.
+    out.update(VOL.robust_cols(T, cost, DS, years))
     if want_null:
         nulls, nulls_n, nymat = N._null_match(T, cost, ndraw=ndraw,
                                               years=years, seed=seed)

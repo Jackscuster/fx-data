@@ -67,6 +67,9 @@ os.makedirs(OUT, exist_ok=True)
 LEDGER = os.path.join(OUT, 'CANDIDATE_LEDGER.csv')
 
 RISK_UNIT_ATR = 1.5          # every R here is per 1.5 ATR
+# JACK'S DECIDED RULE 1 (7 Sep 2026): a pair does not trade while its own
+# ATR is in its bottom 5%. None turns the floor off; every writer records it.
+LOWVOL_Q = 0.05
 # 2000, AND BOTH SMALLER VALUES WERE TRIED AND FAILED. At 50 ATR two AUDJPY
 # long trades held 345 bars reached the stop -- the 2008 collapse is that large
 # in ATR units. At 200 a single EURCHF baseline trade reached it, which is the
@@ -180,7 +183,7 @@ def pair_data(p):
     return _PAIR[p]
 
 
-def _neutralise(A, kind, side=None):
+def _neutralise(A, kind, side=None, pair_for_floor=None):
     """Force every slot but the one under test to pass. See the module note.
 
     A CORRECTION TO MY OWN FIRST READING. I took the C1-flip route to be
@@ -201,7 +204,19 @@ def _neutralise(A, kind, side=None):
     n = A['c'].size
     T = np.ones(n, bool)
     A['c2_lc'] = T.copy(); A['c2_sc'] = T.copy()
-    A['v_ok_l'] = T.copy(); A['v_ok_s'] = T.copy()
+    # THE VOLATILITY FLOOR, Jack's decided rule 1, standing from 24 Nov. It
+    # rides the VOLUME SLOT: v_ok_l/v_ok_s appear only in l2engine's entry
+    # conditions, so no entry is taken while the pair's own ATR is in its
+    # bottom LOWVOL_Q and exits are untouched. LOWVOL_Q = None restores the
+    # pre-24-Nov behaviour and every output records which was used.
+    vok = T.copy()
+    if LOWVOL_Q and pair_for_floor:
+        import nnfxvol as _V
+        _ix, _lv = _V.lowvol_mask(pair_for_floor, q=LOWVOL_Q, causal=True)
+        assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
+            pair_for_floor, len(_lv), n)
+        vok = ~_lv
+    A['v_ok_l'] = vok.copy(); A['v_ok_s'] = vok.copy()
     A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
     if kind == 'c1':
         K = 10.0 * float(np.nanmax(np.abs(A['c'])) + 1.0)
@@ -275,7 +290,7 @@ def run_one(name, kind, setting, variant, pairs=None, atr_len=14,
             params[name] = prm
         for sd in sides:
             A = E.prepare(d, c1, C2L[0], VOLL[0], base, XL[0], params=params)
-            A = _neutralise(A, kind, sd)
+            A = _neutralise(A, kind, sd, pair_for_floor=p)
             if kind == 'base':
             # the baseline is under test, so the C1 agreement must not block
                 A['c1_lt'] = np.ones(A['c'].size, bool)

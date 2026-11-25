@@ -54,6 +54,7 @@ import l2r2gate1 as G
 import nnfx1 as N
 import nnfx2s as S2
 import l2r2winners as WN
+import nnfxvol as VOL
 
 OUT = os.path.join(ROOTOUT, 'nnfx')
 os.makedirs(OUT, exist_ok=True)
@@ -200,7 +201,7 @@ _RUNC = {}
 
 def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
                c2=None, c2_set='default', ccy_n=None,
-               vol_rule=None, vol_opt=None,
+               vol_rule=None, vol_opt=None, lowvol_q=VOL.LOWVOL_Q,
                pairs=None, atr_len=14, use_hourly=True, cache=True):
     """Stage 2's run_combo with the C2 SLOT FILLED instead of neutralised.
 
@@ -213,7 +214,7 @@ def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
     """
     assert not (c2 and ccy_n), 'c2 and ccy_n are alternatives, not a pair'
     key = (c1, c1_set, base, base_set, variant, ruleset, c2, c2_set, ccy_n,
-           vol_rule, vol_opt, bool(use_hourly),
+           vol_rule, vol_opt, lowvol_q, bool(use_hourly),
            tuple(pairs) if pairs else None)
     if cache and key in _RUNC:
         return _RUNC[key]
@@ -280,16 +281,23 @@ def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
                 vm = vol_mask_ticks(p, int(vol_opt))
                 assert len(vm) == n, '%s: volume mask %d vs %d bars' % (
                     p, len(vm), n)
-                A['v_ok_l'] = vm.copy(); A['v_ok_s'] = vm.copy()
             elif vol_rule == 'layer1_activity_med_or_strong':
                 vm = layer1_activity(p)
                 assert len(vm) == n, '%s: activity mask %d vs %d bars' % (
                     p, len(vm), n)
-                A['v_ok_l'] = vm.copy(); A['v_ok_s'] = vm.copy()
             elif vol_rule:
                 raise SystemExit('unknown vol_rule %s' % vol_rule)
             else:
-                A['v_ok_l'] = T_.copy(); A['v_ok_s'] = T_.copy()
+                vm = T_.copy()
+            # THE VOLATILITY FLOOR ANDs WITH the stage 4 rule: both are
+            # "is this bar tradable", both are entry-only, and a bar the
+            # floor rejects is not rescued by a volume rule accepting it.
+            if lowvol_q:
+                _ix, _lv = VOL.lowvol_mask(p, q=lowvol_q, causal=True)
+                assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
+                    p, len(_lv), n)
+                vm = vm & (~_lv)
+            A['v_ok_l'] = vm.copy(); A['v_ok_s'] = vm.copy()
             A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
             if not RS['side']:
                 K = 10.0 * float(np.nanmax(np.abs(A['c'])) + 1.0)
@@ -322,6 +330,7 @@ def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
         T['ccy_n'] = (ccy_n if ccy_n is not None else -1)
         T['vol_rule'] = vol_rule or ''
         T['vol_opt'] = (vol_opt if vol_opt is not None else -1)
+        T['lowvol_q'] = (lowvol_q if lowvol_q else 0.0)
         out = T
     if cache:
         if len(_RUNC) > 40:
