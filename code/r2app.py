@@ -149,6 +149,31 @@ def stage_app():
         'ambiguous days only -- the earlier caveat in the file was wrong.')
     for k in ('a4_capsweep_binding', 'a5_overlay_team1'):
         sec['reads'][k] = {m: v for m, v in sec['reads'][k].items() if v}
+    # ---- B1-NARROW, the eleven-step walk on the narrow universe (chain 29).
+    sec['reads']['b1narrow_winners'] = _rr(
+        'b1narrow_winners_new6.csv',
+        cols=['mode', 'sid', 'stream', 'R_new6_mean', 't_new6',
+              'years_pos_new6', 'R_old5_mean', 't_old5', 'years_pos_old5',
+              'R_all11_mean', 'years_pos_all11'])
+    sec['reads']['b1narrow_vs_control'] = _rr('b1narrow_winner_vs_control.csv')
+    sec['reads']['b1narrow_cohorts'] = _rr('b1narrow_cohorts.csv')
+    sec['reads']['b1narrow_note'] = (
+        'The eleven-step walk re-tunes every strategy from 2005 so that trade '
+        'years 2010-2015 -- six years no part of the five-step selection ever '
+        'touched -- can be read. 7,970 strategies banked across the two modes: '
+        'the 10 winners, a 2,000-strategy sample of the lemantrend / '
+        'waddah_attar family, and a 2,000-strategy random control. THE RESULT: '
+        'the winners average +0.12310 R per trade on the five years they were '
+        'selected on and -0.02089 on the six they never saw, 2 of 10 positive. '
+        'Against a random control on the same stream their median percentile '
+        'is 36.1 and only 4 of 10 sit above the control median -- so on unseen '
+        'years they are no better than strategies drawn at random from the '
+        'same universe. Family and control are also indistinguishable. '
+        'THE REPORT WAS EMPTY ON FIRST WRITE: the reader joined the universe '
+        'csv to the bank on `bank_row`, but G2.run banks by POSITION in the '
+        'combos list it is handed, so the join hit 27 of 4,008 rows and a '
+        'defensive `continue` dropped the rest while every stage reported OK. '
+        'The join is now on `sid`, which the bank carries itself.')
     # ---- THE NNFX BUILD SECTION (HANDOFF 0m). Standing rule: every result
     # gets an app tab, and a markdown file on disk does not satisfy it.
     ND = os.path.join(ROOTOUT, 'nnfx')

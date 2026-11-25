@@ -5722,6 +5722,11 @@ const rrFill=()=>{const el=document.getElementById('rrbody');if(!el||el.dataset.
    +'winner-years by a median of 1.01 R. A direct re-score returns gate 2\u2019s number, so gate 2 is the faithful record. '
    +'This affects mode?_winners.csv and everything built on it, including MODEA_WINNERS.md.</div>';
  h+=tbl(R.gate2_vs_gate3,null,'Gate 2 win array against the gate 3 KPI bank, same strategy and config');
+ h+='<h3>B1-NARROW — the winners against their own family and a random control</h3>';
+ h+='<div class="note">'+(R.b1narrow_note||'')+'</div>';
+ h+=tbl(R.b1narrow_winners,null,'The 10 winners on the six never-seen years, each on its own selected stream');
+ h+=tbl(R.b1narrow_vs_control,null,'Each winner\u2019s percentile against a 2,000-strategy random control on the same stream');
+ h+=tbl(R.b1narrow_cohorts,null,'Winner, family and control as distributions, per mode and stream');
  h+='<h3>A4 — currency netting and the exposure cap</h3>';
  h+='<div class="note">The cap is the shipped one (l2walkfwd.Book.series, cap_pct), swept over its full range. '
    +'It does essentially nothing. And the largest currency leg carries LESS of total exposure on the ten worst '

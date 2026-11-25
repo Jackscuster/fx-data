@@ -578,6 +578,7 @@ def stage_md(out=None):
       'tuning-window length still need their own pass**. Nothing in this '
       'report needs it: every figure reads the selected configuration.\n')
     rows = []
+    join = []
     for mode in ('A', 'B'):
         try:
             bank, CB = read_bank(mode)
@@ -585,31 +586,84 @@ def stage_md(out=None):
             a('\n## Mode %s\n\n_No B1-narrow bank yet._\n' % mode)
             continue
         U = _safe_csv(os.path.join(OUT, 'mode%s_b1narrow_universe.csv' % mode))
+        # THE JOIN IS ON `sid`, NOT ON `bank_row`. G2.run banks by POSITION in
+        # the `combos` list it was handed, so this bank is keyed 0..4007 by
+        # position in the bank_row-sorted universe, while the csv's `bank_row`
+        # is the row in the FULL gate-2 bank and runs to 273,778. Joining on
+        # bank_row matched 27 of 4,008 rows by coincidence. `sid` is the
+        # strategy identity and the bank carries it in its own `combo` array,
+        # so it is the only join that survives the universe being re-sampled.
+        by_sid = {}
+        for _k, _c in CB.items():
+            by_sid.setdefault('|'.join(str(x) for x in _c), int(_k))
+        _hit = _miss = 0
         for _i, u in U.iterrows():
-            k = int(u.bank_row)
-            if k not in bank:
+            k = by_sid.get(str(u.sid))
+            if k is None or k not in bank:
+                _miss += 1
                 continue
-            st_ = (list(G2.STREAMS).index(u.stream)
-                   if 'stream' in U.columns and isinstance(u.stream, str)
-                   else None)
-            if st_ is None:
-                continue          # a universe row with no stream cannot be read
-            per = _per_year(bank[k], st_)
-            sn = _stats(per, NEW_YEARS); so = _stats(per, OLD_YEARS)
-            sa = _stats(per, NEW_YEARS + OLD_YEARS)
-            r = dict(mode=mode, cohort=u.cohort, bank_row=k, sid=u.sid,
-                     R_new6_mean=sn['mean_R'], t_new6=sn['t'],
-                     years_pos_new6=sn['years_positive'],
-                     R_old5_mean=so['mean_R'], t_old5=so['t'],
-                     years_pos_old5=so['years_positive'],
-                     R_all11_mean=sa['mean_R'], years_pos_all11=sa['years_positive'])
-            for y in NEW_YEARS + OLD_YEARS:
-                r['R_%d' % y] = per.get(y, np.nan)
-                r['never_seen_%d' % y] = int(y in NEW_YEARS)
-            rows.append(r)
+            _hit += 1
+            # THE UNIVERSE CSV CARRIES NO `stream` COLUMN. `universe()` writes
+            # bank_row, sid, cohort, mode only, because the family and the
+            # control have no SELECTED stream -- only the winners do. The first
+            # version of this block required one, found none, and skipped every
+            # one of the 8,010 banked rows, which emptied the entire report
+            # while every chain stage still reported OK. So: use the named
+            # stream when the csv has one, otherwise read ALL FOUR streams and
+            # label each. The winner tables below pick each winner's own
+            # selected stream back out of the four.
+            if 'stream' in U.columns and isinstance(u.stream, str):
+                sts = [(list(G2.STREAMS).index(u.stream), str(u.stream))]
+            else:
+                sts = list(enumerate(G2.STREAMS))
+            for st_, stname in sts:
+                per = _per_year(bank[k], st_)
+                sn = _stats(per, NEW_YEARS); so = _stats(per, OLD_YEARS)
+                sa = _stats(per, NEW_YEARS + OLD_YEARS)
+                r = dict(mode=mode, cohort=u.cohort, bank_row=k, sid=u.sid,
+                         stream=stname,
+                         R_new6_mean=sn['mean_R'], t_new6=sn['t'],
+                         years_pos_new6=sn['years_positive'],
+                         R_old5_mean=so['mean_R'], t_old5=so['t'],
+                         years_pos_old5=so['years_positive'],
+                         R_all11_mean=sa['mean_R'],
+                         years_pos_all11=sa['years_positive'])
+                for y in NEW_YEARS + OLD_YEARS:
+                    r['R_%d' % y] = per.get(y, np.nan)
+                    r['never_seen_%d' % y] = int(y in NEW_YEARS)
+                rows.append(r)
+        join.append((mode, len(U), _hit, _miss, len(bank)))
     D = pd.DataFrame(rows)
+    # EACH WINNER'S OWN SELECTED STREAM, taken from the five-step selection
+    # record, so the winner tables carry one row per winner rather than four.
+    sel = {}
+    for _m in ('A', 'B'):
+        _wf = os.path.join(OUT, 'mode%s_b1winners.csv' % _m)
+        if os.path.exists(_wf) and os.path.getsize(_wf) > 1:
+            _W = _safe_csv(_wf)
+            if {'stream', 'sid'} <= set(_W.columns):
+                for _j, _wr in _W.iterrows():
+                    # KEYED ON sid, NOT bank_row: `D.bank_row` is this bank's
+                    # POSITIONAL key (0..4007) while the winners csv carries
+                    # the full gate-2 bank row, so the two never match.
+                    sel[(_m, str(_wr.sid))] = str(_wr.stream)
+    if len(D):
+        D['is_selected_stream'] = [
+            int(sel.get((str(m_), str(sid_))) == str(s_))
+            for m_, sid_, s_ in zip(D['mode'], D.sid, D.stream)]
     f = os.path.join(OUT, 'b1narrow_per_strategy.csv')
     D.to_csv(f, index=False)
+    if join:
+        a('\n**THE JOIN, STATED.** Universe rows, rows matched into the bank by '
+          '`sid`, rows not matched, and strategies in the bank:\n')
+        for _m, _nu, _h, _ms, _nb in join:
+            a('- mode %s: %s universe rows, **%s matched**, %s unmatched, '
+              '%s in the bank' % (_m, f'{_nu:,}', f'{_h:,}', f'{_ms:,}',
+                                  f'{_nb:,}'))
+        if any(x[3] for x in join):
+            a('\nUnmatched rows are universe rows whose strategy is not in the '
+              'bank -- the universe csv was re-sampled after that bank was '
+              'built. They are dropped, not substituted.\n')
     if len(D):
         # PROP RETURN needs a drawdown; the eleven-step bank has no max DD, so
         # it is computed from the per-year spread as a STATED PROXY and labelled.
@@ -618,10 +672,18 @@ def stage_md(out=None):
         a('\n## The 10 winners, year by year\n')
         a('`never_seen = 1` marks a year no part of the original selection '
           'touched.\n')
-        w = D[D.cohort == 'winner']
-        a(G3x.BK_tbl(w, ['mode', 'sid'] + ['R_%d' % y for y in NEW_YEARS + OLD_YEARS]))
+        w = D[(D.cohort == 'winner') & (D.is_selected_stream == 1)]
+        if not len(w):
+            a('\n_The selected-stream join found no winner row; the four streams '
+              'are shown instead and are NOT one row per winner._\n')
+            w = D[D.cohort == 'winner']
+        a('Stream is each winner\'s **own selected stream** from the five-step '
+          'record, not a pooled figure.\n')
+        a(G3x.BK_tbl(w, ['mode', 'sid', 'stream']
+                     + ['R_%d' % y for y in NEW_YEARS + OLD_YEARS]))
         a('\n### The six never-seen years alone, per winner\n')
-        a(G3x.BK_tbl(w, ['mode', 'sid', 'R_new6_mean', 't_new6', 'years_pos_new6',
+        a(G3x.BK_tbl(w, ['mode', 'sid', 'stream',
+                         'R_new6_mean', 't_new6', 'years_pos_new6',
                          'R_old5_mean', 't_old5', 'years_pos_old5',
                          'R_all11_mean', 'years_pos_all11']))
         if len(w):
@@ -632,13 +694,45 @@ def stage_md(out=None):
               % (nn, len(w), float(w.R_old5_mean.mean()),
                  float(w.R_new6_mean.mean())))
         a('\n## The family and the control, as distributions\n')
-        g = D.groupby(['mode', 'cohort'], as_index=False).agg(
+        a('Family and control are shown PER STREAM, because neither cohort has '
+          'a selected stream and pooling the four would describe no strategy.\n')
+        g = D.groupby(['mode', 'cohort', 'stream'], as_index=False).agg(
             n=('bank_row', 'size'), mean_new6=('R_new6_mean', 'mean'),
             median_new6=('R_new6_mean', 'median'),
             pct_positive_new6=('R_new6_mean', lambda s: 100.0 * (s > 0).mean()),
             mean_old5=('R_old5_mean', 'mean'),
             mean_t_new6=('t_new6', 'mean'))
+        g.to_csv(os.path.join(OUT, 'b1narrow_cohorts.csv'), index=False)
+        w.to_csv(os.path.join(OUT, 'b1narrow_winners_new6.csv'), index=False)
         a(G3x.BK_tbl(g, list(g.columns)))
+        a('\n### Each winner against the control, on its OWN stream\n')
+        a('The percentile is the share of CONTROL strategies on the same stream '
+          'and in the same mode whose mean R per trade on the six never-seen '
+          'years is **below** the winner. 50 means the winner is at the control '
+          'median; a winner that carried a real edge into unseen years should '
+          'sit high.\n')
+        _pr = []
+        for _j, _w in w.iterrows():
+            _c = D[(D['mode'] == _w['mode']) & (D.cohort == 'control')
+                   & (D.stream == _w.stream)]
+            if not len(_c):
+                continue
+            _pr.append(dict(mode=_w['mode'], sid=_w.sid, stream=_w.stream,
+                            R_new6_mean=_w.R_new6_mean,
+                            control_n=len(_c),
+                            control_mean=float(_c.R_new6_mean.mean()),
+                            pctile_vs_control=100.0 * float(
+                                (_c.R_new6_mean < _w.R_new6_mean).mean())))
+        if _pr:
+            P = pd.DataFrame(_pr)
+            a(G3x.BK_tbl(P.sort_values('pctile_vs_control', ascending=False),
+                         list(P.columns)))
+            a('\n**Median winner percentile against its own-stream control: '
+              '%.1f.** %d of %d winners sit above the control median.\n'
+              % (float(P.pctile_vs_control.median()),
+                 int((P.pctile_vs_control > 50).sum()), len(P)))
+            P.to_csv(os.path.join(OUT, 'b1narrow_winner_vs_control.csv'),
+                     index=False)
         a('\nIf the family and the control are indistinguishable on the six '
           'never-seen years, the components the winners are built from carry '
           'nothing the rest of the field lacks — which is what A1 already '
@@ -650,7 +744,8 @@ def stage_md(out=None):
           'correctly within this table and is NOT comparable to the prop return '
           'in `MODEA_WINNERS.md`.\n')
         a(G3x.BK_tbl(w.sort_values('prop_proxy_new6', ascending=False),
-                     ['mode', 'sid', 'R_new6_mean', 'prop_proxy_new6']))
+                     ['mode', 'sid', 'stream', 'R_new6_mean',
+                      'prop_proxy_new6']))
     else:
         a('\n_No bank rows read._\n')
     a('\n## Random-entry null on the six never-seen years\n')
