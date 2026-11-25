@@ -241,3 +241,10 @@
     239/576 A exit_ind_only    stop 1.0 tgt 2.0 trail 0 ts 10 -> R  +35.827  R/yr  +5.971  dip  20.139  R/dip +1.779  n 709
     240/576 A exit_ind_only    stop 1.0 tgt 2.0 trail 0 ts 20 -> R  +31.610  R/yr  +5.268  dip  25.778  R/dip +1.226  n 705
     241/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 1 ts  0 -> R  +15.156  R/yr  +2.526  dip  14.321  R/dip +1.058  n 698
+    242/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 1 ts  5 -> R  +12.121  R/yr  +2.020  dip  13.289  R/dip +0.912  n 719
+    243/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 1 ts 10 -> R  +13.397  R/yr  +2.233  dip  15.958  R/dip +0.839  n 703
+    244/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 1 ts 20 -> R  +20.207  R/yr  +3.368  dip  14.057  R/dip +1.437  n 696
+    245/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 0 ts  0 -> R   +4.384  R/yr  +0.731  dip  19.893  R/dip +0.220  n 704
+    246/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 0 ts  5 -> R  +11.488  R/yr  +1.915  dip  13.355  R/dip +0.860  n 719
+    247/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 0 ts 10 -> R  +11.556  R/yr  +1.926  dip  15.092  R/dip +0.766  n 703
+    248/576 A exit_ind_only    stop 1.5 tgt 1.0 trail 0 ts 20 -> R  +15.834  R/yr  +2.639  dip  15.847  R/dip +0.999  n 698

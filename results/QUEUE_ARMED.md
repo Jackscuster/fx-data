@@ -1,4 +1,4 @@
-# QUEUE_ARMED — 25 November 2026, 11:48 EST
+# QUEUE_ARMED — 25 November 2026, 11:52 EST
 
 **New standing rule, Jack 25 Nov: this file is written before any turn ends and
 the chat reads it directly.** A stage that exists only as a plan counts as NOT
@@ -15,9 +15,11 @@ started.** 10 cores free.
 |---|---|---|---|
 | **item 6a — the full exit factorial** `code/chain/exit6.sh` | pid **49381**, pgid **49378** | `results/nnfx/exit_grid.csv` (576 cells, resumable per cell) | started 11:32, **~12:20** |
 
-Follow-up `code/chain/exit6b.sh` (EXITS.md + app + preflight) is written and
-**not** armed — it must run after the sweep, and it is a separate file because
-`exit6.sh` must not be edited while it runs.
+| **item 6a follow-up waiter** `code/chain/exit6wait.sh` | pid **52627**, pgid **52624** | waits for the sweep, verifies **576 rows in `exit_grid.csv`** (resuming it if short), then runs `exit6b.sh`: `EXITS.md`, the app feed, pre-flight | **~12:25** |
+
+So **nothing needs a manual step after the sweep.** The waiter checks
+completion from the row count rather than the log, for the reason below, and
+`exit6.sh` resumes per cell if it is short.
 
 **A HAZARD I HIT AND HAVE TO RECORD.** I edited `exit6.sh` at 11:45 while it
 was live, to append the md and app steps. Bash reads a script incrementally, so
