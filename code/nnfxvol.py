@@ -224,10 +224,27 @@ def robust_cols(T, cost, DS, years):
     # ---- per TRADE, not per leg. entry_frame carries no R column, so the
     # legs' R is summed onto the entry key first -- the two legs of a position
     # sum to the position's R, which is the whole reason entry_frame exists.
+    #
+    # AND IN THE SAME UNIT AS R_total, WHICH IT WAS NOT. A trade frame carries
+    # TWO R columns: `R`, the engine's raw r, and `R_gross`, that restated to
+    # the declared 1.5-ATR notional (nnfx3:330, R_gross = R x atr_mult / 1.5).
+    # Every reported figure is in the R_gross unit -- `_cost_R` divides by
+    # RISK_UNIT_ATR, `_yearly` sums R_gross, and R_total above comes off the
+    # daily series. This block summed the RAW column and charged no cost, so
+    # best_trade_R and R_ex_best_trade came out 1.5x too large on a realized-
+    # by-exit-year basis and sat in the same row as an R_total that is MTM net
+    # in the other unit: for A/jack the row read R_total 40.030 beside
+    # R_ex_best_trade 92.049. The SHARES were never wrong -- numerator and
+    # denominator were both raw, so the 1.5 cancels -- which is why this hid.
+    # The denominator is now written out as R_realized_total so the two bases
+    # can never be compared by accident again. Fixed 25 Nov 2026.
     E = N.entry_frame(T)
     if len(E):
-        Rsum = (T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
-                .agg(R=('R', 'sum')))
+        assert 'R_gross' in T.columns, 'robust_cols: frame carries no R_gross'
+        _net = T.R_gross.to_numpy(float) - np.asarray(cost, float)
+        Rsum = (T.assign(_net=_net)
+                .groupby(['pair', 'entry_date', 'direction'], as_index=False)
+                .agg(R=('_net', 'sum')))
         E = E.merge(Rsum, on=['pair', 'entry_date', 'direction'], how='left')
         xy = pd.DatetimeIndex(E.exit_date).year
         sel = E[np.isin(xy, yrs)]
@@ -235,6 +252,7 @@ def robust_cols(T, cost, DS, years):
         sel = E
     if len(sel) and 'R' in sel.columns:
         rt = sel.R.to_numpy(float)
+        out['R_realized_total'] = float(rt.sum())
         out['best_trade_R'] = float(rt.max())
         out['R_ex_best_trade'] = float(rt.sum() - rt.max())
         out['best_trade_share'] = (float(rt.max() / rt.sum())
@@ -275,7 +293,7 @@ def leverage_census(T, equity=EQUITY, cap_lev=CAP_LEV):
     g = (T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
          .agg(n_legs=('leg', 'size'), units=('units', 'first'),
               entry_px=('entry_px', 'first'), exit_date=('exit_date', 'max'),
-              R=('R', 'sum')))
+              R=('R_gross', 'sum')))   # R_gross: the reported 1.5-ATR unit
     g['notional'] = g.units * g.n_legs * g.entry_px
     g['leverage_alone'] = g.notional / float(equity)
     g['over_cap_alone'] = (g.leverage_alone > cap_lev).astype(int)
@@ -489,8 +507,21 @@ def atr_buckets(T, nb=10, atr_len=ATR_LEN):
     E = N.entry_frame(T)
     if not len(E):
         return pd.DataFrame()
-    Rsum = (T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
-            .agg(R=('R', 'sum')))
+    # NET, LIKE EVERY OTHER LAYER 2 TABLE. The `R` column on a trade frame is
+    # GROSS of cost; net R is R minus `_cost_R`, charged per LEG. This table
+    # summed the gross column and called it R_total, so for candidate A it read
+    # 156.890 R where the net figure every other table quotes is 52.501 -- and
+    # `share_of_total_R` was then a share of the wrong denominator, putting
+    # bucket 1 at 50.7% of a total that does not exist. The bucket ORDER was
+    # never affected (cost per trade is near-uniform); the shares and the R per
+    # trade were. Fixed 25 Nov 2026. This is the fourth time a Layer 2 number
+    # has been restated in the wrong unit, so the gross column is kept beside
+    # the net one rather than dropped.
+    _T = T.copy()
+    _T['_cost'] = N._cost_R(_T)
+    Rsum = (_T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
+            .agg(R_gross=('R_gross', 'sum'), cost=('_cost', 'sum')))
+    Rsum['R'] = Rsum.R_gross - Rsum.cost
     E = E.merge(Rsum, on=['pair', 'entry_date', 'direction'], how='left')
     pct = np.full(len(E), np.nan)
     for p, sub in E.groupby('pair'):
@@ -511,15 +542,19 @@ def atr_buckets(T, nb=10, atr_len=ATR_LEN):
     # AND THE SAME BUCKETS WITH 15-16 JANUARY 2015 TAKEN OUT. Without this
     # column the table says "the profit is concentrated in low-volatility
     # entries" when what it may be saying is "ONE low-volatility trade is the
-    # profit". For candidate A those are not the same claim: bucket 1 totals
-    # about 79.5 R and the single EURCHF short through the SNB peg break is
-    # +74.996 of it.
+    # profit". For candidate A, net and at achievable size, bucket 1 totals
+    # about 59.9 R of which the single EURCHF short through the SNB peg break
+    # is +51.05; uncapped that one trade is +74.996. It does NOT carry the
+    # bucket on its own: the other 165 trades in the bottom decile are still
+    # worth more per trade than the sample mean.
     _xd = pd.DatetimeIndex(E.exit_date) if 'exit_date' in E.columns else None
     E['_snb'] = (_xd.normalize().isin(pd.DatetimeIndex(SNB_DAYS))
                  if _xd is not None else False)
     out = (E.groupby('bucket', as_index=False)
            .agg(n_trades=('R', 'size'), R_total=('R', 'sum'),
                 R_per_trade=('R', 'mean'),
+                R_gross_total=('R_gross', 'sum'),
+                cost_total=('cost', 'sum'),
                 atr_pctile_lo=('atr_pctile', 'min'),
                 atr_pctile_hi=('atr_pctile', 'max')))
     X = E[~E._snb]

@@ -1095,6 +1095,81 @@ def c35():
                 % (len(skipped), ', '.join(skipped))) if skipped else ''))
 
 
+# ------------------------------------------------- THE TWO R COLUMNS, ONE UNIT
+def c40():
+    """A reported figure taken from the RAW `R` column instead of `R_gross`.
+
+    WHAT WENT WRONG. A trade frame carries two R columns and they differ by a
+    constant factor: `R` is the engine's raw r, and `R_gross = R x atr_mult /
+    1.5` restates it to the declared 1.5-ATR notional (nnfx3:330). Everything
+    reported is in the R_gross unit -- `_cost_R` divides by RISK_UNIT_ATR,
+    `_yearly` sums R_gross, and the daily series marks in it. Three reported
+    paths summed the RAW column instead, and because each one used the raw
+    column on BOTH sides of its own ratio, every SHARE came out right and only
+    the absolute numbers were 1.5x too large. That is why it survived guards
+    32, 33 and 36: nothing failed to reconcile, because each path reconciled
+    with itself.
+
+    WHAT IT CHECKS. The three paths by source, and then the files:
+      - robust_cols charges cost and takes R_gross, and writes the denominator
+        out as R_realized_total so a realized-by-exit-year total can never be
+        read as the MTM R_total beside it;
+      - atr_buckets aggregates R_gross, and its net column reconciles to
+        gross minus cost on every row of the shipped table;
+      - nnfxcurves._entry_R takes net R_gross, so the floor curve's removed-
+        versus-kept means are in the unit the rest of the table is in.
+    """
+    import pandas as _pd
+    vs = src('nnfxvol.py')
+    assert 'R_gross.to_numpy(float) - np.asarray(cost' in vs, (
+        'robust_cols does not take net R_gross for its per-trade columns')
+    assert "out['R_realized_total']" in vs, (
+        'robust_cols does not write the per-trade denominator out')
+    assert "R_gross=('R_gross', 'sum')" in vs, (
+        'atr_buckets does not aggregate the R_gross column')
+    cs = src('nnfxcurves.py')
+    assert "_T['_net'] = _T.R_gross.to_numpy(float) - N._cost_R(_T)" in cs, (
+        'nnfxcurves._entry_R does not take net R_gross')
+    ND = os.path.join(ROOTOUT, 'nnfx')
+    checked = []
+    f = os.path.join(ND, 'atr_buckets_abc.csv')
+    if os.path.exists(f) and os.path.getsize(f) > 2:
+        B = _pd.read_csv(f)
+        for c in ('R_total', 'R_gross_total', 'cost_total'):
+            assert c in B.columns, 'atr_buckets_abc.csv has no %s' % c
+        d = (B.R_total - (B.R_gross_total - B.cost_total)).abs().max()
+        assert d < 1e-6, (
+            'atr_buckets_abc.csv: R_total is not gross minus cost, worst '
+            '%.3g' % d)
+        checked.append('atr_buckets_abc.csv (%d rows, net == gross - cost to '
+                       '%.1e)' % (len(B), d))
+    for nm in ('stage2_picks_report.csv', 'stage3_report.csv'):
+        f = os.path.join(ND, nm)
+        if not os.path.exists(f) or os.path.getsize(f) < 2:
+            continue
+        D = _pd.read_csv(f)
+        if 'best_trade_R' not in D.columns:
+            continue
+        assert 'R_realized_total' in D.columns, (
+            '%s predates the unit fix: no R_realized_total column' % nm)
+        L = D[_pd.to_numeric(D.best_trade_R, errors='coerce').notna()]
+        if not len(L):
+            continue
+        d1 = (L.best_trade_R + L.R_ex_best_trade - L.R_realized_total).abs().max()
+        assert d1 < 1e-6, ('%s: best_trade_R + R_ex_best_trade does not equal '
+                           'R_realized_total, worst %.3g' % (nm, d1))
+        sh = L.best_trade_R / L.R_realized_total.where(
+            L.R_realized_total.abs() > 1e-9)
+        d2 = (sh - L.best_trade_share).abs().max()
+        assert not (d2 == d2) or d2 < 1e-6, (
+            '%s: best_trade_share is not best_trade_R / R_realized_total, '
+            'worst %.3g' % (nm, d2))
+        checked.append('%s (%d rows with a best trade, split and share both '
+                       'reconcile)' % (nm, len(L)))
+    assert checked, 'no table carrying the per-trade columns was found'
+    return ('all three raw-R paths now take net R_gross; ' + '; '.join(checked))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -1167,12 +1242,15 @@ def main():
     guard(37, 'A zero-row result file nobody declared: B1_NARROW.md shipped naming a csv at 0 rows, and hours later stage3_report/paired/yearly were all written EMPTY while the chain logged OK in one second for work needing 108 engine runs. Guard 35 missed the second one because the report SKIPPED the empty files from its own provenance block, so omission was a way round it. The cause is worth recording: an empty CSV field reads back as NaN, not the empty string, so every `c2 == \'\'` match on the currency-agreement rows came back all-False and the stage found no control at all',
           'this guard does not go through the reports: it looks at the files, and no csv under results/ may carry a header and no data rows unless it is declared empty in preflight.c37 with a reason',
           'no undeclared zero-row csv anywhere under results/', c37)
-    guard(38, 'A Layer 2 job that does not declare whether the VOLATILITY FLOOR is on: Jack\'s decided rule 1 of 7 Sep 2026 -- a pair does not trade while its own ATR is in its bottom 5% -- had been in the repo since then as l2suppvol.atr_floors and was REPORT-ONLY, so the entire staged build ran without it and no result file said either way. The SNB trade of 15 Jan 2015, worth +74.996 R and 56-137% of three carried-forward candidates, entered on a bar the as-built flag marks low-volatility',
+    guard(38, 'A Layer 2 job that does not declare whether the VOLATILITY FLOOR is on: Jack\'s decided rule 1 of 7 Sep 2026 -- a pair does not trade while its own ATR is in its bottom 5% -- had been in the repo since then as l2suppvol.atr_floors and was REPORT-ONLY, so the entire staged build ran without it and no result file said either way. The SNB trade of 15 Jan 2015 -- quoted at +74.996 R until guard 40 showed that figure is the RAW r column, 1.5x the unit every candidate total is in; it is +49.997 R uncapped and +34.036 R at achievable size -- entered on a bar the as-built flag marks low-volatility',
           'nnfx1, nnfx2s and nnfx3 each expose the switch, default it to 0.05, record it on every trade frame, and gate the VOLUME slot rather than `suspect` -- v_ok is entry-only in l2engine while a suspect bar blocks exits too; and the mask is causal, an expanding percentile over bars <= t-1 with a one-bar-lagged ATR',
           'all three writers declare and record the floor, and it demonstrably removes entries on a live EURCHF probe', c38)
-    guard(39, 'A Layer 2 table computed at a size no account could hold. The EURCHF short of 2 Jan 2015 is 56-137% of three carried-forward candidates and was reported at +74.996 R; its OWN leverage was 15.87:1, inside the cap, but 197,294 of notional was already open when it entered, so the summed position was 35.60:1, the achievable size 64.7%, and the trade worth 48.543 R. The number that mattered was never the position\'s own leverage, it was the book\'s',
+    guard(39, 'A Layer 2 table computed at a size no account could hold. The EURCHF short of 2 Jan 2015 is a large share of three carried-forward candidates and was reported at +74.996 R, which guard 40 later showed to be the RAW r column: +49.997 R in the reported unit, and +34.036 R once the cap scales it to 0.6807. Its OWN leverage was 15.87:1, inside the cap, but 197,294 of notional was already open when it entered, so the summed position was 35.60:1, the achievable size 64.7%, and the trade worth 48.543 R. The number that mattered was never the position\'s own leverage, it was the book\'s',
           'nnfx2s._score defaults leverage_cap=True and applies the cap before computing anything; the cap is sequential and causal, never resizing a position already open; and every Layer 2 result table carries leverage_cap_on = 1',
           'the cap defaults on in the scorer and no stage2/stage3 table lacks the column', c39)
+    guard(40, 'A reported figure taken from the RAW `R` column instead of `R_gross`. A trade frame carries both, and they differ by the declared-notional factor: R_gross = R x atr_mult / 1.5. Everything reported is in the R_gross unit, but robust_cols, atr_buckets and nnfxcurves._entry_R all summed the raw column -- and each used it on BOTH sides of its own ratio, so every SHARE was right and only the absolute numbers were 1.5x too large. stage3_report read R_total 40.030 beside R_ex_best_trade 92.049 on the same row. Guards 32, 33 and 36 all passed, because each path reconciled with itself',
+          'the three paths take net R_gross; robust_cols writes its denominator out as R_realized_total so a realized-by-exit-year total cannot be read as the MTM R_total beside it; and the shipped tables must reconcile net == gross - cost and best_trade_R + R_ex_best_trade == R_realized_total',
+          'no reported path sums the raw R column, and the shipped tables reconcile', c40)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

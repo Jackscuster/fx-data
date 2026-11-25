@@ -73,22 +73,46 @@ def _fig(T, years=BUILD):
                 worst_dip_R=N.true_dip(DS, years))
 
 
+def _ekeys(D):
+    """ONE key convention for an entry, used by both sides of the removed-
+    versus-kept split. It has to be one function.
+
+    It was two, and they disagreed: _entry_keys formatted the date through
+    pd.DatetimeIndex(...).astype(str) ('2015-01-02') while _entry_R formatted
+    the same date through str(pd.Timestamp(...)) ('2015-01-02 00:00:00'). No
+    key ever matched, so `removed` came back as the WHOLE floor-off set and
+    `kept` came back empty -- floor_curve_abc.csv read 866 trades removed and
+    100.0% removed at every level including the floor-OFF level, with
+    mean_R_kept NaN. The R_total and trades columns were never wrong; only the
+    split was. Found and fixed 25 Nov 2026.
+    """
+    return list(zip(D.pair.astype(str),
+                    pd.DatetimeIndex(D.entry_date).strftime('%Y-%m-%d %H:%M:%S'),
+                    D.direction.astype(str)))
+
+
 def _entry_keys(T):
     if not len(T):
         return set()
-    E = N.entry_frame(T)
-    return set(zip(E.pair.astype(str),
-                   pd.DatetimeIndex(E.entry_date).astype(str),
-                   E.direction.astype(str)))
+    return set(_ekeys(N.entry_frame(T)))
 
 
 def _entry_R(T):
+    """Net R per entry, in the REPORTED 1.5-ATR unit.
+
+    `R` on a trade frame is the engine's raw r; `R_gross` is that restated to
+    the declared notional, and every reported figure is in the R_gross unit.
+    This summed the raw column and charged no cost, so the removed-versus-kept
+    means were 1.5x too large and gross. Both sides carried the same error, so
+    the COMPARISON held and only the absolute numbers were wrong.
+    """
     if not len(T):
         return {}
-    g = (T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
-         .agg(R=('R', 'sum')))
-    return {(str(r.pair), str(pd.Timestamp(r.entry_date)), str(r.direction)):
-            float(r.R) for r in g.itertuples()}
+    _T = T.copy()
+    _T['_net'] = _T.R_gross.to_numpy(float) - N._cost_R(_T)
+    g = (_T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
+         .agg(R=('_net', 'sum')))
+    return dict(zip(_ekeys(g), g.R.astype(float)))
 
 
 def stage_peg(verbose=True):
@@ -133,6 +157,15 @@ def stage_floor(verbose=True):
                 kept = _entry_keys(T)
                 allk = set(base_R)
                 removed = allk - kept
+                # THE INVARIANT THAT WOULD HAVE CAUGHT THE KEY MISMATCH: at
+                # the floor-OFF level the two sides are the same run, so
+                # nothing can be removed. A key convention that disagrees
+                # with itself fails here instead of shipping 100.0%.
+                if q == 0.0:
+                    assert not removed, (
+                        '%s/%s floor OFF: %d of %d entries "removed" against '
+                        'itself -- the entry key conventions disagree'
+                        % (lab, v, len(removed), len(allk)))
                 r_rem = [base_R[k] for k in removed]
                 r_kep = [base_R[k] for k in (allk & kept)]
                 rows.append(dict(
@@ -158,6 +191,7 @@ def stage_floor(verbose=True):
 def stage_buckets(verbose=True):
     """R per trade by ATR percentile at entry, ten buckets, per base."""
     rows = []
+    snb = []
     for (lab, c1, base, rs) in S3.BASES:
         for v in ('jack', 'textbook'):
             T = _stitch(c1, base, rs, v, 0.0, 0.0)   # NO floor, NO peg guard,
@@ -169,6 +203,53 @@ def stage_buckets(verbose=True):
                 continue
             B = B.assign(base=lab, variant=v)
             rows.append(B)
+            # THE ONE TRADE, ON THE RECORD, IN BOTH UNITS AND BOTH SIZES.
+            # It was quoted at +74.996 R for two days. That is the RAW r
+            # column; every candidate total is in the restated 1.5-ATR unit,
+            # where the same trade is +49.997 uncapped. Nobody should ever
+            # have to derive that again, so it goes in a file.
+            # PER ENTRY, NOT PER LEG, AND THE SINGLE BIGGEST ONE NAMED.
+            # The first version summed every LEG exiting on the two SNB days,
+            # which for A/jack is three legs across two different positions
+            # and came out at 75.746 raw -- close enough to the 74.996 that
+            # had been quoted for two days to look like the same number and
+            # not be. The question is what ONE TRADE is worth.
+            def _per_entry(X, cst):
+                Y = X.assign(_c=cst)
+                g = (Y.groupby(['pair', 'entry_date', 'direction'],
+                               as_index=False)
+                     .agg(raw=('R', 'sum'), gross=('R_gross', 'sum'),
+                          cost=('_c', 'sum'), legs=('leg', 'size'),
+                          xd=('exit_date', 'max'),
+                          sc=('lev_scale', 'min') if 'lev_scale' in Y.columns
+                          else ('R', 'size')))
+                g['net'] = g.gross - g.cost
+                return g[pd.DatetimeIndex(g.xd).normalize()
+                         .isin(pd.DatetimeIndex(VOL.SNB_DAYS))]
+            _gu = _per_entry(T, N._cost_R(T))
+            _gc = _per_entry(M, N._cost_R(M))
+            if len(_gu):
+                _b = _gu.loc[_gu.net.idxmax()]
+                _m = _gc[(_gc.pair == _b.pair)
+                         & (pd.DatetimeIndex(_gc.entry_date)
+                            == pd.Timestamp(_b.entry_date))]
+                _m = _m.iloc[0] if len(_m) else None
+                snb.append(dict(
+                    base=lab, variant=v, pair=str(_b.pair),
+                    entry_date=str(pd.Timestamp(_b.entry_date).date()),
+                    direction=str(_b.direction), legs=int(_b.legs),
+                    n_entries_exiting_on_SNB_days=int(len(_gu)),
+                    R_raw_uncapped=float(_b.raw),
+                    R_gross_uncapped=float(_b.gross),
+                    R_net_uncapped=float(_b.net),
+                    R_raw_capped=(float(_m.raw) if _m is not None else np.nan),
+                    R_gross_capped=(float(_m.gross) if _m is not None
+                                    else np.nan),
+                    R_net_capped=(float(_m.net) if _m is not None else np.nan),
+                    lev_scale=(float(_m.sc) if _m is not None else np.nan),
+                    all_SNB_entries_R_net_uncapped=float(_gu.net.sum()),
+                    all_SNB_entries_R_net_capped=float(_gc.net.sum()),
+                    candidate_R_total_net_capped=float(B.R_total.sum())))
             if verbose:
                 b1 = B[B.bucket <= 3].share_of_total_R.sum()
                 print('    buckets %s/%s: bottom 3 deciles carry %.1f%% of R '
@@ -178,6 +259,18 @@ def stage_buckets(verbose=True):
                          / B.n_trades.sum()), flush=True)
     D = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
     S2._write_csv(D, os.path.join(OUT, 'atr_buckets_abc.csv'))
+    S2._write_csv(pd.DataFrame(snb),
+                  os.path.join(OUT, 'snb_trade_value.csv'))
+    if verbose and snb:
+        for r in snb:
+            print('    SNB trade %s/%s: %s %s %s, %d legs -- raw %+.3f -> '
+                  'reported %+.3f gross, %+.3f net uncapped; capped %+.3f net '
+                  'at scale %.4f, against a candidate total of %+.3f'
+                  % (r['base'], r['variant'], r['pair'], r['entry_date'],
+                     r['direction'], r['legs'], r['R_raw_uncapped'],
+                     r['R_gross_uncapped'], r['R_net_uncapped'],
+                     r['R_net_capped'], r['lev_scale'],
+                     r['candidate_R_total_net_capped']), flush=True)
     return D
 
 

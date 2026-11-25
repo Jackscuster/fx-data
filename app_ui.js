@@ -5992,12 +5992,30 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
   h+=tbl(RU.pegguard_curve,['X','pct_bars_flagged','pairs_ever_flagged','worst_pair','eurchf_pct_all','eurchf_peg_days_blocked','eurchf_peg_days','eurchf_pct_of_peg','blocks_2jan2015'],'Item 2 \u2014 the peg guard swept from X = 0.10 to 0.70');
   h+='<div class="note"><b>And here is what it costs.</b> All six base/plan cells are positive with the guard off. '
     +'Turning it on removes one to three trades and takes 25 to 49 R with them, and four of the six go negative. '
-    +'At any X of 0.20 or above the guard blocks the EURCHF entry of 2 January 2015 \u2014 the single trade worth '
-    +'<b>+74.996 R</b>. Candidate A on the jack plan with the guard on at X = 0.33 makes <b>40.03 R</b> over six years; '
-    +'the same candidate measured ex-SNB by a completely separate route makes <b>40.21 R</b>. The guard\u2019s whole '
-    +'effect, to within 0.2 R, is removing that one trade.</div>';
+    +'At any X of 0.20 or above the guard blocks the EURCHF entry of 2 January 2015. '
+    +'<b>THE UNIT, CORRECTED 25 Nov.</b> That trade was quoted at +74.996 R for two days. That figure is the engine\u2019s '
+    +'RAW r column; every candidate total on this page is in the restated 1.5-ATR unit. In the reported unit the same trade '
+    +'is <b>+50.50 R gross and +50.27 R net uncapped</b>, and at achievable size \u2014 the cap scales it to 0.6807 \u2014 '
+    +'<b>+34.38 R net</b>, against a candidate total of +72.90 R. It is still the largest single trade in the book by a '
+    +'wide margin and still exactly what the guard deletes; it is not larger than the whole result, which is what the raw '
+    +'figure made it look like. See snb_trade_value and guard 40.</div>';
   h+=tbl(RU.pegguard_effect,['base','variant','peg_X','floor_q','R_total','R_per_year','trades','R_per_trade','worst_dip_R'],'Item 2 \u2014 the effect of X on A, B and C');
+  h+=tbl(RU.snb_trade_value,['base','variant','pair','entry_date','direction','legs','R_raw_uncapped','R_gross_uncapped','R_net_uncapped','R_net_capped','lev_scale','all_SNB_entries_R_net_capped','candidate_R_total_net_capped'],'The one trade, in both units and at both sizes \u2014 so nobody has to derive it again');
+  h+='<div class="note"><b>It is the same trade in all six cells.</b> A short EURCHF entered 2 or 6 January 2015, two legs, '
+    +'worth <b>+49.3 to +49.8 R net</b> before the cap in every one \u2014 against candidate totals running from '
+    +'\u221218.8 R to +78.1 R. What differs is what the cap leaves of it: scale 1.0000 on the textbook cells, so the full '
+    +'+49.36 R stands and for A/textbook the single trade is LARGER than the whole six-year result; 0.6807 on A/jack, '
+    +'leaving +33.89 R; 0.1947 on C/jack, leaving +9.69 R. The raw column read +74.996 for the same trade, and that is the '
+    +'figure that was quoted for two days.</div>';
   h+=tbl(RU.floor_curve_abc,['base','variant','floor_q','peg_X','R_total','R_per_year','trades_removed','pct_trades_removed','mean_R_removed','mean_R_kept'],'Item 3 \u2014 the per-pair floor curve on A, B and C (exact removed-vs-kept match)');
+  h+='<div class="note"><b>What the removed-versus-kept split says, and what it read before 25 Nov.</b> The split is an '
+    +'exact one-by-one entry match against the floor-off run, and it is net of cost in the reported unit. It is '
+    +'candidate-specific: for <b>A</b> the floor removes trades that are BETTER than the ones it keeps at every level '
+    +'(+0.078 against +0.054 per trade at the 5% floor), so on this measure the floor is costing A; for <b>B</b> the '
+    +'removed trades are worse (+0.004 against +0.019). Before 25 Nov this table read <b>866 removed, 100.0%, kept NaN</b> '
+    +'at every level including the floor-OFF level, because the two sides built their entry keys with different date '
+    +'formats and nothing ever matched. The R_total and trades columns were never affected. A floor-off assertion now '
+    +'fails the run rather than shipping 100%.</div>';
   h+=tbl(RU.floor_curve_stage1,['variant','floor_q','n_candidate_settings','trades','R_total','R_per_year','trades_removed','pct_trades_removed','mean_R_kept','mean_R_removed_by_difference'],'Item 3 \u2014 the same curve over the stage 1 C1 ranking (117 candidate-settings per plan)');
   h+='<div class="note"><b>One honest limit on that last column.</b> For A, B and C the removed-versus-kept split is '
     +'exact \u2014 entries are matched one by one against the floor-off run. Over the 117-candidate ranking no per-trade '
@@ -6005,12 +6023,15 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'the same quantity, because the leverage cap is portfolio-wide \u2014 removing one entry leaves room for a later one '
     +'to be placed at larger size. Quote the A/B/C figures.</div>';
   h+=tbl(RU.floor_leaders_stage1,['variant','floor_q','rank','indicator','setting','R_total','R_per_year','n_entered','t_yearly','R_total_at_floor_off'],'Item 3 \u2014 does the floor change WHICH C1 leads, or only by how much?');
-  h+='<div class="note"><b>Is the profit concentrated in low-volatility entries? Arithmetically yes \u2014 but it is ONE '
-    +'TRADE, not a regime.</b> The bottom three ATR deciles carry about 84% of all R. Then take 15\u201316 January 2015 '
-    +'out of the same table: bucket 1 totals roughly 79.5 R, of which <b>+74.996 R is the single EURCHF short through the '
-    +'SNB peg break</b>, and the remaining 165 trades in the bottom decile are worth a few R between them \u2014 below the '
-    +'sample mean. So the fall from 89.8 R to 8.2 R between the 5% and 10% floor is not a low-volatility edge being '
-    +'switched off; it is one trade being switched off. Read the ex_SNB columns.</div>';
+  h+='<div class="note"><b>Is the profit concentrated in low-volatility entries? Yes \u2014 and unlike the first answer '
+    +'given on this page, it survives deleting the SNB trade.</b> Net, in the reported unit, at achievable size, candidate '
+    +'A on the jack plan makes <b>+72.90 R over 883 trades</b>, and the bottom three ATR deciles carry <b>100.0% of it '
+    +'from 38.4% of the trades</b> \u2014 deciles 4 to 10 net to zero between them. Take 15\u201316 January 2015 out and '
+    +'the total falls to +39.01 R, of which the bottom three deciles are again <b>100.0%</b>. What the SNB trade DOES carry '
+    +'is the bottom decile specifically: bucket 1 goes from +44.22 R to +10.33 R without it, so decile 1 on its own is '
+    +'mostly that one trade while deciles 2 and 3 (+14.42 and +14.26 R, the best R per trade in the table ex-SNB) are not. '
+    +'An earlier version of this note said the concentration WAS the one trade. That was wrong: it came from subtracting an '
+    +'uncapped raw-unit trade from a capped gross-unit bucket total. Read the ex_SNB columns.</div>';
   h+=tbl(RU.atr_buckets,['base','variant','bucket','atr_pctile_lo','atr_pctile_hi','n_trades','R_total','R_per_trade','share_of_total_R','n_SNB_trades','n_trades_ex_SNB','R_total_ex_SNB','R_per_trade_ex_SNB','share_of_total_R_ex_SNB'],'Item 3 \u2014 R per trade by ATR percentile at entry, ten buckets, with and without the SNB days');
   h+='<div class="note"><b>Condition 4, the zero-edge check, and a fault it exposed in itself.</b> Random entries taking '
     +'the same exits must lose their costs and nothing else. On the 25 Nov rerun every TWO-LEG label failed by a '

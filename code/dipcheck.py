@@ -235,8 +235,19 @@ CARRY = (('A', 'ichimoku_signals', 'sma_baseline', 'full_nnfx'),
 SNB = (pd.Timestamp('2015-01-15'), pd.Timestamp('2015-01-16'))
 
 
-def stitch(c1, base, var, rs):
-    """The walk-forward stitched trade frame, exactly as stage_report builds it."""
+def stitch(c1, base, var, rs, lowvol_q=None, peg_x=None):
+    """The walk-forward stitched trade frame, exactly as stage_report builds it.
+
+    THE FLOOR AND THE PEG GUARD ARE OFF BY DEFAULT HERE, AND THAT IS DELIBERATE.
+    This script asks how dependent a candidate is on the SNB day. Answering
+    that needs the book that CONTAINS the day. On 25 Nov the floor and the peg
+    guard became module defaults in nnfx2s/nnfxvol, so this stitch silently
+    inherited them -- and the peg guard's whole effect is deleting the 2 Jan
+    2015 EURCHF entry. The dependence table came back reading 745 entries and
+    "1.4 R on the two SNB days, 3.7% of total", which is true of a book the
+    guard had already removed the trade from and says nothing about the
+    question. Both are now passed explicitly and written into the output.
+    """
     W = pd.read_csv(os.path.join(OUT, 'stage2_picks_walk.csv'))
     acc = []
     for stp in S2.STEPS:
@@ -248,7 +259,8 @@ def stitch(c1, base, var, rs):
             continue
         w = w.iloc[0]
         T = S2.run_combo(c1, w.picked_c1_setting, base, w.picked_base_setting,
-                         var, rs, use_hourly=True)
+                         var, rs, use_hourly=True,
+                         lowvol_q=lowvol_q, peg_x=peg_x)
         if not len(T):
             continue
         T = T[pd.DatetimeIndex(T.exit_date).year == stp['trade']]
@@ -303,6 +315,7 @@ def stage_snb():
                                 if (x.pair[:3] == c or x.pair[3:6] == c))
                             for c in set(list(net))), default=0)
             row = dict(label=lab, c1=c1, base=base, ruleset=rs, variant=var,
+                       lowvol_q=0.0, peg_x=0.0, leverage_cap_on=0,
                        n_entries=n_ent, R_total=r_tot,
                        R_per_year=r_tot / len(BUILD),
                        R_on_the_two_SNB_days=r_snb,

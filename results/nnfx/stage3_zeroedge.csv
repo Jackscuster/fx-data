@@ -1,7 +1,7 @@
 base,c1,ruleset,variant,legs_no_name,legs_named_neutral,identical,abs_dR,legs_real_c2
-A,ichimoku_signals,full_nnfx,jack,4568,4568,1,0.0,2910
-A,ichimoku_signals,full_nnfx,textbook,3382,3382,1,0.0,2234
-B,schaff_trend_cycle_signals,side_xentry,jack,11150,11150,1,0.0,3286
-B,schaff_trend_cycle_signals,side_xentry,textbook,10500,10500,1,0.0,3148
-C,halftrend_signals,full_nnfx,jack,9546,9546,1,0.0,3262
-C,halftrend_signals,full_nnfx,textbook,9060,9060,1,0.0,3034
+A,ichimoku_signals,full_nnfx,jack,4030,4030,1,0.0,2572
+A,ichimoku_signals,full_nnfx,textbook,2988,2988,1,0.0,1982
+B,schaff_trend_cycle_signals,side_xentry,jack,9970,9970,1,0.0,2948
+B,schaff_trend_cycle_signals,side_xentry,textbook,9410,9410,1,0.0,2828
+C,halftrend_signals,full_nnfx,jack,8466,8466,1,0.0,2904
+C,halftrend_signals,full_nnfx,textbook,8038,8038,1,0.0,2696

@@ -324,19 +324,23 @@ def stage_app():
               'in 24 years of 28-pair data is EURCHF. Turning the guard on '
               'removes 1 to 3 trades and takes 25 to 49 R with them in every '
               'one of the six base/plan cells, because at any X of 0.20 or '
-              'above it blocks the EURCHF entry of 2 Jan 2015 -- the single '
-              'trade worth +74.996 R. Candidate A/jack with the guard on '
-              'makes 40.03 R; measured ex-SNB by a separate route it makes '
-              '40.21 R. The guard\'s whole effect is removing that trade. '
-              'Bucket 1 of the ATR table totals ~79.5 R of which +74.996 is '
-              'that one trade, so the "profit concentrated in low-volatility '
-              'entries" is one trade, not a regime.'),
+              'above it blocks the EURCHF entry of 2 Jan 2015. '
+              'THE UNIT, CORRECTED 25 Nov: that trade was quoted at +74.996 R '
+              'for two days, which is the engine\'s RAW r column. Every '
+              'candidate total here is in the restated 1.5-ATR unit, where '
+              'the same trade is +49.997 R uncapped and about +34 R at '
+              'achievable size -- see snb_trade_value and guard 40. It is '
+              'still the largest single trade in the book and still what the '
+              'guard deletes, but it is NOT larger than the whole result. '
+              'The ATR bucket table is also net of cost now; it was gross, '
+              'so its shares were taken against the wrong denominator.'),
         pegguard_curve=nd('pegguard_curve.csv', head=20),
         pegguard_effect=nd('pegguard_effect_abc.csv', head=60),
         floor_curve_abc=nd('floor_curve_abc.csv', head=80),
         floor_curve_stage1=nd('floor_curve_stage1.csv', head=40),
         floor_leaders_stage1=nd('floor_leaders_stage1.csv', head=200),
         atr_buckets=nd('atr_buckets_abc.csv', head=80),
+        snb_trade_value=nd('snb_trade_value.csv', head=20),
         zero_edge=nd('condition4_zero_edge.csv', head=600),
     )
     sec['nnfx']['audit2'] = dict(

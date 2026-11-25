@@ -747,6 +747,17 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
                              int(pr['trades_removed'])), flush=True)
     R = pd.DataFrame(rows)
     P = pd.DataFrame(pair_rows)
+    # EVERY STAGE 3 ROW DECLARES THE STANDING RULES IT WAS RUN UNDER, including
+    # the NO TRADES rows. Those rows carry no `_score` output, so before this
+    # they had leverage_cap_on = NaN and guard 39 read the whole table as
+    # computed at an unachievable size. A cell with zero entries has nothing to
+    # cap; the rule was still on, and the file has to say so.
+    for _D in (R, P):
+        if len(_D):
+            _D['lowvol_q'] = (VOL.LOWVOL_Q if VOL.LOWVOL_Q else 0.0)
+            _D['peg_x'] = (VOL.PEG_X_PLACEHOLDER
+                           if VOL.PEG_X_PLACEHOLDER else 0.0)
+            _D['leverage_cap_on'] = 1
     f1 = os.path.join(OUT, 'stage3_report.csv')
     f2 = os.path.join(OUT, 'stage3_paired.csv')
     f3 = os.path.join(OUT, 'stage3_yearly.csv')
@@ -1327,9 +1338,29 @@ def md_stage3(out=None):
               'six are positive with the guard off; **%d of the 6 go negative '
               'with it on**. That is not a coincidence and it is not the '
               'guard being badly calibrated. At any X of 0.20 or above the '
-              'guard blocks the EURCHF entry of 2 January 2015, and that '
-              'single trade is worth **+74.996 R**.\n'
+              'guard blocks the EURCHF entry of 2 January 2015.\n'
               % (_dn.min(), _dn.max(), _dr.min(), _dr.max(), _neg))
+        SNV = _f('snb_trade_value.csv')
+        if len(SNV):
+            _a = SNV[(SNV.base == 'A') & (SNV.variant == 'jack')]
+            if len(_a):
+                _a = _a.iloc[0]
+                a('\n**What that one trade is worth, in both units and at '
+                  'both sizes.** It was quoted at **+%.3f R** on 24 and 25 '
+                  'November. That figure is the engine\'s RAW r column, and '
+                  'every candidate total on this page is in the restated '
+                  '1.5-ATR unit (`R_gross = R x atr_mult / 1.5`). In the '
+                  'reported unit the same trade is **%+.3f R gross and %+.3f '
+                  'R net uncapped**, and at achievable size — the cap scales '
+                  'it to %.4f — it is **%+.3f R net**, against a candidate '
+                  'total of %+.3f R. It is still the largest single trade in '
+                  'the book by a wide margin and it is still what the peg '
+                  'guard deletes; it is not larger than the whole result, '
+                  'which is what the raw figure made it look like. See '
+                  '`snb_trade_value.csv` and guard 40.\n'
+                  % (_a.R_raw_uncapped, _a.R_gross_uncapped,
+                     _a.R_net_uncapped, _a.lev_scale, _a.R_net_capped,
+                     _a.candidate_R_total_net_capped))
     if len(SNB):
         a('`dipcheck_snb_dependence.csv`, measured before the cap and the '
           'floor, says the same thing from the other direction:\n')
@@ -1689,7 +1720,8 @@ def md_stage3(out=None):
                'stage4_picks.csv', 'pegguard_curve.csv',
                'pegguard_effect_abc.csv', 'floor_curve_abc.csv',
                'floor_curve_stage1.csv', 'floor_leaders_stage1.csv',
-               'atr_buckets_abc.csv', 'dipcheck_snb_dependence.csv',
+               'atr_buckets_abc.csv', 'snb_trade_value.csv',
+               'dipcheck_snb_dependence.csv',
                'dipcheck_snb_by_pair.csv', 'stage2_picks_report.csv'):
         p_ = os.path.join(OUT, n_)
         if not os.path.exists(p_):

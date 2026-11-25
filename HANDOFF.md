@@ -2802,6 +2802,71 @@ the unit of the denominator has to be checked against the unit of the
 numerator, and `plan=2` makes those differ by exactly 2 — a factor small
 enough to look like a plausible result.
 
+# 2ab. THE TWO R COLUMNS, AND WHY FOUR GUARDS LET IT THROUGH
+
+Found 25 Nov 2026, after the rerun, by chasing a 52 R gap between two tables
+that describe the same six-year cell. Recorded at length because it is the
+*fifth* time a Layer 2 number has been restated in the wrong unit, and because
+it is the first one that no existing guard could have caught.
+
+**The fact.** A trade frame carries TWO R columns:
+
+    R        the engine's raw r
+    R_gross  that restated to the declared 1.5-ATR notional,
+             R_gross = R x atr_mult / 1.5      (nnfx3:330)
+
+With `atr_mult = 1.0` the ratio is exactly 2/3, everywhere, on every row.
+Everything reported is in the **R_gross** unit: `_cost_R` divides by
+`RISK_UNIT_ATR`, `_yearly` sums `R_gross`, `daily_series` marks in it, and
+`R_net` is the mark-to-market figure off that series.
+
+**What was wrong.** Three reported paths summed the RAW column:
+
+| path | columns | effect |
+|---|---|---|
+| `nnfxvol.robust_cols` | `best_trade_R`, `R_ex_best_trade`, `R_crisis`, `R_ex_crisis` | 1.5x too large, and gross of cost |
+| `nnfxvol.atr_buckets` | every R column in the bucket table | 1.5x too large, and gross of cost |
+| `nnfxcurves._entry_R` | the floor curve's removed-vs-kept means | 1.5x too large, and gross of cost |
+
+For candidate A/jack this put **`R_total` 40.030 beside `R_ex_best_trade`
+92.049 in the same row of `stage3_report.csv`** — two different units on two
+different bases, side by side.
+
+**Why four guards passed.** Each path used the raw column on BOTH sides of its
+own ratio, so the 1.5 cancelled and **every SHARE was correct**:
+`best_trade_share`, `crisis_share` and `share_of_total_R` were all right, and
+they are what the standing rules are written in terms of. Nothing failed to
+reconcile, because each path reconciled *with itself*. Guard 32 (two
+conventions, one column name) checks `R_mtm`/`n_entered`/`n_touching` and not
+these; guard 33 (a leg counted as a trade) checks counts; guard 36 (the daily
+path) checks the daily series against `R_gross - cost`, which was never the
+broken path. **Guard 40 now checks the three paths by source and the shipped
+tables by arithmetic**, and `robust_cols` writes its denominator out as
+`R_realized_total` so a realized-by-exit-year total can never again be read as
+the mark-to-market `R_total` sitting next to it.
+
+**What it changed in the record.** The SNB trade of 2 Jan 2015 was reported at
+**+74.996 R** throughout 24 and 25 November, including in guards 38 and 39 and
+in everything said to Jack. That figure is in the raw unit. In the unit every
+candidate total is quoted in it is:
+
+    uncapped   +49.997 R
+    capped     +34.036 R gross, +33.891 R net   (scale 0.6807)
+
+It is still the largest single trade in the book by a wide margin, and it is
+still what the peg guard deletes. It is **not** larger than the candidate's
+whole result, which is what the raw figure made it look like.
+
+**The fault class, stated once.** Five instances now: a LEG counted as a TRADE;
+a leg's daily mark built from the FULL position size; a per-leg null restated
+with a per-entry cost; two entry-key conventions that disagreed on date format
+(25 Nov, the floor curve's removed-vs-kept split, which read 100% removed at
+every level including floor-OFF); and this one. **Every one of them was two
+units or two conventions meeting at a join, and every one of them produced a
+number that looked plausible.** Before any Layer 2 figure is quoted, the
+question to ask is not "is it right" but "what unit is it in, and what is the
+denominator".
+
 # 3. EVERY RULE DECIDED
 
 | date | rule |
