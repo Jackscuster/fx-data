@@ -1,4 +1,4 @@
-# QUEUE_ARMED — 25 November 2026, 11:22 EST
+# QUEUE_ARMED — 25 November 2026, 11:31 EST
 
 **New standing rule, Jack 25 Nov: this file is written before any turn ends and
 the chat reads it directly.** A stage that exists only as a plan counts as NOT
@@ -38,8 +38,8 @@ should be divided by about five.
 | item 2 — everything | **DONE 10:53.** `results/nnfx/QUIET_ENTRY.md`, nine csvs, app section wired, preflight **41 of 41 PASS**. **Verdict: the rule FAILS and is not adopted.** |
 | item 3 — everything | **DONE 11:06.** `PER_PAIR_BANK.md` + `PAIR_GROUPS.md`, 38,919 bank cells, six csvs, app section, preflight **41 of 41 PASS**. **Verdict: the edge is NOT pair-specific in any way a tuning-year pick can find, and pair character does not persist.** |
 | item 4 — everything | **DONE 11:20.** `MEAN_REVERSION.md`, five csvs, app section, preflight **41 of 41 PASS**. **Verdict: not proven alone (nothing reaches \|t\| = 2, every positive cell over the 10% crisis threshold), kept as a sleeve candidate because every variant is NEGATIVELY correlated with A.** |
-| item 5 — the book, `BOOK.md` | **not built, nothing blocking it now.** Items 2, 3 and 4 have all landed. The inputs it needs from 2 and 3 are now in place: `per_pair_bank.csv` holds every sleeve per pair and the daily-correlation matrices are built. **One thing item 3 changes about it:** equal-risk-per-sleeve combination is arithmetic over the bank and will work; what item 3 showed cannot be done is CHOOSING the sleeves. So BOOK.md will have to combine a DECLARED set, not a selected one, and say so. |
-| item 6 — exits, speeds, drawdown control | **not built.** Explicitly ordered last. |
+| item 5 — everything | **DONE 11:30.** `BOOK.md`, five csvs, app section, preflight **41 of 41 PASS**. **Verdict: the best book is A ON ITS OWN at 1.135%/yr at the firm's maximum legal sizing — a factor of 10.6 short of 12%, and no book at any sizing ever passes the +10% evaluation.** |
+| item 6 — exits, speeds, drawdown control | **not built. NEXT.** Explicitly ordered last by Jack, and items 1-5 have all landed. Three separate reports: exits (three together against each alone; stop 1.0/1.5/2.0 ATR; first target 1.0/1.5/2.0x the stop; trail on and off; time stop 5/10/20 bars), three speeds together, and drawdown control (steady-risk sizing, equity pause, kill switch, crisis sizing). **One thing item 5 changes about it:** the book is a factor of 10 short, so an exit sweep is not going to close the gap and should not be presented as if it might. It is worth running because a 2x on the best sleeve is still a 2x. |
 | chain 22B | **not armed.** It was behind 22A in the old queue; the new direction (per-pair banking, book-level judging) supersedes what it was for, and re-arming it before Jack has seen items 1-5 would spend ten cores on the old question. Flagged for his call, not quietly dropped. |
 | chain 31 (A4/A5 follow-ups) | **not armed**, same reason. |
 
