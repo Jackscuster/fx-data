@@ -476,6 +476,42 @@ def stage_app():
         per_pair=nd('mr_per_pair.csv', head=200),
         corr=nd('mr_corr.csv', head=20),
     )
+    sec['nnfx']['book'] = dict(
+        note=('ITEM 5, Jack 25 Nov -- THE BOOK. The target is the BOOK\'s, '
+              'not a strategy\'s: at least 12% a year inside the prop '
+              'limits. THE ANSWER: the best book is A ON ITS OWN, and at the '
+              'firm\'s maximum legal sizing it makes 1.135% a year. That is '
+              '10.9 percentage points short of 12%, a factor of 10.6. NO '
+              'BOOK AT ANY SIZING EVER PASSES THE +10% EVALUATION over six '
+              'years of unseen data. '
+              'THE GAP IS NOT A SIZING PROBLEM AND NOT A COMBINATION '
+              'PROBLEM -- it is a return problem. '
+              'EQUAL RISK PER SLEEVE is weight 1/N on each sleeve\'s daily R '
+              'series, so the risk budget is constant as sleeves are added '
+              'and a sleeve must beat the dilution it causes. THE ADDITION '
+              'ORDER IS THE BRIEF\'S OWN and is NOT searched -- a greedy '
+              'search over orderings would find the best book by '
+              'construction. The marginal contribution of EVERY sleeve to '
+              'the A+B book is reported separately. '
+              'THE DIP IS VERIFIED TWO WAYS and the worse one binds: the '
+              'true chronological drawdown and DIP95 over 400 shuffled day '
+              'orders. DIP95 is BELOW the true dip on every sleeve, so '
+              'nothing is sized off a shuffle. '
+              'The prop simulator is r2reads.prop_run unchanged; its breach '
+              'counts are LOWER BOUNDS because the input is daily. '
+              '3 of 6 candidate additions improve the A+B book\'s return per '
+              'dip -- A_quiet, MR120 and MR60 -- and every one still leaves '
+              'the book below A alone. A_quiet correlates 0.856 with A so it '
+              'is not a second sleeve; MR120 and MR60 at +0.002 and -0.022 '
+              'ARE genuine diversification and still not enough. '
+              'Payout on the best book: $843/yr against the $549 fee, $294 '
+              'net. On the six-sleeve book $144, less than the fee.'),
+        sleeves=nd('book_sleeves.csv', head=20),
+        incremental=nd('book_incremental.csv', head=20),
+        marginal=nd('book_marginal.csv', head=20),
+        prop=nd('book_prop.csv', head=20),
+        corr=nd('book_corr.csv', head=20),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '

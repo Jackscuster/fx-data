@@ -6196,6 +6196,43 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'two labels. <b>Verdict: not proven alone, kept as a sleeve candidate for the book test.</b></div>';
   h+=tbl(MR.per_pair,['variant','pair','direction','n_trades','R_total','R_per_trade','win_rate','mean_bars','range_prone'],'Per pair, per direction \u2014 the declared variants, conditional, no gate');
  }
+ /* ITEM 5, Jack 25 Nov: THE BOOK. The target was always the book's, not one
+    strategy's. */
+ const BK2=R.book||{};
+ if(BK2.note){
+  h+='<h3>The book \u2014 how far 12% a year actually is</h3>';
+  h+='<div class="note">'+BK2.note+'</div>';
+  h+=tbl(BK2.sleeves,['sleeve','legs','days','R_total','R_per_year','dip_true','dip95','dip_binding','R_per_dip','worst_day_R','years_positive','years','t_yearly','team1_pct_per_year','firm_pct_per_year'],'The sleeves on their own, unseen years 2010\u20132015');
+  h+='<div class="note"><b>DIP95 is BELOW the true chronological dip on every sleeve.</b> That is the point of measuring '
+    +'both: the real order of days is worse than a random order of the same days, so the true drawdown binds everywhere '
+    +'and nothing here is sized off a shuffle. Sizing on DIP95 alone would knowingly under-size the risk \u2014 the '
+    +'graft book once drew 5.35% where its DIP95 was 3.60%.</div>';
+  h+=tbl(BK2.incremental,['step','added','members','R_per_year','dip_binding','R_per_dip','team1_pct_per_year','firm_pct_per_year','dR_total','t_block_boot_diff','years_improved','corr_new_sleeve_with_book'],'The declared addition sequence \u2014 the brief\u2019s own order, not searched');
+  h+='<div class="note"><b>Every addition in the declared order makes the book worse than A on its own</b>, and not one '
+    +'step\u2019s paired t statistic comes close to 2 in either direction. At equal risk per sleeve a weaker sleeve '
+    +'dilutes, and the Team 1 sizing follows return per dip exactly \u2014 so the ranking of books IS the ranking of '
+    +'their risk-adjusted return, not an artefact of the 1/N weighting.</div>';
+  h+=tbl(BK2.marginal,['added','R_per_year','dip_binding','R_per_dip','team1_pct_per_year','dR_total','t_block_boot_diff','years_improved','corr_new_sleeve_with_book','improves'],'Every sleeve\u2019s marginal contribution to the A+B book');
+  h+='<div class="note"><b>Three of six additions improve A+B on return per dip, and every one still leaves the book '
+    +'below A alone.</b> Separate the two findings: <code>A_quiet</code> improves A+B but correlates <b>0.856</b> with A '
+    +'\u2014 it is not a second sleeve, it is A with a quarter of its trades removed, so what it really shows is that '
+    +'A+B is worse than A and anything diluting B helps. <code>MR120</code> and <code>MR60</code> improve it at '
+    +'correlations of <b>+0.002</b> and <b>\u22120.022</b> \u2014 those ARE genuine diversification, exactly as item 4 '
+    +'predicted, and they are still not enough to beat one sleeve.</div>';
+  h+=tbl(BK2.corr,['sleeve','A','B','A_quiet','B_quiet','group_assign','MR60','MR20','MR120'],'The sleeve correlation matrix');
+  h+='<div class="note"><b>The diversification the book plan needs is genuinely there and it is not the binding '
+    +'constraint.</b> All three mean-reversion sleeves are negatively correlated with A, and MR20 is negatively '
+    +'correlated with every trend sleeve in the table.</div>';
+  h+=tbl(BK2.prop,['members','team1_pct_per_year','firm_pct_per_year','eval_days_to_pass','eval_days_to_pass_at_firm_limits','funded_breached','funded_payout_per_year','funded_worst_dip_pct','internal_breached','distance_from_target_pct_at_firm_limits','times_short_at_firm_limits']," Through the prop simulator \u2014 Team 1 budget and the firm\u2019s own limits");
+  h+='<div class="note"><b>No book passes the +10% evaluation, ever, at either sizing.</b> The best makes about 6.8% in '
+    +'six years where the target is +10% with no time limit. <b>No book breaches anything either</b> \u2014 which is not '
+    +'a safety result but the same fact from the other side: a book sized so its worst historical drawdown fits in 3.6% '
+    +'or 6% is a book that barely moves. The payout on the best book is <b>$843 a year against the $549 fee</b>, $294 '
+    +'net; on the six-sleeve book it is $144, less than the fee. <b>Where the remaining distance lives:</b> item 3 found '
+    +'the cross-sectional dispersion is enormous \u2014 a per-pair assignment with hindsight is worth +520 R over the '
+    +'same six years against the \u221272 R any tested rule achieved \u2014 so the room exists in the data and no '
+    +'tested selection rule reaches any of it.</div>';
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){

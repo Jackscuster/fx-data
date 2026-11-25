@@ -402,11 +402,302 @@ def prop(ser, order=ORDER, verbose=True):
     return D
 
 
+
+# ====================== THE DOCUMENT ====================================
+def md_book(out=None):
+    """BOOK.md -- item 5, from the files."""
+    import hashlib
+    L_ = []
+    a = L_.append
+    def rd(n, ix=None):
+        f = os.path.join(OUT, n)
+        if not (os.path.exists(f) and os.path.getsize(f) > 2):
+            return pd.DataFrame()
+        return pd.read_csv(f, index_col=ix) if ix is not None \
+            else pd.read_csv(f)
+    SL, IN, MG = rd('book_sleeves.csv'), rd('book_incremental.csv'), \
+        rd('book_marginal.csv')
+    PP, CR = rd('book_prop.csv'), rd('book_corr.csv', 0)
+    a('# THE BOOK — item 5, Jack 25 November 2026')
+    a('')
+    best = (PP.loc[PP.firm_pct_per_year.idxmax()] if len(PP)
+            and PP.firm_pct_per_year.notna().any() else None)
+    if best is not None:
+        a('## The answer first')
+        a('')
+        a('**The best book is `%s`. At the firm\'s own maximum legal sizing '
+          'it makes %.3f%% a year. The target is 12%%. It is %.1f percentage '
+          'points short — a factor of %.1f.**'
+          % (best.members, best.firm_pct_per_year,
+             best.distance_from_target_pct_at_firm_limits,
+             best.times_short_at_firm_limits))
+        a('')
+        a('**And no book at any sizing ever passes the +10%% evaluation**, '
+          'over six years of unseen data. Not one of the %d prefixes, not at '
+          'the Team 1 budget and not at the firm\'s limits.' % len(PP))
+        a('')
+        a('**The gap is not a sizing problem and it is not a combination '
+          'problem. It is a return problem.** Combination and sizing are '
+          'arithmetic and both have been done correctly here; reaching 12% '
+          'needs roughly ten times more return per unit of risk than the best '
+          'thing this project has built.')
+        a('')
+    a('## How the book is built, and the two choices that matter')
+    a('')
+    a('**EQUAL RISK PER SLEEVE means weight 1/N on each sleeve\'s daily R '
+      'series**, so the book\'s risk budget is held constant as sleeves are '
+      'added and a sleeve has to EARN its place by being better than the '
+      'dilution it causes. The alternative — every sleeve at full size, book '
+      '= sum — makes every addition look additive because it is adding risk '
+      'as well as return.')
+    a('')
+    a('**THE ADDITION ORDER IS THE BRIEF\'S OWN AND IS NOT SEARCHED**: "A, B, '
+      'quiet-entry versions, group-assigned strategies, mean reversion", in '
+      'that order. A greedy search over orderings would find the best book by '
+      'construction, and the number it produced would be a maximum over '
+      'orderings — the exact fault item 2 spent a document demonstrating. '
+      'The marginal contribution of **every** sleeve to the A+B book is '
+      'reported separately so the ordering is not the only view.')
+    a('')
+    a('**THE DIP IS VERIFIED TWO WAYS AND THE WORSE ONE BINDS**, exactly as '
+      '`l2team` does: the TRUE chronological drawdown of the daily series, '
+      'and DIP95 over 400 shuffled day orders. Losses cluster in time, so a '
+      'shuffle-based dip understates the real one and sizing on it would '
+      'knowingly under-size the risk.')
+    a('')
+    a('**The prop simulator is `r2reads.prop_run`, unchanged** — the '
+      'FundedTradingPlus profile Jack confirmed with the firm: 6% trailing '
+      'floor that stops trailing permanently once it reaches the starting '
+      'balance, 4% daily from the previous close with floating losses '
+      'counting, 10% evaluation target, 80% payouts every 7 days, $549 fee, '
+      '1:30 leverage. **Its breach counts are LOWER BOUNDS** because the '
+      'input is a daily series: an intraday excursion that breached and '
+      'recovered before the close is invisible.')
+    a('')
+    if len(SL):
+        a('## The sleeves on their own, unseen years 2010–2015')
+        a('')
+        a('| sleeve | legs | days | R total | R/yr | true dip | DIP95 | '
+          '**binding dip** | R per dip | worst day | years + | t yearly |')
+        a('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|')
+        for _, r in SL.sort_values('R_per_dip', ascending=False).iterrows():
+            a('| `%s` | %d | %d | %+.3f | %+.3f | %.3f | %.3f | **%.3f** | '
+              '%s | %.3f | %d of %d | %s |'
+              % (r.sleeve, int(r.legs), int(r.days), r.R_total, r.R_per_year,
+                 r.dip_true, r.dip95, r.dip_binding, _f(r.R_per_dip),
+                 r.worst_day_R, int(r.years_positive), int(r.years),
+                 _f(r.t_yearly)))
+        a('')
+        a('**DIP95 is BELOW the true dip on every sleeve**, which is the '
+          'point of measuring both: the real order of days is worse than a '
+          'random order of the same days, so the true drawdown binds '
+          'everywhere and nothing is being sized off a shuffle.')
+        a('')
+    if len(IN):
+        a('## The declared addition sequence')
+        a('')
+        a('| step | added | members | R/yr | binding dip | **R per dip** | '
+          '**Team 1 %/yr** | dR total | t of the difference | years improved '
+          '| corr of the new sleeve with the book |')
+        a('|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|')
+        for _, r in IN.iterrows():
+            a('| %d | `%s` | %s | %+.3f | %.3f | **%s** | **%+.3f%%** | %s | '
+              '%s | %s | %s |'
+              % (int(r.step), r.added, r.members, r.R_per_year,
+                 r.dip_binding, _f(r.R_per_dip), r.team1_pct_per_year,
+                 _f(r.get('dR_total')), _f(r.get('t_block_boot_diff')),
+                 ('%d' % int(r.years_improved)
+                  if np.isfinite(r.get('years_improved', np.nan)) else '—'),
+                 _f(r.get('corr_new_sleeve_with_book'))))
+        a('')
+        a('**Every addition in the declared order makes the book worse than '
+          'A on its own.** A alone is R per dip %s and %.3f%% a year at the '
+          'Team 1 budget; the full six-sleeve book is %s and %.3f%%. Not one '
+          'step\'s paired t statistic comes close to 2, in either direction.'
+          % (_f(IN.iloc[0].R_per_dip), IN.iloc[0].team1_pct_per_year,
+             _f(IN.iloc[-1].R_per_dip), IN.iloc[-1].team1_pct_per_year))
+        a('')
+    if len(MG):
+        a('## Every sleeve\'s marginal contribution to the A+B book')
+        a('')
+        a('Judged on **return per dip**, because a book is judged on what it '
+          'earns for the risk it has to be allowed to take, and because total '
+          'R alone would reward whichever combination holds the most risk.')
+        a('')
+        base = MG[MG.added == '(none)']
+        a('| added to A+B | R/yr | binding dip | **R per dip** | '
+          'Team 1 %/yr | dR total | t of the difference | '
+          'corr with the A+B book | better? |')
+        a('|---|---:|---:|---:|---:|---:|---:|---:|---|')
+        for _, r in MG.sort_values('R_per_dip', ascending=False).iterrows():
+            b = '**' if r.added == '(none)' else ''
+            a('| %s`%s`%s | %+.3f | %.3f | **%s** | %+.3f%% | %s | %s | %s | '
+              '%s |'
+              % (b, r.added, b, r.R_per_year, r.dip_binding,
+                 _f(r.R_per_dip), r.team1_pct_per_year, _f(r.get('dR_total')),
+                 _f(r.get('t_block_boot_diff')),
+                 _f(r.get('corr_new_sleeve_with_book')),
+                 ('—' if r.added == '(none)'
+                  else ('**BETTER**' if int(r.improves) else 'worse'))))
+        a('')
+        imp = MG[(MG.added != '(none)') & (MG.improves == 1)]
+        if len(imp) and len(base):
+            a('**%d of the %d candidate additions improve the A+B book\'s '
+              'return per dip**: %s. And every one of them still leaves the '
+              'book below **A on its own** (%s).'
+              % (len(imp), len(MG) - 1,
+                 '; '.join('`%s` %s (corr %+.3f)'
+                           % (r.added, _f(r.R_per_dip),
+                              r.corr_new_sleeve_with_book)
+                           for _, r in imp.sort_values(
+                               'R_per_dip', ascending=False).iterrows()),
+                 _f(IN.iloc[0].R_per_dip) if len(IN) else '—'))
+            a('')
+            a('**The two findings in that table are worth separating.** '
+              '`A_quiet` improves the A+B book but correlates **%.3f** with '
+              'A — it is not a second sleeve, it is A with a quarter of the '
+              'trades removed, so what it is really showing is that A+B is '
+              'worse than A and anything that dilutes B helps. `MR120` and '
+              '`MR60` improve it at a correlation of **%+.3f** and **%+.3f** '
+              '— those ARE genuine diversification, exactly as item 4 '
+              'predicted, and they are still not enough to beat one sleeve.'
+              % (float(CR.loc['A', 'A_quiet'])
+                 if ('A' in CR.index and 'A_quiet' in CR.columns)
+                 else float('nan'),
+                 float(MG[MG.added == 'MR120'].corr_new_sleeve_with_book
+                       .iloc[0]) if len(MG[MG.added == 'MR120']) else
+                 float('nan'),
+                 float(MG[MG.added == 'MR60'].corr_new_sleeve_with_book
+                       .iloc[0]) if len(MG[MG.added == 'MR60']) else
+                 float('nan')))
+            a('')
+    if len(CR):
+        a('## The sleeve correlation matrix')
+        a('')
+        cols = list(CR.columns)
+        a('| | %s |' % ' | '.join('`%s`' % c for c in cols))
+        a('|---|%s|' % ('---:|' * len(cols)))
+        for i in CR.index:
+            a('| `%s` | %s |' % (i, ' | '.join(
+                ('**1.000**' if i == c else '%+.3f' % CR.loc[i, c])
+                for c in cols)))
+        a('')
+        a('**The diversification the book plan needs is genuinely there.** '
+          'All three mean-reversion sleeves are negatively correlated with A '
+          'and `MR20` is negatively correlated with every trend sleeve in the '
+          'table. **It is not the binding constraint.** `A_quiet` at %.3f '
+          'with A is the one thing in the matrix that is not a sleeve at all.'
+          % (float(CR.loc['A', 'A_quiet'])
+             if ('A' in CR.index and 'A_quiet' in CR.columns)
+             else float('nan')))
+        a('')
+    if len(PP):
+        a('## Through the prop simulator, at the Team 1 budget and at the '
+          'firm\'s limits')
+        a('')
+        a('| book | Team 1 %/yr | **firm limits %/yr** | days to pass +10% | '
+          'at firm limits | funded breaches | payout $/yr | '
+          'internal (3.6/5.4) breaches | **short of 12% by** | '
+          '**times short** |')
+        a('|---|---:|---:|---|---|---|---:|---|---:|---:|')
+        for _, r in PP.iterrows():
+            a('| %s | %+.3f%% | **%+.3f%%** | %s | %s | %s | $%.0f | %s | '
+              '%.3f pp | **%.1fx** |'
+              % (r.members, r.team1_pct_per_year, r.firm_pct_per_year,
+                 ('%d' % r.eval_days_to_pass
+                  if np.isfinite(r.eval_days_to_pass) else '**NEVER**'),
+                 ('%d' % r.eval_days_to_pass_at_firm_limits
+                  if np.isfinite(r.eval_days_to_pass_at_firm_limits)
+                  else '**NEVER**'),
+                 (str(r.funded_breached)
+                  if isinstance(r.funded_breached, str)
+                  and r.funded_breached else 'none'),
+                 r.funded_payout_per_year,
+                 (str(r.internal_breached)
+                  if isinstance(r.internal_breached, str)
+                  and r.internal_breached else 'none'),
+                 r.distance_from_target_pct_at_firm_limits,
+                 r.times_short_at_firm_limits))
+        a('')
+        a('**Three things to read off it.**')
+        a('')
+        a('1. **No book passes the evaluation, ever, at either sizing.** The '
+          'best makes about %.1f%% in six years where the target is +10%% '
+          'with no time limit. The evaluation is not the binding problem — '
+          'the return is.'
+          % (6.0 * float(PP.firm_pct_per_year.max())))
+        a('2. **No book breaches anything, at either the firm\'s limits or '
+          'the tighter internal ones.** That is not a safety result, it is '
+          'the same fact from the other side: a book sized so its worst '
+          'historical drawdown fits in 3.6% or 6% is a book that barely '
+          'moves.')
+        a('3. **The payout on the best book is $%.0f a year against a $549 '
+          'fee** — $%.0f a year net. On the full six-sleeve book it is $%.0f, '
+          'which is less than the fee.'
+          % (float(PP.funded_payout_per_year.max()),
+             float(PP.funded_payout_per_year.max()) - 549.0,
+             float(PP.funded_payout_per_year.iloc[-1])))
+        a('')
+    a('## What this settles')
+    a('')
+    a('1. **Settled: the book machinery works and is not the problem.** '
+      'Equal-risk combination, the two-way dip verification, the Team 1 and '
+      'firm-limit sizing and the prop simulator all run end to end on every '
+      'sleeve this project has produced, and every number above comes from '
+      'files.')
+    a('2. **Settled: the diversification is available and it is not enough.** '
+      'Mean reversion is negatively correlated with A, improves the A+B '
+      'book\'s return per dip, and the resulting book is still worse than A '
+      'on its own.')
+    a('3. **Settled: the best book is ONE SLEEVE**, and every addition in the '
+      'brief\'s own order makes it worse at equal risk.')
+    a('4. **Settled: the distance to 12% is a factor of about ten**, at the '
+      'largest size the firm\'s rules permit, on six years of unseen data.')
+    a('5. **NOT settled, and this is the live question: where another order of '
+      'magnitude of return per unit of risk would come from.** Nothing in '
+      'items 1 to 5 found it. Item 3 did find that the cross-sectional '
+      'dispersion is enormous — a per-pair assignment with hindsight is worth '
+      '+520 R over the same six years against the −72 R any tested rule '
+      'achieved — so the room exists in the data. No tested selection rule '
+      'reaches any of it, and that, rather than combination or sizing, is '
+      'where the remaining distance lives.')
+    a('')
+    a('## Provenance')
+    a('')
+    for n_ in ('book_sleeves.csv', 'book_incremental.csv',
+               'book_marginal.csv', 'book_prop.csv', 'book_corr.csv'):
+        p_ = os.path.join(OUT, n_)
+        if not os.path.exists(p_):
+            a('- `%s` — **MISSING**' % os.path.join('results', 'nnfx', n_))
+            continue
+        a('- `%s` — %s rows, md5 `%s`'
+          % (os.path.relpath(p_, _R),
+             '{:,}'.format(len(S2._safe_csv(p_))),
+             hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+    out = out or os.path.join(OUT, 'BOOK.md')
+    open(out, 'w').write('\n'.join(L_) + '\n')
+    print('  BOOK.md: %d lines -> %s'
+          % (len('\n'.join(L_).splitlines()), os.path.relpath(out, _R)),
+          flush=True)
+    return out
+
+
+def _f(v, fmt='%+.3f'):
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return '—'
+    return (fmt % f) if np.isfinite(f) else '—'
+
+
 def main():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument('--stage', default='all')
     g = ap.parse_args()
+    if g.stage == 'md':
+        md_book()
+        return
     T = sleeves()
     ser = {k: _ds(v) for k, v in T.items()}
     ser = {k: v for k, v in ser.items() if v is not None}
@@ -418,6 +709,7 @@ def main():
     incremental(ser)
     marginal(ser)
     prop(ser)
+    md_book()
     print('  nnfxbook done', flush=True)
 
 
