@@ -261,6 +261,53 @@ def stage_app():
         neutral=nd('stage2_picks_neutralcheck.csv', head=40),
         grid=nd('stage2_picks_grid.csv', head=200),
     )
+    # ---- STAGE 3 (a second confirmation) and the STAGE 4 volume preview.
+    sec['nnfx']['s3'] = dict(
+        note=('Stage 3: a second confirmation added to the three Jack carried '
+              'forward (A ichimoku+sma full_nnfx, B schaff+sma side_xentry, '
+              'C halftrend+sma full_nnfx). Five C2 candidates declared before '
+              'anything ran: the other two C1 picks, kalman_filter, dspo, and '
+              'CURRENCY AGREEMENT swept N 3-6. READ THE DIP CHECK FIRST: '
+              '15 January 2015, one short EURCHF worth +74.996 R, is 56% to '
+              '137% of each of these candidates over 2010-2015, and four of '
+              'the six base/plan combinations are NEGATIVE without that single '
+              'day. Only the C2 setting is tuned here; the C1 and baseline '
+              'settings are stage 2\'s, unchanged, so the paired test changes '
+              'one thing.'),
+        zeroedge=nd('stage3_zeroedge.csv', head=40),
+        report=nd('stage3_report.csv',
+                  cols=['base', 'variant', 'c2', 'picked_c2_opts', 'n_entered',
+                        'trades_per_year', 'R_gross_per_trade',
+                        'R_net_per_trade', 'R_net_per_year', 'years_positive',
+                        'worst_year', 'worst_dip_R', 'R_per_year_per_dip',
+                        't_yearly', 't_block_boot', 'null_p', 'clears_alone'],
+                  head=160),
+        paired=nd('stage3_paired.csv',
+                  cols=['base', 'variant', 'c2', 'picked_c2_opts', 'dR_total',
+                        'dR_per_year', 'years_diff_positive', 'years',
+                        't_block_boot_diff', 'boot_sd_diff', 'trades_without',
+                        'trades_with', 'trades_removed', 'pct_trades_removed',
+                        'days'], head=160),
+        walk=nd('stage3_walk.csv', head=400),
+        ccy_rate=nd('stage3_ccy_agreement_rate.csv', head=40),
+        stage4=nd('stage4_paired.csv', head=80),
+        stage4_picks=nd('stage4_picks.csv', head=200),
+    )
+    sec['nnfx']['dipcheck'] = dict(
+        note=('CHECK 1, Jack 24 Nov. worst_dip_R was wrong wherever plan=2 is '
+              'used: nnfx1.daily_series built each leg\'s mark from the FULL '
+              'position size while a leg realises half. It cancelled at the '
+              'exit bar, so every TOTAL reconciled to the last decimal and '
+              'guard 33 passed. On ichimoku+sma full_nnfx (jack) the 15 Jan '
+              '2015 SNB day showed +101.62 R then -50.18 R where the truth is '
+              '+51.29 then -0.34, inventing the peak the 54.93 R dip was '
+              'measured down from. The fixed dip is 22.83 R and the next '
+              'largest day in six years is 5.92 R. Guard 36 pins it.'),
+        snb_dependence=nd('dipcheck_snb_dependence.csv', head=20),
+        snb_by_pair=nd('dipcheck_snb_by_pair.csv', head=30),
+        dips_before=nd('dipcheck_dips_stitched.csv', head=10),
+        dips_after=nd('dipcheck_dips_corrected.csv', head=10),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '

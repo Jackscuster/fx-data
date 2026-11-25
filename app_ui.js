@@ -5906,6 +5906,77 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'trailing the answer depends entirely on that number \u2014 so it is SWEPT, not assumed.</div>';
   h+=tbl(T2.prop,['c1','base','ruleset','risk_pct_per_R','phase','days','breached','return_pct_per_year','worst_dip_pct','paid_out_per_year'],'Prop simulator, risk per R swept');
  }
+ /* CHECK 1 -- the dip, and the engine fault it found. */
+ const DK=R.dipcheck||{};
+ if(DK.note){
+  h+='<h3>Check 1 \u2014 the worst dip, and the engine fault it found</h3>';
+  h+='<div class="note">'+DK.note+'</div>';
+  h+='<div class="note"><b>Jack was right about the days and the bases.</b> The dip WAS computed on this strategy\u2019s own '
+    +'2010-2015, and the yearly table and the daily curve agree to <b>exactly 0.0</b> in all six years \u2014 so '
+    +'<code>worst_year</code> and <code>worst_dip_R</code> were never on different bases. The CURVE was wrong. '
+    +'<code>trade_frame</code> writes <code>units</code> as the FULL position size on every leg of a <code>plan=2</code> '
+    +'entry while each leg realises half (a full stop-out is \u22120.5 + \u22120.5), and <code>daily_series</code> built '
+    +'each leg\u2019s mark from full <code>units</code>. Verified on 642 stop exits, where settlement is a pure price move: '
+    +'<code>dir \u00d7 (units/n_legs) \u00d7 (exit_px \u2212 entry_px) / RISK</code> reproduces each leg\u2019s R to '
+    +'<b>exactly 0.000000</b>, and full <code>units</code> is out by exactly 2\u00d7.</div>';
+  h+='<div class="note"><b>It is not a concentration event.</b> At the peak only 4 positions were open and net CHF exposure '
+    +'was +1 leg; at the trough, 2. It is ONE TRADE: EURCHF short, entered 2015-01-02 at 1.20207, closed 2015-01-16 at '
+    +'0.977081, <b>+74.996 R</b> \u2014 against a six-year total of 91.64 R for candidate A on the jack plan.</div>';
+  h+=tbl(DK.snb_by_pair,['pair','R_on_day'],'The +101.6 R of 15 January 2015, by pair, as the OLD code had it');
+  h+='<div class="note"><b>And this matters more than the dip.</b> That single day is 56% to 137% of each carried-forward '
+    +'candidate\u2019s entire six-year result, and <b>four of the six base/plan combinations are NEGATIVE over 2010-2015 '
+    +'without it</b>. Stage 3 asks what a C2 adds to these bases, which is a different question \u2014 but this is the first '
+    +'thing to decide about A, B and C.</div>';
+  h+=tbl(DK.snb_dependence,['label','variant','ruleset','n_entries','R_total','R_per_year','R_on_the_two_SNB_days','share_of_total_pct','R_total_ex_SNB','R_per_year_ex_SNB','worst_dip_R','worst_dip_R_ex_SNB','positions_open_on_SNB_day','net_CHF_legs_on_SNB_day'],'How much of each carried-forward candidate is the SNB day');
+  h+=tbl(DK.dips_before,['rank','peak_date','trough_date','recover_date','depth_R','days_peak_to_trough','days_to_recover'],'The five deepest dips BEFORE the fix');
+  h+=tbl(DK.dips_after,['rank','peak_date','trough_date','recover_date','depth_R','days_peak_to_trough','days_to_recover'],'The five deepest dips AFTER the fix');
+ }
+ /* STAGE 3 -- a second confirmation, and the stage 4 volume preview. */
+ const T3=R.s3||{};
+ if(T3.note){
+  h+='<h3>Stage 3 \u2014 a second confirmation added to the carried-forward three</h3>';
+  h+='<div class="note">'+T3.note+'</div>';
+  if(T3.zeroedge&&T3.zeroedge.length){
+   const bad=T3.zeroedge.filter(r=>!r.identical).length;
+   h+='<div class="note"><b>The zero-edge check, and why stage 3 needs its own.</b> Stage 2 neutralised the C2 slot by '
+     +'overwriting <code>c2_lc</code>/<code>c2_sc</code> after <code>prepare</code>. Stage 3 instead hands '
+     +'<code>prepare</code> a real C2 name. If the slot is genuinely the only difference, naming a C2 and then overwriting '
+     +'its arrays all-True must give THE SAME TRADES as never naming one \u2014 otherwise <code>prepare</code> does '
+     +'something else with the name and every paired number here would be measuring that instead. '
+     +T3.zeroedge.length+' cells, '+(bad?('<b>'+bad+' FAILING</b>'):'<b>all identical at exactly zero</b>')+'.</div>';}
+  h+=tbl(T3.zeroedge,['base','c1','ruleset','variant','legs_no_name','legs_named_neutral','identical','abs_dR','legs_real_c2'],'Stage 3 zero-edge check');
+  h+='<div class="note"><b>The currency-agreement rule.</b> It is not an indicator, so it occupies the C2 slot as a RULE: '
+    +'take the trade only if the base currency is rising against at least N of its other six partners AND the quote currency '
+    +'is falling against at least N of its other six, measured by THE SAME C1 on those pairs. The counts are taken on a '
+    +'UNION calendar across all 28 pairs, so a partner with no bar that day counts as NO OPINION rather than as agreement, '
+    +'and they are lagged ONE BAR explicitly rather than relying on the engine\u2019s own convention.</div>';
+  h+='<div class="note"><b>Read the agreement rate before reading N = 5 or 6 as a result.</b> At the top of the sweep the '
+    +'rule almost never fires, so a candidate that picks N = 6 is trading a handful of days and its figures are not '
+    +'comparable to the rest. The 30-trade tuning minimum is what stops it being picked by accident.</div>';
+  h+=tbl(T3.ccy_rate,['c1','N','pct_bars_agree_long','pct_bars_agree_short'],'How often the currency rule agrees at all, before any trading');
+  h+='<h4>3a \u2014 the paired test: what each C2 adds</h4>';
+  h+='<div class="note">The two daily series are aligned on the UNION of their trading days, not the intersection: a day on '
+    +'which only one of the two was in the market is a real difference, and dropping it would hide exactly what the C2 does. '
+    +'Stage 2 did the same. The t is a block bootstrap on the difference.</div>';
+  h+=tbl(T3.paired,['base','variant','c2','picked_c2_opts','dR_total','dR_per_year','years_diff_positive','years','t_block_boot_diff','boot_sd_diff','trades_without','trades_with','trades_removed','pct_trades_removed','days'],'3a \u2014 \u0394 against the same base with no C2');
+  h+='<h4>3b \u2014 the full table, with and without each C2</h4>';
+  h+=tbl(T3.report,['base','variant','c2','picked_c2_opts','n_entered','trades_per_year','R_gross_per_trade','R_net_per_trade','R_net_per_year','years_positive','worst_year','worst_dip_R','R_per_year_per_dip','t_yearly','t_block_boot','null_p','clears_alone'],'3b \u2014 every column stage 2 reported, on the unseen years');
+  h+='<h4>3c \u2014 which C2 setting each step picked</h4>';
+  h+='<div class="note">The C2 setting is picked on each step\u2019s own four tuning years, on tuning-year net R with at '
+    +'least 30 trades. The C1 and baseline settings are NOT re-picked: they are stage 2\u2019s, chosen on these same '
+    +'windows, so the only thing tuned in stage 3 is the C2.</div>';
+  h+=tbl(T3.walk,['base','variant','c2_label','trade_year','picked_c1_setting','picked_base_setting','picked_c2_opt','n_options_eligible','n_options_offered','tune_R','tune_n','trade_R_net','trade_n'],'3c \u2014 the walk-forward C2 pick, per step');
+  h+='<h4>Stage 4 preview \u2014 the volume slot</h4>';
+  h+='<div class="note">Same paired design, on A, B and C WITHOUT any C2. Two candidates only: <b>(a) real tick volume</b> '
+    +'from <code>data/oanda_h1</code> \u2014 the PREVIOUS day\u2019s tally above its own trailing median, lookback swept '
+    +'and picked walk-forward. The previous day, not the current one, because the engine fills at the close and the one-bar '
+    +'rule holds everywhere. Verified informative from 2005-01-03; <code>v</code> is a tick COUNT, not traded size. '
+    +'<b>(b) Layer 1 activity</b> medium or strong \u2014 <code>layer1_states.csv</code> says in its own header that its '
+    +'rows are already lagged one bar, so it is NOT lagged again; that would charge the rule two bars. A bar with no tally '
+    +'and a bar with no Layer 1 row are both FALSE: no opinion means no trade, never a free pass.</div>';
+  h+=tbl(T3.stage4,['base','variant','vol_rule','picked_opts','dR_total','dR_per_year','years_diff_positive','years','t_block_boot_diff','trades_without','trades_with','trades_removed','pct_trades_removed','days'],'Stage 4 preview \u2014 the volume slot, paired');
+  h+=tbl(T3.stage4_picks,['base','variant','vol_rule','trade_year','picked_lookback'],'Stage 4 preview \u2014 the walk-forward lookback pick');
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){
