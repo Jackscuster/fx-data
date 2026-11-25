@@ -421,6 +421,17 @@ def c28():
     return 'PASS', '%d banks match their manifests (file list and size)' % seen
 
 
+def _named_note(named_ok):
+    """The named-exception line that guard 34 always prints, so the set of
+    exceptions cannot grow or drift unnoticed."""
+    if not named_ok:
+        return '; 0 named exceptions present'
+    return ('; %d named exception(s): %s'
+            % (len(named_ok),
+               ', '.join('%s at %.0f MB' % (r, n / 1048576)
+                         for n, r in sorted(named_ok, reverse=True))))
+
+
 def c34():
     """NO NEW FILE OVER 50 MB MAY BE COMMITTED. Jack, 24 Nov, step 5.
 
@@ -446,19 +457,37 @@ def c34():
     accepted", which is exactly the thing that can break a push. The
     grandfathered count is printed every run so the set cannot grow unnoticed.
     """
+    # ---- NAMED EXCEPTIONS. Jack, 24 Nov: "signals.json at 92 MB is under
+    # GitHub's 100 MB limit: allow it as a named exception to the 50 MB guard."
+    # It is a Layer 1 artifact the app fetches, so it cannot become a manifest
+    # entry without breaking the app. The exception is NAMED, not a size band:
+    # each entry carries its own ceiling, and a file that grows past its
+    # ceiling fails this guard like any other. 100 MB is GitHub's hard
+    # pre-receive limit, so the ceiling is 95 MB -- enough headroom to notice
+    # before a push is refused rather than after.
+    NAMED = {'results/signals.json': 95 * 1024 * 1024}
     LIM = 50 * 1024 * 1024
     out = subprocess.run(['git', 'ls-files', '-z'], cwd=_R,
                          capture_output=True, text=True).stdout
-    big = []
+    big, named_ok = [], []
     for rel in [x for x in out.split('\0') if x]:
         try:
             n = os.path.getsize(os.path.join(_R, rel))
         except OSError:
             continue
+        if rel in NAMED:
+            assert n <= NAMED[rel], (
+                '%s is a NAMED exception to the 50 MB limit with a ceiling of '
+                '%.0f MB and it is now %.0f MB -- GitHub refuses anything over '
+                '100 MB at the pre-receive hook, so this must shrink or move '
+                'behind a manifest before the next push'
+                % (rel, NAMED[rel] / 1048576, n / 1048576))
+            named_ok.append((n, rel))
+            continue
         if n > LIM:
             big.append((n, rel))
     if not big:
-        return 'no tracked file exceeds 50 MB'
+        return ('no tracked file exceeds 50 MB%s' % _named_note(named_ok))
     base = subprocess.run(['git', 'ls-remote', 'origin', 'refs/heads/main'],
                           cwd=_R, capture_output=True, text=True).stdout.split()
     base = base[0] if base else ''
@@ -476,8 +505,9 @@ def c34():
         % (len(newbig), '; '.join('%s (%.0f MB)' % (r, n / 1048576)
                                   for n, r in newbig[:5])))
     return ('no NEW file over 50 MB; %d grandfathered and already on the '
-            'remote, largest %s at %.0f MB'
-            % (len(grand), grand[0][1], grand[0][0] / 1048576))
+            'remote, largest %s at %.0f MB%s'
+            % (len(grand), grand[0][1], grand[0][0] / 1048576,
+               _named_note(named_ok)))
 
 
 def c33():
@@ -676,6 +706,80 @@ def c29():
         glob.glob(os.path.join(ROOTLIB, '*.py')))
 
 
+def c36():
+    """THE DAILY PATH BUILT FROM FULL `units` ON A HALF-WEIGHT LEG.
+
+    WHAT THIS COST, found 24 Nov at 22:10 checking Jack's 54.9 R dip.
+    `l2engine.trade_frame` writes `units` as the FULL position size on EVERY
+    leg of a plan=2 entry, while each leg's realised R is half -- a full
+    stop-out is -0.5 + -0.5 = -1.0. `nnfx1.daily_series` built each leg's
+    mark-to-market from full `units`, so open mark-to-market was overstated by
+    the number of legs, 2x for all three plans.
+
+    IT CANCELS AT THE EXIT BAR, which is why it survived guard 33. The exit
+    term is `R - prev` and `prev` carries the same 2x, so every TOTAL is exact:
+    the daily series summed over all days equals R_gross - cost to the last
+    decimal, and the yearly sums reconcile. Only the PATH is wrong, and only
+    path statistics are wrong with it:
+
+        worst_dip_R            too large   (54.93 -> 22.83 on ichimoku+sma)
+        R_per_year_per_dip     too small
+        t_block_boot           biased DOWN (inflated daily variance)
+
+    Unaffected: every trade-level figure -- R totals, R per trade, trades per
+    year, years positive, null_p.
+
+    ON THE 15 JANUARY 2015 SNB DAY the bug showed +101.6 R and -50.2 R on
+    consecutive days where the truth is +51.3 and -0.34: a 50 R one-day spike
+    that invented a peak, and a 54.93 R "drawdown" measured down from it.
+
+    WHAT THIS CHECKS, on a live two-pair probe:
+      (a) dir * (units / n_legs) * (exit_px - entry_px) / RISK reproduces each
+          leg's R EXACTLY on stop exits, where the settlement is a pure price
+          move;
+      (b) the same identity at FULL `units` is out by about the leg count, so a
+          revert is caught rather than passing quietly;
+      (c) daily_series still totals to R_gross - cost.
+    """
+    import numpy as _np
+    sys.path.insert(0, ROOTLIB)
+    import nnfx1 as _N, l2sweep as _S
+    _S.load_costs(os.environ.get('FX_COST_TABLE',
+                                 'results/cost_table_h22.csv'))
+    T = _N.run_one('ichimoku_signals', 'c1', 'default', 'jack',
+                   pairs=['EURUSD', 'GBPJPY'], use_hourly=False)
+    assert len(T), 'guard 36: the probe candidate took no trades'
+    assert 'leg' in T.columns, 'guard 36: no leg column -- cannot weight legs'
+    nleg = float(max(1, T['leg'].astype(str).nunique()))
+    assert nleg >= 2, 'guard 36: the probe plan is single-leg; pick a plan=2 one'
+    d = _np.where(T.direction.to_numpy() == 'long', 1.0, -1.0)
+    move = (T.exit_px.to_numpy(float) - T.entry_px.to_numpy(float)) * d
+    r_full = T.units.to_numpy(float) * move / _S.RISK
+    r_leg = r_full / nleg
+    rr = T.R.to_numpy(float)
+    st = (T.reason.to_numpy() == 'stop')
+    assert st.sum() >= 20, 'guard 36: only %d stop exits to test' % int(st.sum())
+    e_leg = float(_np.abs(r_leg[st] - rr[st]).max())
+    e_full = float(_np.abs(r_full[st] - rr[st]).max())
+    assert e_leg < 1e-9, ('guard 36: units/n_legs does NOT reproduce leg R on '
+                          'stop exits (worst %.3e over %d legs)'
+                          % (e_leg, int(st.sum())))
+    assert e_full > 0.4 * (nleg - 1), ('guard 36: full units reproduces leg R '
+                                       'too -- the leg weight is not what this '
+                                       'guard thinks (worst %.3e)' % e_full)
+    cost = _np.asarray(_N._cost_R(T), float)
+    DS = _N.daily_series(T, cost)
+    want = float(T.R_gross.sum() - cost.sum())
+    got = float(DS.R.sum())
+    assert abs(got - want) < 1e-6, ('guard 36: daily series totals %.6f against '
+                                    'R_gross - cost %.6f' % (got, want))
+    return ('%d legs over 2 pairs, %d stop exits: units/%d reproduces leg R at '
+            '%.1e, full units is out by %.3f, and the daily series totals to '
+            'R_gross - cost at %.1e'
+            % (len(T), int(st.sum()), int(nleg), e_leg, e_full,
+               abs(got - want)))
+
+
 def c35():
     """A REPORT THAT NAMES ITS OWN CSVs AND DOES NOT MATCH THEM.
 
@@ -810,6 +914,9 @@ def main():
     guard(35, 'A report that names its own csvs and does not match them: B1_NARROW.md shipped at 19:11 on 24 Nov with "_No bank rows read._" and a provenance line reading 0 rows, while chain 29 reported all eleven stages OK -- the read joined the universe on bank_row where the bank is keyed by POSITION, matching 27 of 4,008, and a defensive `continue` dropped the rest in silence. The same scan found STAGE1.md naming three canonical_risk csvs at 1,929/117/23,400 rows against 99/6/360 on disk, overwritten by a smaller run that reused the production filenames',
           'every provenance line in every report under results/ is checked against the file it names: it must exist, be non-empty, and hold exactly the claimed number of data rows; a report whose head marks it SUPERSEDED is skipped and the skip is printed',
           'all provenance lines in results/**/*.md match their files on row count', c35)
+    guard(36, 'The daily mark-to-market path built from FULL `units` on a HALF-WEIGHT leg: trade_frame writes the whole position size on every leg of a plan=2 entry while each leg realises half, so open mark-to-market was overstated 2x. It cancels at the exit bar, so every total reconciled to the last decimal and guard 33 passed -- but worst_dip_R was too large (54.93 against 22.83 on ichimoku+sma), R_per_year_per_dip too small and t_block_boot biased down. On 15 Jan 2015 it showed +101.6 R then -50.2 R where the truth is +51.3 then -0.34, inventing the peak the 54.93 R dip was measured from',
+          'nnfx1.daily_series divides `units` by the plan leg count, taken from the distinct `leg` labels so a frame filtered by exit year cannot sever a pair and halve the divisor',
+          'on a live probe units/n_legs reproduces each leg R exactly on stop exits, full units is out by the leg count, and the daily series still totals to R_gross - cost', c36)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

@@ -366,6 +366,31 @@ def daily_series(T, cost):
         return pd.DataFrame(columns=['date', 'R'])
     acc = {}
     cost = np.asarray(cost, float)
+    # ---- THE LEG WEIGHT. FOUND 24 NOV, 22:10, CHECKING JACK'S 54.9 R DIP.
+    # `units` is the FULL position size and is written IDENTICALLY on every leg
+    # of a plan=2 entry, while each leg's realised R is half -- a full stop-out
+    # is -0.5 + -0.5 = -1.0. So a per-leg mark built from `units` overstates
+    # open mark-to-market by the number of legs. VERIFIED on 642 stop exits:
+    # dir * (units / n_legs) * (exit_px - entry_px) / RISK reproduces the leg's
+    # R to EXACTLY 0.000000, and full `units` is out by exactly 2x.
+    #
+    # WHY NOTHING CAUGHT IT. The error cancels at the exit bar: the exit term
+    # is `R - prev` and `prev` carries the same 2x, so every TOTAL is exact and
+    # the yearly sums reconcile to the last decimal. Only the PATH is wrong.
+    # On ichimoku+sma full_nnfx (jack) the 15 Jan 2015 SNB day showed +99.23 R
+    # where the truth is +49.6, and the next day -50.22 where the truth is
+    # -0.36 -- a one-day spike of 49.6 R that invented a peak, and a 54.93 R
+    # "drawdown" measured down from it. Guard 33 caught this same fault class
+    # in the TRADE COUNTS and did not look at the daily series; guard 36 does.
+    #
+    # THE DIVISOR IS THE PLAN'S LEG COUNT, NOT THE COUNT IN THIS FRAME. A leg
+    # count taken per entry would be wrong on a frame filtered by exit year,
+    # where leg1 can exit in December and leg2 in January and one of the two is
+    # severed -- each surviving leg still carries units/2. The distinct `leg`
+    # labels are a property of the plan (all three plans are two-leg) and
+    # survive any row filter.
+    nleg = float(max(1, T['leg'].astype(str).nunique())) \
+        if 'leg' in T.columns else 1.0
     for p, g in T.groupby('pair'):
         d = pair_data(p)
         cl = d['close'].values.astype(float)
@@ -385,7 +410,8 @@ def daily_series(T, cost):
                                               (eb, xb, dirv, un, epx, rr, am, cst))
         if not len(eb):
             continue
-        k = dirv * un / S.RISK * am / RISK_UNIT_ATR     # R per unit of price
+        # R per unit of price, PER LEG (units is the whole position: see nleg)
+        k = dirv * (un / nleg) / S.RISK * am / RISK_UNIT_ATR
         inc = np.zeros(n)
         # ---- THE MIDDLE BARS, as a difference array.
         # For e < b < x the increment is k_j x (cl[b] - cl[b-1]) -- a plain

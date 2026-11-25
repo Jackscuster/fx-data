@@ -104,12 +104,37 @@ g(){
 # A file already on the remote is left alone -- 71 of them exceed 50 MB and
 # removing those would mean rewriting pushed history, which Jack ruled out.
 # The question is only whether a commit is ADDING one.
+# NAMED EXCEPTIONS to the 50 MB commit limit, each with its own ceiling.
+# Jack, 24 Nov: signals.json at 92 MB is under GitHub's 100 MB pre-receive
+# limit and is a Layer 1 artifact the app fetches, so it cannot move behind a
+# manifest without breaking the app. Pre-flight guard 34 carries the same list
+# and fails if a named file grows past its ceiling.
+ci_named_ceiling(){  # -> ceiling in bytes, or empty if not a named exception
+  case "$1" in
+    results/signals.json) echo $((95*1024*1024)) ;;
+    *) echo "" ;;
+  esac
+}
+
 ci_size_gate(){
-  local lim=$((50*1024*1024)) bad=0 f sz
+  local lim=$((50*1024*1024)) bad=0 f sz cap
   while IFS= read -r f; do
     [ -n "$f" ] || continue
     [ -f "$f" ] || continue
     sz=$(stat -f %z "$f" 2>/dev/null || echo 0)
+    cap=$(ci_named_ceiling "$f")
+    if [ -n "$cap" ]; then
+      if [ "$sz" -gt "$cap" ]; then
+        say "!!! REFUSING TO COMMIT $f at $((sz/1048576)) MB -- it is a NAMED"
+        say "    exception with a ceiling of $((cap/1048576)) MB and has outgrown it."
+        say "    GitHub refuses anything over 100 MB. Unstaging it."
+        git reset -q HEAD -- "$f" 2>/dev/null
+        bad=$((bad+1))
+      else
+        say "    $f at $((sz/1048576)) MB allowed: named exception, ceiling $((cap/1048576)) MB"
+      fi
+      continue
+    fi
     if [ "$sz" -gt "$lim" ]; then
       say "!!! REFUSING TO COMMIT $f at $((sz/1048576)) MB -- over the 50 MB limit."
       say "    Write it to disk, gitignore it, and commit a MANIFEST.sha256 entry"
