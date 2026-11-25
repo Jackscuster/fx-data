@@ -512,6 +512,45 @@ def stage_app():
         prop=nd('book_prop.csv', head=20),
         corr=nd('book_corr.csv', head=20),
     )
+    sec['nnfx']['item6'] = dict(
+        note=('ITEM 6, Jack 25 Nov -- EXITS, THREE SPEEDS, DRAWDOWN CONTROL. '
+              'Read item 5 first: the best book is a factor of 10.6 short of '
+              '12%, so none of this closes the gap and none of it is '
+              'presented as if it might. '
+              'TWO APPARATUS CHANGES WERE NEEDED AND BOTH ARE IN. (1) The '
+              'engine had NO TIME STOP; l2engine.run_bars now takes '
+              'time_stop_bars, default 0 = off, checked AFTER the three '
+              'signal exits so a bar on which a signal also fires is '
+              'attributed to the signal and not to the clock. At 0 the engine '
+              'is byte-identical to before, SHA e5264776bbacc833. (2) The '
+              'EXIT-INDICATOR SLOT WAS BLANK -- stage 2 zeroed x_el/x_es, so '
+              '"each alone" would have been two arms not three. The family '
+              'has exactly one member, adx_dmi_exit, so no choice is made. '
+              'SPEEDS: "three speeds" is read as the project\'s own half / '
+              'default / double settings, run simultaneously as equal-risk '
+              'sleeves. FIXED settings, so the window is 2005-2015 by Jack\'s '
+              'own rule, with a 2010-2015 column so the window is not a '
+              'confound. THE RESULT IS NOT ABOUT SPEEDS: 6 of 6 fixed-setting '
+              'cells lose on 2005-2015 and 4 of 6 lose on 2010-2015; the best '
+              'is A/default at +5.692 R against +39.874 R for the '
+              'walk-forward stitch of the same combination. A is '
+              'substantially the walk-forward SELECTION, not the indicator at '
+              'any one setting. '
+              'DRAWDOWN: steady risk, equity pause, kill switch and crisis '
+              'sizing, each causal, each swept. Best single cell is '
+              'equity_pause at 25% of dip / 10 days, +16.5% on return per '
+              'dip -- the maximum over 25 cells on one six-year sample, so an '
+              'upper bound rather than a setting to adopt, and the curve is '
+              'not monotone. A kill switch at 50% of the binding dip turns '
+              '+39.874 R into -13.348 R. Crisis sizing costs money '
+              'monotonically.'),
+        exit_grid=nd('exit_grid.csv', head=600),
+        speed_cells=nd('speed_cells.csv', head=20),
+        speed_book=nd('speed_book.csv', head=20),
+        speed_corr=nd('speed_corr.csv', head=20),
+        dd_curves=nd('dd_curves.csv', head=80),
+        dd_prop=nd('dd_prop.csv', head=40),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '

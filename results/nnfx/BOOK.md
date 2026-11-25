@@ -14,7 +14,7 @@
 
 **THE ADDITION ORDER IS THE BRIEF'S OWN AND IS NOT SEARCHED**: "A, B, quiet-entry versions, group-assigned strategies, mean reversion", in that order. A greedy search over orderings would find the best book by construction, and the number it produced would be a maximum over orderings — the exact fault item 2 spent a document demonstrating. The marginal contribution of **every** sleeve to the A+B book is reported separately so the ordering is not the only view.
 
-**THE DIP IS VERIFIED TWO WAYS AND THE WORSE ONE BINDS**, exactly as `l2team` does: the TRUE chronological drawdown of the daily series, and DIP95 over 400 shuffled day orders. Losses cluster in time, so a shuffle-based dip understates the real one and sizing on it would knowingly under-size the risk.
+**THE DIP IS VERIFIED TWO WAYS AND THE WORSE ONE BINDS**, exactly as `l2team` does: the realised chronological drawdown of the daily series, and DIP95 over 400 shuffled day orders. Either can be the larger — on the graft book `l2team` found the realised drawdown worse than the shuffle, and on these sleeves it is the other way round — so the rule is to take the maximum rather than to assume which way it goes.
 
 **The prop simulator is `r2reads.prop_run`, unchanged** — the FundedTradingPlus profile Jack confirmed with the firm: 6% trailing floor that stops trailing permanently once it reaches the starting balance, 4% daily from the previous close with floating losses counting, 10% evaluation target, 80% payouts every 7 days, $549 fee, 1:30 leverage. **Its breach counts are LOWER BOUNDS** because the input is a daily series: an intraday excursion that breached and recovered before the close is invisible.
 
@@ -31,7 +31,7 @@
 | `MR20` | 6552 | 1558 | -9.627 | -1.604 | 63.603 | 122.925 | **122.925** | -0.078 | 8.269 | 2 of 6 | -0.167 |
 | `group_assign` | 3034 | 1558 | -64.735 | -10.789 | 93.453 | 120.715 | **120.715** | -0.536 | 7.783 | 4 of 6 | -1.145 |
 
-**DIP95 is BELOW the true dip on every sleeve**, which is the point of measuring both: the real order of days is worse than a random order of the same days, so the true drawdown binds everywhere and nothing is being sized off a shuffle.
+**DIP95 is ABOVE the realised dip on every one of the 8 sleeves**, by a factor of 1.22 to 2.36. That is the opposite of what `l2team` found on the graft book (which drew 5.35% where its DIP95 was 3.60%) and it has to be said the right way round: on these sleeves a RANDOM arrangement of the same days produces a worse drawdown than the arrangement that actually happened. The realised path was luckier than its own day distribution, not unluckier. **So DIP95 binds everywhere and every %-a-year figure in this document is sized off the HARSHER of the two measures** — which also means the R-per-dip numbers here are smaller than ones quoted elsewhere in the project against the realised dip. For A the realised dip is 22.616 R and the binding one is 35.125 R.
 
 ## The declared addition sequence
 

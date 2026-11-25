@@ -146,9 +146,15 @@ STOP, TARGET, EXIT_IND, BASE_CROSS, C1_FLIP, REVERSAL, END = 1, 2, 3, 4, 5, 6, 7
 # scratch, a trail stop is a banked win. DIAGNOSTIC ONLY -- no price, size or
 # fill logic reads these, so splitting them cannot move a single trade or R.
 STOP_BE, STOP_TRAIL = 8, 9
+# THE TIME STOP, added 25 Nov for Jack's item 6. It is a SIGNAL exit, not part
+# of the risk plan: it closes at the bar's CLOSE after a declared number of
+# bars in the position, and it is OFF at 0, which is the default so that no
+# existing result moves.
+TIME_STOP = 10
 REASON = {STOP: 'stop', TARGET: 'target', EXIT_IND: 'exit indicator',
           BASE_CROSS: 'baseline cross', C1_FLIP: 'c1 flip', REVERSAL: 'reversal',
-          END: 'end of data', STOP_BE: 'breakeven stop', STOP_TRAIL: 'trail stop'}
+          END: 'end of data', STOP_BE: 'breakeven stop', STOP_TRAIL: 'trail stop',
+          TIME_STOP: 'time stop'}
 # leg 1 never moves its stop (set at entry, never reassigned) and plan 1 has no
 # leg 2 at all, so a plan-1 trade can only ever close on stop / target / signal.
 LEG1, LEG2, SINGLE = 1, 2, 0
@@ -296,7 +302,8 @@ def run_bars(o, h, l, c, atr,
              t_entry_bar, t_exit_bar, t_dir, t_leg, t_entry_px, t_exit_px,
              t_units, t_r, t_reason, t_route,
              hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts,
-             hb_op, ha_op, gf_on, gf_tol, gap_counts):
+             hb_op, ha_op, gf_on, gf_tol, gap_counts,
+             time_stop_bars=0):
     """The bar loop. Returns (n_trades, n_both_touched, n_blocked_late,
     n_blocked_stale). Trade fields are written into the t_* output arrays."""
     n = c.size
@@ -594,6 +601,15 @@ def run_bars(o, h, l, c, atr,
                     reason = BASE_CROSS
                 elif exit_on_c1_flip and c1_lt[i]:
                     reason = C1_FLIP
+            # THE TIME STOP IS CHECKED LAST, so a bar on which a signal exit
+            # also fires is attributed to the signal and not to the clock --
+            # otherwise a short time stop would silently absorb the exits
+            # being measured and the exit comparison would read the time stop
+            # instead. `i - entry_bar` counts bars HELD: a position opened on
+            # bar k and time-stopped at bars=5 closes on bar k+5.
+            if reason == 0 and time_stop_bars > 0 \
+                    and (i - entry_bar) >= time_stop_bars:
+                reason = TIME_STOP
             if reason != 0:
                 if l1_open:
                     t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = cl
@@ -866,7 +882,7 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         use_base_cross=True, use_c1_flip=True, use_continuation=True,
         exit_on_c1_flip=False, exit_on_base_cross=True, exit_on_exit_ind=True,
         one_candle_rule=False, block_suspect=True,
-        bridge_all_routes=True, amb=None):
+        bridge_all_routes=True, amb=None, time_stop_bars=0):
     n = A['c'].size
     cap = 4 * n + 8                      # a hard ceiling on trade records
     t = {k: np.zeros(cap, dt) for k, dt in
@@ -890,7 +906,8 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
         bool(bridge_all_routes),
         t['entry_bar'], t['exit_bar'], t['dir'], t['leg'], t['entry_px'],
         t['exit_px'], t['units'], t['r'], t['reason'], t['route'],
-                *(amb if amb is not None else _amb_off(n)))
+                *(amb if amb is not None else _amb_off(n)),
+        int(time_stop_bars))
     out = {k: v[:nt] for k, v in t.items()}
     out['_n'] = nt; out['_both_touched'] = both
     _ac = (amb[6] if amb is not None else None)

@@ -6203,10 +6203,14 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
   h+='<h3>The book \u2014 how far 12% a year actually is</h3>';
   h+='<div class="note">'+BK2.note+'</div>';
   h+=tbl(BK2.sleeves,['sleeve','legs','days','R_total','R_per_year','dip_true','dip95','dip_binding','R_per_dip','worst_day_R','years_positive','years','t_yearly','team1_pct_per_year','firm_pct_per_year'],'The sleeves on their own, unseen years 2010\u20132015');
-  h+='<div class="note"><b>DIP95 is BELOW the true chronological dip on every sleeve.</b> That is the point of measuring '
-    +'both: the real order of days is worse than a random order of the same days, so the true drawdown binds everywhere '
-    +'and nothing here is sized off a shuffle. Sizing on DIP95 alone would knowingly under-size the risk \u2014 the '
-    +'graft book once drew 5.35% where its DIP95 was 3.60%.</div>';
+  h+='<div class="note"><b>DIP95 is ABOVE the realised dip on every one of the eight sleeves</b>, by 1.5x to 2.0x. '
+    +'That is the opposite of what l2team found on the graft book, which drew 5.35% where its DIP95 was 3.60% \u2014 so '
+    +'it has to be stated the right way round: on these sleeves a RANDOM arrangement of the same days produces a worse '
+    +'drawdown than the arrangement that actually happened, and the realised path was luckier than its own day '
+    +'distribution. <b>Either measure can be the larger, which is why the rule is to take the maximum rather than assume '
+    +'which way it goes.</b> Here DIP95 binds, so every %-a-year figure in this section is sized off the harsher of the '
+    +'two \u2014 and the R-per-dip numbers are therefore smaller than ones quoted elsewhere against the realised dip '
+    +'(for A: realised 22.616 R, binding 35.125 R).</div>';
   h+=tbl(BK2.incremental,['step','added','members','R_per_year','dip_binding','R_per_dip','team1_pct_per_year','firm_pct_per_year','dR_total','t_block_boot_diff','years_improved','corr_new_sleeve_with_book'],'The declared addition sequence \u2014 the brief\u2019s own order, not searched');
   h+='<div class="note"><b>Every addition in the declared order makes the book worse than A on its own</b>, and not one '
     +'step\u2019s paired t statistic comes close to 2 in either direction. At equal risk per sleeve a weaker sleeve '
@@ -6232,6 +6236,45 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'the cross-sectional dispersion is enormous \u2014 a per-pair assignment with hindsight is worth +520 R over the '
     +'same six years against the \u221272 R any tested rule achieved \u2014 so the room exists in the data and no '
     +'tested selection rule reaches any of it.</div>';
+ }
+ /* ITEM 6, Jack 25 Nov: exits, three speeds, drawdown control. */
+ const I6=R.item6||{};
+ if(I6.note){
+  h+='<h3>Exits, three speeds, and drawdown control</h3>';
+  h+='<div class="note">'+I6.note+'</div>';
+  h+=tbl(I6.exit_grid,['member','exit_arm','stop_atr','target_mult','trail_on','time_stop_bars','R_total','R_per_year','R_per_year_ex_best_day','trades','mean_bars','worst_dip_R','R_per_dip','t_yearly','years_positive'],'Exits \u2014 the full factorial: 4 exit arms x 3 stops x 3 targets x 2 trails x 4 time stops, per member');
+  h+='<div class="note"><b>A full factorial, not a chosen configuration.</b> Nothing is selected here; it is a curve, '
+    +'reported as one, because the current exit configuration was inherited rather than tested. Two things the apparatus '
+    +'needed first: the engine had <b>no time stop</b> (added, default off, byte-identical at 0), and the '
+    +'<b>exit-indicator slot was blank</b> because stage 2 zeroed it \u2014 so \u201ceach alone\u201d would have been '
+    +'two arms, not three.</div>';
+  h+=tbl(I6.speed_cells,['member','speed','c1_setting','distinct','legs','R_total','R_per_year','worst_dip_R','R_per_dip','years_positive','t_yearly','build_R_total','build_R_per_year','build_R_per_dip'],'Three speeds \u2014 each alone, FIXED settings, 2005\u20132015 with a 2010\u20132015 column');
+  h+='<div class="note"><b>The result in this table is not about speeds.</b> 6 of 6 fixed-setting cells lose money on '
+    +'2005\u20132015 and 4 of 6 lose on 2010\u20132015. The best fixed-setting cell on those same six years is '
+    +'<b>A/default at +5.692 R</b> \u2014 against <b>+39.874 R</b> for the walk-forward stitch of the same combination. '
+    +'The 2010\u20132015 columns exist so the window cannot be the explanation. <b>Candidate A is substantially the '
+    +'walk-forward SELECTION rather than the indicator at any one setting</b>, which is not a reason to distrust it '
+    +'\u2014 the selection is causal and made on tuning years only \u2014 but it is a reason to be precise about what A '
+    +'is: that combination <i>with its lookback re-chosen on every step</i>.</div>';
+  h+=tbl(I6.speed_book,['member','sleeves','members','R_total','R_per_year','worst_dip_R','R_per_dip','best_single_speed','best_single_R_per_dip','beats_best_single'],'Three speeds \u2014 the three together at equal risk, against the best single');
+  h+=tbl(I6.speed_corr,['sleeve','A_half','A_default','A_double','B_half','B_default','B_double'],'How much do the speeds actually diversify?');
+  h+='<div class="note">They are the same rule on the same pairs reading the same prices, so the correlation is high by '
+    +'construction and there is far less to diversify than three sleeves make it look. Compare the mean-reversion '
+    +'sleeves, which sit at \u22120.12 to \u22120.40 against A.</div>';
+  h+=tbl(I6.dd_curves,['book','control','setting','R_total','R_per_year','dip_true','dip95','dip_binding','R_per_dip','worst_day_R','days_flat','team1_pct_per_year','firm_pct_per_year'],'Drawdown control \u2014 four controls, each swept over its full range');
+  h+='<div class="note"><b>A drawdown control cannot add return.</b> The most any of them can do is let the same return '
+    +'be taken at a larger size by shrinking the drawdown the sizing must fit inside. The best single cell is '
+    +'<code>equity_pause</code> at 25% of dip / 10 days, <b>+16.5%</b> on return per dip \u2014 and it is the maximum '
+    +'over 25 swept cells on one six-year sample, with a curve that is <b>not monotone</b> (no change at 5 days, best at '
+    +'10, worse than baseline at 20). Treat it as an upper bound on what is there, not a setting to adopt. '
+    +'<b>A kill switch at 50% of the binding dip turns +39.874 R into \u221213.348 R</b>; the higher levels never fire '
+    +'because they are fractions of DIP95 (35.125 R) while the realised drawdown is 22.616 R. <b>Crisis sizing costs '
+    +'money monotonically</b> \u2014 zeroing size in crisis windows costs 26.4% of the total and the dip barely moves, '
+    +'because A\u2019s worst drawdown is not in a crisis window. '
+    +'<b>A fault found and fixed in the first run:</b> equity_pause measured drawdown from the peak of the MANAGED '
+    +'equity, so while paused it could never recover and re-triggered forever \u2014 a pause that cannot end is a kill '
+    +'switch. It showed up as identical numbers at 5, 10 and 20 days. The peak now resets on resumption.</div>';
+  h+=tbl(I6.dd_prop,['book','control','setting','sizing','scale','pct_per_year','eval_days_to_pass','funded_breached','funded_payout_per_year','funded_worst_dip_pct','distance_from_12pct'],'Drawdown control \u2014 through the prop simulator');
  }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};

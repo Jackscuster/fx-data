@@ -130,7 +130,8 @@ def _write_csv(D, path, cols=None):
 def run_combo(c1, c1_set, base, base_set, variant, ruleset,
               pairs=None, atr_len=14, use_hourly=True, amb_out=None,
               lowvol_q=VOL.LOWVOL_Q, peg_x=VOL.PEG_X_DECIDED,
-              gapfill=None, gap_out=None, quiet_q=None):
+              gapfill=None, gap_out=None, quiet_q=None,
+              exit_kw=None):
     """One C1 + one baseline, one ruleset, across the pairs. -> trade frame.
 
     THE C1 ENTRY AND EXIT ARE ALWAYS ON. Stage 2 adds a baseline to a C1; it
@@ -161,6 +162,11 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
               use_base_cross=bool(RS['xentry'] and RS['side']),
               exit_on_base_cross=bool(RS['xexit'] and RS['side']),
               exit_on_exit_ind=False)
+    # ITEM 6's EXIT KNOBS, applied LAST so they override the ruleset's own
+    # defaults. Empty is the configuration every other table was run under,
+    # so a call that does not mention them is unchanged.
+    if exit_kw:
+        kw.update({k: v for k, v in exit_kw.items() if v is not None})
     c1_prm = N.setting_params(c1, c1_set)
     b_prm = N.setting_params(base, base_set)
     rows = []
@@ -214,7 +220,15 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
                     p, len(_qt), n)
                 vok = vok & (~_qt)
             A['v_ok_l'] = vok.copy(); A['v_ok_s'] = vok.copy()
-            A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
+            # THE EXIT-INDICATOR SLOT IS ZEROED UNLESS IT IS UNDER TEST, and
+            # that is why `exit_ind_only` would otherwise take no signal exit
+            # at all: stage 2 blanked x_el/x_es because the exit slot was not
+            # its question, so `exit_on_exit_ind=True` had nothing to fire on.
+            # E.prepare already computed the real arrays from XL[0]
+            # (adx_dmi_exit, the only member of the family), so when item 6
+            # asks for the exit indicator the arrays are simply kept.
+            if not (exit_kw or {}).get('exit_on_exit_ind'):
+                A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
             if not RS['side']:
                 K = 10.0 * float(np.nanmax(np.abs(A['c'])) + 1.0)
                 A['bl'] = A['c'] - K if sd == 'long' else A['c'] + K
@@ -250,6 +264,8 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
     T['lowvol_q'] = (lowvol_q if lowvol_q else 0.0)
     T['peg_x'] = (peg_x if peg_x else 0.0)
     T['quiet_q'] = (float(quiet_q) if quiet_q is not None else 1.0)
+    for _k, _v in (exit_kw or {}).items():
+        T['x_%s' % _k] = _v
     # EVERY FRAME DECLARES WHETHER ITS STOPS WERE FILLED REALISTICALLY.
     # Standing from 25 Nov; a frame that does not say so is read by pre-flight
     # guard 41 as computed at a price that was never quoted.

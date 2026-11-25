@@ -35,9 +35,12 @@ each sleeve at full size, book = sum -- makes every addition look additive
 because it is adding risk as well as return.
 
 THE DIP IS VERIFIED TWO WAYS and the worse one binds, exactly as l2team does:
-the TRUE chronological drawdown of the daily series, and DIP95 over shuffled
-day orders. Losses cluster in time, so a shuffle-based dip under-states the
-real one; sizing on it would knowingly under-size the risk.
+the realised chronological drawdown of the daily series, and DIP95 over
+shuffled day orders. EITHER CAN BE THE LARGER and the rule is to take the
+maximum rather than to assume which. l2team found the graft book drawing 5.35%
+where its DIP95 was 3.60%; on the sleeves in this file it is the other way
+round -- DIP95 is above the realised dip on all eight, so DIP95 binds and
+every percent-a-year figure here is sized off the harsher measure.
 
 THE PROP SIMULATOR IS r2reads.prop_run, unchanged -- the FundedTradingPlus
 profile Jack confirmed with the firm. The book is scaled to the TEAM 1 budget
@@ -460,10 +463,12 @@ def md_book(out=None):
       'reported separately so the ordering is not the only view.')
     a('')
     a('**THE DIP IS VERIFIED TWO WAYS AND THE WORSE ONE BINDS**, exactly as '
-      '`l2team` does: the TRUE chronological drawdown of the daily series, '
-      'and DIP95 over 400 shuffled day orders. Losses cluster in time, so a '
-      'shuffle-based dip understates the real one and sizing on it would '
-      'knowingly under-size the risk.')
+      '`l2team` does: the realised chronological drawdown of the daily '
+      'series, and DIP95 over 400 shuffled day orders. Either can be the '
+      'larger — on the graft book `l2team` found the realised drawdown worse '
+      'than the shuffle, and on these sleeves it is the other way round — so '
+      'the rule is to take the maximum rather than to assume which way it '
+      'goes.')
     a('')
     a('**The prop simulator is `r2reads.prop_run`, unchanged** — the '
       'FundedTradingPlus profile Jack confirmed with the firm: 6% trailing '
@@ -488,10 +493,24 @@ def md_book(out=None):
                  r.worst_day_R, int(r.years_positive), int(r.years),
                  _f(r.t_yearly)))
         a('')
-        a('**DIP95 is BELOW the true dip on every sleeve**, which is the '
-          'point of measuring both: the real order of days is worse than a '
-          'random order of the same days, so the true drawdown binds '
-          'everywhere and nothing is being sized off a shuffle.')
+        a('**DIP95 is ABOVE the realised dip on every one of the %d '
+          'sleeves**, by a factor of %.2f to %.2f. That is the opposite of '
+          'what `l2team` found on the graft book (which drew 5.35%% where its '
+          'DIP95 was 3.60%%) and it has to be said the right way round: on '
+          'these sleeves a RANDOM arrangement of the same days produces a '
+          'worse drawdown than the arrangement that actually happened. The '
+          'realised path was luckier than its own day distribution, not '
+          'unluckier. **So DIP95 binds everywhere and every %%-a-year figure '
+          'in this document is sized off the HARSHER of the two measures** — '
+          'which also means the R-per-dip numbers here are smaller than ones '
+          'quoted elsewhere in the project against the realised dip. For A '
+          'the realised dip is %.3f R and the binding one is %.3f R.'
+          % (len(SL), float((SL.dip95 / SL.dip_true).min()),
+             float((SL.dip95 / SL.dip_true).max()),
+             float(SL[SL.sleeve == 'A'].dip_true.iloc[0])
+             if len(SL[SL.sleeve == 'A']) else float('nan'),
+             float(SL[SL.sleeve == 'A'].dip_binding.iloc[0])
+             if len(SL[SL.sleeve == 'A']) else float('nan')))
         a('')
     if len(IN):
         a('## The declared addition sequence')

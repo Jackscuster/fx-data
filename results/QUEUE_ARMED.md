@@ -1,4 +1,4 @@
-# QUEUE_ARMED — 25 November 2026, 11:31 EST
+# QUEUE_ARMED — 25 November 2026, 11:48 EST
 
 **New standing rule, Jack 25 Nov: this file is written before any turn ends and
 the chat reads it directly.** A stage that exists only as a plan counts as NOT
@@ -13,7 +13,22 @@ started.** 10 cores free.
 
 | stage | pid / pgid | what it writes | ETA (US Eastern) |
 |---|---|---|---|
-| — | — | — | — |
+| **item 6a — the full exit factorial** `code/chain/exit6.sh` | pid **49381**, pgid **49378** | `results/nnfx/exit_grid.csv` (576 cells, resumable per cell) | started 11:32, **~12:20** |
+
+Follow-up `code/chain/exit6b.sh` (EXITS.md + app + preflight) is written and
+**not** armed — it must run after the sweep, and it is a separate file because
+`exit6.sh` must not be edited while it runs.
+
+**A HAZARD I HIT AND HAVE TO RECORD.** I edited `exit6.sh` at 11:45 while it
+was live, to append the md and app steps. Bash reads a script incrementally, so
+inserting lines in the middle of a running driver moves the byte offset it
+resumes from and can corrupt the rest of the run. The sweep's own python
+process is independent and unaffected, so the data is safe, but **the log's
+final lines may be garbled and completion must be verified from
+`exit_grid.csv`'s row count, not from the log.** The project already knew this
+(it is why `s234c/d/e.sh` are separate files) and I did it anyway. The script
+now carries the warning in a comment and the follow-up is in `exit6b.sh`.
+
 
 **NOTHING IS ARMED RIGHT NOW, and that is accurate rather than tidy.** Both of
 the queues armed this turn have finished: `code/chain/gap1.sh` (item 1) at

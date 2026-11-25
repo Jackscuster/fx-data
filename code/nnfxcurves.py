@@ -31,7 +31,8 @@ FLOOR_CURVE = (0.0, 0.01, 0.025, 0.05, 0.075, 0.10)
 
 
 def _stitch(c1, base, rs, v, lowvol_q, peg_x, years=BUILD,
-            gapfill=None, gap_out=None, quiet_q=None, q_by_step=None):
+            gapfill=None, gap_out=None, quiet_q=None, q_by_step=None,
+            exit_kw=None):
     """The walk-forward stitch, exactly as stage 2 builds it, under one
     (floor, peg) setting.
 
@@ -60,7 +61,8 @@ def _stitch(c1, base, rs, v, lowvol_q, peg_x, years=BUILD,
                          lowvol_q=(lowvol_q or None), peg_x=(peg_x or None),
                          gapfill=gapfill, gap_out=gap_out,
                          quiet_q=(q_by_step.get(stp['name'])
-                                  if q_by_step is not None else quiet_q))
+                                  if q_by_step is not None else quiet_q),
+                         exit_kw=exit_kw)
         if not len(T):
             continue
         Ty = T[pd.DatetimeIndex(T.exit_date).year == stp['trade']]
