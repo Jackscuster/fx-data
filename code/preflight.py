@@ -676,6 +676,74 @@ def c29():
         glob.glob(os.path.join(ROOTLIB, '*.py')))
 
 
+def c35():
+    """A REPORT THAT NAMES ITS OWN CSVs AND DOES NOT MATCH THEM.
+
+    WHAT THIS COST. `B1_NARROW.md` was written at 19:11 on 24 Nov with its
+    central section reading `_No bank rows read._` and its provenance block
+    naming `b1narrow_per_strategy.csv` at **0 rows** -- while chain 29's ledger
+    showed all eleven stages OK, including `md`. 7.6 h of eleven-step tune per
+    mode was on disk and correct; only the read was broken, twice over. The
+    universe csv carries no `stream` column, which a defensive `continue`
+    turned into a silent 100% row drop; and the join was on `bank_row` while
+    G2.run banks by POSITION in the combos list it is handed, which matched 27
+    of 4,008 rows. Neither raised anything. A stage that writes a report is not
+    verified by the report existing.
+
+    The same scan caught a second, different fault: `STAGE1.md` names three
+    `stage1_c1_canonical_risk_*.csv` files at 1,929 / 117 / 23,400 rows and
+    the files on disk hold 99 / 6 / 360, overwritten at 13:08 on 24 Nov by a
+    smaller run that reused the production filenames.
+
+    WHAT IT CHECKS. Every provenance line of the form
+    ``- `path` -- N rows, md5 `h` `` in any markdown file under results/: the
+    file must exist, N must be greater than zero, and N must equal the file's
+    actual data-row count. A report whose first line marks it SUPERSEDED is
+    skipped, because a superseded report is a record of what was said at the
+    time and its csvs are allowed to have moved on -- but the skip is counted
+    and printed, so the set cannot grow unnoticed.
+    """
+    pat = re.compile(r'^- `([^`]+)` . ([\d,]+) rows, md5 `([0-9a-f]+)`')
+    bad, n_lines, n_files, skipped = [], 0, 0, []
+    for md in sorted(glob.glob(os.path.join(ROOTOUT, '**', '*.md'),
+                               recursive=True)):
+        head = ''
+        with open(md, errors='replace') as fh:
+            lines = fh.read().splitlines()
+        head = '\n'.join(lines[:3])
+        if 'SUPERSEDED' in head:
+            if any(pat.match(l) for l in lines):
+                skipped.append(os.path.relpath(md, _R))
+            continue
+        hit = False
+        for ln in lines:
+            m = pat.match(ln)
+            if not m:
+                continue
+            hit = True
+            n_lines += 1
+            rel, claim = m.group(1), int(m.group(2).replace(',', ''))
+            fp = rel if os.path.isabs(rel) else os.path.join(_R, rel)
+            if not os.path.exists(fp):
+                bad.append('%s names %s: MISSING' % (os.path.basename(md), rel))
+                continue
+            with open(fp, 'rb') as fh:
+                act = max(0, sum(1 for _ in fh) - 1)
+            if claim == 0 or act == 0:
+                bad.append('%s names %s: %d rows claimed, %d on disk -- an '
+                           'EMPTY read' % (os.path.basename(md), rel, claim, act))
+            elif act != claim:
+                bad.append('%s names %s: %d rows claimed, %d on disk'
+                           % (os.path.basename(md), rel, claim, act))
+        n_files += 1 if hit else 0
+    assert not bad, '; '.join(bad[:6])
+    return ('%d provenance lines across %d reports: every named csv exists, is '
+            'non-empty and matches its claimed row count%s'
+            % (n_lines, n_files,
+               ('; %d superseded report(s) skipped: %s'
+                % (len(skipped), ', '.join(skipped))) if skipped else ''))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -739,6 +807,9 @@ def main():
     guard(34, 'A file too large for the remote committed by a chain: results/r2reads/modeA_a2_defaults.csv at 654 MB against GitHub\'s 100 MB pre-receive limit, which no retry can clear because the blob is in the history being offered -- it took a rewrite of 33 unpushed commits',
           'the limit is 50 MB, half of GitHub\'s, so a growing stage is noticed before it blocks anything; a big artifact goes to disk gitignored with a MANIFEST.sha256 entry and a committed summary, as guard 28 does for the banks and a2summary.py now does for this file; chainlib ci refuses the commit too',
           'no tracked file in the index or working tree exceeds 50 MB', c34)
+    guard(35, 'A report that names its own csvs and does not match them: B1_NARROW.md shipped at 19:11 on 24 Nov with "_No bank rows read._" and a provenance line reading 0 rows, while chain 29 reported all eleven stages OK -- the read joined the universe on bank_row where the bank is keyed by POSITION, matching 27 of 4,008, and a defensive `continue` dropped the rest in silence. The same scan found STAGE1.md naming three canonical_risk csvs at 1,929/117/23,400 rows against 99/6/360 on disk, overwritten by a smaller run that reused the production filenames',
+          'every provenance line in every report under results/ is checked against the file it names: it must exist, be non-empty, and hold exactly the claimed number of data rows; a report whose head marks it SUPERSEDED is skipped and the skip is printed',
+          'all provenance lines in results/**/*.md match their files on row count', c35)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

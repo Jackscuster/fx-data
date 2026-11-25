@@ -1,5 +1,18 @@
 <!-- SUPERSEDED 2026-11-24 by results/nnfx/STAGE1_R2.md.
 
+ALSO: THREE OF THE CSVs THIS FILE NAMES NO LONGER BACK ITS NUMBERS.
+Found by pre-flight guard 35 on 24 Nov at 21:30. The provenance block
+below names stage1_c1_canonical_risk_yearly.csv at 1,929 rows,
+_summary.csv at 117 and _nulls.csv at 23,400. The files on disk hold
+99, 6 and 360: they were overwritten at 13:08 on 24 Nov by a smaller
+run that reused the production filenames. The full canonical_risk
+numbers quoted in this file are therefore NOT reproducible from disk.
+Do not re-derive anything from them. The live record is the R2 run,
+which writes under the stage1r2_ prefix and whose 18 provenance lines
+all match -- and the three C1 picks and the three baselines Jack chose
+were read off STAGE1_R2.md, not off this file. The baseline-side
+canonical_risk csvs (stage1_base_*) are intact and still match.
+
 Jack read this file and found three faults. All three were real:
 
 1. NO COST WAS CHARGED ON THE FLIP-ONLY VARIANT. R was restated against the
