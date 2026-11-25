@@ -64,6 +64,7 @@ import l2sweep as S
 import l2engine as E
 import l2r2gate1 as G
 import nnfx1 as N
+import l2r2winners as WN
 
 OUT = os.path.join(ROOTOUT, 'nnfx')
 os.makedirs(OUT, exist_ok=True)
@@ -902,17 +903,47 @@ def stage_report(tag='picks', pool_tag=None, variants=PLANS_USED,
         rows.append(dict(c1=c1, base=base, variant=v, ruleset=rs,
                          **{k: val for k, val in sc.items()
                             if not k.startswith('_')}))
-        # ---- through the prop simulator, risk per R swept
-        for rp in RISK_PCTS:
+        # ---- THROUGH THE PROP SIMULATOR. CHECK 2, Jack 24 Nov: the first
+        # version annualised runs of a few days, so an 8-day run that breached
+        # the daily limit reported 207,847% paid out a year and a 2-day run
+        # reported 1,312% return a year. Three fixes, all his:
+        #   (1) totals and days are always reported;
+        #   (2) nothing shorter than a year is annualised -- the annualised
+        #       columns are blank, not small, so they cannot be read by
+        #       mistake;
+        #   (3) the HEADLINE sizing is the Team 1 budget: risk per R is set so
+        #       this candidate's own worst dip equals PROP_DIP (3.6%), which is
+        #       what MODEA_WINNERS.md means by Team 1. The fixed sweep is kept
+        #       beside it, labelled, because every cut gets swept -- but it is
+        #       context, not the headline.
+        dip_r = float(sc.get('worst_dip_R', np.nan))
+        sized = ((WN.PROP_DIP / dip_r) if np.isfinite(dip_r) and dip_r > 1e-9
+                 else np.nan)
+        plans = [('dip_%.1fpct' % WN.PROP_DIP, sized)] + \
+                [('fixed', rp) for rp in RISK_PCTS]
+        for (szlab, rp) in plans:
+            if not np.isfinite(rp):
+                continue
             dp = prop_of_daily(DS, years, rp)
             if not len(dp):
                 continue
-            ev = RR.prop_run(dp, 'eval', 'fixed')
-            fu = RR.prop_run(dp, 'funded', 'fixed')
-            prop_rows.append(dict(c1=c1, base=base, variant=v, ruleset=rs,
-                                  risk_pct_per_R=rp, phase='eval', **ev))
-            prop_rows.append(dict(c1=c1, base=base, variant=v, ruleset=rs,
-                                  risk_pct_per_R=rp, phase='funded', **fu))
+            for ph in ('eval', 'funded'):
+                rec = RR.prop_run(dp, ph, 'fixed')
+                yrs = float(rec.get('years', 0.0))
+                full = yrs >= 1.0
+                rec = dict(rec)
+                rec['annualised'] = int(full)
+                rec['too_short_to_annualise'] = int(not full)
+                if not full:
+                    # BLANK, NOT SMALL. A 2-day run has no annual rate.
+                    rec['return_pct_per_year'] = np.nan
+                    rec['paid_out_per_year'] = np.nan
+                prop_rows.append(dict(
+                    c1=c1, base=base, variant=v, ruleset=rs,
+                    sizing=szlab, risk_pct_per_R=rp, phase=ph,
+                    worst_dip_R_used=dip_r,
+                    dip_budget_pct=(WN.PROP_DIP if szlab != 'fixed' else np.nan),
+                    **rec))
         if verbose:
             print('    2c %s/%s/%s/%s: %+8.2f R/yr, dip %7.1f, t_y %5.2f, '
                   't_b %6.2f, p %.3f'
@@ -1226,18 +1257,53 @@ def md_stage2(out=None):
     # project has broken three report writes that way; concatenation cannot.
     a('The daily series is in R, where 1 R is one 1.5 ATR risk unit. Turning it '
       'into the percent-of-equity series the simulator consumes needs a '
-      'declared risk per unit, and since the firm\'s limits are 4% daily and 6% '
-      'trailing the answer depends entirely on that number. So it is **swept**, '
-      'not assumed: ' + ', '.join('{:.2f}'.format(x) for x in RISK_PCTS)
-      + '% of equity per R.\n')
+      'declared risk per unit, and the firm\'s limits are 4% daily and 6% '
+      'trailing.\n')
+    a('\n> **CORRECTED, 24 Nov, on Jack\'s check 2.** The first version of this '
+      'section annualised runs of a few days. An 8-day run that breached the '
+      'daily limit reported **207,847% paid out a year**, and a 2-day run '
+      'reported **1,312% return a year**. Three things are fixed. Totals and '
+      'days are always shown. **Nothing shorter than a year is annualised** '
+      'and the annualised columns are left BLANK rather than small, so they '
+      'cannot be read by mistake. And the headline sizing is no longer a fixed '
+      'risk per R: each candidate is sized so that **its own worst dip equals '
+      'the Team 1 budget of ' + '{:.1f}'.format(WN.PROP_DIP) + '%**, which is '
+      'what `MODEA_WINNERS.md` means by Team 1. The fixed sweep is kept below '
+      'it as context.\n')
     if len(PR):
-        qc = ['c1', 'base', 'ruleset', 'risk_pct_per_R', 'phase', 'days',
-              'breached', 'return_pct_per_year', 'worst_dip_pct',
-              'paid_out_per_year']
         d = PR[PR.variant == MAIN_PLAN].copy() if 'variant' in PR.columns else PR.copy()
         d['c1'] = d.c1.map(lambda s: _short(s, '_signals'))
         d['base'] = d.base.map(lambda s: _short(s, '_baseline'))
-        a(N._tbl(d.sort_values(['c1', 'base', 'risk_pct_per_R']), qc))
+        qc = ['c1', 'base', 'ruleset', 'phase', 'risk_pct_per_R',
+              'worst_dip_R_used', 'days', 'years', 'breached',
+              'return_pct', 'paid_out', 'worst_dip_pct', 'annualised',
+              'return_pct_per_year', 'paid_out_per_year']
+        if 'sizing' in d.columns:
+            hd = d[d.sizing != 'fixed']
+            a('\n### Sized so the worst dip equals the Team 1 budget\n')
+            a('`risk_pct_per_R` is derived, not chosen: it is '
+              + '{:.1f}'.format(WN.PROP_DIP) + ' divided by the candidate\'s own '
+              'verified worst dip in R. A blank `return_pct_per_year` means the '
+              'run ended before a full year and has no annual rate.\n')
+            if len(hd):
+                a(N._tbl(hd.sort_values(['c1', 'base', 'ruleset', 'phase']), qc))
+                nshort = int((hd.annualised == 0).sum())
+                a('\n**' + str(nshort) + ' of ' + str(len(hd)) + ' runs ended '
+                  'before a full year** and are therefore not annualised at '
+                  'all. That is the finding, not a gap in the table: at a '
+                  'sizing that puts the worst dip at the budget, most of these '
+                  'candidates breach a firm limit inside the first year.\n')
+            else:
+                a('_no dip-sized rows: every candidate had an undefined dip_\n')
+            a('\n### The fixed risk-per-R sweep, as context\n')
+            a('Swept over ' + ', '.join('{:.2f}'.format(x) for x in RISK_PCTS)
+              + '% of equity per R. Same annualisation rule.\n')
+            fx = d[d.sizing == 'fixed']
+            if len(fx):
+                a(N._tbl(fx.sort_values(['c1', 'base', 'risk_pct_per_R',
+                                         'ruleset', 'phase']), qc))
+        else:
+            a(N._tbl(d.sort_values(['c1', 'base', 'risk_pct_per_R']), qc))
     else:
         a('_not computed_\n')
 
