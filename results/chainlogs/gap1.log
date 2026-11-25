@@ -1,0 +1,17 @@
+[10:21:07] START gap1 (item 1: realistic gap fills)
+[10:21:07] START snb long
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  long EURCHF into 15 Jan 2015, 1.5 ATR stop: engine books -1.000 R, hourly rule -1.000 R, bound -20.100 R; capped -20.100 R at leverage 7.3:1
+  nnfxgap done
+[10:21:09] OK snb long
+[10:21:09] START effect + deciles, 28 pairs, 6 cells, gap fills off then on
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  A/jack  R -14.093 -> -14.386   worst trade -2.813 -> -2.956   17 of 2103 entries moved
+  A/textbook  R -7.193 -> -7.792   worst trade -2.813 -> -2.956   42 of 1615 entries moved
+  B/jack  R -43.372 -> -45.920   worst trade -2.813 -> -2.956   50 of 4859 entries moved
+  B/textbook  R -37.604 -> -39.671   worst trade -2.813 -> -2.956   139 of 4633 entries moved
+  C/jack  R -19.051 -> -19.306   worst trade -2.813 -> -2.956   29 of 4307 entries moved
+  C/textbook  R 0.431 -> -0.283   worst trade -2.813 -> -2.956   68 of 4102 entries moved
+  nnfxgap done
+[10:21:55] OK effect + deciles
+[10:21:55] DONE gap1
