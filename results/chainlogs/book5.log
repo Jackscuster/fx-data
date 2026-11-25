@@ -36,3 +36,37 @@
 [11:23:19] DONE book5
 [11:23:58] START book5
   costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+      re-ran vortex_signals                           15928 legs
+      re-ran hieken_ashi_smoothed_signals              8894 legs
+      re-ran waddah_attar_explosion_signals            5328 legs
+      re-ran A                                         1470 legs
+    A               1470 legs  R   +39.874  R/yr  +6.646  dip  35.125  R/dip +1.135
+    B               3926 legs  R   +23.934  R/yr  +3.989  dip  90.655  R/dip +0.264
+    A_quiet         1032 legs  R   +35.058  R/yr  +5.843  dip  26.798  R/dip +1.308
+    B_quiet         2193 legs  R    -1.755  R/yr  -0.292  dip  75.165  R/dip -0.023
+    group_assign    3034 legs  R   -64.735  R/yr -10.789  dip 120.715  R/dip -0.536
+    MR60             855 legs  R   +14.210  R/yr  +2.368  dip  45.132  R/dip +0.315
+    MR20            6552 legs  R    -9.627  R/yr  -1.604  dip 122.925  R/dip -0.078
+    MR120            336 legs  R   +18.507  R/yr  +3.084  dip  37.939  R/dip +0.488
+  sleeve correlations written
+    +A              1 sleeves  R/yr  +6.646  dip  35.125  R/dip +1.135  team1  +0.68%/yr  dR —  corr —
+    +B              2 sleeves  R/yr  +5.317  dip  55.105  R/dip +0.579  team1  +0.35%/yr  dR -7.970  corr +0.377
+    +A_quiet        3 sleeves  R/yr  +5.493  dip  40.105  R/dip +0.822  team1  +0.49%/yr  dR +1.051  corr +0.551
+    +B_quiet        4 sleeves  R/yr  +4.046  dip  44.504  R/dip +0.546  team1  +0.33%/yr  dR -8.678  corr +0.679
+    +group_assign   5 sleeves  R/yr  +1.079  dip  52.217  R/dip +0.124  team1  +0.07%/yr  dR -17.802  corr +0.434
+    +MR120          6 sleeves  R/yr  +1.413  dip  42.298  R/dip +0.200  team1  +0.12%/yr  dR +2.005  corr -0.007
+    A+B+A_quiet        R/dip +0.822 (was +0.579)  team1  +0.49%/yr  corr +0.551  BETTER
+    A+B+B_quiet        R/dip +0.372 (was +0.579)  team1  +0.22%/yr  corr +0.715  worse
+    A+B+MR120          R/dip +0.750 (was +0.579)  team1  +0.45%/yr  corr +0.002  BETTER
+    A+B+MR20           R/dip +0.462 (was +0.579)  team1  +0.28%/yr  corr -0.366  worse
+    A+B+MR60           R/dip +0.691 (was +0.579)  team1  +0.41%/yr  corr -0.022  BETTER
+    A+B+group_assign   R/dip -0.005 (was +0.579)  team1  -0.00%/yr  corr +0.445  worse
+    A                                        team1  +0.68%/yr  eval pass day NEVER  funded breach none     payout $843/yr
+    A+B                                      team1  +0.35%/yr  eval pass day NEVER  funded breach none     payout $386/yr
+    A+B+A_quiet                              team1  +0.49%/yr  eval pass day NEVER  funded breach none     payout $527/yr
+    A+B+A_quiet+B_quiet                      team1  +0.33%/yr  eval pass day NEVER  funded breach none     payout $350/yr
+    A+B+A_quiet+B_quiet+group_assign         team1  +0.07%/yr  eval pass day NEVER  funded breach none     payout $100/yr
+    A+B+A_quiet+B_quiet+group_assign+MR120   team1  +0.12%/yr  eval pass day NEVER  funded breach none     payout $144/yr
+  nnfxbook done
+[11:25:17] OK book5
+[11:25:17] DONE book5
