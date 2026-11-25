@@ -2697,6 +2697,60 @@ walks 10 s · uncut random-entry null 17 min (2 workers).
 
 ---
 
+# 2z. THE 7 SEP VALIDATION OF THE LOWVOL FLAG USED THE AS-BUILT FULL-SAMPLE VERSION
+
+Recorded 25 Nov 2026 on Jack's instruction, because the distinction decides
+whether a decided rule actually does what it was adopted for.
+
+**What was validated on 7 Sep.** `l2suppvol.atr_floors` flags a trade when
+`atr[entry_bar] / close[entry_bar]` is below that pair's own 5th percentile of
+`ATR/close`. GAUNTLET.md's leverage-cap section reports the result of that
+measurement — 188 of 783,527 pair-bars below the 1:30 threshold, EURCHF only,
+100% inside the announced SNB floor — and `l2suppvol` describes itself as
+"Report only; kills nothing."
+
+**The percentile in that version spans the pair's ENTIRE series**, including
+bars after the one being judged, and **the ATR is read at the entry bar
+itself** rather than lagged. Neither matters for a report. Both matter the
+moment the flag decides a trade.
+
+**The causal version is a materially weaker rule, and the numbers are these.**
+Expanding percentile over bars ≤ t−1, ATR lagged one bar:
+
+| EURCHF, SNB peg 6 Sep 2011 – 15 Jan 2015 | |
+|---|---|
+| peg days the causal flag is ON | **218 of 1,297** |
+| 2011 | 0 of 260 days |
+| 2012 | 151 of 260 |
+| 2013 | 0 of 259 |
+| 2014 | 59 of 259 |
+| 2015 | 8 of 259 |
+| **2 Jan 2015, the SNB trade's entry bar** | **flag OFF — the trade is TAKEN** |
+
+On that bar the lagged ATR/price is **12.756 bp**. The as-built full-sample
+floor is **15.242 bp**, so it flags. The causal floor is **12.687 bp**, so it
+does not — it misses by **0.069 bp, half a per cent of the floor.**
+
+**Why, and it is structural rather than bad luck.** After three years of the
+peg, the peg IS EURCHF's own normal, so the pair's own 5th percentile collapses
+toward the pegged level. A per-pair percentile cannot flag a long peg once the
+peg dominates that pair's own history. The full-sample version only catches
+this trade because it has already seen the post-float volatility of 2015
+onward — which is precisely the information a rule trading on 2 Jan 2015 does
+not have.
+
+**What does catch it.** A cross-pair measure. On 2 Jan 2015 EURCHF's lagged
+ATR/price was 12.756 bp against a 28-pair median of **86.0 bp**, the next
+quietest pair being USDCAD at 63.4 bp — EURCHF was **6.7× below the median**.
+The peg guard adopted on 25 Nov (ratio to the 28-pair median, not a
+cross-pair percentile) blocks it at every X from 0.20 up, and between X = 0.10
+and X = 0.33 the ONLY pair it ever flags across 24 years of 28-pair data is
+EURCHF. See `results/nnfx/pegguard_curve.csv`.
+
+**NNFX_FIDELITY.md row 15 was corrected the same day.** It had conflated a
+per-pair floor (in the repo since 7 Sep, report-only, traded from 25 Nov) with
+a market-wide floor (still not implemented, and the version that matters here).
+
 # 3. EVERY RULE DECIDED
 
 | date | rule |

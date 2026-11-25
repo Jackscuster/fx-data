@@ -129,7 +129,7 @@ def _write_csv(D, path, cols=None):
 
 def run_combo(c1, c1_set, base, base_set, variant, ruleset,
               pairs=None, atr_len=14, use_hourly=True, amb_out=None,
-              lowvol_q=VOL.LOWVOL_Q):
+              lowvol_q=VOL.LOWVOL_Q, peg_x=VOL.PEG_X_PLACEHOLDER):
     """One C1 + one baseline, one ruleset, across the pairs. -> trade frame.
 
     THE C1 ENTRY AND EXIT ARE ALWAYS ON. Stage 2 adds a baseline to a C1; it
@@ -190,7 +190,16 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
                 _ix, _lv = VOL.lowvol_mask(p, q=lowvol_q, causal=True)
                 assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
                     p, len(_lv), n)
-                vok = ~_lv
+                vok = vok & (~_lv)
+            # THE PEG GUARD, cross-pair and NOT a percentile: no new entry
+            # while this pair's lagged ATR/price is below peg_x x the 28-pair
+            # MEDIAN of the same lagged quantity that day. X is a PLACEHOLDER
+            # until Jack picks it off the curve.
+            if peg_x:
+                _ix2, _pg = VOL.peg_mask(p, x=peg_x)
+                assert len(_pg) == n, '%s: peg mask %d vs %d bars' % (
+                    p, len(_pg), n)
+                vok = vok & (~_pg)
             A['v_ok_l'] = vok.copy(); A['v_ok_s'] = vok.copy()
             A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
             if not RS['side']:
@@ -222,12 +231,29 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
     T['base'] = base; T['base_setting'] = base_set
     T['variant'] = variant; T['ruleset'] = ruleset
     T['lowvol_q'] = (lowvol_q if lowvol_q else 0.0)
+    T['peg_x'] = (peg_x if peg_x else 0.0)
     return T
 
 
 # ====================== SCORING, REUSED FROM STAGE 1 ======================
-def _score(T, years, ndraw=400, nboot=2000, want_null=True, seed=7):
-    """Every figure Jack's 2c list asks for, on one trade frame."""
+def _score(T, years, ndraw=400, nboot=2000, want_null=True, seed=7,
+           leverage_cap=True):
+    """Every figure Jack's 2c list asks for, on one trade frame.
+
+    THE LEVERAGE CAP IS APPLIED FIRST AND BY DEFAULT, standing from 25 Nov.
+    Every figure below is therefore at ACHIEVABLE SIZE: open positions summed,
+    capped at 1:30, each new entry scaled down -- never skipped -- to fit, plus
+    the GAUNTLET per-position cap. The uncapped headline is computed once
+    alongside it and carried in the `*_uncapped` columns, so the size of the
+    correction is on record in the same row rather than in a separate pass.
+    """
+    T_req = T
+    if leverage_cap:
+        T, _lsum = VOL.apply_leverage_cap(T)
+        if len(_lsum):
+            _r = _lsum.iloc[0]
+        else:
+            _r = {}
     cost = N._cost_R(T)
     DS = N.daily_series(T, cost)
     Y = N._yearly(T, cost, DS)
@@ -261,6 +287,33 @@ def _score(T, years, ndraw=400, nboot=2000, want_null=True, seed=7):
     # ---- JACK'S STANDING ROBUSTNESS COLUMNS, 24 Nov, in EVERY Layer 2 table.
     # A candidate is judged on the excluding-best-day figures FIRST.
     out.update(VOL.robust_cols(T, cost, DS, years))
+    # ---- THE UNCAPPED HEADLINE, once, beside the capped figures
+    if leverage_cap:
+        out['leverage_cap_on'] = 1
+        for k in ('trades_capped', 'pct_trades_capped', 'min_scale',
+                  'mean_scale_on_capped', 'max_leverage_requested'):
+            out['lev_' + k] = (float(_r[k]) if k in getattr(_r, 'index', [])
+                               else np.nan)
+        try:
+            Tu = T_req.reset_index(drop=True)
+            cu = N._cost_R(Tu); DSu = N.daily_series(Tu, cu)
+            Yu = N._yearly(Tu, cu, DSu)
+            bu = Yu[Yu.year.isin(list(years))]
+            nyu = max(1, len(bu))
+            out['R_net_build_uncapped'] = float(bu.R_net.sum())
+            out['R_net_per_year_uncapped'] = float(bu.R_net.sum() / nyu)
+            out['worst_dip_R_uncapped'] = float(N.true_dip(DSu, years))
+            out['n_entered_uncapped'] = float(bu.n_entered.sum())
+            out['R_lost_to_leverage_cap'] = (
+                out['R_net_build_uncapped'] - out['R_net_build'])
+            out['pct_R_lost_to_leverage_cap'] = (
+                100.0 * out['R_lost_to_leverage_cap']
+                / out['R_net_build_uncapped']
+                if abs(out['R_net_build_uncapped']) > 1e-9 else np.nan)
+        except Exception as e:
+            out['uncapped_error'] = '%s: %s' % (type(e).__name__, e)
+    else:
+        out['leverage_cap_on'] = 0
     if want_null:
         nulls, nulls_n, nymat = N._null_match(T, cost, ndraw=ndraw,
                                               years=years, seed=seed)

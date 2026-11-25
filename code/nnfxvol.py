@@ -221,10 +221,14 @@ def robust_cols(T, cost, DS, years):
         if len(ys) > 1 and ys.std(ddof=1) > 0 else np.nan)
     tb, _sd = N._block_t(dd.R.to_numpy(float), ndraw=2000)
     out['t_block_boot_ex_best_day'] = float(tb)
-    # ---- per TRADE, not per leg
+    # ---- per TRADE, not per leg. entry_frame carries no R column, so the
+    # legs' R is summed onto the entry key first -- the two legs of a position
+    # sum to the position's R, which is the whole reason entry_frame exists.
     E = N.entry_frame(T)
     if len(E):
-        ey = pd.DatetimeIndex(E.entry_date).year
+        Rsum = (T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
+                .agg(R=('R', 'sum')))
+        E = E.merge(Rsum, on=['pair', 'entry_date', 'direction'], how='left')
         xy = pd.DatetimeIndex(E.exit_date).year
         sel = E[np.isin(xy, yrs)]
     else:
@@ -307,6 +311,208 @@ def leverage_census(T, equity=EQUITY, cap_lev=CAP_LEV):
         R_lost_to_cap=float(g.R.sum() - g.R_capped.sum()),
         equity_assumed=float(equity), cap_leverage=float(cap_lev))
     return g, pd.DataFrame([summ])
+
+
+# ============== THE PEG GUARD: CROSS-PAIR, AND NOT A PERCENTILE ==============
+# Jack, 25 Nov: "Do not use a cross-pair percentile (it would permanently ban
+# the quietest pair)." Exactly right -- a 5th-percentile-of-28 rule flags
+# roughly 1.4 pairs every single day whatever the market is doing, so the
+# structurally quietest pair is banned for its whole life and nothing is
+# learned. A RATIO TO THE MEDIAN has no such floor: on a day when every pair is
+# quiet together, no pair is flagged, which is the correct behaviour, and a pair
+# is flagged only when it is quiet RELATIVE TO ITS PEERS THAT DAY.
+PEG_X_CURVE = (0.10, 0.20, 0.30, 0.33, 0.40, 0.50, 0.60, 0.70)
+PEG_X_PLACEHOLDER = 0.33      # Jack picks X from the curve; this is labelled
+_PEGC = {}
+
+
+def _panel(atr_len=ATR_LEN):
+    """(union index, {pair: lagged ATR/price on the union index}, median row)."""
+    key = int(atr_len)
+    if key in _PEGC:
+        return _PEGC[key]
+    ixs, rels = {}, {}
+    for p in S.all_pairs():
+        ix, rel = _rel(p, atr_len)
+        rl = np.full(len(rel), np.nan)
+        rl[1:] = rel[:-1]                     # the explicit one-bar lag
+        ixs[p], rels[p] = ix, rl
+    uni = ixs[S.all_pairs()[0]]
+    for p in S.all_pairs()[1:]:
+        uni = uni.union(ixs[p])
+    uni = pd.DatetimeIndex(sorted(set(uni)))
+    M = np.full((len(S.all_pairs()), len(uni)), np.nan)
+    for j, p in enumerate(S.all_pairs()):
+        sel = uni.get_indexer(ixs[p])
+        ok = sel >= 0
+        M[j, sel[ok]] = rels[p][ok]
+    with np.errstate(all='ignore'):
+        import warnings
+        with warnings.catch_warnings():
+            # a union date on which NO pair has a bar gives an all-NaN slice;
+            # the median is then NaN and the guard reads False, which is right
+            warnings.simplefilter('ignore', RuntimeWarning)
+            med = np.nanmedian(M, axis=0)
+    _PEGC[key] = (uni, M, med)
+    return _PEGC[key]
+
+
+def peg_mask(pair, x=PEG_X_PLACEHOLDER, atr_len=ATR_LEN):
+    """True on bars where this pair's lagged ATR/price is below x x the 28-pair
+    MEDIAN of the same lagged quantity that day. Causal by construction: every
+    input is bar t-1 on every pair."""
+    uni, M, med = _panel(atr_len)
+    j = list(S.all_pairs()).index(pair)
+    with np.errstate(invalid='ignore'):
+        flag = np.isfinite(M[j]) & np.isfinite(med) & (M[j] < float(x) * med)
+    ix, _rel_ = _rel(pair, atr_len)
+    sel = uni.get_indexer(ix)
+    out = np.zeros(len(ix), bool)
+    ok = sel >= 0
+    out[ok] = flag[sel[ok]]
+    return ix, out
+
+
+def peg_curve(xs=PEG_X_CURVE, atr_len=ATR_LEN):
+    """For each X: share of bars flagged, how many pairs ever flagged, and
+    whether EURCHF is blocked across the SNB peg."""
+    rows = []
+    for x in xs:
+        tot = flg = 0
+        per = {}
+        for p in S.all_pairs():
+            ix, m = peg_mask(p, x=x, atr_len=atr_len)
+            tot += len(m); flg += int(m.sum())
+            if m.any():
+                per[p] = 100.0 * float(m.mean())
+        ixe, me = peg_mask('EURCHF', x=x, atr_len=atr_len)
+        peg = (pd.DatetimeIndex(ixe) >= '2011-09-06') & \
+              (pd.DatetimeIndex(ixe) <= '2015-01-15')
+        i0 = int(pd.DatetimeIndex(ixe).get_indexer([pd.Timestamp('2015-01-02')])[0])
+        rows.append(dict(
+            X=x, pct_bars_flagged=100.0 * flg / max(1, tot),
+            pairs_ever_flagged=len(per),
+            worst_pair=(max(per, key=per.get) if per else ''),
+            worst_pair_pct=(max(per.values()) if per else 0.0),
+            eurchf_pct_all=100.0 * float(me.mean()),
+            eurchf_peg_days_blocked=int(me[peg].sum()),
+            eurchf_peg_days=int(peg.sum()),
+            eurchf_pct_of_peg=100.0 * float(me[peg].mean()) if peg.any() else np.nan,
+            blocks_2jan2015=int(bool(me[i0])) if i0 >= 0 else -1))
+    return pd.DataFrame(rows)
+
+
+# ================== THE LEVERAGE CAP, APPLIED NOT REPORTED ==================
+def apply_leverage_cap(T, equity=EQUITY, cap_lev=CAP_LEV, verbose=False):
+    """Return T restated at ACHIEVABLE SIZE, and the scale actually applied.
+
+    Jack, 25 Nov, standing: every Layer 2 result is computed at achievable
+    size -- all open positions summed, capped at 1:30, new entries SCALED DOWN
+    (never skipped) to fit, plus the GAUNTLET per-position cap.
+
+    THE RULE IS SEQUENTIAL AND CAUSAL, which it has to be. Entries are walked
+    in date order; at each one the room left is `cap x equity` minus the
+    notional of positions ALREADY OPEN AT THEIR OWN SCALED SIZE, and the new
+    entry takes the smaller of that room and its own per-position cap. A
+    position already open is never cut retroactively -- doing that would use
+    the future to resize a trade that had already been placed.
+
+    Because the entry is scaled and not skipped, the SET of trades is
+    unchanged: only sizes move. So this composes with every other rule without
+    changing which bars fire.
+
+    `units`, `R` and `R_gross` are all scaled by the same per-entry factor.
+    That is enough to carry the cap through everything downstream: `_cost_R` is
+    proportional to `units`, and `daily_series` builds its marks from `units`
+    and its exit term from `R_gross`.
+    """
+    if not len(T):
+        return T, pd.DataFrame()
+    T = T.reset_index(drop=True).copy()
+    key = ['pair', 'entry_date', 'direction']
+    g = (T.groupby(key, as_index=False)
+         .agg(n_legs=('leg', 'size'), units=('units', 'first'),
+              entry_px=('entry_px', 'first'), exit_date=('exit_date', 'max')))
+    g['notional_req'] = g.units * g.n_legs * g.entry_px
+    g = g.sort_values('entry_date').reset_index(drop=True)
+    ed = pd.DatetimeIndex(g.entry_date); xd = pd.DatetimeIndex(g.exit_date)
+    req = g.notional_req.to_numpy(float)
+    ceiling = float(cap_lev) * float(equity)
+    scale = np.ones(len(g))
+    placed = np.zeros(len(g))          # notional actually taken
+    for j in range(len(g)):
+        live = (ed <= ed[j]) & (xd >= ed[j])
+        live = live.copy(); live[j] = False
+        open_now = float(placed[live].sum())
+        room = max(0.0, ceiling - open_now)
+        s_port = min(1.0, room / req[j]) if req[j] > 0 else 1.0
+        s_alone = min(1.0, ceiling / req[j]) if req[j] > 0 else 1.0
+        scale[j] = min(s_port, s_alone)
+        placed[j] = req[j] * scale[j]
+    g['lev_scale'] = scale
+    g['notional_placed'] = placed
+    g['capped'] = (g.lev_scale < 1.0 - 1e-12).astype(int)
+    M = T.merge(g[key + ['lev_scale', 'notional_req', 'notional_placed',
+                         'capped']], on=key, how='left')
+    M['lev_scale'] = M.lev_scale.fillna(1.0)
+    for c in ('units', 'R', 'R_gross'):
+        if c in M.columns:
+            M[c] = M[c].to_numpy(float) * M.lev_scale.to_numpy(float)
+    summ = pd.DataFrame([dict(
+        trades=int(len(g)), trades_capped=int(g.capped.sum()),
+        pct_trades_capped=100.0 * float(g.capped.mean()),
+        min_scale=float(g.lev_scale.min()),
+        mean_scale_on_capped=(float(g[g.capped == 1].lev_scale.mean())
+                              if int(g.capped.sum()) else np.nan),
+        max_leverage_requested=float((req / float(equity)).max()),
+        equity_assumed=float(equity), cap_leverage=float(cap_lev))])
+    if verbose:
+        print('    leverage cap: %d of %d entries scaled, worst to %.3f'
+              % (int(g.capped.sum()), len(g), float(g.lev_scale.min())),
+              flush=True)
+    return M, summ
+
+
+# ============ R PER TRADE BY ATR BUCKET AT ENTRY (TEN BUCKETS) ============
+def atr_buckets(T, nb=10, atr_len=ATR_LEN):
+    """Item 3's last part: is the profit concentrated in low-volatility entries?
+
+    The bucket is the entry bar's LAGGED ATR/price expressed as that pair's own
+    expanding percentile -- the same quantity the per-pair floor thresholds, so
+    bucket 1 IS the bottom decile the floor is cutting into.
+    """
+    if not len(T):
+        return pd.DataFrame()
+    E = N.entry_frame(T)
+    if not len(E):
+        return pd.DataFrame()
+    Rsum = (T.groupby(['pair', 'entry_date', 'direction'], as_index=False)
+            .agg(R=('R', 'sum')))
+    E = E.merge(Rsum, on=['pair', 'entry_date', 'direction'], how='left')
+    pct = np.full(len(E), np.nan)
+    for p, sub in E.groupby('pair'):
+        ix, rel = _rel(p, atr_len)
+        rl = np.full(len(rel), np.nan); rl[1:] = rel[:-1]
+        rk = (pd.Series(rl).expanding(min_periods=MIN_HIST)
+              .apply(lambda a: (a[:-1] < a[-1]).mean() if len(a) > 1 else np.nan,
+                     raw=True).to_numpy())
+        sel = ix.get_indexer(pd.DatetimeIndex(sub.entry_date))
+        ok = sel >= 0
+        pct[sub.index.to_numpy()[ok]] = rk[sel[ok]]
+    E['atr_pctile'] = pct
+    E = E[np.isfinite(E.atr_pctile.to_numpy(float))]
+    if not len(E):
+        return pd.DataFrame()
+    E['bucket'] = np.minimum(nb - 1,
+                             (E.atr_pctile.to_numpy(float) * nb).astype(int)) + 1
+    out = (E.groupby('bucket', as_index=False)
+           .agg(n_trades=('R', 'size'), R_total=('R', 'sum'),
+                R_per_trade=('R', 'mean'),
+                atr_pctile_lo=('atr_pctile', 'min'),
+                atr_pctile_hi=('atr_pctile', 'max')))
+    tot = float(out.R_total.sum())
+    out['share_of_total_R'] = (out.R_total / tot if abs(tot) > 1e-9 else np.nan)
+    return out
 
 
 if __name__ == '__main__':

@@ -70,6 +70,10 @@ RISK_UNIT_ATR = 1.5          # every R here is per 1.5 ATR
 # JACK'S DECIDED RULE 1 (7 Sep 2026): a pair does not trade while its own
 # ATR is in its bottom 5%. None turns the floor off; every writer records it.
 LOWVOL_Q = 0.05
+# THE PEG GUARD, cross-pair, Jack 25 Nov. No new entry while this pair's lagged
+# ATR/price is below PEG_X x the 28-pair MEDIAN that day. X IS A PLACEHOLDER
+# at 0.33 until Jack picks it off the curve in STAGE3.md. None turns it off.
+PEG_X = 0.33
 # 2000, AND BOTH SMALLER VALUES WERE TRIED AND FAILED. At 50 ATR two AUDJPY
 # long trades held 345 bars reached the stop -- the 2008 collapse is that large
 # in ATR units. At 200 a single EURCHF baseline trade reached it, which is the
@@ -210,12 +214,18 @@ def _neutralise(A, kind, side=None, pair_for_floor=None):
     # bottom LOWVOL_Q and exits are untouched. LOWVOL_Q = None restores the
     # pre-24-Nov behaviour and every output records which was used.
     vok = T.copy()
-    if LOWVOL_Q and pair_for_floor:
+    if pair_for_floor and (LOWVOL_Q or PEG_X):
         import nnfxvol as _V
-        _ix, _lv = _V.lowvol_mask(pair_for_floor, q=LOWVOL_Q, causal=True)
-        assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
-            pair_for_floor, len(_lv), n)
-        vok = ~_lv
+        if LOWVOL_Q:
+            _ix, _lv = _V.lowvol_mask(pair_for_floor, q=LOWVOL_Q, causal=True)
+            assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
+                pair_for_floor, len(_lv), n)
+            vok = vok & (~_lv)
+        if PEG_X:
+            _ix2, _pg = _V.peg_mask(pair_for_floor, x=PEG_X)
+            assert len(_pg) == n, '%s: peg mask %d vs %d bars' % (
+                pair_for_floor, len(_pg), n)
+            vok = vok & (~_pg)
     A['v_ok_l'] = vok.copy(); A['v_ok_s'] = vok.copy()
     A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
     if kind == 'c1':

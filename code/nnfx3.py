@@ -202,6 +202,7 @@ _RUNC = {}
 def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
                c2=None, c2_set='default', ccy_n=None,
                vol_rule=None, vol_opt=None, lowvol_q=VOL.LOWVOL_Q,
+               peg_x=VOL.PEG_X_PLACEHOLDER,
                pairs=None, atr_len=14, use_hourly=True, cache=True):
     """Stage 2's run_combo with the C2 SLOT FILLED instead of neutralised.
 
@@ -214,7 +215,7 @@ def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
     """
     assert not (c2 and ccy_n), 'c2 and ccy_n are alternatives, not a pair'
     key = (c1, c1_set, base, base_set, variant, ruleset, c2, c2_set, ccy_n,
-           vol_rule, vol_opt, lowvol_q, bool(use_hourly),
+           vol_rule, vol_opt, lowvol_q, peg_x, bool(use_hourly),
            tuple(pairs) if pairs else None)
     if cache and key in _RUNC:
         return _RUNC[key]
@@ -297,6 +298,11 @@ def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
                 assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
                     p, len(_lv), n)
                 vm = vm & (~_lv)
+            if peg_x:
+                _ix2, _pg = VOL.peg_mask(p, x=peg_x)
+                assert len(_pg) == n, '%s: peg mask %d vs %d bars' % (
+                    p, len(_pg), n)
+                vm = vm & (~_pg)
             A['v_ok_l'] = vm.copy(); A['v_ok_s'] = vm.copy()
             A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
             if not RS['side']:
@@ -331,6 +337,7 @@ def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
         T['vol_rule'] = vol_rule or ''
         T['vol_opt'] = (vol_opt if vol_opt is not None else -1)
         T['lowvol_q'] = (lowvol_q if lowvol_q else 0.0)
+        T['peg_x'] = (peg_x if peg_x else 0.0)
         out = T
     if cache:
         if len(_RUNC) > 40:

@@ -578,6 +578,67 @@ def c38():
             % (100.0 * float(_m.mean()), na - nb, na))
 
 
+def c39():
+    """A LAYER 2 TABLE COMPUTED AT A SIZE NO ACCOUNT COULD HOLD.
+
+    Jack, 25 Nov, standing: every Layer 2 result is computed at ACHIEVABLE
+    size -- all open positions summed, capped at the 1:30 prop limit, new
+    entries scaled down (never skipped) to fit, plus the GAUNTLET per-position
+    cap. "Preflight guard: no Layer 2 table without it."
+
+    WHAT IT COST TO LEARN. The EURCHF short of 2 Jan 2015 is 56-137% of three
+    carried-forward candidates and was reported at +74.996 R. Its own leverage
+    was 15.87:1, inside the cap -- but 197,294 of notional was ALREADY OPEN
+    when it entered, so the summed position was 35.60:1 and the achievable size
+    was 64.7%, worth 48.543 R. The number that mattered was never the
+    position's own leverage; it was the book's.
+
+    WHAT IT CHECKS. The code path, and then the tables:
+      - nnfx2s._score defaults leverage_cap=True and calls apply_leverage_cap
+        before it computes anything;
+      - the cap is SEQUENTIAL and causal -- a position already open is never
+        resized retroactively, which would use the future;
+      - every stage2/stage3 result table that exists carries
+        `leverage_cap_on == 1`. A table from before 25 Nov has no such column
+        at all, which is how a stale table is told apart from a bad one, and it
+        FAILS until it is regenerated rather than being quietly accepted.
+    """
+    sys.path.insert(0, ROOTLIB)
+    n2 = src('nnfx2s.py')
+    assert 'leverage_cap=True' in n2, (
+        'nnfx2s._score does not default the leverage cap ON')
+    assert 'VOL.apply_leverage_cap(T)' in n2, (
+        'nnfx2s._score does not apply the cap')
+    vs = src('nnfxvol.py')
+    assert 'placed[live].sum()' in vs, (
+        'the cap is not SEQUENTIAL -- it must sum the notional of positions '
+        'already open AT THEIR OWN SCALED SIZE')
+    assert 'never cut retroactively' in vs or 'retroactively' in vs, (
+        'the cap does not document that open positions are not resized')
+    import pandas as _pd
+    ND = os.path.join(ROOTOUT, 'nnfx')
+    want = ['stage2_picks_report.csv', 'stage3_report.csv']
+    stale, ok = [], []
+    for nm in want:
+        f = os.path.join(ND, nm)
+        if not os.path.exists(f) or os.path.getsize(f) < 2:
+            continue
+        D = _pd.read_csv(f)
+        if 'leverage_cap_on' not in D.columns:
+            stale.append('%s (no leverage_cap_on column: predates 25 Nov)' % nm)
+        elif not bool((_pd.to_numeric(D.leverage_cap_on,
+                                      errors='coerce') == 1).all()):
+            stale.append('%s (leverage_cap_on is not 1 on every row)' % nm)
+        else:
+            ok.append(nm)
+    assert not stale, (
+        '%d Layer 2 table(s) not at achievable size -- regenerate them: %s'
+        % (len(stale), '; '.join(stale)))
+    return ('the cap defaults ON in _score, is sequential and causal, and %d '
+            'Layer 2 table(s) carry leverage_cap_on = 1 (%s)'
+            % (len(ok), ', '.join(ok) if ok else 'none present yet'))
+
+
 def _named_note(named_ok):
     """The named-exception line that guard 34 always prints, so the set of
     exceptions cannot grow or drift unnoticed."""
@@ -1096,6 +1157,9 @@ def main():
     guard(38, 'A Layer 2 job that does not declare whether the VOLATILITY FLOOR is on: Jack\'s decided rule 1 of 7 Sep 2026 -- a pair does not trade while its own ATR is in its bottom 5% -- had been in the repo since then as l2suppvol.atr_floors and was REPORT-ONLY, so the entire staged build ran without it and no result file said either way. The SNB trade of 15 Jan 2015, worth +74.996 R and 56-137% of three carried-forward candidates, entered on a bar the as-built flag marks low-volatility',
           'nnfx1, nnfx2s and nnfx3 each expose the switch, default it to 0.05, record it on every trade frame, and gate the VOLUME slot rather than `suspect` -- v_ok is entry-only in l2engine while a suspect bar blocks exits too; and the mask is causal, an expanding percentile over bars <= t-1 with a one-bar-lagged ATR',
           'all three writers declare and record the floor, and it demonstrably removes entries on a live EURCHF probe', c38)
+    guard(39, 'A Layer 2 table computed at a size no account could hold. The EURCHF short of 2 Jan 2015 is 56-137% of three carried-forward candidates and was reported at +74.996 R; its OWN leverage was 15.87:1, inside the cap, but 197,294 of notional was already open when it entered, so the summed position was 35.60:1, the achievable size 64.7%, and the trade worth 48.543 R. The number that mattered was never the position\'s own leverage, it was the book\'s',
+          'nnfx2s._score defaults leverage_cap=True and applies the cap before computing anything; the cap is sequential and causal, never resizing a position already open; and every Layer 2 result table carries leverage_cap_on = 1',
+          'the cap defaults on in the scorer and no stage2/stage3 table lacks the column', c39)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
