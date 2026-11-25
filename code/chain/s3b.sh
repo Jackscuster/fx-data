@@ -11,7 +11,7 @@ run(){ local n=$1; shift
   if nice -n 10 python3 -W error::FutureWarning code/nnfx3.py "$@" >>$L 2>&1; then
     say "OK s3 $n"; else say "FAIL s3 $n"; return 1; fi
 }
-say "stage 3 report re-run on the fixed control"
+say "stage 3 report re-run on the BUILD-only scoring window"
 run report --stage report || exit 1
 run md     --stage md
 say "DONE stage 3b"

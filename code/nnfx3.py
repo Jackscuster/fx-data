@@ -613,20 +613,36 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
             _RUNC.clear()
             w2 = W2[(W2.c1 == c1) & (W2.base == base)
                     & (W2.variant == v) & (W2.ruleset == rs)]
-            acc0 = []
+            # THE SCORED FRAME HOLDS **BUILD YEARS ONLY**, and the all-years
+            # frame is built separately for the yearly csv. Stitching all
+            # eleven years and then filtering the DAILY SERIES to 2010-2015
+            # keeps the pre-2016 marks of positions that CLOSED in 2016, which
+            # inflated the control from 93.33 R to 100.59 R and silently used a
+            # different window convention from stage 2 -- whose stage_report
+            # stitches BUILD only. The marks are real and lag-clean; they are
+            # simply not part of the BUILD result as stage 2 defined it, and a
+            # paired figure compared against stage 2 has to be on stage 2's
+            # convention.
+            acc0, acc0_all = [], []
             for stp in STEPS:
-                if stp['trade'] not in allyears:
-                    continue
                 r2 = w2[w2.step == stp['name']]
                 if not len(r2):
                     continue
                 T_ = run_combo3(c1, str(r2.iloc[0].picked_c1_setting), base,
                                 str(r2.iloc[0].picked_base_setting), v, rs,
                                 use_hourly=use_hourly)
-                if len(T_):
-                    acc0.append(T_[pd.DatetimeIndex(T_.exit_date).year
-                                   == stp['trade']])
+                if not len(T_):
+                    continue
+                Ty = T_[pd.DatetimeIndex(T_.exit_date).year == stp['trade']]
+                if not len(Ty):
+                    continue
+                if stp['trade'] in allyears:
+                    acc0_all.append(Ty)
+                if stp['trade'] in years:
+                    acc0.append(Ty)
             T0 = pd.concat(acc0, ignore_index=True) if acc0 else pd.DataFrame()
+            T0_all = (pd.concat(acc0_all, ignore_index=True) if acc0_all
+                      else pd.DataFrame())
             if not len(T0):
                 print('  !! control empty for %s/%s -- no stage 2 walk rows'
                       % (lab, v), flush=True)
@@ -638,9 +654,9 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
                              picked_c2_opts='', **{k: val
                                                    for k, val in sc0.items()
                                                    if not k.startswith('_')}))
-            Y0, _d0, _c0 = _yearly_of(T0)
-            Y0 = Y0.assign(base=lab, variant=v, c2='(none)')
-            yearly.append(Y0)
+            if len(T0_all):
+                Y0, _d0, _c0 = _yearly_of(T0_all)
+                yearly.append(Y0.assign(base=lab, variant=v, c2='(none)'))
             if verbose:
                 print('    3c %s/%s/(none)      : %+8.2f R/yr, dip %7.2f, '
                       't_y %5.2f, t_b %6.2f, p %.3f'
@@ -649,8 +665,11 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
                       flush=True)
             for (kind, nm, clab) in c2_candidates(c1):
                 _RUNC.clear()
-                T1 = _stitch3(c1, base, v, rs, kind, nm, W, years=allyears,
+                T1 = _stitch3(c1, base, v, rs, kind, nm, W, years=years,
                               use_hourly=use_hourly, with_c2=True)
+                T1_all = _stitch3(c1, base, v, rs, kind, nm, W,
+                                  years=allyears, use_hourly=use_hourly,
+                                  with_c2=True)
                 if not len(T1):
                     print('    3c %s/%s/%-20s: NO TRADES' % (lab, v, clab),
                           flush=True)
@@ -669,8 +688,9 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
                                  picked_c2_opts=opts,
                                  **{k: val for k, val in sc1.items()
                                     if not k.startswith('_')}))
-                Y1, _d1, _c1 = _yearly_of(T1)
-                yearly.append(Y1.assign(base=lab, variant=v, c2=clab))
+                if len(T1_all):
+                    Y1, _d1, _c1 = _yearly_of(T1_all)
+                    yearly.append(Y1.assign(base=lab, variant=v, c2=clab))
                 # ---- THE PAIRED TEST, same days, on the difference
                 DS1 = sc1['_DS']
                 pr = _paired_of(DS0, DS1, T0, T1, years, nboot=nboot)
@@ -702,8 +722,36 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
     return f1, f2, f3
 
 
+SNB_DAYS = (pd.Timestamp('2015-01-15'), pd.Timestamp('2015-01-16'))
+
+
+def _snb_trade_present(T):
+    """Does this frame hold the EURCHF short that spans the SNB day?"""
+    if not len(T):
+        return 0
+    E = N.entry_frame(T)
+    m = ((E.pair == 'EURCHF')
+         & (pd.DatetimeIndex(E.entry_date) <= SNB_DAYS[0])
+         & (pd.DatetimeIndex(E.exit_date) >= SNB_DAYS[0]))
+    return int(m.sum())
+
+
 def _paired_of(DS0, DS1, T0, T1, years, nboot=2000):
-    """The difference series on the UNION of trading days, and its statistics."""
+    """The difference series on the UNION of trading days, and its statistics.
+
+    REPORTED TWICE, AND IT HAS TO BE. 15 January 2015 -- the Swiss National
+    Bank abandoning the EURCHF floor -- is 56% to 137% of every carried-forward
+    candidate's whole six-year result, and it is ONE TRADE: a EURCHF short
+    worth +74.996 R. Measured on 24 Nov: of the five C2 candidates on base A,
+    three DROP that trade and two KEEP it, and that single fact dominates every
+    paired figure. `schaff_trend_cycle` as C2 shows dR -54.63 and looks
+    destructive, but its SNB-free total is 41.82 R against the control's
+    SNB-free 42.38 -- the same edge, without the windfall, which is why its
+    yearly t is 6.10 and the control's is 1.73.
+
+    So the ex-SNB columns are not a sensitivity check. On this data they are
+    the ones that read the C2 rather than reading one gap.
+    """
     a = DS0[pd.DatetimeIndex(DS0.date).year.isin(list(years))]
     b = DS1[pd.DatetimeIndex(DS1.date).year.isin(list(years))]
     m = (a.set_index('date').R.rename('r0')
@@ -715,11 +763,26 @@ def _paired_of(DS0, DS1, T0, T1, years, nboot=2000):
     yr = pd.DatetimeIndex(m.index).year
     byyr = pd.DataFrame(dict(year=yr, d=diff)).groupby('year').d.sum()
     e0, e1 = N.n_entries(T0), N.n_entries(T1)
+    # ---- the same thing with the two SNB days removed from both series
+    keep = ~pd.DatetimeIndex(m.index).isin(SNB_DAYS)
+    dx = diff[keep]
+    tx, sdx = N._block_t(dx, ndraw=nboot)
+    byyrx = (pd.DataFrame(dict(year=yr[keep], d=dx))
+             .groupby('year').d.sum())
     return dict(days=int(len(m)), years=int(len(byyr)),
+                R_without=float(m.r0.sum()), R_with=float(m.r1.sum()),
                 dR_total=float(diff.sum()),
                 dR_per_year=float(diff.sum() / max(1, len(byyr))),
                 years_diff_positive=int((byyr > 0).sum()),
                 t_block_boot_diff=float(t_d), boot_sd_diff=float(sd_d),
+                snb_trade_kept=_snb_trade_present(T1),
+                snb_trade_in_control=_snb_trade_present(T0),
+                R_without_ex_snb=float(m.r0[keep].sum()),
+                R_with_ex_snb=float(m.r1[keep].sum()),
+                dR_total_ex_snb=float(dx.sum()),
+                dR_per_year_ex_snb=float(dx.sum() / max(1, len(byyrx))),
+                years_diff_positive_ex_snb=int((byyrx > 0).sum()),
+                t_block_boot_diff_ex_snb=float(tx),
                 trades_without=float(e0), trades_with=float(e1),
                 trades_removed=float(e0 - e1),
                 pct_trades_removed=(100.0 * (e0 - e1) / e0 if e0 else np.nan))
@@ -1035,17 +1098,36 @@ def md_stage3(out=None):
       'the market is a real difference, and dropping it would hide exactly '
       'what the C2 does. Stage 2 did the same.\n')
     if len(P):
-        pc = ['base', 'variant', 'c2', 'picked_c2_opts', 'dR_total',
-              'dR_per_year', 'years_diff_positive', 'years',
-              't_block_boot_diff', 'boot_sd_diff', 'trades_without',
-              'trades_with', 'trades_removed', 'pct_trades_removed', 'days']
+        a('\n> **THE PAIRED NUMBER IS DOMINATED BY ONE TRADE, SO IT IS GIVEN '
+          'TWICE.** 15 January 2015 is 56%–137% of each of these bases over '
+          '2010–2015, and it is a single EURCHF short worth **+74.996 R**. Of '
+          'the five C2 on base A, **three drop that trade and two keep it**, '
+          'and which side a candidate falls on swamps everything else it does. '
+          '`schaff_trend_cycle` shows ΔR −54.63 and looks destructive; its '
+          'SNB-free total is **41.82 R against the control\'s SNB-free '
+          '42.38** — the same edge without the windfall, which is why its '
+          'yearly t is 6.10 where the control\'s is 1.73. The `_ex_snb` '
+          'columns are not a sensitivity check on this data: they are the ones '
+          'that read the C2 instead of reading one gap.\n')
+        pc = ['base', 'variant', 'c2', 'picked_c2_opts', 'snb_trade_kept',
+              'R_without', 'R_with', 'dR_total', 'dR_per_year',
+              'years_diff_positive', 'years', 't_block_boot_diff',
+              'trades_without', 'trades_with', 'pct_trades_removed', 'days']
+        px = ['base', 'variant', 'c2', 'snb_trade_kept', 'R_without_ex_snb',
+              'R_with_ex_snb', 'dR_total_ex_snb', 'dR_per_year_ex_snb',
+              'years_diff_positive_ex_snb', 't_block_boot_diff_ex_snb']
         for v in PLANS_USED:
             d = P[P.variant == v]
             if not len(d):
                 continue
-            a('\n### %s plan\n' % v)
+            a('\n### %s plan — as measured\n' % v)
             a(_tbl(d.sort_values(['base', 'dR_per_year'],
                                  ascending=[True, False]), pc))
+            a('\n### %s plan — the same, with 15–16 January 2015 removed from '
+              'both series\n' % v)
+            a(_tbl(d.sort_values(['base', 'dR_per_year_ex_snb'],
+                                 ascending=[True, False]),
+                   [c for c in px if c in d.columns]))
         jm = P[P.variant == MAIN_PLAN]
         if len(jm):
             npos = int((jm.dR_per_year > 0).sum())
@@ -1053,6 +1135,11 @@ def md_stage3(out=None):
             a('\n**On the main plan, %d of %d base-by-C2 combinations improve '
               'R per year at all, and %d reach |bootstrap t| ≥ 2.**'
               % (npos, len(jm), nsig))
+            if 'dR_per_year_ex_snb' in jm.columns:
+                npx = int((jm.dR_per_year_ex_snb > 0).sum())
+                nsx = int((jm.t_block_boot_diff_ex_snb.abs() >= 2.0).sum())
+                a(' **With the two SNB days removed: %d of %d improve and %d '
+                  'reach |t| ≥ 2.**' % (npx, len(jm), nsx))
             bst = jm.loc[jm.dR_per_year.idxmax()]
             a(' The largest improvement is **%s on base %s, %+.2f R per year** '
               '(bootstrap t %.2f, %d of %d years positive, %.1f%% of trades '
