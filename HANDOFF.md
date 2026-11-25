@@ -841,6 +841,50 @@ The evidence that nothing but those two paths changed is
    would FLATTER them. Leaving it out is the conservative choice here, which is
    the opposite of how a missing cost usually reads.
 
+   **THE TARGET IS THE BOOK, NOT A STRATEGY. Jack, 25 Nov 2026. THIS CHANGES
+   WHAT A CANDIDATE IS FOR AND HOW IT IS JUDGED.**
+
+   At least **12% a year inside the prop limits** is the target for the WHOLE
+   BOOK. It was never a target for one strategy, and reading it as one is what
+   made every single-strategy result look like a failure against a bar it was
+   not being asked to clear. The book is **a handful of strategies, each
+   assigned to the pairs it suits** -- for example two strategies on 10 pairs
+   and four on the other 18. Nothing says one algorithm has to work on 28
+   pairs at once, and nothing in the evidence so far suggests one does.
+
+   **WHAT THIS MAKES STANDING, from 25 Nov:**
+
+   1. **EVERY candidate is banked PER PAIR AND PER DIRECTION.** Not pooled and
+      then split on request -- banked that way, as the primary unit, so a
+      pair-by-pair assignment can be built from the bank without re-running
+      anything. `results/nnfx/PER_PAIR_BANK*`.
+   2. **A candidate is judged by WHAT IT ADDS TO THE BOOK**, not by its own
+      total R: the book's return per year, its verified worst dip, and return
+      per dip, **with it and without it**. A strategy that is mediocre alone
+      and uncorrelated with what is already there can be a better addition
+      than a stronger one that duplicates an existing sleeve. That comparison
+      is the gate; the single-strategy table is now context, not a verdict.
+   3. **A second TYPE of strategy is in scope** -- declared mean reversion for
+      the range-prone pairs, at most three variants, no search. Trend-following
+      on all 28 pairs was never the plan; it was what had been built.
+
+   **WHAT DOES NOT CHANGE.** Walk-forward on unseen 2010-2015 (2005-2015 for
+   fixed settings), 2016-2020 computed and NOT reported, 2021 onward sealed,
+   one-bar lag, the leverage cap, the peg guard at the decided X = 0.33, the
+   per-pair floor as tested, robustness and crisis columns, random-entry and
+   shuffle nulls, the zero-edge check, and the ledger. Per-pair banking makes
+   the multiple-comparison problem WORSE, not better -- 28 pairs x 2 directions
+   is 56 ways to find a winner by luck in each candidate -- so the nulls now
+   have to shuffle the ASSIGNMENT, not just the entries. Any pair-group
+   assignment is declared from something that is not strategy performance
+   (Layer 1 pair character measured before 2010, currency bloc, or cost per
+   ATR) and its labels are shuffled 1,000 times as the null.
+
+   **THE 12% IS STILL NOT CLAIMED.** As of 25 Nov nothing built reaches it, at
+   book level or otherwise: the best prop return measured is 3.76%/yr (mode A)
+   and 6.60%/yr (mode B). BOOK.md states the distance to 12% explicitly and is
+   the only document that may speak about the target at all.
+
 0d. **15 SEP — THE NETTING LAYER HAD A ONE-BAR LOOK-AHEAD. EVERY LAYER 2 BOOK
    NUMBER IN THIS FILE IS CONTAMINATED UNTIL RERUN. READ THIS BEFORE QUOTING
    ANYTHING BELOW.**

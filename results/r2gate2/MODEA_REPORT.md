@@ -1,3 +1,11 @@
+<!-- JACK'S RULING, 25 Nov 2026: DO NOT REGENERATE THIS REPORT.
+He read the drift note below and decided the header note is the whole remedy.
+The figures in the body are the figures of the run that produced them; a
+regeneration would quietly restate them against today's smaller condition-2
+file and lose the record of what was actually reported. Nothing downstream
+reads this document -- it is a record, not an input. Guard 35 continues to
+report the drift and that is intended, not a fault to be silenced. -->
+
 <!-- PROVENANCE DRIFT, found by pre-flight guard 35 on 24 Nov 2026 at 22:50.
 
 Two csvs this report names no longer hold the rows it claims:

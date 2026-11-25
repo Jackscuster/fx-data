@@ -202,7 +202,7 @@ _RUNC = {}
 def run_combo3(c1, c1_set, base, base_set, variant, ruleset,
                c2=None, c2_set='default', ccy_n=None,
                vol_rule=None, vol_opt=None, lowvol_q=VOL.LOWVOL_Q,
-               peg_x=VOL.PEG_X_PLACEHOLDER,
+               peg_x=VOL.PEG_X_DECIDED,
                pairs=None, atr_len=14, use_hourly=True, cache=True):
     """Stage 2's run_combo with the C2 SLOT FILLED instead of neutralised.
 
@@ -403,7 +403,7 @@ def condition_c2_neutral(use_hourly=True, verbose=True):
 
 def _neutralised_with_name(c1, cs, base, bs, v, rs, c2name, use_hourly,
                            lowvol_q=VOL.LOWVOL_Q,
-                           peg_x=VOL.PEG_X_PLACEHOLDER):
+                           peg_x=VOL.PEG_X_DECIDED):
     """run_combo3 with a REAL c2 NAMED in prepare and then overwritten
     all-True -- the exact thing condition_c2_neutral compares against.
 
@@ -755,8 +755,8 @@ def stage_report3(years=BUILD_YEARS, ndraw=400, nboot=2000, use_hourly=True,
     for _D in (R, P):
         if len(_D):
             _D['lowvol_q'] = (VOL.LOWVOL_Q if VOL.LOWVOL_Q else 0.0)
-            _D['peg_x'] = (VOL.PEG_X_PLACEHOLDER
-                           if VOL.PEG_X_PLACEHOLDER else 0.0)
+            _D['peg_x'] = (VOL.PEG_X_DECIDED
+                           if VOL.PEG_X_DECIDED else 0.0)
             _D['leverage_cap_on'] = 1
     f1 = os.path.join(OUT, 'stage3_report.csv')
     f2 = os.path.join(OUT, 'stage3_paired.csv')
@@ -1279,8 +1279,10 @@ def md_stage3(out=None):
     a('| Per-pair volatility floor | no entry while the pair\'s own ATR is in '
       'its bottom **5%**, causal | Jack\'s decided rule 1, 7 Sep |')
     a('| Cross-pair peg guard | no new entry while ATR/price is below **X = '
-      '0.33** x the 28-pair median that day, one-bar lag | **PLACEHOLDER.** '
-      'Jack picks X off the curve below |')
+      '0.33** x the 28-pair median that day, one-bar lag | **DECIDED, '
+      '25 Nov.** Jack picked X = 0.33 off the curve below, knowing that its '
+      'whole measurable effect on A, B and C is deleting the 2 Jan 2015 '
+      'EURCHF entry |')
 
     # ---- ITEM 2: THE PEG GUARD CURVE
     a('\n## Item 2 — the peg guard, swept from X = 0.10 to 0.70\n')
@@ -1290,7 +1292,7 @@ def md_stage3(out=None):
           'blocked | blocks 2 Jan 2015 |')
         a('|---:|---:|---:|---|---:|---|---|')
         for _, r in PEGC.sort_values('X').iterrows():
-            _b = '**' if abs(r.X - VOL.PEG_X_PLACEHOLDER) < 1e-9 else ''
+            _b = '**' if abs(r.X - VOL.PEG_X_DECIDED) < 1e-9 else ''
             a('| %s%.2f%s | %.3f%% | **%d** | %s | %.1f%% | %d of %d (%.1f%%) '
               '| %s |'
               % (_b, r.X, _b, r.pct_bars_flagged,

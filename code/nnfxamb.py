@@ -56,10 +56,18 @@ _IDX = {}
 
 
 def hourly_index(pair, dates=None):
-    """-> (hb_lo, hb_hi, ha_lo, ha_hi, hr_off) aligned to `pair`'s daily bars.
+    """-> (hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hb_op, ha_op) aligned to
+    `pair`'s daily bars.
 
     hr_off[i]:hr_off[i+1] slices the flat arrays to daily bar i's hourly
     sub-bars, in time order. Empty for a bar with no hourly coverage.
+
+    THE OPENS ARE HERE FOR THE GAP FILLS (Jack item 1, 25 Nov). _amb_first
+    only ever needed the hourly highs and lows -- which level was touched
+    first. l2engine._gap_px needs the price that was actually QUOTED when the
+    level was first breached, and that is the open of the hour that breached
+    it. Loading them in the same pass costs one more column per file and
+    keeps one alignment, one session cut and one cache for both uses.
     """
     key = pair
     if key in _IDX:
@@ -69,10 +77,13 @@ def hourly_index(pair, dates=None):
     d = S.load_pair(pair)
     n = len(d)
     if not (os.path.exists(fb) and os.path.exists(fa)):
-        _IDX[key] = E._amb_off(n)[:5]
+        _z = E._amb_off(n)
+        _IDX[key] = _z[:5] + (_z[0], _z[0])
         return _IDX[key]
-    b = pd.read_csv(fb, parse_dates=['time'], usecols=['time', 'h', 'l'])
-    a = pd.read_csv(fa, parse_dates=['time'], usecols=['time', 'h', 'l'])
+    b = pd.read_csv(fb, parse_dates=['time'],
+                    usecols=['time', 'o', 'h', 'l'])
+    a = pd.read_csv(fa, parse_dates=['time'],
+                    usecols=['time', 'o', 'h', 'l'])
     j = b.merge(a, on='time', suffixes=('_b', '_a')).sort_values('time')
     t = pd.DatetimeIndex(j.time.values)
     if t.tz is None:
@@ -92,23 +103,55 @@ def hourly_index(pair, dates=None):
     bar = bar[m].astype(np.int64)
     hb_lo = j.l_b.to_numpy(np.float64)[m]; hb_hi = j.h_b.to_numpy(np.float64)[m]
     ha_lo = j.l_a.to_numpy(np.float64)[m]; ha_hi = j.h_a.to_numpy(np.float64)[m]
+    hb_op = j.o_b.to_numpy(np.float64)[m]; ha_op = j.o_a.to_numpy(np.float64)[m]
     o = np.argsort(bar, kind='stable')
     bar = bar[o]; hb_lo = hb_lo[o]; hb_hi = hb_hi[o]
     ha_lo = ha_lo[o]; ha_hi = ha_hi[o]
+    hb_op = hb_op[o]; ha_op = ha_op[o]
     cnt = np.bincount(bar, minlength=n)
     hr_off = np.zeros(n + 1, np.int64)
     np.cumsum(cnt, out=hr_off[1:])
     _IDX[key] = (np.ascontiguousarray(hb_lo), np.ascontiguousarray(hb_hi),
                  np.ascontiguousarray(ha_lo), np.ascontiguousarray(ha_hi),
-                 hr_off)
+                 hr_off,
+                 np.ascontiguousarray(hb_op), np.ascontiguousarray(ha_op))
     return _IDX[key]
 
 
-def amb_args(pair):
-    """The 7-tuple run_bars wants, with hourly ON for this pair."""
-    hb_lo, hb_hi, ha_lo, ha_hi, hr_off = hourly_index(pair)
+# GAP FILLS ARE STANDING FROM 25 NOV 2026 (Jack item 1). amb_args turns them on
+# wherever the pair has an hourly path; gapfill=False is for the before/after
+# measurement in nnfxgap.py and for nothing else.
+GAPFILL_STANDING = True
+
+
+def gf_tol(pair):
+    """The pair's round-trip cost as a fraction of price -- the threshold
+    below which an hourly open beyond a mid stop is a SPREAD, not a gap.
+
+    THE TABLE IS THE RUN'S OWN. If the caller has already loaded a cost table
+    the tolerance uses THAT one, so the charge the gap fill declines to make
+    twice is the charge the run is actually making. Only a bare call loads a
+    table, and it loads the standing one -- cost_table_h22.csv, never the flat
+    default, which would set the tolerance from a cost nothing is charging.
+    """
+    if not S.COSTS:
+        S.load_costs(os.environ.get(
+            'FX_COST_TABLE', os.path.join(ROOTOUT, 'cost_table_h22.csv')))
+    return float(S.COSTS.get(pair, 0.0))
+
+
+def amb_args(pair, gapfill=None):
+    """The 12-tuple run_bars wants, with hourly ON for this pair.
+
+    Returns (hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts,
+             hb_op, ha_op, gf_on, gf_tol, gap_counts).
+    """
+    hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hb_op, ha_op = hourly_index(pair)
     on = bool(hr_off[-1] > 0)
-    return (hb_lo, hb_hi, ha_lo, ha_hi, hr_off, on, np.zeros(3, np.int64))
+    gf = GAPFILL_STANDING if gapfill is None else bool(gapfill)
+    return (hb_lo, hb_hi, ha_lo, ha_hi, hr_off, on, np.zeros(3, np.int64),
+            hb_op, ha_op, bool(gf and on), gf_tol(pair),
+            np.zeros(4, np.int64))
 
 
 def coverage_report(out=None):
@@ -116,7 +159,7 @@ def coverage_report(out=None):
     rows = []
     for p in S.all_pairs():
         d = S.load_pair(p)
-        hb_lo, hb_hi, ha_lo, ha_hi, hr_off = hourly_index(p)
+        hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hb_op, ha_op = hourly_index(p)
         per = np.diff(hr_off)
         rows.append(dict(pair=p, daily_bars=len(d),
                          bars_with_hourly=int((per > 0).sum()),

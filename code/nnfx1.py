@@ -71,8 +71,8 @@ RISK_UNIT_ATR = 1.5          # every R here is per 1.5 ATR
 # ATR is in its bottom 5%. None turns the floor off; every writer records it.
 LOWVOL_Q = 0.05
 # THE PEG GUARD, cross-pair, Jack 25 Nov. No new entry while this pair's lagged
-# ATR/price is below PEG_X x the 28-pair MEDIAN that day. X IS A PLACEHOLDER
-# at 0.33 until Jack picks it off the curve in STAGE3.md. None turns it off.
+# ATR/price is below PEG_X x the 28-pair MEDIAN that day. X = 0.33 is DECIDED,
+# picked off the STAGE3.md curve on 25 Nov 2026. None turns it off.
 PEG_X = 0.33
 # 2000, AND BOTH SMALLER VALUES WERE TRIED AND FAILED. At 50 ATR two AUDJPY
 # long trades held 345 bars reached the stop -- the 2008 collapse is that large

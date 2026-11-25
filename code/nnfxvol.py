@@ -340,7 +340,12 @@ def leverage_census(T, equity=EQUITY, cap_lev=CAP_LEV):
 # quiet together, no pair is flagged, which is the correct behaviour, and a pair
 # is flagged only when it is quiet RELATIVE TO ITS PEERS THAT DAY.
 PEG_X_CURVE = (0.10, 0.20, 0.30, 0.33, 0.40, 0.50, 0.60, 0.70)
-PEG_X_PLACEHOLDER = 0.33      # Jack picks X from the curve; this is labelled
+# JACK PICKED X = 0.33 OFF THE CURVE ON 25 NOV 2026. It is no longer a
+# placeholder. He saw what it does -- at 0.33 the guard's whole measurable
+# effect on the six A/B/C cells is deleting the 2 Jan 2015 EURCHF entry, the
+# one trade the SNB result is made of -- and adopted it anyway.
+PEG_X_DECIDED = 0.33
+PEG_X_PLACEHOLDER = PEG_X_DECIDED   # deprecated alias; nothing new uses it
 # THE TWO SNB DAYS, so any table can be restated without them. 15 Jan 2015 is
 # the floor abandonment; 16 Jan is the exit bar of the trade it made.
 SNB_DAYS = ('2015-01-15', '2015-01-16')
@@ -378,7 +383,7 @@ def _panel(atr_len=ATR_LEN):
     return _PEGC[key]
 
 
-def peg_mask(pair, x=PEG_X_PLACEHOLDER, atr_len=ATR_LEN):
+def peg_mask(pair, x=PEG_X_DECIDED, atr_len=ATR_LEN):
     """True on bars where this pair's lagged ATR/price is below x x the 28-pair
     MEDIAN of the same lagged quantity that day. Causal by construction: every
     input is bar t-1 on every pair."""
@@ -495,6 +500,35 @@ def apply_leverage_cap(T, equity=EQUITY, cap_lev=CAP_LEV, verbose=False):
 
 
 # ============ R PER TRADE BY ATR BUCKET AT ENTRY (TEN BUCKETS) ============
+def attach_atr_pctile(E, nb=10, atr_len=ATR_LEN):
+    """Add `atr_pctile` and `bucket` to an ENTRY frame, causally.
+
+    ONE IMPLEMENTATION, because two would drift. The percentile is the entry
+    bar's LAGGED ATR/price against that pair's own EXPANDING history -- the
+    same quantity the per-pair floor thresholds, so bucket 1 is the decile the
+    floor cuts into. Rows whose percentile is not yet defined (inside the
+    minimum history) are DROPPED, not bucketed as zero.
+    """
+    E = E.reset_index(drop=True)
+    pct = np.full(len(E), np.nan)
+    for p, sub in E.groupby('pair'):
+        ix, rel = _rel(p, atr_len)
+        rl = np.full(len(rel), np.nan); rl[1:] = rel[:-1]
+        rk = (pd.Series(rl).expanding(min_periods=MIN_HIST)
+              .apply(lambda a: (a[:-1] < a[-1]).mean() if len(a) > 1 else np.nan,
+                     raw=True).to_numpy())
+        sel = ix.get_indexer(pd.DatetimeIndex(sub.entry_date))
+        ok = sel >= 0
+        pct[sub.index.to_numpy()[ok]] = rk[sel[ok]]
+    E['atr_pctile'] = pct
+    E = E[np.isfinite(E.atr_pctile.to_numpy(float))].copy()
+    if not len(E):
+        return E
+    E['bucket'] = np.minimum(nb - 1,
+                             (E.atr_pctile.to_numpy(float) * nb).astype(int)) + 1
+    return E
+
+
 def atr_buckets(T, nb=10, atr_len=ATR_LEN):
     """Item 3's last part: is the profit concentrated in low-volatility entries?
 
@@ -523,30 +557,21 @@ def atr_buckets(T, nb=10, atr_len=ATR_LEN):
             .agg(R_gross=('R_gross', 'sum'), cost=('_cost', 'sum')))
     Rsum['R'] = Rsum.R_gross - Rsum.cost
     E = E.merge(Rsum, on=['pair', 'entry_date', 'direction'], how='left')
-    pct = np.full(len(E), np.nan)
-    for p, sub in E.groupby('pair'):
-        ix, rel = _rel(p, atr_len)
-        rl = np.full(len(rel), np.nan); rl[1:] = rel[:-1]
-        rk = (pd.Series(rl).expanding(min_periods=MIN_HIST)
-              .apply(lambda a: (a[:-1] < a[-1]).mean() if len(a) > 1 else np.nan,
-                     raw=True).to_numpy())
-        sel = ix.get_indexer(pd.DatetimeIndex(sub.entry_date))
-        ok = sel >= 0
-        pct[sub.index.to_numpy()[ok]] = rk[sel[ok]]
-    E['atr_pctile'] = pct
-    E = E[np.isfinite(E.atr_pctile.to_numpy(float))]
+    E = attach_atr_pctile(E, nb=nb, atr_len=atr_len)
     if not len(E):
         return pd.DataFrame()
-    E['bucket'] = np.minimum(nb - 1,
-                             (E.atr_pctile.to_numpy(float) * nb).astype(int)) + 1
     # AND THE SAME BUCKETS WITH 15-16 JANUARY 2015 TAKEN OUT. Without this
     # column the table says "the profit is concentrated in low-volatility
     # entries" when what it may be saying is "ONE low-volatility trade is the
-    # profit". For candidate A, net and at achievable size, bucket 1 totals
-    # about 59.9 R of which the single EURCHF short through the SNB peg break
-    # is +51.05; uncapped that one trade is +74.996. It does NOT carry the
-    # bucket on its own: the other 165 trades in the bottom decile are still
-    # worth more per trade than the sample mean.
+    # profit". MEASURED, net and at achievable size, for candidate A/jack:
+    # the bottom three deciles carry 100.0% of the +72.897 R from 38.4% of the
+    # trades, and deciles 4-10 net to zero between them. Ex-SNB the total is
+    # +39.007 R and the bottom three are AGAIN 100.0%. The SNB trade carries
+    # decile ONE specifically (+44.222 -> +10.331 R); deciles 2 and 3
+    # (+14.424, +14.258 R) have the best R per trade in the table ex-SNB and
+    # owe it nothing. So the concentration is real and SURVIVES deleting the
+    # trade. An earlier note here said the opposite -- it subtracted an
+    # uncapped raw-unit trade from a capped gross-unit bucket total. 25 Nov.
     _xd = pd.DatetimeIndex(E.exit_date) if 'exit_date' in E.columns else None
     E['_snb'] = (_xd.normalize().isin(pd.DatetimeIndex(SNB_DAYS))
                  if _xd is not None else False)

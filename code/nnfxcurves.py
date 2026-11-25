@@ -149,7 +149,7 @@ def stage_floor(verbose=True):
             base_T = None
             base_R = {}
             for q in FLOOR_CURVE:
-                T = _stitch(c1, base, rs, v, q, VOL.PEG_X_PLACEHOLDER)
+                T = _stitch(c1, base, rs, v, q, VOL.PEG_X_DECIDED)
                 fg = _fig(T)
                 if q == 0.0:
                     base_T = T
@@ -169,7 +169,7 @@ def stage_floor(verbose=True):
                 r_rem = [base_R[k] for k in removed]
                 r_kep = [base_R[k] for k in (allk & kept)]
                 rows.append(dict(
-                    base=lab, variant=v, floor_q=q, peg_X=VOL.PEG_X_PLACEHOLDER,
+                    base=lab, variant=v, floor_q=q, peg_X=VOL.PEG_X_DECIDED,
                     **fg,
                     trades_removed=len(removed),
                     pct_trades_removed=(100.0 * len(removed) / len(allk)
@@ -330,7 +330,7 @@ def stage_floor1(verbose=True):
             drem = n0 - nt
             rows.append(dict(
                 scope='stage1_c1_ranking', variant=v, floor_q=q,
-                peg_X=VOL.PEG_X_PLACEHOLDER, leverage_cap_on=1,
+                peg_X=VOL.PEG_X_DECIDED, leverage_cap_on=1,
                 n_candidate_settings=int(len(S_)),
                 trades=nt, R_total=rt,
                 R_per_year=float(S_.R_net_per_year.sum()),

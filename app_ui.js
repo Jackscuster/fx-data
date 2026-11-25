@@ -5978,8 +5978,8 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
   h+=tbl(T3.stage4_picks,['base','variant','vol_rule','trade_year','picked_lookback'],'Stage 4 preview \u2014 the walk-forward lookback pick');
  }
  /* THE THREE STANDING RULES, Jack 25 Nov. Leverage cap, peg guard, per-pair
-    floor. The peg guard curve is the one he has to pick X off, and the thing
-    the curve turns out to measure is the SNB trade. */
+    floor. X = 0.33 is DECIDED (Jack, 25 Nov) -- picked off this curve, and
+    the thing the curve turns out to measure is the SNB trade. */
  const RU=R.rules||{};
  if(RU.note){
   h+='<h3>The three standing rules \u2014 leverage cap, peg guard, per-pair floor</h3>';

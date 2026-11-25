@@ -1,6 +1,6 @@
 # MODE A — GATE 3
 
-Generated 2026-11-20 10:16 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
+Generated 2026-11-25 10:19 by `code/l2r2gate3.py`. **No new tuning**: every configuration here was already chosen by gate 2 and is re-scored, nothing is searched. Every number below is read back out of the CSV named beside it.
 
 
 ## The bars, unchanged
@@ -30,7 +30,7 @@ Costs are charged throughout (`cost_table_h22`, restated per fault #27).
 | null | results/r2gate2/modeA_gate3_null.csv | 20 | dd9d7d439433 |
 | stitched | results/r2gate2/modeA_gate3_stitched.csv | 0 | 68b329da9893 |
 | stitched_counts | results/r2gate2/modeA_gate3_stitched_counts.csv | 4 | 18313dcc9133 |
-| book | results/r2gate2/modeA_gate3_passersbook.csv | 20 | 913e3f4f358a |
+| book | results/r2gate2/modeA_gate3_passersbook.csv | 20 | ae2d82da85da |
 | booknull | results/r2gate2/modeA_gate3_passersbook_nulls.csv | 60 | 6131572191d2 |
 
 
@@ -148,82 +148,82 @@ Per-step rows with every field are in `results/r2gate2/modeA_gate3_passersbook.c
 
 | KPI | ALWAYS-ON | ROUTED (chop RANGING + trend TRENDING) |
 |---|---|---|
-| median year | 0.03% | -1.05% |
-| average year | 0.10% | -1.47% |
-| worst year | -3.04% | -2.90% |
-| best year | 3.43% | 0.03% |
-| total 2016-2020 | 0.49% | -7.34% |
-| CAGR | 0.10% | -1.47% |
-| worst day | -1.09% | -0.56% |
-| max drawdown | -6.54% | -8.15% |
-| DIP95 (worst step) | 7.47% | 4.69% |
-| Sharpe | 0.03 | -0.70 |
-| Sortino | 0.05 | -1.02 |
-| Calmar (total / max DD, the shipped bar) | 0.07 | -0.90 |
-| Calmar (CAGR / max DD) | 0.01 | -0.18 |
-| profit factor (trades, median step) | 1.00 | 0.89 |
-| win rate (trades, median step) | 49.42% | 47.10% |
+| median year | 0.15% | -1.09% |
+| average year | 0.33% | -1.33% |
+| worst year | -2.84% | -2.91% |
+| best year | 3.73% | 0.32% |
+| total 2016-2020 | 1.65% | -6.65% |
+| CAGR | 0.33% | -1.33% |
+| worst day | -1.11% | -0.57% |
+| max drawdown | -6.00% | -7.80% |
+| DIP95 (worst step) | 7.38% | 4.66% |
+| Sharpe | 0.11 | -0.62 |
+| Sortino | 0.16 | -0.91 |
+| Calmar (total / max DD, the shipped bar) | 0.28 | -0.85 |
+| Calmar (CAGR / max DD) | 0.06 | -0.17 |
+| profit factor (trades, median step) | 1.01 | 0.89 |
+| win rate (trades, median step) | 49.81% | 45.95% |
 | positive years of 5 | 3 | 1 |
-| retention (median step) | 0.00 | -0.32 |
+| retention (median step) | 0.02 | -0.31 |
 | steps flagged FIT of 5 | 3 | 5 |
 
 Per year:
 
-- ALWAYS-ON: 2016: +2.94% | 2017: +0.03% | 2018: +3.43% | 2019: -3.04% | 2020: -2.87%
-- ROUTED (chop RANGING + trend TRENDING): 2016: -1.03% | 2017: -2.38% | 2018: -1.05% | 2019: -2.90% | 2020: +0.03%
+- ALWAYS-ON: 2016: +3.10% | 2017: +0.15% | 2018: +3.73% | 2019: -2.84% | 2020: -2.49%
+- ROUTED (chop RANGING + trend TRENDING): 2016: -1.09% | 2017: -2.17% | 2018: -0.80% | 2019: -2.91% | 2020: +0.32%
 
 ### TEAM 2
 
 | KPI | ALWAYS-ON | ROUTED (chop RANGING + trend TRENDING) |
 |---|---|---|
-| median year | 0.05% | -1.58% |
-| average year | 0.15% | -2.20% |
-| worst year | -4.56% | -4.35% |
-| best year | 5.15% | 0.04% |
-| total 2016-2020 | 0.73% | -11.02% |
-| CAGR | 0.15% | -2.20% |
-| worst day | -1.64% | -0.85% |
-| max drawdown | -9.80% | -12.23% |
-| DIP95 (worst step) | 11.21% | 7.04% |
-| Sharpe | 0.03 | -0.70 |
-| Sortino | 0.05 | -1.02 |
-| Calmar (total / max DD, the shipped bar) | 0.07 | -0.90 |
-| Calmar (CAGR / max DD) | 0.01 | -0.18 |
-| profit factor (trades, median step) | 1.00 | 0.89 |
-| win rate (trades, median step) | 49.42% | 47.10% |
+| median year | 0.23% | -1.64% |
+| average year | 0.50% | -1.99% |
+| worst year | -4.26% | -4.37% |
+| best year | 5.60% | 0.49% |
+| total 2016-2020 | 2.48% | -9.97% |
+| CAGR | 0.50% | -1.99% |
+| worst day | -1.66% | -0.86% |
+| max drawdown | -9.00% | -11.70% |
+| DIP95 (worst step) | 11.07% | 6.99% |
+| Sharpe | 0.11 | -0.62 |
+| Sortino | 0.16 | -0.91 |
+| Calmar (total / max DD, the shipped bar) | 0.28 | -0.85 |
+| Calmar (CAGR / max DD) | 0.06 | -0.17 |
+| profit factor (trades, median step) | 1.01 | 0.89 |
+| win rate (trades, median step) | 49.81% | 45.95% |
 | positive years of 5 | 3 | 1 |
-| retention (median step) | 0.00 | -0.32 |
+| retention (median step) | 0.02 | -0.31 |
 | steps flagged FIT of 5 | 3 | 5 |
 
 Per year:
 
-- ALWAYS-ON: 2016: +4.41% | 2017: +0.05% | 2018: +5.15% | 2019: -4.56% | 2020: -4.31%
-- ROUTED (chop RANGING + trend TRENDING): 2016: -1.55% | 2017: -3.57% | 2018: -1.58% | 2019: -4.35% | 2020: +0.04%
+- ALWAYS-ON: 2016: +4.65% | 2017: +0.23% | 2018: +5.60% | 2019: -4.26% | 2020: -3.74%
+- ROUTED (chop RANGING + trend TRENDING): 2016: -1.64% | 2017: -3.25% | 2018: -1.19% | 2019: -4.37% | 2020: +0.49%
 
 ### Per step, as traded
 
 | step | book | budget | members | size_scale | scale_binds | trade_total_pct | trade_max_dd_pct | trade_dip95_pct | trade_profit_factor | trade_sortino | trade_calmar | trade_win_rate_pct | retention | FIT |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 2011-2014 | allon | team1 | 9,303 | 0.7901 | DIP95 | 2.939 | 1.373 | 2.717 | 1.247 | 1.971 | 2.141 | 49.42 | 0.6296 | 0 |
-| 2011-2014 | allon | team2 | 9,303 | 1.185 | DIP95 | 4.409 | 2.06 | 4.075 | 1.247 | 1.971 | 2.141 | 49.42 | 0.6296 | 0 |
-| 2011-2014 | chop_trend | team1 | 16,963 | 0.545 | DIP95 | -1.034 | 2.21 | 2.902 | 0.8876 | -1.041 | -0.4681 | 44.4 | -0.3158 | 1 |
-| 2011-2014 | chop_trend | team2 | 16,963 | 0.8175 | DIP95 | -1.552 | 3.315 | 4.353 | 0.8876 | -1.041 | -0.4681 | 44.4 | -0.3158 | 1 |
-| 2012-2015 | allon | team1 | 2,661 | 0.6743 | DIP95 | 0.03109 | 3.149 | 4.076 | 1.002 | 0.01849 | 0.009872 | 50 | 0.003956 | 1 |
-| 2012-2015 | allon | team2 | 2,661 | 1.011 | DIP95 | 0.04663 | 4.724 | 6.114 | 1.002 | 0.01849 | 0.009872 | 50 | 0.003956 | 1 |
-| 2012-2015 | chop_trend | team1 | 2,505 | 0.8489 | DIP95 | -2.38 | 2.958 | 4.691 | 0.834 | -1.53 | -0.8045 | 50 | -0.548 | 1 |
-| 2012-2015 | chop_trend | team2 | 2,505 | 1.273 | DIP95 | -3.57 | 4.438 | 7.037 | 0.834 | -1.53 | -0.8045 | 50 | -0.548 | 1 |
-| 2013-2016 | allon | team1 | 3,826 | 0.6648 | DIP95 | 3.432 | 1.67 | 2.108 | 1.317 | 2.711 | 2.055 | 49.42 | 0.7415 | 0 |
-| 2013-2016 | allon | team2 | 3,826 | 0.9973 | DIP95 | 5.148 | 2.505 | 3.162 | 1.317 | 2.711 | 2.055 | 49.42 | 0.7415 | 0 |
-| 2013-2016 | chop_trend | team1 | 2,590 | 0.5838 | DIP95 | -1.055 | 2.827 | 3.493 | 0.9087 | -0.8844 | -0.3732 | 45.17 | -0.1775 | 1 |
-| 2013-2016 | chop_trend | team2 | 2,590 | 0.8757 | DIP95 | -1.582 | 4.24 | 5.239 | 0.9087 | -0.8844 | -0.3732 | 45.17 | -0.1775 | 1 |
-| 2014-2017 | allon | team1 | 7,233 | 0.6465 | DIP95 | -3.043 | 3.637 | 5.682 | 0.8193 | -1.689 | -0.8368 | 44.4 | -0.7144 | 1 |
-| 2014-2017 | allon | team2 | 7,233 | 0.9697 | DIP95 | -4.565 | 5.455 | 8.523 | 0.8193 | -1.689 | -0.8368 | 44.4 | -0.7144 | 1 |
-| 2014-2017 | chop_trend | team1 | 9,135 | 0.6232 | DIP95 | -2.902 | 3.367 | 4.418 | 0.7547 | -2.498 | -0.8619 | 47.1 | -3.535 | 1 |
-| 2014-2017 | chop_trend | team2 | 9,135 | 0.9348 | DIP95 | -4.353 | 5.051 | 6.627 | 0.7547 | -2.498 | -0.8619 | 47.1 | -3.535 | 1 |
-| 2015-2018 | allon | team1 | 877 | 1.077 | DIP95 | -2.873 | 4.374 | 7.473 | 0.8741 | -0.9622 | -0.6569 | 51.34 | -0.2323 | 1 |
-| 2015-2018 | allon | team2 | 877 | 1.616 | DIP95 | -4.31 | 6.561 | 11.21 | 0.8741 | -0.9622 | -0.6569 | 51.34 | -0.2323 | 1 |
-| 2015-2018 | chop_trend | team1 | 1,322 | 1.01 | DIP95 | 0.02627 | 3.011 | 4.332 | 1.002 | 0.0135 | 0.008727 | 49.04 | 0.004368 | 1 |
-| 2015-2018 | chop_trend | team2 | 1,322 | 1.514 | DIP95 | 0.03941 | 4.516 | 6.497 | 1.002 | 0.0135 | 0.008727 | 49.04 | 0.004368 | 1 |
+| 2011-2014 | allon | team1 | 9,303 | 0.8122 | DIP95 | 3.099 | 1.382 | 2.747 | 1.255 | 2.033 | 2.243 | 49.81 | 0.6281 | 0 |
+| 2011-2014 | allon | team2 | 9,303 | 1.218 | DIP95 | 4.649 | 2.072 | 4.121 | 1.255 | 2.033 | 2.243 | 49.81 | 0.6281 | 0 |
+| 2011-2014 | chop_trend | team1 | 16,963 | 0.5742 | DIP95 | -1.092 | 2.289 | 3.018 | 0.8864 | -1.068 | -0.4769 | 45.17 | -0.3082 | 1 |
+| 2011-2014 | chop_trend | team2 | 16,963 | 0.8614 | DIP95 | -1.638 | 3.434 | 4.527 | 0.8864 | -1.068 | -0.4769 | 45.17 | -0.3082 | 1 |
+| 2012-2015 | allon | team1 | 2,661 | 0.7117 | DIP95 | 0.1503 | 3.19 | 4.087 | 1.009 | 0.08884 | 0.04712 | 50.78 | 0.0183 | 1 |
+| 2012-2015 | allon | team2 | 2,661 | 1.068 | DIP95 | 0.2255 | 4.785 | 6.13 | 1.009 | 0.08884 | 0.04712 | 50.78 | 0.0183 | 1 |
+| 2012-2015 | chop_trend | team1 | 2,505 | 0.8803 | DIP95 | -2.169 | 2.779 | 4.658 | 0.8529 | -1.372 | -0.7806 | 49.61 | -0.4745 | 1 |
+| 2012-2015 | chop_trend | team2 | 2,505 | 1.32 | DIP95 | -3.253 | 4.168 | 6.988 | 0.8529 | -1.372 | -0.7806 | 49.61 | -0.4745 | 1 |
+| 2013-2016 | allon | team1 | 3,826 | 0.6855 | DIP95 | 3.734 | 1.644 | 2.117 | 1.339 | 2.884 | 2.271 | 49.81 | 0.7574 | 0 |
+| 2013-2016 | allon | team2 | 3,826 | 1.028 | DIP95 | 5.601 | 2.466 | 3.175 | 1.339 | 2.884 | 2.271 | 49.81 | 0.7574 | 0 |
+| 2013-2016 | chop_trend | team1 | 2,590 | 0.6174 | DIP95 | -0.7956 | 2.726 | 3.433 | 0.9323 | -0.6544 | -0.2919 | 45.95 | -0.1289 | 1 |
+| 2013-2016 | chop_trend | team2 | 2,590 | 0.9262 | DIP95 | -1.193 | 4.088 | 5.15 | 0.9323 | -0.6544 | -0.2919 | 45.95 | -0.1289 | 1 |
+| 2014-2017 | allon | team1 | 7,233 | 0.672 | DIP95 | -2.838 | 3.493 | 5.664 | 0.8354 | -1.53 | -0.8126 | 44.4 | -0.6101 | 1 |
+| 2014-2017 | allon | team2 | 7,233 | 1.008 | DIP95 | -4.258 | 5.24 | 8.495 | 0.8354 | -1.53 | -0.8126 | 44.4 | -0.6101 | 1 |
+| 2014-2017 | chop_trend | team1 | 9,135 | 0.6572 | DIP95 | -2.914 | 3.399 | 4.564 | 0.767 | -2.498 | -0.8573 | 45.95 | -2.826 | 1 |
+| 2014-2017 | chop_trend | team2 | 9,135 | 0.9859 | DIP95 | -4.371 | 5.099 | 6.845 | 0.767 | -2.498 | -0.8573 | 45.95 | -2.826 | 1 |
+| 2015-2018 | allon | team1 | 877 | 1.104 | DIP95 | -2.494 | 4.299 | 7.377 | 0.892 | -0.8245 | -0.5801 | 51.72 | -0.1924 | 1 |
+| 2015-2018 | allon | team2 | 877 | 1.657 | DIP95 | -3.741 | 6.448 | 11.07 | 0.892 | -0.8245 | -0.5801 | 51.72 | -0.1924 | 1 |
+| 2015-2018 | chop_trend | team1 | 1,322 | 1.038 | DIP95 | 0.3245 | 2.935 | 4.309 | 1.019 | 0.1632 | 0.1106 | 49.81 | 0.05074 | 1 |
+| 2015-2018 | chop_trend | team2 | 1,322 | 1.556 | DIP95 | 0.4867 | 4.402 | 6.464 | 1.019 | 0.1632 | 0.1106 | 49.81 | 0.05074 | 1 |
 
 
 ### Its three nulls

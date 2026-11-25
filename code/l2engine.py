@@ -49,7 +49,12 @@ place the project's usual one-bar lag is deliberately absent: the indicators are
 computed from data through the close of the bar and the fill is at that same
 close. Nothing reads a later bar.
 
-Stops and targets fill at their own price, not at the close.
+Stops and targets fill at their own price, not at the close -- EXCEPT where
+price was never quoted at that level. A stop fills at the first tradable price
+at or beyond it (`_gap_px`): the daily open for an overnight gap, the hourly
+bid/ask open for an intraday one, the stop itself only when price actually
+traded through it. A TARGET never fills better than its own price. Asymmetric
+on purpose: gaps hurt, they never help.
 
 ------------------------------------------------------------------------
 THE THREE ENTRY ROUTES, and the two blocks that apply to ALL of them
@@ -156,9 +161,83 @@ _AMB_EMPTY = np.zeros(1, np.float64)
 
 
 def _amb_off(n):
-    """(hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts), hourly OFF."""
+    """The hourly tuple with EVERYTHING OFF -- ambiguity resolver and gap
+    fills both. Every caller that supplies no hourly data splats this, so
+    extending it here reaches all of them without touching one call site.
+
+    (hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts,
+     hb_op, ha_op, gf_on, gf_tol, gap_counts)
+    """
     return (_AMB_EMPTY, _AMB_EMPTY, _AMB_EMPTY, _AMB_EMPTY,
-            np.zeros(n + 1, np.int64), False, np.zeros(3, np.int64))
+            np.zeros(n + 1, np.int64), False, np.zeros(3, np.int64),
+            _AMB_EMPTY, _AMB_EMPTY, False, 0.0, np.zeros(4, np.int64))
+
+
+@njit(cache=True)
+def _gap_px(hb_op, hb_lo, ha_op, ha_hi, hr_off, gf_on, gf_tol,
+            i, stop, is_long, day_open, gap_counts):
+    """THE FIRST TRADABLE PRICE AT OR BEYOND THE STOP, from the hourly path.
+
+    A stop is not a price you get. It is a price at which an order becomes a
+    market order, and what fills is the next price actually quoted. Three
+    cases, and the engine used to see only the first two:
+
+      no gap        price walked through the level inside an hour. The stop
+                    price was quoted on the way. Fill at the stop.
+      opening gap   the DAILY bar opens beyond the stop. The engine already
+                    handled this: fill at the daily open.
+      INTRADAY gap  the daily bar opens on the right side of the stop and then
+                    jumps through it mid-session. The daily rule fills at the
+                    stop and is WRONG -- there was no quote there. This is
+                    EURCHF on 15 Jan 2015, and it is why this function exists.
+
+    THE QUOTE SIDE IS THE ONE THAT WOULD FILL. A long exits by selling, so it
+    fills on the BID; a short buys, so it fills on the ASK. The mid would
+    understate every gap by half a spread.
+
+    gf_tol KEEPS THE SPREAD FROM BEING CHARGED TWICE. The daily feed is OANDA
+    MID and the hourly feed is OANDA BID/ASK, so the bid open sits half a
+    spread below a mid stop even on a perfectly orderly bar. gf_tol is the
+    pair's round-trip cost as a FRACTION of price (cost_frac_roundtrip from
+    cost_table_h22.csv), and an hourly open counts as a gap only when it is
+    beyond the stop by more than gf_tol x stop -- a charge the cost table is
+    already making. The residual overlap is at most that per gapped fill,
+    bounded and reported, never silently compounding.
+
+    WHERE THE HOURLY PATH CANNOT SAY, THE DAILY RULE STANDS AND IS COUNTED.
+    gap_counts = [resolved no gap, resolved gap, unresolved, daily-open gaps].
+    """
+    tol = gf_tol * stop
+    gapped = (day_open < stop) if is_long else (day_open > stop)
+    px = day_open if gapped else stop
+    if gapped:
+        gap_counts[3] += 1
+    if not gf_on:
+        return px
+    a = hr_off[i]
+    b = hr_off[i + 1]
+    if b <= a:
+        gap_counts[2] += 1
+        return px
+    for k in range(a, b):
+        if is_long:
+            if hb_lo[k] <= stop:
+                op = hb_op[k]
+                if op < stop - tol:
+                    gap_counts[1] += 1
+                    return op if op < px else px
+                gap_counts[0] += 1
+                return px
+        else:
+            if ha_hi[k] >= stop:
+                op = ha_op[k]
+                if op > stop + tol:
+                    gap_counts[1] += 1
+                    return op if op > px else px
+                gap_counts[0] += 1
+                return px
+    gap_counts[2] += 1
+    return px
 
 
 @njit(cache=True)
@@ -216,7 +295,8 @@ def run_bars(o, h, l, c, atr,
              block_suspect, bridge_all_routes,
              t_entry_bar, t_exit_bar, t_dir, t_leg, t_entry_px, t_exit_px,
              t_units, t_r, t_reason, t_route,
-             hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts):
+             hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hr_on, amb_counts,
+             hb_op, ha_op, gf_on, gf_tol, gap_counts):
     """The bar loop. Returns (n_trades, n_both_touched, n_blocked_late,
     n_blocked_stale). Trade fields are written into the t_* output arrays."""
     n = c.size
@@ -315,12 +395,14 @@ def run_bars(o, h, l, c, atr,
                     else:
                         amb_counts[2] += 1
                 if l1_open and l1_hit_stop and not amb_tp_first:
-                    # GAP-AWARE FILL. A bar that OPENS below the stop gapped
-                    # through it overnight; the stop price was never available.
-                    # Fill at the open, which is worse. Filling at the stop
-                    # price silently assumes liquidity that did not exist and
-                    # flatters every strategy holding through a gap.
-                    px = o[i] if o[i] < l1_stop else l1_stop
+                    # REALISTIC GAP FILL -- the first tradable price at or
+                    # beyond the stop. See _gap_px: the daily open covers an
+                    # OVERNIGHT gap, the hourly bid path covers an INTRADAY
+                    # one, and the stop price itself is only used when price
+                    # was actually quoted there.
+                    px = _gap_px(hb_op, hb_lo, ha_op, ha_hi, hr_off,
+                                 gf_on, gf_tol, i, l1_stop, True, o[i],
+                                 gap_counts)
                     t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = px
                     t_r[l1_idx] = ((px - entry_px) * units_leg) / risk_dollars
                     t_reason[l1_idx] = STOP
@@ -346,7 +428,9 @@ def run_bars(o, h, l, c, atr,
                             frozen_close = cl
                             frozen_atr = a
                 if l2_open and not l2_moved and lo <= l2_stop:
-                    px2 = o[i] if o[i] < l2_stop else l2_stop   # gap-aware
+                    px2 = _gap_px(hb_op, hb_lo, ha_op, ha_hi, hr_off,
+                                  gf_on, gf_tol, i, l2_stop, True, o[i],
+                                  gap_counts)
                     t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = px2
                     t_r[l2_idx] = ((px2 - entry_px) * units_leg) / risk_dollars
                     if l2_phase <= 1:
@@ -381,7 +465,9 @@ def run_bars(o, h, l, c, atr,
                     else:
                         amb_counts[2] += 1
                 if l1_open and l1_hit_stop and not amb_tp_first:
-                    px = o[i] if o[i] > l1_stop else l1_stop    # gap-aware
+                    px = _gap_px(hb_op, hb_lo, ha_op, ha_hi, hr_off,
+                                 gf_on, gf_tol, i, l1_stop, False, o[i],
+                                 gap_counts)
                     t_exit_bar[l1_idx] = i; t_exit_px[l1_idx] = px
                     t_r[l1_idx] = ((entry_px - px) * units_leg) / risk_dollars
                     t_reason[l1_idx] = STOP
@@ -401,7 +487,9 @@ def run_bars(o, h, l, c, atr,
                             frozen_close = cl
                             frozen_atr = a
                 if l2_open and not l2_moved and hi >= l2_stop:
-                    px2 = o[i] if o[i] > l2_stop else l2_stop   # gap-aware
+                    px2 = _gap_px(hb_op, hb_lo, ha_op, ha_hi, hr_off,
+                                  gf_on, gf_tol, i, l2_stop, False, o[i],
+                                  gap_counts)
                     t_exit_bar[l2_idx] = i; t_exit_px[l2_idx] = px2
                     t_r[l2_idx] = ((entry_px - px2) * units_leg) / risk_dollars
                     if l2_phase <= 1:
@@ -808,6 +896,9 @@ def run(A, plan=2, risk_dollars=200.0, atr_mult=1.0, tp_mult=1.5,
     _ac = (amb[6] if amb is not None else None)
     out['_amb'] = (np.asarray(_ac).copy() if _ac is not None
                    else np.zeros(3, np.int64))
+    _gc = (amb[11] if amb is not None and len(amb) > 11 else None)
+    out['_gap'] = (np.asarray(_gc).copy() if _gc is not None
+                   else np.zeros(4, np.int64))
     out['_blocked_late'] = late; out['_blocked_stale'] = stale
     return out
 

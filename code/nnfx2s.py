@@ -129,7 +129,8 @@ def _write_csv(D, path, cols=None):
 
 def run_combo(c1, c1_set, base, base_set, variant, ruleset,
               pairs=None, atr_len=14, use_hourly=True, amb_out=None,
-              lowvol_q=VOL.LOWVOL_Q, peg_x=VOL.PEG_X_PLACEHOLDER):
+              lowvol_q=VOL.LOWVOL_Q, peg_x=VOL.PEG_X_DECIDED,
+              gapfill=None, gap_out=None):
     """One C1 + one baseline, one ruleset, across the pairs. -> trade frame.
 
     THE C1 ENTRY AND EXIT ARE ALWAYS ON. Stage 2 adds a baseline to a C1; it
@@ -193,8 +194,8 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
                 vok = vok & (~_lv)
             # THE PEG GUARD, cross-pair and NOT a percentile: no new entry
             # while this pair's lagged ATR/price is below peg_x x the 28-pair
-            # MEDIAN of the same lagged quantity that day. X is a PLACEHOLDER
-            # until Jack picks it off the curve.
+            # MEDIAN of the same lagged quantity that day. X = 0.33, DECIDED
+            # by Jack on 25 Nov off the STAGE3.md curve.
             if peg_x:
                 _ix2, _pg = VOL.peg_mask(p, x=peg_x)
                 assert len(_pg) == n, '%s: peg mask %d vs %d bars' % (
@@ -207,10 +208,14 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
                 A['bl'] = A['c'] - K if sd == 'long' else A['c'] + K
             if use_hourly:
                 import nnfxamb as _AMB
-                res = E.run(A, amb=_AMB.amb_args(p), **kw)
+                res = E.run(A, amb=_AMB.amb_args(p, gapfill=gapfill), **kw)
                 if amb_out is not None:
                     amb_out += np.asarray(res.get('_amb', np.zeros(3, np.int64)))
+                if gap_out is not None:
+                    gap_out += np.asarray(res.get('_gap', np.zeros(4, np.int64)))
             else:
+                # NO HOURLY PATH MEANS NO GAP FILLS EITHER. Both live on the
+                # same tuple, and use_hourly=False is the pre-hourly engine.
                 res = E.run(A, **kw)
             tf = E.trade_frame(res, d)
             if tf is None or not len(tf):
@@ -232,6 +237,13 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
     T['variant'] = variant; T['ruleset'] = ruleset
     T['lowvol_q'] = (lowvol_q if lowvol_q else 0.0)
     T['peg_x'] = (peg_x if peg_x else 0.0)
+    # EVERY FRAME DECLARES WHETHER ITS STOPS WERE FILLED REALISTICALLY.
+    # Standing from 25 Nov; a frame that does not say so is read by pre-flight
+    # guard 41 as computed at a price that was never quoted.
+    import nnfxamb as _AMB2
+    T['gapfill_on'] = int(bool(
+        use_hourly and (_AMB2.GAPFILL_STANDING if gapfill is None
+                        else gapfill)))
     return T
 
 
