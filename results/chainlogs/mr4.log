@@ -1,0 +1,56 @@
+[11:13:09] START mr4
+[11:13:09] START condition report
+    MR120  half-life ok 96.7%  stationary ok 9.3%  BOTH 9.3%  median half-life 27.5 bars
+    MR20   half-life ok 99.9%  stationary ok 90.4%  BOTH 90.4%  median half-life 7.5 bars
+    MR60   half-life ok 98.8%  stationary ok 18.0%  BOTH 18.0%  median half-life 18.5 bars
+  nnfxmr done
+[11:13:18] OK cond
+[11:13:18] START run: 3 variants x conditional x ranging gate
+Traceback (most recent call last):
+  File "/Users/jackcuster/fx-data/code/nnfxmr.py", line 565, in <module>
+    main()
+  File "/Users/jackcuster/fx-data/code/nnfxmr.py", line 559, in main
+    D, P, keep = run_all()
+  File "/Users/jackcuster/fx-data/code/nnfxmr.py", line 415, in run_all
+    RG = _ranging_series()
+  File "/Users/jackcuster/fx-data/code/nnfxmr.py", line 404, in _ranging_series
+    L = pd.read_csv(f, usecols=['date', 'pair', 'shape2'],
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1026, in read_csv
+    return _read(filepath_or_buffer, kwds)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 620, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1620, in __init__
+    self._engine = self._make_engine(f, self.engine)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/readers.py", line 1898, in _make_engine
+    return mapping[engine](f, **self.options)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/c_parser_wrapper.py", line 140, in __init__
+    self._validate_usecols_names(usecols, self.orig_names)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/io/parsers/base_parser.py", line 988, in _validate_usecols_names
+    raise ValueError(
+ValueError: Usecols do not match columns, columns expected but not found: ['pair', 'shape2', 'date']
+[11:13:19] FAIL run
+[11:13:39] START mr4
+[11:13:39] START condition report
+    MR120  half-life ok 96.7%  stationary ok 9.3%  BOTH 9.3%  median half-life 27.5 bars
+    MR20   half-life ok 99.9%  stationary ok 90.4%  BOTH 90.4%  median half-life 7.5 bars
+    MR60   half-life ok 98.8%  stationary ok 18.0%  BOTH 18.0%  median half-life 18.5 bars
+  nnfxmr done
+[11:13:48] OK cond
+[11:13:48] START run: 3 variants x conditional x ranging gate
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    MR60   cond=1 gate=0  all28 R +14.210  R/yr +2.368  dip 26.914  n 379
+    MR60   cond=1 gate=1  all28 R +1.621  R/yr +0.270  dip 16.353  n 183
+    MR60   cond=0 gate=0  all28 R -115.252  R/yr -19.209  dip 201.706  n 2210
+    MR60   cond=0 gate=1  all28 R -35.926  R/yr -5.988  dip 56.880  n 826
+    MR20   cond=1 gate=0  all28 R -9.627  R/yr -1.604  dip 63.603  n 2601
+    MR20   cond=1 gate=1  all28 R -39.898  R/yr -6.650  dip 48.580  n 879
+    MR20   cond=0 gate=0  all28 R -23.808  R/yr -3.968  dip 62.750  n 2931
+    MR20   cond=0 gate=1  all28 R -44.638  R/yr -7.440  dip 54.899  n 972
+    MR120  cond=1 gate=0  all28 R +18.507  R/yr +3.084  dip 23.620  n 145
+    MR120  cond=1 gate=1  all28 R -9.811  R/yr -1.635  dip 21.996  n 83
+    MR120  cond=0 gate=0  all28 R -83.542  R/yr -13.924  dip 222.541  n 1551
+    MR120  cond=0 gate=1  all28 R -70.091  R/yr -11.682  dip 79.527  n 597
+  daily corr to A: MR120_uncond -0.341, MR120 -0.124, MR20_uncond -0.339, MR20 -0.338, MR60_uncond -0.397, MR60 -0.197
+  nnfxmr done
+[11:14:45] OK run
+[11:14:45] DONE mr4

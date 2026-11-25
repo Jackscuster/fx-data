@@ -437,6 +437,45 @@ def stage_app():
         assign=nd('group_assign.csv', head=20),
         assign_steps=nd('group_assign_steps.csv', head=400),
     )
+    sec['nnfx']['meanrev'] = dict(
+        note=('ITEM 4, Jack 25 Nov -- A SECOND TYPE OF STRATEGY: DECLARED '
+              'MEAN REVERSION, 3 variants, NO SEARCH. The rule is '
+              'code/strat.py:52 from the early project work (z-score against '
+              'a rolling n-bar mean, long at z <= -entry, short at z >= '
+              'entry, flat at |z| < 0.1) and its evidence is HANDOFF_3.md '
+              'section 9: mean OOS Sharpe +0.109 with 69% of pairs positive '
+              'against momentum at -0.225, best config n=60 entry=2.0. '
+              'MR60 is that config; MR20 and MR120 are one faster and one '
+              'slower. `entry` is NOT varied -- that would be the search '
+              'item 4 forbids. Stop at one further sigma beyond the entry '
+              'stretch, target the mean, realistic gap fills, hourly '
+              'ambiguity resolution, leverage cap, R in the same 1.5-ATR '
+              'unit as every other Layer 2 number. '
+              'ONE CORRECTION TO THE BRIEF: the early work\'s CONDITION was '
+              'the 9-box (HANDOFF_3 section 10), NOT a half-life or a '
+              'stationarity test -- the repo has a Hurst exponent and '
+              'neither of the other two, so both are new and built here. '
+              'AND THE HALF-LIFE IS NOT BINDING: it passes on 96.7% to 99.9% '
+              'of bars while the Dickey-Fuller test passes on 9.3% (MR120), '
+              '18.0% (MR60) and 90.4% (MR20), so "both agree" IS the ADF '
+              'test alone. '
+              'RESULTS: 7 of 24 cells positive, NOT ONE reaching |t| = 2, '
+              'and every cell that does reach |t| >= 2 is negative. The '
+              'condition does all the work -- MR120 goes from -83.542 R '
+              'unconditional to +18.507 R conditional on all 28 pairs, worst '
+              'dip 222.5 -> 23.6. The Layer 1 RANGING gate helps in only 1 of '
+              '6 conditional comparisons and is in-sample anyway. '
+              '"Mean reversion for range-prone pairs" is NOT supported on R '
+              'per trade (5 of 12) or R per dip (6 of 12). '
+              'FLAGGED: every positive cell is over the 10% crisis threshold '
+              'and MR120 takes 73.6% of its R from crisis windows. '
+              'THE ONE THING THAT IS NOT BORDERLINE: every variant is '
+              'NEGATIVELY correlated with candidate A, -0.124 to -0.397.'),
+        condition=nd('mr_condition.csv', head=100),
+        summary=nd('mr_summary.csv', head=40),
+        per_pair=nd('mr_per_pair.csv', head=200),
+        corr=nd('mr_corr.csv', head=20),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '

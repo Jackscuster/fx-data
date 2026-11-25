@@ -6167,6 +6167,35 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
   h+='<div class="note"><b>27 distinct candidates were picked at least once out of 47, across 78 picks.</b> The rule is '
     +'not settling on anything, which is the diagnosis rather than a detail.</div>';
  }
+ /* ITEM 4, Jack 25 Nov: a second TYPE of strategy -- declared mean reversion,
+    three variants, no search. */
+ const MR=R.meanrev||{};
+ if(MR.note){
+  h+='<h3>Mean reversion \u2014 a second type of strategy, declared</h3>';
+  h+='<div class="note">'+MR.note+'</div>';
+  h+=tbl(MR.condition,['variant','n','pair','bars','pct_halflife_ok','pct_stationary_ok','pct_both_ok','median_halflife','median_df_t'],'The condition \u2014 OU half-life and Dickey-Fuller, per pair per variant');
+  h+='<div class="note"><b>The half-life is not binding; the stationarity test is the whole condition.</b> The half-life '
+    +'passes on 96.7% to 99.9% of bars while the Dickey-Fuller test passes on 9.3% (MR120), 18.0% (MR60) and 90.4% '
+    +'(MR20) \u2014 and \u201cboth\u201d equals the ADF figure to the decimal in every variant. For MR20 it barely '
+    +'gates anything, which is why MR20 conditional and unconditional are nearly the same book (daily correlation '
+    +'0.930). There is no statsmodels here, so the DF statistic is computed directly and the 5% critical value '
+    +'\u22122.86 (Fuller 1976; MacKinnon 1991) is a named constant in <code>code/nnfxmr.py</code>.</div>';
+  h+=tbl(MR.summary,['variant','conditional','ranging_gate','scope','R_total','R_per_year','R_per_year_ex_best_day','trades','worst_dip_R','R_per_dip','t_yearly','t_block_boot','years_positive','null_p','best_trade_share','crisis_share'],'Unseen years 2010\u20132015 \u2014 3 variants x conditional x Layer 1 RANGING gate x all 28 / range-prone');
+  h+='<div class="note"><b>7 of 24 cells positive and not one reaches |t| = 2; every cell that does reach |t| \u2265 2 is '
+    +'negative.</b> The best is MR120 conditional on all 28 pairs: <b>+18.507 R over six years, +3.084 a year</b>, t 0.602, '
+    +'null p 0.110, 3 of 6 years positive. <b>The condition does all the work</b> \u2014 MR120 goes from \u221283.542 R '
+    +'unconditional to +18.507 R conditional, and its worst dip from 222.5 to 23.6. <b>FLAGGED: every positive cell is '
+    +'over the 10% crisis threshold</b> and MR120 takes <b>73.6%</b> of its R from crisis windows, which for a '
+    +'mean-reversion rule is the opposite of reassuring \u2014 a stretch away from the mean during a crisis is exactly '
+    +'the stretch that may not come back, and the SNB de-peg is the case in point.</div>';
+  h+=tbl(MR.corr,['series','A','MR120','MR60','MR20','MR120_uncond','MR60_uncond','MR20_uncond'],'Daily P&amp;L correlation \u2014 the number that decides whether it is worth having');
+  h+='<div class="note"><b>Every variant is NEGATIVELY correlated with candidate A, \u22120.124 to \u22120.397.</b> That '
+    +'is the one thing in item 4 that is not borderline. A second TYPE of strategy earns its place in a book by being '
+    +'uncorrelated, not by being better: a sleeve at 0.0 making half as much as A is a better addition than one at 0.8 '
+    +'matching it. MR120 and MR20 are also nearly independent of each other (+0.079), so they are not one sleeve wearing '
+    +'two labels. <b>Verdict: not proven alone, kept as a sleeve candidate for the book test.</b></div>';
+  h+=tbl(MR.per_pair,['variant','pair','direction','n_trades','R_total','R_per_trade','win_rate','mean_bars','range_prone'],'Per pair, per direction \u2014 the declared variants, conditional, no gate');
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){

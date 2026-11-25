@@ -1,0 +1,6 @@
+[11:13:39] START mr4
+[11:13:39] START condition report
+[11:13:48] OK cond
+[11:13:48] START run: 3 variants x conditional x ranging gate
+[11:14:45] OK run
+[11:14:45] DONE mr4
