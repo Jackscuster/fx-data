@@ -885,6 +885,45 @@ The evidence that nothing but those two paths changed is
    and 6.60%/yr (mode B). BOOK.md states the distance to 12% explicitly and is
    the only document that may speak about the target at all.
 
+   **WHAT THE SIX ITEMS OF 25 NOVEMBER FOUND. Every one of them is on disk
+   with its own document, its own csvs and an app section; pre-flight 41 of
+   41 throughout. Five of the six are NEGATIVE results and that is the
+   value.**
+
+   | item | document | verdict |
+   |---|---|---|
+   | 1 gap fills | `GAP_FILLS.md` | **Fixed a real fault, changed no verdict.** The engine filled a stop at the stop price whenever the daily bar did not OPEN beyond it, so an overnight gap was handled and an INTRADAY one was not. Standing now via `l2engine._gap_px`, guard 41. Worth under 1 R a year on A/B/C; worth **−1.000 R booked against a −20.100 R bound** on a long EURCHF into the SNB de-peg, and the leverage cap scales none of it (that position is 7.3:1). |
+   | 2 quiet entry | `QUIET_ENTRY.md` | **The rule FAILS. Do not adopt a Q cut.** Walk-forward it loses 4.816 R on A and 25.689 R on B, 1 of 6 years positive. The fixed-Q curve turns direction 4 and 5 times out of 8. **The thing underneath it is real and inverted**: 35 of 39 C1 alone show R per trade falling as the ATR decile rises, and real entries in the top deciles underperform RANDOM entries from the SAME decile by up to 1 SD. It is losses concentrated in loud entries, not profit in quiet ones. |
+   | 3 per-pair bank, groups | `PER_PAIR_BANK.md`, `PAIR_GROUPS.md` | **The edge is NOT pair-specific in any way a tuning-year pick can find**, and the assignment step destroys value: −50.960 R pooled, worse for every grouping, and the Layer 1 character grouping is worse than its own shuffled labels (null p 0.987). **Pair character does not persist**: Spearman −0.456 pre-2010 into 2010–2015, 21.4% of labels kept. **And the ceiling is +520.643 R** with hindsight — the dispersion is real and nothing reaches it. |
+   | 4 mean reversion | `MEAN_REVERSION.md` | **Unproven alone, kept as a sleeve for one reason: it is NEGATIVELY correlated with A** (−0.124 to −0.397). Nothing reaches \|t\| = 2; every positive cell is over the 10% crisis threshold and MR120 takes 73.6% of its R from crisis windows. The half-life is NOT binding — the ADF test is the whole condition. |
+   | 5 the book | `BOOK.md` | **The best book is A ON ITS OWN, 1.135% a year at the firm's maximum legal sizing against a 12% target — a factor of 10.6 short, and no book at any sizing ever passes the +10% evaluation.** Every addition at equal risk makes it worse. **The gap is not a sizing or combination problem; it is a return problem.** |
+   | 6 exits, speeds, drawdown | `EXITS.md`, `SPEEDS.md`, `DRAWDOWN.md` | **At a FIXED setting 6 of 6 cells lose on 2005–2015 and 4 of 6 on 2010–2015** — A is substantially the walk-forward SELECTION, not the indicator. Best drawdown control is +16.5% on return per dip, a best-of-25 with a non-monotone curve. A kill switch at 50% of the binding dip turns +39.874 R into −13.348 R. |
+
+   **THE ONE THING ALL SIX AGREE ON, and it is the thing to carry forward.**
+   Every mechanism tested for CHOOSING — a Q cut chosen on tuning years, a
+   strategy chosen per pair group on tuning years, a setting chosen per step
+   (which is the one that works), an exit configuration chosen from a 576-cell
+   grid — either loses or is a best-of-N maximum. The one selection that does
+   carry is the per-step setting choice inside A, and item 6b shows that is
+   most of what A IS. **The project's remaining distance is not in combination,
+   sizing, exits or drawdown control. It is in selection, and item 3 measured
+   how much is on the table: +520 R of cross-sectional dispersion over six
+   years that no tested rule reaches.**
+
+   **FIVE APPARATUS FAULTS FOUND AND FIXED ON 25 NOVEMBER, each caught by a
+   pattern rather than by a test.** The raw `R` column summed where `R_gross`
+   was meant (every share hid it); two entry-key conventions that never matched
+   (100% removed at every floor level); `dipcheck` silently inheriting the
+   floor and peg defaults; `snb_trade_value` summing legs instead of entries;
+   and in item 6c an `equity_pause` that measured drawdown from the peak of the
+   MANAGED equity, so while paused it could never recover and re-triggered
+   forever — a pause that cannot end is a kill switch, and it showed up as
+   byte-identical numbers at 5, 10 and 20 days. **A sixth, in my own
+   reporting: `BOOK.md` first said DIP95 was BELOW the realised dip on every
+   sleeve. It is ABOVE on all eight, by 1.22x to 2.36x.** Either can be larger
+   — `l2team` found the opposite on the graft book — which is exactly why the
+   rule is to take the maximum rather than assume which way it goes.
+
 0d. **15 SEP — THE NETTING LAYER HAD A ONE-BAR LOOK-AHEAD. EVERY LAYER 2 BOOK
    NUMBER IN THIS FILE IS CONTAMINATED UNTIL RERUN. READ THIS BEFORE QUOTING
    ANYTHING BELOW.**
