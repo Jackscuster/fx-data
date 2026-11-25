@@ -315,8 +315,8 @@ def _score(T, years, ndraw=400, nboot=2000, want_null=True, seed=7,
     else:
         out['leverage_cap_on'] = 0
     if want_null:
-        nulls, nulls_n, nymat = N._null_match(T, cost, ndraw=ndraw,
-                                              years=years, seed=seed)
+        nulls, nulls_n, nymat, nulls_c = N._null_match(
+            T, cost, ndraw=ndraw, years=years, seed=seed)
         out.update(null_p=(float((nulls >= real).mean()) if len(nulls) else np.nan),
                    null_mean=float(np.mean(nulls)) if len(nulls) else np.nan,
                    null_p95=(float(np.percentile(nulls, 95)) if len(nulls)

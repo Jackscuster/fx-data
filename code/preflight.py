@@ -840,16 +840,29 @@ def c31():
     if not len(A):
         return 'no stage 1 null files on disk; nothing to check yet'
     bad = [k for k, v in oks.items() if not v]
-    worst = A.loc[A.null_gross_R_per_trade.abs().idxmax()]
-    assert not bad, (
-        'zero-edge check FAILED for %s. Worst: %s/%s gross %+.5f R per trade '
-        'against a band of +/-%.5f. Random entries are not losing only their '
-        'costs, so the apparatus is biased'
-        % (', '.join(bad), worst.label, worst.indicator,
-           worst.null_gross_R_per_trade, worst.tol_3se))
-    return ('%d candidate-settings across %d variants: null gross R per trade '
-            'is zero within 3 SE everywhere (worst %+.5f)'
-            % (len(A), len(oks), A.null_gross_R_per_trade.abs().max()))
+    # A CELL WITH NO null_cost COLUMN IS A GAP, NOT A PASS. Nulls files written
+    # before 25 Nov 2026 carry no charged-cost figure, so their gross cannot be
+    # restated and they are not judged. Name them rather than let an unjudged
+    # label read as a clean one.
+    J = A[A.judged == 1] if 'judged' in A.columns else A
+    gaps = sorted(set(A.label) - set(J.label))
+    if len(J):
+        worst = J.loc[J.null_gross_R_per_trade.abs().idxmax()]
+        assert not bad, (
+            'zero-edge check FAILED for %s. Worst: %s/%s gross %+.5f R per '
+            'trade against a band of +/-%.5f. Random entries are not losing '
+            'only their costs, so the apparatus is biased'
+            % (', '.join(bad), worst.label, worst.indicator,
+               worst.null_gross_R_per_trade, worst.tol_3se))
+    note = ('; NOT JUDGED (no null_cost column, re-run stage 1): %s'
+            % ', '.join(gaps)) if gaps else ''
+    if not len(J):
+        return ('%d candidate-settings on disk but NONE judged%s'
+                % (len(A), note))
+    return ('%d of %d candidate-settings judged across %d variants: null gross '
+            'R per trade is zero within 3 SE everywhere (worst %+.5f)%s'
+            % (len(J), len(A), len(oks),
+               J.null_gross_R_per_trade.abs().max(), note))
 
 
 def c30():

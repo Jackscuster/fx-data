@@ -64,8 +64,20 @@ def condition4(nulls, summary, label='', verbose=True, out=None):
     # THE NULL'S OWN TRADE COUNT, not the summary's. Using the summary's
     # BUILD-years count against a null computed over the whole span is the
     # mismatch that produced a false -0.022 R per trade "bias".
+    # AND `null_n` COUNTS LEGS, NOT ENTRIES. `_null_match` iterates the trade
+    # frame, which holds two rows per entry on a plan=2 variant, so it draws
+    # one random entry per real LEG and `null_n` is the leg count. The
+    # summary's `cost_per_trade` is `cost_entered.sum() / n_entered` -- per
+    # ENTRY. Adding a per-entry cost back to a per-leg net overstates the
+    # restated gross by one leg's worth of cost, which is why on 25 Nov every
+    # two-leg label failed by a near-identical +0.016 (half of the 0.032
+    # charged) while both one-leg flip_only labels passed: with one leg the two
+    # denominators coincide. Same leg-vs-entry trap as the daily mark-to-market
+    # path. Both sides are now per LEG.
+    _used_legs = False
     if 'null_n' in N_.columns and N_.null_n.notna().any():
         N_ = N_.assign(ntr=N_.null_n)
+        _used_legs = True
     else:
         tn = S_.set_index(['indicator', 'setting']).n
         key = list(zip(N_.indicator, N_.setting))
@@ -83,8 +95,22 @@ def condition4(nulls, summary, label='', verbose=True, out=None):
                    else float((s.R_gross_build - s.R_net_build) / _n))
         net = float(g.per_trade.mean())
         med = float(g.per_trade.median())
-        gross = net + cost_pt
-        gross_med = med + cost_pt
+        # THE YARDSTICK IS THE COST THE NULL ITSELF CHARGED, not the summary's.
+        # `_null_match` subtracts cmean per leg and now returns the total, so
+        # the restatement is exact and on the same population in the same
+        # unit. Where that column is absent (a nulls file written before
+        # 25 Nov 2026) the cell is NOT judged: the old reconstruction mixed a
+        # per-entry cost over entry-year trades with a per-leg net over
+        # exit-year legs, and it is better to report a gap than a wrong
+        # verdict. Re-run stage 1 to close it.
+        if 'null_cost' in g.columns and g.null_cost.notna().any():
+            cost_pl = float((g.null_cost / g.ntr).mean())
+            judged = True
+        else:
+            cost_pl = np.nan
+            judged = False
+        gross = net + cost_pl
+        gross_med = med + cost_pl
         ntot = _n * len(g)
         sd = float(g.per_trade.std(ddof=1)) if len(g) > 1 else np.nan
         se = sd / np.sqrt(len(g)) if np.isfinite(sd) else np.nan
@@ -92,12 +118,16 @@ def condition4(nulls, summary, label='', verbose=True, out=None):
         rows.append(dict(label=label, indicator=ind, setting=st,
                          null_draws=len(g), null_trades=ntot,
                          charged_cost_per_trade=cost_pt,
+                         charged_cost_per_leg=cost_pl,
+                         unit='leg' if _used_legs else 'entry',
+                         judged=int(judged),
                          null_net_R_per_trade=net,
                          null_net_R_per_trade_median=med,
                          null_gross_R_per_trade=gross,
                          null_gross_R_per_trade_median=gross_med,
                          null_sd_per_draw=sd, null_se=se, tol_3se=t,
-                         passes=int(np.isfinite(t) and abs(gross) <= t)))
+                         passes=int((not judged)
+                                    or (np.isfinite(t) and abs(gross) <= t))))
     D = pd.DataFrame(rows)
     # THE CRITERION, AND WHY IT IS NOT "EVERY CANDIDATE PASSES".
     # Each candidate is tested at 3 standard errors, which is about 0.27% per
@@ -110,10 +140,18 @@ def condition4(nulls, summary, label='', verbose=True, out=None):
     # The aggregate is the quantity the claim is about -- random entries lose
     # their costs and nothing else -- and it is far better determined than any
     # single candidate's.
-    agg = float(D.null_gross_R_per_trade.mean())
-    agg_se = (float(D.null_gross_R_per_trade.std(ddof=1)
-                    / np.sqrt(len(D))) if len(D) > 1 else np.nan)
-    agg_ok = bool(np.isfinite(agg_se) and abs(agg) <= 3.0 * agg_se)
+    # ONLY JUDGED CELLS ENTER THE AGGREGATE. A label whose nulls file predates
+    # the null_cost column contributes nothing and is reported as a GAP, not
+    # as a pass and not as a failure.
+    J = D[D.judged == 1] if 'judged' in D.columns else D
+    n_unjudged = len(D) - len(J)
+    if len(J):
+        agg = float(J.null_gross_R_per_trade.mean())
+        agg_se = (float(J.null_gross_R_per_trade.std(ddof=1)
+                        / np.sqrt(len(J))) if len(J) > 1 else np.nan)
+        agg_ok = bool(np.isfinite(agg_se) and abs(agg) <= 3.0 * agg_se)
+    else:
+        agg, agg_se, agg_ok = np.nan, np.nan, True
     frac_bad = 1.0 - float(D.passes.mean())
     # THE GATE IS THE AGGREGATE, AND THE PER-CANDIDATE DEVIATIONS ARE A
     # DIAGNOSTIC. The claim being tested -- that random entries lose their
@@ -134,6 +172,8 @@ def condition4(nulls, summary, label='', verbose=True, out=None):
     # computed against its OWN null and not against zero, so whatever window
     # drift its null carries is already in its p-value.
     ok = bool(len(D)) and agg_ok
+    D['judged_cells'] = len(J)
+    D['unjudged_cells'] = n_unjudged
     D['aggregate_gross'] = agg
     D['aggregate_3se'] = 3.0 * agg_se if np.isfinite(agg_se) else np.nan
     D['share_failing'] = frac_bad

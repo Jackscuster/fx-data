@@ -181,6 +181,99 @@ def stage_buckets(verbose=True):
     return D
 
 
+FLOOR1_DIR = os.path.join(ROOTOUT, 'nnfx_floor')
+
+
+def stage_floor1(verbose=True):
+    """THE FLOOR CURVE OVER THE STAGE 1 C1 RANKING, Jack's item 3.
+
+    The heavy part is done by the chain, which runs nnfx1's stage 1 at each
+    of the six floor levels into results/nnfx_floor/ -- a separate directory
+    so condition4_all's glob does not mix six different rules into one
+    zero-edge aggregate. This function only reads those summaries.
+
+    ONE HONEST LIMIT, STATED IN THE OUTPUT. For A, B and C the removed-versus-
+    kept split is exact: floor_curve_abc.csv matches entries one by one and
+    reads the R of the trades that disappeared. Here there are 117
+    candidate-settings per plan and no per-trade frames were kept, so the
+    removed trades' mean R is attributed BY DIFFERENCE -- the drop in total R
+    divided by the drop in trade count. That is not the same thing, because
+    the leverage cap is portfolio-wide: removing one entry leaves room for a
+    later one to be placed at larger size, so the difference carries a second
+    effect as well as the removed trades' own R. The column is named
+    mean_R_removed_by_difference to keep that visible, and the exact figure
+    for A, B and C is the one to quote.
+    """
+    import glob
+    rows, lead = [], []
+    for v in ('jack', 'textbook'):
+        per_q = {}
+        for q in FLOOR_CURVE:
+            tg = 'q%s' % ('off' if q == 0.0 else ('%g' % (q * 100)).replace('.', 'p'))
+            f_ = os.path.join(FLOOR1_DIR,
+                              'stage1r2_c1_%s_%s_summary.csv' % (v, tg))
+            if not os.path.exists(f_):
+                if verbose:
+                    print('    floor1 %s q=%.3f: MISSING %s'
+                          % (v, q, os.path.basename(f_)), flush=True)
+                continue
+            S_ = pd.read_csv(f_)
+            S_ = S_[S_.get('n_entered', pd.Series(dtype=float)).fillna(0) > 0]
+            if not len(S_):
+                continue
+            per_q[q] = S_
+        if 0.0 not in per_q:
+            if verbose:
+                print('    floor1 %s: no q=0 baseline on disk, skipped' % v,
+                      flush=True)
+            continue
+        B0 = per_q[0.0].set_index(['indicator', 'setting'])
+        for q in sorted(per_q):
+            S_ = per_q[q]
+            nt = float(S_.n_entered.sum())
+            rt = float(S_.R_net_build.sum())
+            n0 = float(per_q[0.0].n_entered.sum())
+            r0 = float(per_q[0.0].R_net_build.sum())
+            drem = n0 - nt
+            rows.append(dict(
+                scope='stage1_c1_ranking', variant=v, floor_q=q,
+                peg_X=VOL.PEG_X_PLACEHOLDER, leverage_cap_on=1,
+                n_candidate_settings=int(len(S_)),
+                trades=nt, R_total=rt,
+                R_per_year=float(S_.R_net_per_year.sum()),
+                mean_R_kept=(rt / nt if nt else np.nan),
+                trades_removed=drem,
+                pct_trades_removed=(100.0 * drem / n0 if n0 else np.nan),
+                mean_R_removed_by_difference=((r0 - rt) / drem
+                                              if drem > 0 else np.nan),
+                n_positive_candidates=int((S_.R_net_build > 0).sum()),
+                n_clearing_alone=int(S_.get('clears_alone',
+                                            pd.Series([0] * len(S_))).sum())))
+            # THE LEADERBOARD AT THIS LEVEL, which is the question behind the
+            # curve: does the floor change WHICH C1 leads, or only the size?
+            T_ = S_.sort_values('R_net_build', ascending=False).head(10)
+            for rk, (_i, r) in enumerate(T_.iterrows(), 1):
+                k = (r.indicator, r.setting)
+                lead.append(dict(
+                    variant=v, floor_q=q, rank=rk, indicator=r.indicator,
+                    setting=r.setting, R_total=float(r.R_net_build),
+                    R_per_year=float(r.R_net_per_year),
+                    n_entered=float(r.n_entered),
+                    t_yearly=float(r.get('t_yearly', np.nan)),
+                    R_total_at_floor_off=(float(B0.loc[k].R_net_build)
+                                          if k in B0.index else np.nan)))
+            if verbose:
+                print('    floor1 %s q=%.3f: %d settings, %d trades, R %9.1f, '
+                      'removed %6.0f, leader %s/%s'
+                      % (v, q, len(S_), nt, rt, drem,
+                         T_.iloc[0].indicator, T_.iloc[0].setting), flush=True)
+    D = pd.DataFrame(rows)
+    L = pd.DataFrame(lead)
+    S2._write_csv(D, os.path.join(OUT, 'floor_curve_stage1.csv'))
+    S2._write_csv(L, os.path.join(OUT, 'floor_leaders_stage1.csv'))
+    return D, L
+
+
 if __name__ == '__main__':
     st = G.opt('--stage', str, 'all')
     S.load_costs(os.environ.get('FX_COST_TABLE', 'results/cost_table_h22.csv'))
@@ -190,5 +283,7 @@ if __name__ == '__main__':
         stage_buckets()
     if st in ('floor', 'all'):
         stage_floor()
-    if st not in ('peg', 'floor', 'buckets', 'all'):
+    if st in ('floor1', 'all'):
+        stage_floor1()
+    if st not in ('peg', 'floor', 'floor1', 'buckets', 'all'):
         raise SystemExit('unknown stage %s' % st)

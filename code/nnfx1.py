@@ -607,6 +607,17 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
     `years` now restricts the null to the same window as the real figure it is
     compared against, and the per-draw trade count is returned so no caller has
     to guess it.
+
+    AND THE COST IT CHARGES IS RETURNED TOO, for the same reason. `null_R` is
+    NET: the loop subtracts `cmean * len(r)` per pair. Restating it gross
+    needs that exact figure, and on 25 Nov condition 4 was reconstructing it
+    from the SUMMARY's `cost_per_trade` instead -- a per-ENTRY cost over
+    entry-year trades set against a per-LEG net over exit-year legs. Two
+    mismatches at once: the leg/entry factor of 2 made every two-leg label
+    fail by a near-identical +0.016 (half the 0.032 charged) while both
+    one-leg flip_only labels passed, and the entry-year/exit-year difference
+    put the populations as far apart as 0.41 to 1 on a long-held flip_only
+    setting. Returning the charged cost removes the reconstruction entirely.
     """ 
     """Random-entry null MATCHED on trade count and holding period, per pair.
 
@@ -621,12 +632,14 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
         T = T[m]
         cost = np.asarray(cost)[np.asarray(m)]
     if not len(T):
-        return np.array([]), np.array([]), np.zeros((0, 0))
+        return (np.array([]), np.array([]), np.zeros((0, 0)),
+                np.array([]))
     T = T.reset_index(drop=True)
     cost = np.asarray(cost)
     rng = np.random.default_rng(seed)
     out = np.zeros(ndraw)
     ntr = np.zeros(ndraw)
+    chg = np.zeros(ndraw)
     yrs_list = sorted(years) if years is not None else []
     ymat = np.zeros((ndraw, max(1, len(yrs_list))))
     per_pair = {}
@@ -645,6 +658,7 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
     for k in range(ndraw):
         tot = 0.0
         nn = 0
+        cc = 0.0
         for p, (cl, atr, ent, hold, dirs, cmean, yr_of_bar) in per_pair.items():
             n = len(ent)
             lo, hi = int(np.nanmin(ent)), int(np.nanmax(ent))
@@ -660,6 +674,7 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
             r = r[np.isfinite(r)]
             tot += float(r.sum()) - cmean * len(r)
             nn += len(r)
+            cc += cmean * len(r)
             # ITEM 6: the null's PER-YEAR vector, so a luck floor can be
             # computed in the units of the statistic (a yearly t) instead of
             # in R, which is what the first version wrongly did.
@@ -674,7 +689,8 @@ def _null_match(T, cost, ndraw=200, seed=7, years=None):
                             - cmean * int(mm.sum())
         out[k] = tot
         ntr[k] = nn
-    return out, ntr, ymat
+        chg[k] = cc
+    return out, ntr, ymat, chg
 
 
 def _block_t(x, block=20, ndraw=2000, seed=13):
@@ -748,7 +764,8 @@ def analytic_floor(m, span):
 
 
 def stage_run(kind='c1', variant='jack', names=None, nmax=None,
-              ndraw=400, era_table=None, use_hourly=True, nboot=2000):
+              ndraw=400, era_table=None, use_hourly=True, nboot=2000,
+              tag_extra='', outdir=None):
     """1a / 1b — every indicator of a family, every setting, one risk plan.
 
     ITEM 5: the three FIXED settings are reported over EVERY trade year from
@@ -785,7 +802,8 @@ def stage_run(kind='c1', variant='jack', names=None, nmax=None,
             b = Y[Y.year.isin(yrs)]
             ds = DS[pd.DatetimeIndex(DS.date).year.isin(list(yrs))]
             real = float(b.R_net.sum())
-            nulls, nulls_n, nymat = _null_match(T, cost, ndraw=ndraw, years=yrs)
+            nulls, nulls_n, nymat, nulls_c = _null_match(
+                T, cost, ndraw=ndraw, years=yrs)
             p = float((nulls >= real).mean()) if len(nulls) else np.nan
             ys = b.sort_values('year').R_net.to_numpy(float)
             t_yr = (float(ys.mean() * np.sqrt(len(ys)) / ys.std(ddof=1))
@@ -832,7 +850,7 @@ def stage_run(kind='c1', variant='jack', names=None, nmax=None,
             null_rows.append(pd.DataFrame(dict(
                 kind=kind, variant=variant, indicator=nm, setting=st,
                 draw=np.arange(1, len(nulls) + 1), null_R=nulls,
-                null_n=nulls_n)))
+                null_n=nulls_n, null_cost=nulls_c)))
         if ii % 5 == 0 or ii == len(names):
             print('    %s/%s: %d of %d indicators, %.1f min'
                   % (kind, variant, ii, len(names), (time.time() - t0) / 60),
@@ -852,10 +870,24 @@ def stage_run(kind='c1', variant='jack', names=None, nmax=None,
         Sall['clears_alone'] = (Sall.t_yearly >= Sall.floor_t_alone).astype(int)
         Sall['clears_best_of_family'] = (
             Sall.t_yearly >= Sall.floor_t_best_of_family).astype(int)
-    tag = '%s_%s' % (kind, variant)
-    f1 = os.path.join(OUT, 'stage1r2_%s_yearly.csv' % tag)
-    f2 = os.path.join(OUT, 'stage1r2_%s_summary.csv' % tag)
-    f3 = os.path.join(OUT, 'stage1r2_%s_nulls.csv' % tag)
+    # EVERY STAGE 1 FILE DECLARES THE STANDING RULES IT WAS RUN UNDER. The
+    # floor curve sweeps LOWVOL_Q, so without this the six levels' files are
+    # indistinguishable on disk and a reader cannot tell which is which.
+    for _D in (Yall, Sall, Nall):
+        if len(_D):
+            _D['lowvol_q'] = (LOWVOL_Q if LOWVOL_Q else 0.0)
+            _D['peg_x'] = (PEG_X if PEG_X else 0.0)
+            _D['leverage_cap_on'] = 1
+    # A SWEEP'S FILES DO NOT BELONG IN results/nnfx. condition4_all globs
+    # stage1r2_*_summary.csv there and treats each match as a label, so six
+    # floor levels dropped beside the real ranking would mix six different
+    # rules into one aggregate zero-edge verdict. A sweep passes outdir.
+    _O = outdir or OUT
+    os.makedirs(_O, exist_ok=True)
+    tag = '%s_%s%s' % (kind, variant, tag_extra)
+    f1 = os.path.join(_O, 'stage1r2_%s_yearly.csv' % tag)
+    f2 = os.path.join(_O, 'stage1r2_%s_summary.csv' % tag)
+    f3 = os.path.join(_O, 'stage1r2_%s_nulls.csv' % tag)
     Yall.to_csv(f1, index=False); Sall.to_csv(f2, index=False)
     Nall.to_csv(f3, index=False)
     print('  stage 1 R2 [%s]: %d indicators x %d settings -> %d yearly rows, '
@@ -1585,10 +1617,23 @@ if __name__ == '__main__':
     st = G.opt('--stage', str, 'run')
     kind = G.opt('--kind', str, 'c1')
     var = G.opt('--variant', str, 'flip_only')
+    # THE STANDING RULES ARE OVERRIDABLE ONLY FROM THE COMMAND LINE, and the
+    # value used is written into every output file. -1 means "leave the
+    # module default alone"; 0 means OFF.
+    _q = G.opt('--lowvol-q', float, -1.0)
+    _x = G.opt('--peg-x', float, -1.0)
+    if _q >= 0.0:
+        LOWVOL_Q = _q if _q > 0 else None
+    if _x >= 0.0:
+        PEG_X = _x if _x > 0 else None
+    print('  standing rules: lowvol_q=%s, peg_x=%s, leverage cap ON'
+          % (LOWVOL_Q, PEG_X), flush=True)
     if st == 'run':
         stage_run(kind=kind, variant=var, nmax=G.opt('--nmax', int, None),
                   ndraw=G.opt('--draws', int, 400),
-                  nboot=G.opt('--nboot', int, 2000))
+                  nboot=G.opt('--nboot', int, 2000),
+                  tag_extra=G.opt('--tag', str, ''),
+                  outdir=G.opt('--outdir', str, None))
     elif st == 'walk':
         stage_walk(kind=kind, variant=var)
     elif st == 'select':

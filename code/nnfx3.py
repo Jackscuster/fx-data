@@ -401,9 +401,19 @@ def condition_c2_neutral(use_hourly=True, verbose=True):
     return D, ok
 
 
-def _neutralised_with_name(c1, cs, base, bs, v, rs, c2name, use_hourly):
+def _neutralised_with_name(c1, cs, base, bs, v, rs, c2name, use_hourly,
+                           lowvol_q=VOL.LOWVOL_Q,
+                           peg_x=VOL.PEG_X_PLACEHOLDER):
     """run_combo3 with a REAL c2 NAMED in prepare and then overwritten
-    all-True -- the exact thing condition_c2_neutral compares against."""
+    all-True -- the exact thing condition_c2_neutral compares against.
+
+    THE C2 SLOT IS THE ONLY THING NEUTRALISED HERE. The volatility floor and
+    the peg guard ride the VOLUME slot, and they are a standing rule, not part
+    of what is under test, so this path must carry them exactly as run_combo3
+    does. It did not on the first run with the floor on: the slot was set
+    all-True, the no-name side had the floor on, and the check failed with
+    MORE legs on the neutralised side (4568 vs 4030 for A/jack) -- the floor's
+    own blocked entries, not a prepare side effect. Fixed 25 Nov 2026."""
     C1L, BASEL, C2L, VOLL, XL = N.families()
     RS = S2.RULESETS[rs]
     PL = N.PLANS[v]
@@ -435,7 +445,18 @@ def _neutralised_with_name(c1, cs, base, bs, v, rs, c2name, use_hourly):
             n = A['c'].size
             T_ = np.ones(n, bool)
             A['c2_lc'] = T_.copy(); A['c2_sc'] = T_.copy()
-            A['v_ok_l'] = T_.copy(); A['v_ok_s'] = T_.copy()
+            vm = T_.copy()
+            if lowvol_q:
+                _ix, _lv = VOL.lowvol_mask(p, q=lowvol_q, causal=True)
+                assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
+                    p, len(_lv), n)
+                vm = vm & (~_lv)
+            if peg_x:
+                _ix2, _pg = VOL.peg_mask(p, x=peg_x)
+                assert len(_pg) == n, '%s: peg mask %d vs %d bars' % (
+                    p, len(_pg), n)
+                vm = vm & (~_pg)
+            A['v_ok_l'] = vm.copy(); A['v_ok_s'] = vm.copy()
             A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
             if not RS['side']:
                 K = 10.0 * float(np.nanmax(np.abs(A['c'])) + 1.0)
