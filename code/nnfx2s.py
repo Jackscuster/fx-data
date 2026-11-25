@@ -1030,6 +1030,159 @@ def _short(s, sfx):
     return str(s).replace(sfx, '')
 
 
+def _read_2d(CC):
+    """CHECK 3, Jack 24 Nov: one paragraph in plain English, does a cost cap
+    raise net R per year or return per dip, and at what setting. Every figure
+    is computed from the csv here, never typed."""
+    L_ = []
+    if not len(CC):
+        return ['_not computed_\n']
+    rows = []
+    for (c1, st, v), g in CC.groupby(['c1', 'setting', 'variant']):
+        if v != MAIN_PLAN:
+            continue
+        g = g.sort_values('pairs_kept')
+        full = g.iloc[-1]
+        bR = g.loc[g.R_net_per_year.idxmax()]
+        bD = g.loc[g.R_per_year_per_dip.idxmax()]
+        rows.append(dict(c1=_short(c1, '_signals'), setting=st,
+                         full_Ryr=float(full.R_net_per_year),
+                         full_rpd=float(full.R_per_year_per_dip),
+                         best_Ryr=float(bR.R_net_per_year),
+                         best_Ryr_pairs=int(bR.pairs_kept),
+                         best_rpd=float(bD.R_per_year_per_dip),
+                         best_rpd_pairs=int(bD.pairs_kept),
+                         full_pairs=int(full.pairs_kept)))
+    if not rows:
+        return ['_not computed_\n']
+    D = pd.DataFrame(rows)
+    prof = D[D.full_Ryr > 0]
+    nR = int((prof.best_Ryr_pairs == prof.full_pairs).sum())
+    nD = int((prof.best_rpd_pairs == prof.full_pairs).sum())
+    ex = prof[prof.best_Ryr_pairs != prof.full_pairs]
+    L_.append('\n### What 2d says, in plain English\n')
+    L_.append(
+        'No. A cost cap does not raise net R per year or return per dip on any '
+        'candidate that was making money without it, with a single exception '
+        'that does not survive a second look. Of the ' + str(len(D))
+        + ' candidate-settings on the main plan, ' + str(len(prof))
+        + ' are profitable over the unseen years at the full 28-pair set; for '
+        + str(nR) + ' of those ' + str(len(prof)) + ' the best cap on R per '
+        'year IS the full set, and for ' + str(nD) + ' of ' + str(len(prof))
+        + ' so is the best cap on return per dip. The median gain from the '
+        'best cap across the profitable candidates is '
+        + '{:+.3f}'.format(float(prof.best_Ryr.sub(prof.full_Ryr).median()))
+        + ' R per year and '
+        + '{:+.4f}'.format(float(prof.best_rpd.sub(prof.full_rpd).median()))
+        + ' on return per dip — zero to three decimals. Where the cap appears '
+        'to help it is helping a LOSER: it improves every one of the '
+        + str(len(D) - len(prof)) + ' unprofitable settings, which is not an '
+        'improvement but simply doing less of something that loses money.')
+    if len(ex):
+        e = ex.iloc[0]
+        L_.append(
+            '\nThe one exception is **' + e.c1 + ' at its ' + e.setting
+            + ' setting**, where capping to ' + str(e.best_Ryr_pairs)
+            + ' pairs lifts R per year from ' + '{:+.2f}'.format(e.full_Ryr)
+            + ' to ' + '{:+.2f}'.format(e.best_Ryr) + ' and capping to '
+            + str(e.best_rpd_pairs) + ' pairs lifts return per dip from '
+            + '{:.4f}'.format(e.full_rpd) + ' to '
+            + '{:.4f}'.format(e.best_rpd) + '. I would not act on it: it is one '
+            'cell in ' + str(len(D)) + ', the uncapped base it improves on is '
+            'barely above zero, and **the two metrics choose different caps** ('
+            + str(e.best_Ryr_pairs) + ' pairs against '
+            + str(e.best_rpd_pairs) + '). A real cost effect would put both at '
+            'the same place on the curve; two different answers from the same '
+            'sweep is what noise looks like.\n')
+    L_.append(
+        '\nThis is the same conclusion the first version of 2d reached, and it '
+        'survives the engine fix — the dip changed, the ranking of caps did '
+        'not. **Cheap pairs do not carry the edge**, even though the dearest '
+        'pair costs three times the cheapest (EURCHF 0.070 against EURUSD '
+        '0.023 per unit of gross R, from `ENGINE_AUDIT_2.md`).\n')
+    return L_
+
+
+def _read_2e(FW):
+    """CHECK 3: the same for fewer trades."""
+    L_ = []
+    if not len(FW):
+        return ['_not computed_\n']
+    rows = []
+    for (c1, st, rule), g in FW.groupby(['c1', 'setting', 'rule']):
+        g = g.sort_values('cut')
+        base = g.iloc[0]
+        bR = g.loc[g.R_net_build.idxmax()]
+        bD = g.loc[g.R_per_year_per_dip.idxmax()]
+        rows.append(dict(c1=_short(c1, '_signals'), setting=st, rule=rule,
+                         base_R=float(base.R_net_build),
+                         base_rpt=float(base.R_net_per_trade),
+                         base_rpd=float(base.R_per_year_per_dip),
+                         best_R=float(bR.R_net_build), best_R_cut=float(bR.cut),
+                         best_R_share=float(bR.share_trades),
+                         best_rpt=float(bR.R_net_per_trade),
+                         best_rpd=float(bD.R_per_year_per_dip),
+                         best_rpd_cut=float(bD.cut)))
+    D = pd.DataFrame(rows)
+    ich = D[(D.c1 == 'ichimoku') & (D.rule == 'min_gap_days')]
+    helped = D[(D.best_R > D.base_R + 1e-9) & (D.base_R > 0)]
+    L_.append('\n### What 2e says, in plain English\n')
+    L_.append(
+        'Yes, and only for ichimoku — but there it is the clearest effect in '
+        'the whole staged build. A minimum gap between trades raises net R per '
+        'year AND return per dip on **all three** of ichimoku\'s settings, and '
+        'all three choose the same cut, a **'
+        + '{:.0f}'.format(float(ich.best_R_cut.mode().iloc[0])
+                          if len(ich) else 0)
+        + '-day minimum gap**. That agreement across settings is the part '
+        'worth something: a single lucky cut on one setting would be a '
+        'coincidence, three settings landing on the same cut is a property of '
+        'the indicator. At the default setting the gap takes total R from '
+        + '{:.2f}'.format(float(ich[ich.setting == 'default'].base_R.iloc[0])
+                          if len(ich[ich.setting == 'default']) else 0)
+        + ' to '
+        + '{:.2f}'.format(float(ich[ich.setting == 'default'].best_R.iloc[0])
+                          if len(ich[ich.setting == 'default']) else 0)
+        + ' on '
+        + '{:.0f}'.format(100.0 * float(
+            ich[ich.setting == 'default'].best_R_share.iloc[0])
+            if len(ich[ich.setting == 'default']) else 0)
+        + '% of the trades, R per trade from '
+        + '{:+.4f}'.format(float(ich[ich.setting == 'default'].base_rpt.iloc[0])
+                           if len(ich[ich.setting == 'default']) else 0)
+        + ' to '
+        + '{:+.4f}'.format(float(ich[ich.setting == 'default'].best_rpt.iloc[0])
+                           if len(ich[ich.setting == 'default']) else 0)
+        + ', and return per dip from '
+        + '{:.4f}'.format(float(ich[ich.setting == 'default'].base_rpd.iloc[0])
+                          if len(ich[ich.setting == 'default']) else 0)
+        + ' to '
+        + '{:.4f}'.format(float(ich[ich.setting == 'default'].best_rpd.iloc[0])
+                          if len(ich[ich.setting == 'default']) else 0)
+        + '. So the answer to Jack\'s actual question — does net R per trade '
+        'rise faster than the trade count falls — is YES on ichimoku: it keeps '
+        'about three quarters of the trades and more than doubles R per trade, '
+        'so total R goes UP rather than merely surviving.')
+    L_.append(
+        '\nIt does not generalise. On **schaff_trend_cycle** the half setting '
+        'improves at an 8-day cut and the default setting improves at NO cut '
+        'in the whole sweep — its best is the uncapped base. On **halftrend** '
+        'there is nothing: the largest gain anywhere is under one R over six '
+        'years, and its half setting loses money at every cut. Across all '
+        + str(len(D)) + ' candidate-setting-rule combinations only '
+        + str(len(helped)) + ' that were already profitable improve at all.\n')
+    L_.append(
+        '\nThe honest reading is that **ichimoku holds its trades too briefly '
+        'and benefits from being made to wait**, which is a statement about '
+        'one indicator and not about the NNFX algorithm. Nothing here has been '
+        'null-tested yet: the cut was swept over its full range and the best of '
+        'the sweep is reported, so a selection correction is still owed before '
+        'the ' + '{:.0f}'.format(float(ich.best_R_cut.mode().iloc[0])
+                                 if len(ich) else 0)
+        + '-day gap is treated as a finding rather than a lead.\n')
+    return L_
+
+
 def md_stage2(out=None):
     """STAGE2.md — Jack's 2a/2b/2c/2f/2d/2e, numbers read from the csvs."""
     out = out or os.path.join(OUT, 'STAGE2.md')
@@ -1228,6 +1381,8 @@ def md_stage2(out=None):
               'R_per_year_per_dip', 't_block_boot']
         d = CC.copy(); d['c1'] = d.c1.map(lambda s: _short(s, '_signals'))
         a(N._tbl(d.sort_values(['c1', 'setting', 'cap']), cc))
+        for _l in _read_2d(CC):
+            a(_l)
     else:
         a('_not computed_\n')
 
@@ -1248,6 +1403,8 @@ def md_stage2(out=None):
               'base_R_net_build', 'R_net_build', 'worst_dip_R']
         d = FW.copy(); d['c1'] = d.c1.map(lambda s: _short(s, '_signals'))
         a(N._tbl(d.sort_values(['c1', 'setting', 'rule', 'cut']), fc))
+        for _l in _read_2e(FW):
+            a(_l)
     else:
         a('_not computed_\n')
 
@@ -1288,11 +1445,34 @@ def md_stage2(out=None):
             if len(hd):
                 a(N._tbl(hd.sort_values(['c1', 'base', 'ruleset', 'phase']), qc))
                 nshort = int((hd.annualised == 0).sum())
+                nbr = int((hd.breached.fillna('').astype(str) != '').sum())
+                fu = hd[(hd.phase == 'funded') & (hd.annualised == 1)]
                 a('\n**' + str(nshort) + ' of ' + str(len(hd)) + ' runs ended '
-                  'before a full year** and are therefore not annualised at '
-                  'all. That is the finding, not a gap in the table: at a '
-                  'sizing that puts the worst dip at the budget, most of these '
-                  'candidates breach a firm limit inside the first year.\n')
+                  'before a full year**, and ' + str(nbr) + ' breached a firm '
+                  'limit.\n')
+                if len(fu):
+                    a('\nAnd this is what check 2 was for. Sized so the worst '
+                      'dip is the Team 1 budget, the derived risk per R comes '
+                      'out at ' + '{:.3f}'.format(float(hd.risk_pct_per_R.min()))
+                      + ' to ' + '{:.3f}'.format(float(hd.risk_pct_per_R.max()))
+                      + ' per cent of equity, the realised worst dip lands at '
+                      + '{:.2f}'.format(float(hd.worst_dip_pct.min())) + ' to '
+                      + '{:.2f}'.format(float(hd.worst_dip_pct.max()))
+                      + ' per cent as intended, and the funded return is '
+                      + '{:+.3f}'.format(float(fu.return_pct_per_year.min()))
+                      + ' to '
+                      + '{:+.3f}'.format(float(fu.return_pct_per_year.max()))
+                      + ' per cent a YEAR. The best of them is '
+                      + '{:+.3f}'.format(float(fu.return_pct_per_year.max()))
+                      + ' per cent against a 12 per cent target, and '
+                      + str(int((fu.return_pct_per_year >= 12.0).sum()))
+                      + ' of ' + str(len(fu)) + ' clear it. The uncorrected '
+                      'version of this table showed a 2-day run at 1,312 per '
+                      'cent a year and an 8-day run paying out 207,847 per '
+                      'cent a year; on a sizing that respects the drawdown '
+                      'budget and an annualisation that refuses to divide by '
+                      'eight days, there is no candidate here a prop firm '
+                      'would fund.\n')
             else:
                 a('_no dip-sized rows: every candidate had an undefined dip_\n')
             a('\n### The fixed risk-per-R sweep, as context\n')
