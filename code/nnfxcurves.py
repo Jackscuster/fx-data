@@ -30,9 +30,15 @@ BUILD = S2.BUILD_YEARS
 FLOOR_CURVE = (0.0, 0.01, 0.025, 0.05, 0.075, 0.10)
 
 
-def _stitch(c1, base, rs, v, lowvol_q, peg_x, years=BUILD):
+def _stitch(c1, base, rs, v, lowvol_q, peg_x, years=BUILD,
+            gapfill=None, gap_out=None):
     """The walk-forward stitch, exactly as stage 2 builds it, under one
-    (floor, peg) setting."""
+    (floor, peg) setting.
+
+    `gapfill` is for nnfxgap's before/after only. Left None it takes the
+    standing value, which from 25 Nov is ON -- so every caller that does not
+    mention gap fills gets them.
+    """
     W = pd.read_csv(os.path.join(OUT, 'stage2_picks_walk.csv'))
     w = W[(W.c1 == c1) & (W.base == base) & (W.variant == v)
           & (W.ruleset == rs)]
@@ -46,7 +52,8 @@ def _stitch(c1, base, rs, v, lowvol_q, peg_x, years=BUILD):
         T = S2.run_combo(c1, str(r.iloc[0].picked_c1_setting), base,
                          str(r.iloc[0].picked_base_setting), v, rs,
                          use_hourly=True,
-                         lowvol_q=(lowvol_q or None), peg_x=(peg_x or None))
+                         lowvol_q=(lowvol_q or None), peg_x=(peg_x or None),
+                         gapfill=gapfill, gap_out=gap_out)
         if not len(T):
             continue
         Ty = T[pd.DatetimeIndex(T.exit_date).year == stp['trade']]

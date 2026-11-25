@@ -1170,6 +1170,115 @@ def c40():
     return ('all three raw-R paths now take net R_gross; ' + '; '.join(checked))
 
 
+def c41():
+    """A stop filled at a price that was never quoted.
+
+    WHAT WENT WRONG. A stop is not a price you get. It is the price at which
+    an order becomes a market order, and what fills is the next price actually
+    quoted. The engine handled two of the three cases and got the third wrong:
+    price walking through the level inside the bar filled at the stop (right),
+    a bar OPENING beyond the stop filled at the daily open (right, and already
+    there), and a bar that opens on the right side of the stop and then JUMPS
+    through it mid-session filled at the stop (WRONG -- there was no quote
+    there). The third case is EURCHF on 15 January 2015: the daily bar opens
+    at 1.2008, above every long stop anyone held, so the opening-gap rule
+    never fired, while the hourly bid went 1.20083 open, 1.16777 low at 09:00
+    UTC, and the next hour opened at 1.03592.
+
+    WHAT IT CHECKS, by source and then by file:
+      - l2engine defines _gap_px and all four stop-fill sites call it, so no
+        branch is left on the old `o[i] if ... else stop` rule;
+      - the OFF sentinel carries all twelve elements, which is what makes
+        every caller that splats it safe;
+      - nnfxamb.GAPFILL_STANDING is True and gf_tol reads the RUN'S cost
+        table, so the spread the gap fill declines to charge twice is the
+        spread actually being charged;
+      - nnfx2s.run_combo stamps gapfill_on on every trade frame;
+      - and no shipped Layer 2 table carries gapfill_on = 0. The gap1
+        measurement files are the one exemption, by name: their whole purpose
+        is to hold the before rows beside the after rows.
+      - the staleness is on record. Every stage table written BEFORE 25 Nov
+        ran on the old fill rule, and this guard fails unless
+        results/nnfx/GAPFILL_STALE.md names them. Silence is not allowed to
+        be the way a stale table passes.
+    """
+    import pandas as _pd
+    es = src('l2engine.py')
+    assert 'def _gap_px(' in es, 'l2engine has no _gap_px'
+    n_call = es.count('px = _gap_px(') + es.count('px2 = _gap_px(')
+    assert n_call == 4, (
+        'l2engine: %d of the 4 stop-fill sites call _gap_px' % n_call)
+    for bad in ('px = o[i] if o[i] < l1_stop else l1_stop',
+                'px2 = o[i] if o[i] < l2_stop else l2_stop',
+                'px = o[i] if o[i] > l1_stop else l1_stop',
+                'px2 = o[i] if o[i] > l2_stop else l2_stop'):
+        assert bad not in es, 'l2engine still fills a stop by: %s' % bad
+    import l2engine as _E
+    assert len(_E._amb_off(4)) == 12, (
+        'the hourly OFF sentinel is %d elements, not 12 -- a splatting '
+        'caller will raise or, worse, bind the wrong argument'
+        % len(_E._amb_off(4)))
+    import nnfxamb as _A
+    assert _A.GAPFILL_STANDING is True, 'nnfxamb.GAPFILL_STANDING is not True'
+    ams = src('nnfxamb.py')
+    assert "'FX_COST_TABLE', os.path.join(ROOTOUT, 'cost_table_h22.csv')" in ams, (
+        'nnfxamb.gf_tol does not fall back to the standing cost table')
+    cs = src('nnfx2s.py')
+    assert "T['gapfill_on'] = int(bool(" in cs, (
+        'nnfx2s.run_combo does not stamp gapfill_on on its trade frames')
+    # the engine actually resolves the 15 Jan 2015 hole, measured not asserted
+    import numpy as _np
+    hb_lo, hb_hi, ha_lo, ha_hi, hr_off, hb_op, ha_op = _A.hourly_index('EURCHF')
+    import l2sweep as _S
+    _d = _S.load_pair('EURCHF')
+    _ix = _pd.DatetimeIndex(_d.index).normalize()
+    j = int(_ix.get_indexer([_pd.Timestamp('2015-01-15')])[0])
+    assert j >= 0, 'no 2015-01-15 EURCHF bar'
+    gc = _np.zeros(4, _np.int64)
+    # a stop below the de-peg hour's low: the fill MUST come from the next
+    # hour's open, not from the stop
+    px = _E._gap_px(hb_op, hb_lo, ha_op, ha_hi, hr_off, True,
+                    _A.gf_tol('EURCHF'), j, 1.1600, True,
+                    float(_d.open.values[j]), gc)
+    assert px < 1.05, (
+        'a long stop at 1.1600 on 15 Jan 2015 fills at %.5f -- the de-peg '
+        'hole is not being seen' % px)
+    assert int(gc[1]) == 1, 'the gap was not counted as a gap'
+    ND = os.path.join(ROOTOUT, 'nnfx')
+    EXEMPT = ('gap_fill_effect.csv', 'gap_fill_effect_defaults.csv',
+              'gap_fill_trades.csv', 'gap_fill_trades_defaults.csv',
+              'gap_stopout_deciles.csv', 'gap_stopout_deciles_defaults.csv')
+    bad = []
+    for f in sorted(glob.glob(os.path.join(ND, '*.csv'))):
+        nm = os.path.basename(f)
+        if nm in EXEMPT or os.path.getsize(f) < 2:
+            continue
+        try:
+            D = _pd.read_csv(f)
+        except Exception:
+            continue
+        if 'gapfill_on' not in D.columns:
+            continue
+        v = _pd.to_numeric(D.gapfill_on, errors='coerce')
+        if not (v.fillna(0) == 1).all():
+            bad.append('%s (%d of %d rows not 1)'
+                       % (nm, int((v.fillna(0) != 1).sum()), len(D)))
+    assert not bad, ('tables computed on the old fill rule: '
+                     + '; '.join(bad))
+    stale = os.path.join(ND, 'GAPFILL_STALE.md')
+    assert os.path.exists(stale) and os.path.getsize(stale) > 200, (
+        'results/nnfx/GAPFILL_STALE.md is missing -- every stage table '
+        'written before 25 Nov ran on the old fill rule and the record has '
+        'to say which')
+    return ('4 of 4 stop-fill sites on _gap_px, OFF sentinel 12 wide, a '
+            '1.1600 long stop on 15 Jan 2015 fills at %.5f, %d shipped '
+            'tables carry gapfill_on = 1' % (px, sum(
+                1 for f in glob.glob(os.path.join(ND, '*.csv'))
+                if os.path.basename(f) not in EXEMPT
+                and os.path.getsize(f) > 2
+                and 'gapfill_on' in open(f).readline())))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -1251,6 +1360,9 @@ def main():
     guard(40, 'A reported figure taken from the RAW `R` column instead of `R_gross`. A trade frame carries both, and they differ by the declared-notional factor: R_gross = R x atr_mult / 1.5. Everything reported is in the R_gross unit, but robust_cols, atr_buckets and nnfxcurves._entry_R all summed the raw column -- and each used it on BOTH sides of its own ratio, so every SHARE was right and only the absolute numbers were 1.5x too large. stage3_report read R_total 40.030 beside R_ex_best_trade 92.049 on the same row. Guards 32, 33 and 36 all passed, because each path reconciled with itself',
           'the three paths take net R_gross; robust_cols writes its denominator out as R_realized_total so a realized-by-exit-year total cannot be read as the MTM R_total beside it; and the shipped tables must reconcile net == gross - cost and best_trade_R + R_ex_best_trade == R_realized_total',
           'no reported path sums the raw R column, and the shipped tables reconcile', c40)
+    guard(41, 'A stop filled at a price that was never quoted. The engine filled a stop at the stop price whenever the bar did not OPEN beyond it -- so an overnight gap was handled and an INTRADAY one was not. EURCHF on 15 Jan 2015 is the case: the daily bar opens at 1.2008, above every long stop held, while the hourly bid went 1.20083 open, 1.16777 low at 09:00 UTC, and the next hour opened at 1.03592. A long stop at 1.16 was booked at 1.16. Hour resolution cannot prove the gap for a stop near the peg, because the de-peg fits inside one hourly bar -- so a 1.5 ATR stop still books 1.0 R where the BOUND is 20.1 R, and that limit is reported rather than averaged away',
+          'l2engine._gap_px fills a stop at the first tradable price at or beyond it -- the daily open for an overnight gap, the breaching hour\'s open on the fill side for an intraday one, the stop itself only where price was genuinely quoted through it; the quote side is the one that would fill; and an hourly open counts as a gap only when it is beyond the stop by more than the pair\'s round-trip cost, which the cost table already charges',
+          'all four stop-fill sites call it, the OFF sentinel is unchanged byte for byte, a 1.1600 long stop on 15 Jan 2015 fills below 1.05, and no shipped table carries gapfill_on = 0', c41)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

@@ -1,0 +1,11 @@
+[10:23:01] START gap1b stitched effect
+  -- the candidates AS REPORTED (walk-forward stitch)
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  A/jack  R 40.030 -> 39.874   worst trade -1.496 -> -1.577   4 of 745 entries moved
+  A/textbook  R -7.226 -> -7.802   worst trade -1.496 -> -1.577   21 of 551 entries moved
+  B/jack  R 26.256 -> 23.934   worst trade -1.496 -> -1.577   20 of 1970 entries moved
+  B/textbook  R -28.611 -> -30.870   worst trade -1.936 -> -2.014   78 of 2557 entries moved
+  C/jack  R -46.652 -> -47.054   worst trade -1.496 -> -1.577   8 of 1657 entries moved
+  C/textbook  R -12.367 -> -13.068   worst trade -1.496 -> -1.577   29 of 1673 entries moved
+  nnfxgap done
+[10:24:41] OK gap1b

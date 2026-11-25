@@ -56,6 +56,7 @@ import nnfx1 as N
 import nnfx2s as S2
 import nnfxvol as VOL
 import nnfxamb as AMB
+import nnfxcurves as CUR
 import l2sweep as S
 import l2engine as E
 
@@ -98,16 +99,32 @@ def _fig(T, years=BUILD):
             N.true_dip(DS, years))
 
 
-def run_both(pairs=None, verbose=True):
-    """A, B and C with gap fills OFF and ON. Everything else identical."""
+def run_both(pairs=None, verbose=True, stitched=True, tag=''):
+    """A, B and C with gap fills OFF and ON. Everything else identical.
+
+    `stitched=True` is the candidates AS REPORTED -- the walk-forward stitch,
+    each step's settings picked on that step's own tuning years, trades taken
+    only in that step's unseen trade year. That is what A, B and C mean in
+    every other table, so it is what the before/after has to be measured on.
+
+    `stitched=False` runs the same three combinations at DEFAULT settings over
+    the whole span. It is a second, larger sample of the same mechanism -- four
+    to six times the trades -- and it is kept because the stitch's BUILD window
+    holds only a few hundred entries and a handful of gaps.
+    """
     rows, chg, keep = [], [], {}
     for (lab, c1, base, rs) in BASES:
         for v in PLANS:
             got = {}
             for gf in (0, 1):
                 gc = np.zeros(4, np.int64)
-                T = S2.run_combo(c1, None, base, None, v, rs, pairs=pairs,
-                                 gapfill=bool(gf), gap_out=gc)
+                if stitched:
+                    T = CUR._stitch(c1, base, rs, v, VOL.LOWVOL_Q,
+                                    VOL.PEG_X_DECIDED,
+                                    gapfill=bool(gf), gap_out=gc)
+                else:
+                    T = S2.run_combo(c1, None, base, None, v, rs, pairs=pairs,
+                                     gapfill=bool(gf), gap_out=gc)
                 got[gf] = (T, gc)
             T0, g0 = got[0]
             T1, g1 = got[1]
@@ -153,19 +170,20 @@ def run_both(pairs=None, verbose=True):
                          rows[-2]['worst_trade_R'], rows[-1]['worst_trade_R'],
                          len(d), len(E0)), flush=True)
     D = pd.DataFrame(rows)
-    D.to_csv(os.path.join(OUT, 'gap_fill_effect.csv'), index=False)
+    D['stitched'] = int(bool(stitched))
+    D.to_csv(os.path.join(OUT, 'gap_fill_effect%s.csv' % tag), index=False)
     C = (pd.concat(chg, ignore_index=True) if chg else pd.DataFrame())
     if len(C):
         C = C[['base', 'variant', 'pair', 'entry_date', 'direction',
                'exit_date_off', 'reason_off', 'entry_px_off',
                'exit_px_off', 'exit_px_on', 'R_off', 'R_on', 'dR']]
         C = C.sort_values('dR')
-    C.to_csv(os.path.join(OUT, 'gap_fill_trades.csv'), index=False)
+    C.to_csv(os.path.join(OUT, 'gap_fill_trades%s.csv' % tag), index=False)
     return D, C, keep
 
 
 # ====================== stop-outs by ATR decile ==========================
-def stopout_deciles(keep, nb=10):
+def stopout_deciles(keep, nb=10, tag=''):
     """How often a stop-out exceeded 2 R and 5 R, by ATR decile at entry.
 
     The decile is the ENTRY bar's own-pair causal ATR percentile -- the same
@@ -196,7 +214,7 @@ def stopout_deciles(keep, nb=10):
                     mean_R=float(r.mean()),
                     R_total=float(r.sum())))
     D = pd.DataFrame(rows)
-    D.to_csv(os.path.join(OUT, 'gap_stopout_deciles.csv'), index=False)
+    D.to_csv(os.path.join(OUT, 'gap_stopout_deciles%s.csv' % tag), index=False)
     return D
 
 
@@ -301,8 +319,13 @@ def main():
     if g.stage in ('all', 'snb'):
         snb_long()
     if g.stage in ('all', 'effect'):
-        D, C, keep = run_both(pairs=pairs)
+        print('  -- the candidates AS REPORTED (walk-forward stitch)', flush=True)
+        D, C, keep = run_both(pairs=pairs, stitched=True)
         stopout_deciles(keep)
+    if g.stage in ('all', 'defaults'):
+        print('  -- the same three at DEFAULT settings, whole span', flush=True)
+        D2, C2, k2 = run_both(pairs=pairs, stitched=False, tag='_defaults')
+        stopout_deciles(k2, tag='_defaults')
     print('  nnfxgap done', flush=True)
 
 
