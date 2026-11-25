@@ -343,6 +343,43 @@ def stage_app():
         snb_trade_value=nd('snb_trade_value.csv', head=20),
         zero_edge=nd('condition4_zero_edge.csv', head=600),
     )
+    sec['nnfx']['gapfill'] = dict(
+        note=('ITEM 1, Jack 25 Nov -- WHAT A STOP ACTUALLY FILLS AT. The '
+              'engine filled a stop at the stop price whenever the daily bar '
+              'did not OPEN beyond it, so an overnight gap was handled and an '
+              'INTRADAY one was not. EURCHF on 15 Jan 2015 is the case: the '
+              'daily bar opens at 1.2008, above every long stop held, while '
+              'the hourly bid went 1.20083 open, 1.16777 low at 09:00 UTC, '
+              'and the next hour opened at 1.03592. A long stop at 1.10 was '
+              'booked at 1.10. STANDING NOW (l2engine._gap_px, pre-flight '
+              'guard 41): a stop fills at the first tradable price at or '
+              'beyond it -- the daily open for an overnight gap, the '
+              'breaching hour\'s open on the FILL SIDE (bid for a long exit, '
+              'ask for a short) for an intraday one, the stop itself only '
+              'where price was genuinely quoted through it. The hourly-OFF '
+              'path is byte-identical to the pre-patch engine, SHA '
+              'e5264776bbacc833 both ways. '
+              'THE RESOLUTION LIMIT: an hour is not a tick. The de-peg fits '
+              'inside the 09:00 bar, whose own range covers any stop near the '
+              'peg -- so a 1.5 ATR stop is NOT seen as gapped and still fills '
+              'at the stop. snb_long_eurchf therefore gives three fills: the '
+              'stop, the hourly rule, and the BOUND (the breaching hour\'s '
+              'far extreme). The bound is a bound, not a claim. '
+              'WHAT IT IS WORTH: on A, B and C it changes no verdict -- the '
+              'largest move to a candidate total is about 2.3 R over six '
+              'years and the worst single trade gets ~5% worse. On a LONG '
+              'EURCHF into the de-peg it is worth -1.000 R booked against a '
+              '-20.100 R bound at a 1.5 ATR stop, and -20.667 -> -99.949 R at '
+              'a 31 ATR stop where the hourly path CAN prove it. The leverage '
+              'cap scales none of it: that position is 7.3:1, inside the '
+              '1:30 limit, so capped size equals engine size.'),
+        snb_long=nd('snb_long_eurchf.csv', head=30),
+        effect=nd('gap_fill_effect.csv', head=20),
+        trades=nd('gap_fill_trades.csv', head=60),
+        deciles=nd('gap_stopout_deciles.csv', head=200),
+        effect_defaults=nd('gap_fill_effect_defaults.csv', head=20),
+        deciles_defaults=nd('gap_stopout_deciles_defaults.csv', head=200),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '

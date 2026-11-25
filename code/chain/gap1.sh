@@ -4,6 +4,7 @@
 # worth it -- the whole thing is ~15 min single-threaded and chain 22A has just
 # finished, so nothing is competing for the machine.
 cd "$(dirname "$0")/../.." || exit 1
+export FX_COST_TABLE=results/cost_table_h22.csv
 LOG=results/chainlogs/gap1.log
 say(){ echo "[$(date +%H:%M:%S)] $*" | tee -a $LOG; }
 say "START gap1 (item 1: realistic gap fills)"

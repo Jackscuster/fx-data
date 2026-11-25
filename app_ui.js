@@ -6042,6 +6042,48 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'than waved through.</div>';
   h+=tbl(RU.zero_edge,['label','indicator','setting','null_draws','unit','judged','charged_cost_per_leg','null_net_R_per_trade','null_gross_R_per_trade','tol_3se','passes','aggregate_gross','aggregate_3se'],'Condition 4 \u2014 the zero-edge check per candidate-setting');
  }
+ /* ITEM 1, Jack 25 Nov: WHAT A STOP ACTUALLY FILLS AT. The engine had the
+    overnight gap right and the INTRADAY gap wrong, and the intraday one is
+    the shape every peg break has. */
+ const GF=R.gapfill||{};
+ if(GF.note){
+  h+='<h3>Gap fills \u2014 what a stop actually fills at</h3>';
+  h+='<div class="note">'+GF.note+'</div>';
+  h+='<div class="note"><b>The three cases, and the one that was wrong.</b> Price walking through the level inside the bar '
+    +'filled at the stop \u2014 right. A bar OPENING beyond the stop filled at the daily open \u2014 right, and already '
+    +'there. A bar that opens on the right side of the stop and then JUMPS through it mid-session filled at '
+    +'<b>the stop</b>, and there was no quote there. That third case is EURCHF on 15 January 2015, and it is why this '
+    +'section exists.</div>';
+  h+=tbl(GF.snb_long,['stop_atr_mult','stop_px','fill','fill_px','R_1p5atr_engine','leverage_requested','lev_scale','R_1p5atr_capped','pct_of_equity_capped','hourly_resolved_gap'],'A LONG EURCHF held into 15 January 2015 \u2014 three fills, two sizes');
+  h+='<div class="note"><b>No candidate held this trade</b> \u2014 every A, B and C entry through the de-peg was a SHORT, '
+    +'which is why the SNB day is a windfall in those tables and not a ruin. This is the other side, constructed: long at '
+    +'the close of 14 Jan 2015, stop at a multiple of that bar\u2019s 14-day ATR (which was <b>11.0 pips</b>, after three '
+    +'years of peg), sized the way the engine sizes. <b>At a 1.5 ATR stop the engine books \u22121.000 R and the bound is '
+    +'\u221220.100 R</b> \u2014 a factor of twenty, and hour resolution cannot prove it, because the whole de-peg fits '
+    +'inside the 09:00 bar whose own range covers that stop. <b>At a 31 ATR stop the hourly path CAN prove it</b>: the '
+    +'breach moves to the 10:00 bar, whose open is 1.03592, and \u221220.667 R becomes \u221299.949 R. '
+    +'<b>The leverage cap is no protection against any of it</b> \u2014 that position is 7.3:1, inside the 1:30 prop '
+    +'limit, so the cap scales it by 1.0000 and capped size equals engine size. The cap limits how much you may hold, not '
+    +'what a hole in the market does to what you are already holding.</div>';
+  h+=tbl(GF.effect,['base','variant','gapfill_on','R_total','R_per_year','trades','worst_dip_R','worst_trade_R','entries_changed','entries_total','stop_fills_resolved_no_gap','stop_fills_gapped','stop_fills_unresolved','dailyopen_gaps'],'What it is worth on A, B and C \u2014 the walk-forward stitch, old fill rule then realistic');
+  h+='<div class="note"><b>It changes no verdict.</b> The largest move to a candidate total over six years is about '
+    +'<b>2.3 R</b> (B/jack, +26.26 \u2192 +23.93) and the worst single trade gets about 5% worse everywhere '
+    +'(\u22121.496 \u2192 \u22121.577 R). Everything else in the two rows is identical by construction: a gap fill '
+    +'changes an exit PRICE, it cannot change which bar an exit happens on, and no entry condition reads an exit price \u2014 '
+    +'so the run asserts the trade set is unchanged and voids itself if it is not.</div>';
+  h+=tbl(GF.trades,['base','variant','pair','entry_date','direction','exit_date_off','reason_off','exit_px_off','exit_px_on','R_off','R_on','dR'],'Every entry whose R moved, worst first');
+  h+='<div class="note"><b>The six largest corrections were all opened on 15 January 2015 itself.</b> CHFJPY long, then '
+    +'GBPCHF, USDCHF, NZDCHF, AUDCHF and CADCHF short \u2014 entered at the close of the de-peg day and stopped out on '
+    +'the 16th, into a market that was still jumping. The old rule could not see that case, on the one day it mattered '
+    +'most.</div>';
+  h+=tbl(GF.deciles,['base','variant','gapfill_on','bucket','n_entries','n_losers','n_worse_than_2R','n_worse_than_5R','pct_worse_than_2R','worst_R','mean_R','R_total'],'How often a stop-out exceeded 2 R and 5 R, by ATR decile at entry');
+  h+='<div class="note"><b>Essentially never \u2014 and that is not reassurance.</b> One of 9,153 entries across the six '
+    +'cells loses more than 2 R with realistic fills (none with the old rule), and <b>none</b> loses more than 5 R, in any '
+    +'decile. The reason is not that the stops held. It is that <b>the book was never long CHF into the de-peg</b>. The '
+    +'constructed trade above shows what the same mechanism is worth from the wrong side: \u221220 R at a normal stop, '
+    +'\u2212100 R at a wide one. The empirical tail measures this sample, not the exposure.</div>';
+  h+=tbl(GF.effect_defaults,['base','variant','gapfill_on','R_total','R_per_year','trades','worst_trade_R','entries_changed','entries_total','stop_fills_gapped'],'The same three at DEFAULT settings over the whole span \u2014 four to six times the trades');
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){

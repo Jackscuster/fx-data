@@ -1,4 +1,4 @@
-# QUEUE_ARMED — 25 November 2026, 10:21 EST
+# QUEUE_ARMED — 25 November 2026, 10:40 EST
 
 **New standing rule, Jack 25 Nov: this file is written before any turn ends and
 the chat reads it directly.** A stage that exists only as a plan counts as NOT
@@ -13,17 +13,20 @@ started.** 10 cores free.
 
 | stage | pid / pgid | what it writes | ETA (US Eastern) |
 |---|---|---|---|
-| **item 1 — realistic gap fills** `code/chain/gap1.sh` | pid **27787**, pgid **27783** | `results/nnfx/gap_fill_effect.csv`, `gap_fill_trades.csv`, `gap_stopout_deciles.csv`, `snb_long_eurchf.csv` | started 10:21, **~10:45** |
+| — | — | — | — |
 
-That is **one** stage. It is the only one armed and the list is not padded.
+**NOTHING IS ARMED RIGHT NOW, and that is accurate rather than tidy.** Item 1
+finished at 10:25 (it took 4 minutes, not the 25 estimated: `run_combo` caches
+per pair and indicator, so the second pass over the same twelve runs costs
+almost nothing). Item 2 is being written in this turn and is not launched yet.
+The machine is idle. The list is not padded with things that are merely next.
 
 ## NOT ARMED, AND WHY
 
 | stage | why not |
 |---|---|
-| item 1 — `GAP_FILLS.md` | waits on the run above. The document is written from the csvs, not before them. |
-| item 1 — pre-flight guard 41 | **engine change is in and regression-proven; the guard is not written yet.** Next thing after the run lands. |
-| item 2 — quiet-entry test, `QUIET_ENTRY.md` | **not built.** 39 C1 alone x 10 deciles x own-pair causal, plus a count/holding/decile-matched random-entry null, plus a walk-forward Q and a fixed-Q curve, plus the floor interaction at 0/1%/5%. Needs a new module. Nothing of it exists. |
+| item 1 — everything | **DONE 10:38.** `results/nnfx/GAP_FILLS.md`, four csvs, pre-flight **guard 41** live, app section wired, preflight **41 of 41 PASS**. |
+| item 2 — quiet-entry test, `QUIET_ENTRY.md` | **being written now, not launched.** 39 C1 alone x 10 deciles x own-pair causal, plus a count/holding/decile-matched random-entry null, plus a walk-forward Q and a fixed-Q curve, plus the floor interaction at 0/1%/5%. |
 | item 3 — per-pair bank, `PAIR_GROUPS.md` | **not built.** Needs per-pair-per-direction-per-year banking as the primary output (a change to how every candidate is stored), three declared groupings, and a 1,000-draw label-shuffle null. |
 | item 4 — mean reversion, `MEAN_REVERSION.md` | **not built, and not yet located.** The conditional mean-reversion rule from the early project work has to be found in the repo and cited before anything is run. Not started. |
 | item 5 — the book, `BOOK.md` | **not built.** Depends on 2, 3 and 4 landing first; it is the thing they feed. |

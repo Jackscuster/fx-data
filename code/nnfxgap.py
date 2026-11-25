@@ -309,6 +309,288 @@ def snb_long(stops_atr=(1.0, 1.5, 2.0, 3.0, 31.0, 50.0), risk_dollars=None,
     return D
 
 
+
+# ====================== THE DOCUMENT ====================================
+def md_gapfills(out=None):
+    """GAP_FILLS.md -- item 1, from the files, nothing retyped."""
+    import hashlib
+    L_ = []
+    a = L_.append
+    rd = lambda n: (pd.read_csv(os.path.join(OUT, n))
+                    if os.path.exists(os.path.join(OUT, n))
+                    and os.path.getsize(os.path.join(OUT, n)) > 2
+                    else pd.DataFrame())
+    SNBD, EFF, TRD, DEC = (rd('snb_long_eurchf.csv'), rd('gap_fill_effect.csv'),
+                           rd('gap_fill_trades.csv'),
+                           rd('gap_stopout_deciles.csv'))
+    EFFD = rd('gap_fill_effect_defaults.csv')
+    DECD = rd('gap_stopout_deciles_defaults.csv')
+    a('# GAP FILLS — item 1, Jack 25 November 2026')
+    a('')
+    a('**The question: when price gaps through a stop, what does the engine '
+      'fill at?**')
+    a('')
+    a('## The answer as the engine stood')
+    a('')
+    a('| case | what it filled at | right? |')
+    a('|---|---|---|')
+    a('| price walks through the level inside the bar | the stop | **yes** |')
+    a('| the daily bar OPENS beyond the stop | the daily open | **yes**, and '
+      'already there |')
+    a('| the bar opens on the right side of the stop and then JUMPS through '
+      'it mid-session | the stop | **NO.** There was no quote there |')
+    a('')
+    a('Only the third case was wrong, and it is the one that matters, because '
+      'it is the shape every currency-peg break has. EURCHF on 15 January '
+      '2015: the daily bar dated the 15th (16:00 NY on the 14th to 16:00 NY '
+      'on the 15th) **opens at 1.2008**, above every long stop anyone held, '
+      'so the opening-gap rule never fires. The hourly bid went **1.20083 '
+      'open, 1.16777 low at 09:00 UTC, and the next hour opened at '
+      '1.03592**. A long stop at 1.10 was booked at 1.10.')
+    a('')
+    a('## What is standing now')
+    a('')
+    a('`l2engine._gap_px`, from 25 Nov, enforced by **pre-flight guard 41**: '
+      'a stop fills at the **first tradable price at or beyond it** — the '
+      'daily open for an overnight gap, the breaching hour\'s OPEN on the '
+      'fill side for an intraday one, and the stop price itself only where '
+      'price was genuinely quoted through it. A long exits by selling so it '
+      'fills on the **bid**; a short buys so it fills on the **ask**. An '
+      'hourly open counts as a gap only when it is beyond the stop by more '
+      'than the pair\'s round-trip cost — a charge the cost table is already '
+      'making, and the one place these two feeds (daily MID, hourly '
+      'BID/ASK) could otherwise double-count.')
+    a('')
+    a('**The hourly-OFF path is byte-identical to the pre-patch engine** — '
+      'six base/plan cells on four pairs, same trade counts, same R to ten '
+      'decimals, same exit prices, SHA `e5264776bbacc833` both ways.')
+    a('')
+    a('## THE RESOLUTION LIMIT, stated before the numbers')
+    a('')
+    a('**An hour is not a tick, and on this event that is decisive.** Inside '
+      'the hour that breaches the stop this method cannot say what was '
+      'quoted, so it keeps the stop price. On 15 Jan 2015 the breaching hour '
+      'for any stop near the peg is the 09:00 bar, whose own range (1.20090 '
+      'down to 1.16777) covers that stop — so **a 1.5 ATR stop is not seen '
+      'as gapped at all** and still fills at the stop, exactly as before. '
+      'That is a measurement limit, not a result, and the table below '
+      'therefore gives three fills: the stop, the hourly rule, and the '
+      '**bound** — the worst price the breaching hour contains. The bound is '
+      'a bound. Making it the standing fill would be a judgement the data '
+      'cannot support, and that call is Jack\'s, not mine.')
+    a('')
+    a('## A LONG EURCHF held into 15 January 2015')
+    a('')
+    a('**No candidate held this trade.** Every A, B and C entry through the '
+      'de-peg was a SHORT, which is why the SNB day is a windfall in those '
+      'tables and not a ruin. This is the other side, constructed: long at '
+      'the close of 14 Jan 2015 (the last bar before the break), stop at a '
+      'multiple of that bar\'s 14-day ATR, sized the way the engine sizes — '
+      'risk at the stop distance. The entry date is the event, not a choice, '
+      'and nothing here is optimised.')
+    a('')
+    if len(SNBD):
+        a('ATR on 14 Jan 2015 was **%.5f** (%.1f pips) on a price of '
+          '**%.5f** — the pair had been pegged for three years.'
+          % (float(SNBD.atr.iloc[0]), 1e4 * float(SNBD.atr.iloc[0]),
+             float(SNBD.entry_px.iloc[0])))
+        a('')
+        a('| stop | stop price | fill | fill price | R, engine size | '
+          'leverage | cap scale | R, capped size |')
+        a('|---:|---:|---|---:|---:|---:|---:|---:|')
+        for _, r in SNBD.iterrows():
+            b = '**' if r.fill == 'bound' else ''
+            a('| %.1f ATR | %.5f | %s%s%s | %.5f | %s%+.3f%s | %.2f:1 | '
+              '%.4f | %s%+.3f%s |'
+              % (r.stop_atr_mult, r.stop_px, b, r.fill, b, r.fill_px,
+                 b, r.R_1p5atr_engine, b, r.leverage_requested, r.lev_scale,
+                 b, r.R_1p5atr_capped, b))
+        a('')
+        _g = lambda m, f, c: float(SNBD[(SNBD.stop_atr_mult == m)
+                                        & (SNBD.fill == f)][c].iloc[0])
+        a('**Three things to take from that table.**')
+        a('')
+        a('1. **At a realistic stop the engine understates the loss by up to '
+          '20 times and the hourly path cannot prove it.** A 1.5 ATR stop '
+          'books **%+.3f R**; the bound is **%+.3f R**.'
+          % (_g(1.5, 'stop', 'R_1p5atr_engine'),
+             _g(1.5, 'bound', 'R_1p5atr_engine')))
+        a('2. **Where the gap IS resolvable the correction is enormous.** A '
+          'stop below 1.16777 breaches in the 10:00 bar instead, whose open '
+          'is 1.03592: at a 31 ATR stop **%+.3f R becomes %+.3f R**, and the '
+          'bound is %+.3f R.'
+          % (_g(31.0, 'stop', 'R_1p5atr_engine'),
+             _g(31.0, 'hourly', 'R_1p5atr_engine'),
+             _g(31.0, 'bound', 'R_1p5atr_engine')))
+        a('3. **The leverage cap is no protection against this.** That '
+          'position is **%.1f:1** at a 1.5 ATR stop — comfortably inside the '
+          '1:30 prop limit — so the cap scales it by %.4f and capped size '
+          'EQUALS engine size. The cap limits how much you may hold. It does '
+          'nothing about what a hole in the market does to what you are '
+          'already holding.'
+          % (_g(1.5, 'stop', 'leverage_requested'),
+             _g(1.5, 'stop', 'lev_scale')))
+        a('')
+    a('## What it is worth on A, B and C')
+    a('')
+    a('The candidates **as reported** — the walk-forward stitch, each step\'s '
+      'settings picked on that step\'s own tuning years, trades taken only in '
+      'that step\'s unseen trade year, floor 5%, peg guard X = 0.33, '
+      'leverage cap on. Everything identical between the two rows except the '
+      'fill rule.')
+    a('')
+    if len(EFF):
+        a('| candidate | R total, old fill | R total, realistic | R/yr old | '
+          'R/yr new | worst dip old | worst dip new | worst trade old | '
+          'worst trade new | entries moved |')
+        a('|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|')
+        for (b, v), g in EFF.groupby(['base', 'variant'], sort=False):
+            o = g[g.gapfill_on == 0].iloc[0]
+            n = g[g.gapfill_on == 1].iloc[0]
+            a('| %s / %s | %+.3f | **%+.3f** | %+.3f | **%+.3f** | %.3f | '
+              '%.3f | %+.3f | **%+.3f** | %d of %d |'
+              % (b, v, o.R_total, n.R_total, o.R_per_year, n.R_per_year,
+                 o.worst_dip_R, n.worst_dip_R, o.worst_trade_R,
+                 n.worst_trade_R, int(n.entries_changed),
+                 int(n.entries_total)))
+        a('')
+        a('| candidate | stop fills resolved, no gap | **resolved as GAPS** | '
+          'unresolvable, daily rule kept | daily-open gaps |')
+        a('|---|---:|---:|---:|---:|')
+        for _, n in EFF[EFF.gapfill_on == 1].iterrows():
+            a('| %s / %s | %d | **%d** | %d | %d |'
+              % (n.base, n.variant, int(n.stop_fills_resolved_no_gap),
+                 int(n.stop_fills_gapped), int(n.stop_fills_unresolved),
+                 int(n.dailyopen_gaps)))
+        a('')
+    if len(TRD):
+        a('### The entries that moved most')
+        a('')
+        a('| candidate | pair | entry | dir | exit | reason | old fill | '
+          'new fill | R old | R new | dR |')
+        a('|---|---|---|---|---|---|---:|---:|---:|---:|---:|')
+        for _, r in TRD.head(10).iterrows():
+            a('| %s/%s | %s | %s | %s | %s | %s | %.5f | %.5f | %+.3f | '
+              '%+.3f | **%+.3f** |'
+              % (r.base, r.variant, r.pair, str(r.entry_date)[:10],
+                 r.direction, str(r.exit_date_off)[:10], r.reason_off,
+                 r.exit_px_off, r.exit_px_on, r.R_off, r.R_on, r.dR))
+        a('')
+        _c = TRD[pd.DatetimeIndex(TRD.entry_date).normalize()
+                 == pd.Timestamp('2015-01-15')]
+        a('**%d of the %d corrected entries were opened on 15 January 2015 '
+          'itself**, and they are the six largest. The engine entered at the '
+          'close of the de-peg day and was stopped out on the 16th, into a '
+          'market that was still jumping — which is the case the old rule '
+          'could not see, happening on the one day it mattered most.'
+          % (len(_c), len(TRD)))
+        a('')
+    a('## How often a stop-out exceeded 2 R and 5 R, by ATR decile at entry')
+    a('')
+    a('The decile is the entry bar\'s own-pair causal ATR percentile — the '
+      'same bucket the per-pair floor cuts into — and the loss is the whole '
+      'ENTRY\'s net R at achievable size, both legs together, because that is '
+      'the loss the account takes.')
+    a('')
+    if len(DEC):
+        on = DEC[DEC.gapfill_on == 1]
+        off = DEC[DEC.gapfill_on == 0]
+        a('| decile | entries | losers | **worse than −2 R** | '
+          '**worse than −5 R** | worst single entry, old fill | '
+          'worst single entry, realistic |')
+        a('|---:|---:|---:|---:|---:|---:|---:|')
+        for b in sorted(on.bucket.unique()):
+            g = on[on.bucket == b]
+            h = off[off.bucket == b]
+            a('| %d | %d | %d | **%d** | **%d** | %+.3f | %+.3f |'
+              % (int(b), int(g.n_entries.sum()), int(g.n_losers.sum()),
+                 int(g.n_worse_than_2R.sum()), int(g.n_worse_than_5R.sum()),
+                 float(h.worst_R.min()), float(g.worst_R.min())))
+        a('| **all** | **%d** | **%d** | **%d** | **%d** | **%+.3f** | '
+          '**%+.3f** |'
+          % (int(on.n_entries.sum()), int(on.n_losers.sum()),
+             int(on.n_worse_than_2R.sum()), int(on.n_worse_than_5R.sum()),
+             float(off.worst_R.min()), float(on.worst_R.min())))
+        a('')
+        a('**Essentially never — and that is not reassurance.** %d of %d '
+          'entries across the six cells lose more than 2 R with realistic '
+          'fills (%d with the old rule), and **none** loses more than 5 R, in '
+          'any decile. The reason is not that the stops held. It is that '
+          '**the book was never long CHF into the de-peg.** The constructed '
+          'trade above shows what the same mechanism is worth when the '
+          'position is on the wrong side: −20 R at a normal stop, −100 R at '
+          'a wide one. The empirical tail here measures the sample, not the '
+          'exposure.'
+          % (int(on.n_worse_than_2R.sum()), int(on.n_entries.sum()),
+             int(off.n_worse_than_2R.sum())))
+        a('')
+    a('## The same three at default settings, as a larger sample')
+    a('')
+    a('The stitch\'s BUILD window holds a few hundred entries per cell and a '
+      'couple of hundred gap-resolvable stop fills. The same three '
+      'combinations at DEFAULT settings over the whole span give four to six '
+      'times the trades. Same direction, same size, nothing new — which is '
+      'the point of running it.')
+    a('')
+    if len(EFFD):
+        a('| candidate | R total, old fill | R total, realistic | '
+          'worst trade old | worst trade new | entries moved | gaps resolved |')
+        a('|---|---:|---:|---:|---:|---:|---:|')
+        for (b, v), g in EFFD.groupby(['base', 'variant'], sort=False):
+            o = g[g.gapfill_on == 0].iloc[0]
+            n = g[g.gapfill_on == 1].iloc[0]
+            a('| %s / %s | %+.3f | %+.3f | %+.3f | %+.3f | %d of %d | %d |'
+              % (b, v, o.R_total, n.R_total, o.worst_trade_R, n.worst_trade_R,
+                 int(n.entries_changed), int(n.entries_total),
+                 int(n.stop_fills_gapped)))
+        a('')
+    a('## What this does and does not settle')
+    a('')
+    a('1. **Settled: the engine no longer books a fill at a price that was '
+      'never quoted**, wherever an hourly path exists to prove it, and guard '
+      '41 will not let a Layer 2 table ship without it.')
+    a('2. **Settled: it changes no verdict on A, B or C.** The largest '
+      'correction to a candidate total is %s R and the worst single trade '
+      'gets about 5%% worse. Nothing here rescues or kills anything.'
+      % ('%.3f' % max(
+          abs(float(g[g.gapfill_on == 1].R_total.iloc[0])
+              - float(g[g.gapfill_on == 0].R_total.iloc[0]))
+          for _k, g in EFF.groupby(['base', 'variant']))
+         if len(EFF) else 'n/a'))
+    a('3. **NOT settled: what a peg break actually costs a position on the '
+      'wrong side of it.** Hour resolution cannot answer it for a normal '
+      'stop. The bound is −20 R against an intended −1 R, the leverage cap '
+      'does not touch it, and the only ways to close that gap are tick data '
+      'for the event or a declared assumption. Jack\'s call.')
+    a('4. **NOT settled: every stage table written before today ran on the '
+      'old rule.** `results/nnfx/GAPFILL_STALE.md` names them and guard 41 '
+      'fails if it goes missing. They are not being re-run to move a '
+      'sub-1-R-a-year figure; the per-pair bank replaces them on the new '
+      'rule from the start.')
+    a('')
+    a('## Provenance')
+    a('')
+    for n_ in ('snb_long_eurchf.csv', 'gap_fill_effect.csv',
+               'gap_fill_trades.csv', 'gap_stopout_deciles.csv',
+               'gap_fill_effect_defaults.csv',
+               'gap_fill_trades_defaults.csv',
+               'gap_stopout_deciles_defaults.csv'):
+        p_ = os.path.join(OUT, n_)
+        if not os.path.exists(p_):
+            a('- `%s` — **MISSING**' % os.path.join('results', 'nnfx', n_))
+            continue
+        a('- `%s` — %s rows, md5 `%s`'
+          % (os.path.relpath(p_, _R),
+             '{:,}'.format(len(S2._safe_csv(p_))),
+             hashlib.md5(open(p_, 'rb').read()).hexdigest()[:12]))
+    out = out or os.path.join(OUT, 'GAP_FILLS.md')
+    open(out, 'w').write('\n'.join(L_) + '\n')
+    print('  GAP_FILLS.md: %d lines -> %s'
+          % (len('\n'.join(L_).splitlines()), os.path.relpath(out, _R)),
+          flush=True)
+    return out
+
+
 def main():
     import argparse
     ap = argparse.ArgumentParser()
@@ -322,6 +604,8 @@ def main():
         print('  -- the candidates AS REPORTED (walk-forward stitch)', flush=True)
         D, C, keep = run_both(pairs=pairs, stitched=True)
         stopout_deciles(keep)
+    if g.stage in ('all', 'md'):
+        md_gapfills()
     if g.stage in ('all', 'defaults'):
         print('  -- the same three at DEFAULT settings, whole span', flush=True)
         D2, C2, k2 = run_both(pairs=pairs, stitched=False, tag='_defaults')
