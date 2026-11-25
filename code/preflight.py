@@ -17,7 +17,7 @@ Statuses: PASS -- the check ran and held. FAIL -- the check ran and did not.
 MANUAL -- the check cannot be run by code here and says what to do. Nothing is
 marked PASS without a check that executed.
 """
-import argparse, glob, json, re, subprocess, time
+import argparse, glob, inspect, json, re, subprocess, time
 import numpy as np, pandas as pd
 
 ROWS = []
@@ -1279,6 +1279,103 @@ def c41():
                 and 'gapfill_on' in open(f).readline())))
 
 
+def c42():
+    """Cost charged twice: the engine's risk denominator against l2sweep's.
+
+    WHAT WENT WRONG. l2engine.run defaults risk_dollars=200.0 and every nnfx*
+    caller takes that default, so raw r is (price move x units) / 200 --
+    checked on 80 stop exits, where / 200 reproduces the booked -0.5 and / 100
+    gives -1.0. nnfx1._cost_R divides by l2sweep.RISK = 100. Numerator and
+    denominator in different units: every net figure in stage 1, stage 2,
+    stage 3 and items 1 to 6 is charged exactly TWICE the measured spread, in
+    the pessimistic direction. The gauntlet path is unaffected, because
+    l2sweep.run_combo passes RISK through as risk_dollars.
+
+    results/nnfx/COST_DOUBLE_CHARGE.md is the record and the correction.
+    """
+    import nnfxproto as PR
+    import l2engine as EN
+    import l2sweep as SW
+    import numpy as np
+    out = []
+    # by source: the engine default is still 200, so the explicit pass matters
+    sg = inspect.signature(EN.run)
+    rd = sg.parameters['risk_dollars'].default
+    assert float(rd) == 200.0, 'l2engine.run risk_dollars default is %s' % rd
+    assert float(PR.RISK_DOLLARS) == float(rd), \
+        'nnfxproto.RISK_DOLLARS %s != engine default %s' % (PR.RISK_DOLLARS, rd)
+    k = PR._kw(PR.cand('g', 'ichimoku_signals', 'vortex_signals',
+                       'variance_volume_signals', 'sma_baseline',
+                       'ssl_channel_exit'))
+    assert float(k.get('risk_dollars', -1)) == float(PR.RISK_DOLLARS), \
+        'nnfxproto._kw does not pass risk_dollars'
+    src_pr = src('nnfxproto.py')
+    assert 'np.abs(T.units.to_numpy(float)) / RISK_DOLLARS' in src_pr, \
+        'nnfxproto.cost_R no longer divides by RISK_DOLLARS'
+    assert 'N._cost_R' not in src_pr, \
+        'nnfxproto reaches nnfx1._cost_R again, which divides by l2sweep.RISK'
+    out.append('engine default %.0f, protocol divisor %.0f, passed explicitly'
+               % (float(rd), float(PR.RISK_DOLLARS)))
+    # by measurement: the two independent paths must agree on realised net R
+    SW.load_costs(os.environ.get('FX_COST_TABLE',
+                                 os.path.join(ROOTOUT, 'cost_table_h22.csv')))
+    pr = [x for x in SW.all_pairs() if 'JPY' not in x and 'CHF' not in x][:6]
+    for plan in (1, 2):
+        C = PR.cand('g%d' % plan, 'ichimoku_signals', 'vortex_signals',
+                    'variance_volume_signals', 'sma_baseline',
+                    'ssl_channel_exit', risk={'plan': plan})
+        v = PR.verify_fast(C, pr, tuple(range(2005, 2011)))
+        assert v['ok'], 'plan %d: fast %.6f vs full %.6f' % (
+            plan, v['fast'], v['full'])
+        out.append('plan %d agrees to %.1e' % (plan, abs(v['diff'])))
+    # and the record exists
+    assert os.path.exists(os.path.join(ROOTOUT, 'nnfx',
+                                       'COST_DOUBLE_CHARGE.md')), \
+        'COST_DOUBLE_CHARGE.md is missing -- the correction has no record'
+    return '; '.join(out)
+
+
+def c43():
+    """A search null reading the real market's indicators.
+
+    WHAT WOULD GO WRONG. nnfxproto caches indicator arrays, ATR, the entry
+    masks and the fast-path context per pair. If any of those keys omits the
+    WORLD tag, a null run computes a shuffled price series' trades from the
+    REAL market's indicators -- which would not raise, would run at full
+    speed, and would make the search null meaningless in the direction that
+    flatters the real search.
+
+    AND THE TWO MASK IMPLEMENTATIONS MUST AGREE. nnfxvol's floor and peg masks
+    read N.pair_data directly and cannot see a synthetic world, so nnfxproto
+    carries array-level versions. check_masks asserts they reproduce the
+    shipped ones bar for bar on all 28 real pairs.
+    """
+    import nnfxproto as PR
+    import nnfxsrc3 as S3
+    import numpy as np
+    sp = src('nnfxproto.py')
+    for frag in ("k = (WORLD, p, name, _pkey(params))",
+                 "k = (WORLD, p, int(atr_len))",
+                 "k = (WORLD, p, int(atr_len), lowvol_q, peg_x)",
+                 "k = (WORLD, tuple(pairs), tuple(years))"):
+        assert frag in sp, 'cache key without the world: %s' % frag
+    assert PR.check_masks(), 'array masks disagree with nnfxvol'
+    F = S3.zero_edge_frames(424242, pairs=['EURUSD', 'GBPUSD'])
+    assert S3.check_world(F)
+    PR.set_world('guard43', F)
+    try:
+        a = PR.slot_arrays('EURUSD', 'c1', 'ichimoku_signals', {})
+        PR.set_world('real')
+        b = PR.slot_arrays('EURUSD', 'c1', 'ichimoku_signals', {})
+        assert not np.array_equal(a[0], b[0]), \
+            'the null world returned the real world\'s C1 arrays'
+    finally:
+        PR.set_world('real')
+        PR.drop_world('guard43')
+    return ('4 cache keys carry the world, array masks match nnfxvol on 28 '
+            'pairs, and a null world returns different arrays')
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -1363,6 +1460,12 @@ def main():
     guard(41, 'A stop filled at a price that was never quoted. The engine filled a stop at the stop price whenever the bar did not OPEN beyond it -- so an overnight gap was handled and an INTRADAY one was not. EURCHF on 15 Jan 2015 is the case: the daily bar opens at 1.2008, above every long stop held, while the hourly bid went 1.20083 open, 1.16777 low at 09:00 UTC, and the next hour opened at 1.03592. A long stop at 1.16 was booked at 1.16. Hour resolution cannot prove the gap for a stop near the peg, because the de-peg fits inside one hourly bar -- so a 1.5 ATR stop still books 1.0 R where the BOUND is 20.1 R, and that limit is reported rather than averaged away',
           'l2engine._gap_px fills a stop at the first tradable price at or beyond it -- the daily open for an overnight gap, the breaching hour\'s open on the fill side for an intraday one, the stop itself only where price was genuinely quoted through it; the quote side is the one that would fill; and an hourly open counts as a gap only when it is beyond the stop by more than the pair\'s round-trip cost, which the cost table already charges',
           'all four stop-fill sites call it, the OFF sentinel is unchanged byte for byte, a 1.1600 long stop on 15 Jan 2015 fills below 1.05, and no shipped table carries gapfill_on = 0', c41)
+    guard(42, 'Cost charged twice. l2engine.run risks risk_dollars = 200 by default and every nnfx caller takes that default, so raw r is (move x units) / 200 -- proven on 80 stop exits where / 200 reproduces the booked -0.5 and / 100 gives -1.0 -- while nnfx1._cost_R divides by l2sweep.RISK = 100. Every net figure in stage 1, 2 and 3 and items 1 to 6 is charged exactly TWICE the measured spread, pessimistically. The gauntlet path is unaffected: l2sweep.run_combo passes RISK through as risk_dollars, so its engine and its cost divisor are the same number',
+          'nnfxproto declares RISK_DOLLARS = 200.0, passes it EXPLICITLY on every engine call so the two can never drift apart, and charges nnfxproto.cost_R which divides by it; COST_DOUBLE_CHARGE.md records the fault, the affected tables and the mechanical correction',
+          'the engine default and the protocol divisor are the same number, _kw passes it, cost_R divides by it, nnfxproto never reaches nnfx1._cost_R, and the fast and full paths agree on realised net R for plan 1 and plan 2', c42)
+    guard(43, 'A search null reading the real market. nnfxproto caches indicator arrays, ATR, the entry masks and the fast-path context per pair; a cache key without the WORLD tag makes a null run compute a shuffled series trades from the REAL indicators -- silently, at full speed, in the direction that flatters the real search. And nnfxvol floor and peg masks read N.pair_data directly, so a synthetic world needs its own implementation, which could drift',
+          'every cache key in nnfxproto carries WORLD; set_world/drop_world own the switch; the array-level floor and peg masks are checked against the shipped nnfxvol ones bar for bar on all 28 real pairs by check_masks',
+          '4 cache keys carry the world, check_masks passes on 28 pairs, a synthetic world returns different C1 arrays than the real one, and every synthetic bar is a possible bar', c43)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

@@ -1,1 +1,6 @@
 [11:32:33] START exit6
+[12:24:57] OK exit6
+code/chain/exit6.sh: line 11: s: command not found
+[12:24:57] START exit6
+[12:24:58] OK exit6
+[12:24:58] DONE exit6

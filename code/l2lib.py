@@ -350,6 +350,30 @@ def fractal_dimension_volume_signals(o, h, l, c, length=30, fd_threshold=1.5):
     return t, t
 
 
+def kijun_baseline(o, h, l, c, kijun_length=26):
+    """KIJUN-SEN AS A BASELINE. Added 25 Nov 2026 for PROTOCOL.md Source 1: it
+    is N1's declared baseline and was the ONE indicator in the whole N1-N6
+    catalogue our library did not carry (research 2026-11-09 part 2, 2.4).
+
+    Kijun-sen is the midpoint of the highest high and the lowest low over
+    `kijun_length` bars -- the same construction the verified `ichimoku`
+    function already computes internally as its base line. It is NOT a moving
+    average of the close, which is why none of the 15 existing baselines is a
+    substitute: it is flat for long stretches and steps, so price crosses it
+    much less often than it crosses an SMA of the same length.
+
+    THE UNIT TEST IS IN main() AND IS TWO CHECKS, NOT ONE.
+      1. an arithmetic reference: on h = 1..30, l = 0..29 the value at bar 29
+         with length 26 is (max h[4:30] + min l[4:30]) / 2 = (30 + 4) / 2 = 17.
+      2. identity with the project's own ichimoku base line on real EURUSD
+         bars, to 1e-12. That is the stronger check, because ichimoku's kijun
+         is already parity-proven against TradingView.
+    """
+    n = int(kijun_length)
+    return (P.highest(np.asarray(h, float), n)
+            + P.lowest(np.asarray(l, float), n)) / 2.0
+
+
 def sma_baseline(o, h, l, c, length=20):
     return P.sma(c, length)
 
@@ -423,6 +447,8 @@ _reg('vertical_horizontal_filter_volume_signals',
      dict(length=28, vhf_threshold=.35), 'patch B8', False)
 _reg('fractal_dimension_volume_signals', fractal_dimension_volume_signals,
      'volume', dict(length=30, fd_threshold=1.5), 'patch B9', False)
+_reg('kijun_baseline', kijun_baseline, 'baseline', dict(kijun_length=26),
+     'ichimoku base line; added for PROTOCOL.md Source 1 (N1)', True)
 _reg('sma_baseline', sma_baseline, 'baseline', dict(length=20), 'patch B10', False)
 _reg('lsma_baseline', lsma_baseline, 'baseline',
      dict(length=20, lsma_offset=0), 'patch B11', False)
@@ -480,6 +506,25 @@ def main():
           'the Pine source)' % (len(R), int(R.defaults_confirmed.sum())))
     print(R[['name', 'slot', 'kind', 'defaults', 'defaults_confirmed',
              'pine_line']].to_string(index=False))
+
+    # ---- UNIT TEST, kijun_baseline. Added 25 Nov 2026 with the indicator.
+    # Two checks: an arithmetic reference, and identity with the project's own
+    # parity-proven ichimoku base line on real bars. A failure here is a wrong
+    # indicator, not a threshold to adjust.
+    _h = np.arange(1.0, 31.0); _l = np.arange(0.0, 30.0)
+    _k = kijun_baseline(_h, _h, _l, _h, kijun_length=26)
+    assert abs(_k[29] - 17.0) < 1e-12, \
+        'kijun_baseline arithmetic reference: got %r, want 17.0' % _k[29]
+    assert not np.isfinite(_k[24]), 'kijun_baseline warms up in 26 bars'
+    _mid = lambda a, b, n: (P.highest(a, n) + P.lowest(b, n)) / 2.0
+    _ref = _mid(h, l, 26)                 # ichimoku's own base line, same bars
+    _got = kijun_baseline(o, h, l, c, kijun_length=26)
+    _fin = np.isfinite(_ref) & np.isfinite(_got)
+    assert _fin.sum() > 1000 and np.max(np.abs(_ref[_fin] - _got[_fin])) < 1e-12, \
+        'kijun_baseline != ichimoku base line'
+    print('\nUNIT TEST kijun_baseline: reference 17.0 OK; identical to the '
+          'ichimoku base line on %d EURUSD bars (max |diff| %.1e)'
+          % (int(_fin.sum()), float(np.max(np.abs(_ref[_fin] - _got[_fin])))))
 
     print('\nCONTRACT CHECK on EURUSD (%d bars)' % len(d))
     rows = []

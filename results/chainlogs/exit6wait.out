@@ -1,1 +1,8 @@
 [11:51:49] START exit6wait -- waiting on the sweep
+[12:25:21] sweep process gone; exit_grid.csv holds 576 of 576 cells
+[12:25:21] START exit6b
+[12:25:22] OK EXITS.md
+[12:25:23] OK app
+[12:25:57] OK preflight
+[12:25:57] DONE exit6b
+[12:25:57] DONE exit6wait

@@ -1,0 +1,18 @@
+[14:59:26] START src2
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  ledger: 10 candidates declared for source2_handbuilt (16 rows total)
+  SOURCE 2: 10 hand-built algorithms, 28 pairs, 2005-2015, all unseen
+    H1         R  +14.841  R/yr +1.349  n   741  dip 43.673  R/dip +0.340  t_bs +0.51  G2 n G3 n G4 n
+    H2         R  +15.119  R/yr +1.374  n   814  dip 43.473  R/dip +0.348  t_bs +0.52  G2 n G3 n G4 n
+    H3         R   +1.851  R/yr +0.168  n    56  dip 10.299  R/dip +0.180  t_bs +0.23  G2 n G3 n G4 n
+    H4         R  -11.903  R/yr -1.082  n   522  dip 46.383  R/dip -0.257  t_bs -0.53  G2 n G3 n G4 n
+    H5         R  -14.473  R/yr -1.316  n   643  dip 46.052  R/dip -0.314  t_bs -0.63  G2 n G3 n G4 n
+    H6         R   +2.384  R/yr +0.217  n  2093  dip 89.066  R/dip +0.027  t_bs +0.05  G2 n G3 n G4 n
+    H7         R  +21.258  R/yr +1.933  n  1264  dip 52.766  R/dip +0.403  t_bs +0.60  G2 Y G3 n G4 n
+    H8         R  -24.967  R/yr -2.270  n  2390  dip 100.070  R/dip -0.249  t_bs -0.55  G2 n G3 n G4 n
+    H9         R  -24.038  R/yr -2.185  n   812  dip 65.571  R/dip -0.367  t_bs -0.80  G2 n G3 n G4 n
+    H10        R  +30.309  R/yr +2.755  n   791  dip 45.354  R/dip +0.668  t_bs +0.94  G2 Y G3 n G4 n
+  SOURCE 2 done in 1.5 min: 0 of 10 passers
+  SOURCE2.md written (130 lines)
+[15:00:58] OK src2
+[15:00:58] DONE src2

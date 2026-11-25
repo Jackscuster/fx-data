@@ -19,6 +19,7 @@ choppiness_index_volume_signals,volume,FILTER,2,length=14; ci_threshold=61.8,Fal
 efficiency_ratio_volume_signals,volume,FILTER,2,length=10; er_threshold=0.3,False,patch B7,library,True,False,False,False,False,False
 vertical_horizontal_filter_volume_signals,volume,FILTER,2,length=28; vhf_threshold=0.35,False,patch B8,library,True,False,False,False,False,False
 fractal_dimension_volume_signals,volume,FILTER,2,length=30; fd_threshold=1.5,False,patch B9,library,True,False,False,False,False,False
+kijun_baseline,baseline,BASELINE,1,kijun_length=26,True,ichimoku base line; added for PROTOCOL.md Source 1 (N1),library,True,False,False,False,False,False
 sma_baseline,baseline,BASELINE,1,length=20,False,patch B10,library,True,False,False,False,False,False
 lsma_baseline,baseline,BASELINE,1,length=20; lsma_offset=0,False,patch B11,library,True,False,False,False,False,False
 ema_baseline,baseline,BASELINE,1,ma_length=20,True,strat 1469,library,True,False,False,False,False,False

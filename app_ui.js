@@ -6276,6 +6276,88 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'switch. It showed up as identical numbers at 5, 10 and 20 days. The peak now resets on resumption.</div>';
   h+=tbl(I6.dd_prop,['book','control','setting','sizing','scale','pct_per_year','eval_days_to_pass','funded_breached','funded_payout_per_year','funded_worst_dip_pct','distance_from_12pct'],'Drawdown control \u2014 through the prop simulator');
  }
+ /* ======== THE NEW DIRECTION, Jack 25 Nov 15:00: Layer 1 out of Layer 2,
+    one fixed protocol, three sources. HANDOFF 0o. ======== */
+ const PRO=R.protocol||{};
+ if(PRO.note){
+  h+='<h3>The protocol — one fixed test for a complete algorithm</h3>';
+  h+='<div class="note">'+PRO.note+'</div>';
+  h+='<div class="note"><b>Read this before any number below it.</b> Every stage above this heading tested a '
+    +'<i>piece</i>: stage 1 neutralised four of the five slots to isolate one, stage 2 neutralised three to isolate '
+    +'the baseline. Both were deliberate, and both mean their numbers are <b>not evidence about a complete '
+    +'algorithm</b>. On one C1/baseline pair the trade count moves by more than a factor of two once C2 and the '
+    +'volume slot actually gate. Nothing below quotes a stage 1 or stage 2 figure as if it transferred.</div>';
+  h+=tbl(PRO.ledger,['cand','source','label','stage','reason'],'The candidate ledger — settings written BEFORE scoring');
+ }
+ const S1=R.source1||{};
+ if(S1.note){
+  h+='<h3>Source 1 — the six published NNFX combinations</h3>';
+  h+='<div class="note">'+S1.note+'</div>';
+  h+=tbl(S1.summary,['cand','published','G1','G2','G3','G4','passer','R_total','R_per_year','trades','R_net_per_trade','dip_binding','R_per_dip','t_block_boot','t_yearly','years_positive','G2_R_ex_best_day','G2_best_trade_share','G3_worst_slice_R','G4_worst_R','G4_worst_knob'],'N1–N6 at their published settings, through the protocol unchanged');
+  h+='<div class="note"><b>0 of 6 passers, and that is a result rather than the absence of one.</b> It means the '
+    +'project is not leaving a known working algorithm untested, and it sets the bar Sources 2 and 3 have to clear. '
+    +'<b>Best is N2</b> at R +38.769 and return per dip 0.555 — it clears G2 and G3 and fails G1 (t 0.842 against '
+    +'a best-of-6 floor of 1.973) and G4. <b>N1 and N6 take 107 and 86 trades in eleven years across 28 pairs</b>, '
+    +'which is a comment on the combination and not on the protocol. <b>Four of the six use their own C1 as their '
+    +'exit indicator</b>, so “five slots” overstates them.</div>';
+  h+=tbl(S1.nulls,['cand','draws','null_t_mean','null_t_p95','null_t_max'],'The random-entry null, matched on count and holding period, per candidate');
+  h+=tbl(S1.nudge,['cand','knob','direction','value','R_total','skipped'],'G4 — every numeric setting one coarse step each way');
+  h+=tbl(S1.per_pair,['cand','pair','direction','trades','R_net','R_per_trade','win_rate'],'Per pair and per direction');
+ }
+ const S2=R.source2||{};
+ if(S2.note){
+  h+='<h3>Source 2 — ten hand-built, each with a reason on record</h3>';
+  h+='<div class="note">'+S2.note+'</div>';
+  h+=tbl(S2.summary,['cand','G1','G2','G3','G4','passer','R_total','R_per_year','trades','R_net_per_trade','dip_binding','R_per_dip','t_block_boot','years_positive','paired_against','paired_change','G3_worst_slice_R','G4_worst_R','G4_worst_knob','reason'],'The ten hand-built candidates');
+  h+='<div class="note"><b>0 of 10 passers, and the best of them is the control.</b> H10 is the Pine file’s own '
+    +'five default slots — the only combination in the project with a TradingView parity proof — at R '
+    +'+30.309 and return per dip 0.668. Eight candidates assembled from the project’s own measured C1 and '
+    +'baseline leaders all do worse. <b>If the measured leaders do not survive a complete algorithm on eleven unseen '
+    +'years, the problem is not the choice of C1.</b></div>';
+  h+='<div class="note"><b>Three of the ten are paired against H1 and differ in ONE slot</b>, which is the only way a '
+    +'ten-candidate batch can say which slot moved the number. <b>H4 was predicted worse before it ran and came out '
+    +'26.744 R worse</b> (−11.903 against +14.841): it swaps a shape volume filter for an <i>expansion</i> one, '
+    +'and item 2 had measured losses concentrating in loud entries on 35 of 39 C1. <b>H5 says “slow beats '
+    +'fast” does not generalise past the baseline</b> — every slot slow is 29.314 R worse. <b>H9 says the '
+    +'baseline choice outweighs both</b> — rma instead of sma loses 38.879 R.</div>';
+  h+=tbl(S2.nulls,['cand','draws','null_t_mean','null_t_p95','null_t_max'],'The random-entry null, per candidate');
+  h+=tbl(S2.nudge,['cand','knob','direction','value','R_total','skipped'],'G4 — the nudge grid');
+  h+=tbl(S2.per_pair,['cand','pair','direction','trades','R_net','R_per_trade','win_rate'],'Per pair and per direction');
+ }
+ const S3=R.source3||{};
+ if(S3.note){
+  h+='<h3>Source 3 — machine search, against a search null</h3>';
+  h+='<div class="note">'+S3.note+'</div>';
+  h+=tbl(S3.meta,['n_random','n_local','n_evaluations','best_disc','best_local_disc','best_repl_of_top','spearman_disc_repl','spearman_p','space_size','minutes'],'The real search — budget and outcome');
+  h+=tbl(S3.nulls,['run','seed','n_evaluations','best_disc','best_local_disc','best_repl_of_top','spearman_disc_repl','minutes'],'The search null — one row per independent run at the same budget');
+  h+='<div class="note"><b>The floor is the 95th percentile of the best REPLICATED null result</b>, not of the best '
+    +'discovery result. A search is allowed to find something on the discovery set by luck; what it is not allowed to '
+    +'do is have that thing carry to different currencies in a different decade more often than noise does.</div>';
+  h+=tbl(S3.top50,['rank','cand','c1','c1_set','c2','c2_set','vol','vol_set','base','base_set','exit','exit_set','obj_discovery','obj_replication','obj_offdiag_13pairs_2005_2010','obj_offdiag_15pairs_2011_2015'],'The top 50 by discovery, on every set');
+  h+='<div class="note">The two off-diagonal columns are the control: a candidate strong on discovery and on the 13 '
+    +'pairs in the <i>same</i> years but weak on the 13 pairs in <i>later</i> years found a period, not a rule.</div>';
+  h+=tbl(S3.gates,['cand','obj_discovery','obj_replication','search_null_floor','R_total','R_per_year','trades','dip_binding','R_per_dip','t_block_boot','G2','G3','G4','passer','G3_worst_slice_R','G4_worst_R','G4_worst_knob'],'The survivors, re-scored on the FULL reporting path, through G2, G3 and G4');
+ }
+ const B2=R.book2||{};
+ if(B2.note){
+  h+='<h3>BOOK2 — the book under the new protocol</h3>';
+  h+='<div class="note">'+B2.note+'</div>';
+  h+=tbl(B2.sleeves,['sleeve','source','passer','label','R_total','R_per_year','dip_true','dip95','dip_binding','R_per_dip','t_block_boot','years_positive'],'The sleeves');
+  h+=tbl(B2.incremental,['n_sleeves','members','new_sleeve','corr_new_with_book','R_total','R_per_year','dip_binding','R_per_dip','team1_pct_per_year','firm_pct_per_year'],'Adding one sleeve at a time, in return-per-dip order');
+  h+=tbl(B2.corr,null,'Daily correlation between sleeves');
+  h+=tbl(B2.prop,['book','budget','rules','scale','eval_days_to_pass','eval_breached','funded_breached','funded_payout_per_year','funded_return_pct_per_year','funded_worst_dip_pct'],'Through the prop simulator');
+  h+=tbl(B2.meta,['label','n_passers','n_sleeves','best_book','best_book_R_per_year','best_book_dip','best_book_R_per_dip','team1_pct_per_year','firm_pct_per_year','target_pct','factor_short'],'How far from 12%');
+ }
+ const CF=R.costfault||{};
+ if(CF.note){
+  h+='<h3>A fault that touches every NNFX number before 25 November</h3>';
+  h+='<div class="note">'+CF.note+'</div>';
+  h+='<div class="note"><b>The direction is pessimistic, which is the one piece of luck in it.</b> Nothing reported '
+    +'as working was really failing. Things reported as failing may be less bad than reported — and the gates '
+    +'that are not cost-sensitive (G2 one event, G3 hold-out sign, the shuffle and label nulls) are unaffected, '
+    +'because both arms of a null comparison are charged the same way. <b>Item 5’s verdict survives in '
+    +'direction:</b> roughly 1.5% a year instead of 1.135%, so a factor of about 8 from 12% instead of 10.6.</div>';
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){

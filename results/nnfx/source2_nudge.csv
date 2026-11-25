@@ -1,0 +1,201 @@
+knob,direction,value,R_total,skipped,cand
+c1:ichimoku_signals,down,"{""conversion_len"": 2.0}",23.12286957291978,0,H1
+c1:ichimoku_signals,up,"{""conversion_len"": 8.0}",15.703977406748512,0,H1
+c2:vortex_signals,down,"{""period"": 7.0}",33.29241398564129,0,H1
+c2:vortex_signals,up,"{""period"": 28.0}",17.98822584615204,0,H1
+vol:choppiness_index_volume_signals,down,"{""length"": 7.0}",6.313202336660899,0,H1
+vol:choppiness_index_volume_signals,up,"{""length"": 28.0}",2.428983382435434,0,H1
+base:sma_baseline,down,"{""length"": 20.0}",37.53261910582468,0,H1
+base:sma_baseline,up,"{""length"": 80.0}",-7.2643056272437505,0,H1
+exit:adx_dmi_exit,down,"{""di_length"": 7.0}",17.78764084128973,0,H1
+exit:adx_dmi_exit,up,"{""di_length"": 28.0}",14.898503395307646,0,H1
+risk:atr_len,down,7,19.25450860630178,0,H1
+risk:atr_len,up,28,7.88858168777956,0,H1
+risk:atr_mult,down,0.75,15.533406652487148,0,H1
+risk:atr_mult,up,1.25,22.79245655577349,0,H1
+risk:tp_mult,down,1.0,38.903063548564305,0,H1
+risk:tp_mult,up,2.0,15.960668031695302,0,H1
+risk:max_atr_dist,down,1.0,8.580583044962909,0,H1
+risk:max_atr_dist,up,2.0,37.302538578770054,0,H1
+risk:bridge_bars,down,5,16.28659155624964,0,H1
+risk:bridge_bars,up,9,17.573661692567633,0,H1
+c1:schaff_trend_cycle_signals,down,"{""macdFast"": 12.0}",21.039395308929393,0,H2
+c1:schaff_trend_cycle_signals,up,"{""macdFast"": 46.0}",21.90283899072007,0,H2
+c2:aroon_signals,down,"{""length"": 12.0}",13.850977545786005,0,H2
+c2:aroon_signals,up,"{""length"": 50.0}",27.054077801318126,0,H2
+vol:choppiness_index_volume_signals,down,"{""length"": 7.0}",4.622252131866674,0,H2
+vol:choppiness_index_volume_signals,up,"{""length"": 28.0}",26.2286872805896,0,H2
+base:sma_baseline,down,"{""length"": 20.0}",48.32129555858284,0,H2
+base:sma_baseline,up,"{""length"": 80.0}",-24.440977711266612,0,H2
+exit:supertrend_exit,down,"{""atr_period"": 5.0}",15.118896785852282,0,H2
+exit:supertrend_exit,up,"{""atr_period"": 20.0}",15.118896785852282,0,H2
+risk:atr_len,down,7,12.18137407184009,0,H2
+risk:atr_len,up,28,6.048427986428621,0,H2
+risk:atr_mult,down,0.75,2.8093692197331848,0,H2
+risk:atr_mult,up,1.25,21.927256467404742,0,H2
+risk:tp_mult,down,1.0,20.635652563616897,0,H2
+risk:tp_mult,up,2.0,9.590707007898207,0,H2
+risk:max_atr_dist,down,1.0,-6.49641354815715,0,H2
+risk:max_atr_dist,up,2.0,24.517250463991264,0,H2
+risk:bridge_bars,down,5,15.804168996018547,0,H2
+risk:bridge_bars,up,9,15.118896785852282,0,H2
+c1:adx_dmi_signals,down,"{""di_length"": 14.0}",-20.08584572251518,0,H3
+c1:adx_dmi_signals,up,"{""di_length"": 56.0}",4.907413759637573,0,H3
+c2:vortex_signals,down,"{""period"": 7.0}",1.1323084776370056,0,H3
+c2:vortex_signals,up,"{""period"": 28.0}",1.848222637575836,0,H3
+vol:choppiness_index_volume_signals,down,"{""length"": 7.0}",3.9561882515321205,0,H3
+vol:choppiness_index_volume_signals,up,"{""length"": 28.0}",6.070389846422415,0,H3
+base:sma_baseline,down,"{""length"": 20.0}",-7.500791755147148,0,H3
+base:sma_baseline,up,"{""length"": 80.0}",-2.16640083719838,0,H3
+exit:linreg_slope_exit,down,"{""length"": 7.0}",-2.871271803925594,0,H3
+exit:linreg_slope_exit,up,"{""length"": 28.0}",0.27401344408955763,0,H3
+risk:atr_len,down,7,-0.05448198036039109,0,H3
+risk:atr_len,up,28,-4.5680439650377656,0,H3
+risk:atr_mult,down,0.75,-0.8909604643939877,0,H3
+risk:atr_mult,up,1.25,-1.3356808149448964,0,H3
+risk:tp_mult,down,1.0,-0.2937195330392541,0,H3
+risk:tp_mult,up,2.0,1.217362367185746,0,H3
+risk:max_atr_dist,down,1.0,1.5649163827921617,0,H3
+risk:max_atr_dist,up,2.0,-2.4047508612322233,0,H3
+risk:bridge_bars,down,5,1.8505154840234985,0,H3
+risk:bridge_bars,up,9,1.8505154840234985,0,H3
+c1:ichimoku_signals,down,"{""conversion_len"": 2.0}",2.542445053252547,0,H4
+c1:ichimoku_signals,up,"{""conversion_len"": 8.0}",3.5367598535547877,0,H4
+c2:vortex_signals,down,"{""period"": 7.0}",-1.6590247733767223,0,H4
+c2:vortex_signals,up,"{""period"": 28.0}",-4.708395738137513,0,H4
+vol:volatility_ratio_volume_signals,down,"{""length"": 7.0}",-5.205045278317006,0,H4
+vol:volatility_ratio_volume_signals,up,"{""length"": 28.0}",-7.231251840792943,0,H4
+base:sma_baseline,down,"{""length"": 20.0}",1.98675533352516,0,H4
+base:sma_baseline,up,"{""length"": 80.0}",-22.199352856404772,0,H4
+exit:adx_dmi_exit,down,"{""di_length"": 7.0}",-6.6651559640936116,0,H4
+exit:adx_dmi_exit,up,"{""di_length"": 28.0}",-8.49629138096102,0,H4
+risk:atr_len,down,7,-3.682538079838901,0,H4
+risk:atr_len,up,28,-15.182092524255896,0,H4
+risk:atr_mult,down,0.75,-9.77764703071126,0,H4
+risk:atr_mult,up,1.25,-12.729464961536884,0,H4
+risk:tp_mult,down,1.0,14.551959153171055,0,H4
+risk:tp_mult,up,2.0,-2.1043013760003726,0,H4
+risk:max_atr_dist,down,1.0,-18.156563660288324,0,H4
+risk:max_atr_dist,up,2.0,6.33259718130418,0,H4
+risk:bridge_bars,down,5,-10.793220432244524,0,H4
+risk:bridge_bars,up,9,-10.105106213152283,0,H4
+c1:ichimoku_signals,down,"{""conversion_len"": 9.0}",32.666985651964154,0,H5
+c1:ichimoku_signals,up,"{""conversion_len"": 36.0}",1.1194569068237041,0,H5
+c2:vortex_signals,down,"{""period"": 14.0}",1.843383602438125,0,H5
+c2:vortex_signals,up,"{""period"": 56.0}",30.04786966612849,0,H5
+vol:choppiness_index_volume_signals,down,"{""length"": 14.0}",-21.56279838573635,0,H5
+vol:choppiness_index_volume_signals,up,"{""length"": 56.0}",-19.17403060345385,0,H5
+base:sma_baseline,down,"{""length"": 20.0}",-37.61974321903932,0,H5
+base:sma_baseline,up,"{""length"": 80.0}",-63.00739940728943,0,H5
+exit:adx_dmi_exit,down,"{""di_length"": 14.0}",-9.169465135185705,0,H5
+exit:adx_dmi_exit,up,"{""di_length"": 56.0}",-11.64990152003654,0,H5
+risk:atr_len,down,7,-16.816156693686736,0,H5
+risk:atr_len,up,28,-9.019870236253565,0,H5
+risk:atr_mult,down,0.75,-12.344084170415616,0,H5
+risk:atr_mult,up,1.25,-17.58933352850549,0,H5
+risk:tp_mult,down,1.0,-6.838206662728807,0,H5
+risk:tp_mult,up,2.0,-19.2916891782273,0,H5
+risk:max_atr_dist,down,1.0,-22.426203194887044,0,H5
+risk:max_atr_dist,up,2.0,-10.670287424850503,0,H5
+risk:bridge_bars,down,5,-13.012217428150699,0,H5
+risk:bridge_bars,up,9,-20.28598782382998,0,H5
+c1:schaff_trend_cycle_signals,down,"{""macdFast"": 12.0}",12.197756793644501,0,H6
+c1:schaff_trend_cycle_signals,up,"{""macdFast"": 46.0}",-32.488459129260654,0,H6
+c2:vortex_signals,down,"{""period"": 7.0}",30.250814297759156,0,H6
+c2:vortex_signals,up,"{""period"": 28.0}",-12.129455485009201,0,H6
+vol:choppiness_index_volume_signals,down,"{""length"": 7.0}",-4.174612157750788,0,H6
+vol:choppiness_index_volume_signals,up,"{""length"": 28.0}",3.4097101663268727,0,H6
+base:kijun_baseline,down,"{""kijun_length"": 13.0}",33.29320516348999,0,H6
+base:kijun_baseline,up,"{""kijun_length"": 52.0}",-25.163927157975806,0,H6
+exit:linreg_slope_exit,down,"{""length"": 7.0}",-18.032387602400387,0,H6
+exit:linreg_slope_exit,up,"{""length"": 28.0}",4.314300572843239,0,H6
+risk:atr_len,down,7,24.280358864839393,0,H6
+risk:atr_len,up,28,-3.0148749803336585,0,H6
+risk:atr_mult,down,0.75,11.817315475624238,0,H6
+risk:atr_mult,up,1.25,-0.6837397006682018,0,H6
+risk:tp_mult,down,1.0,-6.428119270006565,0,H6
+risk:tp_mult,up,2.0,-17.16229890517801,0,H6
+risk:max_atr_dist,down,1.0,-2.898313150302176,0,H6
+risk:max_atr_dist,up,2.0,31.24672054098327,0,H6
+risk:bridge_bars,down,5,4.761324051763808,0,H6
+risk:bridge_bars,up,9,5.366753679792836,0,H6
+c1:halftrend_signals,down,"{""amplitude"": 50.0}",38.33974879729093,0,H7
+c1:halftrend_signals,up,"{""amplitude"": 200.0}",11.317114557544539,0,H7
+c2:vortex_signals,down,"{""period"": 7.0}",36.642025109250405,0,H7
+c2:vortex_signals,up,"{""period"": 28.0}",25.297845836657352,0,H7
+vol:choppiness_index_volume_signals,down,"{""length"": 7.0}",27.360201007544838,0,H7
+vol:choppiness_index_volume_signals,up,"{""length"": 28.0}",1.9061349863384605,0,H7
+base:t3_baseline,down,"{""length"": 10.0}",7.673616263974591,0,H7
+base:t3_baseline,up,"{""length"": 40.0}",-44.24470072132924,0,H7
+exit:adx_dmi_exit,down,"{""di_length"": 7.0}",29.481336969594835,0,H7
+exit:adx_dmi_exit,up,"{""di_length"": 28.0}",32.66538413080019,0,H7
+risk:atr_len,down,7,21.230229040325774,0,H7
+risk:atr_len,up,28,18.097779568846335,0,H7
+risk:atr_mult,down,0.75,21.295188579704117,0,H7
+risk:atr_mult,up,1.25,24.84731358623457,0,H7
+risk:tp_mult,down,1.0,14.010785193156066,0,H7
+risk:tp_mult,up,2.0,9.426301388980459,0,H7
+risk:max_atr_dist,down,1.0,3.4437596977209335,0,H7
+risk:max_atr_dist,up,2.0,20.59737367042995,0,H7
+risk:bridge_bars,down,5,21.94518103893128,0,H7
+risk:bridge_bars,up,9,21.064802501329655,0,H7
+c1:waddah_attar_explosion_signals,down,"{""sensitivity"": 150.0}",-27.873703249374493,0,H8
+c1:waddah_attar_explosion_signals,up,"{""sensitivity"": 600.0}",-22.011730685542844,0,H8
+c2:vortex_signals,down,"{""period"": 7.0}",-0.7279305398278559,0,H8
+c2:vortex_signals,up,"{""period"": 28.0}",-29.73209045778581,0,H8
+vol:waddah_attar_explosion_volume_signals,down,"{""sensitivity"": 75.0}",-23.47067298579951,0,H8
+vol:waddah_attar_explosion_volume_signals,up,"{""sensitivity"": 300.0}",-25.381353908513027,0,H8
+base:sma_baseline,down,"{""length"": 20.0}",-55.20596535615635,0,H8
+base:sma_baseline,up,"{""length"": 80.0}",-26.20386005562672,0,H8
+exit:adx_dmi_exit,down,"{""di_length"": 7.0}",-14.1145944290777,0,H8
+exit:adx_dmi_exit,up,"{""di_length"": 28.0}",-18.210494206609628,0,H8
+risk:atr_len,down,7,-29.508417600768556,0,H8
+risk:atr_len,up,28,-40.606700835360286,0,H8
+risk:atr_mult,down,0.75,-27.332017934009375,0,H8
+risk:atr_mult,up,1.25,-23.981382352325756,0,H8
+risk:tp_mult,down,1.0,-25.131711767228598,0,H8
+risk:tp_mult,up,2.0,-18.82276003016605,0,H8
+risk:max_atr_dist,down,1.0,-28.899643062954002,0,H8
+risk:max_atr_dist,up,2.0,-23.201871707246987,0,H8
+risk:bridge_bars,down,5,-24.967423000027136,0,H8
+risk:bridge_bars,up,9,-24.967423000027136,0,H8
+c1:ichimoku_signals,down,"{""conversion_len"": 2.0}",-31.37482038396478,0,H9
+c1:ichimoku_signals,up,"{""conversion_len"": 8.0}",-28.156876726852484,0,H9
+c2:vortex_signals,down,"{""period"": 7.0}",-5.978930027558549,0,H9
+c2:vortex_signals,up,"{""period"": 28.0}",-33.88690538818416,0,H9
+vol:choppiness_index_volume_signals,down,"{""length"": 7.0}",-31.044039522210756,0,H9
+vol:choppiness_index_volume_signals,up,"{""length"": 28.0}",-24.71851585092341,0,H9
+base:rma_baseline,down,"{""ma_length"": 20.0}",-6.698691916657801,0,H9
+base:rma_baseline,up,"{""ma_length"": 80.0}",-9.478625288113475,0,H9
+exit:adx_dmi_exit,down,"{""di_length"": 7.0}",-23.997383901513608,0,H9
+exit:adx_dmi_exit,up,"{""di_length"": 28.0}",-18.580076379714562,0,H9
+risk:atr_len,down,7,-22.555543065098124,0,H9
+risk:atr_len,up,28,-27.373479672922166,0,H9
+risk:atr_mult,down,0.75,-30.114064105400207,0,H9
+risk:atr_mult,up,1.25,-20.819252996216534,0,H9
+risk:tp_mult,down,1.0,-16.594523318522008,0,H9
+risk:tp_mult,up,2.0,-19.662781624967565,0,H9
+risk:max_atr_dist,down,1.0,-19.43731759089293,0,H9
+risk:max_atr_dist,up,2.0,-19.481933852152874,0,H9
+risk:bridge_bars,down,5,-29.16019113384579,0,H9
+risk:bridge_bars,up,9,-23.543223174062327,0,H9
+c1:ssl_channel_signals,down,"{""len"": 5.0}",30.166404248698253,0,H10
+c1:ssl_channel_signals,up,"{""len"": 20.0}",11.182610265613954,0,H10
+c2:dspo_signals,down,"{""len"": 7.0}",24.77522715929494,0,H10
+c2:dspo_signals,up,"{""len"": 28.0}",56.944440038754976,0,H10
+vol:variance_volume_signals,down,"{""lookback"": 10.0}",12.065974386634696,0,H10
+vol:variance_volume_signals,up,"{""lookback"": 40.0}",-1.8948664838804756,0,H10
+base:tma_baseline,down,"{""length"": 10.0}",60.765930453404295,0,H10
+base:tma_baseline,up,"{""length"": 40.0}",16.66039775964543,0,H10
+exit:ssl_channel_exit,down,"{""len"": 5.0}",30.037375129776933,0,H10
+exit:ssl_channel_exit,up,"{""len"": 20.0}",30.3087086586794,0,H10
+risk:atr_len,down,7,18.690258422934225,0,H10
+risk:atr_len,up,28,39.40154418646545,0,H10
+risk:atr_mult,down,0.75,22.344848001727456,0,H10
+risk:atr_mult,up,1.25,40.638468982739866,0,H10
+risk:tp_mult,down,1.0,17.16821732075796,0,H10
+risk:tp_mult,up,2.0,34.21866040027741,0,H10
+risk:max_atr_dist,down,1.0,20.520801229807564,0,H10
+risk:max_atr_dist,up,2.0,32.47576593400582,0,H10
+risk:bridge_bars,down,5,30.165042284687885,0,H10
+risk:bridge_bars,up,9,32.062809516288176,0,H10

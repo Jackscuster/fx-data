@@ -1,0 +1,60 @@
+[12:25:21] START exit6b
+  EXITS.md: 156 lines -> results/nnfx/EXITS.md
+  nnfxexit done
+[12:25:22] OK EXITS.md
+wired into /Users/jackcuster/fx-data/app_data.json
+wired into /Users/jackcuster/fx-data/results/app_data.json
+app_ui.js already carries the L2 restart tab
+[12:25:23] OK app
+PASS  1  Vote-timing leak: a position voted on its fill day against that day's   -- default False; fill-day vote halts; synthetic book keeps 1 of 2 rows
+PASS  2  Layer 1 one-bar lag: the state used on D must come from bars <= D-1  -- header declares the lag; perturbing the 2019-11-05 close leaves every axis dated 2019-11-05 unchanged and moves D+1; reg
+PASS  3  Settings vs scoring window: settings tuned on years reaching into the   -- W2 by ip1 (to 2010), W3 by ip2 (to 2015); pilot P1<T1, P2<T2; STEPS build<trade
+PASS  4  Field labels computed with sight of the trade years (crosses_label on   -- 8235 rows, label_basis W2_ip1 (2011-2015 under ip1 tuned to 2010) on every row
+PASS  5  Random-entry null in a different mark convention from the real (no fil  -- null writes fill-day cost row + unique tid; a positive fill-day mark halts
+PASS  6  Open positions at window boundaries  -- 1606206 trades: marks start on entry, end <= exit <= 2020-12-31; TY truncated by year
+PASS  7  Walk-forward: a decision reading a bar inside or after its trade block  -- walk() halts if a build block reaches its trade block or shares a played year with it
+PASS  8  Choices made on the build block not logged with their window  -- decisions_routed_tirexcl_actweak.csv: 2 decisions, each with its build window
+PASS  9  Retention not reported  -- every walk KPI carries retention = trade median / build median and flags < 20% as FIT
+PASS 10  2021-2026 readable by Layer 2 modules  -- load_pair ends 2020-12-31 without FX_ALLOW_W4; route and carry sealed; the flag prints when set
+PASS 11  Nulls not on the same field as the real, or changing the wrong thing  -- identity, random-entry (routed to permitted bars) and regime-shuffle nulls exist; workers halt on a field mismatch
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+PASS 12  Exit rule not the mode's own (mode B for everything)  -- share of sampled strategies that fired their own rule: {'A': 0.7, 'B': 1.0, 'C': 0.9}; no forbidden rule fired; audit_ex
+PASS 13  Leg plans: two-leg trend / one-leg chop with each strategy's own multi  -- trend: legs 1 and 2 present, leg 2 exits by its own rule; chop: single leg
+PASS 14  Layer 1 and Layer 2 on different bars  -- route and Scorer both assert the 5pm/lagged header on load
+PASS 15  Regime usage assumed, not measured; trend-in-range admitted  -- tir=excl excludes trend_in_range; dependence per strategy in walkforward_regime_dependence_routed_tirexcl_actweak.csv (1
+PASS 16  Gross numbers on some path (delivery never charged costs)  -- every scoring module loads costs; 100.0% of fill-day marks carry a negative cost
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+PASS 17  Flat cross spread (4.2 pips) instead of measured per-pair spreads  -- cost_table_h22.csv: measured at 22:00 NY, 28 pairs, majors median 1.59 bp, crosses 2.45 bp
+PASS 18  R not account-normalised on marks or on trade R  -- atr_mult applied to marks and R (Scorer and engine); marks sum to R, max gap 1.88e-05 over 1606206 trades
+PASS 19  Max drawdown pair-major in _agg  -- _agg sorts by entry date before the equity curve (synthetic: 0.0 chronological vs 2.0 in given order); undated calls rep
+PASS 20  Layer 4 v1/v2 own netting with the fill-day vote  -- no per-(pair, day) netting loop outside retired/; only l2walkfwd.Book builds books
+PASS 21  Field file defaulted to the contaminated crosses_label field  -- walk halts without --field-file; first log line names the file and per-slice counts; workers re-derive and halt
+PASS 22  B-chop sid spelled B-chop| in places  -- no B-chop| ids; 917 B|chop| ids in the field
+PASS 23  pipeline.py: export.py after persist.py; sc5-7 need signals.json on a   -- export.py before persist.py; prep.py before sc5/sc6/sc7 in pipeline.py
+PASS 24  sc5 chop target never pooled by prep.py  -- signals.json carries cti/cto/cso/cao; 156975 of 175634 records have a chop-target value
+PASS 25  Silenced errors; git tree ops during a chain; logs in results/; launch  -- no silenced errors (l2nosilence); no logs in results/ except the CI failure log; launch.sh confirms 60 s; chains running
+PASS 26  Repo on the iCloud-synced volume (dataless files, read timeouts)  -- repo at /Users/jackcuster/fx-data, outside the iCloud-synced folders
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+PASS 27  Costs under-charged by the account-normalisation factor: R restated by  -- all three paths scale by atr_mult; scaled cost == f*px/ATR at atr_mult 1.0, 1.2, 1.5 (unscaled it is that / atr_mult)
+PASS 28  A bank drifted from the bank a result names: a part file missing, trun
+PASS 29  A stage function appended AFTER the __main__ dispatch: the dispatch ca  -- 232 modules: no definition sits after a __main__ dispatch
+PASS 30  An extended-walk run that does not reproduce the five-step record on t  -- skipped: FX_WALK=base5, not ext11. Run FX_WALK=ext11 python3 code/b1narrow.py --stage cond3 before quoting any extended-
+PASS 31  A measurement apparatus with a built-in bias: random entries taking th  -- 486 of 486 candidate-settings judged across 6 variants: null gross R per trade is zero within 3 SE everywhere (worst +0.
+PASS 32  Two different conventions sharing one column name: gate 2 and gate 3 b  -- 6 stage 1 R2 yearly files all carry R_mtm, n_entered and n_touching
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+PASS 33  A LEG counted as a TRADE: plan=2 splits every position into leg1 and l  -- n_entered == 132 distinct entries from 264 legs (2.0 legs per entry); yearly R still sums to total net R at 3.6e-15
+PASS 34  A file too large for the remote committed by a chain: results/r2reads/  -- no NEW file over 50 MB; 70 grandfathered and already on the remote, largest results/r2gate2/modeB_gate3parts/g3_0031_of3
+PASS 35  A report that names its own csvs and does not match them: B1_NARROW.md  -- 184 provenance lines across 25 reports (bullet and table form): every named csv exists and matches its claimed row count
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+PASS 36  The daily mark-to-market path built from FULL `units` on a HALF-WEIGHT  -- 264 legs over 2 pairs, 153 stop exits: units/2 reproduces leg R at 0.0e+00, full units is out by 0.871, and the daily se
+PASS 37  A zero-row result file nobody declared: B1_NARROW.md shipped naming a   -- 2723 csv(s) scanned, no undeclared zero-row file; 4 declared empty
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+PASS 38  A Layer 2 job that does not declare whether the VOLATILITY FLOOR is on  -- floor declared in all three writers and gating the volume slot; causal mask flags 6.64% of EURCHF bars and removes 1 of 
+PASS 39  A Layer 2 table computed at a size no account could hold. The EURCHF s  -- the cap defaults ON in _score, is sequential and causal, and 2 Layer 2 table(s) carry leverage_cap_on = 1 (stage2_picks_
+PASS 40  A reported figure taken from the RAW `R` column instead of `R_gross`.   -- all three raw-R paths now take net R_gross; atr_buckets_abc.csv (60 rows, net == gross - cost to 7.1e-15); stage2_picks_
+PASS 41  A stop filled at a price that was never quoted. The engine filled a st  -- 4 of 4 stop-fill sites on _gap_px, OFF sentinel 12 wide, a 1.1600 long stop on 15 Jan 2015 fills at 1.03592, 1 shipped t
+
+41 of 41 PASS in 34 s -> results/audit_2026-09.csv
+PRE-FLIGHT CLEAR
+[12:25:57] OK preflight
+[12:25:57] DONE exit6b

@@ -1,0 +1,121 @@
+knob,direction,value,R_total,skipped,cand
+c1:ssl_channel_signals,down,"{""len"": 5.0}",0.28696479693782706,0,N1
+c1:ssl_channel_signals,up,"{""len"": 20.0}",3.57833690645629,0,N1
+c2:trend_direction_force_index_signals,down,"{""lookback"": 6.0}",7.840422812499092,0,N1
+c2:trend_direction_force_index_signals,up,"{""lookback"": 26.0}",-2.977787118953243,0,N1
+vol:waddah_attar_explosion_volume_signals,down,"{""sensitivity"": 75.0}",-3.0576163572345774,0,N1
+vol:waddah_attar_explosion_volume_signals,up,"{""sensitivity"": 300.0}",-1.1434735334857358,0,N1
+base:kijun_baseline,down,"{""kijun_length"": 13.0}",-0.298569424920748,0,N1
+base:kijun_baseline,up,"{""kijun_length"": 52.0}",-30.745075976390844,0,N1
+exit:ssl_channel_exit,down,"{""len"": 5.0}",-5.7179969440883065,0,N1
+exit:ssl_channel_exit,up,"{""len"": 20.0}",-0.45722178456774465,0,N1
+risk:atr_len,down,7,6.228589711159163,0,N1
+risk:atr_len,up,28,-2.4162209337541025,0,N1
+risk:atr_mult,down,0.75,-14.471955313717656,0,N1
+risk:atr_mult,up,1.25,-4.479115305418149,0,N1
+risk:tp_mult,down,1.0,0.354252595083298,0,N1
+risk:tp_mult,up,2.0,3.179812710858598,0,N1
+risk:max_atr_dist,down,1.0,-2.1409223167956695,0,N1
+risk:max_atr_dist,up,2.0,7.461660796074334,0,N1
+risk:bridge_bars,down,5,-0.45722178456774465,0,N1
+risk:bridge_bars,up,9,0.3899730122143774,0,N1
+c1:didi_index_signals,down,"{""medium"": 4.0}",40.647876366766255,0,N2
+c1:didi_index_signals,up,"{""medium"": 16.0}",9.545704790271758,0,N2
+c2:dspo_signals,down,"{""len"": 7.0}",47.72551205120873,0,N2
+c2:dspo_signals,up,"{""len"": 28.0}",53.25881986420406,0,N2
+vol:variance_volume_signals,down,"{""lookback"": 10.0}",33.69600773271817,0,N2
+vol:variance_volume_signals,up,"{""lookback"": 40.0}",9.942252378566256,0,N2
+base:hma_baseline,down,"{""ma_length"": 10.0}",-22.30821926359412,0,N2
+base:hma_baseline,up,"{""ma_length"": 40.0}",32.007245075062634,0,N2
+exit:chandelier_exit_exit,down,"{""atr_period"": 11.0}",38.7689705010425,0,N2
+exit:chandelier_exit_exit,up,"{""atr_period"": 44.0}",39.220440985578605,0,N2
+risk:atr_len,down,7,53.11026100817965,0,N2
+risk:atr_len,up,28,39.53981429326303,0,N2
+risk:atr_mult,down,0.75,34.41281034983817,0,N2
+risk:atr_mult,up,1.25,44.56375886482538,0,N2
+risk:tp_mult,down,1.0,30.372316899978383,0,N2
+risk:tp_mult,up,2.0,43.695832778575394,0,N2
+risk:max_atr_dist,down,1.0,33.25256669046864,0,N2
+risk:max_atr_dist,up,2.0,31.83031902467032,0,N2
+risk:bridge_bars,down,5,38.09718339139467,0,N2
+risk:bridge_bars,up,9,35.661648119498835,0,N2
+c1:schaff_trend_cycle_signals,down,"{""macdFast"": 6.0, ""macdSlow"": 26.0, ""cycleLen"": 10.0, ""upperBand"": 65.0, ""lowerBand"": 35.0}",27.25253072045996,0,N3
+c1:schaff_trend_cycle_signals,up,"{""macdFast"": 24.0, ""macdSlow"": 26.0, ""cycleLen"": 10.0, ""upperBand"": 65.0, ""lowerBand"": 35.0}",19.45824927719509,0,N3
+c2:vortex_signals,down,"{""period"": 7.0}",19.50594927356977,0,N3
+c2:vortex_signals,up,"{""period"": 28.0}",-14.510855961674984,0,N3
+vol:damiani_volatmeter_volume_signals,down,"{""viscosity"": 4.0}",1.103101059671423,0,N3
+vol:damiani_volatmeter_volume_signals,up,"{""viscosity"": 14.0}",-3.064852133039829,0,N3
+base:mcginley_dynamic_index,down,"{""mci_length"": 7.0}",23.43523095011637,0,N3
+base:mcginley_dynamic_index,up,"{""mci_length"": 28.0}",-35.14120252773864,0,N3
+exit:supertrend_exit,down,"{""atr_period"": 5.0}",3.0529379937354104,0,N3
+exit:supertrend_exit,up,"{""atr_period"": 20.0}",3.0529379937354104,0,N3
+risk:atr_len,down,7,9.072745576014022,0,N3
+risk:atr_len,up,28,7.690676175398276,0,N3
+risk:atr_mult,down,0.75,-3.6266801068233256,0,N3
+risk:atr_mult,up,1.25,-1.7704173528727214,0,N3
+risk:tp_mult,down,1.0,-5.772954162740815,0,N3
+risk:tp_mult,up,2.0,5.442260808714567,0,N3
+risk:max_atr_dist,down,1.0,-11.836398705096277,0,N3
+risk:max_atr_dist,up,2.0,11.477120213399921,0,N3
+risk:bridge_bars,down,5,2.524417599206835,0,N3
+risk:bridge_bars,up,9,2.654928688692153,0,N3
+c1:coral_signals,down,"{""smooth_period"": 5.0}",-53.19925461601933,0,N4
+c1:coral_signals,up,"{""smooth_period"": 20.0}",-16.804173723196698,0,N4
+c2:qqe_mod_signals,down,"{""rsi_period"": 3.0}",-45.09408765236958,0,N4
+c2:qqe_mod_signals,up,"{""rsi_period"": 12.0}",-38.88659527545876,0,N4
+vol:ttm_squeeze_volume_signals,down,"{""bb_length"": 10.0}",-17.465977936667613,0,N4
+vol:ttm_squeeze_volume_signals,up,"{""bb_length"": 40.0}",-35.72416659384331,0,N4
+base:kama_baseline,down,"{""length"": 5.0}",-77.61051851428027,0,N4
+base:kama_baseline,up,"{""length"": 20.0}",-41.024218163109886,0,N4
+exit:coral_exit,down,"{""smooth_period"": 5.0}",-20.592521376495274,0,N4
+exit:coral_exit,up,"{""smooth_period"": 20.0}",-20.828550840849786,0,N4
+risk:atr_len,down,7,-12.547484511062184,0,N4
+risk:atr_len,up,28,-31.631978840485203,0,N4
+risk:atr_mult,down,0.75,-13.639112746172025,0,N4
+risk:atr_mult,up,1.25,-22.69369768767062,0,N4
+risk:tp_mult,down,1.0,-14.59072834297309,0,N4
+risk:tp_mult,up,2.0,-32.55008449759359,0,N4
+risk:max_atr_dist,down,1.0,-21.192992662626512,0,N4
+risk:max_atr_dist,up,2.0,-20.48264291769888,0,N4
+risk:bridge_bars,down,5,-26.12178081244374,0,N4
+risk:bridge_bars,up,9,-26.000404278933882,0,N4
+c1:aroon_signals,down,"{""length"": 12.0}",13.238916426256626,0,N5
+c1:aroon_signals,up,"{""length"": 50.0}",-19.682985982457954,0,N5
+c2:kalman_filter_signals,down,"{""sharpness"": 2.0, ""k"": 2.0}",11.386794757184237,0,N5
+c2:kalman_filter_signals,up,"{""sharpness"": 0.5, ""k"": 0.5}",-11.394630652250555,0,N5
+vol:volatility_ratio_volume_signals,down,"{""length"": 7.0}",-9.290855859144806,0,N5
+vol:volatility_ratio_volume_signals,up,"{""length"": 28.0}",3.7114198989132667,0,N5
+base:ema_baseline,down,"{""ma_length"": 12.0}",-26.54876924408824,0,N5
+base:ema_baseline,up,"{""ma_length"": 50.0}",-25.829734834133767,0,N5
+exit:aroon_exit,down,"{""length"": 12.0}",32.29235233052308,0,N5
+exit:aroon_exit,up,"{""length"": 50.0}",21.555848441106516,0,N5
+risk:atr_len,down,7,20.702430460923672,0,N5
+risk:atr_len,up,28,20.934944117422468,0,N5
+risk:atr_mult,down,0.75,2.9285191866961533,0,N5
+risk:atr_mult,up,1.25,12.73905465997074,0,N5
+risk:tp_mult,down,1.0,27.807555421913847,0,N5
+risk:tp_mult,up,2.0,31.989579874880906,0,N5
+risk:max_atr_dist,down,1.0,7.8794174394600915,0,N5
+risk:max_atr_dist,up,2.0,3.6844497900504507,0,N5
+risk:bridge_bars,down,5,19.958463748336733,0,N5
+risk:bridge_bars,up,9,16.22189315357216,0,N5
+c1:halftrend_signals,down,"{""amplitude"": 25.0}",3.6045864683587876,0,N6
+c1:halftrend_signals,up,"{""amplitude"": 100.0}",-8.664665599641763,0,N6
+c2:fisher_transform_signals,down,"{""length"": 5.0}",1.953715435017759,0,N6
+c2:fisher_transform_signals,up,"{""length"": 20.0}",1.3146915790197662,0,N6
+vol:williams_vix_fix_volume_signals,down,"{""lookback"": 11.0}",7.528476748236203,0,N6
+vol:williams_vix_fix_volume_signals,up,"{""lookback"": 44.0}",4.62343174205696,0,N6
+base:super_smoother_2pole_baseline,down,"{""cutoff_period"": 8.0}",6.7755189860381035,0,N6
+base:super_smoother_2pole_baseline,up,"{""cutoff_period"": 30.0}",2.1999039352405863,0,N6
+exit:halftrend_exit,down,"{""amplitude"": 25.0}",0.6031662205897526,0,N6
+exit:halftrend_exit,up,"{""amplitude"": 100.0}",0.5949678981968809,0,N6
+risk:atr_len,down,7,2.4982702448732277,0,N6
+risk:atr_len,up,28,-0.44866962704914437,0,N6
+risk:atr_mult,down,0.75,2.0827473873954663,0,N6
+risk:atr_mult,up,1.25,-0.23555693198286232,0,N6
+risk:tp_mult,down,1.0,1.2871009270407547,0,N6
+risk:tp_mult,up,2.0,-0.16111684539331383,0,N6
+risk:max_atr_dist,down,1.0,0.7720622023972088,0,N6
+risk:max_atr_dist,up,2.0,4.446920304120942,0,N6
+risk:bridge_bars,down,5,0.5949678981968809,0,N6
+risk:bridge_bars,up,9,-0.538729837809274,0,N6

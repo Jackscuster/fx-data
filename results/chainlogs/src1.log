@@ -1,0 +1,14 @@
+[14:56:28] START src1
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  ledger: 6 candidates declared for source1_published (6 rows total)
+  SOURCE 1: 6 published combinations, 28 pairs, 2005-2015, all unseen
+    N1         R   -0.457  R/yr -0.042  n   107  dip 17.646  R/dip -0.026  t_bs -0.05  G2 n G3 n G4 n
+    N2         R  +38.769  R/yr +3.524  n  2719  dip 69.846  R/dip +0.555  t_bs +0.84  G2 Y G3 Y G4 n
+    N3         R   +3.053  R/yr +0.278  n  1152  dip 59.869  R/dip +0.051  t_bs +0.09  G2 n G3 n G4 n
+    N4         R  -24.510  R/yr -2.228  n  1674  dip 81.704  R/dip -0.300  t_bs -0.58  G2 n G3 n G4 n
+    N5         R  +20.450  R/yr +1.859  n  1813  dip 67.044  R/dip +0.305  t_bs +0.43  G2 n G3 n G4 n
+    N6         R   +0.595  R/yr +0.054  n    86  dip 12.574  R/dip +0.047  t_bs +0.07  G2 n G3 n G4 n
+  SOURCE 1 done in 1.2 min: 0 of 6 passers
+  SOURCE1.md written (95 lines)
+[14:57:42] OK src1
+[14:57:42] DONE src1

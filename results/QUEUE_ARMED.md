@@ -1,77 +1,68 @@
-# QUEUE_ARMED — 25 November 2026, 11:52 EST
+# QUEUE_ARMED — 25 November 2026, 15:20 EST
 
-**New standing rule, Jack 25 Nov: this file is written before any turn ends and
-the chat reads it directly.** A stage that exists only as a plan counts as NOT
-ARMED and is listed as such. "Armed" means a process is running or a script is
-queued behind a named pid — not that it is written, not that it is next.
+**Standing rule, Jack 25 Nov: before any turn ends this file lists every stage that is
+ARMED with its pid, report file and ETA, and every requested stage that is NOT armed with
+the reason. A stage that exists only as a plan counts as NOT armed. The chat reads this
+file directly.**
 
-Machine state: chain 22A (the `_r2dd` mode A tune) **finished at 08:58 today**
-and committed itself (`8472553`). **Nothing else was running when this turn
-started.** 10 cores free.
+All times US Eastern. Protocol: `results/nnfx/PROTOCOL.md` (HANDOFF §0o).
 
-## ARMED
+---
 
-| stage | pid / pgid | what it writes | ETA (US Eastern) |
+## ARMED AND RUNNING
+
+| stage | pid / pgid | report | ETA |
 |---|---|---|---|
-| **item 6a — the full exit factorial** `code/chain/exit6.sh` | pid **49381**, pgid **49378** | `results/nnfx/exit_grid.csv` (576 cells, resumable per cell) | started 11:32, **~12:20** |
+| **Source 3** — real search, then 50 search-null runs, then the gates and the write-up | chain `83129`, worker `83135` | `results/nnfx/SOURCE3.md` + `src3_top50.csv`, `src3_nulls.csv`, `src3_gates.csv` | real search **15:30**, nulls **~17:30**, gates and md **~18:10** |
 
-| **item 6a follow-up waiter** `code/chain/exit6wait.sh` | pid **52627**, pgid **52624** | waits for the sweep, verifies **576 rows in `exit_grid.csv`** (resuming it if short), then runs `exit6b.sh`: `EXITS.md`, the app feed, pre-flight | **~12:25** |
+`code/chain/src3.sh` runs all three parts in sequence with no manual step between them.
+Measured throughput at 15:19: **558 evaluations a second**, 200,000 discovery evaluations
+in 6 minutes. The 50 null runs go 8 at a time through `xargs -P 8` and are **resumable by
+run** — a run whose csv is already in `results/nnfx/src3_null/` is skipped, so a killed
+batch costs the runs in flight and no more.
 
-So **nothing needs a manual step after the sweep.** The waiter checks
-completion from the row count rather than the log, for the reason below, and
-`exit6.sh` resumes per cell if it is short.
+**Do not edit `code/chain/src3.sh` while it is running.** Bash reads a script incrementally
+as it executes. Editing `exit6.sh` mid-run on 25 Nov is why that rule is now written in the
+script's own header, in this file and in `EXITS.md`.
 
-**A HAZARD I HIT AND HAVE TO RECORD.** I edited `exit6.sh` at 11:45 while it
-was live, to append the md and app steps. Bash reads a script incrementally, so
-inserting lines in the middle of a running driver moves the byte offset it
-resumes from and can corrupt the rest of the run. The sweep's own python
-process is independent and unaffected, so the data is safe, but **the log's
-final lines may be garbled and completion must be verified from
-`exit_grid.csv`'s row count, not from the log.** The project already knew this
-(it is why `s234c/d/e.sh` are separate files) and I did it anyway. The script
-now carries the warning in a comment and the follow-up is in `exit6b.sh`.
+---
 
+## LANDED THIS TURN
 
-**NOTHING IS ARMED RIGHT NOW, and that is accurate rather than tidy.** Both of
-the queues armed this turn have finished: `code/chain/gap1.sh` (item 1) at
-10:25 and `code/chain/quiet2a.sh` + `code/chain/quiet2c.sh` (item 2) at 10:44
-and 10:50. Item 3 is not written yet, so it is not armed. The machine is idle
-and the list is not padded with things that are merely next.
+| stage | report | result |
+|---|---|---|
+| `PROTOCOL.md` | `results/nnfx/PROTOCOL.md` | written first, before any candidate was scored. Not changed without Jack. |
+| Kijun-sen baseline added | `code/l2lib.py`, unit test in `l2lib.main()` | the one indicator the N1–N6 catalogue needed that the library lacked. Reference value 17.0 exact; identical to the project's parity-proven ichimoku base line on 5,844 EURUSD bars, max abs diff **0.0e+00**. |
+| **Source 1** — the six published combinations | `results/nnfx/SOURCE1.md` | **0 of 6 passers.** Best is N2 at R +38.769, R/dip 0.555; it clears G2 and G3 and fails G1 and G4. |
+| **Source 2** — ten hand-built | `results/nnfx/SOURCE2.md` | **0 of 10 passers.** Best is H10, the Pine default control, at R +30.309, R/dip 0.668. The H4 prediction held. |
+| **Cost fault found and fixed** | `results/nnfx/COST_DOUBLE_CHARGE.md` | every NNFX-phase net figure before today is charged **twice** the measured spread. Pessimistic. Guard 42. |
+| item 6a, the exit factorial | `results/nnfx/EXITS.md` | 576 of 576 cells, landed 12:25. |
+| preflight | `results/audit_2026-09.csv` | **43 of 43 PASS**, including the two new guards 42 and 43. |
 
-Item 3's three queues (`bank3a.sh`, `groups3.sh`) finished at 10:59 and 11:03.
+---
 
-**Both of the first estimates were far too long** and that is worth recording rather than
-hiding: item 1 took 4 minutes against ~25 estimated, item 2 about 13 minutes
-across three stages. `run_combo` caches `prepare` per pair and per indicator,
-so any second pass over the same combinations is nearly free — which means my
-ETAs for anything that re-runs the same candidates under a different rule
-should be divided by about five.
+## NOT ARMED, WITH THE REASON
 
-## NOT ARMED, AND WHY
-
-| stage | why not |
+| requested stage | why it is not armed |
 |---|---|
-| item 1 — everything | **DONE 10:38.** `results/nnfx/GAP_FILLS.md`, four csvs, pre-flight **guard 41** live, app section wired, preflight **41 of 41 PASS**. |
-| item 2 — everything | **DONE 10:53.** `results/nnfx/QUIET_ENTRY.md`, nine csvs, app section wired, preflight **41 of 41 PASS**. **Verdict: the rule FAILS and is not adopted.** |
-| item 3 — everything | **DONE 11:06.** `PER_PAIR_BANK.md` + `PAIR_GROUPS.md`, 38,919 bank cells, six csvs, app section, preflight **41 of 41 PASS**. **Verdict: the edge is NOT pair-specific in any way a tuning-year pick can find, and pair character does not persist.** |
-| item 4 — everything | **DONE 11:20.** `MEAN_REVERSION.md`, five csvs, app section, preflight **41 of 41 PASS**. **Verdict: not proven alone (nothing reaches \|t\| = 2, every positive cell over the 10% crisis threshold), kept as a sleeve candidate because every variant is NEGATIVELY correlated with A.** |
-| item 5 — everything | **DONE 11:30.** `BOOK.md`, five csvs, app section, preflight **41 of 41 PASS**. **Verdict: the best book is A ON ITS OWN at 1.135%/yr at the firm's maximum legal sizing — a factor of 10.6 short of 12%, and no book at any sizing ever passes the +10% evaluation.** |
-| item 6 — exits, speeds, drawdown control | **not built. NEXT.** Explicitly ordered last by Jack, and items 1-5 have all landed. Three separate reports: exits (three together against each alone; stop 1.0/1.5/2.0 ATR; first target 1.0/1.5/2.0x the stop; trail on and off; time stop 5/10/20 bars), three speeds together, and drawdown control (steady-risk sizing, equity pause, kill switch, crisis sizing). **One thing item 5 changes about it:** the book is a factor of 10 short, so an exit sweep is not going to close the gap and should not be presented as if it might. It is worth running because a 2x on the best sleeve is still a 2x. |
-| chain 22B | **not armed.** It was behind 22A in the old queue; the new direction (per-pair banking, book-level judging) supersedes what it was for, and re-arming it before Jack has seen items 1-5 would spend ten cores on the old question. Flagged for his call, not quietly dropped. |
-| chain 31 (A4/A5 follow-ups) | **not armed**, same reason. |
+| **BOOK2** — the book of passers | **Blocked on Source 3, not on code.** `code/nnfxbook2.py` is written and imports clean. Sources 1 and 2 returned **zero passers**, so the only possible sleeve list is whatever Source 3 surfaces. It is launched by hand as soon as `src3_gates.csv` exists, or run on the best non-passers if Source 3 also returns none — which is the case the module was written for and says so in its own output. **ETA ~18:20**, after Source 3. |
+| the 2016–2020 confirm | **Jack's call, not armed by design.** Those years are computed and stored per candidate and summarised nowhere. The protocol says the run stops and reports when a passer exists. |
+| re-running stages 1–3 and items 1–6 under the corrected cost charge | **Jack's call.** About 6 hours of compute. `COST_DOUBLE_CHARGE.md` gives the mechanical correction (`R + cost_per_trade/2 x trades`) so the direction and rough size are known without it. Nothing in the new protocol waits on it. |
+| chain 22B, chain 31 | **Still awaiting Jack's call** on whether they are dead or parked. Unchanged from 24 Nov. |
+| app tab for the protocol sources | **Armed next in this turn**, not running: `code/r2app.py` + `app_ui.js` section, then `node --check`. |
 
-## WHAT JACK STILL OWNS
+---
 
-1. **The per-pair floor at 5%.** Item 2d measured it as a by-product and it is
-   expensive: with the quiet rule off, turning the floor OFF is worth
-   **+12.553 R and 30% of return per dip on A** and **+6.008 R and 37% on B**,
-   and floor-off wins at 3 of 4 and 2 of 4 Q values tested. It is his decided
-   rule of 7 Sep and **nothing has been changed**. On record, his call.
-2. Whether 22B and chain 31 are dead or merely parked (see above).
-3. For item 4: the repo has no half-life and no stationarity test, only a Hurst
-   exponent. Building an OU half-life and an ADF is the straightforward
-   reading of his instruction and that is what I will do unless he says
-   otherwise — flagged rather than asked, because item 4 is not blocked on it.
+## HAZARDS ON THE RECORD
 
-X = 0.33 is adopted and the placeholder label is gone from the code, the
-reports and the app.
+1. **Editing a running script corrupts the rest of its run.** Bash reads incrementally.
+   Hit on 25 Nov with `exit6.sh`; the follow-up had to move to `exit6b.sh` and completion
+   had to be verified from `exit_grid.csv`'s row count rather than the log.
+2. **A function definition pasted into the middle of `main()` silently truncates it.**
+   Hit today adding guards 42 and 43: the two `def` lines at column 0 ended `main()`'s body,
+   so `guard(42)` and `guard(43)` and the summary print became part of `c43`'s body and
+   preflight exited 0 after guard 41 with no summary at all. Caught because the expected
+   `43 of 43` line never appeared. This is the same fault class preflight's own guard 29
+   exists for.
+3. **Disk is at 99%, 5.5 GB free.** Null runs write one summary row each, not their
+   evaluation tables, for this reason. No bank is deleted; `results/r2gate1` is untouched.

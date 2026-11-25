@@ -540,6 +540,86 @@ The evidence that nothing but those two paths changed is
    | `c23fe98` | `88d29ef` | HANDOFF: mode C through the blind pipeline (routed +1.33%, PF  |
 
 
+0o. **LAYER 1 REMOVED FROM LAYER 2. ONE FIXED PROTOCOL, THREE SOURCES.
+   Jack, 25 Nov, 15:00. This replaces all unsent prompts.**
+
+   **THE DIRECTION.** The regime estimator is out of Layer 2 for now. No Layer
+   1 input gates, sizes or labels anything. The job is to find working
+   COMPLETE NNFX algorithms under one fixed test protocol, written before
+   anything is scored and never changed without Jack.
+
+   **THE PROTOCOL IS `results/nnfx/PROTOCOL.md`.** A candidate is a complete
+   algorithm — C1, C2, volume, baseline, exit indicator, all five slots live,
+   all three exits live, Jack's risk plan fixed (stop 1.0 ATR, first target
+   1.5x, baseline distance 1.5, bridge 7, continuation on), every setting in
+   the ledger BEFORE it is scored. Engine standing rules unchanged: one-bar
+   lag, era-correct costs, 1:30 leverage cap, peg guard 0.33, per-pair floor
+   5%, realistic gap fills. Evidence 2005-2015, all eleven unseen because
+   nothing is tuned; 2016-2020 computed and not reported; 2021 on sealed.
+   Four gates, pass or fail, no weighting: **G1 luck** (block-bootstrap t
+   above the batch's own null floor), **G2 one event**, **G3 hold-out** (two
+   time halves and both sides of three currency splits, eight slices),
+   **G4 nudge** (every numeric setting one coarse step each way, 20 runs).
+
+   **THIS IS THE FIRST PROTOCOL IN THE PROJECT THAT TESTS A COMPLETE
+   ALGORITHM.** Stage 1 neutralised four of five slots to isolate one; stage 2
+   neutralised three to isolate the baseline. Both were deliberate and both
+   were therefore tests of a PIECE. No stage 1 or stage 2 number is evidence
+   about a candidate under this protocol and none is quoted as if it were.
+
+   **THE RESULTS OF 25 NOVEMBER, from files.**
+
+   | source | what | passers |
+   |---|---|---|
+   | 1 | the six published combinations N1-N6, zero search | **0 of 6** |
+   | 2 | ten hand-built, each with a reason on record | **0 of 10** |
+   | 3 | machine search, 2.53e9 space, against 50 null searches | running |
+
+   *Source 1.* Best N2 (HMA 20 / DiDi / DSPO / Variance / Chandelier),
+   R +38.769, R/yr +3.524, R/dip 0.555, clears G2 and G3, fails G1 (t 0.842
+   against a best-of-6 floor 1.973) and G4. N1 and N6 take 107 and 86 trades
+   in eleven years across 28 pairs. N4 loses outright. Four of the six use
+   their own C1 as their exit indicator. The 9 Nov catalogue graded all six N
+   — named components, no reproducible result anywhere — and that grade was
+   right. `results/nnfx/SOURCE1.md`.
+
+   *Source 2.* Best is **H10, the control**: the Pine file's own five default
+   slots, the only combination with a TradingView parity proof, R +30.309,
+   R/dip 0.668. Eight candidates built from the project's own measured C1 and
+   baseline leaders all do worse. A prediction declared before the run HELD:
+   H4 (expansion volume filter instead of a shape filter) came out 26.744 R
+   worse than H1, as item 2's loud-entry measurement said it should. "Slow
+   beats fast" does NOT generalise past the baseline — H5, every slot slow, is
+   29.314 R worse. `results/nnfx/SOURCE2.md`.
+
+   **ONE INDICATOR ADDED.** `kijun_baseline` (Kijun-sen 26), N1's declared
+   baseline and the only one in the whole catalogue the library lacked. Unit
+   tested two ways in `l2lib.main()`: an arithmetic reference, and identity
+   with the project's own parity-proven ichimoku base line on 5,844 EURUSD
+   bars at max abs diff 0.0e+00.
+
+   **A FAULT THAT TOUCHES EVERY NNFX NUMBER BEFORE TODAY.**
+   `results/nnfx/COST_DOUBLE_CHARGE.md`, preflight guard 42.
+   `l2engine.run` risks `risk_dollars = 200` by default and every `nnfx*`
+   caller takes that default, so raw r is (move x units) / 200 — proven on 80
+   stop exits. `nnfx1._cost_R` divides by `l2sweep.RISK` = 100. **Every net
+   figure in stage 1, stage 2, stage 3 and items 1 to 6 is charged exactly
+   TWICE the measured spread**, in the pessimistic direction. The gauntlet
+   path is NOT affected: `l2sweep.run_combo` passes RISK through as
+   risk_dollars, so engine and cost divisor agree there. Mechanical
+   correction: `R + (cost_per_trade / 2) x trades`. Candidate A +39.874 ->
+   about +52.040 (+31%); candidate B +23.934 -> about +51.108 (+114%). Item
+   5's verdict survives in direction: 1.135% a year becomes roughly 1.5%, so
+   the gap to 12% goes from a factor of 10.6 to about 8 — still a return
+   problem. The existing tables are NOT edited and NOT deleted; whether to
+   re-run them (about 6 hours) is Jack's call.
+
+   **STANDING: `results/QUEUE_ARMED.md`** is written before every turn ends,
+   listing every armed stage with its pid, report and ETA, and every requested
+   stage that is not armed with the reason. A stage that exists only as a plan
+   counts as not armed.
+
+
 0m. **LAYER 2 REBUILT THE NNFX WAY — ONE ALGORITHM, BUILT ONE PIECE AT A TIME.
    Jack, 24 Nov. This plan replaces all earlier unsent instructions.**
 
