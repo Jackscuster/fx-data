@@ -74,6 +74,9 @@ LOWVOL_Q = 0.05
 # ATR/price is below PEG_X x the 28-pair MEDIAN that day. X = 0.33 is DECIDED,
 # picked off the STAGE3.md curve on 25 Nov 2026. None turns it off.
 PEG_X = 0.33
+# THE QUIET-ENTRY RULE, item 2 of 25 Nov. None is OFF and is the default: it
+# is UNDER TEST, not adopted. Set it only from a caller that reports Q.
+QUIET_Q = None
 # 2000, AND BOTH SMALLER VALUES WERE TRIED AND FAILED. At 50 ATR two AUDJPY
 # long trades held 345 bars reached the stop -- the 2008 collapse is that large
 # in ATR units. At 200 a single EURCHF baseline trade reached it, which is the
@@ -214,8 +217,16 @@ def _neutralise(A, kind, side=None, pair_for_floor=None):
     # bottom LOWVOL_Q and exits are untouched. LOWVOL_Q = None restores the
     # pre-24-Nov behaviour and every output records which was used.
     vok = T.copy()
-    if pair_for_floor and (LOWVOL_Q or PEG_X):
+    if pair_for_floor and (LOWVOL_Q or PEG_X or QUIET_Q is not None):
         import nnfxvol as _V
+        if QUIET_Q is not None and float(QUIET_Q) < 1.0:
+            # THE QUIET-ENTRY RULE, item 2 of 25 Nov. Same slot, same
+            # entry-only discipline as the floor; the opposite end of the same
+            # axis. None and 1.0 both mean off and give the identical book.
+            _ix3, _qt = _V.quiet_mask(pair_for_floor, float(QUIET_Q))
+            assert len(_qt) == n, '%s: quiet mask %d vs %d bars' % (
+                pair_for_floor, len(_qt), n)
+            vok = vok & (~_qt)
         if LOWVOL_Q:
             _ix, _lv = _V.lowvol_mask(pair_for_floor, q=LOWVOL_Q, causal=True)
             assert len(_lv) == n, '%s: lowvol mask %d vs %d bars' % (
@@ -331,6 +342,12 @@ def run_one(name, kind, setting, variant, pairs=None, atr_len=14,
     # restate R against the 1.5 ATR risk unit (see the module note)
     T['R_gross'] = T.R.astype(float) * am / RISK_UNIT_ATR
     T['atr_mult_used'] = am
+    # EVERY FRAME DECLARES THE RULES IT RAN UNDER
+    T['lowvol_q'] = (LOWVOL_Q if LOWVOL_Q else 0.0)
+    T['peg_x'] = (PEG_X if PEG_X else 0.0)
+    T['quiet_q'] = (float(QUIET_Q) if QUIET_Q is not None else 1.0)
+    import nnfxamb as _AMB2
+    T['gapfill_on'] = int(bool(use_hourly and _AMB2.GAPFILL_STANDING))
     if variant == 'flip_only':
         # 'nothing else' is CHECKED, not assumed: a 50 ATR stop must
         # never be reached, and with tp_mult 900 there is no target
@@ -877,6 +894,7 @@ def stage_run(kind='c1', variant='jack', names=None, nmax=None,
         if len(_D):
             _D['lowvol_q'] = (LOWVOL_Q if LOWVOL_Q else 0.0)
             _D['peg_x'] = (PEG_X if PEG_X else 0.0)
+            _D['quiet_q'] = (float(QUIET_Q) if QUIET_Q is not None else 1.0)
             _D['leverage_cap_on'] = 1
     # A SWEEP'S FILES DO NOT BELONG IN results/nnfx. condition4_all globs
     # stage1r2_*_summary.csv there and treats each match as a label, so six

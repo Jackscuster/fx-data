@@ -1,0 +1,72 @@
+[10:40:47] START quiet2c
+[10:40:47] START 2c fixed-Q curve, 10% to 100%
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    A Q=0.10  R 3.702  R/yr 0.617  dip 2.957  R/dip 1.252  n 35
+    A Q=0.20  R 25.906  R/yr 4.318  dip 7.136  R/dip 3.630  n 118
+    A Q=0.30  R 36.314  R/yr 6.052  dip 17.830  R/dip 2.037  n 201
+    A Q=0.40  R 44.010  R/yr 7.335  dip 17.394  R/dip 2.530  n 312
+    A Q=0.50  R 33.777  R/yr 5.629  dip 14.381  R/dip 2.349  n 425
+    A Q=0.60  R 27.153  R/yr 4.525  dip 19.403  R/dip 1.399  n 526
+    A Q=0.70  R 26.785  R/yr 4.464  dip 22.479  R/dip 1.192  n 616
+    A Q=0.80  R 27.688  R/yr 4.615  dip 22.727  R/dip 1.218  n 689
+    A Q=0.90  R 38.227  R/yr 6.371  dip 22.419  R/dip 1.705  n 735
+    A Q=1.00  R 39.874  R/yr 6.646  dip 22.616  R/dip 1.763  n 742
+    B Q=0.10  R 0.654  R/yr 0.109  dip 15.662  R/dip 0.042  n 117
+    B Q=0.20  R 19.683  R/yr 3.281  dip 18.565  R/dip 1.060  n 304
+    B Q=0.30  R 21.821  R/yr 3.637  dip 22.210  R/dip 0.982  n 518
+    B Q=0.40  R 19.625  R/yr 3.271  dip 21.042  R/dip 0.933  n 764
+    B Q=0.50  R 31.377  R/yr 5.229  dip 27.559  R/dip 1.139  n 1060
+    B Q=0.60  R 17.953  R/yr 2.992  dip 41.537  R/dip 0.432  n 1320
+    B Q=0.70  R 40.517  R/yr 6.753  dip 27.131  R/dip 1.493  n 1587
+    B Q=0.80  R 29.723  R/yr 4.954  dip 38.793  R/dip 0.766  n 1786
+    B Q=0.90  R 25.510  R/yr 4.252  dip 43.966  R/dip 0.580  n 1920
+    B Q=1.00  R 23.934  R/yr 3.989  dip 44.541  R/dip 0.537  n 1957
+  nnfxquiet done
+[10:43:44] OK fixedq
+[10:43:44] START 2c walk-forward Q + paired test
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    A 2005-2008 -> Q 1.00 (tuning R 28.109)
+    A 2006-2009 -> Q 0.60 (tuning R 17.174)
+    A 2007-2010 -> Q 0.70 (tuning R 28.251)
+    A 2008-2011 -> Q 0.40 (tuning R -0.016)
+    A 2009-2012 -> Q 0.70 (tuning R 35.291)
+    A 2010-2013 -> Q 0.40 (tuning R 49.449)
+    B 2005-2008 -> Q 1.00 (tuning R 23.444)
+    B 2006-2009 -> Q 0.50 (tuning R 7.111)
+    B 2007-2010 -> Q 0.50 (tuning R -1.766)
+    B 2008-2011 -> Q 0.70 (tuning R 2.391)
+    B 2009-2012 -> Q 0.20 (tuning R -1.861)
+    B 2010-2013 -> Q 0.20 (tuning R 16.308)
+    A  R 39.874 -> 35.058 (dR -4.816)  dip 22.616 -> 21.900  R/dip 1.763 -> 1.601  t_diff -0.335  1 of 6 years positive
+    B  R 23.934 -> -1.755 (dR -25.689)  dip 44.541 -> 31.807  R/dip 0.537 -> -0.055  t_diff -0.680  1 of 6 years positive
+  nnfxquiet done
+[10:47:12] OK walkq+paired
+[10:47:12] START 2d floor cross
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    A floor 0.000 Q 0.20 -> R 37.970  dip 13.147  R/dip 2.888  n 239
+    A floor 0.000 Q 0.30 -> R 47.641  dip 14.944  R/dip 3.188  n 322
+    A floor 0.000 Q 0.50 -> R 45.916  dip 14.186  R/dip 3.237  n 546
+    A floor 0.000 Q 1.00 -> R 52.426  dip 22.834  R/dip 2.296  n 863
+    A floor 0.010 Q 0.20 -> R 25.446  dip 11.943  R/dip 2.131  n 189
+    A floor 0.010 Q 0.30 -> R 35.853  dip 17.382  R/dip 2.063  n 272
+    A floor 0.010 Q 0.50 -> R 33.317  dip 14.186  R/dip 2.349  n 496
+    A floor 0.010 Q 1.00 -> R 39.305  dip 22.834  R/dip 1.721  n 813
+    A floor 0.050 Q 0.20 -> R 25.906  dip 7.136  R/dip 3.630  n 118
+    A floor 0.050 Q 0.30 -> R 36.314  dip 17.830  R/dip 2.037  n 201
+    A floor 0.050 Q 0.50 -> R 33.777  dip 14.381  R/dip 2.349  n 425
+    A floor 0.050 Q 1.00 -> R 39.874  dip 22.616  R/dip 1.763  n 742
+    B floor 0.000 Q 0.20 -> R 29.706  dip 28.100  R/dip 1.057  n 615
+    B floor 0.000 Q 0.30 -> R 25.742  dip 33.720  R/dip 0.763  n 828
+    B floor 0.000 Q 0.50 -> R 36.241  dip 27.827  R/dip 1.302  n 1370
+    B floor 0.000 Q 1.00 -> R 29.942  dip 40.800  R/dip 0.734  n 2267
+    B floor 0.010 Q 0.20 -> R 24.928  dip 23.932  R/dip 1.042  n 469
+    B floor 0.010 Q 0.30 -> R 22.902  dip 31.854  R/dip 0.719  n 682
+    B floor 0.010 Q 0.50 -> R 27.004  dip 29.375  R/dip 0.919  n 1224
+    B floor 0.010 Q 1.00 -> R 11.097  dip 46.260  R/dip 0.240  n 2121
+    B floor 0.050 Q 0.20 -> R 19.683  dip 18.565  R/dip 1.060  n 304
+    B floor 0.050 Q 0.30 -> R 21.821  dip 22.210  R/dip 0.982  n 518
+    B floor 0.050 Q 0.50 -> R 31.377  dip 27.559  R/dip 1.139  n 1060
+    B floor 0.050 Q 1.00 -> R 23.934  dip 44.541  R/dip 0.537  n 1957
+  nnfxquiet done
+[10:50:03] OK floorcross
+[10:50:03] DONE quiet2c

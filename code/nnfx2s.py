@@ -130,7 +130,7 @@ def _write_csv(D, path, cols=None):
 def run_combo(c1, c1_set, base, base_set, variant, ruleset,
               pairs=None, atr_len=14, use_hourly=True, amb_out=None,
               lowvol_q=VOL.LOWVOL_Q, peg_x=VOL.PEG_X_DECIDED,
-              gapfill=None, gap_out=None):
+              gapfill=None, gap_out=None, quiet_q=None):
     """One C1 + one baseline, one ruleset, across the pairs. -> trade frame.
 
     THE C1 ENTRY AND EXIT ARE ALWAYS ON. Stage 2 adds a baseline to a C1; it
@@ -201,6 +201,18 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
                 assert len(_pg) == n, '%s: peg mask %d vs %d bars' % (
                     p, len(_pg), n)
                 vok = vok & (~_pg)
+            # THE QUIET-ENTRY RULE, item 2 of 25 Nov. No new entry while this
+            # pair's own lagged ATR/price is ABOVE its own Q-th percentile.
+            # It rides the same volume slot as the floor and the peg guard --
+            # entry-only -- so all three compose and none of them freezes an
+            # exit. quiet_q=None is the rule off; so is quiet_q=1.0, and the
+            # two give the identical book, which is what lets the fixed-Q
+            # curve end at the unfiltered candidate.
+            if quiet_q is not None and float(quiet_q) < 1.0:
+                _ix3, _qt = VOL.quiet_mask(p, float(quiet_q))
+                assert len(_qt) == n, '%s: quiet mask %d vs %d bars' % (
+                    p, len(_qt), n)
+                vok = vok & (~_qt)
             A['v_ok_l'] = vok.copy(); A['v_ok_s'] = vok.copy()
             A['x_el'] = np.zeros(n, bool); A['x_es'] = np.zeros(n, bool)
             if not RS['side']:
@@ -237,6 +249,7 @@ def run_combo(c1, c1_set, base, base_set, variant, ruleset,
     T['variant'] = variant; T['ruleset'] = ruleset
     T['lowvol_q'] = (lowvol_q if lowvol_q else 0.0)
     T['peg_x'] = (peg_x if peg_x else 0.0)
+    T['quiet_q'] = (float(quiet_q) if quiet_q is not None else 1.0)
     # EVERY FRAME DECLARES WHETHER ITS STOPS WERE FILLED REALISTICALLY.
     # Standing from 25 Nov; a frame that does not say so is read by pre-flight
     # guard 41 as computed at a price that was never quoted.

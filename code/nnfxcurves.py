@@ -31,13 +31,18 @@ FLOOR_CURVE = (0.0, 0.01, 0.025, 0.05, 0.075, 0.10)
 
 
 def _stitch(c1, base, rs, v, lowvol_q, peg_x, years=BUILD,
-            gapfill=None, gap_out=None):
+            gapfill=None, gap_out=None, quiet_q=None, q_by_step=None):
     """The walk-forward stitch, exactly as stage 2 builds it, under one
     (floor, peg) setting.
 
     `gapfill` is for nnfxgap's before/after only. Left None it takes the
     standing value, which from 25 Nov is ON -- so every caller that does not
     mention gap fills gets them.
+
+    `quiet_q` applies ONE fixed quiet-entry Q to every step. `q_by_step` maps
+    a step name to the Q chosen on THAT step's own tuning years and overrides
+    it -- which is the only form of the rule that may be reported as a result,
+    because a single Q over the whole span is a Q chosen with hindsight.
     """
     W = pd.read_csv(os.path.join(OUT, 'stage2_picks_walk.csv'))
     w = W[(W.c1 == c1) & (W.base == base) & (W.variant == v)
@@ -53,7 +58,9 @@ def _stitch(c1, base, rs, v, lowvol_q, peg_x, years=BUILD,
                          str(r.iloc[0].picked_base_setting), v, rs,
                          use_hourly=True,
                          lowvol_q=(lowvol_q or None), peg_x=(peg_x or None),
-                         gapfill=gapfill, gap_out=gap_out)
+                         gapfill=gapfill, gap_out=gap_out,
+                         quiet_q=(q_by_step.get(stp['name'])
+                                  if q_by_step is not None else quiet_q))
         if not len(T):
             continue
         Ty = T[pd.DatetimeIndex(T.exit_date).year == stp['trade']]

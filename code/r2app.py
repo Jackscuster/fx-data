@@ -380,6 +380,32 @@ def stage_app():
         effect_defaults=nd('gap_fill_effect_defaults.csv', head=20),
         deciles_defaults=nd('gap_stopout_deciles_defaults.csv', head=200),
     )
+    sec['nnfx']['quiet'] = dict(
+        note=('ITEM 2, Jack 25 Nov -- THE QUIET-ENTRY TEST, run as a declared '
+              'hypothesis because the finding behind it was found by LOOKING. '
+              'Q is the cut: a pair may enter only while its own one-bar-'
+              'lagged ATR/price is at or below its own EXPANDING Q-th '
+              'percentile. Q = 1.00 is the rule OFF and takes the identical '
+              'code path, which is what lets the curve end at the unfiltered '
+              'candidate. A bar inside the first 250 bars, where the '
+              'percentile is not yet defined, is BLOCKED -- allowing it '
+              'would make the rule look free on exactly the sample it cannot '
+              'police. '
+              'THE THREE PASS CONDITIONS WERE WRITTEN DOWN BEFORE THE RUN: '
+              '(1) the walk-forward version must beat its own control on the '
+              'paired test; (2) the fixed-Q curve must be a broad plateau, '
+              'not a spike, because Q was swept and the best of ten tries is '
+              'a maximum; (3) the effect must appear outside ichimoku. '
+              'Read QUIET_ENTRY.md for the verdict against all three.'),
+        deciles=nd('quiet_deciles_c1.csv', head=450),
+        summary=nd('quiet_deciles_summary.csv', head=60),
+        null=nd('quiet_deciles_null.csv', head=450),
+        fixedq=nd('quiet_fixedq.csv', head=40),
+        walkq=nd('quiet_walkq.csv', head=40),
+        paired=nd('quiet_paired.csv', head=20),
+        floor_cross=nd('quiet_floor_cross.csv', head=60),
+        blocked=nd('quiet_blocked_share.csv', head=320),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '

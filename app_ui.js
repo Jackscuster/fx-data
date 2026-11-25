@@ -6084,6 +6084,48 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'\u2212100 R at a wide one. The empirical tail measures this sample, not the exposure.</div>';
   h+=tbl(GF.effect_defaults,['base','variant','gapfill_on','R_total','R_per_year','trades','worst_trade_R','entries_changed','entries_total','stop_fills_gapped'],'The same three at DEFAULT settings over the whole span \u2014 four to six times the trades');
  }
+ /* ITEM 2, Jack 25 Nov: THE QUIET-ENTRY TEST. A hypothesis found by looking,
+    so tested with its pass conditions declared first. */
+ const QE=R.quiet||{};
+ if(QE.note){
+  h+='<h3>Quiet entry \u2014 tested as a hypothesis, not reported as a finding</h3>';
+  h+='<div class="note">'+QE.note+'</div>';
+  h+=tbl(QE.summary,['kind','name','variant','entries','R_total','R_bottom3','R_top3','share_bottom3','share_entries_bottom3','rho_Rpertrade_vs_decile','positive_overall'],'2a \u2014 all 39 C1 alone plus A and B: is the low-decile tilt ichimoku, or the market?');
+  h+='<div class="note"><b>It is the market \u2014 but the direction is the other way round.</b> 35 of 39 C1 alone have a '
+    +'negative rank correlation of R per trade against the ATR decile, and <b>all 39 lose money overall</b>. So the tilt '
+    +'is not \u201cprofit concentrated in quiet entries\u201d, it is <b>losses concentrated in loud ones</b>. A rule that '
+    +'refuses loud entries is therefore not harvesting an edge; it is declining to take the worst trades \u2014 a smaller '
+    +'claim and a much more believable one. <b>And candidate A, the one the hypothesis came from, is the flattest thing in '
+    +'the table</b> (rho +0.055 against \u22120.442 for B): what A has is a TOTAL-R concentration, 92% of its R from 27% '
+    +'of its entries, which is a story about a few large quiet winners rather than quiet trades paying better on average. '
+    +'Those are different claims and only the second supports a rule. '
+    +'<b>Read share_bottom3 only on A and B</b> \u2014 elsewhere the denominator is negative and the share is '
+    +'meaningless.</div>';
+  h+=tbl(QE.null,['name','variant','bucket','n_real','real_gross_mean','null_mean','null_sd','tol_3se','passes','real_vs_null_z'],'2b \u2014 the null: random entries matched on count, holding period AND decile');
+  h+='<div class="note"><b>Why this null and not the usual one.</b> The standing random-entry null draws the entry bar '
+    +'from anywhere in the pair\u2019s span. That is right for \u201cdoes the timing carry anything\u201d and <b>wrong</b> '
+    +'for a decile table: if quiet bars happen to be followed by larger moves for any reason at all, every strategy\u2019s '
+    +'low deciles would look good and 2a would be measuring the axis. Here the draw is restricted to bars in the '
+    +'<b>same decile</b> as the real entry it replaces, and the test is per decile, gross of cost \u2014 each '
+    +'decile\u2019s null mean must sit inside 3 standard errors of zero.</div>';
+  h+=tbl(QE.fixedq,['base','Q','R_total','R_per_year','R_per_year_ex_best_day','trades','worst_dip_R','R_per_dip','best_trade_share','t_yearly','t_yearly_ex_best_day','crisis_share'],'2c \u2014 the fixed-Q curve, 10% to 100%: SHAPE ONLY, every row carries hindsight = 1');
+  h+='<div class="note"><b>Q is swept here, so the best Q in this table is a maximum over ten tries on the same six '
+    +'years.</b> What the curve is for is its SHAPE \u2014 a real effect is a broad plateau, a fitted one is a spike \u2014 '
+    +'and its end point, because Q = 1.00 is the unfiltered candidate and anchors the column.</div>';
+  h+=tbl(QE.walkq,['base','step','trade_year','picked_Q','tuning_R_at_pick','any_eligible'],'2c \u2014 Q picked on each step\u2019s own four tuning years');
+  h+=tbl(QE.paired,['base','days','R_with','R_without','dR_total','dip_with','dip_without','R_per_dip_with','R_per_dip_without','trades_removed','t_block_boot_diff','years_positive','beats_its_control'],'2c \u2014 the paired test: the walk-forward rule against its own control, same days');
+  h+='<div class="note"><b>Days are unioned, not intersected.</b> A day on which only one side is in the market is a real '
+    +'difference and is the rule\u2019s main effect \u2014 it STOPS trades happening. Missing days are zero P&amp;L, not '
+    +'missing data. <b>This is the condition that decides the rule</b>, and the per-step Q is in the file so the walk is '
+    +'auditable step by step.</div>';
+  h+=tbl(QE.floor_cross,['base','floor_q','Q','R_total','R_per_year','R_per_year_ex_best_day','trades','worst_dip_R','R_per_dip','t_yearly','years_positive'],'2d \u2014 crossed with the per-pair floor at off, 1% and 5%: do the two rules conflict?');
+  h+='<div class="note"><b>They are the two ends of one axis.</b> The floor blocks the bottom q; the quiet rule blocks '
+    +'everything above Q; together they keep the band. If the profit really is in the quiet entries then the floor is '
+    +'cutting into the best part of the book and the two fight \u2014 and the floor-OFF column answers that directly. The '
+    +'measure is <b>return per dip</b>, which is what was asked for and which does not simply reward whichever '
+    +'combination holds the most risk.</div>';
+  h+=tbl(QE.blocked,['pair','Q','bars','bars_blocked','pct_blocked'],'How much of each pair the rule removes, per Q');
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){

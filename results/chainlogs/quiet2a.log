@@ -1,0 +1,107 @@
+[10:36:56] START quiet2a
+[10:36:56] START blocked share
+  quiet_blocked_share written
+  nnfxquiet done
+[10:36:59] OK blocked share
+[10:36:59] START 2a deciles, 39 C1 alone + A + B
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+     1/39 adx_dmi_signals                           85 entries
+     2/39 aroon_signals                           2284 entries
+     3/39 bears_bulls_impulse_signals             8280 entries
+     4/39 center_of_gravity_signals              13193 entries
+     5/39 chandelier_exit_signals                 4964 entries
+     6/39 coppock_curve_signals                   4142 entries
+     7/39 coral_signals                          10307 entries
+     8/39 didi_index_signals                      7617 entries
+     9/39 donchian_breakout_signals               1347 entries
+    10/39 dpo_signals                             3692 entries
+    11/39 dspo_signals                            1778 entries
+    12/39 ehlers_reverse_ema_signals              4331 entries
+    13/39 fisher_transform_signals               25683 entries
+    14/39 fx_sniper_ergodic_cci_signals          12555 entries
+    15/39 glitch_index_signals                    3660 entries
+    16/39 halftrend_signals                        278 entries
+    17/39 hieken_ashi_smoothed_signals            4289 entries
+    18/39 ichimoku_signals                        2890 entries
+    19/39 j_tpo_signals                           1445 entries
+    20/39 kalman_filter_signals                   2496 entries
+    21/39 kase_peak_oscillator_signals            4382 entries
+    22/39 kuskus_starlight_signals                4379 entries
+    23/39 laguerre_filter_signals                 1564 entries
+    24/39 lemantrend_signals                      2230 entries
+    25/39 linreg_slope_signals                    3682 entries
+    26/39 mama_fama_signals                       2288 entries
+    27/39 parabolic_sar_signals                   6532 entries
+    28/39 polychromatic_momentum_signals          2253 entries
+    29/39 price_momentum_oscillator_signals       1889 entries
+    30/39 qqe_mod_signals                         5031 entries
+    31/39 relative_vigor_index_signals           19207 entries
+    32/39 rex_oscillator_signals                 25347 entries
+    33/39 schaff_trend_cycle_signals              3893 entries
+    34/39 ssl_channel_signals                     6277 entries
+    35/39 supertrend_signals                      2761 entries
+    36/39 trend_direction_force_index_signals     3887 entries
+    37/39 volatility_quality_signals              1746 entries
+    38/39 vortex_signals                          7515 entries
+    39/39 waddah_attar_explosion_signals          2482 entries
+    candidate A   745 entries
+    candidate B  1970 entries
+    kind                              name variant  entries     R_total   R_bottom3      R_top3  share_bottom3  share_entries_bottom3  rho_Rpertrade_vs_decile  positive_overall
+c1_alone                     j_tpo_signals    jack   1445.0  -45.066753   39.041212  -56.132345      -0.866297               0.372318                -0.769697                 0
+c1_alone           laguerre_filter_signals    jack   1564.0  -41.753678   36.694636  -43.654974      -0.878836               0.370205                -0.696970                 0
+c1_alone             parabolic_sar_signals    jack   6532.0 -275.587357  -46.789615 -175.032561       0.169781               0.384874                -0.684848                 0
+c1_alone    polychromatic_momentum_signals    jack   2253.0 -171.883455  -14.696208  -95.062728       0.085501               0.361740                -0.684848                 0
+c1_alone price_momentum_oscillator_signals    jack   1889.0  -62.853579    4.501434  -37.076163      -0.071618               0.374801                -0.587879                 0
+c1_alone       bears_bulls_impulse_signals    jack   8280.0 -186.565860  -52.136008 -151.141824       0.279451               0.348913                -0.563636                 0
+c1_alone          kuskus_starlight_signals    jack   4379.0 -148.871961  -32.001695 -117.405146       0.214961               0.356017                -0.551515                 0
+c1_alone      relative_vigor_index_signals    jack  19207.0 -579.700011 -167.277820 -266.228561       0.288559               0.369292                -0.539394                 0
+c1_alone           chandelier_exit_signals    jack   4964.0 -160.804862   -5.505322 -110.841492       0.034236               0.307413                -0.527273                 0
+c1_alone        ehlers_reverse_ema_signals    jack   4331.0 -152.250830  -53.924010  -86.191147       0.354179               0.362734                -0.527273                 0
+c1_alone              glitch_index_signals    jack   3660.0  -77.758058    2.365148  -62.554789      -0.030417               0.384973                -0.490909                 0
+c1_alone                       dpo_signals    jack   3692.0 -111.987898   13.547145  -60.250067      -0.120970               0.403846                -0.490909                 0
+  nnfxquiet done
+[10:39:58] OK 2a deciles
+[10:39:58] START 2b decile-matched null, 200 draws
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    null  1/39 adx_dmi_signals                       
+    null  2/39 aroon_signals                         
+    null  3/39 bears_bulls_impulse_signals           
+    null  4/39 center_of_gravity_signals             
+    null  5/39 chandelier_exit_signals               
+    null  6/39 coppock_curve_signals                 
+    null  7/39 coral_signals                         
+    null  8/39 didi_index_signals                    
+    null  9/39 donchian_breakout_signals             
+    null 10/39 dpo_signals                           
+    null 11/39 dspo_signals                          
+    null 12/39 ehlers_reverse_ema_signals            
+    null 13/39 fisher_transform_signals              
+    null 14/39 fx_sniper_ergodic_cci_signals         
+    null 15/39 glitch_index_signals                  
+    null 16/39 halftrend_signals                     
+    null 17/39 hieken_ashi_smoothed_signals          
+    null 18/39 ichimoku_signals                      
+    null 19/39 j_tpo_signals                         
+    null 20/39 kalman_filter_signals                 
+    null 21/39 kase_peak_oscillator_signals          
+    null 22/39 kuskus_starlight_signals              
+    null 23/39 laguerre_filter_signals               
+    null 24/39 lemantrend_signals                    
+    null 25/39 linreg_slope_signals                  
+    null 26/39 mama_fama_signals                     
+    null 27/39 parabolic_sar_signals                 
+    null 28/39 polychromatic_momentum_signals        
+    null 29/39 price_momentum_oscillator_signals     
+    null 30/39 qqe_mod_signals                       
+    null 31/39 relative_vigor_index_signals          
+    null 32/39 rex_oscillator_signals                
+    null 33/39 schaff_trend_cycle_signals            
+    null 34/39 ssl_channel_signals                   
+    null 35/39 supertrend_signals                    
+    null 36/39 trend_direction_force_index_signals   
+    null 37/39 volatility_quality_signals            
+    null 38/39 vortex_signals                        
+    null 39/39 waddah_attar_explosion_signals        
+  nnfxquiet done
+[10:44:03] OK 2b null
+[10:44:03] DONE quiet2a

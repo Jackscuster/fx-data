@@ -101,6 +101,56 @@ def lowvol_mask(pair, q=LOWVOL_Q, atr_len=ATR_LEN, causal=True):
     return _MC[key]
 
 
+def quiet_mask(pair, Q, atr_len=ATR_LEN):
+    """True on bars this pair may NOT take a new entry on, under the
+    QUIET-ENTRY rule: its own lagged ATR/price is ABOVE the Q-th percentile of
+    its own history.
+
+    THIS IS THE OPPOSITE END OF THE SAME AXIS AS THE FLOOR, and the two can
+    both be on. The per-pair floor blocks the bottom `lowvol_q`; the
+    quiet-entry rule blocks everything above `Q`. Together they keep the band
+    (lowvol_q, Q]. Q = 1.0 is the rule OFF -- nothing is above the 100th
+    percentile -- which is what makes the fixed-Q curve run to 100% and end at
+    the unfiltered candidate, with no separate code path for "off".
+
+    CAUSAL BY CONSTRUCTION, the same way the floor is: an EXPANDING percentile
+    over bars <= t-1 of a one-bar-lagged ATR. It is the same quantity
+    attach_atr_pctile buckets, so decile 1 to 10 and a Q cut read the same
+    axis -- which is the whole point, because the rule under test was found by
+    looking at those deciles.
+    """
+    Q = float(Q)
+    key = ('quiet', pair, Q, int(atr_len))
+    if key in _MC:
+        return _MC[key]
+    ix, rel = _rel(pair, atr_len)
+    if Q >= 1.0:
+        _MC[key] = (ix, np.zeros(len(rel), bool))
+        return _MC[key]
+    rl = np.full(len(rel), np.nan)
+    rl[1:] = rel[:-1]
+    cap = (pd.Series(rl).expanding(min_periods=MIN_HIST)
+           .quantile(Q).to_numpy())
+    # A BAR WHOSE PERCENTILE IS NOT YET DEFINED IS BLOCKED, NOT ALLOWED.
+    # Inside the first MIN_HIST bars there is no history to judge against, and
+    # letting those bars through would make the rule look free: the sample it
+    # cannot police is exactly the sample it would otherwise trade blind.
+    m = ~(np.isfinite(rl) & np.isfinite(cap) & (rl <= cap))
+    _MC[key] = (ix, m)
+    return _MC[key]
+
+
+def quiet_blocked_share(Q, pairs=None, atr_len=ATR_LEN):
+    """How much of the sample the quiet-entry rule removes, per pair."""
+    rows = []
+    for p in (pairs or S.all_pairs()):
+        ix, m = quiet_mask(p, Q, atr_len)
+        rows.append(dict(pair=p, Q=float(Q), bars=len(m),
+                         bars_blocked=int(m.sum()),
+                         pct_blocked=100.0 * float(m.mean())))
+    return pd.DataFrame(rows)
+
+
 def lowvol_xsect(date, q=LOWVOL_Q, atr_len=ATR_LEN):
     """INFORMATION ONLY. The q-quantile of lagged ATR/price ACROSS the 28 pairs
     on one date, and each pair's value against it. Causal by construction: it

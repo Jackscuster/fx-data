@@ -1,0 +1,8 @@
+[10:36:56] START quiet2a
+[10:36:56] START blocked share
+[10:36:59] OK blocked share
+[10:36:59] START 2a deciles, 39 C1 alone + A + B
+[10:39:58] OK 2a deciles
+[10:39:58] START 2b decile-matched null, 200 draws
+[10:44:03] OK 2b null
+[10:44:03] DONE quiet2a

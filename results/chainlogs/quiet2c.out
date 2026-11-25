@@ -1,0 +1,8 @@
+[10:40:47] START quiet2c
+[10:40:47] START 2c fixed-Q curve, 10% to 100%
+[10:43:44] OK fixedq
+[10:43:44] START 2c walk-forward Q + paired test
+[10:47:12] OK walkq+paired
+[10:47:12] START 2d floor cross
+[10:50:03] OK floorcross
+[10:50:03] DONE quiet2c
