@@ -1,0 +1,8 @@
+[11:00:31] START groups3
+[11:00:31] START 3b groupings + stability
+[11:00:37] OK groups
+[11:00:37] START 3c assignment, 1000-draw label shuffle
+[11:00:42] OK assign
+[11:00:42] START 3d daily P&L correlations
+[11:03:23] OK corr
+[11:03:23] DONE groups3

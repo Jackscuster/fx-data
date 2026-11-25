@@ -1,0 +1,58 @@
+[10:55:22] START bank3a
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+     1/39 c1_alone adx_dmi_signals                          36 cells
+     2/39 c1_alone aroon_signals                           335 cells
+     3/39 c1_alone bears_bulls_impulse_signals             336 cells
+[10:56:51] START bank3a
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+     1/39 c1_alone adx_dmi_signals                          87 cells
+     2/39 c1_alone aroon_signals                           891 cells
+     3/39 c1_alone bears_bulls_impulse_signals             896 cells
+     4/39 c1_alone center_of_gravity_signals               896 cells
+     5/39 c1_alone chandelier_exit_signals                 896 cells
+     6/39 c1_alone coppock_curve_signals                   896 cells
+     7/39 c1_alone coral_signals                           896 cells
+     8/39 c1_alone didi_index_signals                      896 cells
+     9/39 c1_alone donchian_breakout_signals               847 cells
+    10/39 c1_alone dpo_signals                             808 cells
+    11/39 c1_alone dspo_signals                            852 cells
+    12/39 c1_alone ehlers_reverse_ema_signals              896 cells
+    13/39 c1_alone fisher_transform_signals                896 cells
+    14/39 c1_alone fx_sniper_ergodic_cci_signals           896 cells
+    15/39 c1_alone glitch_index_signals                    894 cells
+    16/39 c1_alone halftrend_signals                       284 cells
+    17/39 c1_alone hieken_ashi_smoothed_signals            896 cells
+    18/39 c1_alone ichimoku_signals                        879 cells
+    19/39 c1_alone j_tpo_signals                           868 cells
+    20/39 c1_alone kalman_filter_signals                   896 cells
+    21/39 c1_alone kase_peak_oscillator_signals            896 cells
+    22/39 c1_alone kuskus_starlight_signals                895 cells
+    23/39 c1_alone laguerre_filter_signals                 852 cells
+    24/39 c1_alone lemantrend_signals                      884 cells
+    25/39 c1_alone linreg_slope_signals                    895 cells
+    26/39 c1_alone mama_fama_signals                       875 cells
+    27/39 c1_alone parabolic_sar_signals                   896 cells
+    28/39 c1_alone polychromatic_momentum_signals          891 cells
+    29/39 c1_alone price_momentum_oscillator_signals       845 cells
+    30/39 c1_alone qqe_mod_signals                         896 cells
+    31/39 c1_alone relative_vigor_index_signals            896 cells
+    32/39 c1_alone rex_oscillator_signals                  896 cells
+    33/39 c1_alone schaff_trend_cycle_signals              891 cells
+    34/39 c1_alone ssl_channel_signals                     896 cells
+    35/39 c1_alone supertrend_signals                      895 cells
+    36/39 c1_alone trend_direction_force_index_signals     870 cells
+    37/39 c1_alone volatility_quality_signals              851 cells
+    38/39 c1_alone vortex_signals                          896 cells
+    39/39 c1_alone waddah_attar_explosion_signals          887 cells
+    base_alone sma_baseline                            896 cells
+    base_alone hma_baseline                            896 cells
+    base_alone t3_baseline                             896 cells
+    base_filter sma_baseline                            872 cells
+    base_filter hma_baseline                            819 cells
+    base_filter t3_baseline                             861 cells
+    candidate A                                       279 cells
+    candidate B                                       331 cells
+  bank: 38919 cells (14996 unseen, 11876 tune, 12047 sealed), 47 candidates, 28 pairs
+  nnfxbank done
+[10:59:26] OK bank3a
+[10:59:26] DONE bank3a

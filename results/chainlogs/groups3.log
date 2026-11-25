@@ -1,0 +1,60 @@
+[11:00:31] START groups3
+[11:00:31] START 3b groupings + stability
+/Users/jackcuster/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
+/Users/jackcuster/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  adj = tr - a.replace(ACTW).astype(float) * BUMP
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  character     MIXED=9, RANGE_PRONE=9, TREND_PRONE=10
+  bloc          COMMODITY-COMMODITY=3, COMMODITY-EUROPE=9, COMMODITY-RESERVE=6, EUROPE-EUROPE=3, EUROPE-RESERVE=6, RESERVE-RESERVE=1
+  cost_per_atr  CHEAP=9, EXPENSIVE=10, MID=9
+/Users/jackcuster/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
+/Users/jackcuster/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  adj = tr - a.replace(ACTW).astype(float) * BUMP
+/Users/jackcuster/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
+/Users/jackcuster/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  adj = tr - a.replace(ACTW).astype(float) * BUMP
+/Users/jackcuster/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
+/Users/jackcuster/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  adj = tr - a.replace(ACTW).astype(float) * BUMP
+/Users/jackcuster/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
+/Users/jackcuster/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  adj = tr - a.replace(ACTW).astype(float) * BUMP
+/Users/jackcuster/fx-data/code/twoscores.py:111: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  back = pd.Series(outside).shift(1).fillna(False).values & ~outside
+/Users/jackcuster/fx-data/code/paircharacter.py:84: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  adj = tr - a.replace(ACTW).astype(float) * BUMP
+    grouping            block  n_pairs  spearman_vs_pre2010  pct_same_label  value_min  value_max
+   character          pre2010       28                1.000         100.000     -0.235      0.266
+cost_per_atr          pre2010       28                1.000         100.000      0.013      0.057
+        bloc          pre2010       28                1.000         100.000        NaN        NaN
+   character unseen_2010_2015       28               -0.456          21.429     -0.319      0.177
+cost_per_atr unseen_2010_2015       28                0.919          64.286      0.013      0.042
+        bloc unseen_2010_2015       28                1.000         100.000        NaN        NaN
+   character sealed_2016_2020       28               -0.096          17.857     -0.405      0.144
+cost_per_atr sealed_2016_2020       28                0.824          64.286      0.018      0.052
+        bloc sealed_2016_2020       28                1.000         100.000        NaN        NaN
+  nnfxgroups done
+[11:00:37] OK groups
+[11:00:37] START 3c assignment, 1000-draw label shuffle
+    character       3 groups  unseen R   -94.044  ceiling  +291.460  null p 0.987  null mean -30.741
+    bloc            6 groups  unseen R   -73.191  ceiling  +383.342  null p 0.860  null mean -40.981
+    cost_per_atr    3 groups  unseen R   -57.996  ceiling  +303.460  null p 0.810  null mean -33.097
+    single_pairs   28 groups  unseen R   -72.029  ceiling  +520.643  null p —  null mean —
+    all_28          1 groups  unseen R   -50.960  ceiling  +171.244  null p —  null mean —
+  nnfxgroups done
+[11:00:42] OK assign
+[11:00:42] START 3d daily P&L correlations
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    daily 10/39
+    daily 20/39
+    daily 30/39
+  group daily corr: median 0.217, max 0.703
+  strategy daily corr: median 0.347, max 0.883
+  nnfxgroups done
+[11:03:23] OK corr
+[11:03:23] DONE groups3

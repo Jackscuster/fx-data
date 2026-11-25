@@ -406,6 +406,37 @@ def stage_app():
         floor_cross=nd('quiet_floor_cross.csv', head=60),
         blocked=nd('quiet_blocked_share.csv', head=320),
     )
+    sec['nnfx']['bank'] = dict(
+        note=('ITEM 3, Jack 25 Nov -- THE PER-PAIR BANK AND THE PAIR GROUPS. '
+              'The unit of account changed: the 12%/yr target is for the '
+              'BOOK, so every candidate is banked PER PAIR, PER DIRECTION, '
+              'PER YEAR as the primary output. The leverage cap is applied '
+              'over the whole 28-pair frame and THEN split, so a group\'s R '
+              'is its share of a book that was achievable AS A WHOLE. Years '
+              'are labelled tune (2005-2009, may choose, never reported), '
+              'unseen (2010-2015, the only reportable block) and sealed '
+              '(2016-2020, computed and NOT reported). '
+              'THE HEADLINE IS NEGATIVE: the edge is NOT pair-specific in any '
+              'way a tuning-year pick can find. Pooled over all 28 pairs the '
+              'selection rule makes -50.960 R over the six unseen years; '
+              'every grouping is WORSE; and the Layer 1 character grouping '
+              'is worse than its own shuffled labels (null p 0.987, z '
+              '-2.274). AND YET the hindsight ceiling for a per-pair '
+              'assignment is +520.643 R over the same years -- the '
+              'dispersion is real and no tested rule reaches it. '
+              'ALSO: pair character does not persist. Trendiness measured '
+              'before 2010 correlates -0.456 with 2010-2015 and only 21.4% '
+              'of pairs keep their tercile label. Cost per ATR does persist '
+              '(+0.919, 64.3%). '
+              'NOTHING IN THE BANK IS A SELECTION: 28 pairs x 2 directions '
+              'is 56 ways to find a winner by luck inside each candidate.'),
+        bank_cand=nd('per_pair_bank_cand.csv', head=60),
+        bank_pair=nd('per_pair_bank_pair.csv', head=700),
+        groups=nd('pair_groups.csv', head=40),
+        stability=nd('pair_groups_stability.csv', head=40),
+        assign=nd('group_assign.csv', head=20),
+        assign_steps=nd('group_assign_steps.csv', head=400),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '

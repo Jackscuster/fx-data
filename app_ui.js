@@ -6126,6 +6126,47 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'combination holds the most risk.</div>';
   h+=tbl(QE.blocked,['pair','Q','bars','bars_blocked','pct_blocked'],'How much of each pair the rule removes, per Q');
  }
+ /* ITEM 3, Jack 25 Nov: the per-pair bank and the pair groups. The unit of
+    account changed because the target is the BOOK, not one strategy. */
+ const PB=R.bank||{};
+ if(PB.note){
+  h+='<h3>Per-pair bank and pair groups \u2014 is the edge pair-specific?</h3>';
+  h+='<div class="note">'+PB.note+'</div>';
+  h+=tbl(PB.bank_cand,['kind','name','variant','pairs','n_trades','R_total','R_per_year','cells_positive','cells','pct_cells_positive'],'Item 3a \u2014 47 candidates on the unseen block, ranked');
+  h+='<div class="note"><b>Only 4 of the 47 candidates are positive on the unseen years</b> \u2014 A +41.49 R, B +29.59 R, '
+    +'waddah_attar_explosion +19.63 R and laguerre_filter +12.42 R, with glitch_index and adx_dmi barely above zero. The '
+    +'other 41 lose.</div>';
+  h+=tbl(PB.bank_pair,['kind','name','pair','direction','years','n_trades','R_total','R_per_trade','R_per_year','years_positive','best_trade_R','best_trade_share'],'Item 3a \u2014 the bank itself: every candidate x pair x direction on the unseen block');
+  h+='<div class="note"><b>How broadly based a candidate is, is the question the book plan turns on.</b> A candidate whose '
+    +'R comes from two cells cannot be ASSIGNED to a set of pairs; it IS those two cells. <b>A is the only broadly based '
+    +'one</b>: 33 of its 56 cells positive, best cell 18.0% of the total, best five 79.4%. B\u2019s best five are 158% of '
+    +'its total, and glitch_index has a single cell worth nearly thirteen times its own total \u2014 meaning the rest of '
+    +'its book is a large negative that one cell is paying for. Read <code>best_trade_share</code> next to every total: '
+    +'with 56 cells per candidate the thing most likely to make a cell look good is one trade.</div>';
+  h+=tbl(PB.groups,['pair','character','trendiness_pre2010','bloc','cost_per_atr','cost_per_atr_value'],'Item 3b \u2014 the three declared groupings, none using strategy performance');
+  h+=tbl(PB.stability,['grouping','block','spearman_vs_pre2010','pct_same_label','value_min','value_max'],'Item 3b \u2014 how stable is each grouping over time?');
+  h+='<div class="note"><b>Pair character is not stable \u2014 it is ANTI-stable.</b> Trendiness measured before 2010 '
+    +'correlates <b>\u22120.456</b> with trendiness over 2010\u20132015 and only <b>21.4%</b> of pairs keep their tercile '
+    +'label; against 2016\u20132020 it is \u22120.096 and 17.9%. A pair that was trend-prone before 2010 was, if anything, '
+    +'range-prone afterwards. <code>cost_per_atr</code> by contrast holds up (+0.919, 64.3% of labels kept) and '
+    +'<code>bloc</code> is constant by construction. <b>results/pair_character.csv was deliberately NOT used</b> \u2014 '
+    +'its <code>is</code> block is 1999\u20132015 and contains every unseen year the grouping is used to trade; the '
+    +'trendiness here is recomputed with the classifier FIT stopping before 2010, because the fit window is the leak and '
+    +'not just the measurement window.</div>';
+  h+=tbl(PB.assign,['scheme','n_groups','unseen_R_total','unseen_R_per_year','hindsight_ceiling_R','share_of_ceiling','null_draws','null_mean','null_sd','null_max','null_p','null_z'],'Item 3c \u2014 pick per group on the tuning years, trade on the unseen year; 1,000-draw label shuffle');
+  h+='<div class="note"><b>The edge is not pair-specific in any way a tuning-year pick can find.</b> Pooled over all 28 '
+    +'pairs \u2014 the simplest possible version, one pick per step \u2014 the rule makes <b>\u221250.960 R</b> over the '
+    +'six unseen years. Every grouping is worse, and <code>character</code> is worst of all at \u221294.044 with '
+    +'<b>null p 0.987, z \u22122.274</b>: 987 of 1,000 random regroupings beat the real one. A null p near 1 is not \u201cno '
+    +'evidence\u201d, it is evidence AGAINST. <b>And yet the opportunity is real</b>: picking per pair with hindsight makes '
+    +'<b>+520.643 R</b> over the same years, +86.8 a year. The dispersion is enormous and no tested selection rule reaches '
+    +'any of it. <b>What that means for the book plan:</b> the assignment step, done the obvious way, destroys value. It '
+    +'does not say the plan is wrong \u2014 it says an assignment cannot be made by ranking candidates on recent '
+    +'performance, which is the only mechanism tested.</div>';
+  h+=tbl(PB.assign_steps,['scheme','step','trade_year','group','n_pairs','picked','tuning_R','unseen_R','unseen_trades','eligible'],'Item 3c \u2014 what each group actually picked, step by step');
+  h+='<div class="note"><b>27 distinct candidates were picked at least once out of 47, across 78 picks.</b> The rule is '
+    +'not settling on anything, which is the diagnosis rather than a detail.</div>';
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){
