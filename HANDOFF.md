@@ -2751,6 +2751,57 @@ EURCHF. See `results/nnfx/pegguard_curve.csv`.
 per-pair floor (in the repo since 7 Sep, report-only, traded from 25 Nov) with
 a market-wide floor (still not implemented, and the version that matters here).
 
+# 2aa. TWO APPARATUS FAULTS THE 25 NOV RERUN FOUND IN ITSELF
+
+Both were found by a check failing. Recorded because both are instances of
+fault classes this project has now hit more than once.
+
+**1. A neutralisation path that did not carry a standing rule.** Stage 3's
+zero-edge check asks whether naming a C2 and then overwriting its arrays
+all-True gives the same trades as not naming one. On the first run with the
+standing rules on it FAILED, and the direction is what gave it away: the
+*neutralised* side had **more** legs — 4,568 against 4,030 on A/jack. More
+legs means fewer blocked entries, so the neutralised side was missing a block
+the other side had. `_neutralised_with_name` set `v_ok_l`/`v_ok_s` all-True,
+and the volatility floor and the peg guard RIDE the volume slot. So the check
+was comparing floor-off against floor-on. The C2 slot is the only thing that
+path may neutralise; a standing rule must be carried by both sides of any
+paired comparison.
+
+**2. A per-leg quantity restated with a per-entry one.** Condition 4 (the
+zero-edge check on the apparatus: random entries must lose their costs and
+nothing else) then failed for every two-leg label by a near-identical
+**+0.016**, while both one-leg `flip_only` labels passed. 0.016 is half of the
+0.032 charged, and that ratio is the whole diagnosis. `_null_match` iterates
+the trade frame, which holds two rows per entry on a `plan=2` variant, so
+`null_R` and `null_n` are per **LEG**. It was being restated gross by adding
+back the summary's `cost_per_trade`, which is `cost_entered.sum() /
+n_entered` — per **ENTRY**. With one leg the two denominators coincide, which
+is exactly why `flip_only` looked clean and localised nothing.
+
+**The first attempted fix was also wrong, and worth recording.** Deriving
+legs-per-entry as `null_n / n_entered` came out at **0.41** on a long-held
+`flip_only` setting — below 1, which no leg count can be. The reason is a
+second mismatch hiding under the first: the summary counts trades by **ENTRY**
+year while `_null_match` filters by **EXIT** year, so on a candidate whose
+holds run past 2015 the two files are not describing the same population at
+all. `_null_match` now returns the cost it actually charged and the
+restatement is exact — same legs, same window, same unit, no reconstruction.
+
+**This was arithmetic, not a bias in the apparatus.** It was not safe to
+assume that, so stage 1 was re-run across all six labels rather than waved
+through, and a nulls file without the `null_cost` column is now reported as
+**NOT JUDGED** rather than as a pass.
+
+**The fault class, stated once.** This project has now been bitten three times
+by the same thing: a LEG treated as a TRADE (`n_entered` and the per-trade
+columns, 24 Nov, guard 32/33), a leg's mark built from the FULL position size
+(`daily_series`, 24 Nov, guard 36), and now a per-leg null restated with a
+per-entry cost (25 Nov). Any time a per-trade figure is divided or multiplied,
+the unit of the denominator has to be checked against the unit of the
+numerator, and `plan=2` makes those differ by exactly 2 — a factor small
+enough to look like a plausible result.
+
 # 3. EVERY RULE DECIDED
 
 | date | rule |

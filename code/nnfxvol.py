@@ -323,6 +323,9 @@ def leverage_census(T, equity=EQUITY, cap_lev=CAP_LEV):
 # is flagged only when it is quiet RELATIVE TO ITS PEERS THAT DAY.
 PEG_X_CURVE = (0.10, 0.20, 0.30, 0.33, 0.40, 0.50, 0.60, 0.70)
 PEG_X_PLACEHOLDER = 0.33      # Jack picks X from the curve; this is labelled
+# THE TWO SNB DAYS, so any table can be restated without them. 15 Jan 2015 is
+# the floor abandonment; 16 Jan is the exit bar of the trade it made.
+SNB_DAYS = ('2015-01-15', '2015-01-16')
 _PEGC = {}
 
 
@@ -505,13 +508,32 @@ def atr_buckets(T, nb=10, atr_len=ATR_LEN):
         return pd.DataFrame()
     E['bucket'] = np.minimum(nb - 1,
                              (E.atr_pctile.to_numpy(float) * nb).astype(int)) + 1
+    # AND THE SAME BUCKETS WITH 15-16 JANUARY 2015 TAKEN OUT. Without this
+    # column the table says "the profit is concentrated in low-volatility
+    # entries" when what it may be saying is "ONE low-volatility trade is the
+    # profit". For candidate A those are not the same claim: bucket 1 totals
+    # about 79.5 R and the single EURCHF short through the SNB peg break is
+    # +74.996 of it.
+    _xd = pd.DatetimeIndex(E.exit_date) if 'exit_date' in E.columns else None
+    E['_snb'] = (_xd.normalize().isin(pd.DatetimeIndex(SNB_DAYS))
+                 if _xd is not None else False)
     out = (E.groupby('bucket', as_index=False)
            .agg(n_trades=('R', 'size'), R_total=('R', 'sum'),
                 R_per_trade=('R', 'mean'),
                 atr_pctile_lo=('atr_pctile', 'min'),
                 atr_pctile_hi=('atr_pctile', 'max')))
+    X = E[~E._snb]
+    ox = (X.groupby('bucket', as_index=False)
+          .agg(n_trades_ex_SNB=('R', 'size'), R_total_ex_SNB=('R', 'sum'),
+               R_per_trade_ex_SNB=('R', 'mean')))
+    out = out.merge(ox, on='bucket', how='left')
     tot = float(out.R_total.sum())
     out['share_of_total_R'] = (out.R_total / tot if abs(tot) > 1e-9 else np.nan)
+    totx = float(out.R_total_ex_SNB.sum())
+    out['share_of_total_R_ex_SNB'] = (out.R_total_ex_SNB / totx
+                                      if abs(totx) > 1e-9 else np.nan)
+    out['n_SNB_trades'] = (out.n_trades
+                           - out.n_trades_ex_SNB.fillna(0)).astype(int)
     return out
 
 

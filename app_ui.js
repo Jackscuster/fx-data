@@ -5977,6 +5977,50 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
   h+=tbl(T3.stage4,['base','variant','vol_rule','picked_opts','dR_total','dR_per_year','years_diff_positive','years','t_block_boot_diff','trades_without','trades_with','trades_removed','pct_trades_removed','days'],'Stage 4 preview \u2014 the volume slot, paired');
   h+=tbl(T3.stage4_picks,['base','variant','vol_rule','trade_year','picked_lookback'],'Stage 4 preview \u2014 the walk-forward lookback pick');
  }
+ /* THE THREE STANDING RULES, Jack 25 Nov. Leverage cap, peg guard, per-pair
+    floor. The peg guard curve is the one he has to pick X off, and the thing
+    the curve turns out to measure is the SNB trade. */
+ const RU=R.rules||{};
+ if(RU.note){
+  h+='<h3>The three standing rules \u2014 leverage cap, peg guard, per-pair floor</h3>';
+  h+='<div class="note">'+RU.note+'</div>';
+  h+='<div class="note"><b>Why a RATIO and not a cross-pair percentile.</b> A percentile over the 28 pairs would '
+    +'permanently ban whichever pair happens to be quietest, every single day, no matter how normal the panel is. '
+    +'The ratio bans a pair only while it is quiet RELATIVE TO ITS PEERS THAT DAY, so when the whole panel goes quiet '
+    +'together nothing is flagged. In this panel, at X between 0.10 and 0.33, \u201cquiet relative to its peers\u201d '
+    +'has only ever meant <b>one pair: EURCHF</b> \u2014 in 24 years, nothing else, ever.</div>';
+  h+=tbl(RU.pegguard_curve,['X','pct_bars_flagged','pairs_ever_flagged','worst_pair','eurchf_pct_all','eurchf_peg_days_blocked','eurchf_peg_days','eurchf_pct_of_peg','blocks_2jan2015'],'Item 2 \u2014 the peg guard swept from X = 0.10 to 0.70');
+  h+='<div class="note"><b>And here is what it costs.</b> All six base/plan cells are positive with the guard off. '
+    +'Turning it on removes one to three trades and takes 25 to 49 R with them, and four of the six go negative. '
+    +'At any X of 0.20 or above the guard blocks the EURCHF entry of 2 January 2015 \u2014 the single trade worth '
+    +'<b>+74.996 R</b>. Candidate A on the jack plan with the guard on at X = 0.33 makes <b>40.03 R</b> over six years; '
+    +'the same candidate measured ex-SNB by a completely separate route makes <b>40.21 R</b>. The guard\u2019s whole '
+    +'effect, to within 0.2 R, is removing that one trade.</div>';
+  h+=tbl(RU.pegguard_effect,['base','variant','peg_X','floor_q','R_total','R_per_year','trades','R_per_trade','worst_dip_R'],'Item 2 \u2014 the effect of X on A, B and C');
+  h+=tbl(RU.floor_curve_abc,['base','variant','floor_q','peg_X','R_total','R_per_year','trades_removed','pct_trades_removed','mean_R_removed','mean_R_kept'],'Item 3 \u2014 the per-pair floor curve on A, B and C (exact removed-vs-kept match)');
+  h+=tbl(RU.floor_curve_stage1,['variant','floor_q','n_candidate_settings','trades','R_total','R_per_year','trades_removed','pct_trades_removed','mean_R_kept','mean_R_removed_by_difference'],'Item 3 \u2014 the same curve over the stage 1 C1 ranking (117 candidate-settings per plan)');
+  h+='<div class="note"><b>One honest limit on that last column.</b> For A, B and C the removed-versus-kept split is '
+    +'exact \u2014 entries are matched one by one against the floor-off run. Over the 117-candidate ranking no per-trade '
+    +'frames were kept, so it is attributed BY DIFFERENCE: the drop in total R over the drop in trade count. That is not '
+    +'the same quantity, because the leverage cap is portfolio-wide \u2014 removing one entry leaves room for a later one '
+    +'to be placed at larger size. Quote the A/B/C figures.</div>';
+  h+=tbl(RU.floor_leaders_stage1,['variant','floor_q','rank','indicator','setting','R_total','R_per_year','n_entered','t_yearly','R_total_at_floor_off'],'Item 3 \u2014 does the floor change WHICH C1 leads, or only by how much?');
+  h+='<div class="note"><b>Is the profit concentrated in low-volatility entries? Arithmetically yes \u2014 but it is ONE '
+    +'TRADE, not a regime.</b> The bottom three ATR deciles carry about 84% of all R. Then take 15\u201316 January 2015 '
+    +'out of the same table: bucket 1 totals roughly 79.5 R, of which <b>+74.996 R is the single EURCHF short through the '
+    +'SNB peg break</b>, and the remaining 165 trades in the bottom decile are worth a few R between them \u2014 below the '
+    +'sample mean. So the fall from 89.8 R to 8.2 R between the 5% and 10% floor is not a low-volatility edge being '
+    +'switched off; it is one trade being switched off. Read the ex_SNB columns.</div>';
+  h+=tbl(RU.atr_buckets,['base','variant','bucket','atr_pctile_lo','atr_pctile_hi','n_trades','R_total','R_per_trade','share_of_total_R','n_SNB_trades','n_trades_ex_SNB','R_total_ex_SNB','R_per_trade_ex_SNB','share_of_total_R_ex_SNB'],'Item 3 \u2014 R per trade by ATR percentile at entry, ten buckets, with and without the SNB days');
+  h+='<div class="note"><b>Condition 4, the zero-edge check, and a fault it exposed in itself.</b> Random entries taking '
+    +'the same exits must lose their costs and nothing else. On the 25 Nov rerun every TWO-LEG label failed by a '
+    +'near-identical +0.016 while both ONE-LEG flip_only labels passed \u2014 and 0.016 is half of the 0.032 charged. '
+    +'The null\u2019s net is per LEG; it was being restated gross by adding back a per-ENTRY cost. With one leg the two '
+    +'denominators coincide, which is why flip_only looked clean. The null now returns the cost it actually charged, so '
+    +'the restatement is exact. This was arithmetic, not a bias in the apparatus \u2014 but stage 1 was re-run rather '
+    +'than waved through.</div>';
+  h+=tbl(RU.zero_edge,['label','indicator','setting','null_draws','unit','judged','charged_cost_per_leg','null_net_R_per_trade','null_gross_R_per_trade','tol_3se','passes','aggregate_gross','aggregate_3se'],'Condition 4 \u2014 the zero-edge check per candidate-setting');
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){

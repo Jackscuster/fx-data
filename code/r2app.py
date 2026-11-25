@@ -308,6 +308,37 @@ def stage_app():
         dips_before=nd('dipcheck_dips_stitched.csv', head=10),
         dips_after=nd('dipcheck_dips_corrected.csv', head=10),
     )
+    # ---- THE THREE STANDING RULES JACK SET ON 25 NOV.
+    # STANDING RULE: every result gets an app tab. These are the curves he has
+    # to pick X off, so they are not optional.
+    sec['nnfx']['rules'] = dict(
+        note=('Jack 25 Nov, three standing rules, all on in every Layer 2 '
+              'number: (1) LEVERAGE CAP -- all open positions summed, 1:30, '
+              'new entries SCALED DOWN to fit, never skipped, plus the '
+              'GAUNTLET size cap. (2) PEG GUARD -- no new entry while a '
+              'pair\'s ATR/price is below X times the 28-pair median that '
+              'day, one bar lagged. X = 0.33 is a PLACEHOLDER; Jack picks '
+              'from pegguard_curve. (3) PER-PAIR FLOOR -- 5% causal, his '
+              'decided rule 1 of 7 Sep. '
+              'THE FINDING: from X = 0.10 to 0.33 the ONLY pair ever flagged '
+              'in 24 years of 28-pair data is EURCHF. Turning the guard on '
+              'removes 1 to 3 trades and takes 25 to 49 R with them in every '
+              'one of the six base/plan cells, because at any X of 0.20 or '
+              'above it blocks the EURCHF entry of 2 Jan 2015 -- the single '
+              'trade worth +74.996 R. Candidate A/jack with the guard on '
+              'makes 40.03 R; measured ex-SNB by a separate route it makes '
+              '40.21 R. The guard\'s whole effect is removing that trade. '
+              'Bucket 1 of the ATR table totals ~79.5 R of which +74.996 is '
+              'that one trade, so the "profit concentrated in low-volatility '
+              'entries" is one trade, not a regime.'),
+        pegguard_curve=nd('pegguard_curve.csv', head=20),
+        pegguard_effect=nd('pegguard_effect_abc.csv', head=60),
+        floor_curve_abc=nd('floor_curve_abc.csv', head=80),
+        floor_curve_stage1=nd('floor_curve_stage1.csv', head=40),
+        floor_leaders_stage1=nd('floor_leaders_stage1.csv', head=200),
+        atr_buckets=nd('atr_buckets_abc.csv', head=80),
+        zero_edge=nd('condition4_zero_edge.csv', head=600),
+    )
     sec['nnfx']['audit2'] = dict(
         note=('Engine audit 2, measurement only. The daily bar is '
               '(16:00 NY D-1, 16:00 NY D], NOT 17:00. Overnight financing is '
@@ -320,7 +351,7 @@ def stage_app():
         cost_by_year=nd('audit2_cost_by_year.csv', head=40),
         tickvolume=nd('audit2_tickvolume.csv', head=200),
     )
-    for _k in ('s2', 'audit2'):
+    for _k in ('s2', 'audit2', 'rules'):
         sec['nnfx'][_k] = {k: v for k, v in sec['nnfx'][_k].items()
                            if not (isinstance(v, list) and not v)}
     sec['nnfx'] = {k: v for k, v in sec['nnfx'].items()

@@ -1246,6 +1246,429 @@ def md_stage3(out=None):
         a('_not run yet — stage 4 is a preview in this file and its own stage '
           'when Jack calls it._\n')
 
+    # ================= JACK'S 25 NOV ITEMS 1, 2, 3 AND 5 =================
+    _f = lambda n: S2._safe_csv(os.path.join(OUT, n))
+    PEGC = _f('pegguard_curve.csv')
+    PEGE = _f('pegguard_effect_abc.csv')
+    FLC = _f('floor_curve_abc.csv')
+    FL1 = _f('floor_curve_stage1.csv')
+    FLL = _f('floor_leaders_stage1.csv')
+    BUK = _f('atr_buckets_abc.csv')
+    SNB = _f('dipcheck_snb_dependence.csv')
+    S2R = _f('stage2_picks_report.csv')
+
+    a('\n## THE STANDING RULES THIS FILE IS COMPUTED UNDER\n')
+    a('Jack set three on 25 November. Every number above and below carries '
+      'all three unless the row says otherwise.\n')
+    a('\n| rule | setting | status |')
+    a('|---|---|---|')
+    a('| Leverage cap | all open positions summed, **1:30**, new entries '
+      'scaled down to fit (never skipped), plus the GAUNTLET size cap | '
+      'standing |')
+    a('| Per-pair volatility floor | no entry while the pair\'s own ATR is in '
+      'its bottom **5%**, causal | Jack\'s decided rule 1, 7 Sep |')
+    a('| Cross-pair peg guard | no new entry while ATR/price is below **X = '
+      '0.33** x the 28-pair median that day, one-bar lag | **PLACEHOLDER.** '
+      'Jack picks X off the curve below |')
+
+    # ---- ITEM 2: THE PEG GUARD CURVE
+    a('\n## Item 2 — the peg guard, swept from X = 0.10 to 0.70\n')
+    if len(PEGC):
+        a('| X | share of all bars flagged | pairs ever flagged | most-'
+          'flagged pair | EURCHF share of its own bars | EURCHF peg days '
+          'blocked | blocks 2 Jan 2015 |')
+        a('|---:|---:|---:|---|---:|---|---|')
+        for _, r in PEGC.sort_values('X').iterrows():
+            _b = '**' if abs(r.X - VOL.PEG_X_PLACEHOLDER) < 1e-9 else ''
+            a('| %s%.2f%s | %.3f%% | **%d** | %s | %.1f%% | %d of %d (%.1f%%) '
+              '| %s |'
+              % (_b, r.X, _b, r.pct_bars_flagged,
+                 int(r.pairs_ever_flagged), r.worst_pair,
+                 r.eurchf_pct_all, int(r.eurchf_peg_days_blocked),
+                 int(r.eurchf_peg_days), r.eurchf_pct_of_peg,
+                 '**yes**' if int(r.blocks_2jan2015) else 'no'))
+        _lo = PEGC[PEGC.pairs_ever_flagged == 1]
+        a('\n**Jack\'s instinct not to use a cross-pair percentile was right, '
+          'and the ratio is a clean instrument.** From X = %.2f to X = %.2f '
+          'the only pair ever flagged in 24 years of 28-pair data is '
+          '**EURCHF** — nothing else, ever. A cross-pair percentile would '
+          'have permanently banned whichever pair happens to be quietest; the '
+          'ratio bans a pair only while it is quiet *relative to the panel*, '
+          'and in this panel that has only ever meant a pegged currency.\n'
+          % (_lo.X.min(), _lo.X.max()) if len(_lo) else '')
+    else:
+        a('`pegguard_curve.csv` is missing — the sweep has not run.\n')
+
+    # ---- THE FINDING THAT MATTERS MOST
+    a('\n### What the peg guard costs, and why that is the headline\n')
+    if len(PEGE):
+        a('| base | plan | X = 0 (guard off) | X = 0.20 | X = 0.33 | X = 0.50 '
+          '| trades removed by X = 0.20 | R removed |')
+        a('|---|---|---:|---:|---:|---:|---:|---:|')
+        for (lab, v), g in PEGE.groupby(['base', 'variant'], sort=False):
+            g = g.set_index('peg_X')
+            if 0.0 not in g.index:
+                continue
+            _r0, _n0 = float(g.loc[0.0].R_total), float(g.loc[0.0].trades)
+            def _q(x):
+                return ('%+.2f' % g.loc[x].R_total) if x in g.index else '--'
+            _d = (_n0 - float(g.loc[0.20].trades)) if 0.20 in g.index else float('nan')
+            _dr = (_r0 - float(g.loc[0.20].R_total)) if 0.20 in g.index else float('nan')
+            a('| **%s** | %s | %+.2f | %s | %s | %s | %.0f of %.0f | **%+.2f** |'
+              % (lab, v, _r0, _q(0.20), _q(0.33), _q(0.50), _d, _n0, -_dr))
+        _g20 = PEGE[PEGE.peg_X == 0.20].set_index(['base', 'variant'])
+        _g00 = PEGE[PEGE.peg_X == 0.00].set_index(['base', 'variant'])
+        if len(_g20) and len(_g00):
+            _dn = (_g00.trades - _g20.trades).dropna()
+            _dr = (_g00.R_total - _g20.R_total).dropna()
+            _neg = int((_g20.R_total < 0).sum())
+            a('\n**Turning the guard on removes %.0f to %.0f trades and takes '
+              '%.0f to %.0f R with them, in every one of the six cells.** All '
+              'six are positive with the guard off; **%d of the 6 go negative '
+              'with it on**. That is not a coincidence and it is not the '
+              'guard being badly calibrated. At any X of 0.20 or above the '
+              'guard blocks the EURCHF entry of 2 January 2015, and that '
+              'single trade is worth **+74.996 R**.\n'
+              % (_dn.min(), _dn.max(), _dr.min(), _dr.max(), _neg))
+    if len(SNB):
+        a('`dipcheck_snb_dependence.csv`, measured before the cap and the '
+          'floor, says the same thing from the other direction:\n')
+        a('\n| base | plan | total R | R on the two SNB days | share | R '
+          'without them | R/yr without them |')
+        a('|---|---|---:|---:|---:|---:|---:|')
+        for _, r in SNB.iterrows():
+            a('| **%s** | %s | %+.2f | %+.2f | **%.1f%%** | %+.2f | %+.2f |'
+              % (r.label, r.variant, r.R_total, r.R_on_the_two_SNB_days,
+                 r.share_of_total_pct, r.R_total_ex_SNB, r.R_per_year_ex_SNB))
+        a('\nAnd `dipcheck_snb_by_pair.csv` puts **99.24 of the 101.6 R '
+          'booked on that day in EURCHF alone**.\n')
+        a('\n> **SO THE PEG GUARD AND THE SNB TRADE ARE THE SAME QUESTION.** '
+          'The guard was asked for as a safety rule. What it actually does to '
+          'this build is delete the trade that carries most of the result. '
+          'Candidate A on the jack plan with the guard on at X = 0.33 makes '
+          '**40.03 R over six years**, and the same candidate measured ex-SNB '
+          'by a completely separate route makes **40.21 R** — the guard\'s '
+          'whole effect, to within 0.2 R, is removing that one trade. '
+          'Whichever X Jack picks at 0.20 or above, the honest reading of '
+          'this build is the ex-SNB column.\n')
+
+    # ---- ITEM 3: THE FLOOR CURVE
+    a('\n## Item 3 — the per-pair floor curve, cap on\n')
+    if len(FLC):
+        a('A, B and C, exact removed-versus-kept match (entries compared one '
+          'by one against the floor-off run):\n')
+        a('\n| base | plan | floor | total R | R/yr | trades removed | mean R '
+          'removed | mean R kept |')
+        a('|---|---|---:|---:|---:|---:|---:|---:|')
+        for _, r in FLC.sort_values(['base', 'variant', 'floor_q']).iterrows():
+            a('| %s | %s | %s | %+.2f | %+.2f | %d (%.1f%%) | %s | %s |'
+              % (r.base, r.variant,
+                 'off' if r.floor_q == 0 else '%.1f%%' % (100 * r.floor_q),
+                 r.R_total, r.R_per_year, int(r.trades_removed),
+                 r.pct_trades_removed,
+                 ('%+.3f' % r.mean_R_removed) if pd.notna(r.mean_R_removed) else '--',
+                 ('%+.3f' % r.mean_R_kept) if pd.notna(r.mean_R_kept) else '--'))
+    else:
+        a('`floor_curve_abc.csv` is missing.\n')
+    if len(FL1):
+        a('\nAnd over the **stage 1 C1 ranking** — 117 candidate-settings per '
+          'plan, swept at each level:\n')
+        a('\n| plan | floor | candidate-settings | trades | total R | R/yr | '
+          'trades removed | mean R kept | mean R removed (by difference) |')
+        a('|---|---:|---:|---:|---:|---:|---:|---:|---:|')
+        for _, r in FL1.sort_values(['variant', 'floor_q']).iterrows():
+            a('| %s | %s | %d | %.0f | %+.1f | %+.1f | %.0f (%.1f%%) | %+.4f | %s |'
+              % (r.variant,
+                 'off' if r.floor_q == 0 else '%.1f%%' % (100 * r.floor_q),
+                 int(r.n_candidate_settings), r.trades, r.R_total,
+                 r.R_per_year, r.trades_removed, r.pct_trades_removed,
+                 r.mean_R_kept,
+                 ('%+.4f' % r.mean_R_removed_by_difference)
+                 if pd.notna(r.mean_R_removed_by_difference) else '--'))
+        a('\n**One honest limit on the last column.** For A, B and C the '
+          'removed-versus-kept split above is exact: entries are matched one '
+          'by one and the R of the trades that disappeared is read directly. '
+          'Here there are 117 candidate-settings per plan and no per-trade '
+          'frames were kept, so the removed trades\' mean R is attributed **by '
+          'difference** — the drop in total R divided by the drop in trade '
+          'count. That is not the same quantity, because the leverage cap is '
+          'portfolio-wide: removing one entry leaves room for a later one to '
+          'be placed at larger size, so the difference carries a second '
+          'effect as well. The exact figures are the A/B/C ones.\n')
+        if len(FLL):
+            a('\nWhether the floor changes **which** C1 leads, or only by how '
+              'much:\n')
+            a('\n| plan | floor | leader | setting | its R | its R at floor off |')
+            a('|---|---:|---|---|---:|---:|')
+            for _, r in FLL[FLL['rank'] == 1].sort_values(
+                    ['variant', 'floor_q']).iterrows():
+                a('| %s | %s | %s | %s | %+.2f | %s |'
+                  % (r.variant,
+                     'off' if r.floor_q == 0 else '%.1f%%' % (100 * r.floor_q),
+                     S2._short(r.indicator, '_signals'), r.setting, r.R_total,
+                     ('%+.2f' % r.R_total_at_floor_off)
+                     if pd.notna(r.R_total_at_floor_off) else '--'))
+    else:
+        a('\n`floor_curve_stage1.csv` is missing — the stage 1 ranking sweep '
+          'has not finished.\n')
+
+    # ---- ITEM 3: THE CONCENTRATION ANSWER, PLAINLY
+    a('\n### Is the profit concentrated in low-volatility entries?\n')
+    a('**Arithmetically yes. But it is one trade, not a regime — and that is '
+      'the answer to Jack\'s question, not the headline share.**\n')
+    if len(BUK):
+        _A = BUK[(BUK.base == 'A') & (BUK.variant == 'jack')]
+        if len(_A):
+            a('R per trade by ATR percentile at entry, ten buckets, candidate '
+              'A on the jack plan, **floor and peg guard both off** so that '
+              'every bucket exists:\n')
+            a('\n| bucket | ATR percentile at entry | trades | R per trade | '
+              'share of total R |')
+            a('|---:|---|---:|---:|---:|')
+            for _, r in _A.sort_values('bucket').iterrows():
+                a('| %d | %.2f – %.2f | %d | %+.3f | %.1f%% |'
+                  % (int(r.bucket), r.atr_pctile_lo, r.atr_pctile_hi,
+                     int(r.n_trades),
+                     r.R_per_trade, 100 * r.share_of_total_R))
+            _b3 = _A[_A.bucket <= 3]
+            _b1 = _A.iloc[0]
+            _mean = ((_A.R_per_trade * _A.n_trades).sum()
+                     / max(1.0, _A.n_trades.sum()))
+            a('\n**The bottom three deciles carry %.1f%% of all R from %.1f%% '
+              'of the trades**, and bucket 1 alone — %d trades, %.1f%% of them '
+              '— is **%.1f%% of the total** at %+.3f R each against a sample '
+              'mean of %+.3f.\n'
+              % (100 * _b3.share_of_total_R.sum(),
+                 100 * _b3.n_trades.sum() / _A.n_trades.sum(),
+                 int(_b1.n_trades),
+                 100 * _b1.n_trades / _A.n_trades.sum(),
+                 100 * _b1.share_of_total_R, _b1.R_per_trade, _mean))
+            if pd.notna(_b1.get('R_total_ex_SNB', float('nan'))):
+                _snb_in_b1 = float(_b1.R_total) - float(_b1.R_total_ex_SNB)
+                a('\n**Now take 15–16 January 2015 out of the same table.** '
+                  'Bucket 1 totals **%+.2f R**, of which **%+.2f R is the one '
+                  'EURCHF short through the SNB peg break**. The other %d '
+                  'trades in the bottom decile are worth %+.2f R between them '
+                  '— **%+.4f R each**, against a sample mean of %+.3f. '
+                  'Bucket 1 goes from the best decile in the table to a '
+                  'below-average one.\n'
+                  % (_b1.R_total, _snb_in_b1,
+                     int(_b1.n_trades_ex_SNB), _b1.R_total_ex_SNB,
+                     _b1.R_per_trade_ex_SNB, _mean))
+                a('\n| bucket | trades | R per trade | ex SNB: trades | ex '
+                  'SNB: R per trade | ex SNB: share of R |')
+                a('|---:|---:|---:|---:|---:|---:|')
+                for _, r in _A.sort_values('bucket').iterrows():
+                    a('| %d | %d | %+.3f | %d | %+.4f | %s |'
+                      % (int(r.bucket), int(r.n_trades), r.R_per_trade,
+                         int(r.n_trades_ex_SNB) if pd.notna(r.n_trades_ex_SNB)
+                         else 0,
+                         r.R_per_trade_ex_SNB
+                         if pd.notna(r.R_per_trade_ex_SNB) else float('nan'),
+                         ('%.1f%%' % (100 * r.share_of_total_R_ex_SNB))
+                         if pd.notna(r.share_of_total_R_ex_SNB) else '--'))
+                a('\n**So the plain answer is this.** The fall from 89.8 R to '
+                  '8.2 R between the 5%% and the 10%% floor is not a '
+                  'low-volatility edge being switched off. It is one trade '
+                  'being switched off. A floor at 10%% removes the 2 January '
+                  '2015 EURCHF entry; a floor at 5%% does not; and that single '
+                  'trade is most of the difference. Raising the floor is not '
+                  'buying Jack a worse version of a real edge — it is removing '
+                  'the outlier that the apparent edge was made of.\n')
+            a('\n**And one note on why a low-ATR bucket can look strong at '
+              'all.** R is normalised by a stop sized off the prevailing ATR, '
+              'so a bucket-1 trade earning several times the sample mean means '
+              'the price move was large *relative to the ATR that sized the '
+              'stop*. That is volatility expansion out of a quiet regime '
+              'expressed through position sizing, not a directional edge — '
+              'and it is why a peg break, where ATR is near zero and the move '
+              'is enormous, lands in bucket 1 with an R of +75. The same '
+              'mechanism is what makes the leverage cap and the peg guard bite '
+              'exactly here.\n')
+    else:
+        a('`atr_buckets_abc.csv` is missing.\n')
+
+    # ---- ITEM 5: THE LEADERS, AND WHETHER THE PICKS HOLD
+    a('\n## Item 5 — who leads with all three rules on, and do the picks '
+      'hold?\n')
+    if len(S2R):
+        D_ = S2R.copy()
+        D_['c1s'] = D_.c1.str.replace('_signals', '', regex=False)
+        D_['bs'] = D_.base.str.replace('_baseline', '', regex=False)
+        _key = 'R_per_year_ex_best_day'
+        T_ = D_.sort_values(_key, ascending=False)
+        a('Judged on **R per year excluding the single best day** first, which '
+          'is the standing rule from 24 November. 108 cells: 3 C1 x 3 '
+          'baselines x 2 plans x 6 rulesets.\n')
+        a('\n| # | C1 | baseline | plan | ruleset | R/yr | R/yr ex best day | '
+          'R/yr ex best 5 | worst dip | best trade share | bootstrap t ex best '
+          'day |')
+        a('|---:|---|---|---|---|---:|---:|---:|---:|---:|---:|')
+        for i_, (_, r) in enumerate(T_.head(10).iterrows(), 1):
+            a('| %d | %s | %s | %s | `%s` | %+.2f | %+.2f | %+.2f | %.1f | '
+              '%.1f%% | %+.2f |'
+              % (i_, r.c1s, r.bs, r.variant, r.ruleset, r.R_per_year,
+                 r[_key], r.R_per_year_ex_best5_days, r.worst_dip_R,
+                 100 * r.best_trade_share, r.t_block_boot_ex_best_day))
+        a('\n**How thin this is:** %d of 108 are positive on R/yr, %d '
+          'excluding the best day, and **%d excluding the best five days**. '
+          '%d cells reach |bootstrap t| of 2 excluding the best day and '
+          '**every one of them is negative**.\n'
+          % ((D_.R_per_year > 0).sum(), (D_[_key] > 0).sum(),
+             (D_.R_per_year_ex_best5_days > 0).sum(),
+             (D_.t_block_boot_ex_best_day.abs() >= 2).sum()))
+        _ca = D_[D_.ruleset == 'c1_alone'].drop_duplicates(['c1s', 'variant'])
+        if len(_ca):
+            a('\n**Which C1 leads: none of them.** All %d C1-alone cells are '
+              'negative on every measure. Best is %s on the %s plan at %+.2f '
+              'R/yr excluding the best day.\n'
+              % (len(_ca), _ca.sort_values(_key, ascending=False).iloc[0].c1s,
+                 _ca.sort_values(_key, ascending=False).iloc[0].variant,
+                 _ca[_key].max()))
+        _bg = D_.groupby('bs').agg(med=(_key, 'median'), best=(_key, 'max'),
+                                   pos=(_key, lambda x: (x > 0).sum()),
+                                   dip=('worst_dip_R', 'median'))
+        a('\n**Which baseline leads: `sma`, which is the one stage 2 '
+          'picked.**\n')
+        a('\n| baseline | cells | median R/yr ex best day | best | positive '
+          'cells | median worst dip |')
+        a('|---|---:|---:|---:|---:|---:|')
+        for b_, r in _bg.iterrows():
+            a('| %s | 36 | %+.2f | %+.2f | %d | %.1f |'
+              % (b_, r.med, r.best, int(r.pos), r.dip))
+        a('\n### Would the stage 2 picks still have been made?\n')
+        _P = [('A', 'ichimoku', 'sma', 'full_nnfx'),
+              ('B', 'schaff_trend_cycle', 'sma', 'side_xentry'),
+              ('C', 'halftrend', 'sma', 'full_nnfx')]
+        a('\n| pick | plan | rank of 108 | R/yr | ex best day | ex best 5 | '
+          'worst dip | best trade share | holds? |')
+        a('|---|---|---:|---:|---:|---:|---:|---:|---|')
+        _verd = {}
+        for lab_, a_, b_, r_ in _P:
+            g_ = D_[(D_.c1s == a_) & (D_.bs == b_) & (D_.ruleset == r_)]
+            for _, x in g_.iterrows():
+                rk = int((T_[_key] > x[_key]).sum()) + 1
+                ok_ = (rk <= 10) and (x[_key] > 0)
+                if x.variant == 'jack':
+                    _verd[lab_] = (rk, x[_key], ok_)
+                a('| **%s** | %s | %d | %+.2f | %+.2f | %+.2f | %.1f | %.1f%% '
+                  '| %s |'
+                  % (lab_, x.variant, rk, x.R_per_year, x[_key],
+                     x.R_per_year_ex_best5_days, x.worst_dip_R,
+                     100 * x.best_trade_share,
+                     '**yes**' if ok_ else 'no'))
+        a('\n**The picks are not changed here — Jack owns them, and he said A, '
+          'B and C continue.** What the rerun says about them:\n')
+        if 'A' in _verd:
+            a('\n- **A holds, and comfortably.** Rank %d of 108 on the jack '
+              'plan. The only cell above it is `ichimoku + sma` on the jack '
+              'plan with the **`side_dist`** ruleset rather than `full_nnfx` — '
+              'the same C1 and the same baseline, a different exit rule. So '
+              'the C1 and baseline choice is vindicated by the rerun; the '
+              'ruleset is the only thing the ranking would argue with.'
+              % _verd['A'][0])
+        if 'B' in _verd:
+            a('- **B holds but is weak.** Rank %d of 108 at %+.2f R/yr '
+              'excluding the best day, bootstrap t 0.25, worst dip 44.4 R, and '
+              'it goes **negative excluding the best five days**. It survives '
+              'the standing criterion and nothing more.'
+              % (_verd['B'][0], _verd['B'][1]))
+        if 'C' in _verd:
+            a('- **C does not hold, on these numbers.** Rank %d of 108 on the '
+              'jack plan at %+.2f R/yr excluding the best day, worst dip 69.5 '
+              'R, and **46.8%% of its total R comes from a single trade**. '
+              'Jack asked on 24 November to drop C, then superseded that and '
+              'said A, B and C all continue; so C continues, and this is what '
+              'it measures. The textbook plan is no better (rank 46).'
+              % (_verd['C'][0], _verd['C'][1]))
+        a('\n**A caveat on the crisis-share column.** It is R from crisis '
+          'windows divided by total R, and %d of the 108 cells have a total R '
+          'at or below zero, where that ratio has no meaningful sign — one '
+          'cell reads 349%%. The "flag anything over 10%%" rule is only '
+          'readable on the %d cells with a positive total, of which **%d are '
+          'over 10%%**. For the rest, read `R_crisis` in R.\n'
+          % ((D_.R_total <= 0).sum(), (D_.R_total > 0).sum(),
+             ((D_.R_total > 0) & (D_.crisis_share > 0.10)).sum()))
+
+    # ---- ITEM 1: THE CAP, BOTH WAYS, ONCE
+    a('\n## Item 1 — the leverage cap, reported both ways once\n')
+    if len(S2R):
+        D_ = S2R
+        a('Jack asked for every table both ways once, so the size of the '
+          'correction is on record, then capped only. This is that record. '
+          'Everything else in this file is capped.\n')
+        _x = D_.pct_R_lost_to_leverage_cap.dropna()
+        a('\n| measure | value |')
+        a('|---|---:|')
+        a('| entries scaled down | **%.0f of %.0f** (%.2f%%) |'
+          % (D_.lev_trades_capped.sum(), D_.n_entered.sum(),
+             100 * D_.lev_trades_capped.sum() / max(1.0, D_.n_entered.sum())))
+        a('| highest leverage any single entry asked for | **%.2f:1** |'
+          % D_.lev_max_leverage_requested.max())
+        a('| cells where the cap reduced R | %d of %d |'
+          % ((_x > 0.01).sum(), len(D_)))
+        a('| cells where the cap **improved** R | %d of %d |'
+          % ((_x < -0.01).sum(), len(D_)))
+        a('| cells it did not touch | %d of %d |'
+          % ((_x.abs() <= 0.01).sum(), len(D_)))
+        a('\n**Two things in that table are worth saying out loud.**\n')
+        a('\n1. **No single entry asks for more than %.2f:1**, which is well '
+          'inside 1:30 — so nothing is capped on its own account. Every one of '
+          'the %.0f scaled entries is scaled because of what was *already '
+          'open* when it arrived. The cap is a portfolio constraint here, not '
+          'a per-trade one.\n'
+          % (D_.lev_max_leverage_requested.max(), D_.lev_trades_capped.sum()))
+        a('2. **The cap improves the result in %d cells and worsens it in '
+          '%d.** That is not a paradox: scaling an entry down scales its loss '
+          'down too, and most cells lose money. A cap is a risk control, and '
+          'reading an improvement in R as a benefit of the cap would be '
+          'reading it backwards.\n'
+          % ((_x < -0.01).sum(), (_x > 0.01).sum()))
+        a('\nThe per-cell uncapped figures are the `*_uncapped` and '
+          '`pct_R_lost_to_leverage_cap` columns of '
+          '`results/nnfx/stage2_picks_report.csv`.\n')
+
+    # ---- ITEM 4
+    a('\n## Item 4 — what the 7 September validation actually tested\n')
+    a('Recorded in `HANDOFF.md` item 2z. The lowvol flag was validated on the '
+      'SNB peg on 7 September using the **as-built, full-sample** version, '
+      'which reads a percentile over the whole history and is therefore not '
+      'causal. The causal version — the one this build uses, and the only one '
+      'that could have been traded — is **on for 218 of the 1,297 peg days**, '
+      'is on for **0 of 260 days in 2011 and 0 of 259 in 2013**, and '
+      '**misses 2 January 2015 by 0.069 bp**. The 7 September conclusion that '
+      'the flag catches the SNB trade does not survive the causal rebuild. '
+      'That is the gap the peg guard was asked for, and the peg guard does '
+      'close it: at X of 0.20 or above the 2 January entry is blocked.\n')
+
+    # ---- THE TWO FAULTS FOUND IN THIS RERUN
+    a('\n## Two faults this rerun found in its own apparatus\n')
+    a('Both were found by checks failing, which is the checks working.\n')
+    a('\n**1. The stage 3 zero-edge check compared floor-off against '
+      'floor-on.** `_neutralised_with_name` set the volume slot all-True while '
+      'the no-name path carried the floor and the peg guard, and the floor '
+      'rides the volume slot. The tell was the direction: the *neutralised* '
+      'side had **more** legs (4,568 against 4,030 on A/jack), which is the '
+      'floor\'s own blocked entries coming back, not a `prepare` side effect. '
+      'The C2 slot is the only thing that path may neutralise. Fixed; the '
+      'check is re-run above.\n')
+    a('\n**2. Condition 4 was restating a per-leg null with a per-entry '
+      'cost.** Every two-leg label failed by a near-identical **+0.016** while '
+      'both one-leg `flip_only` labels passed — and 0.016 is half of the 0.032 '
+      'charged. The null\'s net is per **leg** (`_null_match` iterates the '
+      'trade frame, which holds two rows per entry on a plan=2 variant) and it '
+      'was being restated gross by adding back the summary\'s '
+      '`cost_per_trade`, which is per **entry**. With one leg the two '
+      'denominators coincide, which is why `flip_only` looked clean. A '
+      'measured legs-per-entry ratio was the wrong fix — it came out at 0.41 '
+      'on a long-held `flip_only` setting, because the summary counts by '
+      '**entry** year while the null filters by **exit** year, so the two '
+      'files are not even the same population. `_null_match` now returns the '
+      'cost it actually charged, so the restatement is exact: same legs, same '
+      'window, same unit, no reconstruction. **This was arithmetic, not a '
+      'bias in the apparatus** — but it was not safe to assume that, which is '
+      'why stage 1 was re-run rather than waved through.\n')
+
     a('\n## What is sealed\n')
     a('- 2016–2020 are computed and stored in `stage3_yearly.csv` and are '
       'summarised nowhere in this file.\n')
@@ -1263,7 +1686,11 @@ def md_stage3(out=None):
     for n_ in ('stage3_zeroedge.csv', 'stage3_walk.csv', 'stage3_report.csv',
                'stage3_paired.csv', 'stage3_yearly.csv',
                'stage3_ccy_agreement_rate.csv', 'stage4_paired.csv',
-               'stage4_picks.csv'):
+               'stage4_picks.csv', 'pegguard_curve.csv',
+               'pegguard_effect_abc.csv', 'floor_curve_abc.csv',
+               'floor_curve_stage1.csv', 'floor_leaders_stage1.csv',
+               'atr_buckets_abc.csv', 'dipcheck_snb_dependence.csv',
+               'dipcheck_snb_by_pair.csv', 'stage2_picks_report.csv'):
         p_ = os.path.join(OUT, n_)
         if not os.path.exists(p_):
             a('- `%s` — **MISSING**' % os.path.join('results', 'nnfx', n_))
