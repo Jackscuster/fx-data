@@ -187,13 +187,13 @@ mistake than there was that night, not more. Disk is 5.7 GB free.
 
 ---
 
-# 26 NOVEMBER, 13:45 EST — JACK'S NEW LIST, STATE OF PLAY
+# 26 NOVEMBER, 12:35 EST — JACK'S NEW LIST, STATE OF PLAY
 
 ## Running
 
 | job | pgid file | what | ETA |
 |---|---|---|---|
-| `booknull2b.sh` | `results/chainlogs/booknull2b.pgid` (69390) | item 1, family (e) against its matched null, 20 runs, 3 workers | **~17:50** |
+| `booknull2b.sh` | `results/chainlogs/booknull2b.pgid` (69390) | item 1, family (e) against its matched null, 20 runs, 3 workers | **~17:30** |
 
 Stop with `bash code/chain/stop_chain.sh $(cat results/chainlogs/booknull2b.pgid)`.
 Never `pkill` — the classifier refuses it.
@@ -206,14 +206,14 @@ Never `pkill` — the classifier refuses it.
   second source is reachable, costed from named public sources with the 1x-5x
   sweep, and the 18 declared algorithms banked on the ten costable ones with
   zero errors.
-- **Item 4, part one** — weekly frames for all 28 pairs and the declared bank,
-  running at 13:40.
+- **Item 4, part one** — weekly frames for all 28 pairs, the declared bank and
+  the gross-against-cost comparison. Done 12:33.
 
 ## Not done, and what each needs
 
 | item | blocked on |
 |---|---|
-| 3d, the 200,000 sample on 10 instruments | the machine. Same shape of job as the FX bank; three null workers hold it until ~17:50 |
+| 3d, the 200,000 sample on 10 instruments | the machine. Same shape of job as the FX bank; three null workers hold it until ~17:30 |
 | 3e, does fit carry off FX | 3d's sample, plus a scrambled-data null per instrument |
 | 3f, books under the five gates, instrument-group rotations | 3d and 3e |
 | 3g, the combined FX plus other-markets book | 3f |
