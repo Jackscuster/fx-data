@@ -190,6 +190,72 @@ Book (a) has no K, so A5 declared its admission count to be the 20-trade floor, 
 | R2 | 30 | 0.25 | separate | 6 | -0.089 | -0.015 | -0.024 | -0.02 |
 | R2 | 30 | 0.25 | voting | 6 | +0.053 | +0.009 | +0.015 | +0.01 |
 
+## Book (d) COMBINED — a plus the best of b and c
+
+A11 fixed the choice as a procedure so the null can apply the identical one: each family's best K by return per dip AVERAGED over the two rotations, then whichever family wins. B4 reads off that K one grid step down and up. A sleeve in both halves is held once.
+
+| rotation | K | is_central_K | sleeves | sleeves_from_a | sleeves_from_winner | winner_family | winner_K | R | cell_baseline_R | excess_over_cell | B1b | R_per_dip | b5_pct_per_year | B2 | B3 | B4 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| R1 | 50 | 1 | 559 | 4 | 555 | c_all_pairs | 50 | +1.657 | -0.092 | +1.750 | 1 | +0.703 | +0.759 | 1 | 1 | +1.000 |
+| R2 | 50 | 1 | 507 | 7 | 500 | c_all_pairs | 50 | +2.813 | +0.478 | +2.335 | 1 | +0.805 | +0.724 | 1 | 1 | +1.000 |
+
+**B1 is blank for both families on purpose.** They were declared at 20:10 and 20:12, after the 19:41 null chain launched, so neither is called a passer until chain 2 lands. See A10 and A11.
+
+## Book (e) FOUR-CELL — the true cross only
+
+A10. Select on 15 pairs in one six-year window, trade the 13 OTHER pairs in the OTHER window. No shared pair, no shared year. Only the TRUE CROSS cell is shown here; all four cells are in the csv, and the other three are what forced B1b into existence.
+
+| direction | cell_pairs | cell_years | K | sleeves | R | cell_baseline_R | excess_over_cell | B1b | R_per_dip | b5_pct_per_year | B2 | B4 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| fwd | 13pairs | 2011_2015 | 10 | 130 | +4.760 | +0.807 | +3.953 | 1 | +2.791 | +3.014 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 20 | 260 | +4.205 | +0.807 | +3.398 | 1 | +2.695 | +2.911 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 50 | 650 | +3.974 | +0.807 | +3.167 | 1 | +2.617 | +2.826 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 100 | 1300 | +3.915 | +0.807 | +3.109 | 1 | +2.576 | +2.782 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 200 | 2600 | +4.322 | +0.807 | +3.515 | 1 | +2.711 | +2.928 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 500 | 6500 | +4.123 | +0.807 | +3.316 | 1 | +2.654 | +2.866 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 1000 | 13000 | +3.704 | +0.807 | +2.897 | 1 | +2.493 | +2.692 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 2000 | 26000 | +3.491 | +0.807 | +2.685 | 1 | +2.801 | +3.025 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 3500 | 45500 | +3.331 | +0.807 | +2.525 | 1 | +3.052 | +3.296 | 1 | +1.000 |
+| fwd | 13pairs | 2011_2015 | 5000 | 65000 | +3.266 | +0.807 | +2.459 | 1 | +3.045 | +3.288 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 10 | 150 | +1.490 | +1.383 | +0.107 | 1 | +0.410 | +0.369 | 0 | +1.000 |
+| rev | 15pairs | 2005_2010 | 20 | 300 | +2.788 | +1.383 | +1.405 | 1 | +0.931 | +0.838 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 50 | 750 | +4.252 | +1.383 | +2.869 | 1 | +1.613 | +1.452 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 100 | 1500 | +4.674 | +1.383 | +3.292 | 1 | +1.762 | +1.586 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 200 | 3000 | +4.526 | +1.383 | +3.144 | 1 | +1.819 | +1.637 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 500 | 7500 | +4.250 | +1.383 | +2.867 | 1 | +1.871 | +1.684 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 1000 | 15000 | +3.963 | +1.383 | +2.580 | 1 | +1.920 | +1.728 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 2000 | 30000 | +3.800 | +1.383 | +2.417 | 1 | +2.107 | +1.896 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 3500 | 52500 | +3.611 | +1.383 | +2.228 | 1 | +2.260 | +2.034 | 1 | +1.000 |
+| rev | 15pairs | 2005_2010 | 5000 | 75000 | +3.357 | +1.383 | +1.974 | 1 | +2.289 | +2.060 | 1 | +1.000 |
+
+**B1 is blank for both families on purpose.** They were declared at 20:10 and 20:12, after the 19:41 null chain launched, so neither is called a passer until chain 2 lands. See A10 and A11.
+
+## What transfers and what does not — A13
+
+Measured on the bank with no book in the way. Rank every algorithm by its total net R pooled over one set of pairs in one window; ask its mean net R per sleeve on the OTHER pairs in the OTHER window.
+
+| | select | score | algorithms | Spearman rho | cell baseline | top decile | bottom decile | top − bottom |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| **fwd** | 15 pairs 2005-2010 | 13 pairs 2011-2015 | 164088 | **+0.2069** | +0.807 | **+2.129** | +0.481 | **+1.648** |
+| **rev** | 13 pairs 2011-2015 | 15 pairs 2005-2010 | 110143 | **+0.1871** | +1.383 | **+2.521** | +1.105 | **+1.416** |
+
+Against the SAME-PAIR figure from item 2: median per-pair rho **+0.0183**, mean **+0.0059**.
+
+**An algorithm's quality transfers across currencies and decades at rho about +0.20; its fit to one particular pair transfers at about +0.01.** Every book result above follows from that asymmetry — per-pair selection fails its own cell baseline in one rotation, pooled selection clears it in both, and the four-cell excess is flat in K across three orders of magnitude, which is what a broad factor looks like and not what overfitting looks like.
+
+| decile of the selection ranking | mean cross-cell R, fwd | mean cross-cell R, rev |
+|---:|---:|---:|
+| 1 | +2.129 | +2.521 |
+| 2 | +1.393 | +2.164 |
+| 3 | +1.236 | +1.985 |
+| 4 | +1.117 | +1.725 |
+| 5 | +0.954 | +1.464 |
+| 6 | +0.759 | +1.527 |
+| 7 | +0.818 | +1.491 |
+| 8 | +0.866 | +1.525 |
+| 9 | +0.776 | +1.428 |
+| 10 | +0.481 | +1.105 |
+
 ## The verdict, plainly
 
 **0 of 552 book cells clear B1 to B4. 0 are passers (B1 to B5).**

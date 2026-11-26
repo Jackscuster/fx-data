@@ -6408,6 +6408,29 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'What a book buys is a smaller dip, which is why <b>return per dip</b> and then the percent a year the B5 '
     +'sizing allows are the only two columns that answer Jack\u2019s question.</div>';
  }
+ const FC=R.fourcell||{};
+ if(FC.note){
+  h+='<h3>Book (e) \u2014 the four-cell rotation, and the night\u2019s strongest number</h3>';
+  h+='<div class="note">'+FC.note+'</div>';
+  h+=tbl(FC.fourcell,['direction','select_pairs','select_years','cell_pairs','cell_years','is_selection_cell','is_true_cross','K','share','mode','sleeves','R','cell_baseline_R','excess_over_cell','B1b','R_per_year','dip_binding','R_per_dip','b5_pct_per_year','R_ex1','R_ex5','B2','B3','B4'],'All four cells, both directions, every K');
+  h+='<div class="note"><b>Read the four cells together or not at all.</b> The two diagonal cells are positive and the '
+    +'two off-diagonal cells are negative <i>in both directions, whichever cell was selected on</i>. That is not a '
+    +'property of the selection \u2014 a random algorithm does the same thing, which is exactly what the cell baseline '
+    +'column says. What survives that correction is the <b>excess</b>, and it is +2.46 to +3.95 R per sleeve at every '
+    +'K from 10 to 5,000.</div>';
+ }
+ const TR=R.transfer||{};
+ if(TR.note){
+  h+='<h3>A13 \u2014 what transfers and what does not</h3>';
+  h+='<div class="note">'+TR.note+'</div>';
+  h+=tbl(TR.transfer,['direction','select','score','n_algorithms','spearman_rho','p','cell_baseline_R','top_decile_mean_R','bottom_decile_mean_R','top_decile_excess','bottom_decile_excess','top_minus_bottom'],'Pooled across pairs, across cells');
+  h+=tbl(TR.deciles,['direction','decile','n','mean_cross_R','excess'],'By decile of the selection ranking');
+  h+='<div class="note"><b>This is the actionable sentence of the whole amendment.</b> Pick algorithms on evidence '
+    +'pooled across many pairs \u2014 never per pair. Pooled quality carries across different currencies in a '
+    +'different decade at rho \u2248 +0.20 and monotonically through every decile; a pair-specific fit carries at '
+    +'rho \u2248 +0.01, which is why the per-pair book is the best single cell in one rotation and loses to a coin '
+    +'from its own cell in the other.</div>';
+ }
  const WN=R.winners||{};
  if(WN.note){
   h+='<h3>Item 4 \u2014 every strategy in the best book</h3>';

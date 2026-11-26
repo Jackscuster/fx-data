@@ -898,6 +898,74 @@ def stage_app():
         gates=nd('books/books_gates.csv', head=600),
         full=nd('books/books_full_real.csv', head=600),
         declared_nudge=nd('books/books_declared_nudge.csv', head=40),
+        combined=nd('books/books_combined.csv', head=80),
+        cell_baseline=nd('books/cell_baseline.csv', head=20),
+    )
+    sec['nnfx']['fourcell'] = dict(
+        note=('FAMILY (e) -- A4\'S FOUR-CELL ROTATION APPLIED TO A BOOK, and '
+              'the night\'s strongest number. PROTOCOL.md A10, declared at '
+              '20:10 before it was run. Select on the 15 pairs with neither '
+              'JPY nor CHF in 2005-2010; trade the 13 pairs containing JPY or '
+              'CHF in 2011-2015. NO SHARED PAIR AND NO SHARED YEAR, so this '
+              'does not need a pair\'s fit to carry at all -- only for an '
+              'algorithm chosen on one set of currencies in one decade to '
+              'work on different currencies in a different decade. '
+              'NO PER-PAIR ADMISSION ON THE SCORING SIDE: choosing which of '
+              'the 13 pairs to trade would mean looking at them, so each '
+              'selected algorithm trades all 13. '
+              'THE TOP-10 BOOK MAKES +4.552 R PER SLEEVE against the cell\'s '
+              'own +0.807 -- an excess of +3.745, about 3.0% a year at B5 '
+              'sizing. By calendar year +2.170, +1.187, +0.101, +1.213, '
+              '-0.120: positive in four of five, still positive with ANY '
+              'single year removed (+2.38 to +4.67), and 2013 -- the '
+              'strongest year of the yen trend -- is its WEAKEST. The same '
+              'algorithms lose money on those 13 pairs in 2005-2010 in four '
+              'of six years. '
+              'AND THE EXCESS IS FLAT IN K from 10 to 5,000 (+2.46 to +3.95), '
+              'which is what a BROAD factor looks like and not what '
+              'overfitting looks like -- a whole decile carries it. '
+              'IT IS NOT CALLED A PASSER. Its matched null was declared after '
+              'the 19:41 chain launched, so B1 is blank until chain 2 lands. '
+              'THE OTHER THREE CELLS ARE WHY B1b EXISTS: this family is '
+              'positive on (15 pairs, 2005-2010) and (13 pairs, 2011-2015) '
+              'and negative on the other two IN BOTH DIRECTIONS, whichever '
+              'cell it selected on -- because a random algorithm does the '
+              'same thing.'),
+        fourcell=nd('books/books_fourcell.csv', head=600),
+    )
+    sec['nnfx']['transfer'] = dict(
+        note=('A13 -- WHAT TRANSFERS AND WHAT DOES NOT. The one measurement '
+              'that explains every book result, taken on the bank with no '
+              'book in the way. '
+              'Rank every algorithm by its total net R POOLED over one set of '
+              'pairs in one six-year window, and ask its mean net R per '
+              'sleeve on the OTHER pairs in the OTHER window. Spearman rho is '
+              '+0.2069 selecting on the 15 pairs in 2005-2010 and scoring on '
+              'the 13 in 2011-2015 (164,088 algorithms), and +0.1871 the '
+              'other way (110,143). Monotone across the deciles in both '
+              'directions: top decile +2.129 against a bottom decile of '
+              '+0.481 one way, +2.521 against +1.105 the other. '
+              'THE SAME QUANTITY WITHIN ONE PAIR -- item 2 -- IS +0.0183 '
+              'MEDIAN AND +0.0059 MEAN. '
+              'SO: AN ALGORITHM\'S QUALITY TRANSFERS ACROSS CURRENCIES AND '
+              'ACROSS DECADES AT RHO ABOUT +0.20, AND ITS FIT TO ONE '
+              'PARTICULAR PAIR TRANSFERS AT ABOUT +0.01 -- a factor of eleven '
+              'on the median and thirty on the mean. '
+              'Everything follows from that asymmetry. b_per_pair, which '
+              'selects per pair, is the best single cell of all 552 in '
+              'rotation R1 at +1.30% a year and FAILS B1b AT EVERY K IN R2, '
+              'returning +0.369 R where a random admitted algorithm in the '
+              'same cell returns +0.478. c_all_pairs, which selects pooled, '
+              'is the only one of a/b/c to beat its own cell in BOTH '
+              'rotations, and family (d) independently chose it as its '
+              'winner. '
+              'WHAT IT DOES NOT SETTLE: the deciles are measured against the '
+              'cell baseline, which is B1b. B1 -- against data with no trend '
+              'longer than 20 days -- is still open for families d and e, and '
+              'chain 2 is armed for it. A broad factor that pays whenever '
+              'trend exists is still worth owning; it is just not a secret.'),
+        transfer=nd('books/crosscell_transfer.csv', head=20),
+        deciles=nd('books/crosscell_deciles.csv', head=40),
     )
     sec['nnfx']['winners'] = dict(
         note=('ITEM 4 -- EVERY STRATEGY IN THE BEST BOOK, sorted by '

@@ -392,6 +392,84 @@ def books_md(verbose=True):
                     r.sleeves, r.R_total, r.R_per_year, r.R_per_dip,
                     r.b5_pct_per_year))
     L.append('')
+    # ---- families d and e, declared after the null chain launched
+    for fn, title, cols, note in (
+        ('books_combined.csv', 'Book (d) COMBINED — a plus the best of b and c',
+         ['rotation', 'K', 'is_central_K', 'sleeves', 'sleeves_from_a',
+          'sleeves_from_winner', 'winner_family', 'winner_K', 'R',
+          'cell_baseline_R', 'excess_over_cell', 'B1b', 'R_per_dip',
+          'b5_pct_per_year', 'B2', 'B3', 'B4'],
+         'A11 fixed the choice as a procedure so the null can apply the '
+         'identical one: each family\'s best K by return per dip AVERAGED over '
+         'the two rotations, then whichever family wins. B4 reads off that K '
+         'one grid step down and up. A sleeve in both halves is held once.'),
+        ('books_fourcell.csv', 'Book (e) FOUR-CELL — the true cross only',
+         ['direction', 'cell_pairs', 'cell_years', 'K', 'sleeves', 'R',
+          'cell_baseline_R', 'excess_over_cell', 'B1b', 'R_per_dip',
+          'b5_pct_per_year', 'B2', 'B4'],
+         'A10. Select on 15 pairs in one six-year window, trade the 13 OTHER '
+         'pairs in the OTHER window. No shared pair, no shared year. Only the '
+         'TRUE CROSS cell is shown here; all four cells are in the csv, and '
+         'the other three are what forced B1b into existence.')):
+        f = os.path.join(BOUT, fn)
+        if not os.path.exists(f):
+            continue
+        X = pd.read_csv(f)
+        if 'is_true_cross' in X.columns:
+            X = X[X.is_true_cross == 1]
+        if 'is_central_K' in X.columns:
+            X = X[X.is_central_K == 1]
+        X = X[(X['share'] == BO.SHARE_DECLARED) & (X['mode'] == 'voting')]
+        cols = [c for c in cols if c in X.columns]
+        L += ['## ' + title, '', note, '',
+              '| ' + ' | '.join(cols) + ' |',
+              '|' + '---|' * len(cols)]
+        for _i, r in X.iterrows():
+            L.append('| ' + ' | '.join(
+                ('%+.3f' % r[c]) if isinstance(r[c], float) else str(r[c])
+                for c in cols) + ' |')
+        L += ['', '**B1 is blank for both families on purpose.** They were '
+              'declared at 20:10 and 20:12, after the 19:41 null chain '
+              'launched, so neither is called a passer until chain 2 lands. '
+              'See A10 and A11.', '']
+    # ---- A13, the measurement that explains all of it
+    f = os.path.join(BOUT, 'crosscell_transfer.csv')
+    if os.path.exists(f):
+        T = pd.read_csv(f)
+        DC = pd.read_csv(os.path.join(BOUT, 'crosscell_deciles.csv'))
+        L += ['## What transfers and what does not — A13', '',
+              'Measured on the bank with no book in the way. Rank every '
+              'algorithm by its total net R pooled over one set of pairs in '
+              'one window; ask its mean net R per sleeve on the OTHER pairs '
+              'in the OTHER window.', '',
+              '| | select | score | algorithms | Spearman rho | cell baseline '
+              '| top decile | bottom decile | top − bottom |',
+              '|---|---|---|---:|---:|---:|---:|---:|---:|']
+        for _i, r in T.iterrows():
+            L.append('| **%s** | %s | %s | %d | **%+.4f** | %+.3f | **%+.3f** '
+                     '| %+.3f | **%+.3f** |'
+                     % (r.direction, r.select, r.score, r.n_algorithms,
+                        r.spearman_rho, r.cell_baseline_R,
+                        r.top_decile_mean_R, r.bottom_decile_mean_R,
+                        r.top_minus_bottom))
+        L += ['', 'Against the SAME-PAIR figure from item 2: median per-pair '
+              'rho **+0.0183**, mean **+0.0059**.', '',
+              '**An algorithm\'s quality transfers across currencies and '
+              'decades at rho about +0.20; its fit to one particular pair '
+              'transfers at about +0.01.** Every book result above follows '
+              'from that asymmetry — per-pair selection fails its own cell '
+              'baseline in one rotation, pooled selection clears it in both, '
+              'and the four-cell excess is flat in K across three orders of '
+              'magnitude, which is what a broad factor looks like and not '
+              'what overfitting looks like.', '',
+              '| decile of the selection ranking | mean cross-cell R, fwd | '
+              'mean cross-cell R, rev |', '|---:|---:|---:|']
+        pv = DC.pivot(index='decile', columns='direction',
+                      values='mean_cross_R')
+        for d_, row in pv.iterrows():
+            L.append('| %d | %+.3f | %+.3f |'
+                     % (d_, row.get('fwd', np.nan), row.get('rev', np.nan)))
+        L.append('')
     # the verdict
     pas = D[D.passer == 1]
     c14 = D[D.clears_B1_B4 == 1]

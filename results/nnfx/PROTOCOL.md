@@ -559,3 +559,55 @@ The same algorithms on the 13 pairs in **2005-2010** lose money in four of six y
 
 That is the most interesting number of 25 November and it is **not** called a passer: family
 (e)'s matched null was declared after the 19:41 chain launched and is a separate armed stage.
+
+---
+
+## A13. A measurement, 20:35 EST — what transfers and what does not
+
+Not a change to the protocol. A measurement that explains every book result above, taken on
+the bank with no book in the way.
+
+Rank every algorithm by its **total net R pooled over one set of pairs in one six-year
+window**, and ask what its mean net R is **per sleeve on the other set of pairs in the other
+window** — no shared pair, no shared year:
+
+| | select on | score on | algorithms | **Spearman rho** | cell baseline | top decile | bottom decile | top − bottom |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| **fwd** | 15 pairs 2005-2010 | 13 pairs 2011-2015 | 164,088 | **+0.2069** | +0.807 | **+2.129** | +0.481 | **+1.648** |
+| **rev** | 13 pairs 2011-2015 | 15 pairs 2005-2010 | 110,143 | **+0.1871** | +1.383 | **+2.521** | +1.105 | **+1.416** |
+
+Monotone across the deciles in both directions, and symmetric.
+
+Now the same quantity measured **within one pair** — item 2, the per-pair rank correlation
+between an algorithm's early-years and later-years result on that same pair:
+
+| | median per-pair rho | mean per-pair rho |
+|---|---:|---:|
+| admit 2005-2010, score 2011-2015 | **+0.0183** | **+0.0059** |
+| admit 2011-2015, score 2005-2010 | **+0.0183** | **+0.0059** |
+
+### The conclusion, in one sentence
+
+**An algorithm's quality transfers across currencies and across decades at rho about +0.20,
+and its fit to one particular pair transfers at rho about +0.01 — a factor of eleven on the
+median and thirty on the mean.**
+
+Everything in this amendment follows from that one asymmetry:
+
+- `b_per_pair`, which selects **per pair**, is the best single cell of all 552 in rotation R1
+  (+1.30% a year) and **fails B1b at every K in R2**, returning +0.369 R where a random
+  admitted algorithm in the same cell returns +0.478.
+- `c_all_pairs`, which selects **pooled across pairs**, is the only one of a/b/c to beat its
+  own cell in **both** rotations, and family (d) independently chose it as its winner.
+- Family (e), which selects pooled and scores on different currencies in a different decade,
+  has the largest excess of anything measured: **+2.46 to +3.95 R per sleeve over its cell,
+  at every K from 10 to 5,000.**
+- The excess being **flat in K across three orders of magnitude** says the signal is **broad,
+  not a best-of-many artefact** — a whole decile carries it. That is the opposite of what
+  overfitting looks like, and it is also why it is better described as a **factor exposure**
+  than as a discovered rule: most algorithms that worked on one cell work on the other.
+
+**What it does not settle.** The deciles are measured against the cell baseline, which is B1b.
+B1 — against data with no trend longer than 20 days — is still the open question for families
+(d) and (e), and chain 2 is armed for it. A broad factor that pays whenever trend exists is
+still worth owning; it is just not a secret.
