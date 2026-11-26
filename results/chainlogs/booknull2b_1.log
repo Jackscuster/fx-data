@@ -1,2 +1,5 @@
   costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
     bnull2_001 50000/200000  414/s  eta 6.0 min
+    bnull2_001 100000/200000  482/s  eta 3.5 min
+    bnull2_001 150000/200000  510/s  eta 1.6 min
+    bnull2_001 200000/200000  525/s  eta 0.0 min

@@ -611,3 +611,74 @@ Everything in this amendment follows from that one asymmetry:
 B1 — against data with no trend longer than 20 days — is still the open question for families
 (d) and (e), and chain 2 is armed for it. A broad factor that pays whenever trend exists is
 still worth owning; it is just not a secret.
+
+---
+
+## A14. THE TARGET MAP — the account lifecycle, declared 12:10 EST on 2026-11-26, before it was run
+
+Jack's item 2 asks for net dollars a year per account, which needs more than
+one pass of the prop simulator: an account that breaches buys another
+challenge, and the fee is paid on every attempt. The lifecycle below is
+declared here **before any number is produced**, because it is a model and not
+a measurement, and because the answer to "what edge reaches $12,000" depends
+entirely on it.
+
+### A14.1 What one simulated account-year is
+
+A path is **252 trading days**. The account starts in the **evaluation** phase
+with one fee of **$549** already paid.
+
+| event | what happens |
+|---|---|
+| evaluation reaches **+10%** | the attempt passes. A **funded** account begins the next day at **$100,000** with its own high-water mark. No fee. |
+| evaluation breaches | the attempt ends. A **new** evaluation starts the next day and **another $549 is paid**. |
+| funded breaches | the funded account ends. A **new evaluation** starts the next day and **another $549 is paid**. |
+| funded, every **7th** funded day | 80% of equity above $100,000 is paid out and removed from the account. |
+| day 252 | the path ends wherever it is. Equity above $100,000 in a funded account at the end is **NOT** counted — only cash actually paid out counts. |
+
+**Unpaid funded equity is deliberately not counted.** It is not money until it
+is withdrawn, and counting it would let a path that was about to breach book a
+profit it never received.
+
+### A14.2 Breach rules, exactly as the firm states them
+
+Daily loss is measured **from the previous day's close**, and the trailing
+floor is the high-water mark less the trailing fraction, never above the
+starting balance. These are `r2reads._floor_of` and `r2reads.prop_run`'s rules
+unchanged. Three budget pairs are reported:
+
+| budget | daily | trailing |
+|---|---|---|
+| Team 1 | 3.6% | 3.6% |
+| internal | 3.6% | 5.4% |
+| **firm hard limit** | **4.0%** | **6.0%** |
+
+### A14.3 Edge, and why size cannot change it
+
+An edge is stated as **true yearly return per unit of yearly volatility** —
+`S = sqrt(252) * mu_daily / sigma_daily`. Position size multiplies `mu` and
+`sigma` together, so **S is invariant to size**: that is the whole reason for
+stating the target map in these units. Size is swept separately as the **daily
+volatility in percent of the account**, which is the quantity the firm's
+budgets actually constrain.
+
+Synthetic books draw daily returns from a normal distribution at the stated
+`S`. **A normal draw is a friendly assumption and is declared as one** — real
+daily P&L has fatter tails, so every pass probability below is an upper bound
+and every breach probability a lower bound.
+
+### A14.4 Measured books are block-bootstrapped, not refitted
+
+For `c_all_pairs` K=50 and family (e), the daily series is resampled in
+**20-day blocks** to 252-day paths, **2,000 paths** per cell, the same block
+length the project's `_block_t` uses. Blocks preserve the autocorrelation that
+makes drawdowns worse than independent draws imply. The series used is the
+**scored** window, never the admission window.
+
+### A14.5 What is reported and what is not
+
+Curves only: pass probability, median days to pass, breach probability within
+the funded year, expected payout, expected fees including re-attempts, and net
+dollars. **No recommendation on size**, as Jack asked. The smallest edge
+reaching $12,000 a year is reported as a crossing point of a curve, with the
+size and breach rate at which it crosses — not as a proposal.
