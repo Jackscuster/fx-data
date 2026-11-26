@@ -15,7 +15,7 @@ pair, makes admission light, and puts the whole pass/fail on the combined book a
 | stage | what | pgid | ETA (US Eastern) |
 |---|---|---|---|
 | **chain 1 — 20 matched null runs** | B1's floor for families **a, b and c**, and item 2's null. Each run scrambles the world, draws 200,000 algorithms, runs the local search at the same cap, builds the full 28-pair sleeve bank, and rebuilds every book | **25289** (`results/chainlogs/booknull.pgid`), 7 workers | **~21:50** |
-| **chain 2 — the matched null for families (d) and (e)** | **ARMED AND WAITING on chain 1**, not launched by hand. Rebuilds the SAME 20 worlds (seeds 700000+run, deterministic) and applies `nnfxcomb.build_d` and `nnfxcell4.build_e` — the same functions that produced the real numbers, imported and not copied | **31947** (`results/chainlogs/booknull2.pgid`), 7 workers | starts ~21:50, **~00:10** |
+| **chain 2 — the matched null for families (d) and (e)** | **ARMED AND WAITING on chain 1**, not launched by hand. Rebuilds the SAME 20 worlds (seeds 700000+run, deterministic) and applies `nnfxcomb.build_d` and `nnfxcell4.build_e` — the same functions that produced the real numbers, imported and not copied | **35372** (`results/chainlogs/booknull2.pgid`), **4 workers** | starts ~21:50, **~01:10** |
 
 **To stop either:** `bash code/chain/stop_chain.sh $(cat results/chainlogs/booknull.pgid)` or
 `…booknull2.pgid`. Both are resumable by run — a run whose output CSVs are on disk is skipped,
@@ -64,6 +64,43 @@ the workers that have not started yet and not the ones that have.
 | chains 22B and 31 | still unresolved: dead or parked. Asked, not answered |
 
 ---
+
+## MEMORY INCIDENT, 20:28 EST — what I did and what it cost
+
+The harness killed a background waiter because the machine was critically low on memory.
+Measured at that moment: **swap 7,472 MB of 7,680 MB used, 64 MB of RAM free.** Seven null
+workers each hold the null bank (344 MB of arrays), the 384,334-entry algorithm list and a
+synthetic world's indicator cache — more than the ~850 MB per worker I estimated at 19:40,
+because a Python list of 384,334 five-tuples of string pairs is far heavier than its array
+equivalent.
+
+**Triage: I stopped `bankev`**, item 5's eleven-year admission bank — the lowest-priority job
+running, 3 of its 7 shards already on disk, and resumable by shard. `stop_chain.sh` verified
+zero survivors. **Swap free went from 208 MB to 881 MB** and the null chain kept running with
+no worker error in any of its logs.
+
+**State at 20:29:** 6 of the 7 round-1 null workers are past the bank phase and in the books
+phase, `fit_*.csv` written for 6 runs, no `MemoryError`, `Killed` or `Traceback` in any worker
+log. Round 1 should write ~20:35.
+
+**What is owed because of this:**
+
+1. **`bankev` needs resuming — 4 of 7 shards left.** One command, and it skips the 3 on disk:
+   `bash code/chain/bankev.sh`. It is only needed if a book clears B1-B4 in both rotations,
+   so it is not on the critical path. **Do not restart it while both null chains are running**
+   — that is what caused this.
+2. **Chain 2 is now 4 workers, not 7** — same per-worker footprint as chain 1, so it would
+   have hit the same wall. **And editing a script bash is reading incrementally is the hazard
+   in row 1 below**: adding two comment lines shifted every later byte offset, which is
+   exactly how a running driver gets corrupted. So the waiter was stopped with
+   `stop_chain.sh` and **relaunched from the edited file at 20:30:19**, new pgid **35372**.
+   It had done nothing but poll, so this cost nothing. The ETA moves from ~00:10 to ~01:10
+   at 4 workers.
+3. I could not arm a watcher for chain 1's completion: `Monitor` was refused by the permission
+   classifier in this session, twice, read-only versions included, and the harness instructed
+   me not to restart the killed background waiter on my own. **So nothing is watching chain 1.**
+   Its output is on disk and the reports are one command: `python3 code/nnfxrep.py --reports`,
+   then `python3 code/nnfxfinal.py`.
 
 ## HAZARDS ON THE RECORD
 

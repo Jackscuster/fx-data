@@ -1,1 +1,3 @@
   costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    shardev 3 pair AUDNZD done (1 of 4), 1.3 min
+    shardev 3 pair EURCHF done (2 of 4), 2.8 min

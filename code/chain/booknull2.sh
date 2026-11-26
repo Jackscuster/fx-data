@@ -41,8 +41,10 @@ while :; do
   LAST="$N"
   sleep 120
 done
-echo "$(ts) chain 1 complete, 20 runs on disk. START booknull2, 7 workers" >> $LOG
-seq 0 19 | xargs -P 7 -I{} sh -c \
+echo "$(ts) chain 1 complete, 20 runs on disk. START booknull2, 4 workers -- reduced from 7 after the 20:28 memory incident" >> $LOG
+# -P 4, NOT 7: at 20:28 seven chain-1 workers put swap at 7472 of 7680 MB with
+# 64 MB of RAM free and the harness killed a background task. Same footprint here.
+seq 0 19 | xargs -P 4 -I{} sh -c \
   'FX_COST_TABLE=results/cost_table_h22.csv python3 code/nnfxnullrun2.py --run {} > results/chainlogs/booknull2_{}.log 2>&1 || echo "$(date +%H:%M:%S) FAIL run {}" >> results/chainlogs/booknull2.log'
 ND=$(ls results/nnfx/books/null/comb_*.csv 2>/dev/null | wc -l | tr -d ' ')
 NE=$(ls results/nnfx/books/null/cell4_*.csv 2>/dev/null | wc -l | tr -d ' ')
