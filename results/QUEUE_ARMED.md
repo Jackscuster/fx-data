@@ -184,3 +184,67 @@ mistake than there was that night, not more. Disk is 5.7 GB free.
    workers that have not started yet would pick up the edit while the running
    ones would not — exactly the split-batch hazard that A5 exists to prevent.
 3. **Whether chains 22B and 31 are dead or parked.**
+
+---
+
+# 26 NOVEMBER, 13:45 EST — JACK'S NEW LIST, STATE OF PLAY
+
+## Running
+
+| job | pgid file | what | ETA |
+|---|---|---|---|
+| `booknull2b.sh` | `results/chainlogs/booknull2b.pgid` (69390) | item 1, family (e) against its matched null, 20 runs, 3 workers | **~17:50** |
+
+Stop with `bash code/chain/stop_chain.sh $(cat results/chainlogs/booknull2b.pgid)`.
+Never `pkill` — the classifier refuses it.
+
+## Done
+
+- **Item 2, TARGET_MAP** — `PROTOCOL` A14 and A15. The lifecycle matches
+  `r2reads.prop_run` to 4.6e-11.
+- **Item 3a to 3d, OTHER_MARKETS** — 12 instruments fetched, verified where a
+  second source is reachable, costed from named public sources with the 1x-5x
+  sweep, and the 18 declared algorithms banked on the ten costable ones with
+  zero errors.
+- **Item 4, part one** — weekly frames for all 28 pairs and the declared bank,
+  running at 13:40.
+
+## Not done, and what each needs
+
+| item | blocked on |
+|---|---|
+| 3d, the 200,000 sample on 10 instruments | the machine. Same shape of job as the FX bank; three null workers hold it until ~17:50 |
+| 3e, does fit carry off FX | 3d's sample, plus a scrambled-data null per instrument |
+| 3f, books under the five gates, instrument-group rotations | 3d and 3e |
+| 3g, the combined FX plus other-markets book | 3f |
+| 4, the 200,000 sample on weekly bars, the fit test, the books | the machine, as above |
+
+**None of these is blocked on a decision.** The engine wiring they need is
+built and tested: `nnfxmkt.frames` and `nnfxweek.weekly_frames` both feed
+`set_world`, the cost tables load, and both declared banks ran clean.
+
+## Two faults worth not repeating
+
+**A chain that did nothing and reported success.** BSD `xargs` refuses a `-I`
+replacement command over 255 bytes and `booknull2b` lost 20 runs to it with
+exit code 0. Any new chain keeps its per-item body in **its own file** and the
+`xargs` line short. `booknull2b_run.sh` is the pattern.
+
+**`bundle.py` after `r2app.py` wipes every nnfx section.** `bundle` regenerates
+`app_data.json`; `r2app` reads it, adds `l2_restart` and writes it back. The
+order is **bundle first, then r2app**, then copy to the repo root.
+
+## Still owed from before
+
+1. **The 2016-2020 confirm on `c_all_pairs` K=50** — Jack's call. The only
+   cell clearing B1 to B4 in both rotations.
+2. **The FundedTradingPlus payout schedule and the MT5 spread list** — two
+   fill-in tables, in `TARGET_MAP.md` and `OTHER_MARKETS.md`. Item 2's answer
+   and every item 3 cost number move with them.
+3. **Item 6**, the corrected cost: `code/nnfx1.py` `_cost_R` divides by
+   `l2sweep.RISK` (100) where the engine risked 200. It must become a module
+   constant read from the environment and **defaulting to the present value**,
+   so existing tables stay byte-identical. Not touched while null workers run,
+   because `nnfx1` is imported by `nnfxproto` and the unstarted workers would
+   pick up the edit while the running ones would not.
+4. **Whether chains 22B and 31 are dead or parked.**
