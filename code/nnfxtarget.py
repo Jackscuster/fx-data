@@ -52,16 +52,28 @@ EDGES = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0)
 EDGES_FINE = tuple(np.round(np.arange(0.25, 6.001, 0.125), 3))
 
 # size axis: daily volatility as a percent of the account
+# THE SIZE AXIS MUST RUN PAST THE OPTIMUM OR THE ANSWER IS THE GRID'S, NOT
+# THE MODEL'S. The first run of 2c stopped at 2.00% and all three budgets put
+# their best size AT that cap, which makes "the smallest edge reaching
+# $12,000" a statement about where the grid ended. Extended to 8% so the
+# curve is seen to turn over -- or seen not to, which is itself a finding
+# about the lifecycle and is reported as one.
 SIGMAS = (0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50,
-          0.60, 0.75, 1.00, 1.25, 1.50, 2.00)
+          0.60, 0.75, 1.00, 1.25, 1.50, 2.00,
+          2.50, 3.00, 4.00, 5.00, 6.00, 8.00)
 
 GOAL = 12000.0
+
+# A15 -- the payout schedule, the one knob that decides whether the map has an
+# interior optimum at all. (cadence in funded days, minimum funded days before
+# the FIRST withdrawal). The first entry is A14 exactly as declared.
+SCHEDULES = ((7, 0), (7, 30), (14, 0), (30, 0), (90, 0))
 
 
 # ===================== the lifecycle =====================================
 def lifecycle(R, daily_frac, trail_frac, fee=FEE, payout_share=PAYOUT_SHARE,
               payout_every=PAYOUT_EVERY, target=TARGET, start=START,
-              start_funded=False):
+              start_funded=False, min_funded_days=0):
     """R is (ndays, npath) daily returns in PERCENT. -> per-path record.
 
     ONE PYTHON ITERATION PER DAY. The order inside a day is prop_run's order:
@@ -126,7 +138,12 @@ def lifecycle(R, daily_frac, trail_frac, fee=FEE, payout_share=PAYOUT_SHARE,
             days_in_attempt = np.where(ps, 0, days_in_attempt)
 
         # --- payouts, every 7th FUNDED day, 80% of equity above the start
-        pay = funded & (fday > 0) & (fday % payout_every == 0) & (eq > start)
+        # A15: min_funded_days gates the FIRST withdrawal of an account's
+        # life. It is the rule that decides whether profit can be extracted
+        # faster than the drawdown rule can take it back, and it is swept
+        # rather than guessed.
+        pay = (funded & (fday > 0) & (fday % payout_every == 0)
+               & (fday >= min_funded_days) & (eq > start))
         if pay.any():
             take = np.where(pay, (eq - start) * payout_share, 0.0)
             paid = paid + take
@@ -166,6 +183,22 @@ def summarise(rec, nd):
 
 
 # ===================== the two return generators ========================
+def common_z(nd, npath, seed=SEED):
+    """ONE standard-normal block, reused for every (edge, size) cell.
+
+    A synthetic path is sigma * (S/sqrt(252) + Z), so a single Z serves the
+    whole map. This is common random numbers: it removes sampling noise
+    BETWEEN neighbouring cells, which is what makes a curve readable, and it
+    costs nothing in correctness because each cell is still an unbiased
+    estimate. It is declared here rather than left to be noticed.
+    """
+    return np.random.default_rng(seed).normal(0.0, 1.0, size=(nd, npath))
+
+
+def synthetic_from_z(S, sigma_pct, Z):
+    return sigma_pct * (S / np.sqrt(DAYS_YEAR) + Z)
+
+
 def synthetic(S, sigma_pct, nd, npath, rng):
     """A14.3. Normal daily returns at yearly Sharpe S and daily deviation
     sigma_pct. mu_daily = S * sigma_daily / sqrt(252), so S is exactly the
@@ -323,57 +356,74 @@ def sweep_measured(books, sigmas=SIGMAS, npath=NPATH, nd=DAYS_YEAR,
 
 
 def crossing(edges=EDGES_FINE, sigmas=SIGMAS, npath=NPATH, nd=DAYS_YEAR,
-             seed=SEED, goal=GOAL, verbose=True):
-    """2c. The smallest edge whose BEST size reaches $goal a year, per budget.
+             seed=SEED, goal=GOAL, schedules=SCHEDULES, verbose=True):
+    """2c, ACROSS THE PAYOUT SCHEDULE -- see PROTOCOL A15.
 
-    The best size is read off the curve; it is not a recommendation, which is
-    what Jack asked for. The breach rate AT that size is reported beside it so
-    the number cannot be read without its cost.
+    Under A14 as declared (cadence 7, no minimum) net dollars rise
+    monotonically in size with no turning point, so "the smallest edge
+    reaching $goal" is a statement about where the grid stopped. That row is
+    still reported, labelled as a boundary. The other schedules have interior
+    optima and are the honest reading.
     """
+    Z = common_z(nd, npath, seed)
     rows = []
     for S in edges:
-        rng = np.random.default_rng(seed + int(S * 1000))
         for sig in sigmas:
-            R = synthetic(S, sig, nd, npath, rng)
+            R = synthetic_from_z(S, sig, Z)
             for nm, dfr, tfr in BUDGETS:
-                rec = lifecycle(R, dfr, tfr)
-                rows.append(dict(edge_sharpe=S, sigma_daily_pct=sig,
-                                 budget=nm, **summarise(rec, nd)))
-        if verbose and abs(S * 8 - round(S * 8)) < 1e-9 and \
-                abs(S - round(S)) < 1e-9:
+                for (ev, mf) in schedules:
+                    rec = lifecycle(R, dfr, tfr, payout_every=ev,
+                                    min_funded_days=mf)
+                    rows.append(dict(edge_sharpe=S, sigma_daily_pct=sig,
+                                     budget=nm, payout_every=ev,
+                                     min_funded_days=mf,
+                                     schedule='%dd/min%dd' % (ev, mf),
+                                     **summarise(rec, nd)))
+        if verbose and abs(S - round(S)) < 1e-9:
             print('  fine grid through edge %.2f' % S, flush=True)
     F = pd.DataFrame(rows)
     best = (F.sort_values('net_per_year', ascending=False)
-             .groupby(['edge_sharpe', 'budget'], as_index=False).first())
+             .groupby(['edge_sharpe', 'budget', 'schedule'], as_index=False)
+             .first())
+    smax = max(sigmas)
     out = []
     for nm, _d, _t in BUDGETS:
-        q = best[(best.budget == nm) & (best.net_per_year >= goal)]
-        q = q.sort_values('edge_sharpe')
-        if len(q):
-            r = q.iloc[0]
-            out.append(dict(budget=nm, reaches_goal=1,
-                            smallest_edge=float(r.edge_sharpe),
-                            at_sigma_daily_pct=float(r.sigma_daily_pct),
-                            net_per_year=float(r.net_per_year),
-                            p_breach_funded_in_year=float(
-                                r.p_breach_funded_in_year),
-                            p_pass_eval=float(r.p_pass_eval),
-                            median_days_to_pass=float(r.median_days_to_pass),
-                            fees_per_year=float(r.fees_per_year),
-                            payout_per_year=float(r.payout_per_year)))
-        else:
-            b = best[best.budget == nm].sort_values(
-                'net_per_year', ascending=False).iloc[0]
-            out.append(dict(budget=nm, reaches_goal=0,
-                            smallest_edge=np.nan,
-                            at_sigma_daily_pct=float(b.sigma_daily_pct),
-                            net_per_year=float(b.net_per_year),
-                            p_breach_funded_in_year=float(
-                                b.p_breach_funded_in_year),
-                            p_pass_eval=float(b.p_pass_eval),
-                            median_days_to_pass=float(b.median_days_to_pass),
-                            fees_per_year=float(b.fees_per_year),
-                            payout_per_year=float(b.payout_per_year)))
+        for (ev, mf) in schedules:
+            sch = '%dd/min%dd' % (ev, mf)
+            b = best[(best.budget == nm) & (best.schedule == sch)]
+            q = b[b.net_per_year >= goal].sort_values('edge_sharpe')
+            if len(q):
+                r = q.iloc[0]
+                out.append(dict(budget=nm, schedule=sch, reaches_goal=1,
+                                smallest_edge=float(r.edge_sharpe),
+                                at_sigma_daily_pct=float(r.sigma_daily_pct),
+                                at_grid_edge=int(
+                                    abs(r.sigma_daily_pct - smax) < 1e-9),
+                                net_per_year=float(r.net_per_year),
+                                p_breach_funded_in_year=float(
+                                    r.p_breach_funded_in_year),
+                                p_pass_eval=float(r.p_pass_eval),
+                                median_days_to_pass=float(
+                                    r.median_days_to_pass),
+                                fees_per_year=float(r.fees_per_year),
+                                payout_per_year=float(r.payout_per_year),
+                                attempts_per_year=float(r.attempts_per_year)))
+            else:
+                r = b.sort_values('net_per_year', ascending=False).iloc[0]
+                out.append(dict(budget=nm, schedule=sch, reaches_goal=0,
+                                smallest_edge=np.nan,
+                                at_sigma_daily_pct=float(r.sigma_daily_pct),
+                                at_grid_edge=int(
+                                    abs(r.sigma_daily_pct - smax) < 1e-9),
+                                net_per_year=float(r.net_per_year),
+                                p_breach_funded_in_year=float(
+                                    r.p_breach_funded_in_year),
+                                p_pass_eval=float(r.p_pass_eval),
+                                median_days_to_pass=float(
+                                    r.median_days_to_pass),
+                                fees_per_year=float(r.fees_per_year),
+                                payout_per_year=float(r.payout_per_year),
+                                attempts_per_year=float(r.attempts_per_year)))
     return F, best, pd.DataFrame(out)
 
 
@@ -498,20 +548,62 @@ def target_md(SY, ME, FINE, BEST, CROSS, selftest):
     L.append('## 2c — the smallest edge reaching $%s a year on one account'
              % '{:,.0f}'.format(GOAL))
     L.append('')
-    L.append('| budget | reaches it | smallest edge | at size (daily σ, %) | '
-             'net/yr there | P(breach funded) there | P(pass) | median days '
-             'to pass |')
-    L.append('|---|---|---:|---:|---:|---:|---:|---:|')
-    for _i, r in CROSS.iterrows():
-        L.append('| %s | %s | %s | %.2f | %s | %.3f | %.3f | %s |'
-                 % (r.budget, 'yes' if r.reaches_goal else '**no**',
-                    _f(r.smallest_edge, 3), r.at_sigma_daily_pct,
-                    _d(r.net_per_year), r.p_breach_funded_in_year,
-                    r.p_pass_eval, _f(r.median_days_to_pass, 0)))
+    L.append('**Read `PROTOCOL.md` A15 before this table.** Under A14 exactly '
+             'as declared — withdrawals every 7 funded days with no minimum — '
+             'net dollars a year rise **monotonically in size with no turning '
+             'point**, so the answer is wherever the grid stopped. Those rows '
+             'are marked `at grid edge` and are a property of the rules, not '
+             'a finding about the edge. The schedules with a minimum, or a '
+             'slower cadence, have genuine interior optima and are the honest '
+             'reading.')
     L.append('')
-    L.append('**No size is recommended, as Jack asked.** The best size in the '
-             'table above is the argmax of a curve, printed with the breach '
-             'rate it carries so the two cannot be separated.')
+    L.append('| budget | payout schedule | reaches it | smallest edge | '
+             'at size (daily σ, %) | at grid edge? | net/yr there | '
+             'P(breach funded) | attempts/yr | fees/yr | payout/yr |')
+    L.append('|---|---|---|---:|---:|:--:|---:|---:|---:|---:|---:|')
+    for _i, r in CROSS.iterrows():
+        L.append('| %s | %s | %s | %s | %.2f | %s | %s | %.3f | %.1f | %s | %s |'
+                 % (r.budget, r.schedule,
+                    'yes' if r.reaches_goal else '**no**',
+                    _f(r.smallest_edge, 3), r.at_sigma_daily_pct,
+                    '**yes**' if r.at_grid_edge else 'no',
+                    _d(r.net_per_year), r.p_breach_funded_in_year,
+                    r.attempts_per_year, _d(r.fees_per_year),
+                    _d(r.payout_per_year)))
+    L.append('')
+    L.append('### What the payout schedule is worth, at a fixed edge of 1.0')
+    L.append('')
+    L.append('| budget | payout schedule | best size (daily σ, %) | '
+             'net/yr | P(breach funded) | interior optimum? |')
+    L.append('|---|---|---:|---:|---:|:--:|')
+    b1 = BEST[np.isclose(BEST.edge_sharpe, 1.0)]
+    smax = max(SIGMAS)
+    for _i, r in b1.sort_values(['budget', 'payout_every',
+                                'min_funded_days']).iterrows():
+        at_edge = abs(r.sigma_daily_pct - smax) < 1e-9
+        L.append('| %s | %s | %.2f | %s | %.3f | %s |'
+                 % (r.budget, r.schedule, r.sigma_daily_pct,
+                    _d(r.net_per_year), r.p_breach_funded_in_year,
+                    'no — **grid edge**' if at_edge else 'yes'))
+    L.append('')
+    L.append('**No size is recommended, as Jack asked.** The best size in '
+             'the tables above is the argmax of a curve, printed with the '
+             'breach rate and the fee bill it carries so the three cannot be '
+             'separated.')
+    L.append('')
+    L.append('### For Jack to fill in — the real payout schedule')
+    L.append('')
+    L.append('The drawdown budgets are already in the model and they do NOT '
+             'decide the answer. The payout schedule does. These are the '
+             'three numbers to read off the FundedTradingPlus account:')
+    L.append('')
+    L.append('| rule | value on the account | used above |')
+    L.append('|---|---|---|')
+    L.append('| funded days between withdrawals | | 7, 14, 30, 90 swept |')
+    L.append('| minimum funded days before the first withdrawal | | '
+             '0 and 30 swept |')
+    L.append('| minimum profit before a withdrawal is allowed | | '
+             'none modelled — **flagged as a gap** |')
     L.append('')
     L.append('## Provenance')
     L.append('')

@@ -1,0 +1,27 @@
+  lifecycle vs prop_run:
+    eval pass day            lifecycle      31.0000  prop_run      31.0000  diff 0.00e+00
+    daily breach day         lifecycle      11.0000  prop_run      11.0000  diff 0.00e+00
+    daily breach counted     lifecycle       1.0000  prop_run       1.0000  diff 0.00e+00
+    trailing breach counted  lifecycle       1.0000  prop_run       1.0000  diff 0.00e+00
+    funded payout            lifecycle    7698.9370  prop_run    7698.9370  diff 4.64e-11
+  synthetic sweep (2a, 2b)
+  edge 0.25 done (budget sizes: team1 0.245%, internal 0.368%, firm 0.409%)
+  edge 0.50 done (budget sizes: team1 0.264%, internal 0.397%, firm 0.441%)
+  edge 0.75 done (budget sizes: team1 0.281%, internal 0.421%, firm 0.468%)
+  edge 1.00 done (budget sizes: team1 0.309%, internal 0.463%, firm 0.515%)
+  edge 1.50 done (budget sizes: team1 0.348%, internal 0.522%, firm 0.580%)
+  edge 2.00 done (budget sizes: team1 0.389%, internal 0.583%, firm 0.648%)
+  measured books
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  c_all_pairs_K50_R1_scored_h2: 1297 days, R +1.668, sleeves 555
+  c_all_pairs_K50_R2_scored_h1: 1565 days, R +2.864, sleeves 500
+  c_all_pairs_K50_R1_scored_h2: 1297 days, daily sd 0.0523%, implied yearly edge 0.390
+  c_all_pairs_K50_R2_scored_h1: 1565 days, daily sd 0.0745%, implied yearly edge 0.390
+  fine edge grid (2c), 47 edges
+  fine grid through edge 1.00
+  fine grid through edge 2.00
+  fine grid through edge 3.00
+  fine grid through edge 4.00
+  fine grid through edge 5.00
+  fine grid through edge 6.00
+  TARGET_MAP.md written, 3.8 min

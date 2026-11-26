@@ -3,3 +3,17 @@
     bnull2_000 100000/200000  484/s  eta 3.4 min
     bnull2_000 150000/200000  513/s  eta 1.6 min
     bnull2_000 200000/200000  528/s  eta 0.0 min
+  bnull2_000: 374465 algorithms, 11.8 min
+    bnull2_000 bank pair 1/28 AUDCAD, 1.0 min
+    bnull2_000 bank pair 2/28 AUDCHF, 2.0 min
+    bnull2_000 bank pair 3/28 AUDJPY, 3.0 min
+    bnull2_000 bank pair 4/28 AUDNZD, 4.0 min
+    bnull2_000 bank pair 5/28 AUDUSD, 4.9 min
+    bnull2_000 bank pair 6/28 CADCHF, 5.9 min
+    bnull2_000 bank pair 7/28 CADJPY, 7.0 min
+    bnull2_000 bank pair 8/28 CHFJPY, 8.0 min
+    bnull2_000 bank pair 9/28 EURAUD, 8.9 min
+    bnull2_000 bank pair 10/28 EURCAD, 9.9 min
+    bnull2_000 bank pair 11/28 EURCHF, 10.9 min
+    bnull2_000 bank pair 12/28 EURGBP, 11.9 min
+    bnull2_000 bank pair 13/28 EURJPY, 12.9 min

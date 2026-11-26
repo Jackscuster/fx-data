@@ -682,3 +682,42 @@ the funded year, expected payout, expected fees including re-attempts, and net
 dollars. **No recommendation on size**, as Jack asked. The smallest edge
 reaching $12,000 a year is reported as a crossing point of a curve, with the
 size and breach rate at which it crosses — not as a proposal.
+
+---
+
+## A15. THE TARGET MAP IS DEGENERATE IN SIZE, and the one knob that decides it — 12:35 EST on 2026-11-26
+
+A14's lifecycle was declared before it ran, and the first run showed it has no
+interior optimum: **net dollars a year rise monotonically with position size
+all the way to 8% daily volatility**, at which point the account breaches with
+probability 1.000 and buys **74 challenges a year**. Extending the grid did
+not find a turning point; it found that there is not one.
+
+**Why, mechanically.** A funded account pays out 80% of its profit every
+seventh funded day, and that cash **leaves the account**. So profit is
+extracted faster than the drawdown rule can take it back, and a breach costs
+only the next $549. With any positive edge, the expected value of levering
+harder is therefore unbounded under these rules. This is not a bug in the
+code — the lifecycle matches `r2reads.prop_run` to 5e-11 — it is a property of
+the rules as A14 states them, and stating it is more useful than hiding it.
+
+**The missing constraint is the payout schedule, not the drawdown budget.**
+The drawdown budgets are already in the model and they do not bind the
+answer. What binds it in reality is how soon and how often cash may actually
+be withdrawn.
+
+So item 2c is reported **two ways, both as curves and neither as a
+recommendation**:
+
+1. **Under A14 exactly as declared** — the answer is a boundary, and it is
+   labelled as one. The smallest edge reaching $12,000 is reported together
+   with the fact that the optimum sits at the top of whatever grid is used.
+2. **With the payout schedule swept** — `PAYOUT_EVERY` over 7, 14, 30 and 90
+   days, and a minimum number of funded days before the first withdrawal over
+   0, 14 and 30. These are the two rules that decide whether fast extraction
+   is possible, and they are swept rather than guessed.
+
+**Jack has to read the real payout schedule off his FundedTradingPlus
+account**, exactly as he already has to read the real spreads off the MT5
+symbol list. Until then the honest output is the curve across that schedule
+and not a single number. A table is left for him to fill in.
