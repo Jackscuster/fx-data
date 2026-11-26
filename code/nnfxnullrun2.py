@@ -108,16 +108,33 @@ def one(k, verbose=True):
             rows = BO.build(bank, allc, W, declared=D, light_only='mid')
             sweep = pd.DataFrame(rows)
             kcols = ['rotation', 'family', 'K', 'share', 'mode']
-            j = chain1.merge(sweep, on=kcols, suffixes=('_c1', '_c2'))
-            assert len(j) == len(chain1), \
-                ('rebuilt sweep has %d of chain 1\'s %d rows on run %d'
-                 % (len(j), len(chain1), k))
+            # THE CHECK IS ON FAMILIES b AND c, WHICH ARE THE ONLY TWO
+            # pick_winner READS. a_declared is deliberately left out of the
+            # row-count assertion: its K is not a setting but a COUNT of how
+            # many of the 18 declared algorithms were admitted, so keying it
+            # on K is brittle by nature. Within one world it should still
+            # agree, so it is checked and PRINTED rather than made fatal --
+            # a mismatch there must not throw away 40 minutes of bank over
+            # something family d never looks at.
+            BC = ('b_per_pair', 'c_all_pairs')
+            c1 = chain1[chain1.family.isin(BC)]
+            sw = sweep[sweep.family.isin(BC)]
+            j = c1.merge(sw, on=kcols, suffixes=('_c1', '_c2'))
+            assert len(j) == len(c1), \
+                ('rebuilt sweep has %d of chain 1\'s %d b/c rows on run %d'
+                 % (len(j), len(c1), k))
             dR = float(np.nanmax(np.abs(j.R_c1 - j.R_c2)))
             assert dR < 1e-6, \
                 ('run %d is NOT chain 1\'s world: worst R difference over '
-                 '%d book cells is %.3e' % (k, len(j), dR))
-            print('  null2 %d sweep matches chain 1 to %.2e over %d cells, '
-                  '%.1f min' % (k, dR, len(j), (time.time() - t0) / 60),
+                 '%d b/c book cells is %.3e' % (k, len(j), dR))
+            ja = chain1[chain1.family == 'a_declared'].merge(
+                sweep[sweep.family == 'a_declared'], on=kcols,
+                suffixes=('_c1', '_c2'))
+            dA = (float(np.nanmax(np.abs(ja.R_c1 - ja.R_c2)))
+                  if len(ja) else np.nan)
+            print('  null2 %d sweep matches chain 1 to %.2e over %d b/c '
+                  'cells (a_declared: %d rows joined, worst %.2e), %.1f min'
+                  % (k, dR, len(j), len(ja), dA, (time.time() - t0) / 60),
                   flush=True)
             rd = CB.build_d(bank, allc, W, pairs, D, sweep, verbose=False)
             Xd = pd.DataFrame(rd); Xd['run'] = k; Xd['seed'] = seed

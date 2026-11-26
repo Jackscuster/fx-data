@@ -45,22 +45,12 @@ echo "$(ts) START booknull2b -- 20 runs, 3 workers, e before d, fail fast" >> $L
 # 7680 MB with 64 MB of RAM free and the harness killed a background task. The
 # machine has since resized swap to 2048 MB total, so there is far LESS room to
 # absorb a mistake than there was that night, not more.
-seq 0 19 | xargs -P 3 -I{} sh -c '
-  if [ -f results/chainlogs/booknull2b.abort ]; then
-    echo "$(date +%H:%M:%S) SKIP run {} -- aborted" >> results/chainlogs/booknull2b.log
-    exit 0
-  fi
-  FX_COST_TABLE=results/cost_table_h22.csv \
-    python3 code/nnfxnullrun2.py --run {} > results/chainlogs/booknull2b_{}.log 2>&1
-  if [ $? -ne 0 ]; then
-    touch results/chainlogs/booknull2b.abort
-    {
-      echo "$(date +%H:%M:%S) FAIL run {} -- ABORTING THE CHAIN"
-      echo "---- last 15 lines of booknull2b_{}.log ----"
-      tail -15 results/chainlogs/booknull2b_{}.log
-      echo "---- end ----"
-    } >> results/chainlogs/booknull2b.log
-  fi'
+# THE BODY LIVES IN booknull2b_run.sh. BSD xargs refuses a -I replacement
+# command over 255 bytes -- "command line cannot be assembled, too long" --
+# and on 26 Nov at 11:54 it refused this one, ran nothing, and let the chain
+# report "DONE -- 0 of 20" after one second with exit code 0. A silent
+# no-op is the worst failure mode there is, so the command line stays short.
+seq 0 19 | xargs -P 3 -I{} sh code/chain/booknull2b_run.sh {}
 
 ND=$(ls results/nnfx/books/null/comb_*.csv 2>/dev/null | wc -l | tr -d ' ')
 NE=$(ls results/nnfx/books/null/cell4_*.csv 2>/dev/null | wc -l | tr -d ' ')
