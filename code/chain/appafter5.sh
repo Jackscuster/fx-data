@@ -33,7 +33,14 @@ fi
 grep -E "reports|nnfxfinal|bankev" "$Q" >> $LOG
 
 echo "$(ts) rebuilding app_data.json" >> $LOG
-python3 code/r2app.py >> $LOG 2>&1 && python3 code/bundle.py >> $LOG 2>&1 \
+# BUNDLE FIRST, THEN r2app. bundle.py REGENERATES results/app_data.json from
+# signals.json, while r2app.py READS that file, adds its l2_restart section
+# and writes it back. Run the other way round -- as this script did at 11:54
+# on 26 Nov -- and bundle wipes every nnfx section r2app just wired in, so
+# the app silently loses the books, winners and amendment tabs while both
+# commands report success. CLAUDE.md's note that bundle must never read and
+# write the same file is the same hazard from the other side.
+python3 code/bundle.py >> $LOG 2>&1 && python3 code/r2app.py >> $LOG 2>&1 \
   && cp results/app_data.json app_data.json \
   && echo "$(ts) app_data.json rebuilt, $(wc -c < app_data.json) bytes" >> $LOG \
   || echo "$(ts) APP REBUILD FAILED" >> $LOG
