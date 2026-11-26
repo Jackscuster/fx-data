@@ -1,0 +1,12 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    bnull006 discovery 50000/200000  365/s  eta 6.8 min
+    bnull006 discovery 100000/200000  434/s  eta 3.8 min
+    bnull006 discovery 150000/200000  450/s  eta 1.9 min
+    bnull006 discovery 200000/200000  466/s  eta 0.0 min
+  bnull006: discovery done 7.2 min, best +12.2325
+  bnull006: local search 179339 evaluations, 379301 algorithms in the bank list, 13.6 min
+    bnull006 bank pair 1/28 AUDCAD, 1.0 min
+    bnull006 bank pair 2/28 AUDCHF, 2.2 min
+    bnull006 bank pair 3/28 AUDJPY, 3.3 min
+    bnull006 bank pair 4/28 AUDNZD, 4.3 min
+    bnull006 bank pair 5/28 AUDUSD, 5.3 min

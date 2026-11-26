@@ -1,0 +1,67 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    shard 6 CADJPY 25000/384334  3358/s  eta 7.5 min
+    shard 6 CADJPY 50000/384334  4354/s  eta 5.7 min
+    shard 6 CADJPY 75000/384334  4845/s  eta 5.0 min
+    shard 6 CADJPY 100000/384334  5137/s  eta 4.7 min
+    shard 6 CADJPY 125000/384334  5316/s  eta 4.4 min
+    shard 6 CADJPY 150000/384334  5442/s  eta 4.2 min
+    shard 6 CADJPY 175000/384334  5541/s  eta 4.1 min
+    shard 6 CADJPY 200000/384334  5607/s  eta 4.0 min
+    shard 6 CADJPY 225000/384334  5638/s  eta 3.9 min
+    shard 6 CADJPY 250000/384334  5670/s  eta 3.8 min
+    shard 6 CADJPY 275000/384334  5708/s  eta 3.7 min
+    shard 6 CADJPY 300000/384334  5742/s  eta 3.6 min
+    shard 6 CADJPY 325000/384334  5772/s  eta 3.5 min
+    shard 6 CADJPY 350000/384334  5798/s  eta 3.4 min
+    shard 6 CADJPY 375000/384334  5815/s  eta 3.3 min
+    shard 6 pair CADJPY done (1 of 4), 1.1 min
+    shard 6 EURNZD 25000/384334  5611/s  eta 3.4 min
+    shard 6 EURNZD 50000/384334  5648/s  eta 3.3 min
+    shard 6 EURNZD 75000/384334  5677/s  eta 3.2 min
+    shard 6 EURNZD 100000/384334  5708/s  eta 3.1 min
+    shard 6 EURNZD 125000/384334  5733/s  eta 3.0 min
+    shard 6 EURNZD 150000/384334  5757/s  eta 2.9 min
+    shard 6 EURNZD 175000/384334  5780/s  eta 2.8 min
+    shard 6 EURNZD 200000/384334  5802/s  eta 2.7 min
+    shard 6 EURNZD 225000/384334  5812/s  eta 2.7 min
+    shard 6 EURNZD 250000/384334  5814/s  eta 2.6 min
+    shard 6 EURNZD 275000/384334  5825/s  eta 2.5 min
+    shard 6 EURNZD 300000/384334  5836/s  eta 2.4 min
+    shard 6 EURNZD 325000/384334  5849/s  eta 2.4 min
+    shard 6 EURNZD 350000/384334  5857/s  eta 2.3 min
+    shard 6 EURNZD 375000/384334  5864/s  eta 2.2 min
+    shard 6 pair EURNZD done (2 of 4), 2.2 min
+    shard 6 GBPUSD 25000/384334  5749/s  eta 2.2 min
+    shard 6 GBPUSD 50000/384334  5761/s  eta 2.1 min
+    shard 6 GBPUSD 75000/384334  5775/s  eta 2.0 min
+    shard 6 GBPUSD 100000/384334  5783/s  eta 1.9 min
+    shard 6 GBPUSD 125000/384334  5791/s  eta 1.9 min
+    shard 6 GBPUSD 150000/384334  5800/s  eta 1.8 min
+    shard 6 GBPUSD 175000/384334  5809/s  eta 1.7 min
+    shard 6 GBPUSD 200000/384334  5815/s  eta 1.6 min
+    shard 6 GBPUSD 225000/384334  5818/s  eta 1.6 min
+    shard 6 GBPUSD 250000/384334  5822/s  eta 1.5 min
+    shard 6 GBPUSD 275000/384334  5827/s  eta 1.4 min
+    shard 6 GBPUSD 300000/384334  5832/s  eta 1.3 min
+    shard 6 GBPUSD 325000/384334  5835/s  eta 1.3 min
+    shard 6 GBPUSD 350000/384334  5840/s  eta 1.2 min
+    shard 6 GBPUSD 375000/384334  5842/s  eta 1.1 min
+    shard 6 pair GBPUSD done (3 of 4), 3.3 min
+    shard 6 USDJPY 25000/384334  5769/s  eta 1.0 min
+    shard 6 USDJPY 50000/384334  5777/s  eta 1.0 min
+    shard 6 USDJPY 75000/384334  5786/s  eta 0.9 min
+    shard 6 USDJPY 100000/384334  5795/s  eta 0.8 min
+    shard 6 USDJPY 125000/384334  5803/s  eta 0.7 min
+    shard 6 USDJPY 150000/384334  5807/s  eta 0.7 min
+    shard 6 USDJPY 175000/384334  5812/s  eta 0.6 min
+    shard 6 USDJPY 200000/384334  5820/s  eta 0.5 min
+    shard 6 USDJPY 225000/384334  5823/s  eta 0.5 min
+    shard 6 USDJPY 250000/384334  5828/s  eta 0.4 min
+    shard 6 USDJPY 275000/384334  5833/s  eta 0.3 min
+    shard 6 USDJPY 300000/384334  5838/s  eta 0.2 min
+    shard 6 USDJPY 325000/384334  5844/s  eta 0.2 min
+    shard 6 USDJPY 350000/384334  5849/s  eta 0.1 min
+    shard 6 USDJPY 375000/384334  5852/s  eta 0.0 min
+    shard 6 pair USDJPY done (4 of 4), 4.4 min
+  shard 6 of 7 written: 384334 algorithms x 4 pairs in 4.4 min
+DONE nnfxsleeves in 4.4 min

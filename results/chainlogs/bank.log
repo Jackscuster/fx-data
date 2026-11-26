@@ -1,0 +1,7 @@
+[19:28:05] START bank
+[19:32:36] shards done
+[19:32:51] OK merge
+[19:32:51] DONE bank
+ distinct costs, median 2.4 bp round trip)
+  sleeve_bank_real.npz: 384334 algorithms x 28 pairs x 2 windows, 208 MB
+DONE nnfxsleeves in 0.2 min

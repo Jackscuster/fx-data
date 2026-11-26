@@ -1,0 +1,4 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    declared nudge R1 done
+    declared nudge R2 done
+  books_declared_nudge.csv 24 rows

@@ -1,0 +1,41 @@
+knob,direction,value,R_total,skipped,cand
+c1:fisher_transform_signals,down,"{""length"": 10.0}",127.33582847123174,0,S3_01
+c1:fisher_transform_signals,up,"{""length"": 40.0}",86.84165151633519,0,S3_01
+c2:parabolic_sar_signals,down,"{""sar_start"": 0.08, ""sar_increment"": 0.08}",88.12124458607059,0,S3_01
+c2:parabolic_sar_signals,up,"{""sar_start"": 0.02, ""sar_increment"": 0.02}",126.34848767289057,0,S3_01
+vol:ttm_squeeze_volume_signals,down,"{""bb_length"": 20.0}",48.70551913649583,0,S3_01
+vol:ttm_squeeze_volume_signals,up,"{""bb_length"": 80.0}",133.8267540664598,0,S3_01
+base:vidya,down,"{""vda_length"": 2.0}",146.81258530817001,0,S3_01
+base:vidya,up,"{""vda_length"": 4.0}",22.194652059805453,0,S3_01
+exit:relative_vigor_index_exit,down,"{""len"": 10.0}",122.77744221294265,0,S3_01
+exit:relative_vigor_index_exit,up,"{""len"": 40.0}",90.55952588911721,0,S3_01
+risk:atr_len,down,7,133.18567825181515,0,S3_01
+risk:atr_len,up,28,110.11904105464556,0,S3_01
+risk:atr_mult,down,0.75,94.73440389289692,0,S3_01
+risk:atr_mult,up,1.25,136.54124663756528,0,S3_01
+risk:tp_mult,down,1.0,114.59260505914276,0,S3_01
+risk:tp_mult,up,2.0,166.82393067934194,0,S3_01
+risk:max_atr_dist,down,1.0,101.0988492402894,0,S3_01
+risk:max_atr_dist,up,2.0,130.24550172838732,0,S3_01
+risk:bridge_bars,down,5,126.80250372502687,0,S3_01
+risk:bridge_bars,up,9,125.12981312246629,0,S3_01
+c1:fisher_transform_signals,down,"{""length"": 10.0}",131.54624223064414,0,S3_02
+c1:fisher_transform_signals,up,"{""length"": 40.0}",118.92324900990286,0,S3_02
+c2:parabolic_sar_signals,down,"{""sar_start"": 0.08, ""sar_increment"": 0.08}",127.82137077610747,0,S3_02
+c2:parabolic_sar_signals,up,"{""sar_start"": 0.02, ""sar_increment"": 0.02}",148.67215705624508,0,S3_02
+vol:mass_index_volume_signals,down,"{""length"": 25.0}",0.8034146887814515,0,S3_02
+vol:mass_index_volume_signals,up,"{""length"": 100.0}",129.8690424558458,0,S3_02
+base:vidya,down,collapses onto the candidate,,1,S3_02
+base:vidya,up,"{""vda_length"": 4.0}",32.77754729138081,0,S3_02
+exit:relative_vigor_index_exit,down,"{""len"": 10.0}",94.61505657600534,0,S3_02
+exit:relative_vigor_index_exit,up,"{""len"": 40.0}",83.57688840962223,0,S3_02
+risk:atr_len,down,7,136.20044957383487,0,S3_02
+risk:atr_len,up,28,110.3009706079014,0,S3_02
+risk:atr_mult,down,0.75,45.001622492245716,0,S3_02
+risk:atr_mult,up,1.25,137.46829538083927,0,S3_02
+risk:tp_mult,down,1.0,72.5842870533662,0,S3_02
+risk:tp_mult,up,2.0,111.61713538268481,0,S3_02
+risk:max_atr_dist,down,1.0,107.01669128126358,0,S3_02
+risk:max_atr_dist,up,2.0,120.92468072665979,0,S3_02
+risk:bridge_bars,down,5,147.56831390523587,0,S3_02
+risk:bridge_bars,up,9,155.2112933853461,0,S3_02

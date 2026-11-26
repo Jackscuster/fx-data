@@ -1,0 +1,67 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    shard 4 AUDUSD 25000/384334  3360/s  eta 7.5 min
+    shard 4 AUDUSD 50000/384334  4371/s  eta 5.7 min
+    shard 4 AUDUSD 75000/384334  4867/s  eta 5.0 min
+    shard 4 AUDUSD 100000/384334  5161/s  eta 4.6 min
+    shard 4 AUDUSD 125000/384334  5343/s  eta 4.4 min
+    shard 4 AUDUSD 150000/384334  5473/s  eta 4.2 min
+    shard 4 AUDUSD 175000/384334  5573/s  eta 4.1 min
+    shard 4 AUDUSD 200000/384334  5642/s  eta 4.0 min
+    shard 4 AUDUSD 225000/384334  5675/s  eta 3.9 min
+    shard 4 AUDUSD 250000/384334  5711/s  eta 3.8 min
+    shard 4 AUDUSD 275000/384334  5747/s  eta 3.7 min
+    shard 4 AUDUSD 300000/384334  5780/s  eta 3.6 min
+    shard 4 AUDUSD 325000/384334  5807/s  eta 3.5 min
+    shard 4 AUDUSD 350000/384334  5832/s  eta 3.4 min
+    shard 4 AUDUSD 375000/384334  5849/s  eta 3.3 min
+    shard 4 pair AUDUSD done (1 of 4), 1.1 min
+    shard 4 EURGBP 25000/384334  5628/s  eta 3.3 min
+    shard 4 EURGBP 50000/384334  5651/s  eta 3.3 min
+    shard 4 EURGBP 75000/384334  5668/s  eta 3.2 min
+    shard 4 EURGBP 100000/384334  5688/s  eta 3.1 min
+    shard 4 EURGBP 125000/384334  5706/s  eta 3.0 min
+    shard 4 EURGBP 150000/384334  5721/s  eta 2.9 min
+    shard 4 EURGBP 175000/384334  5736/s  eta 2.8 min
+    shard 4 EURGBP 200000/384334  5751/s  eta 2.8 min
+    shard 4 EURGBP 225000/384334  5742/s  eta 2.7 min
+    shard 4 EURGBP 250000/384334  5747/s  eta 2.6 min
+    shard 4 EURGBP 275000/384334  5751/s  eta 2.5 min
+    shard 4 EURGBP 300000/384334  5760/s  eta 2.5 min
+    shard 4 EURGBP 325000/384334  5763/s  eta 2.4 min
+    shard 4 EURGBP 350000/384334  5768/s  eta 2.3 min
+    shard 4 EURGBP 375000/384334  5768/s  eta 2.2 min
+    shard 4 pair EURGBP done (2 of 4), 2.2 min
+    shard 4 GBPJPY 25000/384334  5652/s  eta 2.2 min
+    shard 4 GBPJPY 50000/384334  5663/s  eta 2.1 min
+    shard 4 GBPJPY 75000/384334  5675/s  eta 2.0 min
+    shard 4 GBPJPY 100000/384334  5686/s  eta 2.0 min
+    shard 4 GBPJPY 125000/384334  5695/s  eta 1.9 min
+    shard 4 GBPJPY 150000/384334  5703/s  eta 1.8 min
+    shard 4 GBPJPY 175000/384334  5710/s  eta 1.7 min
+    shard 4 GBPJPY 200000/384334  5719/s  eta 1.7 min
+    shard 4 GBPJPY 225000/384334  5723/s  eta 1.6 min
+    shard 4 GBPJPY 250000/384334  5725/s  eta 1.5 min
+    shard 4 GBPJPY 275000/384334  5730/s  eta 1.4 min
+    shard 4 GBPJPY 300000/384334  5738/s  eta 1.4 min
+    shard 4 GBPJPY 325000/384334  5746/s  eta 1.3 min
+    shard 4 GBPJPY 350000/384334  5750/s  eta 1.2 min
+    shard 4 GBPJPY 375000/384334  5753/s  eta 1.1 min
+    shard 4 pair GBPJPY done (3 of 4), 3.3 min
+    shard 4 USDCAD 25000/384334  5680/s  eta 1.1 min
+    shard 4 USDCAD 50000/384334  5689/s  eta 1.0 min
+    shard 4 USDCAD 75000/384334  5698/s  eta 0.9 min
+    shard 4 USDCAD 100000/384334  5705/s  eta 0.8 min
+    shard 4 USDCAD 125000/384334  5710/s  eta 0.8 min
+    shard 4 USDCAD 150000/384334  5716/s  eta 0.7 min
+    shard 4 USDCAD 175000/384334  5723/s  eta 0.6 min
+    shard 4 USDCAD 200000/384334  5732/s  eta 0.5 min
+    shard 4 USDCAD 225000/384334  5735/s  eta 0.5 min
+    shard 4 USDCAD 250000/384334  5738/s  eta 0.4 min
+    shard 4 USDCAD 275000/384334  5742/s  eta 0.3 min
+    shard 4 USDCAD 300000/384334  5747/s  eta 0.2 min
+    shard 4 USDCAD 325000/384334  5752/s  eta 0.2 min
+    shard 4 USDCAD 350000/384334  5755/s  eta 0.1 min
+    shard 4 USDCAD 375000/384334  5759/s  eta 0.0 min
+    shard 4 pair USDCAD done (4 of 4), 4.4 min
+  shard 4 of 7 written: 384334 algorithms x 4 pairs in 4.5 min
+DONE nnfxsleeves in 4.5 min

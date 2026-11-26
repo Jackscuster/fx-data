@@ -1,0 +1,14 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    R1 share=0.25 done
+    R1 share=0.40 done
+    R1 share=0.60 done
+    R1 share=0.80 done
+    R1 share=1.00 done
+    R1 share=inf done
+    R2 share=0.25 done
+    R2 share=0.40 done
+    R2 share=0.60 done
+    R2 share=0.80 done
+    R2 share=1.00 done
+    R2 share=inf done
+  books_sweep_real.csv 552 rows in 4.7 min

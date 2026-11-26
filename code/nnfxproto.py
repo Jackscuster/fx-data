@@ -472,6 +472,17 @@ def amb_cached(p):
     return _AMB[k]
 
 
+# PROTOCOL.md AMENDMENT 1: Jack's item 1 names "A and B" in the sleeve bank.
+# A and B are C1+baseline MEMBERS from stages 1-3, not complete five-slot
+# algorithms -- stage 1 neutralised four slots and stage 2 three. The only way
+# their numbers are the numbers stages 1-3 reported is to run them with those
+# slots neutralised, so the sentinel name 'none' is honoured here and every
+# table that carries such a sleeve labels it NOT COMPLETE. It is never drawn
+# by a search: init_space() builds its inventories from the REGISTRY and
+# 'none' is not in it.
+NEUTRAL = 'none'
+
+
 def assemble(p, C):
     """The engine's A dict for one pair and one complete candidate.
 
@@ -484,14 +495,27 @@ def assemble(p, C):
     A['bl'] = slot_arrays(p, 'base', C['base'], C['base_params'])
     lt, st, lc, sc, tern = slot_arrays(p, 'c1', C['c1'], C['c1_params'])
     A.update(c1_lt=lt, c1_st=st, c1_lc=lc, c1_sc=sc, c1_ternary=tern)
-    _a, _b, lc2, sc2, t2 = slot_arrays(p, 'c2', C['c2'], C['c2_params'])
-    A.update(c2_lc=lc2, c2_sc=sc2, c2_ternary=t2)
-    vl, vs = slot_arrays(p, 'vol', C['vol'], C['vol_params'])
+    nb = len(A['c'])
+    if C['c2'] == NEUTRAL:
+        A.update(c2_lc=np.ones(nb, bool), c2_sc=np.ones(nb, bool),
+                 c2_ternary=False)
+    else:
+        _a, _b, lc2, sc2, t2 = slot_arrays(p, 'c2', C['c2'], C['c2_params'])
+        A.update(c2_lc=lc2, c2_sc=sc2, c2_ternary=t2)
     blk = entry_block(p, C['risk']['atr_len'])
+    if C['vol'] == NEUTRAL:
+        vl = vs = np.ones(nb, bool)
+    else:
+        vl, vs = slot_arrays(p, 'vol', C['vol'], C['vol_params'])
+    # THE FLOOR AND THE PEG GUARD STILL RIDE THE SLOT even when the volume
+    # indicator is neutral: they are engine standing rules, not a slot choice.
     A['v_ok_l'] = np.asarray(vl, bool) & ~blk
     A['v_ok_s'] = np.asarray(vs, bool) & ~blk
-    xl, xs = slot_arrays(p, 'exit', C['exit'], C['exit_params'])
-    A['x_el'] = np.asarray(xl, bool); A['x_es'] = np.asarray(xs, bool)
+    if C['exit'] == NEUTRAL:
+        A['x_el'] = np.zeros(nb, bool); A['x_es'] = np.zeros(nb, bool)
+    else:
+        xl, xs = slot_arrays(p, 'exit', C['exit'], C['exit_params'])
+        A['x_el'] = np.asarray(xl, bool); A['x_es'] = np.asarray(xs, bool)
     return A
 
 
@@ -1033,6 +1057,110 @@ def fast_obj(C, pairs, years, raw=None):
     tot = float(a.sum())
     ex = tot - float(a.max()) if len(a) else tot
     return ex / ctx['nyr'], ntr, tot
+
+
+# ---------------- the SLEEVE path: one pair at a time -------------------
+# PROTOCOL.md AMENDMENT 1, A1: a sleeve is one algorithm ON ONE PAIR. Its
+# numbers must not depend on which other pairs happen to be in the run, so
+# the day index here is the PAIR'S OWN, never a union. A book glues sleeves
+# together on a union index later; that is the book's business, not a
+# sleeve's.
+_PCTX = {}
+
+
+def pair_ctx(p, periods):
+    """Per-pair day count, cost factor, and one keep mask per named period."""
+    k = (WORLD, p, tuple((n, tuple(y)) for n, y in periods))
+    if k in _PCTX:
+        return _PCTX[k]
+    idx = pd.DatetimeIndex(pair_data(p).index)
+    yr = np.asarray(idx.year)
+    ms = []
+    for n, y in periods:
+        m = np.isin(yr, list(y))
+        ms.append((n, m, max(1, len(set(yr[m].tolist())))))
+    _PCTX[k] = dict(nd=len(idx), day_year=yr, masks=tuple(ms),
+                    f=float(S.COSTS.get(p, 0.0)))
+    return _PCTX[k]
+
+
+# the metrics a sleeve carries, in the order the bank stores them
+SLEEVE_COLS = ('R', 'R_ex_best_day', 'best_trade', 'trades', 'days_traded')
+
+
+def fast_per_pair(C, p, periods, res=None):
+    """One sleeve's numbers on every period, from ONE engine run.
+
+    Bars are daily here, so bar index IS day index -- no union map needed.
+    Returns {period_name: dict(SLEEVE_COLS)}.
+
+    A trade is an ENTRY (plan 2 writes two legs per entry); legs are grouped
+    by entry bar and direction. A trade is counted in the period its leg
+    EXITS in, so an entry whose two legs straddle a period boundary has each
+    leg counted in its own period. That is the same convention fast_obj uses
+    and it is stated because it is a choice.
+    """
+    ctx = pair_ctx(p, periods)
+    am = float(C['risk']['atr_mult'])
+    if res is None:
+        res = E.run(assemble(p, C), amb=amb_cached(p), **_kw(C))
+    out = {}
+    n = res['_n']
+    if not n:
+        for nm, _m, _ny in ctx['masks']:
+            out[nm] = dict(R=0.0, R_ex_best_day=0.0, best_trade=0.0,
+                           trades=0, days_traded=0)
+        return out
+    nd = ctx['nd']
+    xb = np.clip(res['exit_bar'][:n].astype(np.int64), 0, nd - 1)
+    eb = res['entry_bar'][:n].astype(np.int64)
+    u = np.abs(res['units'][:n]); px = np.abs(res['entry_px'][:n])
+    rg = res['r'][:n] * am / RISK_UNIT_ATR
+    cst = ctx['f'] * px * u / RISK_DOLLARS * am / RISK_UNIT_ATR
+    net = rg - cst                      # net R per LEG, charged once
+    key = eb * 4 + (res['dir'][:n].astype(np.int64) + 1)
+    for nm, m, _ny in ctx['masks']:
+        sel = m[xb]
+        if not sel.any():
+            out[nm] = dict(R=0.0, R_ex_best_day=0.0, best_trade=0.0,
+                           trades=0, days_traded=0)
+            continue
+        acc = np.zeros(nd)
+        np.add.at(acc, xb[sel], net[sel])
+        a = acc[m]
+        tot = float(a.sum())
+        ks, inv = np.unique(key[sel], return_inverse=True)
+        per_trade = np.bincount(inv, weights=net[sel])
+        out[nm] = dict(R=tot,
+                       R_ex_best_day=tot - float(a.max()),
+                       best_trade=float(per_trade.max()) if len(per_trade) else 0.0,
+                       trades=int(len(ks)),
+                       days_traded=int((a != 0).sum()))
+    return out
+
+
+def sleeve_daily(C, p, res=None):
+    """A sleeve's REALISED daily net R, as a (dates, values) pair.
+
+    The fast path's daily series -- realised on the exit day, uncapped. The
+    full path (run_candidate -> daily_of) is mark-to-market and capped and is
+    what every REPORTED book is re-scored on; this is what the K sweeps and
+    the nulls run on, because it is 300 times cheaper. Section 5 and A5.
+    """
+    idx = pd.DatetimeIndex(pair_data(p).index)
+    am = float(C['risk']['atr_mult'])
+    if res is None:
+        res = E.run(assemble(p, C), amb=amb_cached(p), **_kw(C))
+    acc = np.zeros(len(idx))
+    n = res['_n']
+    if n:
+        xb = np.clip(res['exit_bar'][:n].astype(np.int64), 0, len(idx) - 1)
+        u = np.abs(res['units'][:n]); px = np.abs(res['entry_px'][:n])
+        rg = res['r'][:n] * am / RISK_UNIT_ATR
+        f = float(S.COSTS.get(p, 0.0))
+        cst = f * px * u / RISK_DOLLARS * am / RISK_UNIT_ATR
+        np.add.at(acc, xb, rg - cst)
+    return idx, acc
 
 
 def verify_fast(C, pairs, years, tol=1e-6):

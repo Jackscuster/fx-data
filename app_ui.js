@@ -6358,6 +6358,62 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
     +'because both arms of a null comparison are charged the same way. <b>Item 5’s verdict survives in '
     +'direction:</b> roughly 1.5% a year instead of 1.135%, so a factor of about 8 from 12% instead of 10.6.</div>';
  }
+ /* ======== JACK'S CORRECTION, 25 Nov 19:20: the BOOK is the only gate.
+    PROTOCOL.md AMENDMENT 1. Member unit = one algorithm on one pair. ======== */
+ const AM=R.amendment||{};
+ if(AM.note){
+  h+='<h3>Amendment 1 \u2014 the book is the only gate</h3>';
+  h+='<div class="note">'+AM.note+'</div>';
+  h+='<div class="note"><b>What changed and what did not.</b> The definition of a complete algorithm is '
+    +'untouched \u2014 all five slots live, all three exits live, the risk plan fixed. What changed is the unit '
+    +'that gets admitted and scored: an <b>(algorithm, pair)</b> rather than an algorithm on all 28. '
+    +'<b>Nothing is rejected for being small.</b> G1 and G4 no longer apply to a sleeve or a strategy on its '
+    +'own; they became B1 and B4 on the book. Sections 1\u20139 of the protocol are left exactly as they were, '
+    +'because they are the record of what Sources 1, 2 and 3 were tested under.</div>';
+ }
+ const SB=R.sleevebank||{};
+ if(SB.note){
+  h+='<h3>Item 1 \u2014 the sleeve bank</h3>';
+  h+='<div class="note">'+SB.note+'</div>';
+  h+=tbl(SB.declared,['algo','source','complete','pair','window','R','R_ex_best_day','best_trade','best_trade_share','trades','days_traded','admitted'],'The 18 declared algorithms, per pair and window');
+  h+=tbl(SB.declared_yearly,['algo','pair','year','R','trades','R_ex_best_day'],'The declared 18, per pair per calendar year');
+  h+='<div class="note"><b>One check worth stating on its own.</b> The top-K-per-pair book holds 2,492 sleeves '
+    +'and 2,426 <i>distinct</i> algorithms, so only 66 algorithms make more than one pair\u2019s top 89 \u2014 '
+    +'against about 18 if each pair drew independently from its own admitted pool. <b>Four times chance, and '
+    +'still 97% of the book pair-idiosyncratic.</b> The independence baseline understates chance because '
+    +'candidates share slots, so this is a weak common factor and not a strong one.</div>';
+  h+=tbl(SB.overlap,['rotation','K','sleeves','distinct','repeats','expected_repeats_if_random','median_pool'],'Cross-pair overlap of the top-K lists, against chance');
+ }
+ const PF=R.pairfit||{};
+ if(PF.note){
+  h+='<h3>Item 2 \u2014 does a strategy\u2019s fit to a pair carry?</h3>';
+  h+='<div class="note">'+PF.note+'</div>';
+  h+=tbl(PF.pooled,['rotation','share','n_sleeves','rho_pooled','rho_p','rho_pair_median','n_admitted','share_pos_later','share_pos_later_baseline','mean_R_later_admitted'],'Pooled over all (algorithm, pair) sleeves');
+  h+=tbl(PF.fit,['rotation','share','pair','n_algorithms','rho','rho_p','n_admitted','share_pos_later','n_baseline','share_pos_later_baseline','mean_R_later_admitted','mean_R_later_baseline'],'Per pair');
+  h+='<div class="note"><b>Why the baseline column is the one to read.</b> A share of 48% positive-later sounds '
+    +'like a near coin flip and it is \u2014 but the number that matters is whether <i>admission</i> moved it. '
+    +'It did not: 48.3% against a 48.9% baseline in R1 and 51.3% against 53.4% in R2, at or below in both '
+    +'rotations and at every share threshold. Admitting a sleeve on six years of a pair does not make it more '
+    +'likely to work on the other six years of that same pair.</div>';
+ }
+ const BKS=R.books||{};
+ if(BKS.note){
+  h+='<h3>Item 3 \u2014 the books, and the five book gates</h3>';
+  h+='<div class="note">'+BKS.note+'</div>';
+  h+=tbl(BKS.gates,['rotation','family','K','share','mode','sleeves','R','R_per_year','dip_true','dip95','dip_binding','R_per_dip','b5_scale','b5_pct_per_year','b5_eval_days','R_ex1','R_ex5','t_block_boot','null_runs','null_mean','null_p95','B1','B2','B3','B4','B5','clears_B1_B4','passer'],'Every book cell and its five gates');
+  h+=tbl(BKS.declared_nudge,['rotation','min_trades','share','mode','sleeves','R_total','R_per_year','dip_binding','R_per_dip','b5_scale','b5_pct_per_year','R_ex1','R_ex5'],'Book (a) and its B4 nudge \u2014 the 20-trade floor at 15 and 30');
+  h+='<div class="note"><b>Read the raw R column with the 1/N in mind.</b> Equal risk normalises a book to one '
+    +'unit of risk, so a book\u2019s R is the <i>average</i> sleeve\u2019s R and not the sum \u2014 a book of '
+    +'2,492 sleeves scoring +1.12 R is not a small edge spread thin, it is the average sleeve earning +1.12 R. '
+    +'What a book buys is a smaller dip, which is why <b>return per dip</b> and then the percent a year the B5 '
+    +'sizing allows are the only two columns that answer Jack\u2019s question.</div>';
+ }
+ const WN=R.winners||{};
+ if(WN.note){
+  h+='<h3>Item 4 \u2014 every strategy in the best book</h3>';
+  h+='<div class="note">'+WN.note+'</div>';
+  h+=tbl(WN.winners,['rank','algo','label','n_pairs','pairs','sleeves','R_scoring','R_admission','trades','contribution_R','contribution_R_per_year','pct_per_year_at_book_sizing','share_of_book'],'Sorted by contribution to the book');
+ }
  /* ENGINE AUDIT 2 -- measurement only. */
  const AU=R.audit2||{};
  if(AU.note){

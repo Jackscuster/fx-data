@@ -1,0 +1,14 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  recovered 200000 sampled algorithms in 3.2 s
+  CHECK 1 OK: 300 of the recovered tuples reproduce src3_sample.csv obj_discovery to 1e-9
+    replay 25/200 starts, 23165 evaluations, 0.7 min
+    replay 50/200 starts, 46193 evaluations, 1.4 min
+    replay 75/200 starts, 68475 evaluations, 2.1 min
+    replay 100/200 starts, 92359 evaluations, 2.8 min
+    replay 125/200 starts, 113179 evaluations, 3.4 min
+    replay 150/200 starts, 136787 evaluations, 4.0 min
+    replay 175/200 starts, 160270 evaluations, 4.7 min
+    replay 200/200 starts, 184372 evaluations, 5.5 min
+  CHECK 2 OK: the replayed local search reproduces best discovery +18.007580 on 184372 evaluations
+  384334 algorithms in the bank list: 200000 sampled, 184334 from the local search that the sample did not already hold -> /Users/jackcuster/fx-data/results/nnfx/bank/cand_index.npz
+DONE nnfxcands: 384334 algorithms in 6.3 min

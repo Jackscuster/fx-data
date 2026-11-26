@@ -540,6 +540,82 @@ The evidence that nothing but those two paths changed is
    | `c23fe98` | `88d29ef` | HANDOFF: mode C through the blind pipeline (routed +1.33%, PF  |
 
 
+0p. **THE BOOK IS THE ONLY GATE. Jack's correction, 25 Nov, 19:20.
+   `PROTOCOL.md` AMENDMENT 1 — a dated addition; sections 1-9 untouched.**
+
+   *"Nothing is counted out for being small or for working on only some pairs. A
+   strategy that makes 4% on 5 pairs and another that makes 8% elsewhere are both
+   winners. The only pass or fail is on the combined BOOK."*
+
+   **MEMBER UNIT.** A sleeve is one complete algorithm (all five slots live, all three
+   exits live, risk plan fixed — section 1 unchanged) **on one pair**. A strategy may
+   hold sleeves on any subset of the 28.
+
+   **ADMISSION (light), on the admission years only.** Net R positive excluding its
+   best day; best trade under a quarter of its total; at least 20 trades. **No luck
+   test and no nudge test on a single sleeve or a single strategy.**
+
+   **BOOK GATES (strict, on the book only).** B1 LUCK beats the 95th percentile of the
+   same book built from the null. B2 ONE EVENT positive without the best day and
+   without the best 5. B3 HOLD-OUT positive on data no sleeve was admitted on. B4
+   NUDGE positive with the admission count one step down and up. B5 MONEY at least 12%
+   a year inside 3.6% daily and 5.4% trailing through the prop simulator, and days to
+   pass the +10% evaluation.
+
+   **STANDING RULE.** Admission data and scoring data never overlap. Two rotations:
+   admit 2005-2010 score 2011-2015, then the reverse. Where a strategy is admitted on
+   all pairs of a cell, the four-cell rotation already built is also used.
+
+   **WHAT LANDED, 19:20 TO 20:00 EST**
+
+   | item | result |
+   |---|---|
+   | the algorithm list, **recovered and checked** | 384,334. 300 recovered tuples reproduce `src3_sample.csv` to 1e-9; the replayed local search ends on **+18.007580341** after **exactly 184,372** evaluations — both matching `SOURCE3.md` |
+   | **item 1**, the sleeve bank | 384,334 x 28 pairs x 2 windows in **4.5 minutes** at 0.149 ms per candidate-pair. ~21.5 million sleeve evaluations |
+   | **item 2**, does pair fit carry | pooled rho **+0.0038**; admitted sleeves positive later **48.3% against a 48.9% baseline** (R1) and **51.3% against 53.4%** (R2) — at or below baseline in both rotations at every share threshold |
+   | **item 3**, book (a), the 18 declared | **dead** — negative or zero in every configuration and at every trade floor; best case +0.48% a year |
+   | **item 3**, the best of all 552 cells | `b_per_pair` K=89 voting R1 at share 0.25: R +1.122, R/yr +0.224, dip 0.933, **R/dip +1.203**, sized x5.79 for **+1.30% a year**. Clears B2, B3, B4. **10.70 points short of 12%, a factor of 9.2** |
+   | **B1** | pending 20 fully matched null runs, ETA ~22:10 |
+
+   **A MEASUREMENT RECORDED BEFORE ANY BOOK WAS BUILT (A9).** Jack's admission test
+   admits **4 of 504** declared sleeves on 2005-2010 and **7 of 504** on 2011-2015, and
+   the binding test is the quarter rule, not the trade floor: of the 82 sleeves positive
+   with at least 20 trades the **median best-trade share is 0.561**. That is arithmetic —
+   a sleeve takes a median 38 trades on one pair in six years, so one +2R trade is half
+   its total. Nothing was changed; the share threshold is swept 0.25 / 0.40 / 0.60 /
+   0.80 / 1.00 / off and every book is reported at every setting, with Jack's 0.25 as
+   the headline.
+
+   **THE ONE PIECE OF EVIDENCE AGAINST PURE NOISE.** The top-89-per-pair book holds
+   2,492 sleeves and **2,426 distinct algorithms** — 66 algorithms make more than one
+   pair's top 89, against about 18 if each pair drew independently from its own admitted
+   pool. Four times chance, though the independence baseline understates chance because
+   candidates share slots. And the members the search converged on are the same family
+   as S3_01: **fisher_transform** C1, **ttm_squeeze** or **mass_index** volume,
+   **vidya** or **wma** baseline, **relative_vigor_index** exit.
+
+   **THE NULL IS FULLY MATCHED, and that decision was made on a measurement.** The
+   first draft of the amendment proposed to skip the local search in the book nulls and
+   said so as a limitation. At 0.149 ms per candidate-pair a matched run — 200,000
+   draws, the local search at the same cap, the full 28-pair bank, every book rebuilt —
+   costs ~45 minutes, so it is done properly. A6.2 is left struck through rather than
+   deleted, because the record should show the limit was checked and not assumed.
+
+   **TWO FAULTS, BOTH CAUGHT BEFORE THEY REACHED A REPORTED NUMBER, now guard 44.**
+   A per-bar sleeve cost that omitted `/RISK_DOLLARS x atr_mult/1.5` — a factor of 300,
+   which did not raise and simply made every book hugely negative. And a separate-
+   positions cost taken from the sleeve's *cumulative* signed notional, so two of a
+   sleeve's own overlapping legs cancelled and the sleeve was credited with the voting
+   machine's discount inside the wrong book.
+
+   **SOURCE 3 LANDED AT 17:42, before this correction: 1 passer.** S3_01 —
+   fisher_transform/double, parabolic_sar/half, ttm_squeeze/double, vidya/default,
+   relative_vigor_index/double — R **+146.813** on 8,954 trades, **+13.347 R a year**,
+   dip 104.861, **return per dip 1.400**, and it beats the search null (best replicated
+   +14.8704 against a 95th-percentile floor of +13.6706). It is the first candidate in
+   the project to clear all four of the original gates.
+
+
 0o. **LAYER 1 REMOVED FROM LAYER 2. ONE FIXED PROTOCOL, THREE SOURCES.
    Jack, 25 Nov, 15:00. This replaces all unsent prompts.**
 

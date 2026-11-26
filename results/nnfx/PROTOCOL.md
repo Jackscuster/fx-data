@@ -289,3 +289,163 @@ Stated so no result is read as more than it is.
   2.3, the N1-N6 catalogue and its grades.
 - `results/nnfx/CANDIDATE_LEDGER.csv` — every candidate and every evaluation counted.
 - `code/nnfxproto.py` — the one implementation of this protocol. Sources 1, 2 and 3 all call it.
+
+---
+---
+
+# AMENDMENT 1 — 25 November 2026, 19:20 EST
+
+**Declared by Jack after Sources 1, 2 and 3 landed and before anything below was scored.
+Sections 1 to 9 above are UNCHANGED and are the record of what Sources 1, 2 and 3 were
+tested under. This amendment governs everything from here on.**
+
+Jack's words, verbatim:
+
+> Nothing is counted out for being small or for working on only some pairs. A strategy that
+> makes 4% on 5 pairs and another that makes 8% elsewhere are both winners. The only pass or
+> fail is on the combined BOOK.
+
+## A1. MEMBER UNIT
+
+A **sleeve** is one complete NNFX algorithm — every setting fixed in advance, exactly as
+section 1 defines a candidate — **on ONE PAIR**. A strategy may hold sleeves on any subset
+of the 28 pairs. A strategy is not required to work on all 28, or on any particular one.
+
+This is a change of unit, not of standard. Section 1's definition of a complete algorithm
+(all five slots live, all three exits live, the fixed risk plan) is untouched. What changes
+is that the thing admitted and the thing scored is an (algorithm, pair) pair.
+
+## A2. SLEEVE ADMISSION — light, and deliberately so
+
+On the **admission years only**, a sleeve is admitted if all three hold:
+
+| | test |
+|---|---|
+| **A** | net R positive **excluding its best day** |
+| **B** | best trade under a quarter of its total R |
+| **C** | at least **20 trades** |
+
+**No luck test and no nudge test on single sleeves or single strategies.** G1 and G4 of the
+original protocol do not apply to a sleeve or to a strategy on its own. They move to the
+book, as B1 and B4. Nothing is rejected for being small.
+
+## A3. BOOK GATES — strict, and only on the book
+
+| gate | test |
+|---|---|
+| **B1 LUCK** | beats the **95th percentile of the same book built from the null** |
+| **B2 ONE EVENT** | positive excluding the best day **and** excluding the best 5 days |
+| **B3 HOLD-OUT** | positive on data **no sleeve was admitted on** |
+| **B4 NUDGE** | still positive with the **admission count** moved one step down and one step up |
+| **B5 MONEY** | at least **12% a year** sized inside **3.6% daily** and **5.4% trailing** through the prop simulator; days to pass the **+10%** evaluation |
+
+## A4. STANDING RULE — admission data and scoring data never overlap
+
+Two rotations for pair-specific sleeves:
+
+| rotation | admit on | score on |
+|---|---|---|
+| **R1** | 2005-2010 | 2011-2015 |
+| **R2** | 2011-2015 | 2005-2010 |
+
+Where a strategy is admitted on all pairs of a cell, the **four-cell rotation already built**
+(Source 3's discovery / replication / two off-diagonals: 15 pairs without JPY or CHF against
+13 pairs with, 2005-2010 against 2011-2015) is also used and reported.
+
+2016-2020 stays computed and **not reported**. 2021 onward stays sealed. A book that clears
+B1 to B4 in both rotations goes to section A7, and the 2016-2020 confirm is Jack's call and
+no one else's.
+
+## A5. What this amendment leaves me to declare, declared now
+
+Jack's amendment fixes the unit, the admission test and the gates. These are the operational
+choices it does not name. **They are written here before anything is scored, and the ledger
+carries them.**
+
+| choice | declared value | why it is a choice and not a citation |
+|---|---|---|
+| **sleeve sizing in a book** | equal risk, weight 1/N on a union day index, a missing day counted 0 | the same rule BOOK2 used; it is the only sizing that needs no estimate |
+| **B4's "admission count" for a searched book** | the top-K count K, moved one grid step down and one up | K is the count that selects the book |
+| **B4's "admission count" for the DECLARED book (3a)** | the minimum-trade threshold, 20 moved to 15 and to 30 | book (a) has no K; the trade floor is the only count in its admission test |
+| **the null for a searched book** | the identical construction — scramble, re-search, re-admit, re-select, re-score — 20 runs per rotation | a null that does not repeat the SELECTION measures nothing about selection |
+| **the null's search budget** | **fully matched**: 200,000 random draws AND the local search at the same cap, on every one of the 20 null worlds, then the same 28-pair bank | measured at 19:35 EST, before any book was built: 0.149 ms per candidate-pair, so a matched null run costs ~41 min and 20 of them ~2.7 hours at five workers. It is affordable, so it is done properly |
+| **the voting machine's cost** | charged on changes in the NET position per pair only, Jack's 4 September rule | fewer, larger changes than sleeves traded separately; the saving is reported |
+| **the fast path's role** | the 200,000+ bank is built on the fast objective (realised by exit day, uncapped, charged once); every book that is REPORTED is re-scored on the full path with the 1:30 cap and mark to market | section 5's declared departure, unchanged |
+| **the four-cell rotation's cell definition** | Source 3's, unchanged: 15 pairs with neither JPY nor CHF against the 13 with either | it is "the four-cell rotation already built" |
+
+## A6. What this amendment cannot do
+
+1. **It widens the search enormously.** 370,000 algorithms x 28 pairs x 2 periods is about
+   20 million sleeve evaluations. Selecting the best of 20 million and then testing the
+   selection is exactly the situation B1 exists for, and **B1 is therefore the only gate in
+   this document that carries real weight.** If a book clears B2 to B5 and fails B1, it has
+   found nothing.
+2. **~~The book nulls do not repeat the local search.~~** WITHDRAWN at 19:40 EST, before any
+   book was built, on a measurement rather than an estimate. At 0.149 ms per candidate-pair a
+   matched null run — 200,000 draws, the local search at the same cap, the full 28-pair bank —
+   costs about 41 minutes, and 20 of them about 2.7 hours at five workers. **The null is
+   therefore fully matched** and B1 is a real floor, not a lenient one. This paragraph is left
+   in place struck through rather than deleted, because it was written before the measurement
+   and the record should show that the limit was checked and not merely assumed.
+3. **A sleeve is a pair-specific selection and there are only 28 pairs.** Admitting on one
+   six-year window and scoring on the other gives each pair exactly one independent test per
+   rotation. Item 2 (`PAIR_FIT.md`) measures whether that selection carries at all before any
+   book is built on it; if it does not, every searched book in item 3 is noise by
+   construction and will be reported as such.
+4. **Synthetic worlds run with the ambiguity resolver and realistic gap fills OFF** — there
+   is no hourly bid/ask path for a shuffled series. Same declared limitation as Source 3,
+   same direction: it makes the null slightly easier to beat.
+5. **B5's prop simulator is a model of one firm's rules**, not a contract. `PROP.md` holds
+   what it does and does not model.
+
+## A7. If a book clears B1 to B4 in both rotations
+
+Build the final version with admission on **all of 2005 to 2015** at the admission count that
+was **best on average across the two rotations** — the averaging rule is declared here,
+before the counts are known, so it cannot be chosen after seeing them. Run B5. Then **STOP
+and report.** That is the candidate for the one-time 2016 to 2020 confirm, Jack's call.
+`FINAL_BOOK.md`.
+
+## A8. Order and provenance of the amendment
+
+1. `SLEEVE_BANK` — item 1, the bank everything reads.
+2. `PAIR_FIT.md` — item 2, does pair fit carry.
+3. `BOOKS.md` — item 3, the books and the five gates.
+4. `WINNERS.md` — item 4, the best book's members.
+5. `FINAL_BOOK.md` — item 5, only if a book clears B1 to B4 in both rotations.
+6. The corrected-cost rerun of stage 1 R2, stage 2 and items 1 to 6 — background, lowest
+   priority, `COST_RERUN.md`.
+
+---
+
+## A9. A measurement on the admission test, 19:45 EST, before any book was built
+
+The admission test of A2 was run on the 18 declared algorithms x 28 pairs = 504 candidate
+sleeves per window, purely to see what it admits. **It admits 4 of 504 on 2005-2010 and 7 of
+504 on 2011-2015.** The funnel:
+
+| test | h1 2005-2010 | h2 2011-2015 |
+|---|---:|---:|
+| at least 20 trades | 263 of 504 | 215 of 504 |
+| net R positive excluding the best day | 142 of 504 | 162 of 504 |
+| **best trade under a quarter of total R** | **4 of 504** | **7 of 504** |
+| both of the first two | 82 | 76 |
+| **all three** | **4** | **7** |
+
+Of the 82 sleeves that are positive with enough trades on h1, the **median best-trade share
+is 0.561** and the minimum is 0.191. The quarter rule, applied to a single pair over six
+years, is binding on almost everything.
+
+**This is arithmetic, not a flaw in any sleeve.** A sleeve takes a median of 38 trades on one
+pair in six years and a profitable one totals a few R; a single +2R trade is then half the
+total. The quarter rule is a concentration test sized for a 28-pair book with thousands of
+trades — which is exactly where Jack has now put it, as **B2** — and at the single-sleeve
+level it mostly measures how few trades a sleeve takes.
+
+**Nothing is changed.** Jack wrote the test and the headline number for every book below is
+his test at **0.25**, unchanged. But the project's standing rule is that every cut is swept
+over its full range and reported as a curve, so the share threshold is swept
+**0.25 / 0.40 / 0.60 / 0.80 / 1.00 / off** and every book is reported at every setting, with
+0.25 marked as the declared one. If the books at 0.25 are empty or trivially small, the curve
+is what says whether that is the test or the strategies.
+

@@ -1,0 +1,67 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    shard 1 AUDCHF 25000/384334  3335/s  eta 7.6 min
+    shard 1 AUDCHF 50000/384334  4326/s  eta 5.7 min
+    shard 1 AUDCHF 75000/384334  4808/s  eta 5.1 min
+    shard 1 AUDCHF 100000/384334  5094/s  eta 4.7 min
+    shard 1 AUDCHF 125000/384334  5267/s  eta 4.5 min
+    shard 1 AUDCHF 150000/384334  5394/s  eta 4.3 min
+    shard 1 AUDCHF 175000/384334  5491/s  eta 4.1 min
+    shard 1 AUDCHF 200000/384334  5560/s  eta 4.0 min
+    shard 1 AUDCHF 225000/384334  5590/s  eta 3.9 min
+    shard 1 AUDCHF 250000/384334  5621/s  eta 3.8 min
+    shard 1 AUDCHF 275000/384334  5656/s  eta 3.7 min
+    shard 1 AUDCHF 300000/384334  5687/s  eta 3.6 min
+    shard 1 AUDCHF 325000/384334  5716/s  eta 3.5 min
+    shard 1 AUDCHF 350000/384334  5740/s  eta 3.4 min
+    shard 1 AUDCHF 375000/384334  5755/s  eta 3.4 min
+    shard 1 pair AUDCHF done (1 of 4), 1.1 min
+    shard 1 EURAUD 25000/384334  5554/s  eta 3.4 min
+    shard 1 EURAUD 50000/384334  5589/s  eta 3.3 min
+    shard 1 EURAUD 75000/384334  5619/s  eta 3.2 min
+    shard 1 EURAUD 100000/384334  5649/s  eta 3.1 min
+    shard 1 EURAUD 125000/384334  5675/s  eta 3.0 min
+    shard 1 EURAUD 150000/384334  5698/s  eta 2.9 min
+    shard 1 EURAUD 175000/384334  5721/s  eta 2.8 min
+    shard 1 EURAUD 200000/384334  5743/s  eta 2.8 min
+    shard 1 EURAUD 225000/384334  5743/s  eta 2.7 min
+    shard 1 EURAUD 250000/384334  5752/s  eta 2.6 min
+    shard 1 EURAUD 275000/384334  5761/s  eta 2.5 min
+    shard 1 EURAUD 300000/384334  5775/s  eta 2.5 min
+    shard 1 EURAUD 325000/384334  5788/s  eta 2.4 min
+    shard 1 EURAUD 350000/384334  5798/s  eta 2.3 min
+    shard 1 EURAUD 375000/384334  5804/s  eta 2.2 min
+    shard 1 pair EURAUD done (2 of 4), 2.2 min
+    shard 1 GBPAUD 25000/384334  5689/s  eta 2.2 min
+    shard 1 GBPAUD 50000/384334  5699/s  eta 2.1 min
+    shard 1 GBPAUD 75000/384334  5709/s  eta 2.0 min
+    shard 1 GBPAUD 100000/384334  5719/s  eta 1.9 min
+    shard 1 GBPAUD 125000/384334  5732/s  eta 1.9 min
+    shard 1 GBPAUD 150000/384334  5738/s  eta 1.8 min
+    shard 1 GBPAUD 175000/384334  5750/s  eta 1.7 min
+    shard 1 GBPAUD 200000/384334  5757/s  eta 1.6 min
+    shard 1 GBPAUD 225000/384334  5759/s  eta 1.6 min
+    shard 1 GBPAUD 250000/384334  5760/s  eta 1.5 min
+    shard 1 GBPAUD 275000/384334  5764/s  eta 1.4 min
+    shard 1 GBPAUD 300000/384334  5771/s  eta 1.4 min
+    shard 1 GBPAUD 325000/384334  5779/s  eta 1.3 min
+    shard 1 GBPAUD 350000/384334  5785/s  eta 1.2 min
+    shard 1 GBPAUD 375000/384334  5787/s  eta 1.1 min
+    shard 1 pair GBPAUD done (3 of 4), 3.3 min
+    shard 1 NZDCHF 25000/384334  5714/s  eta 1.0 min
+    shard 1 NZDCHF 50000/384334  5722/s  eta 1.0 min
+    shard 1 NZDCHF 75000/384334  5731/s  eta 0.9 min
+    shard 1 NZDCHF 100000/384334  5740/s  eta 0.8 min
+    shard 1 NZDCHF 125000/384334  5743/s  eta 0.8 min
+    shard 1 NZDCHF 150000/384334  5751/s  eta 0.7 min
+    shard 1 NZDCHF 175000/384334  5757/s  eta 0.6 min
+    shard 1 NZDCHF 200000/384334  5765/s  eta 0.5 min
+    shard 1 NZDCHF 225000/384334  5769/s  eta 0.5 min
+    shard 1 NZDCHF 250000/384334  5772/s  eta 0.4 min
+    shard 1 NZDCHF 275000/384334  5776/s  eta 0.3 min
+    shard 1 NZDCHF 300000/384334  5781/s  eta 0.2 min
+    shard 1 NZDCHF 325000/384334  5786/s  eta 0.2 min
+    shard 1 NZDCHF 350000/384334  5791/s  eta 0.1 min
+    shard 1 NZDCHF 375000/384334  5794/s  eta 0.0 min
+    shard 1 pair NZDCHF done (4 of 4), 4.4 min
+  shard 1 of 7 written: 384334 algorithms x 4 pairs in 4.5 min
+DONE nnfxsleeves in 4.5 min

@@ -1,0 +1,2 @@
+world,seed,n_random,n_local,n_evaluations,best_disc,best_local_disc,best_repl_of_top,spearman_disc_repl,spearman_p,space_size,minutes
+real,20261125,200000,184372,584422,12.411726798964388,18.007580341220848,14.87038255115994,0.08660315931030187,0.0,2531041344,17.083195102214813

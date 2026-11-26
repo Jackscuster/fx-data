@@ -1,0 +1,67 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    shard 0 AUDCAD 25000/384334  3370/s  eta 7.5 min
+    shard 0 AUDCAD 50000/384334  4386/s  eta 5.7 min
+    shard 0 AUDCAD 75000/384334  4881/s  eta 5.0 min
+    shard 0 AUDCAD 100000/384334  5173/s  eta 4.6 min
+    shard 0 AUDCAD 125000/384334  5352/s  eta 4.4 min
+    shard 0 AUDCAD 150000/384334  5481/s  eta 4.2 min
+    shard 0 AUDCAD 175000/384334  5580/s  eta 4.1 min
+    shard 0 AUDCAD 200000/384334  5650/s  eta 3.9 min
+    shard 0 AUDCAD 225000/384334  5690/s  eta 3.8 min
+    shard 0 AUDCAD 250000/384334  5731/s  eta 3.7 min
+    shard 0 AUDCAD 275000/384334  5777/s  eta 3.6 min
+    shard 0 AUDCAD 300000/384334  5819/s  eta 3.5 min
+    shard 0 AUDCAD 325000/384334  5856/s  eta 3.5 min
+    shard 0 AUDCAD 350000/384334  5887/s  eta 3.4 min
+    shard 0 AUDCAD 375000/384334  5907/s  eta 3.3 min
+    shard 0 pair AUDCAD done (1 of 4), 1.1 min
+    shard 0 CHFJPY 25000/384334  5694/s  eta 3.3 min
+    shard 0 CHFJPY 50000/384334  5724/s  eta 3.2 min
+    shard 0 CHFJPY 75000/384334  5745/s  eta 3.1 min
+    shard 0 CHFJPY 100000/384334  5769/s  eta 3.0 min
+    shard 0 CHFJPY 125000/384334  5789/s  eta 3.0 min
+    shard 0 CHFJPY 150000/384334  5808/s  eta 2.9 min
+    shard 0 CHFJPY 175000/384334  5826/s  eta 2.8 min
+    shard 0 CHFJPY 200000/384334  5843/s  eta 2.7 min
+    shard 0 CHFJPY 225000/384334  5848/s  eta 2.6 min
+    shard 0 CHFJPY 250000/384334  5846/s  eta 2.6 min
+    shard 0 CHFJPY 275000/384334  5858/s  eta 2.5 min
+    shard 0 CHFJPY 300000/384334  5865/s  eta 2.4 min
+    shard 0 CHFJPY 325000/384334  5871/s  eta 2.4 min
+    shard 0 CHFJPY 350000/384334  5880/s  eta 2.3 min
+    shard 0 CHFJPY 375000/384334  5885/s  eta 2.2 min
+    shard 0 pair CHFJPY done (2 of 4), 2.2 min
+    shard 0 EURUSD 25000/384334  5765/s  eta 2.1 min
+    shard 0 EURUSD 50000/384334  5775/s  eta 2.1 min
+    shard 0 EURUSD 75000/384334  5786/s  eta 2.0 min
+    shard 0 EURUSD 100000/384334  5795/s  eta 1.9 min
+    shard 0 EURUSD 125000/384334  5803/s  eta 1.8 min
+    shard 0 EURUSD 150000/384334  5810/s  eta 1.8 min
+    shard 0 EURUSD 175000/384334  5821/s  eta 1.7 min
+    shard 0 EURUSD 200000/384334  5830/s  eta 1.6 min
+    shard 0 EURUSD 225000/384334  5832/s  eta 1.6 min
+    shard 0 EURUSD 250000/384334  5837/s  eta 1.5 min
+    shard 0 EURUSD 275000/384334  5839/s  eta 1.4 min
+    shard 0 EURUSD 300000/384334  5843/s  eta 1.3 min
+    shard 0 EURUSD 325000/384334  5847/s  eta 1.3 min
+    shard 0 EURUSD 350000/384334  5852/s  eta 1.2 min
+    shard 0 EURUSD 375000/384334  5855/s  eta 1.1 min
+    shard 0 pair EURUSD done (3 of 4), 3.3 min
+    shard 0 NZDCAD 25000/384334  5781/s  eta 1.0 min
+    shard 0 NZDCAD 50000/384334  5789/s  eta 1.0 min
+    shard 0 NZDCAD 75000/384334  5799/s  eta 0.9 min
+    shard 0 NZDCAD 100000/384334  5808/s  eta 0.8 min
+    shard 0 NZDCAD 125000/384334  5816/s  eta 0.7 min
+    shard 0 NZDCAD 150000/384334  5821/s  eta 0.7 min
+    shard 0 NZDCAD 175000/384334  5827/s  eta 0.6 min
+    shard 0 NZDCAD 200000/384334  5835/s  eta 0.5 min
+    shard 0 NZDCAD 225000/384334  5838/s  eta 0.5 min
+    shard 0 NZDCAD 250000/384334  5841/s  eta 0.4 min
+    shard 0 NZDCAD 275000/384334  5846/s  eta 0.3 min
+    shard 0 NZDCAD 300000/384334  5851/s  eta 0.2 min
+    shard 0 NZDCAD 325000/384334  5856/s  eta 0.2 min
+    shard 0 NZDCAD 350000/384334  5860/s  eta 0.1 min
+    shard 0 NZDCAD 375000/384334  5862/s  eta 0.0 min
+    shard 0 pair NZDCAD done (4 of 4), 4.4 min
+  shard 0 of 7 written: 384334 algorithms x 4 pairs in 4.4 min
+DONE nnfxsleeves in 4.4 min

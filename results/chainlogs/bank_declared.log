@@ -1,0 +1,21 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    declared N1 done, 20.6 s
+    declared N2 done, 21.1 s
+    declared N3 done, 22.0 s
+    declared N4 done, 23.0 s
+    declared N5 done, 23.2 s
+    declared N6 done, 24.1 s
+    declared H1 done, 24.4 s
+    declared H2 done, 24.6 s
+    declared H3 done, 24.9 s
+    declared H4 done, 24.9 s
+    declared H5 done, 25.3 s
+    declared H6 done, 25.3 s
+    declared H7 done, 26.0 s
+    declared H8 done, 26.5 s
+    declared H9 done, 26.6 s
+    declared H10 done, 26.6 s
+    declared A_neutral done, 26.6 s
+    declared B_neutral done, 26.6 s
+  bank_declared.csv 1512 rows, bank_declared_yearly.csv 5544 rows
+DONE nnfxsleeves in 0.4 min

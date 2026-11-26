@@ -1,0 +1,2 @@
+run,seed,n_random,n_local,n_evaluations,best_disc,best_local_disc,best_repl_of_top,spearman_disc_repl,spearman_p,minutes
+25,900025,200000,175298,575348,11.100180866583935,14.452176983017216,7.588318351010149,0.08764564263819664,0.0,19.090194853146873

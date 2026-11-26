@@ -139,3 +139,16 @@ results/r2gate2/*_winners_universe.npz
 # a2_defaults_MANIFEST.sha256 records size and sha256 of each raw file.
 # DO NOT DELETE THE RAW FILES. They are the input stage_a2_compare reads.
 results/r2reads/mode*_a2_defaults.csv
+
+# ---- THE SLEEVE BANK: derived, large, and EXACTLY reproducible ------------
+# PROTOCOL.md AMENDMENT 1, item 1. 384,334 algorithms x 28 pairs x 2 windows
+# is 208 MB merged plus 29 MB per shard -- 408 MB, and GitHub refuses a file
+# over 100 MB, which is why the 19:58 push on 25 Nov was declined.
+#
+# NOTHING IS LOST BY NOT TRACKING THEM. The bank is a cache. What cannot be
+# recomputed is the ALGORITHM LIST, results/nnfx/bank/cand_index.npz (3 MB),
+# and that IS tracked. From it the bank rebuilds in 4.5 minutes:
+#     bash code/chain/bank.sh
+# The files stay on disk. They are untracked, not deleted.
+results/nnfx/bank/sleeve_bank_*.npz
+results/nnfx/bank/shard_*.npz

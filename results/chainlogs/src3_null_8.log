@@ -1,0 +1,2 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  null 8 done 19.4 min: best replicated +10.9137, rho -0.0198

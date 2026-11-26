@@ -1376,6 +1376,80 @@ def c43():
             'pairs, and a null world returns different arrays')
 
 
+def c44():
+    """A sleeve's cost charged on the wrong denominator, or a sleeve netting
+    against itself.
+
+    WHAT WOULD GO WRONG, TWICE, AND BOTH WERE HIT ON 25 NOVEMBER.
+    (1) nnfxbooks charges cost per BAR, on each change in notional, so it
+    cannot reuse cost_R. The first version wrote `f/2 * px * notional` and
+    left out `/ RISK_DOLLARS * atr_mult / RISK_UNIT_ATR` -- a factor of 300 --
+    which made a single sleeve's eleven-year cost 181.9 R instead of 0.46 R.
+    It did not raise: every book simply came out hugely negative, which on
+    random candidates looks like a result.
+    (2) The separate-positions cost was computed from the sleeve's CUMULATIVE
+    signed notional, so two of a sleeve's own overlapping legs in opposite
+    directions cancelled and the sleeve paid less than it would trading alone
+    -- which is the voting machine's saving, credited to the wrong book, so
+    the measured benefit of netting was understated by an unknown amount.
+
+    WHAT IS CHECKED. On three candidates x two pairs: the book's separate cost
+    agrees with nnfxproto.cost_R on the same trades to within 1%, the book's
+    net R agrees with fast_per_pair to 1e-3, a ONE-SLEEVE voting book equals
+    the separate book exactly (nothing to net against), and fast_per_pair
+    agrees with fast_obj to 1e-9 with the two windows summing to the whole.
+    """
+    import l2sweep as S
+    import nnfxproto as PP
+    import nnfxsrc3 as SS3
+    import nnfxbooks as BB
+    import nnfxsleeves as BBK
+    S.load_costs(os.environ.get('FX_COST_TABLE',
+                                os.path.join(ROOTOUT, 'cost_table_h22.csv')))
+    SS3.init_space()
+    EV = tuple(range(2005, 2016))
+    rng = np.random.default_rng(99)
+    cands, _ = SS3.draw(rng, 5)
+    W = BB.World(list(S.all_pairs()))
+    m = W.mask(EV)
+    worst_cost, worst_net, worst_one = 0.0, 0.0, 0.0
+    n = 0
+    for ci in (0, 1, 2):
+        C = SS3.mkcand(cands[ci])
+        for p in ('EURUSD', 'AUDNZD'):
+            acc = BB.Acc(W); acc.add(C, p, 'x')
+            sep, vote, csa, cva = acc.series()
+            cs = float(csa[m].sum()); cv = float(cva[m].sum())
+            bookR = float(sep[m].sum())
+            worst_one = max(worst_one, abs(cs - cv))
+            r = PP.fast_per_pair(C, p, (('ev', EV),))['ev']
+            worst_net = max(worst_net, abs(bookR - r['R']))
+            T = PP.run_candidate(C, pairs=[p], cap=False)
+            if len(T):
+                T = T.reset_index(drop=True)
+                cr = np.asarray(PP.cost_R(T), float)
+                yr = pd.DatetimeIndex(T.exit_date).year
+                crt = float(cr[np.isin(yr, list(EV))].sum())
+                if crt > 1e-6:
+                    worst_cost = max(worst_cost, abs(cs / crt - 1.0))
+            n += 1
+    # fast_per_pair against fast_obj, and the two windows against the whole
+    C = SS3.mkcand(cands[3])
+    per = (('ev', EV), ('h1', BBK.H1Y), ('h2', BBK.H2Y))
+    r = PP.fast_per_pair(C, 'EURUSD', per)
+    _o, _n, tot = PP.fast_obj(C, ['EURUSD'], EV)
+    d_fast = abs(tot - r['ev']['R'])
+    d_sum = abs(r['h1']['R'] + r['h2']['R'] - r['ev']['R'])
+    ok = (worst_cost < 0.01 and worst_net < 1e-3 and worst_one < 1e-9
+          and d_fast < 1e-9 and d_sum < 1e-9)
+    return ok, ('%d sleeve(s) checked: the book cost is within %.3f%% of '
+                'cost_R, net R within %.1e of fast_per_pair, a one-sleeve '
+                'voting book differs from separate by %.1e, fast_per_pair '
+                'matches fast_obj at %.1e and the two windows sum to the '
+                'whole at %.1e'
+                % (n, 100 * worst_cost, worst_net, worst_one, d_fast, d_sum))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -1466,6 +1540,10 @@ def main():
     guard(43, 'A search null reading the real market. nnfxproto caches indicator arrays, ATR, the entry masks and the fast-path context per pair; a cache key without the WORLD tag makes a null run compute a shuffled series trades from the REAL indicators -- silently, at full speed, in the direction that flatters the real search. And nnfxvol floor and peg masks read N.pair_data directly, so a synthetic world needs its own implementation, which could drift',
           'every cache key in nnfxproto carries WORLD; set_world/drop_world own the switch; the array-level floor and peg masks are checked against the shipped nnfxvol ones bar for bar on all 28 real pairs by check_masks',
           '4 cache keys carry the world, check_masks passes on 28 pairs, a synthetic world returns different C1 arrays than the real one, and every synthetic bar is a possible bar', c43)
+    guard(44, 'A sleeve cost charged on the wrong denominator, or a sleeve netting against itself. nnfxbooks charges cost per BAR on each change in notional, so it cannot reuse cost_R; the first version left out / RISK_DOLLARS x atr_mult / 1.5, a factor of 300, and a single sleeve cost 181.9 R instead of 0.46 R -- it did not raise, every book simply came out hugely negative, which on random candidates looks like a result. And the separate-positions cost was taken from the sleeve CUMULATIVE signed notional, so two of its own overlapping legs cancelled and the sleeve paid the voting machine discount inside the separate book, understating the measured benefit of netting',
+          'nnfxbooks.parts returns notional already divided by RISK_DOLLARS and put in the 1.5-ATR unit, and returns LEG-WISE open/close arrays for the separate cost beside the CUMULATIVE signed array used only for the net position',
+          'on three candidates x two pairs the book cost is within 1% of cost_R on the same trades, the book net R within 1e-3 of fast_per_pair, a one-sleeve voting book equals the separate book exactly, and fast_per_pair matches fast_obj with its two windows summing to the whole',
+          c44)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())
