@@ -357,17 +357,28 @@ _CRISIS_WIN = None
 CRISIS_MULT = 2.0
 
 
-def load_costs(path=None):
-    """Load results/cost_table.csv and switch costing on."""
+def load_costs(path=None, npairs=28):
+    """Load results/cost_table.csv and switch costing on.
+
+    npairs DEFAULTS TO 28 so every existing caller is unchanged and the FX
+    guarantee is exactly what it was. Jack's items 3 and 4 run the same
+    protocol on 12 non-FX instruments and on weekly FX bars, and those tables
+    are not 28 rows long; they pass their own count EXPLICITLY, which keeps
+    the assertion a real check rather than deleting it. A table that is
+    silently the wrong length is the fault this assertion exists to catch,
+    and it still catches it.
+    """
     global COSTS, _CRISIS_WIN
     import l2crisis as _C
     path = path or os.environ.get('FX_COST_TABLE') or os.path.join(ROOTOUT, 'cost_table.csv')
     t = pd.read_csv(path)
-    # AUDIT 16/17 (16 Sep): 28 distinct pairs, every cost positive, and the
-    # table named in the log so no run is silently on the flat one.
-    assert t.pair.nunique() == 28 and len(t) == 28, 'cost table %s: expected 28 distinct pair rows' % path
+    # AUDIT 16/17 (16 Sep): distinct instrument rows, every cost positive, and
+    # the table named in the log so no run is silently on the flat one.
+    assert t.pair.nunique() == npairs and len(t) == npairs, \
+        'cost table %s: expected %d distinct instrument rows, got %d (%d distinct)' \
+        % (path, npairs, len(t), t.pair.nunique())
     assert (t.cost_frac_roundtrip > 0).all(), 'cost table %s: a zero or negative cost' % path
-    print('  costs: %s (%d pairs, %d distinct costs, median %.1f bp round trip)' % (os.path.basename(path), len(t), t.cost_frac_roundtrip.round(8).nunique(), 1e4 * t.cost_frac_roundtrip.median()), flush=True)
+    print('  costs: %s (%d instruments, %d distinct costs, median %.1f bp round trip)' % (os.path.basename(path), len(t), t.cost_frac_roundtrip.round(8).nunique(), 1e4 * t.cost_frac_roundtrip.median()), flush=True)
     COSTS = dict(zip(t.pair, t.cost_frac_roundtrip))
     _CRISIS_WIN = _C.windows()
     return COSTS

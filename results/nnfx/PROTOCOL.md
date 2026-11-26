@@ -721,3 +721,42 @@ recommendation**:
 account**, exactly as he already has to read the real spreads off the MT5
 symbol list. Until then the honest output is the curve across that schedule
 and not a single number. A table is left for him to fill in.
+
+---
+
+## A16. THE PEG GUARD ON NON-FX INSTRUMENTS — declared 13:15 EST on 2026-11-26, before item 3's bank was built
+
+Jack's item 3 says *"same protocol as amended, nothing about the method
+changed."* One engine standing rule does not carry over untouched and it has
+to be said out loud rather than quietly switched off.
+
+**What the rule is.** `nnfxproto.entry_block` blocks an entry when the pair's
+lagged ATR/price sits below `PEG_X = 0.33` times the **cross-sectional median
+of the traded universe**. On FX that universe is the 28 pairs, and the rule
+catches a pegged or administratively frozen currency — EURCHF under the SNB
+floor is the case it was built for, and guard 41 records what a de-peg does
+to a stop.
+
+**Why it cannot simply run as-is.** `_panel` builds its cross-section from
+`l2sweep.all_pairs()`, the 28 FX pairs, which do not exist in a non-FX world.
+The first attempt raised `KeyError: ('mkt', 'AUDCAD')` — it did not quietly
+read FX data, which is what guard 43 exists to prevent, and the guard worked.
+
+**What is declared.** `PEG_PAIRS` is set to the **traded universe of the world
+being run** — the ten costed non-FX instruments for item 3, the 28 pairs for
+item 4's weekly bars. The code path is identical; only the cross-section
+changes, and it changes to the set actually being traded, which is what the
+rule always meant.
+
+**What that rule now means, stated honestly.** On FX the 28 pairs share a
+volatility scale, so the median is a meaningful peer group. **Gold, silver,
+WTI, Brent and six equity indices do not share a volatility scale**, so their
+cross-sectional median is a weaker reference and the guard becomes "abnormally
+quiet relative to a heterogeneous universe" rather than "pegged". It is the
+same arithmetic and a weaker claim, and no result below should be read as
+having a peg guard in the FX sense.
+
+**There is no peg to catch in these instruments anyway** — none of the ten is
+an administratively fixed price. The rule is kept switched on for sameness of
+method, not because it is expected to bind, and the number of bars it blocks
+is reported so its effect is visible rather than assumed.

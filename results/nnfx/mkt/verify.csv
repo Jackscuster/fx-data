@@ -1,0 +1,13 @@
+key,tier,source,n_dates,worst_abs_diff,unit,return_corr,n_overlap,error,worst_rel_diff
+gold,proxy,"same underlying via GLD, DAILY RETURNS only",10,0.9407444728033232,percent daily return,0.8883691950784335,5528.0,,
+silver,proxy,"same underlying via SLV, DAILY RETURNS only",10,1.52335193057751,percent daily return,0.896653336696383,5173.0,,
+wti,proxy,"same underlying via USO, DAILY RETURNS only",10,9.61859912739451,percent daily return,0.5413345971378085,5186.0,,
+brent,proxy,"same underlying via BNO, DAILY RETURNS only",10,1.9813249574679883,percent daily return,0.9120051898872966,4114.0,,
+spx,proxy,"same underlying via SPY, DAILY RETURNS only",10,0.14804374593389014,percent daily return,0.983602778677665,8514.0,,
+ndx,independent,api.nasdaq.com historical (NDX),10,9.799999997994746e-05,close level,,,,3.5673334175399035e-08
+dji,proxy,"same underlying via DIA, DAILY RETURNS only",10,0.42521389839517143,percent daily return,0.986909949095907,7258.0,,
+dax,proxy,"same underlying via EWG, DAILY RETURNS only",10,1.4631212024732054,percent daily return,0.7382646407100842,7583.0,,
+ftse,proxy,"same underlying via EWU, DAILY RETURNS only",10,2.8639875692090255,percent daily return,0.6683335887473398,7580.0,,
+nikkei,proxy,"same underlying via EWJ, DAILY RETURNS only",10,1.84007224682321,percent daily return,0.4269905133119048,7267.0,,
+btc,independent,Coinbase Exchange public candles,10,132.89009799999985,close level,,,,0.023707260064294428
+eth,independent,Coinbase Exchange public candles,10,11.511021000000028,close level,,,,0.012616061858155904

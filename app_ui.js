@@ -6468,4 +6468,55 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
   h+=tbl(AU.tickvolume,['pair','side','year','bars','share_le1','median_v','max_v','distinct'],'Audit 2.4 — tick volume usability by pair-year');
  }
  h+='<div class="note">Candidates on record in CANDIDATE_LEDGER.csv: '+(R.ledger_n||0)+'. Every candidate ever tested is listed there, because the luck floor is computed from that file and not from memory.</div>';
+ /* ---- ITEM 2, THE TARGET MAP (PROTOCOL A14 and A15) ---- */
+ if(R.target){const T=R.target;
+  h+='<h3>Item 2 — the target map: what edge reaches $12,000 a year</h3>';
+  h+='<div class="note">'+(T.note||'')+'</div>';
+  h+='<div class="note"><b>Read the schedule column before the edge column.</b> '
+    +'Under A14 exactly as declared — 80% of profit out every 7 funded days with no '
+    +'minimum — net dollars a year rise monotonically with position size and never turn '
+    +'over, so a row marked <code>at_grid_edge</code> is telling you where the grid '
+    +'stopped and nothing else. The drawdown budgets are already in the model and they '
+    +'do NOT decide the answer; the payout schedule does.</div>';
+  h+=tbl(T.crossing,['budget','schedule','reaches_goal','smallest_edge','at_sigma_daily_pct','at_grid_edge','net_per_year','p_breach_funded_in_year','attempts_per_year','fees_per_year','payout_per_year'],'2c — smallest edge reaching $12,000 a year, by budget and payout schedule');
+  h+='<div class="note"><b>What net $12,000 means at these sizes:</b> the account '
+    +'breaches with probability near 1.000 inside the year, so it is blown up and '
+    +'re-bought roughly 9 to 13 times, and the $12,000 is what is left of about $20,000 '
+    +'of payouts after about $7,000 of fees. The breach rate is not a side effect at the '
+    +'optimum — it is where the optimum is.</div>';
+  h+=tbl(T.measured,['book','edge_sharpe','sigma_daily_pct','budget','p_pass_eval','p_breach_funded_in_year','payout_per_year','fees_per_year','net_per_year'],'2a — the measured book (c_all_pairs K=50), implied yearly edge 0.390 in BOTH rotations');
+  h+=tbl(T.synthetic,['edge_sharpe','sigma_daily_pct','budget','sigma_at_budget','p_pass_eval','median_days_to_pass','p_breach_funded_in_year','payout_per_year','fees_per_year','net_per_year'],'2a and 2b — the synthetic curves');
+ }
+ /* ---- ITEM 3, OTHER MARKETS (PROTOCOL A16) ---- */
+ if(R.mkt){const K=R.mkt;
+  h+='<h3>Item 3 — NNFX beyond FX, parts a to d</h3>';
+  h+='<div class="note">'+(K.note||'')+'</div>';
+  h+=tbl(K.availability,['key','ticker','group','rows','first','last','evidence_bars','evidence_years','max_gap_days','gaps_over_7d'],'3a — history and gaps, fetched 26 Nov 2026');
+  h+='<div class="note"><b>ETH has zero evidence bars</b> and BTC has 1.9 years, against '
+    +'the five to six every other instrument gets, and neither has a cost source. Under '
+    +'the calendar rule neither can be tuned at all. Crypto is reported separately and is '
+    +'admitted, booked and scored nowhere.</div>';
+  h+=tbl(K.verify,['key','tier','source','n_dates','worst_abs_diff','worst_rel_diff','return_corr','unit'],'3a — the second source, ten random dates each');
+  h+='<div class="note"><b>Only three of the twelve have a reachable independent source.</b> '
+    +'Nasdaq 100 confirms to 3.6e-08. BTC and ETH disagree between venues by 2.37% and '
+    +'1.26% on the same day, because crypto has no official close. The rest fall back to a '
+    +'same-underlying ETF and compare DAILY RETURNS, which catches misalignment and a wrong '
+    +'scale but not an error the provider makes in both. <b>WTI, DAX, FTSE and Nikkei are '
+    +'UNVERIFIED</b> — their only available proxy measures a different thing.</div>';
+  h+=tbl(K.cost_baseline,['key','group','published_points','point_size','baseline_bp','tick_floor_bp','unit_corrected','confidence'],'3b — baseline round-trip spread, swept 1x to 5x');
+  h+='<div class="note"><b>The exchange minimum tick is a validator, not a footnote.</b> A '
+    +'retail CFD spread cannot be tighter than the underlying exchange tick. Silver read as '
+    +'0.446 bp against a floor of 0.743 bp, which is impossible, so its point size was wrong '
+    +'by ten; the correction is applied by the factor the floor implies and the row is '
+    +'relabelled. Every baseline now sits at or above its floor. These are PUBLISHED '
+    +'HEADLINES, not the measured two-sided spreads the FX work is costed from, which is why '
+    +'the sweep exists.</div>';
+  h+=tbl(K.declared_bank,['algo','instrument','window','R','trades','best_trade','admitted'],'3d — the 18 declared algorithms on ten instruments');
+  h+='<div class="note"><b>The 18 declared algorithms are mildly BETTER off FX than on it:</b> '
+    +'mean R per sleeve-window +0.378 against −0.012, with the same median trade count (20 '
+    +'against 18) and about a 1% admission rate either way. Both are close to zero, so this is '
+    +'not an edge — it is the absence of the penalty one might have expected. All five '
+    +'admissions fall in 2005-2010 and none in 2011-2015. Parts e, f and g are not built; '
+    +'OTHER_MARKETS.md says what each needs.</div>';
+ }
  el.innerHTML=h;el.dataset.done='1';};

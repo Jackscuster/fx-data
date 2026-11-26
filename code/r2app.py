@@ -967,6 +967,48 @@ def stage_app():
         transfer=nd('books/crosscell_transfer.csv', head=20),
         deciles=nd('books/crosscell_deciles.csv', head=40),
     )
+    # ---- item 2, the target map (PROTOCOL A14 and A15)
+    sec['nnfx']['target'] = dict(
+        note=('ITEM 2 -- THE TARGET MAP. results/nnfx/TARGET_MAP.md. '
+              'The $12,000 question turns on the PAYOUT SCHEDULE, not on the '
+              'strategy. Under A14 as declared -- 80% out every 7 funded days '
+              'with no minimum -- net dollars a year rise monotonically with '
+              'size and NEVER TURN OVER, because a payout removes profit from '
+              'the account faster than the drawdown rule can take it back, so '
+              'a breach costs only the next $549. On a 30-day cadence the '
+              'curve does turn over and the smallest edge reaching $12,000 is '
+              '1.250 under the firm hard limits, 1.500 internal, 1.750 Team 1 '
+              '-- at a 99%-plus annual breach rate and 9 to 13 fees a year. '
+              'THE MEASURED BOOK IMPLIES AN EDGE OF 0.390 IN BOTH ROTATIONS, '
+              'a factor of 3.2 short. The lifecycle matches r2reads.prop_run '
+              'to 4.6e-11.'),
+        synthetic=nd('target/target_synthetic.csv', head=400),
+        measured=nd('target/target_measured.csv', head=200),
+        best_by_edge=nd('target/target_best_by_edge.csv', head=400),
+        crossing=nd('target/target_crossing.csv', head=40),
+    )
+    # ---- item 3, other markets (PROTOCOL A16)
+    sec['nnfx']['mkt'] = dict(
+        note=('ITEM 3a-3d -- NNFX BEYOND FX. results/nnfx/OTHER_MARKETS.md. '
+              'Twelve instruments fetched 26 Nov. ETH HAS ZERO EVIDENCE BARS '
+              'and BTC has 1.9 years, so neither can be tuned under the '
+              'calendar rule, and neither has a cost source. ONLY THREE OF '
+              'THE TWELVE HAVE A REACHABLE INDEPENDENT SECOND SOURCE -- NDX '
+              'confirms to 3.6e-08, while BTC and ETH disagree between venues '
+              'by 2.37% and 1.26% because crypto has no official close. WTI, '
+              'DAX, FTSE and Nikkei are UNVERIFIED. The exchange minimum tick '
+              'acted as a validator on the published spreads and caught a '
+              'factor-of-ten unit error in silver. THE 18 DECLARED '
+              'ALGORITHMS ARE MILDLY BETTER OFF FX than on it: mean R per '
+              'sleeve-window +0.378 against -0.012, with the same trade '
+              'counts and about a 1% admission rate either way. Parts e, f '
+              'and g are not built.'),
+        availability=nd('mkt/availability.csv', head=20),
+        verify=nd('mkt/verify.csv', head=20),
+        cost_baseline=nd('mkt/cost_baseline.csv', head=20),
+        declared_bank=nd('mkt/declared_bank_x1.csv', head=400),
+        declared_bank_fx=nd('mkt/declared_bank_fx_reference.csv', head=400),
+    )
     sec['nnfx']['winners'] = dict(
         note=('ITEM 4 -- EVERY STRATEGY IN THE BEST BOOK, sorted by '
               'contribution. results/nnfx/WINNERS.md. Attribution is EXACT '
