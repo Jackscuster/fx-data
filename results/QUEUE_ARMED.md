@@ -134,3 +134,53 @@ log. Round 1 should write ~20:35.
    does the same. Caught by computing the unconditional per-cell mean, which is now B1b.
 8. Editing a running script; a `def` pasted at column 0 inside `main()` silently truncating
    it — both still live, both from earlier turns.
+
+---
+
+# 26 NOVEMBER, 11:50 EST — WHAT IS RUNNING AND HOW TO STOP IT
+
+## Running now
+
+| job | pgid file | what it is | ETA |
+|---|---|---|---|
+| `queue_1126.sh` | `results/chainlogs/queue_1126.pgid` (67677) | four stages, one at a time | stage 4 ends ~18:00 |
+| `appafter5.sh` | `results/chainlogs/appafter5.pgid` | waits for item 5, then rebuilds `app_data.json` | ~12:25 |
+
+Stop either with `bash code/chain/stop_chain.sh $(cat <the pgid file>)`. Never
+`pkill` — the permission classifier refuses it and `stop_chain.sh` is the
+sanctioned path.
+
+## The four stages, in order, and why that order
+
+1. **`bankev`** — the eleven-year admission bank, 4 of 7 shards left at 5.5
+   min each, 3 workers. First because **item 5 is now triggered** and this is
+   the only thing it waits on.
+2. **the three reports** — `nnfxrep.py --reports`. B1 is a real number now.
+3. **item 5** — `nnfxfinal.py`. The 2005-2015 admission book at the count
+   that was best on average, then B5.
+4. **`booknull2b`** — the matched null for families d and e, ~6 h, last
+   because it is the longest and nothing waits on it.
+
+**Stage 4 is withheld unless `results/chainlogs/midcheck.ok` exists.** It
+does: 0 of 12 family-d winners moved and the dip columns agree to 1e-15.
+
+## Three workers, not seven, and not four
+
+At 20:28 on the 25th seven workers put swap at 7472 of 7680 MB with 64 MB of
+RAM free and the harness killed a background task. **The machine has since
+resized swap to 2048 MB total**, so there is far LESS room to absorb a
+mistake than there was that night, not more. Disk is 5.7 GB free.
+
+## Still owed, in order
+
+1. **The 2016-2020 confirm on `c_all_pairs` K=50** — Jack's call, not mine.
+   It is the only cell clearing B1 to B4 in both rotations.
+2. **Item 6**, the corrected cost. The blocker is still one line:
+   `code/nnfx1.py` `_cost_R` divides by `l2sweep.RISK` (100) where the engine
+   risked 200. It must become a module constant read from the environment and
+   **defaulting to the present value**, so every existing table stays
+   byte-identical and item 6 becomes `FX_COST_DIVISOR=engine`. Deliberately
+   not touched again today: `nnfx1` is imported by `nnfxproto`, and the null
+   workers that have not started yet would pick up the edit while the running
+   ones would not — exactly the split-batch hazard that A5 exists to prevent.
+3. **Whether chains 22B and 31 are dead or parked.**
