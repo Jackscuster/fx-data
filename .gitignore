@@ -152,3 +152,5 @@ results/r2reads/mode*_a2_defaults.csv
 # The files stay on disk. They are untracked, not deleted.
 results/nnfx/bank/sleeve_bank_*.npz
 results/nnfx/bank/shard_*.npz
+results/nnfx/bank/shardev_*.npz
+results/nnfx/bank/sleeve_bank_ev_*.npz
