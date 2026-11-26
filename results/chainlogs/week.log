@@ -1,0 +1,33 @@
+  costs: cost_table_h22.csv (28 instruments, 28 distinct costs, median 2.4 bp round trip)
+  AUDCAD    834 weeks  2005-01-07 -> 2020-12-25
+  AUDCHF    834 weeks  2005-01-07 -> 2020-12-25
+  AUDJPY    834 weeks  2005-01-07 -> 2020-12-25
+  AUDNZD    834 weeks  2005-01-07 -> 2020-12-25
+  AUDUSD    834 weeks  2005-01-07 -> 2020-12-25
+  CADCHF    834 weeks  2005-01-07 -> 2020-12-25
+  CADJPY    834 weeks  2005-01-07 -> 2020-12-25
+  CHFJPY    834 weeks  2005-01-07 -> 2020-12-25
+  EURAUD    834 weeks  2005-01-07 -> 2020-12-25
+  EURCAD    834 weeks  2005-01-07 -> 2020-12-25
+  EURCHF    834 weeks  2005-01-07 -> 2020-12-25
+  EURGBP    834 weeks  2005-01-07 -> 2020-12-25
+  EURJPY    834 weeks  2005-01-07 -> 2020-12-25
+  EURNZD    834 weeks  2005-01-07 -> 2020-12-25
+  EURUSD    834 weeks  2005-01-07 -> 2020-12-25
+  GBPAUD    843 weeks  2004-11-05 -> 2020-12-25
+  GBPCAD    834 weeks  2005-01-07 -> 2020-12-25
+  GBPCHF    834 weeks  2005-01-07 -> 2020-12-25
+  GBPJPY    834 weeks  2005-01-07 -> 2020-12-25
+  GBPNZD    834 weeks  2005-01-07 -> 2020-12-25
+  GBPUSD    834 weeks  2005-01-07 -> 2020-12-25
+  NZDCAD    834 weeks  2005-01-07 -> 2020-12-25
+  NZDCHF    834 weeks  2005-01-07 -> 2020-12-25
+  NZDJPY    834 weeks  2005-01-07 -> 2020-12-25
+  NZDUSD    834 weeks  2005-01-07 -> 2020-12-25
+  USDCAD    834 weeks  2005-01-07 -> 2020-12-25
+  USDCHF    834 weeks  2005-01-07 -> 2020-12-25
+  USDJPY    834 weeks  2005-01-07 -> 2020-12-25
+  daily   1008 sleeve-windows, median trades 18, mean R -0.012, admitted 11
+  weekly  1008 sleeve-windows, median trades 4, mean R +0.058, admitted 0
+  daily   trades  25178 | gross/trade +0.0174 R | cost/trade 0.0179 R | net/trade -0.0005 R | cost is 103% of gross
+  weekly  trades   5013 | gross/trade +0.0296 R | cost/trade 0.0180 R | net/trade +0.0116 R | cost is 61% of gross

@@ -6468,6 +6468,25 @@ const nxFill=()=>{const el=document.getElementById('nxbody');if(!el||el.dataset.
   h+=tbl(AU.tickvolume,['pair','side','year','bars','share_le1','median_v','max_v','distinct'],'Audit 2.4 — tick volume usability by pair-year');
  }
  h+='<div class="note">Candidates on record in CANDIDATE_LEDGER.csv: '+(R.ledger_n||0)+'. Every candidate ever tested is listed there, because the luck floor is computed from that file and not from memory.</div>';
+ /* ---- ITEM 4, WEEKLY BARS ON FX ---- */
+ if(R.week){const K=R.week;
+  h+='<h3>Item 4 — weekly bars on FX: the cost is the whole story</h3>';
+  h+='<div class="note">'+(K.note||'')+'</div>';
+  h+=tbl(K.edge_vs_cost,['bar','pair','trades','gross_R_per_trade','cost_R_per_trade','net_R_per_trade','net_R_total','spread_frac_roundtrip','median_atr_over_price'],'4 — gross edge per trade against cost per trade, per pair');
+  h+='<div class="note"><b>A round trip costs the same spread whether the bar is a '
+    +'day or a week.</b> So a weekly system pays the same cost on a fifth as many trades, '
+    +'and the gross edge per trade is 70% larger because the signal is held a week instead '
+    +'of a day. Cost goes from <b>103% of gross</b> to <b>61%</b>, and the 18 declared '
+    +'algorithms go from −11.96 R to +58.39 R in total.</div>';
+  h+=tbl(K.trade_floor,['trade_floor','daily','weekly'],'4 — the trade floor swept: it is NOT what blocks weekly');
+  h+='<div class="note"><b>Weekly admits zero at every trade floor, including 2.</b> '
+    +'The quarter rule is what binds, and at five trades a window it is near-arithmetically '
+    +'unsatisfiable: the best of n trades is at least R/n, so a share under 0.25 needs more '
+    +'than four winning trades. The median weekly sleeve-window has a best-trade share of '
+    +'1.000 — one trade is the whole profit — and the minimum across all 400 profitable '
+    +'weekly sleeve-windows is 0.263, just above the cut. <b>This is reported, not acted '
+    +'on:</b> 0.25 is Jack’s number and changing it is his call.</div>';
+ }
  /* ---- ITEM 2, THE TARGET MAP (PROTOCOL A14 and A15) ---- */
  if(R.target){const T=R.target;
   h+='<h3>Item 2 — the target map: what edge reaches $12,000 a year</h3>';

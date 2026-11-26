@@ -1009,6 +1009,30 @@ def stage_app():
         declared_bank=nd('mkt/declared_bank_x1.csv', head=400),
         declared_bank_fx=nd('mkt/declared_bank_fx_reference.csv', head=400),
     )
+    # ---- item 4, weekly bars on FX
+    sec['nnfx']['week'] = dict(
+        note=('ITEM 4 -- WEEKLY BARS ON FX. results/nnfx/WEEKLY.md. '
+              'THE COST IS THE WHOLE STORY. On daily bars the 18 declared '
+              'algorithms earn a gross edge of +0.0174 R a trade and pay '
+              '0.0179 R a trade in cost: COST IS 103% OF GROSS. They are not '
+              'losing for want of an edge, they are losing because the edge '
+              'is slightly smaller than the spread. On weekly bars the cost '
+              'per trade is IDENTICAL -- 0.0180 R, a round trip costs the '
+              'same spread whatever the bar -- while gross per trade is 70% '
+              'larger at +0.0296 R. Cost falls to 61% of gross, net per trade '
+              'goes from -0.0005 R to +0.0116 R, and total net R over 1,008 '
+              'sleeve-windows goes from -11.96 to +58.39 on a fifth as many '
+              'trades. BUT THE AMENDED ADMISSION TEST ADMITS ZERO WEEKLY '
+              'SLEEVES, and not because the system is worse: the quarter rule '
+              'is near-arithmetically unsatisfiable at five trades a window, '
+              'since the best of n trades is at least R/n. The smallest '
+              'best-trade share across all 400 profitable weekly '
+              'sleeve-windows is 0.263, just above the 0.25 cut. The one-bar '
+              'lag is still one bar, which on weekly data means ONE WEEK.'),
+        declared_bank=nd('week/declared_bank.csv', head=600),
+        edge_vs_cost=nd('week/edge_vs_cost.csv', head=60),
+        trade_floor=nd('week/trade_floor_sweep.csv', head=20),
+    )
     sec['nnfx']['winners'] = dict(
         note=('ITEM 4 -- EVERY STRATEGY IN THE BEST BOOK, sorted by '
               'contribution. results/nnfx/WINNERS.md. Attribution is EXACT '
