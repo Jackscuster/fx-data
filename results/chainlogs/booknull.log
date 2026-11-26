@@ -1,2 +1,4 @@
 [19:37:04] START booknull, 20 matched runs, 7 at a time
 [19:41:40] START booknull -- 20 matched runs, 7 workers, measured ~57 min each
+[22:22:48] OK booknull -- 20 of 20 runs on disk
+[22:22:48] DONE booknull

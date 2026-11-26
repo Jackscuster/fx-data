@@ -15,58 +15,58 @@
 | **separate** | every sleeve its own position at equal risk, 1/N each |
 | **voting** | Jack's 4 September rule: N signals on a pair are ONE position with N votes, cost on changes in the NET position |
 
-Selection pool: **384334 algorithms** -- Source 3's 200,000 random draws plus every algorithm its local search evaluated -- times 28 pairs, so about **21.5 million sleeve evaluations** across the two windows. Null: **0 matched runs**, each one scrambling the world and repeating all of it.
+Selection pool: **384334 algorithms** -- Source 3's 200,000 random draws plus every algorithm its local search evaluated -- times 28 pairs, so about **21.5 million sleeve evaluations** across the two windows. Null: **20 matched runs**, each one scrambling the world and repeating all of it.
 
 ## The gate table at Jack's declared threshold (share 0.25)
 
 | rot | family | K | sleeves | R | R/yr | dip | R/dip | %/yr at B5 sizing | B1 | B2 | B3 | B4 | B5 | passer |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---|---|---|---|---|---|
-| R1 | a declared | 4 | 4 | +0.021 | +0.004 | 2.712 | +0.008 | +0.01 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 1 | 28 | +0.706 | +0.141 | 1.806 | +0.391 | +0.42 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 2 | 56 | +0.394 | +0.079 | 1.657 | +0.238 | +0.26 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 3 | 84 | +0.562 | +0.112 | 1.532 | +0.367 | +0.40 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 5 | 140 | +0.294 | +0.059 | 1.479 | +0.198 | +0.21 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 8 | 224 | +0.507 | +0.101 | 1.385 | +0.366 | +0.40 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 13 | 364 | +0.704 | +0.141 | 1.265 | +0.557 | +0.60 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 21 | 588 | +0.717 | +0.143 | 1.201 | +0.597 | +0.64 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 34 | 952 | +0.757 | +0.151 | 1.183 | +0.640 | +0.69 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 55 | 1540 | +0.952 | +0.190 | 1.033 | +0.921 | +0.99 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 89 | 2492 | +1.122 | +0.224 | 0.933 | +1.203 | +1.30 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 144 | 4032 | +1.074 | +0.215 | 0.924 | +1.163 | +1.26 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | b per pair | 200 | 5600 | +0.947 | +0.189 | 0.962 | +0.985 | +1.06 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 10 | 110 | +0.895 | +0.179 | 3.608 | +0.248 | +0.27 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 20 | 217 | +1.352 | +0.270 | 3.234 | +0.418 | +0.45 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 50 | 555 | +1.668 | +0.334 | 2.373 | +0.703 | +0.76 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 100 | 1107 | +1.329 | +0.266 | 2.112 | +0.629 | +0.68 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 200 | 2195 | +1.030 | +0.206 | 2.179 | +0.473 | +0.51 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 500 | 5233 | +1.101 | +0.220 | 1.793 | +0.614 | +0.66 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 1000 | 10140 | +1.052 | +0.210 | 1.853 | +0.568 | +0.61 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 2000 | 18771 | +0.944 | +0.189 | 1.689 | +0.559 | +0.60 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 3500 | 30454 | +0.597 | +0.119 | 1.707 | +0.350 | +0.38 | -- | fail | **PASS** | **PASS** | fail | no |
-| R1 | c all pairs | 5000 | 41330 | +0.520 | +0.104 | 1.646 | +0.316 | +0.34 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | a declared | 7 | 7 | -0.953 | -0.159 | 3.759 | -0.254 | -0.23 | -- | fail | fail | fail | fail | no |
-| R2 | b per pair | 1 | 28 | -2.091 | -0.348 | 3.540 | -0.591 | -0.53 | -- | fail | fail | fail | fail | no |
-| R2 | b per pair | 2 | 56 | -1.629 | -0.271 | 3.058 | -0.533 | -0.48 | -- | fail | fail | fail | fail | no |
-| R2 | b per pair | 3 | 84 | -1.312 | -0.219 | 2.695 | -0.487 | -0.44 | -- | fail | fail | fail | fail | no |
-| R2 | b per pair | 5 | 140 | -0.523 | -0.087 | 2.039 | -0.257 | -0.23 | -- | fail | fail | fail | fail | no |
-| R2 | b per pair | 8 | 224 | -0.282 | -0.047 | 1.857 | -0.152 | -0.14 | -- | fail | fail | fail | fail | no |
-| R2 | b per pair | 13 | 364 | -0.405 | -0.067 | 1.915 | -0.211 | -0.19 | -- | fail | fail | fail | fail | no |
-| R2 | b per pair | 21 | 588 | +0.081 | +0.013 | 1.792 | +0.045 | +0.04 | -- | fail | **PASS** | fail | fail | no |
-| R2 | b per pair | 34 | 952 | +0.349 | +0.058 | 1.752 | +0.199 | +0.18 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | b per pair | 55 | 1540 | +0.335 | +0.056 | 1.725 | +0.194 | +0.18 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | b per pair | 89 | 2492 | +0.369 | +0.061 | 1.665 | +0.222 | +0.20 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | b per pair | 144 | 4032 | +0.305 | +0.051 | 1.601 | +0.191 | +0.17 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | b per pair | 200 | 5600 | +0.469 | +0.078 | 1.516 | +0.310 | +0.28 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 10 | 100 | +1.326 | +0.221 | 3.028 | +0.438 | +0.39 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 20 | 202 | +1.812 | +0.302 | 3.203 | +0.566 | +0.51 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 50 | 500 | +2.864 | +0.477 | 3.543 | +0.808 | +0.73 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 100 | 980 | +2.910 | +0.485 | 3.700 | +0.786 | +0.71 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 200 | 1861 | +2.443 | +0.407 | 3.590 | +0.681 | +0.61 | -- | **PASS** | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 500 | 4168 | +2.192 | +0.365 | 3.289 | +0.667 | +0.60 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 1000 | 7725 | +1.565 | +0.261 | 3.091 | +0.506 | +0.46 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 2000 | 14364 | +0.582 | +0.097 | 3.030 | +0.192 | +0.17 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 3500 | 23551 | +0.323 | +0.054 | 2.697 | +0.120 | +0.11 | -- | fail | **PASS** | **PASS** | fail | no |
-| R2 | c all pairs | 5000 | 31811 | +0.361 | +0.060 | 2.462 | +0.146 | +0.13 | -- | fail | **PASS** | **PASS** | fail | no |
+| R1 | a declared | 4 | 4 | +0.021 | +0.004 | 2.712 | +0.008 | +0.01 | fail | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 1 | 28 | +0.706 | +0.141 | 1.806 | +0.391 | +0.42 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 2 | 56 | +0.394 | +0.079 | 1.657 | +0.238 | +0.26 | fail | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 3 | 84 | +0.562 | +0.112 | 1.532 | +0.367 | +0.40 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 5 | 140 | +0.294 | +0.059 | 1.479 | +0.198 | +0.21 | fail | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 8 | 224 | +0.507 | +0.101 | 1.385 | +0.366 | +0.40 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 13 | 364 | +0.704 | +0.141 | 1.265 | +0.557 | +0.60 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 21 | 588 | +0.717 | +0.143 | 1.201 | +0.597 | +0.64 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 34 | 952 | +0.757 | +0.151 | 1.183 | +0.640 | +0.69 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 55 | 1540 | +0.952 | +0.190 | 1.033 | +0.921 | +0.99 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 89 | 2492 | +1.122 | +0.224 | 0.933 | +1.203 | +1.30 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 144 | 4032 | +1.074 | +0.215 | 0.924 | +1.163 | +1.26 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | b per pair | 200 | 5600 | +0.947 | +0.189 | 0.962 | +0.985 | +1.06 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 10 | 110 | +0.895 | +0.179 | 3.608 | +0.248 | +0.27 | fail | fail | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 20 | 217 | +1.352 | +0.270 | 3.234 | +0.418 | +0.45 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 50 | 555 | +1.668 | +0.334 | 2.373 | +0.703 | +0.76 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 100 | 1107 | +1.329 | +0.266 | 2.112 | +0.629 | +0.68 | fail | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 200 | 2195 | +1.030 | +0.206 | 2.179 | +0.473 | +0.51 | fail | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 500 | 5233 | +1.101 | +0.220 | 1.793 | +0.614 | +0.66 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 1000 | 10140 | +1.052 | +0.210 | 1.853 | +0.568 | +0.61 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 2000 | 18771 | +0.944 | +0.189 | 1.689 | +0.559 | +0.60 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 3500 | 30454 | +0.597 | +0.119 | 1.707 | +0.350 | +0.38 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R1 | c all pairs | 5000 | 41330 | +0.520 | +0.104 | 1.646 | +0.316 | +0.34 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | a declared | 7 | 7 | -0.953 | -0.159 | 3.759 | -0.254 | -0.23 | fail | fail | fail | fail | fail | no |
+| R2 | b per pair | 1 | 28 | -2.091 | -0.348 | 3.540 | -0.591 | -0.53 | fail | fail | fail | fail | fail | no |
+| R2 | b per pair | 2 | 56 | -1.629 | -0.271 | 3.058 | -0.533 | -0.48 | fail | fail | fail | fail | fail | no |
+| R2 | b per pair | 3 | 84 | -1.312 | -0.219 | 2.695 | -0.487 | -0.44 | fail | fail | fail | fail | fail | no |
+| R2 | b per pair | 5 | 140 | -0.523 | -0.087 | 2.039 | -0.257 | -0.23 | fail | fail | fail | fail | fail | no |
+| R2 | b per pair | 8 | 224 | -0.282 | -0.047 | 1.857 | -0.152 | -0.14 | fail | fail | fail | fail | fail | no |
+| R2 | b per pair | 13 | 364 | -0.405 | -0.067 | 1.915 | -0.211 | -0.19 | fail | fail | fail | fail | fail | no |
+| R2 | b per pair | 21 | 588 | +0.081 | +0.013 | 1.792 | +0.045 | +0.04 | **PASS** | fail | **PASS** | fail | fail | no |
+| R2 | b per pair | 34 | 952 | +0.349 | +0.058 | 1.752 | +0.199 | +0.18 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | b per pair | 55 | 1540 | +0.335 | +0.056 | 1.725 | +0.194 | +0.18 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | b per pair | 89 | 2492 | +0.369 | +0.061 | 1.665 | +0.222 | +0.20 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | b per pair | 144 | 4032 | +0.305 | +0.051 | 1.601 | +0.191 | +0.17 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | b per pair | 200 | 5600 | +0.469 | +0.078 | 1.516 | +0.310 | +0.28 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 10 | 100 | +1.326 | +0.221 | 3.028 | +0.438 | +0.39 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 20 | 202 | +1.812 | +0.302 | 3.203 | +0.566 | +0.51 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 50 | 500 | +2.864 | +0.477 | 3.543 | +0.808 | +0.73 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 100 | 980 | +2.910 | +0.485 | 3.700 | +0.786 | +0.71 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 200 | 1861 | +2.443 | +0.407 | 3.590 | +0.681 | +0.61 | **PASS** | **PASS** | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 500 | 4168 | +2.192 | +0.365 | 3.289 | +0.667 | +0.60 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 1000 | 7725 | +1.565 | +0.261 | 3.091 | +0.506 | +0.46 | **PASS** | fail | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 2000 | 14364 | +0.582 | +0.097 | 3.030 | +0.192 | +0.17 | fail | fail | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 3500 | 23551 | +0.323 | +0.054 | 2.697 | +0.120 | +0.11 | fail | fail | **PASS** | **PASS** | fail | no |
+| R2 | c all pairs | 5000 | 31811 | +0.361 | +0.060 | 2.462 | +0.146 | +0.13 | fail | fail | **PASS** | **PASS** | fail | no |
 
 *The `voting` mode is shown because it dominates `separate` everywhere -- see the cost section. The full table for both modes and all six share thresholds is `books_gates.csv`.*
 
@@ -258,7 +258,7 @@ Against the SAME-PAIR figure from item 2: median per-pair rho **+0.0183**, mean 
 
 ## The verdict, plainly
 
-**0 of 552 book cells clear B1 to B4. 0 are passers (B1 to B5).**
+**50 of 552 book cells clear B1 to B4. 0 are passers (B1 to B5).**
 
 The best cell by percent a year is **R1 b per pair K=89 voting at share 0.25**: +1.30% a year, R/dip +1.203, and it is **10.70 percentage points short of 12%**.
 
@@ -267,5 +267,5 @@ The best cell by percent a year is **R1 b per pair K=89 voting at share 0.25**: 
 - `results/nnfx/books/books_full_real.csv` -- 552 rows
 - `results/nnfx/books/books_gates.csv` -- 552 rows
 - `results/nnfx/books/books_declared_nudge.csv` -- 24 rows
-- `results/nnfx/books/null/books_*.csv` -- 0 matched null runs
+- `results/nnfx/books/null/books_*.csv` -- 20 matched null runs
 - `results/nnfx/PROTOCOL.md` -- AMENDMENT 1 is the governing text

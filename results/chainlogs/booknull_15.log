@@ -1,0 +1,37 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    bnull015 discovery 50000/200000  327/s  eta 7.6 min
+    bnull015 discovery 100000/200000  391/s  eta 4.3 min
+    bnull015 discovery 150000/200000  418/s  eta 2.0 min
+    bnull015 discovery 200000/200000  434/s  eta 0.0 min
+  bnull015: discovery done 7.8 min, best +10.4484
+  bnull015: local search 173310 evaluations, 373277 algorithms in the bank list, 14.2 min
+    bnull015 bank pair 1/28 AUDCAD, 1.1 min
+    bnull015 bank pair 2/28 AUDCHF, 2.3 min
+    bnull015 bank pair 3/28 AUDJPY, 3.5 min
+    bnull015 bank pair 4/28 AUDNZD, 4.6 min
+    bnull015 bank pair 5/28 AUDUSD, 5.7 min
+    bnull015 bank pair 6/28 CADCHF, 6.9 min
+    bnull015 bank pair 7/28 CADJPY, 8.0 min
+    bnull015 bank pair 8/28 CHFJPY, 9.4 min
+    bnull015 bank pair 9/28 EURAUD, 10.7 min
+    bnull015 bank pair 10/28 EURCAD, 12.0 min
+    bnull015 bank pair 11/28 EURCHF, 13.4 min
+    bnull015 bank pair 12/28 EURGBP, 14.8 min
+    bnull015 bank pair 13/28 EURJPY, 16.2 min
+    bnull015 bank pair 14/28 EURNZD, 17.5 min
+    bnull015 bank pair 15/28 EURUSD, 18.9 min
+    bnull015 bank pair 16/28 GBPAUD, 20.4 min
+    bnull015 bank pair 17/28 GBPCAD, 21.8 min
+    bnull015 bank pair 18/28 GBPCHF, 23.3 min
+    bnull015 bank pair 19/28 GBPJPY, 24.9 min
+    bnull015 bank pair 20/28 GBPNZD, 26.4 min
+    bnull015 bank pair 21/28 GBPUSD, 27.8 min
+    bnull015 bank pair 22/28 NZDCAD, 29.2 min
+    bnull015 bank pair 23/28 NZDCHF, 30.8 min
+    bnull015 bank pair 24/28 NZDJPY, 32.3 min
+    bnull015 bank pair 25/28 NZDUSD, 33.7 min
+    bnull015 bank pair 26/28 USDCAD, 35.2 min
+    bnull015 bank pair 27/28 USDCHF, 36.7 min
+    bnull015 bank pair 28/28 USDJPY, 38.2 min
+  bnull015: bank done 52.4 min
+  null 15 DONE 57.6 min: 552 book rows, 336 fit rows

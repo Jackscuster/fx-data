@@ -1,2 +1,25 @@
 [20:17:34] booknull2 ARMED -- waiting for chain 1's 20 runs
 [20:30:19] booknull2 ARMED -- waiting for chain 1's 20 runs
+[22:24:22] chain 1 complete, 20 runs on disk. START booknull2, 4 workers -- reduced from 7 after the 20:28 memory incident
+23:13:44 FAIL run 0
+23:14:46 FAIL run 1
+23:14:46 FAIL run 2
+23:14:59 FAIL run 3
+00:19:57 FAIL run 4
+00:20:21 FAIL run 5
+00:20:25 FAIL run 6
+00:21:59 FAIL run 7
+01:24:56 FAIL run 8
+01:25:23 FAIL run 10
+01:26:32 FAIL run 9
+01:28:25 FAIL run 11
+02:32:05 FAIL run 14
+02:32:38 FAIL run 13
+02:32:47 FAIL run 12
+02:34:07 FAIL run 15
+03:36:32 FAIL run 16
+03:37:21 FAIL run 17
+03:37:53 FAIL run 19
+03:39:03 FAIL run 18
+[03:39:03] OK booknull2 -- 0 of 20 d-runs and 0 of 20 e-runs on disk
+[03:39:03] DONE booknull2

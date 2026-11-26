@@ -1,0 +1,4 @@
+[11:54:14] START booknull2b -- 20 runs, 3 workers, e before d, fail fast
+[11:54:15] OK booknull2b -- 0 of 20 d-runs and 0 of 20 e-runs on disk
+[11:54:15] DONE booknull2b
+[11:56:12] START booknull2b -- 20 runs, 3 workers, e before d, fail fast

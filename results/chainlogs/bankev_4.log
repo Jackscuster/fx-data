@@ -1,3 +1,6 @@
   costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
-    shardev 4 pair AUDUSD done (1 of 4), 1.3 min
-    shardev 4 pair EURGBP done (2 of 4), 2.9 min
+    shardev 4 pair AUDUSD done (1 of 4), 0.9 min
+    shardev 4 pair EURGBP done (2 of 4), 1.9 min
+    shardev 4 pair GBPJPY done (3 of 4), 2.8 min
+    shardev 4 pair USDCAD done (4 of 4), 3.8 min
+  shardev 4 written in 3.8 min

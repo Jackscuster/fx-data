@@ -1,0 +1,6 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    shardev 6 pair CADJPY done (1 of 4), 0.9 min
+    shardev 6 pair EURNZD done (2 of 4), 1.7 min
+    shardev 6 pair GBPUSD done (3 of 4), 2.6 min
+    shardev 6 pair USDJPY done (4 of 4), 3.5 min
+  shardev 6 written in 3.5 min

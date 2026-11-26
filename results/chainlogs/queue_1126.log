@@ -1,0 +1,10 @@
+[11:46:25] START queue_1126
+[11:46:25] midcheck has exited
+[11:46:25] bankev: 3 of 7 shards on disk, resuming
+[11:53:52] bankev: 7 of 7 shards on disk now
+[11:53:52] reports START
+[11:53:55] reports OK
+[11:53:55] nnfxfinal START
+[11:54:14] nnfxfinal OK
+[11:54:14] booknull2b START -- expect ~6 h
+[11:54:15] DONE queue_1126

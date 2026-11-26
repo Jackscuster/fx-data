@@ -1,0 +1,48 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    bnull2_014 50000/200000  263/s  eta 9.5 min
+    bnull2_014 100000/200000  300/s  eta 5.6 min
+    bnull2_014 150000/200000  316/s  eta 2.6 min
+    bnull2_014 200000/200000  325/s  eta 0.0 min
+  bnull2_014: 376848 algorithms, 19.4 min
+    bnull2_014 bank pair 1/28 AUDCAD, 1.6 min
+    bnull2_014 bank pair 2/28 AUDCHF, 3.3 min
+    bnull2_014 bank pair 3/28 AUDJPY, 5.0 min
+    bnull2_014 bank pair 4/28 AUDNZD, 6.7 min
+    bnull2_014 bank pair 5/28 AUDUSD, 8.3 min
+    bnull2_014 bank pair 6/28 CADCHF, 10.0 min
+    bnull2_014 bank pair 7/28 CADJPY, 11.7 min
+    bnull2_014 bank pair 8/28 CHFJPY, 13.4 min
+    bnull2_014 bank pair 9/28 EURAUD, 15.0 min
+    bnull2_014 bank pair 10/28 EURCAD, 16.6 min
+    bnull2_014 bank pair 11/28 EURCHF, 18.3 min
+    bnull2_014 bank pair 12/28 EURGBP, 19.9 min
+    bnull2_014 bank pair 13/28 EURJPY, 21.5 min
+    bnull2_014 bank pair 14/28 EURNZD, 23.2 min
+    bnull2_014 bank pair 15/28 EURUSD, 24.8 min
+    bnull2_014 bank pair 16/28 GBPAUD, 26.4 min
+    bnull2_014 bank pair 17/28 GBPCAD, 28.0 min
+    bnull2_014 bank pair 18/28 GBPCHF, 29.7 min
+    bnull2_014 bank pair 19/28 GBPJPY, 31.3 min
+    bnull2_014 bank pair 20/28 GBPNZD, 33.0 min
+    bnull2_014 bank pair 21/28 GBPUSD, 34.6 min
+    bnull2_014 bank pair 22/28 NZDCAD, 36.2 min
+    bnull2_014 bank pair 23/28 NZDCHF, 37.9 min
+    bnull2_014 bank pair 24/28 NZDJPY, 39.5 min
+    bnull2_014 bank pair 25/28 NZDUSD, 41.1 min
+    bnull2_014 bank pair 26/28 USDCAD, 42.8 min
+    bnull2_014 bank pair 27/28 USDCHF, 44.4 min
+    bnull2_014 bank pair 28/28 USDJPY, 46.1 min
+Traceback (most recent call last):
+  File "/Users/jackcuster/fx-data/code/nnfxnullrun2.py", line 105, in <module>
+    one(a.run)
+  File "/Users/jackcuster/fx-data/code/nnfxnullrun2.py", line 88, in one
+    rd = CB.build_d(bank, allc, W, pairs, D, sweep, verbose=False)
+  File "/Users/jackcuster/fx-data/code/nnfxcomb.py", line 65, in build_d
+    fam, K, avmetric = pick_winner(sweep, share, mode)
+  File "/Users/jackcuster/fx-data/code/nnfxcomb.py", line 48, in pick_winner
+    av = q.groupby('K')[metric].mean()          # average over rotations
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/core/groupby/generic.py", line 1951, in __getitem__
+    return super().__getitem__(key)
+  File "/Users/jackcuster/Library/Python/3.9/lib/python/site-packages/pandas/core/base.py", line 245, in __getitem__
+    raise KeyError(f"Column not found: {key}")
+KeyError: 'Column not found: R_per_dip'

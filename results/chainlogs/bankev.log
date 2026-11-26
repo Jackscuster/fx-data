@@ -1,1 +1,12 @@
 [20:19:33] START bankev
+[11:46:25] START bankev
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+  sleeve_bank_ev_real.npz: 384334 x 28, 108 MB. ADDITIVE CHECK: max |R_ev - (R_h1 + R_h2)| = 3.22e-06, max |trades difference| = 1
+Traceback (most recent call last):
+  File "/Users/jackcuster/fx-data/code/nnfxbankev.py", line 130, in <module>
+    merge(a.nshards)
+  File "/Users/jackcuster/fx-data/code/nnfxbankev.py", line 106, in merge
+    assert dT == 0, ('the eleven-year trade count does not equal h1 + h2 on '
+AssertionError: the eleven-year trade count does not equal h1 + h2 on every sleeve (max difference 1) -- a trade is counted in the window its leg EXITS in, so this must be exact
+[11:53:52] FAIL bankev merge
+[11:53:52] DONE bankev

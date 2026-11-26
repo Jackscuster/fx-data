@@ -1,0 +1,17 @@
+[11:47:50] appafter5 ARMED -- waiting for the queue's nnfxfinal line
+[11:46:25] bankev: 3 of 7 shards on disk, resuming
+[11:53:52] bankev: 7 of 7 shards on disk now
+[11:53:52] reports START
+[11:53:55] reports OK
+[11:53:55] nnfxfinal START
+[11:54:14] nnfxfinal OK
+[11:54:21] rebuilding app_data.json
+wired into /Users/jackcuster/fx-data/app_data.json
+wired into /Users/jackcuster/fx-data/results/app_data.json
+app_ui.js already carries the L2 restart tab
+{'sweep': 38, 'ladder': 18, 'logic': 12, 'duration': 4, 'funnel': 3, 'audit': 20, 'ninebox': 10, 'ninebox_surv': 10, 'mtf': 7, 'mtfagree': 3, 'mtfagree_surv': 3, 'composite': 1, 'val_summary': 2, 'val_shuffle': 1, 'val_synth': 1, 'val_refit': 1, 'val_persist': 3, 'val_trans': 3, 'crisis': 5, 'crisisev': 250, 'famret': 302, 'pairtrend': 28, 'horizon': 4, 'entry': 9, 'termstruct': 19, 'scaleocc': 4, 'durbands': 6, 'clsval': 17, 'combval': 30, 'structsel': 144, 'epicount': 3, 'episep': 24, 'epiexc': 10, 'pairclf': 28, 'transedge': 18, 'transpairs': 5, 'magnull': 12, 'axesab': 4, 'axesct': 3, 'axescts': 3, 'axesset': 1, 'leadtime': 36, 'masweep': 3420, 'maridge': 5, 'maconfirm': 2, 'maiss': 12, 'l1sum': 40, 'shape3cov': 15, 'shapewin': 39, 'shapesc': 39, 'shapesplit': 207, 'scoredist': 2, 'twocells': 6, 'meas1': 8, 'chopcomp': 4, 'finalrep': 5, 'finalpairs': 56, 'paircha': 28, 'pairrank': 28, 'runlen': 120, 'regen': 14, 'pairtrans': 336, 'charblocks': 84, 'rankstab': 7, 'rankmoves': 28, 'rdq1': 24, 'rdq2': 4, 'rdnull': 4, 'rdpairs': 42, 'rdpre': 1, 'precov': 3, 'mvq1': 24, 'mvchg': 8, 'mvq2': 4, 'mvnull': 6, 'mvcov': 1, 'drvsepa': 8, 'drvsepb': 8, 'drvconf': 8, 'drvsub': 12, 'drvsepc': 14, 'drvconfc': 8, 'drvfwdc': 20, 'drvfwdb': 20, 'drvsubc': 9, 'drvmech': 28, 'drvfwdsub': 6, 'drvsepd': 8, 'drvsepe': 8, 'drvfwdd': 20, 'drvfwde': 24, 'drvsubd': 9, 'drvsube': 9, 'drvprog': 7, 'cotsep': 32, 'cotsub': 36, 'cotfwd': 28, 'cotcov': 8, 'stcorr': 756, 'stcorrs': 2, 'stblk': 16, 'stbrd': 24, 'stbrds': 4, 'stneff': 269, 'stext': 40, 'rfinv': 12, 'rfagr': 60, 'rfdis': 6, 'rfthr': 6, 'wsens': 15, 'knobs': 22, 'knobrank': 11, 'knobstate': 84, 'knobsep': 84, 'sqdec': 6, 'sqreg': 14, 'today': 28, 'todayhdr': 1, 'pairmech': 28, 'r10cov': 8, 'chronep': 6, 'chronsep': 30, 'chrondet': 84, 'bothep': 15, 'failsurf': 70, 'scoreyears': 11, 'shapesplitp': 252, 'shapescc': 1, 'shapewinc': 1, 'shape3lb': 5, 'oldnew': 5, 'chgcount': 5, 'chgtrack': 24, 'fswing': 196, 'fswingc': 2, 'structselres': 2, 'shapeval': 9, 'ribsweep': 30, 'ninestates': 9, 'nineexc': 9, 'nineper': 28, 'ninetrans': 9, 'durhaz': 6, 'scaleexc': 4, 'newtarget': 4, 'termpairs': 28, 'entrypair': 28, 'subnull': 8, 'subnullpairs': 28, 'agreepairs': 28, 'extret': 11, 'carryret': 3, 'carrysig': 31, 'ratecov': 8, 'extcov': 27, 'exttr': 8, 'infl': 6, 'inflsum': 3, 'inflfam': 6, 'stability': 13, 'clusters': 7, 'survivors': 8, 'independents': 7, 'meta': 'meta'}
+app_data.json       1.4 MB
+app_signals.json   46.4 MB  (175634 built, 166486 scorable)
+[11:54:27] app_data.json rebuilt,  1513904 bytes
+[11:54:27] node --check app_ui.js PASSES
+[11:54:27] DONE appafter5

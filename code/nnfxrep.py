@@ -570,14 +570,31 @@ def winners_md(D, verbose=True):
     S3.init_space()
     pairs, bank = BK.load_bank('real')
     cands, _src, _m = CL.load()
-    # THE BEST BOOK: a passer if there is one, else the best percent a year,
-    # and the label says which rule was used.
+    # THE BEST BOOK, AND BOTH ROTATIONS COME BEFORE THE BIGGER NUMBER.
+    # Until 26 Nov this took the highest b5_pct_per_year among cells clearing
+    # B1 to B4 in EITHER rotation, and so reported b_per_pair K=89 R1 at
+    # +1.30% a year as the best book -- a cell that fails B2 in R2, where
+    # stripping its best five days turns +0.369 into -0.510. The standing
+    # rule runs both rotations precisely so that a cell has to survive the
+    # swap, and a headline that does not require it flatters the result.
+    both = set()
+    for key, q in D.groupby(['family', 'share', 'mode', 'K'], dropna=False):
+        if len(q) == 2 and bool((q.clears_B1_B4 == 1).all()):
+            both.add(key)
+    kk = list(zip(D.family, D['share'], D['mode'], D.K))
+    D = D.copy()
+    D['clears_both_rotations'] = [int(t in both) for t in kk]
     pas = D[D.passer == 1]
+    c2r = D[D.clears_both_rotations == 1]
     c14 = D[D.clears_B1_B4 == 1]
-    pool = pas if len(pas) else (c14 if len(c14) else D)
+    pool = (pas if len(pas) else
+            (c2r if len(c2r) else (c14 if len(c14) else D)))
     rule = ('a passer (B1 to B5)' if len(pas)
-            else ('the best of those clearing B1 to B4' if len(c14)
-                  else 'the best percent a year -- NOTHING CLEARS B1 TO B4'))
+            else ('the best of those clearing B1 to B4 in BOTH rotations'
+                  if len(c2r) else
+                  ('the best of those clearing B1 to B4 in ONE rotation only '
+                   '-- nothing clears both' if len(c14) else
+                   'the best percent a year -- NOTHING CLEARS B1 TO B4')))
     pool = pool[pool.family != 'a_declared'] if \
         (pool.family != 'a_declared').any() else pool
     b = pool.sort_values('b5_pct_per_year', ascending=False).iloc[0]

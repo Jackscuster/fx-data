@@ -2,12 +2,23 @@
 
 **`PROTOCOL.md` AMENDMENT 1, A7. Built only if a book clears B1 to B4 in BOTH rotations.**
 
-## Nothing qualifies, so nothing was built
+## The qualifying construction
 
-**552 book cells were tested against 0 matched null runs and none clears B1 to B4 in both rotations.** A7 is conditional and the condition is not met, so there is no final book. Assembling one anyway would be a number with no gate behind it.
+**2 cell(s) clear B1 to B4 in both rotations.** A7 picks **c_all_pairs, share 0.25, voting mode, K=50** — the K with the highest return per dip AVERAGED over the two rotations (+0.756), a rule declared before the counts were known.
 
-**No cell clears B1 to B4 in even one rotation.**
+| | |
+|---|---|
+| admission | **all of 2005-2015** |
+| sleeves | 610 |
+| R | +17.756 |
+| R a year | +1.614 |
+| verified worst dip | 1.345 |
+| return per dip | **+13.204** |
+| sizing to 3.6% daily / 5.4% trailing | x4.016 |
+| **percent a year** | **+6.48%** |
+| days to pass the +10% evaluation | 312 |
+| **B5** | **fail — 5.52 points short** |
 
-## What this does not say
+## EVERY FIGURE ABOVE IS IN-SAMPLE
 
-It does not say the searched books lost money — several are positive on data no sleeve was admitted on, and `BOOKS.md` reports every one. It says none of them beat the 95th percentile of the same book built from scrambled data while also surviving the one-event, hold-out and nudge tests in both rotations. **2016-2020 stays closed.** Opening it is Jack's call and nothing here earns it.
+Admission used all eleven years, so there is nothing left to score it on. That is what A7 asks for. **This is the candidate for the one-time 2016-2020 confirm and nothing more. STOPPING HERE.** Opening 2016-2020 is Jack's call.

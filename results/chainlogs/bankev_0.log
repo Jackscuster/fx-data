@@ -1,6 +1,2 @@
   costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
-    shardev 0 pair AUDCAD done (1 of 4), 1.3 min
-    shardev 0 pair CHFJPY done (2 of 4), 2.7 min
-    shardev 0 pair EURUSD done (3 of 4), 4.0 min
-    shardev 0 pair NZDCAD done (4 of 4), 5.4 min
-  shardev 0 written in 5.4 min
+  shard 0 already on disk
