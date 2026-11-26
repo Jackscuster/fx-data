@@ -1,0 +1,14 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+    fwd share=0.25 done, 1.8 min
+    fwd share=0.4 done, 2.4 min
+    fwd share=0.6 done, 3.1 min
+    fwd share=0.8 done, 3.7 min
+    fwd share=1.0 done, 4.3 min
+    fwd share=inf done, 4.9 min
+    rev share=0.25 done, 5.7 min
+    rev share=0.4 done, 6.4 min
+    rev share=0.6 done, 7.1 min
+    rev share=0.8 done, 7.7 min
+    rev share=1.0 done, 8.3 min
+    rev share=inf done, 8.9 min
+  books_fourcell.csv 960 rows in 8.9 min

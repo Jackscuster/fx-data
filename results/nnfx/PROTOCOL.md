@@ -449,3 +449,113 @@ over its full range and reported as a curve, so the share threshold is swept
 0.25 marked as the declared one. If the books at 0.25 are empty or trivially small, the curve
 is what says whether that is the test or the strategies.
 
+
+---
+
+## A10. The four-cell rotation applied to a BOOK — declared 20:10 EST, before it was run
+
+A4 says: *"Where a strategy is admitted on all pairs of a cell, also use the four-cell
+rotation already built."* For books (b) and (c) that rotation cannot be used as Source 3 used
+it, and the reason is worth stating: those books hold **pair-specific** sleeves, so a sleeve
+admitted on a 15-pair has no position at all on a 13-pair and the cross cell is empty, not
+weak.
+
+So the four-cell rotation gets its own family, **(e) FOUR-CELL**, built the one way that
+makes the cross cell real:
+
+| step | rule, fixed here before any number is computed |
+|---|---|
+| **select** | on the **15 pairs with neither JPY nor CHF, 2005-2010 only**. An algorithm's sleeve on each of those pairs must pass A2's admission test; the algorithm is then ranked by its **total net R over the pairs it was admitted on**, exactly as family (c) ranks. Top **K**, swept 10 / 20 / 50 / 100 / 200 / 500 / 1000 / 2000 / 3500 / 5000 |
+| **score** | those K algorithms traded on **all 13 pairs containing JPY or CHF, 2011-2015**, equal risk 1/N over the K x 13 sleeves. **No per-pair admission is applied on the scoring side**, because choosing which of the 13 pairs to trade would require looking at them |
+| **report** | all four cells: the selection cell (15 pairs, 2005-2010), the **true cross** (13 pairs, 2011-2015), and the two off-diagonals (13 pairs 2005-2010, and 15 pairs 2011-2015) |
+| **both modes** | separate and voting, as every other family |
+| **and the mirror** | the same construction with the roles swapped: select on the 13 pairs in 2011-2015, score on the 15 pairs in 2005-2010 |
+
+**Why this is the strongest test in the amendment.** It shares **no pair and no year** with its
+selection, so it does not need a pair's fit to carry at all — only for an algorithm chosen on
+one set of currencies in one decade to work on different currencies in a different decade.
+That is the question Source 3 answered for a single algorithm (rho +0.0866, one passer); this
+asks it for a book.
+
+**AND ITS B1 IS NOT MATCHED, WHICH IS STATED HERE AND NOT BURIED.** The 20 null runs were
+already running when this family was declared, and they do not build it. Family (e) is
+therefore reported **in full and without a passer verdict**: B2, B3 and B4 are computed and
+B1 is left blank. A matched null for it is the next armed stage, not an omission.
+
+---
+
+## A11. Family (d) COMBINED — declared 20:12 EST, before it was run
+
+Item 3d: *"COMBINED: a plus the best of b and c."* "The best of b and c" names a choice, and a
+choice made by looking at the scoring window is not a choice, so the rule is fixed here as a
+**procedure** that the null applies to its own numbers exactly as the real run applies it to
+its own:
+
+1. For each of families **b** and **c**, compute scoring-window **return per dip** at every K
+   in that family's grid, in **both rotations**.
+2. **Average the two rotations** at each K. Take each family's **best K by that average**.
+   Averaging is what A7 already declared for the final book, and it is used here for the same
+   reason: a K that is best on one rotation's scoring window alone has been chosen by the test.
+3. The winner is whichever of b or c has the higher averaged return per dip at its own best K.
+4. **d = book (a)'s admitted sleeves UNION the winner's sleeves at that K**, equal risk 1/N
+   over the union, both modes, every share threshold, both rotations.
+
+A sleeve appearing in both halves is held **once**, not twice — the union is of sleeves, not a
+sum of two books.
+
+**ITS B1 IS NOT MATCHED BY THE RUNNING NULLS EITHER**, for the same reason family (e)'s is not:
+the 20 runs launched at 19:41 build families a, b and c only. Families **d** and **e** get
+their own matched null chain, over the **same 20 scrambled worlds** — the seeds are
+`700000 + run` and `nnfxsrc3.zero_edge_frames` is deterministic, so the second chain rebuilds
+the identical worlds rather than drawing new ones. Until it lands, d and e carry B2, B3 and B4
+and a blank B1, and neither is called a passer.
+
+---
+
+## A12. B1b — THE CELL BASELINE. Declared 20:25 EST, as a companion to B1, not a replacement
+
+Family (e) forced this out into the open and it applies to **every** book in the amendment.
+
+**The measurement.** Over all 384,334 algorithms, with **no selection whatsoever**, the mean
+net R per sleeve (sleeves with at least 20 trades):
+
+| cell | mean R per sleeve | share positive |
+|---|---:|---:|
+| **15 pairs (no JPY, no CHF), 2005-2010** | **+1.383** | 59.5% |
+| 15 pairs, 2011-2015 | −0.861 | 42.1% |
+| 13 pairs (JPY or CHF), 2005-2010 | −0.565 | 45.2% |
+| **13 pairs (JPY or CHF), 2011-2015** | **+0.807** | 55.8% |
+
+**A random complete NNFX algorithm makes +1.38 R on the 15 majors-and-crosses in 2005-2010 and
+loses 0.86 R on the same pairs in 2011-2015.** The cell, not the algorithm, carries most of the
+sign. And this is exactly the diagonal family (e) shows **in both directions, whichever cell
+it selected on** — so a four-cell book that is positive on its cross cell has, so far, proved
+nothing except that it was handed a profitable cell.
+
+**Why B1 alone cannot catch this.** The zero-edge null block-shuffles within the year and flips
+block directions, which destroys any trend longer than 20 days. So **B1 asks "is there
+exploitable trend in this data", not "did the selection beat picking an algorithm at random".**
+A trend-following book passes B1 whenever trend exists, selected or not. Both questions matter
+and they need different baselines.
+
+**B1b, declared.** A book must also beat the **unconditional mean sleeve R of its own cell** —
+the table above, at the same trade floor. This is exact and not an approximation: at equal risk
+1/N a book's R **is** the mean of its sleeves' R, verified at +4.5485 against +4.5516 on family
+(e) fwd K=10, the 0.003 being the entry-versus-bar-price cost convention.
+
+**B1b is reported alongside B1 and does not replace it.** B1 says whether there is an edge
+beyond noise; B1b says whether the selection added anything to a coin pulled from the same
+cell. A book needs both, and a book that clears B1 and fails B1b has found a good six years,
+not a good algorithm.
+
+### What family (e) looks like under B1b, before its own null lands
+
+Selecting on the 15 pairs in 2005-2010 and trading the 13 JPY/CHF pairs in 2011-2015 — no
+shared pair, no shared year — the top-10 book makes **+4.552 R per sleeve against the cell's
++0.807, an excess of +3.745.** By calendar year: **+2.170, +1.187, +0.101, +1.213, −0.120** —
+positive in four of five, and still positive with **any one year removed** (+2.38 to +4.67), so
+it is not one macro event, and 2013 — the strongest year of the yen trend — is its *weakest*.
+The same algorithms on the 13 pairs in **2005-2010** lose money in four of six years.
+
+That is the most interesting number of 25 November and it is **not** called a passer: family
+(e)'s matched null was declared after the 19:41 chain launched and is a separate armed stage.

@@ -1,6 +1,6 @@
 # QUEUE — what is armed right now
 
-**Written 25 November 2026, 19:45 EST. Standing rule: this file is rewritten before the end
+**Rewritten 25 November 2026, 20:20 EST. Standing rule: this file is rewritten before the end
 of every turn, and it names what is RUNNING, what LANDED, and what is NOT ARMED with the
 reason. Nothing is "about to be launched".**
 
@@ -12,13 +12,16 @@ pair, makes admission light, and puts the whole pass/fail on the combined book a
 
 ## ARMED AND RUNNING
 
-| stage | what | pid / pgid | ETA (US Eastern) |
+| stage | what | pgid | ETA (US Eastern) |
 |---|---|---|---|
-| **20 matched null runs** | B1's floor. Each run scrambles the world, draws 200,000 algorithms, runs the local search at the same cap, builds the full 28-pair sleeve bank, and rebuilds every book of item 3 and every statistic of item 2 | chain pid 25292, **pgid 25289** (in `results/chainlogs/booknull.pgid`), 7 workers | **~22:35** |
+| **chain 1 — 20 matched null runs** | B1's floor for families **a, b and c**, and item 2's null. Each run scrambles the world, draws 200,000 algorithms, runs the local search at the same cap, builds the full 28-pair sleeve bank, and rebuilds every book | **25289** (`results/chainlogs/booknull.pgid`), 7 workers | **~21:50** |
+| **chain 2 — the matched null for families (d) and (e)** | **ARMED AND WAITING on chain 1**, not launched by hand. Rebuilds the SAME 20 worlds (seeds 700000+run, deterministic) and applies `nnfxcomb.build_d` and `nnfxcell4.build_e` — the same functions that produced the real numbers, imported and not copied | **31947** (`results/chainlogs/booknull2.pgid`), 7 workers | starts ~21:50, **~00:10** |
 
-**To stop it:** `bash code/chain/stop_chain.sh $(cat results/chainlogs/booknull.pgid)`.
-It is resumable by run — a run whose `books_NNN.csv` and `fit_NNN.csv` are both on disk is
-skipped, so a stop costs the runs in flight and no more.
+**To stop either:** `bash code/chain/stop_chain.sh $(cat results/chainlogs/booknull.pgid)` or
+`…booknull2.pgid`. Both are resumable by run — a run whose output CSVs are on disk is skipped,
+so a stop costs the runs in flight and no more. Chain 2's waiter **refuses to start** if chain
+1 disappears with fewer than 20 runs on disk, and says so in its log, rather than waiting for
+ever or starting on a short batch.
 
 **DO NOT EDIT** `code/nnfxbooks.py`, `code/nnfxnullrun.py`, `code/nnfxsleeves.py`,
 `code/nnfxfit.py` or `code/chain/booknull.sh` while it runs. This chain was launched with
@@ -40,7 +43,12 @@ the workers that have not started yet and not the ones that have.
 | **item 1, the declared 18** | `results/nnfx/bank/bank_declared.csv` (1,512 rows), `bank_declared_yearly.csv` (5,544) | per pair, per window and per calendar year |
 | **item 1, the searched bank** | `results/nnfx/bank/sleeve_bank_real.npz` (208 MB) | 384,334 algorithms x 28 pairs x 2 windows, in 4.5 minutes |
 | **item 2 on real data** | `results/nnfx/books/fit_real.csv`, `fitpooled_real.csv` | pooled rho **+0.0038**; admission does **not** beat its own baseline. Null pending |
-| **item 3 on real data** | `results/nnfx/books/books_sweep_real.csv` | every family, every K, every share threshold, both rotations, both modes |
+| **item 3 on real data**, families a, b, c | `books_sweep_real.csv`, `books_full_real.csv` (552 cells) | every family, every K, all six share thresholds, both rotations, both modes, full stats |
+| **item 3d**, family (d) COMBINED | `books_combined.csv` (72 rows) | the winner is `c_all_pairs` K=50 at share 0.25; **positive in both rotations**, +0.72% to +0.76% a year |
+| **A4's four-cell rotation**, family (e) | `books_fourcell.csv` (960 rows) | select on 15 pairs 2005-2010, trade the 13 JPY/CHF pairs 2011-2015 — no shared pair, no shared year. **+4.55 R per sleeve against the cell's +0.81** |
+| **item 4** | `results/nnfx/WINNERS.md`, `books/winners.csv` | the best book's 2,426 algorithms, sorted by contribution |
+| **B1b, the cell baseline** (A12) | `books/cell_baseline.csv` | a random algorithm makes **+1.383 R** on the 15 pairs in 2005-2010 and **−0.861** on the same pairs in 2011-2015. The cell carries most of the sign, so every book is now also tested against its own cell |
+| preflight guard 44, and guard 34 extended | `code/preflight.py` | 44 of 44. Guard 34 now also refuses a file over 50 MB that is neither tracked nor ignored — it passed at 19:55 and the push was refused at 19:58 |
 
 ---
 
@@ -48,7 +56,8 @@ the workers that have not started yet and not the ones that have.
 
 | what | why not |
 |---|---|
-| `PAIR_FIT.md`, `BOOKS.md`, `WINNERS.md` | each needs the 20 null runs for its floor. The real numbers are computed and on disk; the write-ups are blocked on B1 only. ETA ~22:45 |
+| the FINAL versions of `PAIR_FIT.md`, `BOOKS.md`, `WINNERS.md` | written and generated from the real numbers already, with B1 blank. They are regenerated the moment chain 1 lands — one command, `python3 code/nnfxrep.py --reports`. ETA ~21:55 |
+| B1 for families (d) and (e) | chain 2, armed and waiting above. Until it lands neither is called a passer, and both carry B2, B3, B4 and a blank B1. **Family (e) is the strongest result of the night and it is the one with no floor yet** |
 | `FINAL_BOOK.md` (item 5) | conditional by construction: only if a book clears B1 to B4 **in both rotations**. A7 declares the rule for picking its admission count in advance so it cannot be chosen after the fact |
 | the 2016-2020 confirm | **Jack's call and no one else's.** Computed, never opened. 2021 onward sealed |
 | item 6, the corrected-cost rerun of stage 1 R2, stage 2 and items 1-6 | Jack ranked it lowest priority and it is ~6 hours of compute that would contend with the nulls. `COST_DOUBLE_CHARGE.md` holds the mechanical correction so no earlier table has to be re-run to be read correctly |
@@ -77,5 +86,14 @@ the workers that have not started yet and not the ones that have.
    where netting is the point, inside the voting machine.
 5. **Disk is at 100%, 3.4 GB free.** The null banks are therefore never written — they are
    built in memory, reduced to statistics, and dropped. 20 of them on disk would be 6.8 GB.
-6. Editing a running script; a `def` pasted at column 0 inside `main()` silently truncating
+6. **A guard that checks the wrong set passes and protects nothing.** Guard 34 refuses any
+   NEW tracked file over 50 MB and it passed at 19:55 — because the 208 MB sleeve bank was
+   not tracked yet. The next `git add -A` staged it and GitHub declined the push at 19:58.
+   The guard was right and useless. It now also checks files that are neither tracked nor
+   ignored, and the new branch was self-tested with a sparse 57 MB file to confirm it fires.
+7. **A four-cell book can look out-of-sample and be measuring the cell.** Family (e) is
+   positive on (15 pairs, 2005-2010) and (13 pairs, 2011-2015) and negative on the other two
+   cells **in both directions, whichever cell it selected on** — because a random algorithm
+   does the same. Caught by computing the unconditional per-cell mean, which is now B1b.
+8. Editing a running script; a `def` pasted at column 0 inside `main()` silently truncating
    it — both still live, both from earlier turns.

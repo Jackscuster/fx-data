@@ -704,8 +704,34 @@ def c34():
             continue
         if n > LIM:
             big.append((n, rel))
+    # ---- UNTRACKED BUT NOT IGNORED IS THE SAME FAULT ONE STEP EARLIER.
+    # Added 25 Nov 20:05 after this guard passed at 19:55 and the push was
+    # refused at 19:58. `git ls-files` lists TRACKED files, and the 208 MB
+    # sleeve bank was untracked at 19:55 -- so the guard was right and useless:
+    # the very next `git add -A` staged it, and GitHub declined the push. A
+    # file that is neither tracked nor ignored is a file the next commit will
+    # take, so it is checked here too, and the fix is the same one guard 28
+    # uses for the banks -- gitignore it and commit what rebuilds it.
+    untracked = subprocess.run(
+        ['git', 'ls-files', '--others', '--exclude-standard', '-z'],
+        cwd=_R, capture_output=True, text=True).stdout
+    pending = []
+    for rel in [x for x in untracked.split('\0') if x]:
+        try:
+            n = os.path.getsize(os.path.join(_R, rel))
+        except OSError:
+            continue
+        if n > LIM and rel not in NAMED:
+            pending.append((n, rel))
+    assert not pending, (
+        '%d file(s) are neither tracked nor ignored and exceed 50 MB, so the '
+        'next `git add -A` would stage them and the push would be refused: %s '
+        '-- gitignore them and commit what rebuilds them'
+        % (len(pending), ', '.join('%s (%.0f MB)' % (r, n / 1048576)
+                                   for n, r in sorted(pending, reverse=True)[:4])))
     if not big:
-        return ('no tracked file exceeds 50 MB%s' % _named_note(named_ok))
+        return ('no tracked file exceeds 50 MB, and no untracked unignored '
+                'file does either%s' % _named_note(named_ok))
     base = subprocess.run(['git', 'ls-remote', 'origin', 'refs/heads/main'],
                           cwd=_R, capture_output=True, text=True).stdout.split()
     base = base[0] if base else ''

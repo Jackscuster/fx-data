@@ -89,6 +89,21 @@ def gate_table(RF, F):
                 D.loc[(D.family == fam) & (D.rotation == rot)
                       & (D['share'] == sh) & (D['mode'] == md)
                       & (D.K == k), 'B4'] = ok
+    # ---- B1b, PROTOCOL.md A12: the book must beat the UNCONDITIONAL mean
+    # sleeve R of its own cell, not merely zero. At equal risk 1/N a book's R
+    # IS the mean of its sleeves' R, so this is an exact like-for-like test.
+    try:
+        CBL = pd.read_csv(os.path.join(BOUT, 'cell_baseline.csv'))
+        CBL = CBL[(CBL.cell_pairs == '28pairs') & (CBL.min_trades == 20)]
+        bl = dict(zip(CBL.window, CBL.mean_R))
+        D['cell_baseline_R'] = D.score_window.map(bl)
+        D['excess_over_cell'] = D.R - D.cell_baseline_R
+        D['B1b'] = (D.excess_over_cell > 0).astype(int)
+    except Exception as e:
+        D['cell_baseline_R'] = np.nan
+        D['excess_over_cell'] = np.nan
+        D['B1b'] = np.nan
+        print('  B1b not computed: %s' % e, flush=True)
     if 'b5_pct_per_year' in D.columns:
         D['B5'] = ((D.b5_pct_per_year >= 12.0)
                    & (D.get('b5_eval_breached', False) != True)).astype(int)
@@ -97,6 +112,7 @@ def gate_table(RF, F):
         D['B5'] = np.nan
     D['clears_B1_B4'] = ((D.B1 == 1) & (D.B2 == 1) & (D.B3 == 1)
                          & (D.B4 == 1)).astype(int)
+    D['clears_with_B1b'] = ((D.clears_B1_B4 == 1) & (D.B1b == 1)).astype(int)
     D['passer'] = ((D.clears_B1_B4 == 1) & (D.B5 == 1)).astype(int)
     return D
 
