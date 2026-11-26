@@ -53,9 +53,9 @@ def one(k, verbose=True):
         return
     f_abc = os.path.join(NDIR, 'books_%03d.csv' % k)
     assert os.path.exists(f_abc), \
-        ('null2 run %d needs chain 1\'s books_%03d.csv to pick family d\'s '
-         'winner on the SAME world, and it is not on disk' % (k, k))
-    sweep = pd.read_csv(f_abc)
+        ('null2 run %d needs chain 1\'s books_%03d.csv to check that this '
+         'world is the SAME world, and it is not on disk' % (k, k))
+    chain1 = pd.read_csv(f_abc)
     t0 = time.time()
     seed = NR.SEED_BASE + k
     tag = 'bnull2_%03d' % k
@@ -85,14 +85,45 @@ def one(k, verbose=True):
         bank = NR.bank_in_memory(allc, pairs, verbose=verbose, tag=tag)
         W = BO.World(pairs)
         D = BK.declared_sleeves()
-        rd = CB.build_d(bank, allc, W, pairs, D, sweep, verbose=False)
-        Xd = pd.DataFrame(rd); Xd['run'] = k; Xd['seed'] = seed
-        Xd.to_csv(f_d, index=False)
-        re_ = C4.build_e(bank, allc, W, pairs, verbose=False)
-        Xe = pd.DataFrame(re_); Xe['run'] = k; Xe['seed'] = seed
-        Xe.to_csv(f_e, index=False)
-        print('  null2 %d DONE %.1f min: %d d-rows, %d e-rows'
-              % (k, (time.time() - t0) / 60, len(Xd), len(Xe)), flush=True)
+
+        # ---- FAMILY (e) FIRST, AND WRITTEN BEFORE (d) IS ATTEMPTED.
+        # On 25 Nov this ran the other way round and all 20 runs died inside
+        # build_d, which threw away family e too -- and e is the only book
+        # anywhere near Jack's 12%. e reads the bank and nothing else, so it
+        # has no business waiting behind d's winner lookup.
+        if not os.path.exists(f_e):
+            re_ = C4.build_e(bank, allc, W, pairs, verbose=False)
+            Xe = pd.DataFrame(re_); Xe['run'] = k; Xe['seed'] = seed
+            Xe.to_csv(f_e, index=False)
+            print('  null2 %d family e: %d rows, %.1f min'
+                  % (k, len(Xe), (time.time() - t0) / 60), flush=True)
+
+        # ---- FAMILY (d). A11 picks its winner by R_per_dip averaged over
+        # the rotations, so the sweep it reads must CARRY a dip. Chain 1's
+        # books_%03d.csv is light() and does not, so the b/c sweep is rebuilt
+        # here at the 'mid' tier on this same world. The assertion below is
+        # the point of doing it rather than trusting it: same seed, same
+        # zero_edge_frames, so every R must come back identical to chain 1's.
+        if not os.path.exists(f_d):
+            rows = BO.build(bank, allc, W, declared=D, light_only='mid')
+            sweep = pd.DataFrame(rows)
+            kcols = ['rotation', 'family', 'K', 'share', 'mode']
+            j = chain1.merge(sweep, on=kcols, suffixes=('_c1', '_c2'))
+            assert len(j) == len(chain1), \
+                ('rebuilt sweep has %d of chain 1\'s %d rows on run %d'
+                 % (len(j), len(chain1), k))
+            dR = float(np.nanmax(np.abs(j.R_c1 - j.R_c2)))
+            assert dR < 1e-6, \
+                ('run %d is NOT chain 1\'s world: worst R difference over '
+                 '%d book cells is %.3e' % (k, len(j), dR))
+            print('  null2 %d sweep matches chain 1 to %.2e over %d cells, '
+                  '%.1f min' % (k, dR, len(j), (time.time() - t0) / 60),
+                  flush=True)
+            rd = CB.build_d(bank, allc, W, pairs, D, sweep, verbose=False)
+            Xd = pd.DataFrame(rd); Xd['run'] = k; Xd['seed'] = seed
+            Xd.to_csv(f_d, index=False)
+        print('  null2 %d DONE %.1f min'
+              % (k, (time.time() - t0) / 60), flush=True)
     finally:
         P.set_world('real')
         P.drop_world(tag)

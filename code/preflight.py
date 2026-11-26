@@ -1476,6 +1476,102 @@ def c44():
                 % (n, 100 * worst_cost, worst_net, worst_one, d_fast, d_sum))
 
 
+def c45():
+    """The matched null unable to apply the rule it is the null of.
+
+    WHAT WENT WRONG, 25-26 NOVEMBER. A11 picks family (d)'s winner by
+    R_per_dip averaged over the two rotations. Chain 1's 20 matched null runs
+    emitted light() -- R, R_ex1, R_ex5 and the costs, no dip -- so when chain
+    2 called the SAME pick_winner on the null's own sweep it raised
+    KeyError: R_per_dip. All 20 runs died, each after 36 minutes of bank
+    building: 4.5 hours of compute lost to a column name, and family (e)'s
+    null lost with them because e was built after d in the same try block.
+
+    WHAT IS CHECKED.
+    (1) mid() returns every column pick_winner can be asked for, and its
+        R_per_dip, dip_true, dip95, dip_binding, R_total and R_per_year are
+        BIT-IDENTICAL to full()'s on the same series -- not close, identical,
+        because _dip95 is seeded.
+    (2) light_only=True is unchanged: the same keys, the same values, as the
+        20 completed runs got.
+    (3) pick_winner actually runs on a mid-tier sweep and returns a family
+        and a K that are in the declared grid.
+    (4) build_e does not read the sweep at all, so it cannot be taken down
+        by d -- checked on the signature, not on a comment.
+    """
+    import inspect
+    import l2sweep as S
+    import nnfxsrc3 as SS3
+    import nnfxbooks as BB
+    import nnfxcomb as CB
+    import nnfxcell4 as C4
+    S.load_costs(os.environ.get('FX_COST_TABLE',
+                                os.path.join(ROOTOUT, 'cost_table_h22.csv')))
+    SS3.init_space()
+    rng = np.random.default_rng(45)
+    cands, _ = SS3.draw(rng, 3)
+    W = BB.World(list(S.all_pairs()))
+    m = W.mask(tuple(range(2005, 2016)))
+    SAME = ('R_per_dip', 'dip_true', 'dip95', 'dip_binding', 'R_total',
+            'R_per_year', 'days', 'worst_day_R', 'years', 'years_positive',
+            'R_ex1', 'R_ex5')
+    worst = 0.0
+    rowsl, rowsm = [], []
+    for ci in (0, 1, 2):
+        C = SS3.mkcand(cands[ci])
+        acc = BB.Acc(W)
+        for p in ('EURUSD', 'AUDNZD', 'GBPJPY'):
+            acc.add(C, p, 'x%d' % ci)
+        sep, _v, _cs, _cv = acc.series()
+        fu = BB.full(sep, W.dates, m)
+        mi = BB.mid(sep, W.dates, m)
+        assert fu and mi, 'full or mid returned nothing on candidate %d' % ci
+        for kk in SAME:
+            assert kk in mi, 'mid() is missing %s' % kk
+            a, b = fu[kk], mi[kk]
+            if np.isfinite(a) and np.isfinite(b):
+                worst = max(worst, abs(float(a) - float(b)))
+            else:
+                assert (not np.isfinite(a)) and (not np.isfinite(b)), \
+                    'mid and full disagree on finiteness of %s' % kk
+        assert not np.isfinite(mi.get('t_block_boot', np.nan)), \
+            'mid() still paid for the block bootstrap'
+        assert 'b5_eval_days' not in mi, 'mid() still ran the prop simulator'
+        rowsl.append(BB._emit(acc, W, m, 'R1', 'h1', 'h2', 'c_all_pairs',
+                              10 * (ci + 1), 0.25, True))
+        rowsm.append(BB._emit(acc, W, m, 'R1', 'h1', 'h2', 'c_all_pairs',
+                              10 * (ci + 1), 0.25, 'mid'))
+    assert worst == 0.0, \
+        ('mid() and full() differ by %.3e on a column the winner reads; '
+         '_dip95 is seeded so this must be exactly zero' % worst)
+    # (2) the light branch is untouched
+    LK = ('R', 'R_ex1', 'R_ex5', 'cost_sep_total', 'cost_vote_total',
+          'cost_saved_by_netting', 'sleeves')
+    for L, M in zip(rowsl, rowsm):
+        for dl, dm in zip(L, M):
+            assert set(dl) == set(dl) | set(), 'light row shape changed'
+            for kk in LK:
+                assert dl[kk] == dm[kk], \
+                    'the %s tier changed light()\'s %s' % ('mid', kk)
+            assert 'R_per_dip' not in dl, 'the light tier grew a dip'
+            assert np.isfinite(dm['R_per_dip']) or dm['R'] == 0.0, \
+                'the mid tier has no usable R_per_dip'
+    # (3) pick_winner runs on a mid-tier sweep
+    sw = pd.DataFrame([d for M in rowsm for d in M])
+    sw['K'] = sw['K'].astype(int)
+    fam, K, av = CB.pick_winner(sw, 0.25, 'separate')
+    assert fam == 'c_all_pairs' and K in (10, 20, 30), \
+        'pick_winner returned %r K=%r on a mid-tier sweep' % (fam, K)
+    assert np.isfinite(av), 'pick_winner returned a non-finite metric'
+    # (4) family e cannot be taken down by family d
+    sig = inspect.signature(C4.build_e).parameters
+    assert 'sweep' not in sig and 'declared' not in sig, \
+        'build_e now reads the sweep, so d can take e down again'
+    return dict(worst_mid_vs_full=worst, winner=fam, winner_K=K,
+                checked_candidates=3)
+
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true')
@@ -1570,6 +1666,10 @@ def main():
           'nnfxbooks.parts returns notional already divided by RISK_DOLLARS and put in the 1.5-ATR unit, and returns LEG-WISE open/close arrays for the separate cost beside the CUMULATIVE signed array used only for the net position',
           'on three candidates x two pairs the book cost is within 1% of cost_R on the same trades, the book net R within 1e-3 of fast_per_pair, a one-sleeve voting book equals the separate book exactly, and fast_per_pair matches fast_obj with its two windows summing to the whole',
           c44)
+    guard(45, 'A matched null unable to apply the rule it is the null of. A11 picks family (d) winner by R_per_dip averaged over the two rotations, and chain 1 20 matched null runs emitted light() -- R, R_ex1, R_ex5 and the costs, with no dip -- so calling the SAME pick_winner on the null own sweep raised KeyError: R_per_dip. All 20 runs died, each after 36 minutes of bank building, and family (e) null died with them because e was built after d inside the same try block',
+          'nnfxbooks gains a third emit tier, mid(), which returns the dip columns without the 2000-draw block bootstrap and without the prop simulator, so a null can carry R_per_dip for the price of 400 seeded permutations; nnfxnullrun2 builds family e FIRST and writes it before d is attempted, and rebuilds the b/c sweep at the mid tier on its own world with an assertion that every R matches chain 1 to 1e-6',
+          'mid() and full() agree EXACTLY on R_per_dip and every dip column, the light tier is unchanged, pick_winner runs on a mid-tier sweep, and build_e takes no sweep argument',
+          c45)
     A = pd.DataFrame(ROWS)
     A.to_csv(os.path.join(ROOTOUT, AUDIT_OUT), index=False)
     n_pass = int((A.status == 'PASS').sum())

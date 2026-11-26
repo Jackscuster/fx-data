@@ -228,6 +228,35 @@ def full(a, dates, m):
     return st
 
 
+
+def mid(a, dates, m):
+    """THE DIP COLUMNS WITHOUT THE BOOTSTRAP AND WITHOUT THE PROP SIMULATOR.
+
+    WHY IT EXISTS, 2026-11-26. A11 picks family (d)'s winner by R_per_dip
+    averaged over the two rotations. The 20 matched null runs of chain 1
+    emitted light(), which has no dip, so the null could not apply A11's own
+    rule: all 20 of chain 2's runs died on KeyError: R_per_dip AFTER 36
+    minutes of bank building each, 4.5 hours of compute for a column name.
+
+    The dip is not what costs time. _dip95 is 400 seeded permutations. The
+    two expensive things full() does are _block_t (2000 draws) and prop(),
+    and the winner reads neither.
+
+    R_per_dip HERE IS THE SAME NUMBER full() WOULD GIVE -- same stats() code
+    on the same series, and _dip95 is seeded, so it is deterministic rather
+    than merely close. Guard 45 asserts it.
+    """
+    x = a[m]
+    s = pd.Series(x, index=dates[m])
+    st = B2.stats(s, boot=False)
+    if not st:
+        return {}
+    sv = np.sort(x)
+    st['R_ex1'] = st['R_total'] - float(sv[-1])
+    st['R_ex5'] = st['R_total'] - float(sv[-5:].sum())
+    return st
+
+
 # ======================= selection ======================================
 def cells():
     """Source 3's four cells, unchanged: 15 pairs without JPY or CHF / 13 with."""
@@ -337,8 +366,13 @@ def _emit(acc, W, smask, rot, aw, sw, fam, K, share, light_only):
                  cost_sep_total=cs, cost_vote_total=cv,
                  cost_saved_by_netting=cs - cv)
         d.update(light(a, smask))
-        if not light_only:
-            st = full(a, W.dates, smask)
+        # THREE TIERS NOW. light_only is True (as chain 1 ran it, untouched),
+        # 'mid' (the dip, no bootstrap, no prop sim), or False (everything).
+        # `is not True` rather than a falsiness test so the True branch stays
+        # bit-for-bit what the 20 completed null runs used.
+        if light_only is not True:
+            st = (mid(a, W.dates, smask) if light_only == 'mid'
+                  else full(a, W.dates, smask))
             d.update({k: v for k, v in st.items()
                       if k not in ('R_ex1', 'R_ex5')})
         out.append(d)

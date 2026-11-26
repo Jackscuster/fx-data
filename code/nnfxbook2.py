@@ -96,7 +96,7 @@ def book_of(series, keys):
     return M.mean(axis=1)
 
 
-def stats(s):
+def stats(s, boot=True):
     d = np.asarray(s, float)
     d = d[np.isfinite(d)]
     if not len(d):
@@ -110,7 +110,11 @@ def stats(s):
         np.asarray(s, float))]).groupby(
             lambda t: t.year).sum().sort_index()
     nyr = max(1, len(yrs))
-    tb, _sd = P.N._block_t(d, ndraw=2000)
+    # boot=False SKIPS THE 2000-DRAW BLOCK BOOTSTRAP AND NOTHING ELSE. It is
+    # for nnfxbooks.mid(), which needs the dip and not the t. Every other
+    # number below, R_per_dip included, is unchanged on both branches.
+    tb, _sd = (P.N._block_t(d, ndraw=2000) if boot
+               else (np.nan, np.nan))
     worst_day = float(-d.min()) if d.min() < 0 else np.nan
     sc_t1 = min(TEAM1_DIP / bind if bind > 0 else np.inf,
                 TEAM1_DAY / worst_day if worst_day and worst_day > 0

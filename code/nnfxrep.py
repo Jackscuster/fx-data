@@ -50,21 +50,60 @@ def _read(pat):
     return pd.concat([pd.read_csv(f) for f in fs], ignore_index=True), len(fs)
 
 
-def null_floor(NB):
-    """-> the 95th percentile and the rest of the null distribution per cell."""
-    if not len(NB):
-        return pd.DataFrame()
-    g = NB.groupby(CELL, dropna=False)['R']
-    F = g.agg(null_runs='count', null_mean='mean', null_median='median',
-              null_max='max').reset_index()
+# FAMILY a's K IS NOT A KNOB, IT IS A COUNT. For b, c and d, K is a setting
+# chosen the same way in every world, so the null cell is the same cell. For
+# a_declared, K is however many of the 18 declared algorithms happened to be
+# admitted -- 4 and 7 in the real world, anywhere from 0 to 13 across the 20
+# scrambled ones -- so keying a's floor on K compares the real book against
+# whichever null runs happened to admit the same number of sleeves. On 26 Nov
+# that silently gave R1 no floor at all (NaN, and B1 reported as a fail) and
+# gave R2 a floor built from a subset of runs. a's floor pools every null run
+# in the (rotation, share, mode) cell, which is the matched comparison: the
+# same construction on 20 worlds, whatever count it yields.
+CELL_A = ['rotation', 'family', 'share', 'mode']
+AGG = dict(null_runs='count', null_mean='mean', null_median='median',
+           null_max='max')
+
+
+def _floor_on(NB, key):
+    g = NB.groupby(key, dropna=False)['R']
+    F = g.agg(**AGG).reset_index()
     F['null_p95'] = g.quantile(0.95).to_numpy()
     F['null_p05'] = g.quantile(0.05).to_numpy()
     return F
 
 
+def null_floor(NB):
+    """-> the 95th percentile and the rest of the null distribution per cell.
+
+    Keyed on K for the families whose K is a setting, and pooled over K for
+    a_declared, whose K is a count. See CELL_A above.
+    """
+    if not len(NB):
+        return pd.DataFrame()
+    isa = NB.family == 'a_declared'
+    parts = []
+    if (~isa).any():
+        parts.append(_floor_on(NB[~isa], CELL))
+    if isa.any():
+        Fa = _floor_on(NB[isa], CELL_A)
+        Fa['K'] = np.nan                 # joined on CELL_A, not on K
+        parts.append(Fa)
+    return pd.concat(parts, ignore_index=True)
+
+
 def gate_table(RF, F):
     """The five gates on every real book cell."""
-    D = RF.merge(F, on=CELL, how='left') if len(F) else RF.copy()
+    if len(F):
+        isa = F.family == 'a_declared'
+        Fk, Fa = F[~isa], F[isa]
+        fc = [c for c in F.columns if c.startswith('null_')]
+        ra = RF.family == 'a_declared'
+        Da = RF[ra].merge(Fa[CELL_A + fc], on=CELL_A, how='left')
+        Dk = RF[~ra].merge(Fk[CELL + fc], on=CELL, how='left')
+        D = pd.concat([Dk, Da], ignore_index=True)
+    else:
+        D = RF.copy()
     for c in ('null_p95', 'null_mean', 'null_runs', 'null_median', 'null_max'):
         if c not in D.columns:
             D[c] = np.nan
