@@ -1,0 +1,38 @@
+  costs: cost_table_h22.csv (28 pairs, 28 distinct costs, median 2.4 bp round trip)
+bank loaded 0.0 min
+    R1 share=0.25 done
+    R1 share=0.40 done
+    R1 share=0.60 done
+    R1 share=0.80 done
+    R1 share=1.00 done
+    R1 share=inf done
+    R2 share=0.25 done
+    R2 share=0.40 done
+    R2 share=0.60 done
+    R2 share=0.80 done
+    R2 share=1.00 done
+    R2 share=inf done
+mid sweep 552 rows, 4.1 min
+joined 552 of 552 full rows
+  R            worst |diff| = 1.554e-15 over 552 rows
+  R_total      worst |diff| = 1.554e-15 over 552 rows
+  dip_true     worst |diff| = 1.998e-15 over 552 rows
+  dip95        worst |diff| = 2.665e-15 over 552 rows
+  dip_binding  worst |diff| = 2.665e-15 over 552 rows
+  R_per_dip    worst |diff| = 8.882e-16 over 552 rows
+
+WINNER, full tier vs mid tier:
+  share=0.25  separate full c_all_pairs K=50  |  mid c_all_pairs K=50  SAME
+  share=0.25  voting   full c_all_pairs K=50  |  mid c_all_pairs K=50  SAME
+  share=0.4   separate full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=0.4   voting   full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=0.6   separate full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=0.6   voting   full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=0.8   separate full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=0.8   voting   full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=1.0   separate full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=1.0   voting   full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=inf   separate full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+  share=inf   voting   full b_per_pair K=89  |  mid b_per_pair K=89  SAME
+
+0 of 12 (share, mode) winners moved

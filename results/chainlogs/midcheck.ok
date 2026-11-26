@@ -1,0 +1,10 @@
+2026-11-26 midcheck PASSED on the real bank.
+  mid tier vs full tier, 552 book cells:
+    R, R_total      1.554e-15
+    dip_true        1.998e-15
+    dip95           2.665e-15
+    dip_binding     2.665e-15
+    R_per_dip       8.882e-16
+  family d winner: 0 of 12 (share, mode) choices moved.
+  mid sweep 4.1 min vs full 5.8 min.
+Stage 4 (booknull2b) may run. Full output: results/nnfx/books/midcheck_verdict.txt
